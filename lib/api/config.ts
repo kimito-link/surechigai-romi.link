@@ -1,10 +1,8 @@
 /**
  * API Configuration
- * 
+ *
  * このファイルはAPI関連の設定を一元管理します。
  * すべてのAPI呼び出しはこのファイルの関数を使用してください。
- * 
- * @see docs/API-ARCHITECTURE.md
  */
 
 import { Platform } from "react-native";
@@ -23,18 +21,11 @@ const env = {
 // =============================================================================
 
 /**
- * 本番環境のRailway API URL
- * フロントエンド（Vercel）とバックエンド（Railway）が分離しているため、
- * 本番環境では明示的にRailway URLを指定する必要があります。
- */
-export const PRODUCTION_API_URL = "https://doin-challengecom-production.up.railway.app";
-
-/**
  * 本番環境のフロントエンドドメイン
  */
 export const PRODUCTION_DOMAINS = [
-  "doin-challenge.com",
-  "doin-challengecom.vercel.app",
+  "surechigai-romi.link",
+  "surechigai-romi.vercel.app",
 ];
 
 // =============================================================================
@@ -43,13 +34,13 @@ export const PRODUCTION_DOMAINS = [
 
 /**
  * API Base URLを取得します。
- * 
+ *
  * 優先順位:
  * 1. 環境変数 EXPO_PUBLIC_API_BASE_URL
- * 2. 本番環境ドメインの場合は PRODUCTION_API_URL
+ * 2. 本番環境ドメインの場合は同オリジン（Vercel Functions）
  * 3. 開発環境の場合はポート番号を変換（8081 → 3000）
  * 4. フォールバック: 空文字列（相対URL）
- * 
+ *
  * @returns API Base URL
  */
 export function getApiBaseUrl(): string {
@@ -63,7 +54,8 @@ export function getApiBaseUrl(): string {
     const protocol = location.protocol;
     const hostname = location.hostname;
     if (isProductionDomain(hostname)) {
-      return PRODUCTION_API_URL;
+      // Vercel Functions は同オリジンで動作
+      return "";
     }
     const apiHostname = hostname.replace(/^8081-/, "3000-");
     if (apiHostname !== hostname) {
@@ -73,7 +65,7 @@ export function getApiBaseUrl(): string {
 
   // Native: expo config または本番URL
   if (Platform.OS !== "web") {
-    return Constants.expoConfig?.extra?.apiUrl ?? PRODUCTION_API_URL;
+    return Constants.expoConfig?.extra?.apiUrl ?? "https://surechigai-romi.link";
   }
 
   return "";
@@ -81,12 +73,12 @@ export function getApiBaseUrl(): string {
 
 /**
  * 本番環境ドメインかどうかを判定します。
- * 
+ *
  * @param hostname ホスト名
  * @returns 本番環境の場合はtrue
  */
 export function isProductionDomain(hostname: string): boolean {
-  return PRODUCTION_DOMAINS.some(domain => hostname.includes(domain));
+  return PRODUCTION_DOMAINS.some((domain) => hostname.includes(domain));
 }
 
 // =============================================================================
@@ -102,7 +94,10 @@ export function logApiConfig(): void {
       envApiBaseUrl: env.apiBaseUrl,
       resolvedApiBaseUrl: getApiBaseUrl(),
       platform: Platform.OS,
-      hostname: Platform.OS === "web" && typeof location !== "undefined" ? location.hostname : "N/A",
+      hostname:
+        Platform.OS === "web" && typeof location !== "undefined"
+          ? location.hostname
+          : "N/A",
     });
   }
 }

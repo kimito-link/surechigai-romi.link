@@ -17,8 +17,8 @@ export default function Root({ children }: PropsWithChildren) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
         />
         {/* Preconnect: API・Clerkの接続を事前開始 */}
-        <link rel="preconnect" href="https://doin-challengecom-production.up.railway.app" />
-        <link rel="dns-prefetch" href="https://doin-challengecom-production.up.railway.app" />
+        <link rel="preconnect" href="https://surechigai-romi.link" />
+        <link rel="dns-prefetch" href="https://surechigai-romi.link" />
         <link rel="preconnect" href="https://clerk.accounts.dev" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://clerk.accounts.dev" />
         {/* PWA manifest */}

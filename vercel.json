@@ -92,17 +92,17 @@
       "has": [
         {
           "type": "host",
-          "value": "www.doin-challenge.com"
+          "value": "www.surechigai-romi.link"
         }
       ],
-      "destination": "https://doin-challenge.com/:path*",
+      "destination": "https://surechigai-romi.link/:path*",
       "permanent": true
     }
   ],
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://doin-challengecom-production.up.railway.app/api/:path*"
+      "destination": "/api/:path*"
     },
     {
       "source": "/((?!api/).*)",

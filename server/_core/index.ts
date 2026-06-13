@@ -249,17 +249,10 @@ async function startServer() {
           const caller = appRouter.createCaller(await createContext({ req: _req as any, res: res as any, info: {} as any }));
 
           try {
-            await caller.events.list();
-            criticalApis.homeEvents = { ok: true };
+            await caller.auth.me();
+            criticalApis.authMe = { ok: true };
           } catch (err) {
-            criticalApis.homeEvents = { ok: false, error: err instanceof Error ? err.message : String(err) };
-          }
-
-          try {
-            await caller.rankings.hosts({ limit: 1 });
-            criticalApis.rankings = { ok: true };
-          } catch (err) {
-            criticalApis.rankings = { ok: false, error: err instanceof Error ? err.message : String(err) };
+            criticalApis.authMe = { ok: false, error: err instanceof Error ? err.message : String(err) };
           }
         } catch (err) {
           criticalApis.error = err instanceof Error ? err.message : String(err);

@@ -11,7 +11,6 @@ export {
   getApiBaseUrl,
   isProductionDomain,
   logApiConfig,
-  PRODUCTION_API_URL,
   PRODUCTION_DOMAINS,
 } from "./config";
 

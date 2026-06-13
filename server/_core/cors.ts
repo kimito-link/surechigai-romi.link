@@ -47,11 +47,11 @@ export function isAllowedOrigin(origin: string | undefined): boolean {
     });
   }
 
-  // ALLOWED_ORIGINS が未設定の場合、doin-challenge.com のサブドメインを許可
+  // ALLOWED_ORIGINS が未設定の場合、surechigai-romi.link のサブドメインを許可
   try {
     const url = new URL(origin);
     const hostname = url.hostname;
-    return hostname === "doin-challenge.com" || hostname.endsWith(".doin-challenge.com");
+    return hostname === "surechigai-romi.link" || hostname.endsWith(".surechigai-romi.link");
   } catch {
     // URLパース失敗時は安全側に倒して拒否
     return false;

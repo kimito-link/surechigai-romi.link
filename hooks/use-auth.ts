@@ -24,10 +24,12 @@ function resolveReturnUrl(returnUrl?: string): string | undefined {
 }
 
 export function useAuth() {
-  const { user: clerkUser, isLoaded } = useUser();
+  const { user: clerkUser, isLoaded: clerkIsLoaded } = useUser();
+  const isLoaded = clerkIsLoaded;
   const { signOut, getToken } = useClerkAuth();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_x" });
-  const { signIn, isLoaded: isSignInLoaded } = useSignIn();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { signIn } = useSignIn();
 
   const login = useCallback(
     async (returnUrl?: string, _forceSwitch = false) => {
@@ -41,12 +43,13 @@ export function useAuth() {
         }
 
         if (Platform.OS === "web" && typeof window !== "undefined") {
-          if (!signIn || !isSignInLoaded) {
+          if (!signIn) {
             throw new Error("Sign-in instance is not ready");
           }
           const origin = window.location.origin;
           const redirectComplete = resolveReturnUrl(returnUrl) ?? origin;
-          await signIn.authenticateWithRedirect({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (signIn as any).authenticateWithRedirect({
             strategy: "oauth_x",
             redirectUrl: origin,
             redirectUrlComplete: redirectComplete,
@@ -80,7 +83,7 @@ export function useAuth() {
         console.error("[Auth] OAuth login error:", err);
       }
     },
-    [startOAuthFlow, getToken, signIn, isSignInLoaded],
+    [startOAuthFlow, getToken, signIn],
   );
 
   const logout = useCallback(async () => {
