@@ -1,10 +1,76 @@
+/**
+ * タブレイアウト
+ * すれちがいロミ MVP: 5タブ
+ * - ポスト（封筒一覧・未開封数バッジ）
+ * - チェックイン
+ * - 図鑑
+ * - 軌跡（Web のみ表示。Native でも tab は残すが label は隠す）
+ * - マイページ
+ */
+
 import { Tabs } from "expo-router";
 import { color } from "@/theme/tokens";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HapticTab } from "@/components/atoms/haptic-tab";
 import { IconSymbol } from "@/components/atoms/icon-symbol";
-import { Platform } from "react-native";
+import { Platform, View, Text } from "react-native";
 import { useColors } from "@/hooks/use-colors";
+import { useAuth } from "@/hooks/use-auth";
+import { trpc } from "@/lib/trpc";
+
+/** 未開封バッジ */
+function UnreadBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <View
+      style={{
+        position: "absolute",
+        top: -4,
+        right: -8,
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: color.accentPrimary,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 4,
+        zIndex: 1,
+      }}
+    >
+      <Text
+        style={{
+          color: color.textWhite,
+          fontSize: 10,
+          fontWeight: "800",
+          lineHeight: 14,
+        }}
+      >
+        {count > 99 ? "99+" : count}
+      </Text>
+    </View>
+  );
+}
+
+/** ポストタブアイコン（バッジ付き） */
+function PostTabIcon({ color: iconColor }: { color: string }) {
+  const { isAuthenticated } = useAuth();
+  const { data } = trpc.encounter.list.useQuery(
+    { cursor: undefined },
+    {
+      enabled: isAuthenticated,
+      refetchInterval: 60_000, // 1分ごとに自動更新
+      staleTime: 30_000,
+    },
+  );
+  const unreadCount = (data ?? []).filter((e) => !e.openedByMe).length;
+
+  return (
+    <View style={{ position: "relative" }}>
+      <IconSymbol size={26} name="envelope.fill" color={iconColor} />
+      <UnreadBadge count={unreadCount} />
+    </View>
+  );
+}
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -15,7 +81,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: color.hostAccentLegacy,
+        tabBarActiveTintColor: color.accentIndigo,
         tabBarInactiveTintColor: colors.muted,
         headerShown: false,
         tabBarButton: HapticTab,
@@ -32,11 +98,56 @@ export default function TabLayout() {
         },
       }}
     >
+      {/* ポスト（封筒一覧） */}
       <Tabs.Screen
         name="index"
         options={{
-          title: "ホーム",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "ポスト",
+          tabBarIcon: ({ color: iconColor }) => <PostTabIcon color={iconColor} />,
+        }}
+      />
+
+      {/* チェックイン */}
+      <Tabs.Screen
+        name="checkin"
+        options={{
+          title: "チェックイン",
+          tabBarIcon: ({ color: iconColor }) => (
+            <IconSymbol size={26} name="location.fill" color={iconColor} />
+          ),
+        }}
+      />
+
+      {/* 図鑑 */}
+      <Tabs.Screen
+        name="zukan"
+        options={{
+          title: "図鑑",
+          tabBarIcon: ({ color: iconColor }) => (
+            <IconSymbol size={26} name="book.fill" color={iconColor} />
+          ),
+        }}
+      />
+
+      {/* 軌跡 */}
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: "軌跡",
+          tabBarIcon: ({ color: iconColor }) => (
+            <IconSymbol size={26} name="map.fill" color={iconColor} />
+          ),
+        }}
+      />
+
+      {/* マイページ */}
+      <Tabs.Screen
+        name="mypage"
+        options={{
+          title: "マイページ",
+          tabBarIcon: ({ color: iconColor }) => (
+            <IconSymbol size={26} name="person.crop.circle.fill" color={iconColor} />
+          ),
         }}
       />
     </Tabs>

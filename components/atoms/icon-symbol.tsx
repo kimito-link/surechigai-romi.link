@@ -26,6 +26,19 @@ const MAPPING: Record<string, MaterialIconName> = {
   "person.crop.circle": "account-circle",
   "gearshape.fill": "settings",
   "chart.bar.fill": "bar-chart",
+  // すれちがいロミ用
+  "envelope.fill": "mail",
+  "location.fill": "location-on",
+  "book.fill": "menu-book",
+  "map.fill": "map",
+  "person.crop.circle.fill": "account-circle",
+  "envelope.open.fill": "drafts",
+  "flag.fill": "flag",
+  "hand.raised.fill": "block",
+  "bell.fill": "notifications",
+  "clock.fill": "access-time",
+  "arrow.clockwise": "refresh",
+  "photo.fill": "photo",
 };
 
 type IconSymbolName = keyof typeof MAPPING;
