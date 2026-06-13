@@ -1,0 +1,30 @@
+{
+  "query": "SELECT column_name, is_nullable, column_default FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'challenges' AND is_nullable = 'NO' AND column_default IS NULL ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT column_name, is_nullable, column_default FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'challenges' AND is_nullable = 'NO' AND column_default IS NULL ORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "id",
+      "is_nullable": "NO",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "hostName",
+      "is_nullable": "NO",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "title",
+      "is_nullable": "NO",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "eventDate",
+      "is_nullable": "NO",
+      "column_default": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tis_nullable\tcolumn_default\nid\tNO\tNULL\nhostName\tNO\tNULL\ntitle\tNO\tNULL\neventDate\tNO\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1521
+}

@@ -1,0 +1,1 @@
+ALTER TABLE `badges` MODIFY COLUMN `conditionType` enum('first_participation','goal_reached','milestone_25','milestone_50','milestone_75','contribution_5','contribution_10','contribution_20','host_challenge','special','follower_badge') NOT NULL;

@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `participations` ADD `deletedAt` timestamp NULL;\nALTER TABLE `participations` ADD `deletedBy` int NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute ALTER TABLE `participations` ADD `deletedAt` timestamp NULL;\nALTER TABLE `participations` ADD `deletedBy` int NULL;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1060 (42S21) at line 1: Duplicate column name 'deletedAt'"
+  ]
+}

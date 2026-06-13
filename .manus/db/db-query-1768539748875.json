@@ -1,0 +1,46 @@
+{
+  "query": "SELECT id, title, hostName, hostProfileImage FROM challenges LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT id, title, hostName, hostProfileImage FROM challenges LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "title": "生誕祭ライブ 動員100人達成チャレンジ",
+      "hostName": "りんく",
+      "hostProfileImage": "https://pbs.twimg.com/profile_images/1234567890/rinku_normal.jpg"
+    },
+    {
+      "id": "2",
+      "title": "グループライブ フォロワー1万人チャレンジ",
+      "hostName": "アイドルファンチ",
+      "hostProfileImage": "https://pbs.twimg.com/profile_images/1234567891/idolfunch_normal.jpg"
+    },
+    {
+      "id": "3",
+      "title": "ソロライブ 50人動員チャレンジ",
+      "hostName": "こん太",
+      "hostProfileImage": "https://pbs.twimg.com/profile_images/1234567892/konta_normal.jpg"
+    },
+    {
+      "id": "4",
+      "title": "配信ライブ 同時視聴500人チャレンジ",
+      "hostName": "たぬ姉",
+      "hostProfileImage": "https://pbs.twimg.com/profile_images/1234567893/tanunee_normal.jpg"
+    },
+    {
+      "id": "5",
+      "title": "ワンマンライブ 200人動員チャレンジ",
+      "hostName": "リンク",
+      "hostProfileImage": "https://pbs.twimg.com/profile_images/1234567894/link_normal.jpg"
+    },
+    {
+      "id": "6",
+      "title": "グループライブ 300人動員チャレンジ",
+      "hostName": "アイドルユニットA",
+      "hostProfileImage": "https://pbs.twimg.com/profile_images/1234567895/idol_unit_a_normal.jpg"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\thostName\thostProfileImage\n1\t生誕祭ライブ 動員100人達成チャレンジ\tりんく\thttps://pbs.twimg.com/profile_images/1234567890/rinku_normal.jpg\n2\tグループライブ フォロワー1万人チャレンジ\tアイドルファンチ\thttps://pbs.twimg.com/profile_images/1234567891/idolfunch_normal.jpg\n3\tソロライブ 50人動員チャレンジ\tこん太\thttps://pbs.twimg.com/profile_images/1234567892/konta_normal.jpg\n4\t配信ライブ 同時視聴500人チャレンジ\tたぬ姉\thttps://pbs.twimg.com/profile_images/1234567893/tanunee_normal.jpg\n5\tワンマンライブ 200人動員チャレンジ\tリンク\thttps://pbs.twimg.com/profile_images/1234567894/link_normal.jpg\n6\tグループライブ 300人動員チャレンジ\tアイドルユニットA\thttps://pbs.twimg.com/profile_images/1234567895/idol_unit_a_normal.jpg\n",
+  "stderr": "",
+  "execution_time_ms": 1637
+}

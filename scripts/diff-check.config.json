@@ -1,0 +1,27 @@
+{
+  "dangerFiles": [
+    "server/_core/oauth",
+    "server/_core/auth",
+    "server/_core/login",
+    "server/_core/session",
+    "server/_core/index",
+    "vercel.json",
+    ".github/workflows",
+    "drizzle",
+    "prisma",
+    "db",
+    ".env",
+    ".env.production",
+    "railway.json"
+  ],
+  "forbiddenWords": [
+    "成功",
+    "保証",
+    "必ず",
+    "確実",
+    "売れる",
+    "バズ",
+    "集客できる",
+    "絶対"
+  ]
+}

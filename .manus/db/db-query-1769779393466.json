@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, title, hostProfileImage FROM challenges ORDER BY id LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT id, title, hostProfileImage FROM challenges ORDER BY id LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "title": "生誕祭ライブ 動員100人達成チャレンジ",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%82%8A%E3%82%93%E3%81%8F&background=EC4899&color=fff&size=128"
+    },
+    {
+      "id": "2",
+      "title": "グループライブ フォロワー1万人チャレンジ",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%82%A2%E3%82%A4%E3%83%89%E3%83%AB&background=8B5CF6&color=fff&size=128"
+    },
+    {
+      "id": "3",
+      "title": "ソロライブ 50人動員チャレンジ",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%81%93%E3%82%93%E5%A4%AA&background=DD6500&color=fff&size=128"
+    },
+    {
+      "id": "4",
+      "title": "配信ライブ 同時視聴500人チャレンジ",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%81%9F%E3%81%AC%E5%A7%89&background=22C55E&color=fff&size=128"
+    },
+    {
+      "id": "5",
+      "title": "ワンマンライブ 200人動員チャレンジ",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%83%AA%E3%83%B3%E3%82%AF&background=3B82F6&color=fff&size=128"
+    },
+    {
+      "id": "6",
+      "title": "グループライブ 300人動員チャレンジ",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=Unit+A&background=F59E0B&color=fff&size=128"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\thostProfileImage\n1\t生誕祭ライブ 動員100人達成チャレンジ\thttps://ui-avatars.com/api/?name=%E3%82%8A%E3%82%93%E3%81%8F&background=EC4899&color=fff&size=128\n2\tグループライブ フォロワー1万人チャレンジ\thttps://ui-avatars.com/api/?name=%E3%82%A2%E3%82%A4%E3%83%89%E3%83%AB&background=8B5CF6&color=fff&size=128\n3\tソロライブ 50人動員チャレンジ\thttps://ui-avatars.com/api/?name=%E3%81%93%E3%82%93%E5%A4%AA&background=DD6500&color=fff&size=128\n4\t配信ライブ 同時視聴500人チャレンジ\thttps://ui-avatars.com/api/?name=%E3%81%9F%E3%81%AC%E5%A7%89&background=22C55E&color=fff&size=128\n5\tワンマンライブ 200人動員チャレンジ\thttps://ui-avatars.com/api/?name=%E3%83%AA%E3%83%B3%E3%82%AF&background=3B82F6&color=fff&size=128\n6\tグループライブ 300人動員チャレンジ\thttps://ui-avatars.com/api/?name=Unit+A&background=F59E0B&color=fff&size=128\n",
+  "stderr": "",
+  "execution_time_ms": 1790
+}

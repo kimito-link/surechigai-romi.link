@@ -1,0 +1,216 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1763372440610,
+      "tag": "0000_elite_eternals",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1766586434276,
+      "tag": "0001_green_blob",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1766601352931,
+      "tag": "0002_youthful_cammi",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1766602067706,
+      "tag": "0003_lying_invisible_woman",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1766603197735,
+      "tag": "0004_worried_jackpot",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1766605072002,
+      "tag": "0005_even_phalanx",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1766606928975,
+      "tag": "0006_massive_random",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1766607935346,
+      "tag": "0007_gigantic_jane_foster",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1766609097305,
+      "tag": "0008_windy_justin_hammer",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1767711367868,
+      "tag": "0009_sturdy_dormammu",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1767758654583,
+      "tag": "0010_big_nico_minoru",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1767763920087,
+      "tag": "0011_empty_turbo",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1767786779712,
+      "tag": "0012_clean_trish_tilby",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1768375486748,
+      "tag": "0013_thick_riptide",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1768376956657,
+      "tag": "0014_tranquil_king_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1768534670213,
+      "tag": "0015_normal_johnny_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1768535172294,
+      "tag": "0016_famous_saracen",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1768536235885,
+      "tag": "0017_cuddly_screwball",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1768786315945,
+      "tag": "0018_military_black_bird",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1768791878572,
+      "tag": "0019_watery_tempest",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1768918532230,
+      "tag": "0020_uneven_ultragirl",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1768919090150,
+      "tag": "0021_violet_boomer",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1768994176825,
+      "tag": "0022_wakeful_ironclad",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1768994726252,
+      "tag": "0023_burly_tenebrous",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1769401940469,
+      "tag": "0024_strange_outlaw_kid",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1769847123570,
+      "tag": "0025_spooky_lorna_dane",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1769847318035,
+      "tag": "0026_lovely_pixie",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1738684800000,
+      "tag": "0027_api_usage_tracking",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1770194215266,
+      "tag": "0028_smart_amphibian",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1770300000000,
+      "tag": "0029_users_add_prefecture",
+      "breakpoints": true
+    }
+  ]
+}

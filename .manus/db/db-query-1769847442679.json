@@ -1,0 +1,58 @@
+{
+  "query": "SELECT id, title, hostName, hostProfileImage, isPublic, eventDate FROM challenges ORDER BY eventDate DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT id, title, hostName, hostProfileImage, isPublic, eventDate FROM challenges ORDER BY eventDate DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "6",
+      "title": "グループライブ 300人動員チャレンジ",
+      "hostName": "アイドルユニットA",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=Unit+A&background=F59E0B&color=fff&size=128",
+      "isPublic": "1",
+      "eventDate": "2026-02-21 05:08:18"
+    },
+    {
+      "id": "1",
+      "title": "生誕祭ライブ 動員100人達成チャレンジ",
+      "hostName": "りんく",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%82%8A%E3%82%93%E3%81%8F&background=EC4899&color=fff&size=128",
+      "isPublic": "1",
+      "eventDate": "2026-02-06 05:08:18"
+    },
+    {
+      "id": "5",
+      "title": "ワンマンライブ 200人動員チャレンジ",
+      "hostName": "リンク",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%83%AA%E3%83%B3%E3%82%AF&background=3B82F6&color=fff&size=128",
+      "isPublic": "1",
+      "eventDate": "2026-01-28 05:08:18"
+    },
+    {
+      "id": "2",
+      "title": "グループライブ フォロワー1万人チャレンジ",
+      "hostName": "アイドルファンチ",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%82%A2%E3%82%A4%E3%83%89%E3%83%AB&background=8B5CF6&color=fff&size=128",
+      "isPublic": "1",
+      "eventDate": "2026-01-21 05:08:18"
+    },
+    {
+      "id": "3",
+      "title": "ソロライブ 50人動員チャレンジ",
+      "hostName": "こん太",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%81%93%E3%82%93%E5%A4%AA&background=DD6500&color=fff&size=128",
+      "isPublic": "1",
+      "eventDate": "2026-01-14 05:08:18"
+    },
+    {
+      "id": "4",
+      "title": "配信ライブ 同時視聴500人チャレンジ",
+      "hostName": "たぬ姉",
+      "hostProfileImage": "https://ui-avatars.com/api/?name=%E3%81%9F%E3%81%AC%E5%A7%89&background=22C55E&color=fff&size=128",
+      "isPublic": "1",
+      "eventDate": "2026-01-10 05:08:18"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\thostName\thostProfileImage\tisPublic\teventDate\n6\tグループライブ 300人動員チャレンジ\tアイドルユニットA\thttps://ui-avatars.com/api/?name=Unit+A&background=F59E0B&color=fff&size=128\t1\t2026-02-21 05:08:18\n1\t生誕祭ライブ 動員100人達成チャレンジ\tりんく\thttps://ui-avatars.com/api/?name=%E3%82%8A%E3%82%93%E3%81%8F&background=EC4899&color=fff&size=128\t1\t2026-02-06 05:08:18\n5\tワンマンライブ 200人動員チャレンジ\tリンク\thttps://ui-avatars.com/api/?name=%E3%83%AA%E3%83%B3%E3%82%AF&background=3B82F6&color=fff&size=128\t1\t2026-01-28 05:08:18\n2\tグループライブ フォロワー1万人チャレンジ\tアイドルファンチ\thttps://ui-avatars.com/api/?name=%E3%82%A2%E3%82%A4%E3%83%89%E3%83%AB&background=8B5CF6&color=fff&size=128\t1\t2026-01-21 05:08:18\n3\tソロライブ 50人動員チャレンジ\tこん太\thttps://ui-avatars.com/api/?name=%E3%81%93%E3%82%93%E5%A4%AA&background=DD6500&color=fff&size=128\t1\t2026-01-14 05:08:18\n4\t配信ライブ 同時視聴500人チャレンジ\tたぬ姉\thttps://ui-avatars.com/api/?name=%E3%81%9F%E3%81%AC%E5%A7%89&background=22C55E&color=fff&size=128\t1\t2026-01-10 05:08:18\n",
+  "stderr": "",
+  "execution_time_ms": 1544
+}

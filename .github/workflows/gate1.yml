@@ -1,0 +1,168 @@
+# サイト不具合検知を含む Gate 1: diff-check / 品質 / 本番ヘルス照合。
+# 本番照合は「この push のコミットで本番が応答していること」を厳密に確認し、デプロイ失敗や不具合を検知する。
+name: Gate 1 Check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# push 時は各コミットごとに独立して実行（deploy-verify.ymlと同様の戦略）
+# PR時は最新のPR更新のみを実行（古いrunはキャンセル）
+concurrency:
+  group: gate1-${{ github.ref }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  diff-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write  # PR にコメントするために必要
+    outputs:
+      touch_api: ${{ steps.diff-check.outputs.touch_api }}
+      touch_auth: ${{ steps.diff-check.outputs.touch_auth }}
+      touch_db: ${{ steps.diff-check.outputs.touch_db }}
+      touch_deploy: ${{ steps.diff-check.outputs.touch_deploy }}
+      touch_env: ${{ steps.diff-check.outputs.touch_env }}
+      touch_health: ${{ steps.diff-check.outputs.touch_health }}
+      touch_routing: ${{ steps.diff-check.outputs.touch_routing }}
+      touch_workflow: ${{ steps.diff-check.outputs.touch_workflow }}
+      sensitive: ${{ steps.diff-check.outputs.sensitive }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # 前回のコミットも取得
+      
+      - name: Run diff-check
+        id: diff-check
+        run: |
+          bash scripts/diff-check.sh
+        continue-on-error: true
+      
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sensitive = '${{ steps.diff-check.outputs.sensitive }}';
+            const touchAuth = '${{ steps.diff-check.outputs.touch_auth }}';
+            const touchDeploy = '${{ steps.diff-check.outputs.touch_deploy }}';
+            const touchEnv = '${{ steps.diff-check.outputs.touch_env }}';
+            const touchDb = '${{ steps.diff-check.outputs.touch_db }}';
+            const touchHealth = '${{ steps.diff-check.outputs.touch_health }}';
+            const touchRouting = '${{ steps.diff-check.outputs.touch_routing }}';
+            const touchWorkflow = '${{ steps.diff-check.outputs.touch_workflow }}';
+            
+            let comment = '## 🔍 Gate 1: diff-check結果\n\n';
+            
+            if (sensitive === 'true') {
+              comment += '⚠️ **危険な変更が検知されました**\n\n';
+              comment += '以下の必須アクションを実行してください：\n\n';
+              
+              if (touchAuth === 'true') {
+                comment += '- [ ] **認証関連**: ログイン機能のテストを実施\n';
+              }
+              if (touchDeploy === 'true') {
+                comment += '- [ ] **Deploy関連**: Deploy後ヘルス照合を実施\n';
+              }
+              if (touchEnv === 'true') {
+                comment += '- [ ] **環境変数関連**: 環境変数の設定確認を実施\n';
+              }
+              if (touchDb === 'true') {
+                comment += '- [ ] **データベース関連**: マイグレーション実行確認を実施\n';
+              }
+              if (touchHealth === 'true') {
+                comment += '- [ ] **ヘルスチェック関連**: Deploy後ヘルス照合を実施\n';
+              }
+              if (touchRouting === 'true') {
+                comment += '- [ ] **Routing/Redirect/Proxy関連**: リダイレクトのテストを実施\n';
+              }
+              if (touchWorkflow === 'true') {
+                comment += '- [ ] **ワークフロー関連**: デプロイ・CIパイプラインの動作確認を実施\n';
+              }
+            } else {
+              comment += '✅ **危険な変更は検知されませんでした**\n';
+            }
+            if (touchWorkflow === 'true') {
+              comment += '\nℹ️ `.github/workflows/` に変更があります。マージ後のデプロイ・Gate 1 動作に注意してください。\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      # PR時のみ失敗させる。push（mainへのマージ後など）ではデプロイをブロックしない
+      - name: Gate 1 enforcement
+        if: github.event_name == 'pull_request' && steps.diff-check.outputs.sensitive == 'true'
+        run: |
+          echo "❌ Gate 1: 危険な変更が検知されたため失敗させます"
+          exit 1
+
+  quality:
+    name: Lint / Type check / Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
+      - name: Lint (with auto-fix attempt)
+        run: |
+          # 自動修正可能なエラーを修正
+          pnpm lint --fix || true
+          # 修正後、エラーのみをチェック（警告は無視）
+          pnpm lint --max-warnings 9999 || {
+            echo "⚠️ Lint errors detected. Please fix them before merging."
+            exit 1
+          }
+      - name: Type check
+        run: pnpm check
+      - name: Test
+        run: pnpm test
+
+  health-check:
+    runs-on: ubuntu-latest
+    needs: [diff-check]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && (needs.diff-check.outputs.touch_api == 'true' || needs.diff-check.outputs.touch_db == 'true' || needs.diff-check.outputs.touch_deploy == 'true' || needs.diff-check.outputs.touch_env == 'true' || needs.diff-check.outputs.touch_health == 'true' || needs.diff-check.outputs.touch_routing == 'true')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Wait for deployment
+        run: sleep 420  # 7分: Railway のデプロイ完了を待ってから照合（サイト不具合検知のため）
+
+      - name: Check deployed commit SHA
+        run: |
+          EXPECTED_SHA="${{ github.sha }}"
+          ACTUAL_SHA="unknown"
+          echo "サイト不具合検知: 本番が正常かつ期待コミットまたは最新mainであることを確認します"
+          git fetch origin main --depth=1
+          LATEST_MAIN=$(git rev-parse origin/main)
+          echo "Expected (this push): $EXPECTED_SHA, Latest main: $LATEST_MAIN"
+          for i in $(seq 1 30); do
+            echo "Health check attempt ${i}/30..."
+            RESPONSE=$(curl -s https://doin-challenge.com/api/health || true)
+            if [ -n "${RESPONSE}" ]; then
+              ACTUAL_SHA=$(echo "${RESPONSE}" | jq -r '.commitSha // .gitSha // "unknown"' 2>/dev/null || echo "unknown")
+              OK=$(echo "${RESPONSE}" | jq -r '.ok // false' 2>/dev/null || echo "false")
+              if [ "$OK" = "true" ] && ([ "$EXPECTED_SHA" = "$ACTUAL_SHA" ] || [ "$ACTUAL_SHA" = "$LATEST_MAIN" ]); then
+                echo "✅ 本番は正常に応答しています (commit: $ACTUAL_SHA)"
+                exit 0
+              fi
+            fi
+            sleep 15
+          done
+          echo "❌ 本番が期待コミットまたは最新mainで応答しませんでした（不具合の可能性）"
+          echo "Expected: $EXPECTED_SHA or $LATEST_MAIN"
+          echo "Actual: $ACTUAL_SHA"
+          exit 1

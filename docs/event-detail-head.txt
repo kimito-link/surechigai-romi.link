@@ -1,0 +1,279 @@
+app/event/[id].tsx の先頭部分（import〜state宣言〜tRPC宣言〜handler）です。
+これを基に、具体的な移動リストをお願いします。
+
+---
+
+## 1-200行: import文とローカルコンポーネント定義
+
+```tsx
+import { Image } from "expo-image";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState, useRef, useMemo } from "react";
+import { ScreenContainer } from "@/components/organisms/screen-container";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/hooks/use-auth";
+import { useColors } from "@/hooks/use-colors";
+import { lookupTwitterUser, getErrorMessage } from "@/lib/api";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { LinearGradient } from "expo-linear-gradient";
+import { Countdown } from "@/components/atoms/countdown";
+import { AppHeader } from "@/components/organisms/app-header";
+import { shareToTwitter, shareParticipation } from "@/lib/share";
+import { SharePromptModal } from "@/components/molecules/share-prompt-modal";
+import { ReminderButton } from "@/components/molecules/reminder-button";
+import { OptimizedAvatar } from "@/components/molecules/optimized-image";
+import { Skeleton } from "@/components/atoms/skeleton-loader";
+import { EventDetailSkeleton } from "@/components/organisms/event-detail-skeleton";
+import { JapanHeatmap } from "@/components/organisms/japan-heatmap";
+import { JapanBlockMap } from "@/components/organisms/japan-block-map";
+import { JapanDeformedMap } from "@/components/organisms/japan-deformed-map";
+import { PrefectureParticipantsModal } from "@/components/molecules/prefecture-participants-modal";
+import { RegionParticipantsModal } from "@/components/molecules/region-participants-modal";
+import { GrowthTrajectoryChart } from "@/components/organisms/growth-trajectory-chart";
+import { ParticipantRanking, TopThreeRanking } from "@/components/organisms/participant-ranking";
+import { TicketTransferSection } from "@/components/organisms/ticket-transfer-section";
+import { CelebrationAnimation } from "@/components/molecules/celebration-animation";
+import { TalkingCharacter, ACHIEVEMENT_MESSAGES } from "@/components/molecules/talking-character";
+import { HostProfileModal } from "@/components/organisms/host-profile-modal";
+import { FanProfileModal } from "@/components/organisms/fan-profile-modal";
+import { TwitterUserCard } from "@/components/molecules/twitter-user-card";
+import { useFavorites } from "@/hooks/use-favorites";
+import { getChallengeColor } from "@/lib/challenge-colors";
+
+const { width: screenWidth } = Dimensions.get("window");
+
+// 目標タイプの表示名とアイコン
+const goalTypeConfig: Record<string, { label: string; icon: string; unit: string }> = {
+  attendance: { label: "動員", icon: "people", unit: "人" },
+  followers: { label: "フォロワー", icon: "person-add", unit: "人" },
+  viewers: { label: "同時視聴", icon: "visibility", unit: "人" },
+  points: { label: "ポイント", icon: "star", unit: "pt" },
+  custom: { label: "カスタム", icon: "flag", unit: "" },
+};
+
+// 地域グループ
+const regionGroups = [
+  { name: "北海道・東北", prefectures: ["北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県"] },
+  { name: "関東", prefectures: ["茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県"] },
+  { name: "中部", prefectures: ["新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県"] },
+  { name: "近畿", prefectures: ["三重県", "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県"] },
+  { name: "中国・四国", prefectures: ["鳥取県", "島根県", "岡山県", "広島県", "山口県", "徳島県", "香川県", "愛媛県", "高知県"] },
+  { name: "九州・沖縄", prefectures: ["福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"] },
+];
+
+// 都道府県リスト
+const prefectures = [
+  "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
+  "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
+  "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県",
+  "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県",
+  "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県",
+  "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
+  "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
+];
+
+type Participation = {
+  id: number;
+  userId: number | null;
+  twitterId: string | null;
+  displayName: string;
+  username: string | null;
+  profileImage: string | null;
+  message: string | null;
+  companionCount: number;
+  contribution: number;
+  prefecture: string | null;
+  isAnonymous: boolean;
+  createdAt: Date;
+  followersCount?: number | null;
+  gender?: "male" | "female" | "unspecified" | null;
+};
+
+// ローカルコンポーネント定義（85-560行）
+// - ProgressGrid (85-112行)
+// - RegionMap (114-164行)
+// - ParticipantsList (166-240行)
+// - ContributionRanking (242-363行)
+// - MessageCard (365-560行)
+```
+
+---
+
+## 562-750行: メインコンポーネント、state宣言、tRPC宣言
+
+```tsx
+export default function ChallengeDetailScreen() {
+  const colors = useColors();
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { user, login } = useAuth();
+  
+  // === STATE宣言（約30個） ===
+  
+  // フォーム入力系
+  const [message, setMessage] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [companionCount, setCompanionCount] = useState(0);
+  const [prefecture, setPrefecture] = useState("");
+  const [gender, setGender] = useState<"male" | "female" | "">("")
+  
+  // UI制御系
+  const [showForm, setShowForm] = useState(false);
+  const [showPrefectureList, setShowPrefectureList] = useState(false);
+  const [allowVideoUse, setAllowVideoUse] = useState(true);
+  const [selectedPrefectureFilter, setSelectedPrefectureFilter] = useState("all");
+  const [showPrefectureFilterList, setShowPrefectureFilterList] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [justSubmitted, setJustSubmitted] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingParticipationId, setEditingParticipationId] = useState<number | null>(null);
+  
+  // refs
+  const scrollViewRef = useRef<ScrollView>(null);
+  const messagesRef = useRef<View>(null);
+  
+  // 友人追加用のstate
+  type Companion = {
+    id: string;
+    displayName: string;
+    twitterUsername: string;
+    twitterId?: string;
+    profileImage?: string;
+  };
+  const [companions, setCompanions] = useState<Companion[]>([]);
+  const [showAddCompanionForm, setShowAddCompanionForm] = useState(false);
+  const [newCompanionName, setNewCompanionName] = useState("");
+  const [newCompanionTwitter, setNewCompanionTwitter] = useState("");
+  const [isLookingUpTwitter, setIsLookingUpTwitter] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [lookedUpProfile, setLookedUpProfile] = useState<{
+    id: string;
+    name: string;
+    username: string;
+    profileImage: string;
+  } | null>(null);
+
+  // モーダル制御系
+  const [selectedPrefectureForModal, setSelectedPrefectureForModal] = useState<string | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<{ name: string; prefectures: string[] } | null>(null);
+  const [showHostProfileModal, setShowHostProfileModal] = useState(false);
+  const [selectedFan, setSelectedFan] = useState<{
+    twitterId: string;
+    username: string;
+    displayName: string;
+    profileImage?: string;
+  } | null>(null);
+  const [showDeleteParticipationModal, setShowDeleteParticipationModal] = useState(false);
+  const [deleteTargetParticipation, setDeleteTargetParticipation] = useState<Participation | null>(null);
+  const [showSharePrompt, setShowSharePrompt] = useState(false);
+  const [lastParticipation, setLastParticipation] = useState<{
+    name: string;
+    username?: string;
+    image?: string;
+    message?: string;
+    contribution: number;
+  } | null>(null);
+  const [isGeneratingOgp, setIsGeneratingOgp] = useState(false);
+
+  const challengeId = parseInt(id || "0", 10);
+  
+  // === HOOKS ===
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const isChallengeFavorite = isFavorite(challengeId);
+  
+  // === tRPC QUERY ===
+  const { data: challenge, isLoading: challengeLoading } = trpc.events.getById.useQuery({ id: challengeId });
+  const { data: participations, isLoading: participationsLoading, refetch } = trpc.participations.listByEvent.useQuery({ eventId: challengeId });
+  const { data: challengeCompanions } = trpc.companions.forChallenge.useQuery({ challengeId }, { enabled: challengeId > 0 });
+  const hostUserId = challenge?.hostUserId;
+  const { data: isFollowing } = trpc.follows.isFollowing.useQuery({ followeeId: hostUserId! }, { enabled: !!user && !!hostUserId && hostUserId !== user.id });
+  const { data: followerIds } = trpc.follows.followerIds.useQuery({ userId: hostUserId! }, { enabled: !!hostUserId });
+  
+  // === tRPC MUTATION ===
+  const followMutation = trpc.follows.follow.useMutation({ onSuccess: () => Alert.alert("フォローしました", "新着チャレンジの通知を受け取れます") });
+  const unfollowMutation = trpc.follows.unfollow.useMutation();
+  const generateOgpMutation = trpc.ogp.generateChallengeOgp.useMutation();
+  const deleteParticipationMutation = trpc.participations.delete.useMutation({
+    onSuccess: async () => {
+      Alert.alert("参加取消", "参加表明を取り消しました");
+      setShowDeleteParticipationModal(false);
+      setDeleteTargetParticipation(null);
+      await refetch();
+    },
+    onError: (error) => Alert.alert("エラー", error.message || "削除に失敗しました"),
+  });
+  const createParticipationMutation = trpc.participations.create.useMutation({ /* ... */ });
+  const createAnonymousMutation = trpc.participations.createAnonymous.useMutation({ /* ... */ });
+  const updateParticipationMutation = trpc.participations.update.useMutation({ /* ... */ });
+  const sendCheerMutation = trpc.cheers.send.useMutation({ /* ... */ });
+  
+  // === useMemo ===
+  const myParticipation = useMemo(() => {
+    if (!user || !participations) return null;
+    const twitterId = user.openId?.startsWith("twitter:") ? user.openId.replace("twitter:", "") : user.openId;
+    return participations.find(p => p.twitterId === twitterId) || null;
+  }, [user, participations]);
+  
+  const momentum = useMemo(() => {
+    if (!participations) return { recent24h: 0, recent1h: 0, isHot: false };
+    const now = new Date();
+    const recent24h = participations.filter(p => (now.getTime() - new Date(p.createdAt).getTime()) < 24 * 60 * 60 * 1000).length;
+    const recent1h = participations.filter(p => (now.getTime() - new Date(p.createdAt).getTime()) < 60 * 60 * 1000).length;
+    return { recent24h, recent1h, isHot: recent24h >= 5 || recent1h >= 2 };
+  }, [participations]);
+  
+  // === HANDLER関数 ===
+  const handleFollowToggle = () => { /* ... */ };
+  const handleSendCheer = (participationId: number, toUserId?: number) => { /* ... */ };
+  const lookupTwitterProfile = async (input: string) => { /* ... */ };
+  const handleAddCompanion = () => { /* ... */ };
+  const handleSubmit = () => { /* ... */ };
+  const handleConfirmSubmit = () => { /* ... */ };
+  const handleShare = async () => { /* ... */ };
+  const handleTwitterShare = async () => { /* ... */ };
+  const handleShareWithOgp = async () => { /* ... */ };
+  // ... その他多数
+```
+
+---
+
+## 移動対象のまとめ
+
+### ローカルコンポーネント（85-560行）
+- `ProgressGrid` → features/events/ui/components/ProgressGrid.tsx
+- `RegionMap` → features/events/ui/components/RegionMap.tsx
+- `ParticipantsList` → features/events/ui/components/ParticipantsList.tsx
+- `ContributionRanking` → features/events/ui/components/ContributionRanking.tsx
+- `MessageCard` → features/events/ui/components/MessageCard.tsx
+
+### State（約30個）
+- フォーム入力系: message, displayName, companionCount, prefecture, gender
+- UI制御系: showForm, showPrefectureList, showConfirmation, justSubmitted, isEditMode, etc.
+- モーダル制御系: selectedPrefectureForModal, selectedRegion, showHostProfileModal, selectedFan, etc.
+- 友人追加系: companions, showAddCompanionForm, newCompanionName, newCompanionTwitter, etc.
+
+### tRPC Query
+- `trpc.events.getById.useQuery`
+- `trpc.participations.listByEvent.useQuery`
+- `trpc.companions.forChallenge.useQuery`
+- `trpc.follows.isFollowing.useQuery`
+- `trpc.follows.followerIds.useQuery`
+
+### tRPC Mutation
+- `trpc.follows.follow.useMutation`
+- `trpc.follows.unfollow.useMutation`
+- `trpc.ogp.generateChallengeOgp.useMutation`
+- `trpc.participations.delete.useMutation`
+- `trpc.participations.create.useMutation`
+- `trpc.participations.createAnonymous.useMutation`
+- `trpc.participations.update.useMutation`
+- `trpc.cheers.send.useMutation`
+
+### 定数
+- `goalTypeConfig` → features/events/constants.ts
+- `regionGroups` → features/events/constants.ts
+- `prefectures` → features/events/constants.ts
+
+### 型定義
+- `Participation` → features/events/types.ts
+- `Companion` → features/events/types.ts

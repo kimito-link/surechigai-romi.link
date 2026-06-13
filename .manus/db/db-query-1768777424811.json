@@ -1,0 +1,66 @@
+{
+  "query": "SELECT id, name, slug, sortOrder, isActive FROM categories ORDER BY sortOrder;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT id, name, slug, sortOrder, isActive FROM categories ORDER BY sortOrder;",
+  "rows": [
+    {
+      "id": "30009",
+      "name": "ライブ・コンサート",
+      "slug": "live-concert",
+      "sortOrder": "1",
+      "isActive": "1"
+    },
+    {
+      "id": "30010",
+      "name": "配信イベント",
+      "slug": "streaming",
+      "sortOrder": "2",
+      "isActive": "1"
+    },
+    {
+      "id": "30011",
+      "name": "ファンミーティング",
+      "slug": "fan-meeting",
+      "sortOrder": "3",
+      "isActive": "1"
+    },
+    {
+      "id": "30012",
+      "name": "リリースイベント",
+      "slug": "release-event",
+      "sortOrder": "4",
+      "isActive": "1"
+    },
+    {
+      "id": "30013",
+      "name": "生誕祭",
+      "slug": "birthday",
+      "sortOrder": "5",
+      "isActive": "1"
+    },
+    {
+      "id": "30014",
+      "name": "周年イベント",
+      "slug": "anniversary",
+      "sortOrder": "6",
+      "isActive": "1"
+    },
+    {
+      "id": "30015",
+      "name": "フェス・対バン",
+      "slug": "festival",
+      "sortOrder": "7",
+      "isActive": "1"
+    },
+    {
+      "id": "30016",
+      "name": "その他",
+      "slug": "other",
+      "sortOrder": "8",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tslug\tsortOrder\tisActive\n30009\tライブ・コンサート\tlive-concert\t1\t1\n30010\t配信イベント\tstreaming\t2\t1\n30011\tファンミーティング\tfan-meeting\t3\t1\n30012\tリリースイベント\trelease-event\t4\t1\n30013\t生誕祭\tbirthday\t5\t1\n30014\t周年イベント\tanniversary\t6\t1\n30015\tフェス・対バン\tfestival\t7\t1\n30016\tその他\tother\t8\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1618
+}

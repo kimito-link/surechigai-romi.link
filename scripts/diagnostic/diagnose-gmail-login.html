@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmailログイン診断ツール</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1a73e8;
+            margin-top: 0;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .error {
+            color: #d93025;
+            background: #fce8e6;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #137333;
+            background: #e6f4ea;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .warning {
+            color: #ea8600;
+            background: #fef7e0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1557b0;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #1a73e8;
+            background: white;
+        }
+        .test-result.error {
+            border-left-color: #d93025;
+        }
+        .test-result.success {
+            border-left-color: #137333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Gmailログイン根本診断ツール</h1>
+        
+        <div class="section">
+            <h2>1. ブラウザ環境チェック</h2>
+            <div id="browser-info"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. ネットワーク接続テスト</h2>
+            <button onclick="testNetwork()">ネットワークテスト実行</button>
+            <div id="network-results"></div>
+        </div>
+
+        <div class="section">
+            <h2>3. Googleサービス接続テスト</h2>
+            <button onclick="testGoogleServices()">Googleサービステスト実行</button>
+            <div id="google-results"></div>
+        </div>
+
+        <div class="section">
+            <h2>4. Cookie & ストレージチェック</h2>
+            <button onclick="checkStorage()">ストレージチェック実行</button>
+            <div id="storage-results"></div>
+        </div>
+
+        <div class="section">
+            <h2>5. CORS & セキュリティポリシーチェック</h2>
+            <button onclick="checkSecurity()">セキュリティチェック実行</button>
+            <div id="security-results"></div>
+        </div>
+
+        <div class="section">
+            <h2>6. JavaScript実行エラーチェック</h2>
+            <div id="js-errors"></div>
+        </div>
+
+        <div class="section">
+            <h2>7. 根本的解決策の適用</h2>
+            <button onclick="applyFixes()">自動修正を適用</button>
+            <div id="fix-results"></div>
+        </div>
+
+        <div class="section">
+            <h2>8. 診断レポート</h2>
+            <button onclick="generateReport()">レポート生成</button>
+            <div id="report"></div>
+        </div>
+    </div>
+
+    <script>
+        // エラー収集
+        const errors = [];
+        const originalError = console.error;
+        console.error = function(...args) {
+            errors.push({
+                type: 'console.error',
+                message: args.join(' '),
+                timestamp: new Date().toISOString()
+            });
+            originalError.apply(console, args);
+        };
+
+        window.addEventListener('error', (e) => {
+            errors.push({
+                type: 'window.error',
+                message: e.message,
+                filename: e.filename,
+                lineno: e.lineno,
+                colno: e.colno,
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            errors.push({
+                type: 'unhandledrejection',
+                message: e.reason?.message || String(e.reason),
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        // 1. ブラウザ環境チェック
+        function checkBrowser() {
+            const info = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                doNotTrack: navigator.doNotTrack,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                deviceMemory: navigator.deviceMemory || 'unknown',
+                connection: navigator.connection ? {
+                    effectiveType: navigator.connection.effectiveType,
+                    downlink: navigator.connection.downlink,
+                    rtt: navigator.connection.rtt
+                } : 'unknown'
+            };
+
+            let html = '<pre>' + JSON.stringify(info, null, 2) + '</pre>';
+            
+            // 問題の検出
+            if (!navigator.cookieEnabled) {
+                html += '<div class="error">❌ Cookieが無効です。これが原因の可能性が高いです。</div>';
+            }
+            if (!navigator.onLine) {
+                html += '<div class="error">❌ オフライン状態です。</div>';
+            }
+
+            document.getElementById('browser-info').innerHTML = html;
+        }
+
+        // 2. ネットワーク接続テスト
+        async function testNetwork() {
+            const results = document.getElementById('network-results');
+            results.innerHTML = '<div class="warning">テスト実行中...</div>';
+
+            const tests = [
+                { name: 'DNS解決テスト', url: 'https://8.8.8.8' },
+                { name: 'Google DNS', url: 'https://dns.google' },
+                { name: 'Google検索', url: 'https://www.google.com' },
+                { name: 'accounts.google.com', url: 'https://accounts.google.com' }
+            ];
+
+            let html = '';
+            for (const test of tests) {
+                try {
+                    const startTime = performance.now();
+                    const response = await fetch(test.url, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'no-cache'
+                    });
+                    const endTime = performance.now();
+                    const latency = Math.round(endTime - startTime);
+                    
+                    html += `<div class="test-result success">
+                        ✅ ${test.name}: 接続成功 (${latency}ms)
+                    </div>`;
+                } catch (e) {
+                    html += `<div class="test-result error">
+                        ❌ ${test.name}: 失敗 - ${e.message}
+                    </div>`;
+                }
+            }
+
+            results.innerHTML = html;
+        }
+
+        // 3. Googleサービス接続テスト
+        async function testGoogleServices() {
+            const results = document.getElementById('google-results');
+            results.innerHTML = '<div class="warning">テスト実行中...</div>';
+
+            const services = [
+                'https://accounts.google.com',
+                'https://www.google.com',
+                'https://mail.google.com',
+                'https://apis.google.com'
+            ];
+
+            let html = '';
+            for (const url of services) {
+                try {
+                    // CORS回避のため、画像読み込みでテスト
+                    const img = new Image();
+                    const promise = new Promise((resolve, reject) => {
+                        img.onload = () => resolve(true);
+                        img.onerror = () => reject(new Error('Failed to load'));
+                        img.src = url + '/favicon.ico?' + Date.now();
+                        setTimeout(() => reject(new Error('Timeout')), 5000);
+                    });
+
+                    await promise;
+                    html += `<div class="test-result success">✅ ${url}: アクセス可能</div>`;
+                } catch (e) {
+                    html += `<div class="test-result error">❌ ${url}: ${e.message}</div>`;
+                }
+            }
+
+            results.innerHTML = html;
+        }
+
+        // 4. Cookie & ストレージチェック
+        function checkStorage() {
+            const results = document.getElementById('storage-results');
+            let html = '';
+
+            // Cookieチェック
+            try {
+                document.cookie = 'test=1; SameSite=None; Secure';
+                const hasCookie = document.cookie.includes('test=1');
+                if (hasCookie) {
+                    html += '<div class="test-result success">✅ Cookie書き込み: 正常</div>';
+                    document.cookie = 'test=1; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                } else {
+                    html += '<div class="test-result error">❌ Cookie書き込み: 失敗（これが原因の可能性が高い）</div>';
+                }
+            } catch (e) {
+                html += `<div class="test-result error">❌ Cookieエラー: ${e.message}</div>`;
+            }
+
+            // LocalStorageチェック
+            try {
+                localStorage.setItem('test', '1');
+                const value = localStorage.getItem('test');
+                if (value === '1') {
+                    html += '<div class="test-result success">✅ LocalStorage: 正常</div>';
+                    localStorage.removeItem('test');
+                } else {
+                    html += '<div class="test-result error">❌ LocalStorage: 失敗</div>';
+                }
+            } catch (e) {
+                html += `<div class="test-result error">❌ LocalStorageエラー: ${e.message}</div>`;
+            }
+
+            // SessionStorageチェック
+            try {
+                sessionStorage.setItem('test', '1');
+                const value = sessionStorage.getItem('test');
+                if (value === '1') {
+                    html += '<div class="test-result success">✅ SessionStorage: 正常</div>';
+                    sessionStorage.removeItem('test');
+                } else {
+                    html += '<div class="test-result error">❌ SessionStorage: 失敗</div>';
+                }
+            } catch (e) {
+                html += `<div class="test-result error">❌ SessionStorageエラー: ${e.message}</div>`;
+            }
+
+            // Google関連のCookie確認
+            const googleCookies = document.cookie.split(';').filter(c => 
+                c.includes('google') || c.includes('accounts')
+            );
+            if (googleCookies.length > 0) {
+                html += `<div class="test-result success">✅ Google関連Cookie: ${googleCookies.length}個検出</div>`;
+            } else {
+                html += '<div class="test-result warning">⚠️ Google関連Cookie: なし（初回アクセスの可能性）</div>';
+            }
+
+            results.innerHTML = html;
+        }
+
+        // 5. CORS & セキュリティポリシーチェック
+        async function checkSecurity() {
+            const results = document.getElementById('security-results');
+            let html = '';
+
+            // Content Security Policyチェック
+            const metaCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            if (metaCSP) {
+                html += `<div class="test-result warning">⚠️ CSP検出: ${metaCSP.content}</div>`;
+            }
+
+            // Referrer Policyチェック
+            const metaReferrer = document.querySelector('meta[name="referrer"]');
+            if (metaReferrer) {
+                html += `<div class="test-result">ℹ️ Referrer Policy: ${metaReferrer.content}</div>`;
+            }
+
+            // HTTPSチェック
+            if (location.protocol === 'https:') {
+                html += '<div class="test-result success">✅ HTTPS: 使用中</div>';
+            } else {
+                html += '<div class="test-result error">❌ HTTPS: 未使用（これが原因の可能性）</div>';
+            }
+
+            // Mixed Contentチェック
+            const scripts = Array.from(document.querySelectorAll('script[src]'));
+            const insecureScripts = scripts.filter(s => s.src.startsWith('http://'));
+            if (insecureScripts.length > 0) {
+                html += `<div class="test-result error">❌ Mixed Content検出: ${insecureScripts.length}個のHTTPスクリプト</div>`;
+            }
+
+            results.innerHTML = html || '<div class="test-result">ℹ️ 特に問題は検出されませんでした</div>';
+        }
+
+        // 6. JavaScript実行エラーチェック
+        function checkJSErrors() {
+            const results = document.getElementById('js-errors');
+            if (errors.length === 0) {
+                results.innerHTML = '<div class="test-result success">✅ JavaScriptエラー: 検出されませんでした</div>';
+            } else {
+                let html = `<div class="test-result error">❌ JavaScriptエラー: ${errors.length}個検出</div>`;
+                errors.forEach(err => {
+                    html += `<pre style="font-size: 11px; margin: 5px 0;">${JSON.stringify(err, null, 2)}</pre>`;
+                });
+                results.innerHTML = html;
+            }
+        }
+
+        // 7. 根本的解決策の適用
+        async function applyFixes() {
+            const results = document.getElementById('fix-results');
+            results.innerHTML = '<div class="warning">修正適用中...</div>';
+
+            let fixes = [];
+
+            // Fix 1: Cookie設定の修正
+            try {
+                // SameSite=None; Secure を強制
+                const testCookie = `test_fix=${Date.now()}; SameSite=None; Secure; path=/`;
+                document.cookie = testCookie;
+                fixes.push('✅ Cookie設定の修正を試行');
+            } catch (e) {
+                fixes.push(`❌ Cookie設定の修正失敗: ${e.message}`);
+            }
+
+            // Fix 2: ストレージのクリア
+            try {
+                // Google関連のストレージをクリア
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.includes('google') || key.includes('accounts')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+                fixes.push('✅ Google関連ストレージをクリア');
+            } catch (e) {
+                fixes.push(`❌ ストレージクリア失敗: ${e.message}`);
+            }
+
+            // Fix 3: Service Workerの登録解除
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                    }
+                    fixes.push(`✅ Service Worker解除: ${registrations.length}個`);
+                }
+            } catch (e) {
+                fixes.push(`❌ Service Worker解除失敗: ${e.message}`);
+            }
+
+            // Fix 4: キャッシュのクリア
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    fixes.push(`✅ キャッシュクリア: ${cacheNames.length}個`);
+                }
+            } catch (e) {
+                fixes.push(`❌ キャッシュクリア失敗: ${e.message}`);
+            }
+
+            let html = '<h3>適用された修正:</h3>';
+            fixes.forEach(fix => {
+                html += `<div class="test-result">${fix}</div>`;
+            });
+
+            html += '<div class="success" style="margin-top: 20px;">✅ 修正を適用しました。ページを再読み込みして、accounts.google.comに再度アクセスしてください。</div>';
+
+            results.innerHTML = html;
+        }
+
+        // 8. 診断レポート生成
+        function generateReport() {
+            const report = document.getElementById('report');
+            const reportData = {
+                timestamp: new Date().toISOString(),
+                browser: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    cookieEnabled: navigator.cookieEnabled,
+                    onLine: navigator.onLine
+                },
+                errors: errors,
+                cookies: document.cookie,
+                localStorage: Object.keys(localStorage).length,
+                sessionStorage: Object.keys(sessionStorage).length
+            };
+
+            report.innerHTML = `
+                <h3>診断レポート</h3>
+                <pre>${JSON.stringify(reportData, null, 2)}</pre>
+                <button onclick="downloadReport()">レポートをダウンロード</button>
+            `;
+        }
+
+        function downloadReport() {
+            const reportData = {
+                timestamp: new Date().toISOString(),
+                browser: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    cookieEnabled: navigator.cookieEnabled,
+                    onLine: navigator.onLine
+                },
+                errors: errors,
+                cookies: document.cookie,
+                localStorage: Object.keys(localStorage).length,
+                sessionStorage: Object.keys(sessionStorage).length
+            };
+
+            const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gmail-diagnosis-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ページ読み込み時に自動実行
+        window.addEventListener('load', () => {
+            checkBrowser();
+            checkJSErrors();
+        });
+    </script>
+</body>
+</html>

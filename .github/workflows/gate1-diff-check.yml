@@ -1,0 +1,27 @@
+# Gate 1: PR で危険変更・禁止ワードを検知（強制）
+# Branch protection で "Gate1 Diff Check / diff-check" を必須にするとマージ不可になる
+name: Gate1 Diff Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  diff-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Diff Check (Gate1)
+        env:
+          DIFF_BASE: origin/main
+          DIFF_HEAD: HEAD
+        run: node scripts/diff-check.mjs

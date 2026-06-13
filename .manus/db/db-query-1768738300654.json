@@ -1,0 +1,98 @@
+{
+  "query": "SELECT * FROM categories LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT * FROM categories LIMIT 10;",
+  "rows": [
+    {
+      "id": "30009",
+      "name": "ライブ・コンサート",
+      "slug": "live-concert",
+      "icon": "🎤",
+      "color": "#EC4899",
+      "description": "ライブやコンサートイベント",
+      "sortOrder": "1",
+      "isActive": "1",
+      "createdAt": "2026-01-17 10:38:09"
+    },
+    {
+      "id": "30010",
+      "name": "配信イベント",
+      "slug": "streaming",
+      "icon": "📺",
+      "color": "#8B5CF6",
+      "description": "YouTube、ミクチャなどの配信イベント",
+      "sortOrder": "2",
+      "isActive": "1",
+      "createdAt": "2026-01-17 10:38:09"
+    },
+    {
+      "id": "30011",
+      "name": "ファンミーティング",
+      "slug": "fan-meeting",
+      "icon": "🤝",
+      "color": "#F59E0B",
+      "description": "ファンミーティング・握手会など",
+      "sortOrder": "3",
+      "isActive": "1",
+      "createdAt": "2026-01-17 10:38:09"
+    },
+    {
+      "id": "30012",
+      "name": "リリースイベント",
+      "slug": "release-event",
+      "icon": "💿",
+      "color": "#10B981",
+      "description": "CD・DVD・グッズのリリースイベント",
+      "sortOrder": "4",
+      "isActive": "1",
+      "createdAt": "2026-01-17 10:38:09"
+    },
+    {
+      "id": "30013",
+      "name": "生誕祭",
+      "slug": "birthday",
+      "icon": "🎂",
+      "color": "#EF4444",
+      "description": "誕生日イベント・生誕祭",
+      "sortOrder": "5",
+      "isActive": "1",
+      "createdAt": "2026-01-17 10:38:09"
+    },
+    {
+      "id": "30014",
+      "name": "周年イベント",
+      "slug": "anniversary",
+      "icon": "🎉",
+      "color": "#3B82F6",
+      "description": "デビュー周年・活動周年イベント",
+      "sortOrder": "6",
+      "isActive": "1",
+      "createdAt": "2026-01-17 10:38:09"
+    },
+    {
+      "id": "30015",
+      "name": "フェス・対バン",
+      "slug": "festival",
+      "icon": "🎪",
+      "color": "#F97316",
+      "description": "フェス・対バンライブ",
+      "sortOrder": "7",
+      "isActive": "1",
+      "createdAt": "2026-01-17 10:38:09"
+    },
+    {
+      "id": "30016",
+      "name": "その他",
+      "slug": "other",
+      "icon": "📌",
+      "color": "#6B7280",
+      "description": "その他のイベント",
+      "sortOrder": "8",
+      "isActive": "1",
+      "createdAt": "2026-01-17 10:38:09"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tslug\ticon\tcolor\tdescription\tsortOrder\tisActive\tcreatedAt\n30009\tライブ・コンサート\tlive-concert\t🎤\t#EC4899\tライブやコンサートイベント\t1\t1\t2026-01-17 10:38:09\n30010\t配信イベント\tstreaming\t📺\t#8B5CF6\tYouTube、ミクチャなどの配信イベント\t2\t1\t2026-01-17 10:38:09\n30011\tファンミーティング\tfan-meeting\t🤝\t#F59E0B\tファンミーティング・握手会など\t3\t1\t2026-01-17 10:38:09\n30012\tリリースイベント\trelease-event\t💿\t#10B981\tCD・DVD・グッズのリリースイベント\t4\t1\t2026-01-17 10:38:09\n30013\t生誕祭\tbirthday\t🎂\t#EF4444\t誕生日イベント・生誕祭\t5\t1\t2026-01-17 10:38:09\n30014\t周年イベント\tanniversary\t🎉\t#3B82F6\tデビュー周年・活動周年イベント\t6\t1\t2026-01-17 10:38:09\n30015\tフェス・対バン\tfestival\t🎪\t#F97316\tフェス・対バンライブ\t7\t1\t2026-01-17 10:38:09\n30016\tその他\tother\t📌\t#6B7280\tその他のイベント\t8\t1\t2026-01-17 10:38:09\n",
+  "stderr": "",
+  "execution_time_ms": 1540
+}

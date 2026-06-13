@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE challenges SET `hostProfileImage` = 'https://pbs.twimg.com/profile_images/1234567890/rinku_normal.jpg' WHERE `hostUsername` = 'kimitolink';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute UPDATE challenges SET `hostProfileImage` = 'https://pbs.twimg.com/profile_images/1234567890/rinku_normal.jpg' WHERE `hostUsername` = 'kimitolink';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1594
+}

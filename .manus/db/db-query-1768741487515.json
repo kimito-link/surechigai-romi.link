@@ -1,0 +1,58 @@
+{
+  "query": "SELECT id, name, slug, isActive FROM categories;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT id, name, slug, isActive FROM categories;",
+  "rows": [
+    {
+      "id": "30009",
+      "name": "ライブ・コンサート",
+      "slug": "live-concert",
+      "isActive": "1"
+    },
+    {
+      "id": "30010",
+      "name": "配信イベント",
+      "slug": "streaming",
+      "isActive": "1"
+    },
+    {
+      "id": "30011",
+      "name": "ファンミーティング",
+      "slug": "fan-meeting",
+      "isActive": "1"
+    },
+    {
+      "id": "30012",
+      "name": "リリースイベント",
+      "slug": "release-event",
+      "isActive": "1"
+    },
+    {
+      "id": "30013",
+      "name": "生誕祭",
+      "slug": "birthday",
+      "isActive": "1"
+    },
+    {
+      "id": "30014",
+      "name": "周年イベント",
+      "slug": "anniversary",
+      "isActive": "1"
+    },
+    {
+      "id": "30015",
+      "name": "フェス・対バン",
+      "slug": "festival",
+      "isActive": "1"
+    },
+    {
+      "id": "30016",
+      "name": "その他",
+      "slug": "other",
+      "isActive": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tslug\tisActive\n30009\tライブ・コンサート\tlive-concert\t1\n30010\t配信イベント\tstreaming\t1\n30011\tファンミーティング\tfan-meeting\t1\n30012\tリリースイベント\trelease-event\t1\n30013\t生誕祭\tbirthday\t1\n30014\t周年イベント\tanniversary\t1\n30015\tフェス・対バン\tfestival\t1\n30016\tその他\tother\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1515
+}

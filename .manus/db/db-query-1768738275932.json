@@ -1,0 +1,208 @@
+{
+  "query": "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'challenges' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'challenges' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "hostUserId",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "hostTwitterId",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "hostName",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "hostUsername",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "hostProfileImage",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "hostFollowersCount",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "0"
+    },
+    {
+      "COLUMN_NAME": "hostDescription",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "title",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "description",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "goalType",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "attendance"
+    },
+    {
+      "COLUMN_NAME": "goalValue",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "100"
+    },
+    {
+      "COLUMN_NAME": "goalUnit",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "人"
+    },
+    {
+      "COLUMN_NAME": "currentValue",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "0"
+    },
+    {
+      "COLUMN_NAME": "eventType",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "solo"
+    },
+    {
+      "COLUMN_NAME": "eventDate",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "venue",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "prefecture",
+      "DATA_TYPE": "varchar",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "ticketPresale",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "ticketDoor",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "ticketSaleStart",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "ticketUrl",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "externalUrl",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "status",
+      "DATA_TYPE": "enum",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "active"
+    },
+    {
+      "COLUMN_NAME": "isPublic",
+      "DATA_TYPE": "tinyint",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "1"
+    },
+    {
+      "COLUMN_NAME": "createdAt",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP"
+    },
+    {
+      "COLUMN_NAME": "updatedAt",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "NO",
+      "COLUMN_DEFAULT": "CURRENT_TIMESTAMP"
+    },
+    {
+      "COLUMN_NAME": "categoryId",
+      "DATA_TYPE": "int",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "aiSummary",
+      "DATA_TYPE": "text",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "intentTags",
+      "DATA_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "regionSummary",
+      "DATA_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "participantSummary",
+      "DATA_TYPE": "json",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    },
+    {
+      "COLUMN_NAME": "aiSummaryUpdatedAt",
+      "DATA_TYPE": "timestamp",
+      "IS_NULLABLE": "YES",
+      "COLUMN_DEFAULT": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\tDATA_TYPE\tIS_NULLABLE\tCOLUMN_DEFAULT\nid\tint\tNO\tNULL\nhostUserId\tint\tYES\tNULL\nhostTwitterId\tvarchar\tYES\tNULL\nhostName\tvarchar\tNO\tNULL\nhostUsername\tvarchar\tYES\tNULL\nhostProfileImage\ttext\tYES\tNULL\nhostFollowersCount\tint\tYES\t0\nhostDescription\ttext\tYES\tNULL\ntitle\tvarchar\tNO\tNULL\ndescription\ttext\tYES\tNULL\ngoalType\tenum\tNO\tattendance\ngoalValue\tint\tNO\t100\ngoalUnit\tvarchar\tNO\t人\ncurrentValue\tint\tNO\t0\neventType\tenum\tNO\tsolo\neventDate\ttimestamp\tNO\tNULL\nvenue\tvarchar\tYES\tNULL\nprefecture\tvarchar\tYES\tNULL\nticketPresale\tint\tYES\tNULL\nticketDoor\tint\tYES\tNULL\nticketSaleStart\ttimestamp\tYES\tNULL\nticketUrl\ttext\tYES\tNULL\nexternalUrl\ttext\tYES\tNULL\nstatus\tenum\tNO\tactive\nisPublic\ttinyint\tNO\t1\ncreatedAt\ttimestamp\tNO\tCURRENT_TIMESTAMP\nupdatedAt\ttimestamp\tNO\tCURRENT_TIMESTAMP\ncategoryId\tint\tYES\tNULL\naiSummary\ttext\tYES\tNULL\nintentTags\tjson\tYES\tNULL\nregionSummary\tjson\tYES\tNULL\nparticipantSummary\tjson\tYES\tNULL\naiSummaryUpdatedAt\ttimestamp\tYES\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1531
+}

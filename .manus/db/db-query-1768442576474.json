@@ -1,0 +1,26 @@
+{
+  "query": "SELECT * FROM oauth_pkce_data LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT * FROM oauth_pkce_data LIMIT 10;",
+  "rows": [
+    {
+      "id": "270001",
+      "state": "010675112d6b4a00df83e9b30e2ddee8",
+      "codeVerifier": "DiIleeBbLCvGFMX4Df_DP-dJwH1EAyOnhL9p-c1ZOPA",
+      "callbackUrl": "https://3000-izigamo4e49zcnjyl5ad9-ba2429fa.sg1.manus.computer/api/twitter/callback",
+      "expiresAt": "2026-01-15 02:02:56",
+      "createdAt": "2026-01-15 01:52:56"
+    },
+    {
+      "id": "270002",
+      "state": "8346d3cd758d676bcfdaacc9a7d6e4c9",
+      "codeVerifier": "lOJYwyNXEIMkg9zduyKZL5DbNyVEL0qMbjkTUNuv8cU",
+      "callbackUrl": "https://3000-izigamo4e49zcnjyl5ad9-ba2429fa.sg1.manus.computer/api/twitter/callback",
+      "expiresAt": "2026-01-15 02:03:22",
+      "createdAt": "2026-01-15 01:53:22"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tstate\tcodeVerifier\tcallbackUrl\texpiresAt\tcreatedAt\n270001\t010675112d6b4a00df83e9b30e2ddee8\tDiIleeBbLCvGFMX4Df_DP-dJwH1EAyOnhL9p-c1ZOPA\thttps://3000-izigamo4e49zcnjyl5ad9-ba2429fa.sg1.manus.computer/api/twitter/callback\t2026-01-15 02:02:56\t2026-01-15 01:52:56\n270002\t8346d3cd758d676bcfdaacc9a7d6e4c9\tlOJYwyNXEIMkg9zduyKZL5DbNyVEL0qMbjkTUNuv8cU\thttps://3000-izigamo4e49zcnjyl5ad9-ba2429fa.sg1.manus.computer/api/twitter/callback\t2026-01-15 02:03:22\t2026-01-15 01:53:22\n",
+  "stderr": "",
+  "execution_time_ms": 1625
+}

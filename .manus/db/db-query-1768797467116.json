@@ -1,0 +1,112 @@
+{
+  "query": "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'challenges' ORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'challenges' ORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id"
+    },
+    {
+      "COLUMN_NAME": "hostUserId"
+    },
+    {
+      "COLUMN_NAME": "hostTwitterId"
+    },
+    {
+      "COLUMN_NAME": "hostName"
+    },
+    {
+      "COLUMN_NAME": "hostUsername"
+    },
+    {
+      "COLUMN_NAME": "hostProfileImage"
+    },
+    {
+      "COLUMN_NAME": "hostFollowersCount"
+    },
+    {
+      "COLUMN_NAME": "hostDescription"
+    },
+    {
+      "COLUMN_NAME": "title"
+    },
+    {
+      "COLUMN_NAME": "description"
+    },
+    {
+      "COLUMN_NAME": "goalType"
+    },
+    {
+      "COLUMN_NAME": "goalValue"
+    },
+    {
+      "COLUMN_NAME": "goalUnit"
+    },
+    {
+      "COLUMN_NAME": "currentValue"
+    },
+    {
+      "COLUMN_NAME": "eventType"
+    },
+    {
+      "COLUMN_NAME": "eventDate"
+    },
+    {
+      "COLUMN_NAME": "venue"
+    },
+    {
+      "COLUMN_NAME": "prefecture"
+    },
+    {
+      "COLUMN_NAME": "ticketPresale"
+    },
+    {
+      "COLUMN_NAME": "ticketDoor"
+    },
+    {
+      "COLUMN_NAME": "ticketSaleStart"
+    },
+    {
+      "COLUMN_NAME": "ticketUrl"
+    },
+    {
+      "COLUMN_NAME": "externalUrl"
+    },
+    {
+      "COLUMN_NAME": "status"
+    },
+    {
+      "COLUMN_NAME": "isPublic"
+    },
+    {
+      "COLUMN_NAME": "createdAt"
+    },
+    {
+      "COLUMN_NAME": "updatedAt"
+    },
+    {
+      "COLUMN_NAME": "categoryId"
+    },
+    {
+      "COLUMN_NAME": "aiSummary"
+    },
+    {
+      "COLUMN_NAME": "intentTags"
+    },
+    {
+      "COLUMN_NAME": "regionSummary"
+    },
+    {
+      "COLUMN_NAME": "participantSummary"
+    },
+    {
+      "COLUMN_NAME": "aiSummaryUpdatedAt"
+    },
+    {
+      "COLUMN_NAME": "slug"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\nid\nhostUserId\nhostTwitterId\nhostName\nhostUsername\nhostProfileImage\nhostFollowersCount\nhostDescription\ntitle\ndescription\ngoalType\ngoalValue\ngoalUnit\ncurrentValue\neventType\neventDate\nvenue\nprefecture\nticketPresale\nticketDoor\nticketSaleStart\nticketUrl\nexternalUrl\nstatus\nisPublic\ncreatedAt\nupdatedAt\ncategoryId\naiSummary\nintentTags\nregionSummary\nparticipantSummary\naiSummaryUpdatedAt\nslug\n",
+  "stderr": "",
+  "execution_time_ms": 1516
+}

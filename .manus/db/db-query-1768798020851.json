@@ -1,0 +1,13 @@
+{
+  "query": "SELECT GROUP_CONCAT(column_name ORDER BY ordinal_position SEPARATOR ', ') as columns FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'challenges';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT GROUP_CONCAT(column_name ORDER BY ordinal_position SEPARATOR ', ') as columns FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'challenges';",
+  "rows": [
+    {
+      "columns": "id, hostUserId, hostTwitterId, hostName, hostUsername, hostProfileImage, hostFollowersCount, hostDescription, title, description, goalType, goalValue, goalUnit, currentValue, eventType, eventDate, venue, prefecture, ticketPresale, ticketDoor, ticketSaleStart, ticketUrl, externalUrl, status, isPublic, createdAt, updatedAt, categoryId, aiSummary, intentTags, regionSummary, participantSummary, aiSummaryUpdatedAt, slug"
+    }
+  ],
+  "messages": [],
+  "stdout": "columns\nid, hostUserId, hostTwitterId, hostName, hostUsername, hostProfileImage, hostFollowersCount, hostDescription, title, description, goalType, goalValue, goalUnit, currentValue, eventType, eventDate, venue, prefecture, ticketPresale, ticketDoor, ticketSaleStart, ticketUrl, externalUrl, status, isPublic, createdAt, updatedAt, categoryId, aiSummary, intentTags, regionSummary, participantSummary, aiSummaryUpdatedAt, slug\n",
+  "stderr": "",
+  "execution_time_ms": 1543
+}

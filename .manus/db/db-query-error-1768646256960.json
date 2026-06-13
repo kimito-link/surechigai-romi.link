@@ -1,0 +1,8 @@
+{
+  "query": "\n-- 既存のカテゴリを削除\nDELETE FROM categories;\n\n-- カテゴリデータを投入\nINSERT INTO categories (name, slug, description, sortOrder, createdAt, updatedAt) VALUES\n('ライブ・コンサート', 'live-concert', 'ライブやコンサートイベント', 1, NOW(), NOW()),\n('配信イベント', 'streaming', 'YouTube、ミクチャなどの配信イベント', 2, NOW(), NOW()),\n('ファンミーティング', 'fan-meeting', 'ファンミーティング・握手会など', 3, NOW(), NOW()),\n('リリースイベント', 'release-event', 'CD・DVD・グッズのリリースイベント', 4, NOW(), NOW()),\n('生誕祭', 'birthday', '誕生日イベント・生誕祭', 5, NOW(), NOW()),\n('周年イベント', 'anniversary', 'デビュー周年・活動周年イベント', 6, NOW(), NOW()),\n('フェス・対バン', 'festival', 'フェス・対バンライブ', 7, NOW(), NOW()),\n('その他', 'other', 'その他のイベント', 8, NOW(), NOW());\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute \n-- 既存のカテゴリを削除\nDELETE FROM categories;\n\n-- カテゴリデータを投入\nINSERT INTO categories (name, slug, description, sortOrder, createdAt, updatedAt) VALUES\n('ライブ・コンサート', 'live-concert', 'ライブやコンサートイベント', 1, NOW(), NOW()),\n('配信イベント', 'streaming', 'YouTube、ミクチャなどの配信イベント', 2, NOW(), NOW()),\n('ファンミーティング', 'fan-meeting', 'ファンミーティング・握手会など', 3, NOW(), NOW()),\n('リリースイベント', 'release-event', 'CD・DVD・グッズのリリースイベント', 4, NOW(), NOW()),\n('生誕祭', 'birthday', '誕生日イベント・生誕祭', 5, NOW(), NOW()),\n('周年イベント', 'anniversary', 'デビュー周年・活動周年イベント', 6, NOW(), NOW()),\n('フェス・対バン', 'festival', 'フェス・対バンライブ', 7, NOW(), NOW()),\n('その他', 'other', 'その他のイベント', 8, NOW(), NOW());\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 6: Unknown column 'updatedAt' in 'field list'"
+  ]
+}

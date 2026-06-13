@@ -1,0 +1,46 @@
+{
+  "query": "SELECT id, title, \"hostName\", \"hostProfileImage\" FROM challenges;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SELECT id, title, \"hostName\", \"hostProfileImage\" FROM challenges;",
+  "rows": [
+    {
+      "id": "1",
+      "title": "生誕祭ライブ 動員100人達成チャレンジ",
+      "hostName": "hostName",
+      "hostProfileImage": "hostProfileImage"
+    },
+    {
+      "id": "2",
+      "title": "グループライブ フォロワー1万人チャレンジ",
+      "hostName": "hostName",
+      "hostProfileImage": "hostProfileImage"
+    },
+    {
+      "id": "3",
+      "title": "ソロライブ 50人動員チャレンジ",
+      "hostName": "hostName",
+      "hostProfileImage": "hostProfileImage"
+    },
+    {
+      "id": "4",
+      "title": "配信ライブ 同時視聴500人チャレンジ",
+      "hostName": "hostName",
+      "hostProfileImage": "hostProfileImage"
+    },
+    {
+      "id": "5",
+      "title": "ワンマンライブ 200人動員チャレンジ",
+      "hostName": "hostName",
+      "hostProfileImage": "hostProfileImage"
+    },
+    {
+      "id": "6",
+      "title": "グループライブ 300人動員チャレンジ",
+      "hostName": "hostName",
+      "hostProfileImage": "hostProfileImage"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\thostName\thostProfileImage\n1\t生誕祭ライブ 動員100人達成チャレンジ\thostName\thostProfileImage\n2\tグループライブ フォロワー1万人チャレンジ\thostName\thostProfileImage\n3\tソロライブ 50人動員チャレンジ\thostName\thostProfileImage\n4\t配信ライブ 同時視聴500人チャレンジ\thostName\thostProfileImage\n5\tワンマンライブ 200人動員チャレンジ\thostName\thostProfileImage\n6\tグループライブ 300人動員チャレンジ\thostName\thostProfileImage\n",
+  "stderr": "",
+  "execution_time_ms": 1535
+}

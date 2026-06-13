@@ -1,0 +1,13 @@
+{
+  "query": "SHOW TABLES LIKE 'categories';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3YCTtbVp6bbE1oz.aaf91d266729 --database 4EfvvuNg9KRk4UPdFprmBJ --execute SHOW TABLES LIKE 'categories';",
+  "rows": [
+    {
+      "Tables_in_4EfvvuNg9KRk4UPdFprmBJ (categories)": "categories"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_4EfvvuNg9KRk4UPdFprmBJ (categories)\ncategories\n",
+  "stderr": "",
+  "execution_time_ms": 1625
+}

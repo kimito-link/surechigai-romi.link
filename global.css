@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* v5.35: ハイドレーション時の白い画面を防止 + 水平スクロール防止 */
+html, body, #root {
+  background-color: #0D1117;
+  overflow-x: hidden;
+  max-width: 100vw;
+  position: relative;
+}
+
+/* タッチデバイスでの水平スワイプを防止 */
+body {
+  overscroll-behavior-x: none;
+  touch-action: pan-y pinch-zoom;
+}
+
+/* iOSでの弾性スクロールを制限 */
+@supports (-webkit-touch-callout: none) {
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+}
