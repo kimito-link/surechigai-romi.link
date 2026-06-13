@@ -556,6 +556,56 @@ async function startServer() {
     }),
   );
 
+  // =====================================================================
+  // /api/sweep — GitHub Actions スイープ専用エンドポイント
+  // SWEEP_SECRET ヘッダー照合 + 48h超 locations 削除 + Supabase keepalive
+  // =====================================================================
+  app.post("/api/sweep", async (req: Request, res: Response) => {
+    const sweepSecret = process.env.SWEEP_SECRET;
+    const provided = req.headers["x-sweep-secret"];
+
+    if (!sweepSecret || provided !== sweepSecret) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    try {
+      const { getDb } = await import("../db");
+      const { deleteExpiredLocations, getRecentLocationUserIds } = await import(
+        "../../modules/encounter/db/queries.js"
+      );
+
+      const db = await getDb();
+      if (!db) {
+        res.status(503).json({ error: "DB unavailable" });
+        return;
+      }
+
+      // 1. 48h超 locations 削除
+      const deletedLocations = await deleteExpiredLocations(db);
+
+      // 2. Supabase keepalive（SELECT 1 で接続維持）
+      const { sql: rawSql } = await import("drizzle-orm");
+      await db.execute(rawSql`SELECT 1`);
+
+      // 3. 取りこぼしマッチングのユーザーリストを取得
+      //    （実際のマッチングロジックはスコープが大きいため、ここでは件数のみ返す）
+      const recentUserIds = await getRecentLocationUserIds(db);
+
+      console.log(`[sweep] deletedLocations=${deletedLocations}, recentUsers=${recentUserIds.length}`);
+
+      res.json({
+        ok: true,
+        deletedLocations,
+        recentUsersCount: recentUserIds.length,
+        sweptAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("[sweep] Error:", err);
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
   // Sentry error handler must be after all controllers and before other error middleware
   if (process.env.SENTRY_DSN) {
     app.use(Sentry.expressErrorHandler());

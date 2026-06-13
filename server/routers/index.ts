@@ -10,11 +10,21 @@ import { authRouter } from "./auth";
 import { ogpRouter } from "./ogp";
 import { devRouter } from "./dev";
 
+// encounter モジュールルーター
+import { encounterRouter } from "../../modules/encounter/api/encounter.js";
+import { zukanRouter } from "../../modules/encounter/api/zukan.js";
+import { safetyRouter } from "../../modules/encounter/api/safety.js";
+import { settingsRouter } from "../../modules/encounter/api/settings.js";
+
 // 統合ルーター
 export const appRouter = router({
   auth: authRouter,
   ogp: ogpRouter,
   dev: devRouter,
+  encounter: encounterRouter,
+  zukan: zukanRouter,
+  safety: safetyRouter,
+  settings: settingsRouter,
 });
 
 export type AppRouter = typeof appRouter;
@@ -24,4 +34,8 @@ export {
   authRouter,
   ogpRouter,
   devRouter,
+  encounterRouter,
+  zukanRouter,
+  safetyRouter,
+  settingsRouter,
 };

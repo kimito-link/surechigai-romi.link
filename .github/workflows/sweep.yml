@@ -1,0 +1,32 @@
+name: sweep
+
+on:
+  schedule:
+    # 15分ごと（GitHub Actions は実際には5〜30分の遅延あり）
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Run sweep
+        run: |
+          curl -s -X POST \
+            -H "x-sweep-secret: ${{ secrets.SWEEP_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "${{ vars.API_BASE_URL }}/api/sweep" \
+            | tee sweep_result.json
+          cat sweep_result.json
+          # ok フィールドが true でなければ失敗とする
+          python3 -c "
+          import json, sys
+          with open('sweep_result.json') as f:
+              data = json.load(f)
+          if not data.get('ok'):
+              print('Sweep failed:', data)
+              sys.exit(1)
+          print('Sweep OK:', data)
+          "

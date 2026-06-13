@@ -1,0 +1,326 @@
+/**
+ * modules/encounter/api/encounter.ts
+ *
+ * encounter tRPC ルーター。
+ * - encounter.checkIn
+ * - encounter.list
+ * - encounter.open
+ * - encounter.react
+ * - encounter.updateHitokoto
+ */
+
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { protectedProcedure, router } from "../../../server/_core/trpc.js";
+import { getDb } from "../../../server/db/connection.js";
+import { toGrid, toH3Cell, toH3R7, assertFiniteLatLng } from "../core/geo.js";
+import { findMatches } from "../core/matching.js";
+import { moderateText } from "../core/moderation.js";
+import { reverseGeocode } from "../core/geocoding.js";
+import { reactions, encounters, users } from "../../../drizzle/schema/index.js";
+import { eq, and, sql } from "drizzle-orm";
+import {
+  insertLocation,
+  getNearbyCandidates,
+  getTimeshiftCandidates,
+  getBlockSet,
+  getTodayPairSet,
+  insertEncounterIfNew,
+  upsertVisitedArea,
+  getMyEncounters,
+  openEncounter,
+  getUserSettings,
+  upsertUserSettings,
+  getMostFrequentH3R8,
+} from "../db/queries.js";
+
+export const encounterRouter = router({
+  /**
+   * チェックイン。唯一の位置送信口。
+   * accuracy > 10000 は拒否。位置一時停止中は無視。
+   * サーバーで即 h3 丸め。オンデマンドマッチング実行。
+   */
+  checkIn: protectedProcedure
+    .input(
+      z.object({
+        lat: z.number(),
+        lng: z.number(),
+        accuracy: z.number().optional(),
+        municipality: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id;
+
+      // accuracy チェック
+      if (input.accuracy !== undefined && input.accuracy > 10_000) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "位置精度が低すぎます (accuracy > 10000m)",
+        });
+      }
+
+      // lat/lng バリデーション
+      const latLng = assertFiniteLatLng(input.lat, input.lng);
+      if (!latLng) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "無効な座標です" });
+      }
+
+      const db = await getDb();
+      if (!db) return { newEncounters: 0 };
+
+      // 位置一時停止チェック
+      const settings = await getUserSettings(db, userId);
+      if (
+        settings?.locationPausedUntil &&
+        settings.locationPausedUntil > new Date()
+      ) {
+        return { newEncounters: 0 };
+      }
+
+      // 座標を丸める
+      const { latGrid, lngGrid } = toGrid(latLng.lat, latLng.lng);
+      const h3R8 = toH3Cell(latGrid, lngGrid, 8);
+      const h3R7 = toH3R7(latGrid, lngGrid);
+
+      // 逆ジオコーディング（municipality 未指定時のみ非同期補完）
+      let municipality = input.municipality ?? null;
+      let prefecture: string | null = null;
+      let areaName: string | null = null;
+
+      // バックグラウンドで geocode（await しない: チェックインレイテンシを下げる）
+      const geocodePromise = reverseGeocode(latGrid, lngGrid).then((g) => {
+        municipality = municipality ?? g.municipality;
+        prefecture = g.prefecture;
+        areaName = g.areaName;
+      }).catch(() => {/* ignore */});
+
+      // locations INSERT（geocode 完了前でもよい）
+      await insertLocation(db, {
+        userId,
+        h3R8,
+        latGrid,
+        lngGrid,
+        municipality,
+        prefecture,
+      });
+
+      // visitedAreas UPSERT
+      await upsertVisitedArea(db, {
+        userId,
+        h3R7,
+        municipality,
+        prefecture,
+      });
+
+      // homeMaskCell 自動更新（非同期）
+      getMostFrequentH3R8(db, userId).then((cell) => {
+        if (cell) {
+          upsertUserSettings(db, userId, { homeMaskCell: cell }).catch(() => {});
+        }
+      }).catch(() => {});
+
+      // geocode 完了を待つ（マッチング前に prefecture を確定させる）
+      await geocodePromise;
+
+      // マッチング候補取得
+      const [nearbyCandidates, timeshiftCandidates, blockSet, todayPairSet] =
+        await Promise.all([
+          getNearbyCandidates(db, userId, h3R8),
+          getTimeshiftCandidates(db, userId, h3R7),
+          getBlockSet(db, userId),
+          getTodayPairSet(db, userId),
+        ]);
+
+      const selfLocation = {
+        userId,
+        latGrid,
+        lngGrid,
+        h3R8,
+        recordedAt: new Date(),
+      };
+
+      const matchResults = findMatches({
+        self: selfLocation,
+        nearbyCandidates,
+        timeshiftCandidates,
+        blockSet,
+        todayPairSet,
+      });
+
+      // encounters INSERT（UNIQUE衝突は無視）
+      let newEncounters = 0;
+      for (const m of matchResults) {
+        const inserted = await insertEncounterIfNew(db, {
+          userAId: m.userAId,
+          userBId: m.userBId,
+          tier: m.tier,
+          h3R7: m.h3R7,
+          areaName,
+          prefecture,
+          occurredAt: m.occurredAt,
+        });
+        if (inserted) newEncounters++;
+      }
+
+      // 初回ボーナス: 自分の初チェックイン + マッチ0件 → タイムシフト広域再試行
+      if (newEncounters === 0 && matchResults.length === 0) {
+        const totalRows = await db
+          .select({ cnt: sql<number>`count(*)` })
+          .from(encounters)
+          .where(
+            and(
+              eq(encounters.userAId, userId)
+            )
+          );
+        const total = Number(totalRows[0]?.cnt ?? 0);
+        if (total === 0) {
+          // 都道府県一致でタイムシフト再検索（prefecture フィールドで照合）
+          if (prefecture) {
+            const { visitedAreas } = await import("../../../drizzle/schema/index.js");
+            const { gte: _gte } = await import("drizzle-orm");
+            const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            const wideRows = await db
+              .select({
+                userId: visitedAreas.userId,
+                h3R7: visitedAreas.h3R7,
+                municipality: visitedAreas.municipality,
+                prefecture: visitedAreas.prefecture,
+              })
+              .from(visitedAreas)
+              .innerJoin(users, eq(users.id, visitedAreas.userId))
+              .where(
+                and(
+                  eq(visitedAreas.prefecture, prefecture),
+                  _gte(visitedAreas.lastVisitedAt, since),
+                  sql`${visitedAreas.userId} != ${userId}`,
+                  eq(users.isSuspended, false)
+                )
+              )
+              .limit(5);
+
+            const wideResults = findMatches({
+              self: selfLocation,
+              nearbyCandidates: [],
+              timeshiftCandidates: wideRows.map((r) => ({
+                userId: r.userId,
+                h3R7: r.h3R7,
+                municipality: r.municipality,
+                prefecture: r.prefecture,
+              })),
+              blockSet,
+              todayPairSet,
+            });
+
+            for (const m of wideResults) {
+              const inserted = await insertEncounterIfNew(db, {
+                userAId: m.userAId,
+                userBId: m.userBId,
+                tier: m.tier,
+                h3R7: m.h3R7,
+                areaName,
+                prefecture,
+                occurredAt: m.occurredAt,
+              });
+              if (inserted) newEncounters++;
+              if (newEncounters >= 1) break; // 1件保証で十分
+            }
+          }
+        }
+      }
+
+      return { newEncounters };
+    }),
+
+  /**
+   * 封筒一覧。ブロック相手・停止ユーザー除外。
+   * cursor = occurredAt ISO文字列（ページング）。
+   */
+  list: protectedProcedure
+    .input(z.object({ cursor: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      const items = await getMyEncounters(db, ctx.user.id, input.cursor);
+
+      // 24h以内のひとことのみ返す
+      const now = new Date();
+      return items.map((item) => {
+        const hitokotoAge = item.partnerHitokotoUpdatedAt
+          ? now.getTime() - item.partnerHitokotoUpdatedAt.getTime()
+          : Infinity;
+        return {
+          ...item,
+          partnerHitokoto:
+            hitokotoAge < 24 * 60 * 60 * 1000 ? item.partnerHitokoto : null,
+        };
+      });
+    }),
+
+  /**
+   * 開封（自分側の openedByX を now に）。
+   */
+  open: protectedProcedure
+    .input(z.object({ encounterId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { ok: true };
+      await openEncounter(db, ctx.user.id, input.encounterId);
+      return { ok: true };
+    }),
+
+  /**
+   * 一方向リアクション（1すれ違い1回）。
+   */
+  react: protectedProcedure
+    .input(z.object({ encounterId: z.number(), emoji: z.string().max(8) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { ok: true };
+
+      await db
+        .insert(reactions)
+        .values({
+          encounterId: input.encounterId,
+          senderId: ctx.user.id,
+          emoji: input.emoji,
+          createdAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [reactions.encounterId, reactions.senderId],
+          set: { emoji: input.emoji },
+        });
+
+      return { ok: true };
+    }),
+
+  /**
+   * ひとこと更新（NGワードフィルタ通過必須）。
+   */
+  updateHitokoto: protectedProcedure
+    .input(z.object({ text: z.string().max(140) }))
+    .mutation(async ({ ctx, input }) => {
+      const result = await moderateText(input.text, {
+        groqApiKey: process.env.GROQ_API_KEY,
+        geminiApiKey: process.env.GEMINI_API_KEY,
+      });
+
+      if (result.rejected) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `不適切なひとことです (${result.stage})`,
+        });
+      }
+
+      const db = await getDb();
+      if (!db) return { ok: true };
+
+      await db
+        .update(users)
+        .set({ hitokoto: input.text, hitokotoUpdatedAt: new Date() })
+        .where(eq(users.id, ctx.user.id));
+
+      return { ok: true };
+    }),
+});
