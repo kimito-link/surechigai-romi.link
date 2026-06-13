@@ -1,231 +1,196 @@
-# 君斗りんくの動員ちゃれんじ
+# すれちがいロミ (surechigai-romi.link)
 
-**プロジェクト名**: 動員チャレンジ（Doin Challenge）  
-**ドメイン**: [doin-challenge.com](https://doin-challenge.com)  
-**バージョン**: 6.165  
-**最終更新**: 2026年1月30日
+移動の副産物として封筒（すれ違い）が溜まり、帰宅後にまとめて開封する受動体験アプリ。
+DSすれちがい通信の本質「開いた時に既に何かが起きている」をコアに据え、Xログインのみ・アプリ内DM禁止で運営する。
 
----
-
-## 🚨 最重要：デプロイ方法（AI・人間共通）
-
-### デプロイの3つの方法
-
-| 方法 | コマンド/手順 | 所要時間 |
-|------|--------------|---------|
-| **1. Manusから** | `./scripts/deploy-to-production.sh "コミットメッセージ"` | 5-10分 |
-| **2. スマホから** | GitHubアプリ → Actions → "Manual Deploy" → "Run workflow" | 5-10分 |
-| **3. PCから** | GitHubウェブ → Actions → "Manual Deploy" → "Run workflow" | 5-10分 |
-
-### デプロイ後の確認方法
-
-1. **GitHub Actions**: https://github.com/kimito-link/doin-challenge.com/actions
-   - 最新のワークフローが緑のチェックマーク（成功）になるまで待つ
-   - 通常5-10分かかる
-
-2. **本番環境**: https://doin-challenge.com
-   - シークレットモードでアクセス
-   - バージョン番号が更新されているか確認
-
-3. **Health Check API**: https://doin-challenge.com/api/health
-   - `commitSha`が最新のコミットハッシュと一致しているか確認
-
-### トラブルシューティング
-
-- **ワークフローが失敗した場合**: `docs/deployment-guide.md` を参照
-- **バージョンが更新されない場合**: GitHub Actionsのログを確認
-- **詳細な手順**: `docs/deployment-guide.md` を参照
+設計書: `../surechigai-nico/docs/V2-SURECHIGAI-DESIGN.md`
 
 ---
 
-## ⚠️ AIへの重要な指示（セッション開始時に必ず読むこと）
+## アプリ概要
 
-### 📋 作業開始時のチェックリスト
-
-1. ✅ 最新の `docs/chatlog-YYYYMMDD.md` を読む（過去の作業内容を確認）
-2. ✅ `todo.md` で未完了タスクを確認
-3. ✅ mdファイルに書かれていることを忠実に実行（勝手に仕様を拡大しない）
-4. ✅ ユーザーが「何度も言った」と言ったら、chatlogを確認する
-
-### 🔴 絶対に忘れてはいけないこと
-
-- **デプロイ**: `./scripts/deploy-to-production.sh` で実行（手動git pushは不要）
-- **GitHubアプリ**: スマホにもインストール済み（Workflow Dispatchが使える）
-- **本番環境**: doin-challenge.com（デプロイ後5-10分で反映）
-- **リポジトリ**: https://github.com/kimito-link/doin-challenge.com
-
-### 📚 重要なドキュメント
-
-| ファイル | 内容 | 優先度 |
-|---------|------|--------|
-| `docs/chatlog-YYYYMMDD.md` | 過去の作業ログ（必ず読む） | 🔴 最高 |
-| `docs/deployment-guide.md` | デプロイ手順の詳細 | 🔴 最高 |
-| `docs/development-guide.md` | 開発環境のセットアップ | 🟡 高 |
-| `docs/ARCHITECTURE.md` | アーキテクチャの説明 | 🟢 中 |
-| `docs/gate1.md` | 本番環境の品質基準 | 🔴 最高 |
-| `todo.md` | 未完了タスク一覧 | 🔴 最高 |
-
----
-
-## 📖 プロジェクト概要
-
-**動員チャレンジ**は、アイドル・ホスト・キャバ嬢などのエンターテイナーの生誕祭やイベントを応援するためのWebアプリケーションです。
-
-### 主要機能
-
-| 機能 | 説明 |
+| 特性 | 内容 |
 |------|------|
-| **Twitter OAuth認証** | Twitter OAuth 2.0 with PKCEによる安全なログイン |
-| **フォロワー数表示** | ログインユーザーのTwitterフォロワー数をリアルタイム表示 |
-| **応援メッセージ投稿** | ファンからの応援メッセージを収集・表示 |
-| **参加登録機能** | イベントへの参加表明と都道府県別の可視化 |
-| **統計ダッシュボード** | ユーザー統計・管理者統計の表示 |
+| コンセプト | 移動の副産物としてすれ違い体験を積み重ねる |
+| ログイン | X (Twitter) OAuth 2.0 のみ |
+| 位置情報 | 生緯度経度を保存しない。サーバー受信時に H3 res8（約460m）+ 500m グリッドへ即丸め |
+| マッチング | オンデマンド即時 + タイムシフト（過去30日同セル）の2本柱 |
+| 削除ポリシー | locations テーブルは 48 h TTL で物理削除 |
+| 交流 | X に委譲。アプリ内は定型スタンプ一方向リアクションのみ。DM禁止 |
+| インフラ | Vercel (フロント+API Functions) + Supabase Free (Postgres) + GitHub Actions スイープ |
+
+### プライバシー設計の3原則
+
+1. **生緯度経度を保存しない** — H3 res8 + 500m グリッドに即丸め
+2. **48h 削除** — `locations` テーブルは 48h TTL で物理削除
+3. **タイムシフトマッチング** — 同時刻同地点が不要。過去30日同セル通過者と成立
 
 ---
 
-## 🛠️ 技術スタック
+## 技術スタック
 
-### フロントエンド
-
-- **React** 19.1.0 - UIライブラリ
-- **React Native** 0.81.5 - モバイルアプリケーションフレームワーク
-- **Expo** ~54.0.29 - React Nativeの開発環境・ビルドツール
-- **NativeWind** ^4.2.1 - Tailwind CSSのReact Native実装
-- **TypeScript** ~5.9.3 - 型安全性の確保
-
-### バックエンド
-
-- **Node.js** 24.x - サーバーランタイム
-- **Express** ^4.22.1 - Webフレームワーク
-- **tRPC** 11.7.2 - 型安全なAPIエンドポイント
-- **Drizzle ORM** ^0.44.7 - データベースORM
-- **PostgreSQL** - リレーショナルデータベース
-
-### ビルド・デプロイ
-
-- **pnpm** 9.12.0 - パッケージマネージャー
-- **esbuild** - サーバーサイドバンドラー
-- **Railway** - バックエンドホスティング
-- **Vercel** - フロントエンドホスティング
-- **GitHub Actions** - CI/CDパイプライン
+| レイヤー | 採用技術 |
+|---------|---------|
+| フロントエンド | Expo Router (web/iOS/Android 1コードベース), NativeWind, tRPC client |
+| バックエンド | tRPC + Express (Vercel Functions に同居), Drizzle ORM |
+| DB | Supabase Free (Postgres), H3 + B-tree (PostGIS 非依存) |
+| 認証 | Clerk + Twitter OAuth 2.0 PKCE |
+| 位置精度 | H3 res8 (約460m), h3-js ライブラリ |
+| モデレーション | Groq llama-3.1-8b-instant (14,400 RPD) 主 + Gemini Flash-Lite 控え |
+| 地図 (フェーズ2) | MapLibre + OpenFreeMap (キー不要・無制限) |
+| 通知 (フェーズ2) | Expo Push (完全無料) |
 
 ---
 
-## 📁 プロジェクト構造
-
-```
-birthday-celebration/
-├── app/                      # Expo Routerアプリケーション
-│   ├── (tabs)/              # タブナビゲーション画面
-│   ├── event/               # イベント関連画面
-│   └── oauth/               # OAuth認証コールバック
-├── components/              # 再利用可能なUIコンポーネント
-├── features/                # 機能別コンポーネント
-│   ├── onboarding/          # オンボーディング
-│   ├── mypage/              # マイページ
-│   ├── create/              # イベント作成
-│   └── event/               # イベント詳細
-├── hooks/                   # カスタムReactフック
-├── lib/                     # ユーティリティ・共通ロジック
-├── server/                  # バックエンドサーバー
-│   ├── _core/               # サーバーコア
-│   ├── routers/             # tRPCルーター
-│   └── db/                  # データベーススキーマ
-├── shared/                  # クライアント・サーバー共通型定義
-├── docs/                    # ドキュメント
-├── scripts/                 # ビルド・デプロイスクリプト
-├── .github/workflows/       # GitHub Actions
-└── assets/                  # 静的アセット（画像・フォント）
-```
-
-詳細は `docs/architecture.md` を参照してください。
-
----
-
-## 🚀 クイックスタート
+## セットアップ手順
 
 ### 前提条件
 
-- **Node.js**: 24.x以上
-- **pnpm**: 9.12.0以上
-- **Git**: 最新版
+- Node.js 22.x 以上
+- pnpm 9.x 以上
 
-### 1. リポジトリのクローン
-
-```bash
-git clone https://github.com/kimito-link/doin-challenge.com.git
-cd doin-challenge.com
-```
-
-### 2. 依存関係のインストール
+### 1. 依存関係のインストール
 
 ```bash
 pnpm install
 ```
 
-### 3. 環境変数の設定
+### 2. Supabase プロジェクトの作成
 
-プロジェクトルートに`.env`ファイルを作成し、以下の環境変数を設定します。
+1. [supabase.com](https://supabase.com) でプロジェクトを作成
+2. プロジェクト設定 > Database > Connection string > URI > Transaction pooler (ポート 6543) を取得
+3. `DATABASE_URL` に設定
 
-```env
-# データベース接続（Railway提供）
-DATABASE_URL=postgresql://user:password@host:port/database
-
-# Twitter OAuth 2.0認証情報
-TWITTER_CLIENT_ID=your_twitter_client_id
-TWITTER_CLIENT_SECRET=your_twitter_client_secret
-TWITTER_CALLBACK_URL=https://doin-challenge.com/oauth/callback
-
-# セッション管理
-SESSION_SECRET=your_random_session_secret
-
-# Expo設定
-EXPO_PORT=8081
+```bash
+# DB スキーマを Supabase に適用
+pnpm db:push
 ```
 
-### 4. 開発サーバーの起動
+### 3. Clerk プロジェクトの作成
+
+1. [dashboard.clerk.com](https://dashboard.clerk.com) でプロジェクトを作成
+2. Social connections で Twitter/X を有効化
+3. `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` と `CLERK_SECRET_KEY` を取得
+
+### 4. Twitter Developer App の設定
+
+1. [developer.twitter.com](https://developer.twitter.com) でアプリを作成
+2. OAuth 2.0 の Callback URL を設定:
+   - 本番: `https://surechigai-romi.link/oauth/twitter-callback`
+   - 開発: `http://localhost:8081/oauth/twitter-callback`
+3. `TWITTER_CLIENT_ID` と `TWITTER_CLIENT_SECRET` を取得
+
+### 5. 環境変数の設定
+
+`.env.example` をコピーして `.env.local` を作成:
+
+```bash
+cp .env.example .env.local
+# 各変数を編集
+```
+
+### 6. 開発サーバーの起動
 
 ```bash
 pnpm dev
 ```
 
-このコマンドは以下を同時に起動します：
-
-- **バックエンドサーバー**: `http://localhost:3000`
-- **Expo Metro Bundler**: `http://localhost:8081`
-
-詳細は `docs/development-guide.md` を参照してください。
+- バックエンド: http://localhost:3000
+- Expo (Web): http://localhost:8081
 
 ---
 
-## 📚 ドキュメント一覧
+## 環境変数一覧
 
-| ドキュメント | 内容 | 対象読者 |
-|-------------|------|---------|
-| [deployment-guide.md](./docs/deployment-guide.md) | デプロイ手順の詳細 | AI・開発者 |
-| [development-guide.md](./docs/development-guide.md) | 開発環境のセットアップ | AI・開発者 |
-| [architecture.md](./docs/architecture.md) | アーキテクチャの説明 | AI・開発者 |
-| [gate1.md](./docs/gate1.md) | 本番環境の品質基準 | AI・開発者 |
-| [visibility-issues.md](./docs/visibility-issues.md) | 視認性問題の修正履歴 | 開発者 |
-| [chatlog-YYYYMMDD.md](./docs/chatlog-YYYYMMDD.md) | 作業ログ | AI・開発者 |
-| [todo.md](./todo.md) | 未完了タスク一覧 | AI・開発者 |
+| 変数名 | 必須 | 説明 |
+|--------|------|------|
+| `DATABASE_URL` | 必須 | Supabase Postgres 接続文字列 (Transaction pooler ポート 6543) |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | 必須 | Clerk 公開キー |
+| `CLERK_SECRET_KEY` | 必須 | Clerk シークレットキー |
+| `TWITTER_CLIENT_ID` | 必須 | Twitter OAuth 2.0 クライアント ID |
+| `TWITTER_CLIENT_SECRET` | 必須 | Twitter OAuth 2.0 クライアントシークレット |
+| `ENCRYPTION_KEY` | 必須 | Twitter トークン暗号化用 64 文字 hex キー (`openssl rand -hex 32`) |
+| `SESSION_SECRET` | 必須 | セッション署名用シークレット |
+| `SWEEP_SECRET` | 必須 | GitHub Actions スイープ Webhook 認証トークン |
+| `NODE_ENV` | 任意 | `development` / `production` |
+| `PORT` | 任意 | バックエンドポート (デフォルト: 3000) |
+| `SENTRY_DSN` | 任意 | Sentry エラー監視 DSN |
+| `GROQ_API_KEY` | 任意 | Groq API キー (ひとこと NGワードモデレーション) |
+| `GEMINI_API_KEY` | 任意 | Gemini API キー (モデレーション控え) |
 
 ---
 
-## 🤝 コントリビューション
+## Vercel デプロイ設定
 
-このプロジェクトは、Manus AIによって開発されています。
+| 設定項目 | 値 |
+|---------|-----|
+| ドメイン | `surechigai-romi.link` |
+| Framework Preset | Other |
+| Build Command | `pnpm expo export -p web` |
+| Output Directory | `dist` |
+| Install Command | `pnpm install` |
+| Node.js Version | 22.x |
+
+Vercel の Environment Variables に上記の「環境変数一覧」を全て設定すること。
 
 ---
 
-## 📄 ライセンス
+## GitHub Actions secrets
+
+スイープワークフロー (`sweeper.yml`) に以下の secrets が必要:
+
+| Secret 名 | 内容 |
+|-----------|------|
+| `DATABASE_URL` | Supabase 接続文字列 |
+| `SWEEP_SECRET` | スイープ Webhook 認証トークン (`.env.local` の値と一致させる) |
+| `API_BASE_URL` | 本番 API URL (例: `https://surechigai-romi.link`) |
+
+---
+
+## プロジェクト構造
+
+```
+surechigai-romi.link/
+├── app/
+│   ├── (tabs)/              # 5タブ画面
+│   │   ├── index.tsx        # ポスト（封筒開封UI）
+│   │   ├── checkin.tsx      # チェックイン（位置送信）
+│   │   ├── zukan.tsx        # 図鑑（47都道府県グリッド）
+│   │   ├── map.tsx          # 軌跡マップ
+│   │   └── mypage.tsx       # マイページ
+│   └── oauth/
+│       └── twitter-callback.tsx
+├── modules/
+│   └── encounter/           # すれ違いコアロジック
+│       ├── core/            # 純TS: geo/tiers/matching/moderation/geocoding/privacy
+│       └── db/              # Drizzle クエリ
+├── server/
+│   ├── routers/
+│   │   ├── encounter.ts     # tRPC encounter ルーター
+│   │   ├── safety.ts        # ブロック・通報
+│   │   └── zukan.ts         # 図鑑・訪問エリア
+│   └── db/                  # DB クエリ層
+├── drizzle/
+│   └── schema.ts            # Supabase Postgres スキーマ定義
+├── .github/workflows/
+│   └── sweeper.yml          # 15分スイープ: 48h削除・タイムシフトマッチング回収
+├── .env.example             # 環境変数テンプレート
+└── CLAUDE.md                # AIアシスタント向けコア・ディレクティブ
+```
+
+---
+
+## 残課題・フェーズ2以降
+
+- **maplibre-gl 実装**: `pnpm add maplibre-gl` 後、`app/(tabs)/map.web.tsx` で H3 セルを GeoJSON → maplibre-gl レイヤーとして描画
+- **ブロックリスト取得 API**: `safety.listBlocked` を追加して mypage.tsx に接続
+- **nativeバックグラウンド位置**: expo-location バックグラウンド (フェーズ1.5)
+- **Expo Push 通知**: ネイティブアプリビルド後に有効化
+- **公式ゴースト**: 駅・観光地常駐キャラクター (フェーズ2)
+- **doin-challenge 移植**: `modules/encounter/` を doin-challenge.com に移植
+
+---
+
+## ライセンス
 
 MIT License
-
----
-
-## 📞 サポート
-
-- **リポジトリ**: https://github.com/kimito-link/doin-challenge.com
-- **本番環境**: https://doin-challenge.com
-- **Health Check API**: https://doin-challenge.com/api/health

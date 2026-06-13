@@ -10,19 +10,19 @@ import { OpenAPIV3 } from "openapi-types";
 export const openApiDocument: OpenAPIV3.Document = {
   openapi: "3.0.3",
   info: {
-    title: "動員ちゃれんじ API",
+    title: "すれちがいロミ API",
     description: `
 ## 概要
 
-「動員ちゃれんじ」は、VTuberやアイドルのファンイベント参加者を可視化・応援するアプリケーションです。
+「すれちがいロミ」は、移動の副産物としてすれ違い体験を積み重ねるアプリケーションです。
 
 このAPIを使用することで、以下の機能を外部から利用できます：
 
-- イベント（チャレンジ）の作成・取得・更新・削除
-- 参加登録の管理
-- 都道府県別統計の取得
-- バッジ・アチーブメントの管理
-- 通知設定の管理
+- チェックイン・位置情報の記録
+- すれ違い（封筒）の管理
+- 図鑑・軌跡データの取得
+- ブロック・通報の管理
+- 設定の管理
 
 ## 認証
 
@@ -44,8 +44,8 @@ APIには以下のレート制限があります：
     `,
     version: "1.0.0",
     contact: {
-      name: "動員ちゃれんじ サポート",
-      url: "https://github.com/birthday-celebration",
+      name: "すれちがいロミ サポート",
+      url: "https://surechigai-romi.link",
     },
     license: {
       name: "MIT",

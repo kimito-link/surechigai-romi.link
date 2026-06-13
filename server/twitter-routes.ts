@@ -146,11 +146,11 @@ export function registerTwitterRoutes(app: Express) {
         const protocol = req.get("x-forwarded-proto") || req.protocol;
         const forceHttps = protocol === "https" || host.includes("manus.computer") || host.includes("railway.app");
         
-        // Production: redirect to doin-challenge.com
+        // Production: redirect to surechigai-romi.link
         // Development: redirect to Expo app (port 8081)
         let baseUrl: string;
         if (host.includes("railway.app")) {
-          baseUrl = "https://doin-challenge.com";
+          baseUrl = "https://surechigai-romi.link";
         } else {
           const expoHost = host.replace("3000-", "8081-");
           baseUrl = `${forceHttps ? "https" : protocol}://${expoHost}`;
@@ -312,16 +312,16 @@ export function registerTwitterRoutes(app: Express) {
       const protocol = req.get("x-forwarded-proto") || req.protocol;
       const forceHttps = protocol === "https" || host.includes("manus.computer") || host.includes("railway.app");
       
-      // Production: redirect to doin-challenge.com
+      // Production: redirect to surechigai-romi.link
       // Development: redirect to Expo app (port 8081)
       let baseUrl: string;
       if (host.includes("railway.app")) {
-        baseUrl = "https://doin-challenge.com";
+        baseUrl = "https://surechigai-romi.link";
       } else {
         const expoHost = host.replace("3000-", "8081-");
         baseUrl = `${forceHttps ? "https" : protocol}://${expoHost}`;
       }
-      
+
       // Redirect to Expo app callback page with user data and session token
       // WebプラットフォームでCookieが正しく設定されない場合に備えて、セッショントークンもURLパラメータとして渡す
       const redirectParams = new URLSearchParams({
@@ -341,16 +341,16 @@ export function registerTwitterRoutes(app: Express) {
       const protocol = req.get("x-forwarded-proto") || req.protocol;
       const forceHttps = protocol === "https" || host.includes("manus.computer") || host.includes("railway.app");
       
-      // Production: redirect to doin-challenge.com
+      // Production: redirect to surechigai-romi.link
       // Development: redirect to Expo app (port 8081)
       let baseUrl: string;
       if (host.includes("railway.app")) {
-        baseUrl = "https://doin-challenge.com";
+        baseUrl = "https://surechigai-romi.link";
       } else {
         const expoHost = host.replace("3000-", "8081-");
         baseUrl = `${forceHttps ? "https" : protocol}://${expoHost}`;
       }
-      
+
       // エラー情報をエンコードしてリダイレクト（本番環境では詳細情報を除外）
       const errorResponse = createErrorResponse(error, process.env.NODE_ENV !== "production");
       const errorData = encodeURIComponent(JSON.stringify(errorResponse));

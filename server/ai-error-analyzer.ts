@@ -167,8 +167,8 @@ export async function analyzeError(error: {
           headers: {
             "Authorization": `Bearer ${apiKey}`,
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://doin-challenge.com",
-            "X-Title": "Doin Challenge Error Analyzer",
+            "HTTP-Referer": "https://surechigai-romi.link",
+            "X-Title": "Surechigai Romi Error Analyzer",
           },
           timeout: 30000,
         }

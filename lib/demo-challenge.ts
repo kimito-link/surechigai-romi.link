@@ -73,7 +73,7 @@ const DEMO_PARTICIPANTS: DemoParticipant[] = [
 // デモチャレンジのテンプレート
 export const DEMO_CHALLENGE_TEMPLATE: DemoChallenge = {
   id: "demo_challenge_001",
-  title: "りんくの100人動員チャレンジ",
+  title: "りんくの100人すれ違いチャレンジ",
   hostName: "君斗りんく",
   hostUsername: "kimito_link",
   hostProfileImage: "https://pbs.twimg.com/profile_images/1234567890/link_400x400.jpg",
@@ -82,7 +82,7 @@ export const DEMO_CHALLENGE_TEMPLATE: DemoChallenge = {
   eventDate: new Date(Date.now() + 3600000 * 24 * 30).toISOString(), // 30日後
   venue: "渋谷CLUB QUATTRO",
   prefecture: "東京都",
-  description: "みんなの力で100人動員を達成しよう！一緒に盛り上げてくれる仲間を募集中✨",
+  description: "みんなの力で100人すれ違いを達成しよう！一緒に盛り上げてくれる仲間を募集中✨",
   participants: DEMO_PARTICIPANTS,
 };
 

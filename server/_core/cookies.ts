@@ -45,7 +45,7 @@ function getParentDomain(hostname: string): string | undefined {
 }
 
 /**
- * プロキシ経由のときはクライアントのホストを使う（Vercel → Railway で admin_session を doin-challenge.com に送るため）
+ * プロキシ経由のときはクライアントのホストを使う（Vercel Functions で surechigai-romi.link に Cookie を送るため）
  */
 function getEffectiveHostname(req: Request): string {
   const forwarded = req.headers["x-forwarded-host"];

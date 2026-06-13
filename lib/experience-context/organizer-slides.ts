@@ -12,7 +12,7 @@ export const ORGANIZER_EXPERIENCE_SLIDES: ExperienceSlide[] = [
     character: "kimitolink",
     message: "主催者の追体験へようこそ！",
     subMessage: "チャレンジを作成して、ファンと一緒に目標を達成する流れを体験しよう",
-    thought: "これから動員ちゃれんじの使い方を説明するね！",
+    thought: "これからすれちがいロミの使い方を説明するね！",
     previewType: "none",
     backgroundColor: "#1a1a2e",
     stepNumber: 0,

@@ -50,7 +50,7 @@ export function generateCSV(data: ExportData): string {
   
   // ヘッダー情報
   const header = [
-    `# 動員ちゃれんじ 統計レポート`,
+    `# すれちがいロミ 統計レポート`,
     `# チャレンジ名: ${challenge.title}`,
     `# 主催者: ${challenge.hostName}`,
     `# 目標: ${challenge.goalValue}${challenge.goalUnit}`,
@@ -142,7 +142,7 @@ export function generateTextReport(data: ExportData): string {
   const topRegions = regionStats.sort((a, b) => b.count - a.count).slice(0, 3);
 
   const report = [
-    `📊 動員ちゃれんじ 統計レポート`,
+    `📊 すれちがいロミ 統計レポート`,
     `━━━━━━━━━━━━━━━━━━━━`,
     ``,
     `🎯 チャレンジ: ${challenge.title}`,
@@ -165,7 +165,7 @@ export function generateTextReport(data: ExportData): string {
     ``,
     `━━━━━━━━━━━━━━━━━━━━`,
     `レポート生成: ${formatDateTime(exportDate)}`,
-    `#動員ちゃれんじ`,
+    `#すれちがいロミ`,
   ].join("\n");
 
   return report;
