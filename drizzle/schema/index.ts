@@ -2,6 +2,7 @@
  * Database Schema Index
  *
  * 全テーブル定義を再エクスポート
+ * すれちがいロミ: pg-core (Supabase Postgres) 版
  */
 
 // Users & Auth
@@ -12,3 +13,6 @@ export * from "./audit";
 
 // API Usage Tracking
 export * from "./api-usage";
+
+// すれちがいロミ: Encounter 関連テーブル
+export * from "./encounter";

@@ -51,8 +51,8 @@ export async function recordApiUsage(usage: {
       month,
     };
 
-    const [result] = await db.insert(apiUsage).values(insertData);
-    return result.insertId ?? null;
+    const result = await db.insert(apiUsage).values(insertData).returning({ id: apiUsage.id });
+    return result[0]?.id ?? null;
   } catch (error) {
     console.error("[API Usage] Failed to record usage:", error);
     return null;

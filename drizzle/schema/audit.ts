@@ -2,19 +2,27 @@
  * Audit Log Schema
  *
  * 監査ログテーブル定義
+ * すれちがいロミ: pg-core (Supabase Postgres) 版
  */
 
-import { mysqlTable, int, varchar, text, timestamp, mysqlEnum, json } from "drizzle-orm/mysql-core";
+import {
+  pgTable,
+  integer,
+  varchar,
+  text,
+  timestamp,
+  json,
+  serial,
+} from "drizzle-orm/pg-core";
 
-export const auditLogs = mysqlTable("audit_logs", {
-  id: int("id").autoincrement().primaryKey(),
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
   requestId: varchar("requestId", { length: 36 }).notNull(),
-  action: mysqlEnum("action", [
-    "CREATE", "EDIT", "DELETE", "RESTORE", "BULK_DELETE", "BULK_RESTORE", "LOGIN", "LOGOUT", "ADMIN_ACTION",
-  ]).notNull(),
+  // ENUM → text（CHECK制約はDB側で持つ場合はdrizzle-kitが生成するが、型安全性はアプリ側で保証）
+  action: text("action").notNull(),
   entityType: varchar("entityType", { length: 64 }).notNull(),
-  targetId: int("targetId"),
-  actorId: int("actorId"),
+  targetId: integer("targetId"),
+  actorId: integer("actorId"),
   actorName: varchar("actorName", { length: 255 }),
   actorRole: varchar("actorRole", { length: 32 }),
   beforeData: json("beforeData").$type<Record<string, unknown> | null>(),

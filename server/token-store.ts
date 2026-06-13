@@ -115,13 +115,15 @@ export async function storeTokens(
     const encryptedAccess = encryptToken(tokens.accessToken);
     const encryptedRefresh = tokens.refreshToken ? encryptToken(tokens.refreshToken) : null;
 
+    // MySQL: onDuplicateKeyUpdate → Postgres: onConflictDoUpdate (target: openId)
     await db.insert(userTwitterTokens).values({
       openId,
       encryptedAccessToken: encryptedAccess,
       encryptedRefreshToken: encryptedRefresh,
       tokenExpiresAt: expiresAt,
       scope: tokens.scope || null,
-    }).onDuplicateKeyUpdate({
+    }).onConflictDoUpdate({
+      target: userTwitterTokens.openId,
       set: {
         encryptedAccessToken: encryptedAccess,
         encryptedRefreshToken: encryptedRefresh,

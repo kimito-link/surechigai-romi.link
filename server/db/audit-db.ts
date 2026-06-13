@@ -24,8 +24,8 @@ export async function createAuditLog(data: InsertAuditLog) {
   }
 
   try {
-    const [result] = await db.insert(auditLogs).values(data);
-    return result.insertId ?? null;
+    const result = await db.insert(auditLogs).values(data).returning({ id: auditLogs.id });
+    return result[0]?.id ?? null;
   } catch (error) {
     // 監査ログの記録失敗は本体の処理を止めない
     console.error("[AuditLog] Failed to create audit log:", error);
