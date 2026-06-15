@@ -1,18 +1,19 @@
 // Load environment variables with proper priority (system > .env)
 import "./scripts/load-env.js";
 import type { ExpoConfig } from "expo/config";
+import appConfigJson from "./app.config.json" with { type: "json" };
 
-const bundleId = "com.surechigairomi.app";
-const scheme = "surechigairomi";
+const bundleId = appConfigJson.identity.bundleId;
+const scheme = appConfigJson.identity.iosScheme;
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = appConfigJson.stores.marketingVersion;
 
 const env = {
-  appName: "すれちがいロミ",
-  appSlug: "surechigai-romi",
+  appName: appConfigJson.identity.displayName,
+  appSlug: appConfigJson.identity.shortName,
   scheme,
   iosBundleId: bundleId,
-  androidPackage: bundleId,
+  androidPackage: appConfigJson.stores.playPackageName,
   appVersion: APP_VERSION,
 };
 

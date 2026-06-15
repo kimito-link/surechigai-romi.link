@@ -1,0 +1,62 @@
+{
+  "_README": "★ここがスタート地点★ このファイルに『あなたのアプリの情報』を書くだけ。あとはAIと自動化が、Chrome拡張・Web・iOS・Androidの4つに展開してくれます。",
+  "identity": {
+    "displayName": "すれちがいロミ",
+    "displayNameEn": "Surechigai Romi",
+    "shortName": "surechigai",
+    "bundleId": "com.surechigairomi.app",
+    "iosScheme": "surechigairomi",
+    "productionDomain": "surechigai-romi.link",
+    "stagingDomain": null
+  },
+  "stores": {
+    "ascAppId": "",
+    "playAppId": "",
+    "playPackageName": "com.surechigairomi.app",
+    "appleTeamId": null,
+    "playDeveloperId": "",
+    "primaryCategory": "LIFESTYLE",
+    "ageRating": "FOUR_PLUS",
+    "contentRights": "DOES_NOT_USE_THIRD_PARTY_CONTENT",
+    "marketingVersion": "1.0.0",
+    "buildNumberOffset": 0
+  },
+  "chrome": {
+    "_note": "Chrome拡張も作る場合だけ書く。作らないなら enabled を false に。",
+    "enabled": false,
+    "itemId": "",
+    "manifestPath": "manifest.json"
+  },
+  "brand": {
+    "primaryColor": "#4F86C6",
+    "accentColor": "#22C55E",
+    "iconSource": "assets/images/icon.png",
+    "featureGraphicSource": "assets/images/feature-graphic-source.png"
+  },
+  "contact": {
+    "email": "info@surechigai-romi.link",
+    "phoneE164": "",
+    "firstName": "",
+    "lastName": "",
+    "supportUrl": "https://surechigai-romi.link/support",
+    "privacyUrl": "https://surechigai-romi.link/privacy",
+    "termsUrl": "https://surechigai-romi.link/terms",
+    "marketingUrl": "https://surechigai-romi.link",
+    "dataDeletionUrl": "https://surechigai-romi.link/deletion"
+  },
+  "businessModel": {
+    "hasInAppPurchase": false,
+    "hasSubscription": false,
+    "hasPaidContent": false,
+    "summaryJa": "位置情報を利用して近くにいるユーザー同士をマッチングする無料のすれ違い通信アプリです。",
+    "summaryEn": "A free streetpass app that matches users nearby using location data."
+  },
+  "ownership": {
+    "organization": "Best Trust",
+    "country": "JP",
+    "githubOrg": "kimito-link",
+    "githubRepo": "surechigai-romi.link",
+    "vercelTeamSlug": "",
+    "vercelProjectName": "surechigai-romi"
+  }
+}
