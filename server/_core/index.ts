@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -605,6 +606,21 @@ async function startServer() {
       res.status(500).json({ error: String(err) });
     }
   });
+
+  // =====================================================================
+  // 静的ファイル配信（public/）
+  // LP (public/lp.html) などのマーケ用静的ページを surechigai-romi.link/<file> で配信。
+  // /api/* は上で処理済みのためここには来ない。catch-all はせず、存在するファイルのみ返す。
+  // =====================================================================
+  {
+    const publicDir = path.join(process.cwd(), "public");
+    if (fs.existsSync(publicDir)) {
+      app.use(express.static(publicDir, { extensions: ["html"], index: false }));
+      console.log(`[static] serving public/ from ${publicDir}`);
+    } else {
+      console.log(`[static] public dir not found at ${publicDir} (skipped)`);
+    }
+  }
 
   // Sentry error handler must be after all controllers and before other error middleware
   if (process.env.SENTRY_DSN) {
