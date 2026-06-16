@@ -86,7 +86,7 @@ type CheckinState = "idle" | "loading" | "success" | "error" | "zero";
 
 export default function CheckinScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReady, login } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI, login } = useAuth();
 
   const [state, setState] = useState<CheckinState>("idle");
   const [newCount, setNewCount] = useState(0);
@@ -261,7 +261,7 @@ export default function CheckinScreen() {
         showLoginButton={!isAuthenticated}
       />
 
-      {!isAuthReady ? (
+      {!isAuthReadyForUI ? (
         <View style={styles.center}>
           <Text style={styles.loadingText}>読み込み中...</Text>
         </View>

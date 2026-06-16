@@ -67,7 +67,7 @@ function PrefectureCell({
 
 export default function ZukanScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReady, login } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI, login } = useAuth();
 
   const { data, refetch, isFetching } = trpc.zukan.myAreas.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -92,7 +92,7 @@ export default function ZukanScreen() {
   const visitedCount = visitedPrefSet.size;
   const encounteredCount = new Set([...visitedPrefSet, ...encounteredPrefSet]).size;
 
-  if (!isAuthReady) {
+  if (!isAuthReadyForUI) {
     return (
       <ScreenContainer containerClassName="bg-background">
         <AppHeader title="図鑑" showCharacters={false} isDesktop={isDesktop} showMenu={true} />

@@ -497,7 +497,7 @@ function LoginGate() {
 
 export default function PostScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReady } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
   const [openItem, setOpenItem] = useState<EncounterItem | null>(null);
   const [openModalVisible, setOpenModalVisible] = useState(false);
@@ -597,7 +597,7 @@ export default function PostScreen() {
         showLoginButton={!isAuthenticated}
       />
 
-      {!isAuthReady ? (
+      {!isAuthReadyForUI ? (
         <View style={styles.center}>
           <Text style={styles.loadingText}>読み込み中...</Text>
         </View>

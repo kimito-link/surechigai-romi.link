@@ -128,7 +128,7 @@ function formatDate(d: Date | string): string {
 
 export default function MapScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReady, login } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI, login } = useAuth();
 
   const { data, refetch, isFetching } = trpc.zukan.myAreas.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -138,7 +138,7 @@ export default function MapScreen() {
 
   const visited = data?.visited ?? [];
 
-  if (!isAuthReady) {
+  if (!isAuthReadyForUI) {
     return (
       <ScreenContainer containerClassName="bg-background">
         <AppHeader title="軌跡" showCharacters={false} isDesktop={isDesktop} showMenu />
