@@ -33,7 +33,7 @@ DSすれちがい通信の本質「開いた時に既に何かが起きている
 |---------|---------|
 | フロントエンド | Expo Router (web/iOS/Android 1コードベース), NativeWind, tRPC client |
 | バックエンド | tRPC + Express (Vercel Functions に同居), Drizzle ORM |
-| DB | Supabase Free (Postgres), H3 + B-tree (PostGIS 非依存) |
+| DB | **Railway PostgreSQL**（旧: Supabase Free を想定）, H3 + B-tree (PostGIS 非依存)。`DATABASE_URL` は Railway 外部URL `*.proxy.rlwy.net`。詳細は CLAUDE.md「Railway / データベースについて」 |
 | 認証 | Clerk + Twitter OAuth 2.0 PKCE |
 | 位置精度 | H3 res8 (約460m), h3-js ライブラリ |
 | モデレーション | Groq llama-3.1-8b-instant (14,400 RPD) 主 + Gemini Flash-Lite 控え |
