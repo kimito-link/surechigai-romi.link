@@ -216,7 +216,8 @@
   .ink .three .t h3{ font-weight:600; font-size:16.5px; letter-spacing:.1em; margin:0 0 .3em; color:var(--washi) } .ink .three .t p{ margin:0 auto; font-size:14px; color:#cabfa9; max-width:24rem; line-height:2 }
 
   .closing{ text-align:center; min-height:96vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(40px,8vw,80px) 0 0 }
-  .closing .ichigo{ font-family:var(--fude); font-size:15px; letter-spacing:.3em; color:var(--taisha); margin-bottom:1.4em; text-indent:.3em }
+  .closing .ichigo{ font-family:var(--fude); font-size:13px; letter-spacing:.42em; color:var(--taisha); margin-bottom:1.1em; text-indent:.42em }
+  .closing .kessui{ font-family:var(--fude); font-weight:400; font-size:clamp(30px,8vw,52px); line-height:1.55; letter-spacing:.16em; color:var(--sumi); margin:0 auto .8em; text-indent:.16em; }
   .closing .haiku{ font-family:var(--fude); font-size:clamp(17px,4vw,21px); color:var(--sumi-soft); line-height:2.5; letter-spacing:.14em; margin:0 auto 1.6em; max-width:24rem }
   .chikurin{ position:relative; height:clamp(220px,40vh,360px); margin-top:clamp(30px,7vw,56px); overflow:hidden; }
   .chikurin .take{ position:absolute; bottom:0; width:5px; border-radius:3px; background:linear-gradient(180deg,#5f7048,#3f5232); }
@@ -381,10 +382,10 @@
 
 <!-- 結び -->
 <section class="closing shell reveal" data-scene="clear">
-  <p class="ichigo">一期一会</p>
+  <p class="ichigo">結びに</p>
+  <h2 class="kessui">一期一会の旅の<br />思い出を、刻む</h2>
   <p class="haiku">今日の一歩、<br />いづれ懐かしき<br />道となる</p>
-  <h2>さあ、旅をはじめよう</h2>
-  <p class="lead">吹雪は晴れ、遠くに富士。<br />その先は、竹林の細道へと続いてゆく。<br />いつもの移動が、そのまま物語になります。</p>
+  <p class="lead">同じ道、同じ景色は、二度とない。<br />だからこそ、その一度きりの足あとを、消さずに刻む。<br />吹雪は晴れ、遠くに富士。その先は、竹林の細道へ。<br />いつもの移動が、そのまま、あなただけの物語になります。</p>
   <div class="cta-row"><a class="btn btn-x" href="https://surechigai-romi.link">𝕏 で旅をはじめる</a></div>
   <div class="chikurin" id="chikurin" aria-hidden="true"><div class="michi"></div></div>
 </section>
@@ -417,6 +418,8 @@
 
     var KF = [
       { at:0.00, skyT:'#c2ccd3', skyB:'#dfe2de', tint:[150,170,185], tintA:.16, fuji:.05, clear:0,  kasumi:1.0, bliz:1.0, lx:82, lsp:48, lop:.30, lc:[214,228,240] },
+      /* 雪国（トンネルを抜けた先）：吹雪が和らぎ、温泉の猿が見える静かな雪景色 */
+      { at:0.14, skyT:'#cdd6dd', skyB:'#e4e2da', tint:[150,168,182], tintA:.12, fuji:.10, clear:.2, kasumi:.8, bliz:0.28, lx:78, lsp:54, lop:.34, lc:[224,234,242] },
       { at:0.30, skyT:'#e6e0e8', skyB:'#f0e8da', tint:[220,160,185], tintA:.07, fuji:.18, clear:.5, kasumi:.5, bliz:0.0, lx:62, lsp:70, lop:.42, lc:[255,244,236] },
       { at:0.58, skyT:'#d6e7ea', skyB:'#efe7d6', tint:[70,120,90],   tintA:.06, fuji:.26, clear:1,  kasumi:.15, bliz:0.0, lx:50, lsp:42, lop:.62, lc:[255,252,232] },
       { at:0.82, skyT:'#ecdfce', skyB:'#e8dcc6', tint:[168,87,47],   tintA:.09, fuji:.30, clear:1,  kasumi:.06, bliz:0.0, lx:24, lsp:64, lop:.5,  lc:[255,206,150] },
@@ -467,7 +470,9 @@
       [els.yataiA,els.yataiB,els.senko].forEach(function(e){ if(e) e.style.opacity=nightW; });
       els.senko.classList.toggle('show', wNatsu>0.1);
       if(els.hanabi) els.hanabi.style.opacity=(wNatsu>0.1?1:0);  /* 花火コンテナを夏で可視化 */
-      els.yakiimo.style.opacity=wMomiji; els.yuki.style.opacity=wYuki; els.onsen.style.opacity=wYuki;
+      els.yakiimo.style.opacity=wMomiji; els.yuki.style.opacity=wYuki;
+      /* 温泉の猿は「雪国」章(p≈0.08〜0.26)で主役に。吹雪が薄れるこの帯でしっかり見せる。 */
+      var wOnsen=win(p,0.13,0.13); els.onsen.style.opacity=wOnsen;
       var si=Math.min(3,Math.floor(p*4+0.0001)); dots.forEach(function(d,i){ d.classList.toggle('on', i===si); });
     }
 
@@ -485,11 +490,21 @@
 
     /* 一度きりの演出トリガー */
     function fireTrigger(tg){
-      if(tg==='kisha'){ var k=els && document.getElementById('kishaScene'); var sc=document.getElementById('kishaScene');
-        if(sc){ sc.style.opacity='1'; sc.classList.add('run'); whistle(); setTimeout(function(){ sc.style.opacity='0'; sc.classList.remove('run'); }, 5200); } }
+      if(tg==='kisha'){ var sc=document.getElementById('kishaScene');
+        if(sc){ sc.style.opacity='1'; sc.classList.add('run'); whistle(); setTimeout(function(){ sc.style.opacity='0'; sc.classList.remove('run'); }, 5200); }
+        setTimeout(walkSnow, 5400); }  /* トンネルを抜けて雪国に出たら、雪道をザッザッと歩く */
       if(tg==='rikisha'){ var r=document.getElementById('jinrikisha'); if(r){ r.classList.remove('go'); void r.offsetWidth; r.classList.add('go'); } }
       if(tg==='natsu-hiru'){ jumpFish(); var b=document.getElementById('boushi'); if(b){ setTimeout(function(){ b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); }, 1400); } boom(); }
       if(tg==='natsu-yoru'){ boom(); jumpFish(); }
+    }
+    /* 雪道を「ザッ・ザッ・ザッ」と歩き、足跡を一つずつ刻む（消えずに残る＝一期一会を刻む） */
+    function walkSnow(){
+      var y=document.getElementById('yukimichi'); if(!y) return;
+      var atos=[].slice.call(y.querySelectorAll('.ato')); if(!atos.length) return;
+      atos.forEach(function(a){ a.classList.remove('step'); a.style.opacity='0'; });  /* 一旦リセット */
+      atos.forEach(function(a,i){ setTimeout(function(){
+        a.classList.add('step'); footstep();   /* 踏みしめる音「ザッ」 */
+      }, 650 + i*620); });   /* 約0.62秒間隔のリズム＝ザッ・ザッ・ザッ */
     }
     function jumpFish(){ if(reduce) return; var u=document.getElementById('uo'); if(!u) return; u.classList.remove('jump'); void u.offsetWidth; u.classList.add('jump'); splash(); setTimeout(function(){ if(body.getAttribute('data-scene')==='summer'){ u.classList.remove('jump'); void u.offsetWidth; u.classList.add('jump'); splash(); } }, 4500); }
     function boom(){ var h=document.getElementById('hanabi'); if(!h||reduce) return;
@@ -521,6 +536,11 @@
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.3,t+0.2); g.gain.setValueAtTime(0.3,t+1.0); g.gain.exponentialRampToValueAtTime(0.0001,t+1.8); o.connect(g); g.connect(master); o.start(t); o.stop(t+2); }
     function boomSound(){ if(!soundOn||!actx) return; var t=actx.currentTime, n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.8,actx.sampleRate), ch=bf.getChannelData(0);
       for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,2); n.buffer=bf; var f=actx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=220; var g=actx.createGain(); g.gain.setValueAtTime(0.6,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.8);
+      n.connect(f); f.connect(g); g.connect(master); n.start(t); }
+    /* 雪を踏みしめる「ザッ」：短く詰まったノイズ（中域）＋わずかな沈み込み */
+    function footstep(){ if(!soundOn||!actx) return; var t=actx.currentTime, n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.12,actx.sampleRate), ch=bf.getChannelData(0);
+      for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,1.6); n.buffer=bf;
+      var f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=900; f.Q.value=0.8; var g=actx.createGain(); g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.13);
       n.connect(f); f.connect(g); g.connect(master); n.start(t); }
     function splash(){ if(!soundOn||!actx) return; var t=actx.currentTime, n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.15,actx.sampleRate), ch=bf.getChannelData(0);
       for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*(1-i/ch.length); n.buffer=bf; var f=actx.createBiquadFilter(); f.type='highpass'; f.frequency.value=1800; var g=actx.createGain(); g.gain.value=0.18; n.connect(f); f.connect(g); g.connect(master); n.start(t); }
