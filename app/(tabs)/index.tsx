@@ -566,7 +566,7 @@ export default function PostScreen() {
   );
 
   return (
-    <ScreenContainer containerClassName="bg-background" edges={[]}>
+    <ScreenContainer style={{ backgroundColor: "#FFFFFF" }} edges={[]}>
       <RadarHud isAuthenticated={isAuthenticated} onLogin={login} />
       
       {!isAuthReadyForUI ? (

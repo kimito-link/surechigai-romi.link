@@ -266,7 +266,7 @@ export function JapanRadarMap({ children }: { children?: React.ReactNode }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color.bg,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     width: '150%',
     height: '150%',
     position: 'absolute',
-    opacity: 0.3, // dark neon vibe
+    opacity: 0.8, // Make it visible on white
   },
   radarContainer: {
     ...StyleSheet.absoluteFillObject,
