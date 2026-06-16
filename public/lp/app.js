@@ -118,9 +118,14 @@
           var sub=best.getAttribute('data-sub')||'day'; body.setAttribute('data-sub', sub);
           setSeasonTarget(scene); manageAmbient(scene, sub);
         }
-        /* トリガー（章ごとの一度きり演出）は、その章が画面に十分入ったら */
-        var tg=best.getAttribute('data-trigger'); if(tg && !best.dataset.fired){ best.dataset.fired='1'; fireTrigger(tg); }
       }
+      /* トリガー（章ごとの一度きり演出）は、その章の「冒頭」が画面に入ったら発火。
+         章は数画面ぶん縦に長いので“中央”を待つと演出が遅れる。章の上端が画面中央より上に来た時点
+         （＝最初の文を読み始めるあたり）で鳴らす。best非依存の全章走査で取りこぼしも防ぐ。 */
+      sceneEls.forEach(function(e){ var tg=e.getAttribute('data-trigger'); if(!tg||e.dataset.fired) return;
+        var r=e.getBoundingClientRect();
+        if(r.top<vh*0.55 && r.bottom>vh*0.3){ e.dataset.fired='1'; fireTrigger(tg); }
+      });
 
       /* 章の見出し・暗幕・罫：章が画面に少しでも入ったら lead-in */
       storyEls.forEach(function(s){ var r=s.getBoundingClientRect();
