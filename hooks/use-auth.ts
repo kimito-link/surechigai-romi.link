@@ -23,9 +23,16 @@ function resolveReturnUrl(returnUrl?: string): string | undefined {
   return `${origin}${withLeadingSlash}`;
 }
 
+let globalAuthReady = false;
+
 export function useAuth() {
   const { user: clerkUser, isLoaded: clerkIsLoaded } = useUser();
-  const isLoaded = clerkIsLoaded;
+  
+  if (clerkIsLoaded) {
+    globalAuthReady = true;
+  }
+  
+  const isLoaded = clerkIsLoaded || globalAuthReady;
   const { signOut, getToken } = useClerkAuth();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_x" });
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
