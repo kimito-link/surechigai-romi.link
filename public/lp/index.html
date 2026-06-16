@@ -247,6 +247,14 @@
     background:linear-gradient(270deg, rgba(234,243,255,.9), transparent); }
   .novel .nagareboshi.go{ animation:nagare-boshi 1.3s ease-in forwards; }
   @keyframes nagare-boshi{ 0%{opacity:0; transform:translate(0,0)} 10%{opacity:1} 100%{opacity:0; transform:translate(-220px,150px)} }
+  /* 願いの星：流れ星のあとに、ひとつ強く瞬く（願いが届いた合図） */
+  .novel .negai{ position:absolute; width:4px; height:4px; border-radius:50%; background:#fff; opacity:0; z-index:1; }
+  .novel .negai.shine{ animation:negai 2.2s ease-out forwards; }
+  @keyframes negai{ 0%{opacity:0; transform:scale(.4); box-shadow:0 0 0 0 rgba(234,243,255,0)} 20%{opacity:1; transform:scale(1.4); box-shadow:0 0 14px 4px rgba(234,243,255,.9)} 100%{opacity:.5; transform:scale(1); box-shadow:0 0 6px 1px rgba(234,243,255,.4)} }
+  /* 見上げる: 星空がゆっくり下へ流れ、空を仰ぐ感覚 */
+  .novel.in .silhouette ~ .hoshi, .novel.in .hoshi{ }
+  .novel .sky-drift{ animation:miageru 24s linear infinite; }
+  @keyframes miageru{ from{ transform:translateY(0) } to{ transform:translateY(20px) } }
 
   /* ===== 序・章 ===== */
   .hero{ text-align:center; min-height:118vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(80px,16vw,150px) 0 clamp(40px,8vw,70px); }
@@ -291,6 +299,17 @@
   footer{ text-align:center; padding:clamp(40px,8vw,70px) 0 56px; color:var(--faint); font-size:12.5px; line-height:2.2; letter-spacing:.06em; position:relative; z-index:2 }
   footer a{ color:var(--ai); text-decoration:none; border-bottom:1px solid var(--line) }
   .footnote{ margin-top:14px; font-size:11.5px; color:var(--faint); line-height:2.1 }
+
+  /* 実写写真(SD生成)を背景に薄く敷く。墨のベール越しで侘び寂びに馴染ませる。 */
+  .photo-bg{ position:relative; }
+  .photo-bg::before{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+    background-size:cover; background-position:center; opacity:.22;
+    -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 50%, #000 30%, transparent 88%);
+    mask-image:radial-gradient(ellipse 80% 70% at 50% 50%, #000 30%, transparent 88%); }
+  .photo-bg::after{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+    background:linear-gradient(180deg, var(--sky-top), transparent 30%, transparent 70%, var(--sky-bottom)); opacity:.5; }
+  .ma.photo-bg::before{ background-image:url('img/chashitsu.png'); }
+  .chap.photo-bg::before{ background-image:url('img/hosomichi.png'); }
 
   .reveal{ opacity:0; transform:translateY(16px); transition:opacity 1.1s ease, transform 1.1s ease } .reveal.in{ opacity:1; transform:none }
   @media(prefers-reduced-motion:reduce){
@@ -425,7 +444,7 @@
 </section>
 
 <!-- 休憩の間：茶道・和菓子・書道 -->
-<div class="ma" data-koton>
+<div class="ma photo-bg" data-koton>
   <div class="chakyu">
     <div class="item"><svg viewBox="0 0 70 60"><path class="yuge2" d="M30 18 C 26 10, 34 8, 30 0" stroke="#cfcabf" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M14 28 Q35 50 56 28 Z" fill="#3f6b5e"/><path d="M14 28 Q35 34 56 28" fill="none" stroke="#23201b" stroke-width="1.2"/><ellipse cx="35" cy="28" rx="21" ry="4" fill="none" stroke="#23201b" stroke-width="1.2"/></svg><p class="nm">一服の茶</p></div>
     <div class="item"><svg viewBox="0 0 70 60"><rect x="16" y="34" width="38" height="6" rx="2" fill="#8a6a3a"/><path d="M22 34 Q35 16 48 34 Z" fill="#d8849c"/><circle cx="35" cy="28" r="3" fill="#a8572f"/></svg><p class="nm">和菓子</p></div>
@@ -463,7 +482,7 @@
 <div class="ma" data-koton><span class="niwa"><svg viewBox="0 0 520 150"><g fill="none" stroke="#3a352c" stroke-opacity=".4" stroke-width="1.2"><path d="M0 100 Q130 82 260 100 T520 100"/><path d="M0 114 Q130 96 260 114 T520 114"/></g><ellipse cx="200" cy="98" rx="20" ry="12" fill="#3a352c" fill-opacity=".15"/></svg></span><span class="shishi"><svg viewBox="0 0 90 64"><ellipse cx="46" cy="58" rx="34" ry="5" fill="#3a352c" fill-opacity=".12"/><path d="M16 56 Q46 46 76 56" fill="none" stroke="#3c5a6e" stroke-width="2" stroke-opacity=".5"/><line x1="24" y1="56" x2="24" y2="30" stroke="#3a352c" stroke-width="2.4"/><g class="tsutsu"><rect x="22" y="14" width="44" height="11" rx="5" fill="#7a6b48" stroke="#3a352c" stroke-width="2" transform="rotate(-16 34 40)"/></g><circle class="shizuku" cx="64" cy="40" r="2.6" fill="#3c5a6e" fill-opacity=".7"/></svg></span><span class="ku fude">紅葉散り敷く</span></div>
 
 <!-- 四の章（秋） -->
-<section class="chap shell reveal" data-scene="autumn" data-trigger="aki">
+<section class="chap shell reveal photo-bg" data-scene="autumn" data-trigger="aki">
   <div class="ink">
     <p class="chapter-no">四の章</p><p class="kisetsu">― 秋 ―</p>
     <h2>足あとは、ずっと残る</h2>
