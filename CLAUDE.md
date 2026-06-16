@@ -12,9 +12,15 @@ DSのすれ違い通信を現代的に再現する位置情報マッチングア
 Expo Router + tRPC + Drizzle (Railway PostgreSQL) + Clerk (X OAuth)。
 本番ドメイン: https://surechigai-romi.link
 
-### 設計原則（V2-SURECHIGAI-DESIGN.md より）
+### 設計原則
 
-1. **生緯度経度を保存しない** — サーバー受信時に即 H3 res8（約460m）+ 500mグリッドに丸める
+> ⚠️ **方針転換済み（重要）**: 当初の V2-SURECHIGAI-DESIGN.md は「生座標を保存しない・48h削除・プライバシー最優先」だったが、
+> コンセプトを「**移動の足あとを正確に残し、後でその思い出の場所をたどれる／推しの軌跡をファンが聖地巡礼できる**」へ転換した。
+> よって現行方針は以下。古い設計書の記述よりこちらが優先。
+
+1. **正確な座標を保存し、消さない** — `locations` に正確な `lat`/`lng`/`accuracyM` を保存（後で行ける精度）。48h削除は廃止＝永続保存。
+   すれ違いマッチング用に H3 res8（約460m）+ 500mグリッドの丸め値（`latGrid`/`lngGrid`/`h3R8`）も併せて保持する。
+   プライバシーの自衛は「移動専用アカウントの利用」をユーザーに委ねる方針（Xで名前を出してやる前提のため）。
 2. **Vercel Functions に API を同居** — Railway のプロキシ中継は廃止（API側は月0円）。ただし DB は Railway PostgreSQL を採用（後述）
 3. **タイムシフトマッチング** — 過去30日に同セルを通った人とマッチング（コールドスタート対策）
 4. **DM禁止、X連携** — アプリ内通信は一方向スタンプのみ。交流はXに委譲
@@ -34,7 +40,7 @@ Expo Router + tRPC + Drizzle (Railway PostgreSQL) + Clerk (X OAuth)。
 | テーブル | 要点 |
 |---------|------|
 | `users` | Clerk連携（既存） |
-| `locations` | userId, h3R8, latGrid, lngGrid, municipality, prefecture, recordedAt — 48h TTL |
+| `locations` | userId, h3R8, latGrid, lngGrid, **lat, lng, accuracyM（正確な座標）**, municipality, prefecture, recordedAt — **永続保存（48h削除は廃止）** |
 | `encounters` | userAId, userBId, tier 1-5, h3R7, areaName, prefecture, occurredAt, openedAt |
 | `reactions` | encounterId, senderId, emoji |
 | `visitedAreas` | userId, municipality, h3R7, firstVisitedAt |

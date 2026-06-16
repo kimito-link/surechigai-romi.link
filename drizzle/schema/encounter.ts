@@ -28,12 +28,22 @@ export const locations = pgTable(
   {
     id: serial("id").primaryKey(),
     userId: integer("userId").notNull(),
-    /** H3 resolution 8 セル (約460m) */
+    /** H3 resolution 8 セル (約460m)。すれ違いマッチングに使う粗い粒度。 */
     h3R8: text("h3R8").notNull(),
-    /** 500mグリッド丸め済み緯度 */
+    /** 500mグリッド丸め済み緯度（マッチング・互換用） */
     latGrid: real("latGrid").notNull(),
-    /** 500mグリッド丸め済み経度 */
+    /** 500mグリッド丸め済み経度（マッチング・互換用） */
     lngGrid: real("lngGrid").notNull(),
+    /**
+     * 正確な緯度（思い出の軌跡用）。後でその場所に行ける精度で残す。
+     * 方針転換: 思い出をたどる/聖地巡礼のため、生座標を保存し48hでも消さない。
+     * 自衛は移動専用アカウント運用に委ねる。NULL可（旧データ互換）。
+     */
+    lat: real("lat"),
+    /** 正確な経度（思い出の軌跡用） */
+    lng: real("lng"),
+    /** 位置精度（メートル）。記録時の accuracy を残す。 */
+    accuracyM: real("accuracyM"),
     municipality: text("municipality"),
     prefecture: varchar("prefecture", { length: 32 }),
     recordedAt: timestamp("recordedAt").defaultNow().notNull(),

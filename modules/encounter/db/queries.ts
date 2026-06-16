@@ -27,7 +27,11 @@ type DB = PostgresJsDatabase<typeof schema>;
 // locations
 // ---------------------------------------------------------------------------
 
-/** チェックイン位置を locations テーブルに INSERT */
+/**
+ * チェックイン位置を locations テーブルに INSERT。
+ * 方針転換: 正確な lat/lng/accuracy も保存する（思い出の軌跡・聖地巡礼のため）。
+ * 丸め済み latGrid/lngGrid はすれ違いマッチング用に引き続き保持。
+ */
 export async function insertLocation(
   db: DB,
   params: {
@@ -35,6 +39,9 @@ export async function insertLocation(
     h3R8: string;
     latGrid: number;
     lngGrid: number;
+    lat?: number | null;
+    lng?: number | null;
+    accuracyM?: number | null;
     municipality: string | null;
     prefecture: string | null;
   }
@@ -44,6 +51,9 @@ export async function insertLocation(
     h3R8: params.h3R8,
     latGrid: params.latGrid,
     lngGrid: params.lngGrid,
+    lat: params.lat ?? null,
+    lng: params.lng ?? null,
+    accuracyM: params.accuracyM ?? null,
     municipality: params.municipality ?? null,
     prefecture: params.prefecture ?? null,
     recordedAt: new Date(),
@@ -562,12 +572,15 @@ export async function upsertUserSettings(
 // sweep: 48h超 locations 削除
 // ---------------------------------------------------------------------------
 
-export async function deleteExpiredLocations(db: DB): Promise<number> {
-  const threshold = new Date(Date.now() - 48 * 60 * 60 * 1000);
-  const result = await db
-    .delete(locations)
-    .where(sql`${locations.recordedAt} < ${threshold}`);
-  return (result as unknown as { rowCount?: number })?.rowCount ?? 0;
+/**
+ * 方針転換により無効化: locations は削除しない（思い出の軌跡として永続保存する）。
+ * 以前は48h超を物理削除していたが、後で思い出の場所をたどれるよう残す方針へ。
+ * sweep からの呼び出し互換のため関数は残し、常に 0 件削除を返す。
+ * （DB側に TTL を持たせていないので、呼ばれても何もしないのが安全）
+ */
+export async function deleteExpiredLocations(_db: DB): Promise<number> {
+  // 削除しない。永続化方針。
+  return 0;
 }
 
 /**

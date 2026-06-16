@@ -96,11 +96,15 @@ export const encounterRouter = router({
       }).catch(() => {/* ignore */});
 
       // locations INSERT（geocode 完了前でもよい）
+      // 方針転換: 正確な座標も保存（思い出の軌跡・聖地巡礼用）。マッチングは引き続き丸めセル。
       await insertLocation(db, {
         userId,
         h3R8,
         latGrid,
         lngGrid,
+        lat: latLng.lat,
+        lng: latLng.lng,
+        accuracyM: input.accuracy ?? null,
         municipality,
         prefecture,
       });

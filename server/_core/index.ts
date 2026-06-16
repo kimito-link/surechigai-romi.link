@@ -559,7 +559,9 @@ async function startServer() {
 
   // =====================================================================
   // /api/sweep — GitHub Actions スイープ専用エンドポイント
-  // SWEEP_SECRET ヘッダー照合 + 48h超 locations 削除 + Supabase keepalive
+  // SWEEP_SECRET ヘッダー照合 + DB keepalive + 取りこぼしマッチング回収。
+  // 方針転換: locations は削除しない（思い出の軌跡として永続保存）。
+  // deleteExpiredLocations は互換のため呼ぶが常に0件（実削除しない）。
   // =====================================================================
   app.post("/api/sweep", async (req: Request, res: Response) => {
     const sweepSecret = process.env.SWEEP_SECRET;
@@ -582,7 +584,7 @@ async function startServer() {
         return;
       }
 
-      // 1. 48h超 locations 削除
+      // 1. locations は削除しない（永続保存方針）。互換のため呼ぶが常に0件。
       const deletedLocations = await deleteExpiredLocations(db);
 
       // 2. Supabase keepalive（SELECT 1 で接続維持）
