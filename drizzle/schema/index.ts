@@ -16,3 +16,6 @@ export * from "./api-usage";
 
 // すれちがいロミ: Encounter 関連テーブル
 export * from "./encounter";
+
+// すれちがいロミ / 動員ちゃれんじ 共通: Event（集まり）関連テーブル
+export * from "./event";
