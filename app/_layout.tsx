@@ -8,7 +8,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { Platform } from "react-native";
+import { Platform, View, Text } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { LoginSuccessProvider } from "@/lib/login-success-context";
@@ -124,39 +124,60 @@ export default function RootLayout() {
     };
   }, [initialInsets, initialFrame]);
 
+  const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const isMissingClerkKey = !clerkKey;
+
   const content = (
     <ErrorBoundary screenName="App">
       <GestureHandlerRootView style={{ flex: 1, overflow: "hidden" }}>
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
-          <PersistQueryClientProvider
-            client={queryClient}
-            persistOptions={{ persister: asyncStoragePersister }}
-          >
-            <AutoLoginProvider>
-              <LoginSuccessProvider>
-                <ToastProvider>
-                  <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="(tabs)" />
-                  </Stack>
-                  <StatusBar style="auto" />
-                  <LoginSuccessModalWrapper />
-                  <OfflineBanner />
-                  <NetworkToast />
-                </ToastProvider>
-              </LoginSuccessProvider>
-            </AutoLoginProvider>
-          </PersistQueryClientProvider>
-        </trpc.Provider>
+        {isMissingClerkKey ? (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0D1117", padding: 20 }}>
+            <Text style={{ color: "#F87171", fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>セットアップエラー</Text>
+            <Text style={{ color: "#E6EDF3", fontSize: 16, textAlign: "center", marginBottom: 20 }}>
+              Clerkの公開鍵 (EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY) が設定されていません。
+              VercelのEnvironment Variables、またはローカルの.envを確認してください。
+            </Text>
+          </View>
+        ) : (
+          <trpc.Provider client={trpcClient} queryClient={queryClient}>
+            <PersistQueryClientProvider
+              client={queryClient}
+              persistOptions={{ persister: asyncStoragePersister }}
+            >
+              <AutoLoginProvider>
+                <LoginSuccessProvider>
+                  <ToastProvider>
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="(tabs)" />
+                    </Stack>
+                    <StatusBar style="auto" />
+                    <LoginSuccessModalWrapper />
+                    <OfflineBanner />
+                    <NetworkToast />
+                  </ToastProvider>
+                </LoginSuccessProvider>
+              </AutoLoginProvider>
+            </PersistQueryClientProvider>
+          </trpc.Provider>
+        )}
       </GestureHandlerRootView>
     </ErrorBoundary>
   );
 
   const shouldOverrideSafeArea = Platform.OS === "web";
 
+  if (isMissingClerkKey) {
+    return (
+      <SafeAreaProvider initialMetrics={providerInitialMetrics}>
+        {content}
+      </SafeAreaProvider>
+    );
+  }
+
   if (shouldOverrideSafeArea) {
     return (
       <ClerkProvider
-        publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!}
+        publishableKey={clerkKey!}
         tokenCache={tokenCache}
       >
         <ClerkTokenSync />
@@ -175,7 +196,7 @@ export default function RootLayout() {
 
   return (
     <ClerkProvider
-      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!}
+      publishableKey={clerkKey!}
       tokenCache={tokenCache}
     >
       <ClerkTokenSync />
