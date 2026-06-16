@@ -566,9 +566,28 @@
       var n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.05,actx.sampleRate), ch=bf.getChannelData(0); for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*(1-i/ch.length); n.buffer=bf; var ng=actx.createGain(); ng.gain.value=0.22; n.connect(ng); ng.connect(master); n.start(t); }
     function whistle(){ if(!soundOn||!actx) return; var t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain(); o.type='sine'; o.frequency.setValueAtTime(520,t); o.frequency.linearRampToValueAtTime(440,t+1.4);
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.3,t+0.2); g.gain.setValueAtTime(0.3,t+1.0); g.gain.exponentialRampToValueAtTime(0.0001,t+1.8); o.connect(g); g.connect(master); o.start(t); o.stop(t+2); }
-    function boomSound(){ if(!soundOn||!actx) return; var t=actx.currentTime, n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.8,actx.sampleRate), ch=bf.getChannelData(0);
-      for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,2); n.buffer=bf; var f=actx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=220; var g=actx.createGain(); g.gain.setValueAtTime(0.6,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.8);
-      n.connect(f); f.connect(g); g.connect(master); n.start(t); }
+    /* 花火「ドオォン → パチパチパチ」。爆発音の後に小さな破裂が散発的に弾ける。 */
+    function boomSound(){ if(!soundOn||!actx) return; var t=actx.currentTime;
+      // ① ドオォン（低音の爆発＋胴鳴り）
+      var n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.9,actx.sampleRate), ch=bf.getChannelData(0);
+      for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,2.2); n.buffer=bf;
+      var f=actx.createBiquadFilter(); f.type='lowpass'; f.frequency.setValueAtTime(900,t); f.frequency.exponentialRampToValueAtTime(120,t+0.5);
+      var g=actx.createGain(); g.gain.setValueAtTime(0.7,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.9);
+      n.connect(f); f.connect(g); g.connect(master); n.start(t);
+      // 低い余韻（ズーン）
+      var o=actx.createOscillator(), og=actx.createGain(); o.type='sine'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(40,t+0.5);
+      og.gain.setValueAtTime(0.4,t); og.gain.exponentialRampToValueAtTime(0.0001,t+0.6); o.connect(og); og.connect(master); o.start(t); o.stop(t+0.7);
+      // ② パチパチパチ（小さな破裂を散発的に）
+      var crackles=12+((Math.random()*6)|0);
+      for(var k=0;k<crackles;k++){
+        var dt=0.18+Math.random()*1.0;   // ドーンの後にばらけて
+        var cn=actx.createBufferSource(), cbf=actx.createBuffer(1,actx.sampleRate*0.04,actx.sampleRate), cc=cbf.getChannelData(0);
+        for(var m=0;m<cc.length;m++) cc[m]=(Math.random()*2-1)*Math.pow(1-m/cc.length,3); cn.buffer=cbf;
+        var cf=actx.createBiquadFilter(); cf.type='bandpass'; cf.frequency.value=2600+Math.random()*2600; cf.Q.value=3;
+        var cg=actx.createGain(); cg.gain.setValueAtTime(0.0001,t+dt); cg.gain.linearRampToValueAtTime(0.12+Math.random()*0.12,t+dt+0.004); cg.gain.exponentialRampToValueAtTime(0.0001,t+dt+0.05);
+        cn.connect(cf); cf.connect(cg); cg.connect(master); cn.start(t+dt);
+      }
+    }
     /* 雪を踏みしめる「ザッ」：短く詰まったノイズ（中域）＋わずかな沈み込み */
     function footstep(){ if(!soundOn||!actx) return; var t=actx.currentTime, n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.12,actx.sampleRate), ch=bf.getChannelData(0);
       for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,1.6); n.buffer=bf;
