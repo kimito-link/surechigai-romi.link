@@ -188,7 +188,7 @@
   @keyframes hintpulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(168,87,47,0) } 50%{ box-shadow:0 0 0 5px rgba(168,87,47,.18) } }
 
   /* ===== 間（ま）：余韻。縦長。 ===== */
-  .ma{ min-height:clamp(80vh,100vh,110vh); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(20px,5vw,40px); position:relative; z-index:2; }
+  .ma{ min-height:135vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(24px,6vw,52px); position:relative; z-index:2; }
   .ma .niwa{ width:min(520px,86vw); opacity:0; transform:translateY(20px); transition:opacity 1.3s ease, transform 1.3s ease; }
   .ma.in .niwa{ opacity:.8; transform:none; } .ma .niwa svg{ width:100%; display:block }
   .ma .shishi{ width:clamp(96px,24vw,128px); height:auto; opacity:.92 } .ma .shishi svg{ width:100%; display:block; overflow:visible }
@@ -208,7 +208,7 @@
   @keyframes fude-run{ to{ stroke-dashoffset:0 } }
 
   /* ===== 序・章 ===== */
-  .hero{ text-align:center; min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(80px,16vw,150px) 0 clamp(40px,8vw,70px); }
+  .hero{ text-align:center; min-height:118vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(80px,16vw,150px) 0 clamp(40px,8vw,70px); }
   .haiku-open{ font-family:var(--fude); font-size:clamp(16px,3.8vw,19px); color:var(--sumi-soft); line-height:2.5; letter-spacing:.14em; margin:0 auto; max-width:30rem; }
   .hero h1{ font-family:var(--fude); font-weight:400; letter-spacing:.3em; font-size:clamp(40px,12vw,80px); line-height:1.25; margin:.55em 0 .1em; color:var(--sumi); text-indent:.3em; }
   .hero .yomi{ font-size:12px; letter-spacing:.5em; color:var(--faint); text-indent:.5em }
@@ -222,7 +222,7 @@
   .scroll-hint::after{ content:"｜"; display:block; margin:.6em auto 0; animation:hint 2s ease-in-out infinite }
   @keyframes hint{ 0%,100%{opacity:.3;transform:translateY(0)} 50%{opacity:.9;transform:translateY(4px)} }
 
-  section.chap{ min-height:96vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(20px,4vw,40px) 0 }
+  section.chap{ min-height:150vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(20px,4vw,40px) 0 }
   .chapter-no{ font-family:var(--fude); text-align:center; font-size:13px; letter-spacing:.42em; color:var(--taisha); text-indent:.42em; margin-bottom:.3em }
   .kisetsu{ font-family:var(--fude); text-align:center; font-size:13px; letter-spacing:.4em; color:var(--faint); text-indent:.4em; margin-bottom:.7em; opacity:0; transform:translateY(14px); transition:opacity 1.1s ease, transform 1.1s ease; }
   .chap.in .kisetsu{ opacity:1; transform:none; }
@@ -239,7 +239,7 @@
   .ink .three{ margin:clamp(30px,6vw,46px) auto 0; max-width:28rem; display:flex; flex-direction:column; gap:clamp(22px,4vw,34px) }
   .ink .three .t h3{ font-weight:600; font-size:16.5px; letter-spacing:.1em; margin:0 0 .3em; color:var(--washi) } .ink .three .t p{ margin:0 auto; font-size:14px; color:#cabfa9; max-width:24rem; line-height:2 }
 
-  .closing{ text-align:center; min-height:96vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(40px,8vw,80px) 0 0 }
+  .closing{ text-align:center; min-height:130vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(40px,8vw,80px) 0 0 }
   .closing .ichigo{ font-family:var(--fude); font-size:13px; letter-spacing:.42em; color:var(--taisha); margin-bottom:1.1em; text-indent:.42em }
   .closing .kessui{ font-family:var(--fude); font-weight:400; font-size:clamp(30px,8vw,52px); line-height:1.55; letter-spacing:.16em; color:var(--sumi); margin:0 auto .8em; text-indent:.16em; }
   .closing .haiku{ font-family:var(--fude); font-size:clamp(17px,4vw,21px); color:var(--sumi-soft); line-height:2.5; letter-spacing:.14em; margin:0 auto 1.6em; max-width:24rem }
