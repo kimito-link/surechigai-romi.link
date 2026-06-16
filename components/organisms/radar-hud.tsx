@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Image, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { color } from "@/lib/tokens";
+import { color } from "@/theme/tokens";
 
 interface RadarHudProps {
   onDismissIntro?: () => void;
