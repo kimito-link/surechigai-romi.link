@@ -393,16 +393,22 @@
   .story .ph.key{ font-family:var(--fude); font-size:clamp(22px,6.4vw,34px); line-height:2.1; letter-spacing:.16em; color:var(--sumi); min-height:54vh; }
   /* 沈黙の「間（ま）」：…… や記号だけの一行は、たっぷり余白を取る */
   .story .ph.ma{ min-height:64vh; color:var(--faint); letter-spacing:.5em; }
-  /* 夜・暗い章は本文を白く。data-night の章に適用 */
-  .story.night .ph{ color:#e7eef7; text-shadow:0 1px 18px rgba(8,16,30,.6); }
-  .story.night .ph.key{ color:#f2f6fc; }
-  .story.night .ep-label{ color:#aac3df; } .story.night .ep-no{ color:#6f93b8; }
-  /* 章ごとの暗幕（情景を引き締める）。季節で濃さを変える */
+  /* 明るい章の本文：濃い墨色＋淡い白縁で、どんな背景でもくっきり読める */
+  .story .ph{ text-shadow:0 1px 2px rgba(255,255,255,.7), 0 0 22px rgba(255,255,255,.55); }
+  /* 夜・暗い章だけ本文を白く（夏夜・結章など data-veil=dusk/night） */
+  .story.night .ph{ color:#f3f7fc; text-shadow:0 1px 3px rgba(6,12,26,.9), 0 0 22px rgba(6,12,26,.7); }
+  .story.night .ph.key{ color:#fff; }
+  .story.night .ph.ma{ color:#9fb4ce; }
+  .story.night .ep-label{ color:#bcd2ec; } .story.night .ep-no{ color:#85a7cb; }
+  /* 章ごとの“ベール”。文字を浮かせるための最小限に留め、背景の景色は潰さない。 */
   .story .veil{ position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:0; transition:opacity 1.4s ease; }
   .story.lead-in .veil{ opacity:1; }
-  .story[data-veil="dark"] .veil{ background:radial-gradient(ellipse 100% 80% at 50% 45%, rgba(8,14,28,.30), rgba(6,10,22,.74)); }
-  .story[data-veil="dusk"] .veil{ background:radial-gradient(ellipse 100% 80% at 50% 45%, rgba(20,18,34,.10), rgba(14,12,26,.5)); }
-  .story[data-veil="soft"] .veil{ background:radial-gradient(ellipse 100% 90% at 50% 50%, transparent 40%, rgba(30,26,20,.18)); }
+  /* 雪国(冬)：白景色を活かす。中央をほんの少しだけ白く明るくし、文字(墨)を読みやすく */
+  .story[data-veil="mist"] .veil{ background:radial-gradient(ellipse 90% 60% at 50% 48%, rgba(255,255,255,.32), transparent 70%); }
+  /* 昼(春・夏昼・秋)：ごく薄い下方の陰で文字を締める程度 */
+  .story[data-veil="soft"] .veil{ background:radial-gradient(ellipse 100% 90% at 50% 50%, transparent 45%, rgba(40,34,24,.14)); }
+  /* 夕暮れ・夜(夏夜・結)：やや暗くして白文字を映えさせる（黒潰しはしない） */
+  .story[data-veil="dusk"] .veil{ background:radial-gradient(ellipse 110% 85% at 50% 42%, rgba(14,16,34,.18), rgba(8,10,26,.46)); }
   /* 章の終わりの罫（次章への余韻） */
   .story .ep-rule{ width:1px; height:clamp(40px,8vw,70px); margin:18vh auto 0; background:linear-gradient(180deg, var(--line), transparent); opacity:0; transition:opacity 1.4s ease; }
   .story.lead-in .ep-rule{ opacity:.6; }
@@ -462,21 +468,27 @@
   .footnote{ margin-top:14px; font-size:11.5px; color:var(--faint); line-height:2.1 }
 
   /* 実写写真(SD生成)を背景に薄く敷く。墨のベール越しで侘び寂びに馴染ませる。 */
+  /* 実写背景：章いっぱいに敷き、はっきり見せる（写真を主役に）。
+     章は数画面ぶん高いので background-attachment:fixed で“窓から景色を覗く”ように固定し、
+     スクロール中もその章の情景が画面に貼り付く。文字は別途、白縁/影で確実に読ませる。 */
+  .story.photo-bg{ position:relative; }
   .photo-bg{ position:relative; }
-  .photo-bg::before{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
-    background-size:cover; background-position:center; opacity:.22;
-    -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 50%, #000 30%, transparent 88%);
-    mask-image:radial-gradient(ellipse 80% 70% at 50% 50%, #000 30%, transparent 88%); }
-  .photo-bg::after{ content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
-    background:linear-gradient(180deg, var(--sky-top), transparent 30%, transparent 70%, var(--sky-bottom)); opacity:.5; }
-  /* 各セクション固有の背景写真（SD生成）。data-bg で出し分け。 */
-  .photo-bg[data-bg="chashitsu"]::before{ background-image:url('img/chashitsu.png'); }
-  .photo-bg[data-bg="hosomichi"]::before{ background-image:url('img/hosomichi.png'); }
-  .photo-bg[data-bg="fuji"]::before{ background-image:url('img/fuji.png'); opacity:.28; }
-  .photo-bg[data-bg="sakura"]::before{ background-image:url('img/sakura.png'); opacity:.26; }
-  .photo-bg[data-bg="taki"]::before{ background-image:url('img/taki.png'); opacity:.24; }
-  .photo-bg[data-bg="tanbo"]::before{ background-image:url('img/tanbo.png'); opacity:.26; }
-  .photo-bg[data-bg="tekiya"]::before{ background-image:url('img/tekiya.png'); opacity:.30; }
+  /* 実写背景：画面に固定した1枚レイヤー(#photoStage)に、いまの章の写真を出す。
+     JS(updateNarrative)が、画面中央にある章の data-bg に応じて画像を差し替え、クロスフェードする。
+     sticky/background-attachment:fixed の不安定さを避け、どの端末でも“章ごとに景色が変わる”を確実に出す。 */
+  #photoStage{ position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+  #photoStage .pf{ position:absolute; inset:0; background-size:cover; background-position:center;
+    opacity:0; transition:opacity 1.2s ease;
+    -webkit-mask-image:radial-gradient(ellipse 100% 96% at 50% 50%, #000 70%, transparent 100%);
+    mask-image:radial-gradient(ellipse 100% 96% at 50% 50%, #000 70%, transparent 100%); }
+  #photoStage .pf.on{ opacity:.66; }
+  /* 写真の上の明暗（昼は淡い白、夜は淡い暗）。 */
+  #photoStage .pf-tint{ position:absolute; inset:0; opacity:0; transition:opacity 1.2s ease;
+    background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 24%, transparent 72%, rgba(255,255,255,.18)); }
+  #photoStage.night .pf-tint{ background:linear-gradient(180deg, rgba(8,12,26,.32), transparent 28%, transparent 66%, rgba(8,12,26,.44)); }
+  #photoStage.has-photo .pf-tint{ opacity:1; }
+  /* 本文・章見出しは写真レイヤーより前に（.story は z:2 なので元々前だが念のため） */
+  .photo-bg .ep-head, .photo-bg .ph, .photo-bg .ep-rule, .photo-bg .saso, .photo-bg .shishi-stage{ position:relative; z-index:2; }
 
   .reveal{ opacity:0; transform:translateY(16px); transition:opacity 1.1s ease, transform 1.1s ease } .reveal.in{ opacity:1; transform:none }
   @media(prefers-reduced-motion:reduce){
@@ -494,6 +506,9 @@
   <span class="lbl">四季</span>
   <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
 </div>
+
+<!-- 実写背景ステージ（章ごとに写真をクロスフェード差し替え） -->
+<div id="photoStage" aria-hidden="true"><div class="pf" id="pfA"></div><div class="pf" id="pfB"></div><div class="pf-tint"></div></div>
 
 <!-- 固定背景 -->
 <div class="scenery" aria-hidden="true">
@@ -601,7 +616,7 @@
 </section>
 
 <!-- ════════════════ 序章・語り（冬の夜のはじまり） ════════════════ -->
-<section class="story night" data-scene="winter" data-veil="dark">
+<section class="story photo-bg" data-scene="winter" data-veil="mist" data-bg="yukiguni">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">序 章</span><span class="ep-label">― 旅のはじまり ―</span></div>
   <p class="ph">ある冬の夜のことを、まだ覚えている。</p>
@@ -613,7 +628,7 @@
 </section>
 
 <!-- ════════════════ 一章・雪国へ（汽車・トンネル・雪国） ════════════════ -->
-<section class="story night" data-scene="winter" data-trigger="kisha" data-veil="dark">
+<section class="story photo-bg" data-scene="winter" data-trigger="kisha" data-veil="mist" data-bg="kisha">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">一 章</span><span class="ep-label">― 雪国へ ―</span></div>
   <p class="ph">汽笛が、ポオォと尾を引いた。</p>
@@ -629,7 +644,7 @@
 </section>
 
 <!-- ════════════════ 二章・雪道の足跡（先に通った誰か） ════════════════ -->
-<section class="story night" data-scene="winter" data-trigger="yukimichi" data-veil="dark">
+<section class="story photo-bg" data-scene="winter" data-trigger="yukimichi" data-veil="mist" data-bg="yukimichi">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">二 章</span><span class="ep-label">― 雪の一本道 ―</span></div>
   <p class="ph">駅を出て、雪の一本道を歩く。</p>
@@ -644,7 +659,7 @@
 </section>
 
 <!-- ════════════════ 三章・春（雪解け・桜・人力車・地蔵の花） ════════════════ -->
-<section class="story" data-scene="spring" data-trigger="rikisha" data-veil="soft" data-bg="sakura">
+<section class="story photo-bg" data-scene="spring" data-trigger="rikisha" data-veil="soft" data-bg="sakura">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">三 章</span><span class="ep-label">― 春、すれ違ふ ―</span></div>
   <p class="ph">峠を下るほどに、雪は、霞へと変わった。</p>
@@ -660,7 +675,7 @@
 </section>
 
 <!-- ════════════════ 四章・一服の間（茶室・鹿威し・間／ま） ════════════════ -->
-<section class="story" data-scene="spring" data-veil="soft" data-bg="chashitsu">
+<section class="story photo-bg" data-scene="spring" data-veil="soft" data-bg="shishiodoshi">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">四 章</span><span class="ep-label">― 一服の間（ま） ―</span></div>
   <p class="ph">街道の茶屋で、ひと息つくことにした。</p>
@@ -707,7 +722,7 @@
 </section>
 
 <!-- ════════════════ 五章・夏昼（蝉・川・かき氷・儚さ） ════════════════ -->
-<section id="michi" class="story" data-scene="summer" data-sub="day" data-trigger="natsu-hiru" data-veil="soft" data-bg="taki">
+<section id="michi" class="story photo-bg" data-scene="summer" data-sub="day" data-trigger="natsu-hiru" data-veil="soft" data-bg="taki">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">五 章</span><span class="ep-label">― 夏の、昼 ―</span></div>
   <p class="ph">季節は、いつのまにか、夏になっていた。</p>
@@ -723,7 +738,7 @@
 </section>
 
 <!-- ════════════════ 六章・夏夜祭り（屋台・花火・すれ違い・線香花火） ════════════════ -->
-<section class="story night" data-scene="summer" data-sub="night" data-trigger="natsu-yoru" data-veil="dusk" data-bg="tekiya">
+<section class="story night photo-bg" data-scene="summer" data-sub="night" data-trigger="natsu-yoru" data-veil="dusk" data-bg="tekiya">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">六 章</span><span class="ep-label">― 夏の、夜祭り ―</span></div>
   <p class="ph">日が暮れて、遠くに、祭りの灯が見えた。</p>
@@ -740,7 +755,7 @@
 </section>
 
 <!-- ════════════════ 七章・時を越えて（タイムシフト・推しの軌跡） ════════════════ -->
-<section class="story night" data-scene="summer" data-sub="night" data-veil="dusk">
+<section class="story night photo-bg" data-scene="summer" data-sub="night" data-veil="dusk" data-bg="hanabi">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">七 章</span><span class="ep-label">― 時を越えて ―</span></div>
   <p class="ph">祭りのあと、私は、ひとつのことに気づいた。</p>
@@ -755,7 +770,7 @@
 </section>
 
 <!-- ════════════════ 八章・秋（紅葉・落ち葉・足あとは消えない） ════════════════ -->
-<section class="story" data-scene="autumn" data-trigger="aki" data-veil="soft" data-bg="hosomichi">
+<section class="story photo-bg" data-scene="autumn" data-trigger="aki" data-veil="soft" data-bg="hosomichi">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">八 章</span><span class="ep-label">― 秋、残るもの ―</span></div>
   <p class="ph">木々が、燃えるように、色づいていた。</p>
@@ -771,7 +786,7 @@
 </section>
 
 <!-- ════════════════ 結章・扉（富士・月・流れ星・Xへの誘い） ════════════════ -->
-<section class="story night" data-scene="clear" data-veil="dusk">
+<section class="story night photo-bg" data-scene="clear" data-veil="dusk" data-bg="fuji">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">結 章</span><span class="ep-label">― 晴れて、富士 ―</span></div>
   <p class="ph">雲が晴れ、はじめて、富士が見えた。</p>
@@ -799,6 +814,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=5"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

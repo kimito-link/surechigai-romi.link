@@ -118,6 +118,9 @@
           var sub=best.getAttribute('data-sub')||'day'; body.setAttribute('data-sub', sub);
           setSeasonTarget(scene); manageAmbient(scene, sub);
         }
+        /* いまの章の実写背景を出す（クロスフェード）。夜章は暗いtintに。 */
+        var isNight = best.classList.contains('night') || best.getAttribute('data-sub')==='night';
+        setPhoto(best.getAttribute('data-bg'), isNight);
       }
       /* トリガー（章ごとの一度きり演出）は、その章の「冒頭」が画面に入ったら発火。
          章は数画面ぶん縦に長いので“中央”を待つと演出が遅れる。章の上端が画面中央より上に来た時点
@@ -197,6 +200,26 @@
     }
     var hanabiTimer=null;
 
+    /* 実写背景ステージ：画面固定の2枚(pfA/pfB)を使い、章ごとに写真をクロスフェード差し替えする。 */
+    var PHOTOS={ yukiguni:'img/yukiguni.png', kisha:'img/kisha.png', yukimichi:'img/yukimichi.png',
+      sakura:'img/sakura.png', chashitsu:'img/chashitsu.png', shishiodoshi:'img/shishiodoshi.png',
+      taki:'img/taki.png', tekiya:'img/tekiya.png', hanabi:'img/hanabi.png',
+      hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', tanbo:'img/tanbo.png' };
+    var pfStage=document.getElementById('photoStage'), pfA=document.getElementById('pfA'), pfB=document.getElementById('pfB');
+    var pfFront=pfA, pfBack=pfB, curBg=null;
+    /* 先読み（チラつき防止） */
+    Object.keys(PHOTOS).forEach(function(k){ var im=new Image(); im.src=PHOTOS[k]; });
+    function setPhoto(bg, night){
+      if(pfStage){ pfStage.classList.toggle('night', !!night); }
+      if(bg===curBg) return; curBg=bg;
+      if(!bg || !PHOTOS[bg]){ if(pfFront) pfFront.classList.remove('on'); if(pfBack) pfBack.classList.remove('on'); if(pfStage) pfStage.classList.remove('has-photo'); return; }
+      if(pfStage) pfStage.classList.add('has-photo');
+      /* 裏面に次の写真を入れてフェードイン、表を裏に */
+      if(pfBack){ pfBack.style.backgroundImage="url('"+PHOTOS[bg]+"')"; pfBack.classList.add('on'); }
+      if(pfFront){ pfFront.classList.remove('on'); }
+      var t=pfFront; pfFront=pfBack; pfBack=t;
+    }
+
     /* 夜の章（.story.night）に、控えめなかまいたちの刃を仕込む（本文の背後でたまに一閃）。
        序章・雪道・夏夜など暗い章で、ふっと風の刃が走り「かまいたちの夜」の質感を添える。 */
     if(!reduce){
@@ -225,6 +248,14 @@
     var AC=window.AudioContext||window.webkitAudioContext, actx=null, master=null, soundOn=false, armed=false;
     var otoBtn=document.getElementById('oto'), otoHint=document.getElementById('otoHint');
     function ensureCtx(){ if(actx||!AC) return; actx=new AC(); master=actx.createGain(); master.gain.value=0; master.connect(actx.destination); }
+    /* iOS/Safari アンロック：ユーザー操作の同期フレーム内で「無音を1回 start」して AudioContext を解錠する。
+       これをやらないと、touchstartで resume しても実際の音が鳴らない端末がある。 */
+    function unlockIOS(){ if(!actx) return;
+      try{
+        var b=actx.createBuffer(1,1,22050), s=actx.createBufferSource(); s.buffer=b; s.connect(actx.destination); s.start(0);
+        if(actx.resume) actx.resume();
+      }catch(e){}
+    }
     function setOn(on){ soundOn=on; if(otoBtn) otoBtn.classList.toggle('muted', !on); if(master) master.gain.setTargetAtTime(on?0.5:0, actx.currentTime, .05); manageAmbient(body.getAttribute('data-scene'), body.getAttribute('data-sub')); }
     function tone(freq, type, dur, peak, t0){ if(!soundOn||!actx) return; var t=t0||actx.currentTime, o=actx.createOscillator(), g=actx.createGain(); o.type=type||'sine'; o.frequency.value=freq;
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak||0.3,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05); return o; }
@@ -357,11 +388,14 @@
       else { stopAmb('semi'); stopAmb('kawa'); if(chimeTimer){ clearInterval(chimeTimer); chimeTimer=null; } }
     }
 
-    function arm(){ if(armed) return; armed=true; ensureCtx(); if(actx&&actx.state==='suspended') actx.resume(); setOn(true); if(otoHint) otoHint.classList.remove('show');
-      window.removeEventListener('pointerdown',arm); window.removeEventListener('touchstart',arm); window.removeEventListener('keydown',arm); }
-    if(AC && !reduce){ window.addEventListener('pointerdown',arm,{passive:true}); window.addEventListener('touchstart',arm,{passive:true}); window.addEventListener('keydown',arm);
+    function arm(){ if(armed) return; armed=true; ensureCtx(); unlockIOS(); if(actx&&actx.state==='suspended') actx.resume(); setOn(true); if(otoHint) otoHint.classList.remove('show');
+      window.removeEventListener('pointerdown',arm); window.removeEventListener('touchstart',arm); window.removeEventListener('touchend',arm); window.removeEventListener('click',arm); window.removeEventListener('keydown',arm); }
+    /* スマホは touchend / click も拾う（touchstart だけだとスクロール開始と誤判定されアンロックしない端末がある） */
+    if(AC && !reduce){ window.addEventListener('pointerdown',arm,{passive:true}); window.addEventListener('touchstart',arm,{passive:true}); window.addEventListener('touchend',arm,{passive:true}); window.addEventListener('click',arm); window.addEventListener('keydown',arm);
       if(otoHint) setTimeout(function(){ if(!armed) otoHint.classList.add('show'); },1200); }
-    if(otoBtn) otoBtn.addEventListener('click', function(ev){ ev.stopPropagation(); if(!armed){ arm(); return; } ensureCtx(); if(actx&&actx.state==='suspended') actx.resume(); setOn(!soundOn); });
+    if(otoBtn) otoBtn.addEventListener('click', function(ev){ ev.stopPropagation(); ensureCtx(); unlockIOS(); if(actx&&actx.state==='suspended') actx.resume(); if(!armed){ armed=true; setOn(true); if(otoHint) otoHint.classList.remove('show'); return; } setOn(!soundOn); });
+    /* タブ復帰でiOSがcontextをsuspendに戻すことがある。戻ったら鳴らせるよう resume する保険。 */
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden && soundOn && actx && actx.state==='suspended') actx.resume(); });
 
     /* サウンドノベルの扉に瞬く星を散りばめる */
     (function(){ var novels=document.querySelectorAll('.novel'); novels.forEach(function(nv){ var n=reduce?0:40;
