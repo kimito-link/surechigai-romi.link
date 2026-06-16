@@ -331,9 +331,15 @@
     0%,2%,4%,100%{ opacity:0 }
     3%           { opacity:1 }
   }
+  /* 夜の章（.story.night）に走る、控えめなかまいたちの刃。本文の背後でたまに一閃。
+     章は数画面ぶん高いので、刃は画面に貼り付く形(position:sticky+vh高)にして“いま見えている範囲”だけを走らせる。 */
+  .story .kama{ z-index:1; position:sticky; top:0; height:100vh; inset:auto 0 auto 0; }
+  .story .kama .ha:nth-child(1){ left:18%; top:-6%; height:112vh; transform:rotate(19deg); animation:ha-run 14s ease-in-out 1.2s infinite; }
+  .story .kama .ha:nth-child(2){ left:66%; top:-5%; height:110vh; transform:rotate(15deg); animation:ha-run 14s ease-in-out 6.0s infinite; width:0.8px; }
+  .story .kama .ha:nth-child(3){ left:44%; top:-7%; height:114vh; transform:rotate(23deg); animation:ha-run 14s ease-in-out 10.4s infinite; width:0.7px; }
   /* reduced-motion */
   @media(prefers-reduced-motion:reduce){
-    .kama .ha, .kama .flash{ animation:none !important; }
+    .kama .ha, .kama .flash, .story .kama .ha{ animation:none !important; }
   }
 
   /* 月（空）と湖に映る逆さ月 */
@@ -793,6 +799,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

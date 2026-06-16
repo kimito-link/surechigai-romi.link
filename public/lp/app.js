@@ -197,6 +197,17 @@
     }
     var hanabiTimer=null;
 
+    /* 夜の章（.story.night）に、控えめなかまいたちの刃を仕込む（本文の背後でたまに一閃）。
+       序章・雪道・夏夜など暗い章で、ふっと風の刃が走り「かまいたちの夜」の質感を添える。 */
+    if(!reduce){
+      document.querySelectorAll('.story.night').forEach(function(s){
+        if(s.querySelector('.kama')) return;
+        var kama=document.createElement('div'); kama.className='kama'; kama.setAttribute('aria-hidden','true');
+        kama.innerHTML='<div class="ha"></div><div class="ha"></div><div class="ha"></div><div class="flash"></div>';
+        s.insertBefore(kama, s.firstChild);
+      });
+    }
+
     body.setAttribute('data-scene','winter'); body.setAttribute('data-sub','day');
     setSeasonTarget('winter');
     if(reduce){
