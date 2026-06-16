@@ -23,13 +23,39 @@ function resolveReturnUrl(returnUrl?: string): string | undefined {
   return `${origin}${withLeadingSlash}`;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildUserFromClerk(clerkUser: any): Auth.User | null {
+  if (!clerkUser) return null;
+  return {
+    id: 0,
+    openId: `clerk:${clerkUser.id}`,
+    name:
+      clerkUser.fullName ||
+      clerkUser.username ||
+      clerkUser.externalAccounts?.[0]?.username ||
+      null,
+    email: clerkUser.primaryEmailAddress?.emailAddress || null,
+    loginMethod: "twitter",
+    lastSignedIn: new Date(),
+    username:
+      clerkUser.externalAccounts?.[0]?.username ||
+      clerkUser.username ||
+      undefined,
+    profileImage: clerkUser.imageUrl || undefined,
+  };
+}
+
 let globalAuthReady = false;
+let cachedUser: Auth.User | null = null;
+let cachedIsAuthenticated = false;
 
 export function useAuth() {
   const { user: clerkUser, isLoaded: clerkIsLoaded } = useUser();
   
   if (clerkIsLoaded) {
     globalAuthReady = true;
+    cachedIsAuthenticated = !!clerkUser;
+    cachedUser = buildUserFromClerk(clerkUser);
   }
   
   const isLoaded = clerkIsLoaded || globalAuthReady;
@@ -96,6 +122,8 @@ export function useAuth() {
   const logout = useCallback(async () => {
     try {
       await signOut();
+      cachedUser = null;
+      cachedIsAuthenticated = false;
     } catch (err) {
       console.error("[Auth] Clerk signOut error:", err);
     } finally {
@@ -105,33 +133,25 @@ export function useAuth() {
     }
   }, [signOut]);
 
-  const user: Auth.User | null = clerkUser
-    ? {
-        id: 0,
-        openId: `clerk:${clerkUser.id}`,
-        name:
-          clerkUser.fullName ||
-          clerkUser.username ||
-          clerkUser.externalAccounts?.[0]?.username ||
-          null,
-        email: clerkUser.primaryEmailAddress?.emailAddress || null,
-        loginMethod: "twitter",
-        lastSignedIn: new Date(),
-        username:
-          clerkUser.externalAccounts?.[0]?.username ||
-          clerkUser.username ||
-          undefined,
-        profileImage: clerkUser.imageUrl || undefined,
-      }
-    : null;
+  const user = useMemo(() => {
+    if (clerkIsLoaded) {
+      return buildUserFromClerk(clerkUser);
+    }
+    return cachedUser;
+  }, [clerkUser, clerkIsLoaded]);
 
-  const isAuthenticated = useMemo(() => !!clerkUser, [clerkUser]);
+  const isAuthenticated = useMemo(() => {
+    if (clerkIsLoaded) {
+      return !!clerkUser;
+    }
+    return cachedIsAuthenticated;
+  }, [clerkUser, clerkIsLoaded]);
 
-  // Clerkの読み込みが遅い場合、3秒後にログインUIを表示するフォールバック
+  // Clerkの読み込みが遅い場合、1秒後にログインUIを表示するフォールバック
   const [authReadyTimeout, setAuthReadyTimeout] = useState(false);
   useEffect(() => {
     if (isLoaded) return;
-    const t = setTimeout(() => setAuthReadyTimeout(true), 3000);
+    const t = setTimeout(() => setAuthReadyTimeout(true), 1000);
     return () => clearTimeout(t);
   }, [isLoaded]);
   const isAuthReadyForUI = isLoaded || authReadyTimeout;

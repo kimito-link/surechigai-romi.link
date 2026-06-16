@@ -569,11 +569,7 @@ export default function PostScreen() {
     <ScreenContainer style={{ backgroundColor: "#FFFFFF" }} edges={[]}>
       <RadarHud isAuthenticated={isAuthenticated} onLogin={login} />
       
-      {!isAuthReadyForUI ? (
-        <View style={styles.center}>
-          <Text style={styles.loadingText}>読み込み中...</Text>
-        </View>
-      ) : (
+      {!isAuthReadyForUI ? null : (
         <View style={styles.mapContainer}>
           <JapanRadarMap>
             {unopened.map((item, index) => {

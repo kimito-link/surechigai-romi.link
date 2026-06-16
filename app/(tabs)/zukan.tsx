@@ -97,9 +97,6 @@ export default function ZukanScreen() {
     return (
       <ScreenContainer containerClassName="bg-background">
         <AppHeader title="図鑑" showCharacters={false} isDesktop={isDesktop} showMenu={true} />
-        <View style={styles.center}>
-          <Text style={styles.loadingText}>読み込み中...</Text>
-        </View>
       </ScreenContainer>
     );
   }

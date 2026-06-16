@@ -262,11 +262,7 @@ export default function CheckinScreen() {
         showLoginButton={!isAuthenticated}
       />
 
-      {!isAuthReadyForUI ? (
-        <View style={styles.center}>
-          <Text style={styles.loadingText}>読み込み中...</Text>
-        </View>
-      ) : !isAuthenticated ? (
+      {!isAuthReadyForUI ? null : !isAuthenticated ? (
         <GlobalLoginGate
           title="チェックイン"
           subtitle={`チェックインすると近くにいた人と\nすれ違いが成立します`}

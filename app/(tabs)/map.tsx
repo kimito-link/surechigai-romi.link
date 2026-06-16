@@ -143,9 +143,6 @@ export default function MapScreen() {
     return (
       <ScreenContainer containerClassName="bg-background">
         <AppHeader title="軌跡" showCharacters={false} isDesktop={isDesktop} showMenu />
-        <View style={styles.center}>
-          <Text style={styles.loadingText}>読み込み中...</Text>
-        </View>
       </ScreenContainer>
     );
   }
