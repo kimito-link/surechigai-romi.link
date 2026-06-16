@@ -229,6 +229,24 @@
   .novel .hoshi{ position:absolute; width:2px; height:2px; background:#cfe0f5; border-radius:50%; opacity:.0; z-index:1; }
   .novel.in .hoshi{ animation:matataki 4s ease-in-out infinite; }
   @keyframes matataki{ 0%,100%{opacity:.15} 50%{opacity:.7} }
+  /* 月（空）と湖に映る逆さ月 */
+  .novel .tsuki{ position:absolute; top:14%; left:64%; width:clamp(54px,12vw,82px); aspect-ratio:1; border-radius:50%; z-index:1;
+    background:radial-gradient(circle at 38% 36%, #fdf6e3 0%, #f0e6c8 60%, #d9cba0 100%); box-shadow:0 0 30px 8px rgba(253,246,227,.35); }
+  .novel .mizu{ position:absolute; left:0; right:0; bottom:0; height:30%; z-index:1; overflow:hidden;
+    background:linear-gradient(180deg, rgba(20,40,74,.0), rgba(16,34,64,.65) 40%, rgba(10,22,44,.9)); }
+  .novel .tsuki-kage{ position:absolute; left:64%; top:14%; width:clamp(54px,12vw,82px); aspect-ratio:1; border-radius:50%; z-index:1;
+    background:radial-gradient(circle at 38% 36%, rgba(253,246,227,.5), rgba(217,203,160,.2) 70%, transparent);
+    filter:blur(2px); animation:yurameki 5s ease-in-out infinite; transform-origin:center; }
+  @keyframes yurameki{ 0%,100%{ transform:scaleY(1) translateX(0) } 50%{ transform:scaleY(.86) translateX(3px) } }
+  /* 富士山のシルエット（夜・湖の向こう） */
+  .novel .fuji-yo{ position:absolute; left:0; right:0; bottom:24%; width:100%; height:auto; z-index:1; opacity:.92; }
+  /* 流れ星：スーッと流れて消える */
+  .novel .nagareboshi{ position:absolute; width:3px; height:3px; border-radius:50%; background:#eaf3ff; opacity:0; z-index:1;
+    box-shadow:0 0 6px 2px rgba(234,243,255,.8); }
+  .novel .nagareboshi::after{ content:""; position:absolute; right:2px; top:50%; width:70px; height:1.5px; transform:translateY(-50%) rotate(0deg); transform-origin:right center;
+    background:linear-gradient(270deg, rgba(234,243,255,.9), transparent); }
+  .novel .nagareboshi.go{ animation:nagare-boshi 1.3s ease-in forwards; }
+  @keyframes nagare-boshi{ 0%{opacity:0; transform:translate(0,0)} 10%{opacity:1} 100%{opacity:0; transform:translate(-220px,150px)} }
 
   /* ===== 序・章 ===== */
   .hero{ text-align:center; min-height:118vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(80px,16vw,150px) 0 clamp(40px,8vw,70px); }
@@ -362,14 +380,18 @@
     <ellipse cx="624" cy="298" rx="16" ry="4" fill="#05080f"/>
     <g fill="#05080f" transform="translate(616 244)"><path d="M0 0 Q8 -18 16 0 Z"/><rect x="2" y="2" width="12" height="6" rx="2"/><path d="M4 8 L4 40 M12 8 L12 40 M4 22 L0 30 M12 22 L16 30" stroke="#05080f" stroke-width="3" fill="none" stroke-linecap="round"/></g>
   </svg>
+  <div class="tsuki"></div>
+  <div class="mizu"></div>
+  <div class="tsuki-kage"></div>
+  <svg class="fuji-yo" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path d="M0 220 L0 150 Q420 28 560 24 Q700 28 1120 150 L1200 160 L1200 220 Z" fill="#0a1626"/><path d="M500 64 Q560 22 560 24 Q560 22 620 64 Q596 54 580 66 Q566 50 552 66 Q536 54 500 64 Z" fill="#26405e"/></svg>
   <div class="nv-inner">
     <p class="nv-label">― 序 ―</p>
     <p class="nv-text">
-      <span class="l">――その道を、確かに歩いた。</span>
-      <span class="l">けれど、いつのまにか</span>
-      <span class="l">記憶は薄れ、景色は溶けてゆく。</span>
-      <span class="l">消えてしまう前に。</span>
-      <span class="l">さあ、足あとを刻む旅へ。</span>
+      <span class="l">流れ星に願いが叶うのは、</span>
+      <span class="l">流れる一瞬で言えるほど、</span>
+      <span class="l">その願いを、ずっと思っているから。</span>
+      <span class="l">想いが強ければ、足は自ずと動いている。</span>
+      <span class="l">――だから、消えてしまう前に。</span>
     </p>
   </div>
 </section>
@@ -474,6 +496,10 @@
     <ellipse cx="600" cy="298" rx="20" ry="5" fill="#05080f"/>
     <g fill="#05080f" transform="translate(592 240)"><path d="M0 0 Q8 -18 16 0 Z"/><rect x="2" y="2" width="12" height="6" rx="2"/><path d="M4 8 L4 44 M12 8 L12 44 M4 24 L0 32 M12 24 L16 32" stroke="#05080f" stroke-width="3" fill="none" stroke-linecap="round"/></g>
   </svg>
+  <div class="tsuki"></div>
+  <div class="mizu"></div>
+  <div class="tsuki-kage"></div>
+  <svg class="fuji-yo" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path d="M0 220 L0 150 Q420 28 560 24 Q700 28 1120 150 L1200 160 L1200 220 Z" fill="#0a1626"/><path d="M500 64 Q560 22 560 24 Q560 22 620 64 Q596 54 580 66 Q566 50 552 66 Q536 54 500 64 Z" fill="#26405e"/></svg>
   <div class="nv-inner">
     <p class="nv-label">― 結 ―</p>
     <p class="nv-text">
@@ -481,7 +507,7 @@
       <span class="l">だからこそ、刻まれた足あとは</span>
       <span class="l">いつまでも、消えずに残る。</span>
       <span class="l">それが、一期一会の旅。</span>
-      <span class="l">あなたの物語を、はじめよう。</span>
+      <span class="l">願いを込めて、物語をはじめよう。</span>
     </p>
   </div>
 </section>
@@ -698,6 +724,35 @@
       for(var i=0;i<n;i++){ var h=document.createElement('span'); h.className='hoshi';
         h.style.left=((i*53)%100)+'%'; h.style.top=((i*29)%70)+'%';
         h.style.animationDelay=(-(i*0.37))+'s'; h.style.transform='scale('+(0.6+((i*13)%100)/100*1.2).toFixed(2)+')'; nv.appendChild(h); } }); })();
+
+    /* 流れ星：扉が見えている間、時々スーッと流れて消える。
+       ときどき2つが交差して出会う＝「君とリンク」(人と人が繋がる)演出。 */
+    (function(){
+      if(reduce) return;
+      var novels=document.querySelectorAll('.novel'); if(!novels.length) return;
+      function shoot(nv, x, y, pair){
+        var s=document.createElement('span'); s.className='nagareboshi';
+        s.style.left=x+'%'; s.style.top=y+'%'; nv.appendChild(s);
+        void s.offsetWidth; s.classList.add('go');
+        setTimeout(function(){ s.remove(); }, 1500);
+        if(pair){ /* もう一つを逆向き気味に流して交差させる */
+          var s2=document.createElement('span'); s2.className='nagareboshi';
+          s2.style.left=(x-18)+'%'; s2.style.top=(y+10)+'%'; s2.style.setProperty('--rev','1');
+          nv.appendChild(s2); void s2.offsetWidth; s2.classList.add('go');
+          setTimeout(function(){ s2.remove(); }, 1500);
+        }
+      }
+      var active=null;
+      var io2=new IntersectionObserver(function(es){ es.forEach(function(e){ active = e.isIntersecting ? e.target : (active===e.target?null:active); }); }, { threshold:.3 });
+      novels.forEach(function(nv){ io2.observe(nv); });
+      var tick=0;
+      setInterval(function(){
+        if(!active) return;
+        tick++;
+        var x=55+Math.random()*35, y=8+Math.random()*30;
+        shoot(active, x, y, tick%3===0);   /* 3回に1回は2つ交差(出会い) */
+      }, 2600);
+    })();
 
     /* 竹林生成 */
     (function(){ var c=document.getElementById('chikurin'); if(!c) return; var n=reduce?9:16;
