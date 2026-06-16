@@ -123,8 +123,11 @@
 
   /* 冬：蓑笠の旅人＋足跡＋雪道 */
   .yukimichi{ position:absolute; left:0; right:0; bottom:5%; height:min(34vh,300px); opacity:0; transition:opacity 1.4s ease; } .yukimichi svg{ width:100%; height:100%; display:block; overflow:visible }
-  .yukimichi .ato{ opacity:0; animation:ashiato 9s ease-in-out infinite; }
-  @keyframes ashiato{ 0%,8%{opacity:0} 16%{opacity:.5} 70%{opacity:.5} 100%{opacity:0} }
+  /* 足跡は刻まれたら消えずに残る（「足あとはずっと残る」を体現）。
+     ザッと踏みしめた瞬間だけ少し沈み込む演出つき。 */
+  .yukimichi .ato{ opacity:0; }
+  .yukimichi .ato.step{ animation:fumishime .5s ease-out forwards; }
+  @keyframes fumishime{ 0%{opacity:0; transform-box:fill-box; transform-origin:50% 100%; } 40%{opacity:.65} 100%{opacity:.5} }
   .yukimichi .tabibito{ transform-box:fill-box; transform-origin:50% 100%; animation:ayumi 5s ease-in-out infinite; }
   @keyframes ayumi{ 0%,100%{transform:translateX(0) rotate(0)} 50%{transform:translateX(2px) rotate(.6deg)} }
   /* 冬：温泉と猿 */
@@ -455,12 +458,15 @@
       if(wSnow>0.05) build('snow','snow'); if(wSakura>0.05) build('sakura','sakura'); if(wMomiji>0.05) build('momiji','momiji');
       layers.snow.style.opacity=wSnow; layers.sakura.style.opacity=wSakura; layers.momiji.style.opacity=wMomiji;
       els.kagerou.style.opacity=wNatsu*0.8;
-      var sub=body.getAttribute('data-sub'); var day=(sub!=='night');
-      var natsuDay=wNatsu*(day?1:0), natsuNight=wNatsu*(day?0:1);
-      [els.semi,els.furin,els.suika,els.kawa,els.tsuri].forEach(function(e){ if(e) e.style.opacity=natsuDay; });
-      els.semi.classList.toggle('show', natsuDay>0.1); els.furin.classList.toggle('show', natsuDay>0.1);
-      [els.yataiA,els.yataiB,els.senko].forEach(function(e){ if(e) e.style.opacity=natsuNight; });
-      els.senko.classList.toggle('show', natsuNight>0.1);
+      /* 夏は昼物(蝉/風鈴/スイカ/川/釣り)も夜祭り物(屋台/線香花火)も、夏である限り両方しっかり出す。
+         夜章では夜物をやや強調するが、昼物が消えて寂しくならないよう最低限は残す。 */
+      var sub=body.getAttribute('data-sub'); var night=(sub==='night');
+      var dayW=wNatsu*(night?0.45:1), nightW=wNatsu*(night?1:0.6);
+      [els.semi,els.furin,els.suika,els.kawa,els.tsuri].forEach(function(e){ if(e) e.style.opacity=dayW; });
+      els.semi.classList.toggle('show', wNatsu>0.1); els.furin.classList.toggle('show', wNatsu>0.1);
+      [els.yataiA,els.yataiB,els.senko].forEach(function(e){ if(e) e.style.opacity=nightW; });
+      els.senko.classList.toggle('show', wNatsu>0.1);
+      if(els.hanabi) els.hanabi.style.opacity=(wNatsu>0.1?1:0);  /* 花火コンテナを夏で可視化 */
       els.yakiimo.style.opacity=wMomiji; els.yuki.style.opacity=wYuki; els.onsen.style.opacity=wYuki;
       var si=Math.min(3,Math.floor(p*4+0.0001)); dots.forEach(function(d,i){ d.classList.toggle('on', i===si); });
     }
@@ -482,12 +488,12 @@
       if(tg==='kisha'){ var k=els && document.getElementById('kishaScene'); var sc=document.getElementById('kishaScene');
         if(sc){ sc.style.opacity='1'; sc.classList.add('run'); whistle(); setTimeout(function(){ sc.style.opacity='0'; sc.classList.remove('run'); }, 5200); } }
       if(tg==='rikisha'){ var r=document.getElementById('jinrikisha'); if(r){ r.classList.remove('go'); void r.offsetWidth; r.classList.add('go'); } }
-      if(tg==='natsu-hiru'){ jumpFish(); var b=document.getElementById('boushi'); if(b){ setTimeout(function(){ b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); }, 1400); } }
-      if(tg==='natsu-yoru'){ boom(); }
+      if(tg==='natsu-hiru'){ jumpFish(); var b=document.getElementById('boushi'); if(b){ setTimeout(function(){ b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); }, 1400); } boom(); }
+      if(tg==='natsu-yoru'){ boom(); jumpFish(); }
     }
     function jumpFish(){ if(reduce) return; var u=document.getElementById('uo'); if(!u) return; u.classList.remove('jump'); void u.offsetWidth; u.classList.add('jump'); splash(); setTimeout(function(){ if(body.getAttribute('data-scene')==='summer'){ u.classList.remove('jump'); void u.offsetWidth; u.classList.add('jump'); splash(); } }, 4500); }
     function boom(){ var h=document.getElementById('hanabi'); if(!h||reduce) return;
-      function fire(){ if(body.getAttribute('data-sub')!=='night') return; h.innerHTML=''; var cx=20+Math.random()*60, cy=15+Math.random()*25, cols=['#e08b4c','#d15d88','#b08a3e','#e6dcc6'], col=cols[(Math.random()*cols.length)|0];
+      function fire(){ if(body.getAttribute('data-scene')!=='summer') return; h.innerHTML=''; var cx=20+Math.random()*60, cy=15+Math.random()*25, cols=['#e08b4c','#d15d88','#b08a3e','#e6dcc6'], col=cols[(Math.random()*cols.length)|0];
         for(var i=0;i<22;i++){ var a=i/22*Math.PI*2, r=60+Math.random()*30, b=document.createElement('div'); b.className='burst'; b.style.left=cx+'%'; b.style.top=cy+'%'; b.style.background=col; b.style.setProperty('--hx',Math.cos(a)*r+'px'); b.style.setProperty('--hy',Math.sin(a)*r+'px'); h.appendChild(b); }
         h.classList.remove('boom'); void h.offsetWidth; h.classList.add('boom'); boomSound(); }
       fire(); if(hanabiTimer) clearInterval(hanabiTimer); hanabiTimer=setInterval(fire, 5000);
