@@ -609,13 +609,14 @@ async function startServer() {
 
   // =====================================================================
   // 静的ファイル配信（public/）
-  // LP (public/lp.html) などのマーケ用静的ページを surechigai-romi.link/<file> で配信。
+  // LP (public/lp/index.html) などのマーケ用静的ページを surechigai-romi.link/lp/ で配信。
+  // index:"index.html" によりディレクトリ（/lp/）アクセスで index.html を返す。
   // /api/* は上で処理済みのためここには来ない。catch-all はせず、存在するファイルのみ返す。
   // =====================================================================
   {
     const publicDir = path.join(process.cwd(), "public");
     if (fs.existsSync(publicDir)) {
-      app.use(express.static(publicDir, { extensions: ["html"], index: false }));
+      app.use(express.static(publicDir, { extensions: ["html"], index: "index.html" }));
       console.log(`[static] serving public/ from ${publicDir}`);
     } else {
       console.log(`[static] public dir not found at ${publicDir} (skipped)`);

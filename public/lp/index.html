@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>すれ違い通信 ― 月日は百代の過客にして</title>
+<meta name="description" content="人生は旅である。移動するだけで、行った場所が足あととして刻まれ、軌跡となって残る。あとから「あの日、あんな場所を歩いたな」とたどれる。同じ道を通った誰かとのすれ違いが、旅にそっと彩りを添える。X連携・移動の道中記アプリ。" />
+<meta property="og:title" content="すれ違い通信 ― 月日は百代の過客にして" />
+<meta property="og:description" content="人生は旅である。あなたの移動が、ひとつの道中記になる。" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://surechigai-romi.link/lp/" />
+<meta name="theme-color" content="#efe7d6" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Zen+Old+Mincho:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    /* 侘び寂び — 生成り(きなり)の紙・墨・淡い藍と代赭(たいしゃ)だけ */
+    --washi:#efe7d6;        /* 生成りの和紙 */
+    --washi-2:#e6dcc6;
+    --sumi:#23201b;         /* 墨 */
+    --sumi-soft:#3a352c;
+    --muted:#6f6656;        /* 薄墨 */
+    --faint:#928975;
+    --line:rgba(35,32,27,.14);
+    --line-soft:rgba(35,32,27,.08);
+    --ai:#3c5a6e;           /* 淡い藍 */
+    --taisha:#a8572f;       /* 代赭（差し色） */
+    --kin:#b08a3e;          /* 金茶（ごく控えめ） */
+    --paper:rgba(248,243,233,.7);
+    --maxw:760px;
+    --lh:2.05;
+    --shell:clamp(22px,6vw,40px);
+    --mincho:"Shippori Mincho","Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;overflow-x:hidden}
+  body{
+    margin:0; color:var(--sumi);
+    font-family:var(--mincho);
+    line-height:var(--lh); letter-spacing:.04em; overflow-x:hidden;
+    font-feature-settings:"palt";
+    background:
+      radial-gradient(ellipse 70% 40% at 88% 6%, rgba(60,90,110,.08), transparent 55%),
+      radial-gradient(ellipse 60% 38% at 8% 96%, rgba(168,87,47,.06), transparent 56%),
+      linear-gradient(180deg,var(--washi),#ece2cf 60%,var(--washi-2));
+    background-attachment:fixed;
+  }
+  /* 紙の繊維のような極薄ノイズ感 */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+    background-image:
+      repeating-linear-gradient(96deg, rgba(35,32,27,.018) 0 1px, transparent 1px 5px),
+      repeating-linear-gradient(8deg, rgba(35,32,27,.014) 0 1px, transparent 1px 7px);
+  }
+  .shell{position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; padding:0 var(--shell);}
+  a{color:inherit}
+
+  /* 章のあいだの「間」を作る罫 */
+  .rule{ display:flex; align-items:center; justify-content:center; gap:18px; margin:clamp(54px,11vw,96px) 0; }
+  .rule::before,.rule::after{ content:""; height:1px; width:min(120px,22vw); background:var(--line); }
+  .rule .mark{ width:7px;height:7px;border:1px solid var(--faint); transform:rotate(45deg); }
+
+  /* ===== 序（ヒーロー） ===== */
+  .hero{ text-align:center; padding:clamp(72px,15vw,140px) 0 clamp(30px,6vw,54px); }
+  .haiku-open{
+    font-size:clamp(15px,3.6vw,18px); color:var(--muted); line-height:2.4;
+    letter-spacing:.16em; margin:0 auto; max-width:30rem;
+  }
+  .haiku-open b{ font-weight:600; color:var(--sumi-soft); }
+  .hero h1{
+    font-weight:600; letter-spacing:.28em;
+    font-size:clamp(38px,11vw,76px); line-height:1.25; margin:.7em 0 .1em;
+    color:var(--sumi); text-indent:.28em;
+  }
+  .hero .yomi{ font-size:12px; letter-spacing:.5em; color:var(--faint); text-indent:.5em; }
+  .hero .lead{ font-size:clamp(16px,3.6vw,20px); color:var(--sumi-soft); margin:1.6em auto 0; max-width:28rem; line-height:2.2; }
+  .hero .sub{ font-size:14px; color:var(--muted); margin-top:1.1em; line-height:2.1; }
+
+  .cta-row{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:2.4em; }
+  .btn{
+    display:inline-flex; align-items:center; gap:9px; text-decoration:none;
+    font-family:var(--mincho); font-weight:600; letter-spacing:.12em;
+    padding:13px 30px; border-radius:2px; font-size:15px; transition:opacity .2s, transform .15s;
+  }
+  .btn:active{ transform:translateY(1px) }
+  .btn-x{ background:var(--sumi); color:var(--washi); }
+  .btn-x:hover{ opacity:.85 }
+  .btn-ghost{ background:transparent; color:var(--sumi); border:1px solid var(--line); }
+  .btn-ghost:hover{ border-color:var(--faint) }
+
+  /* 道（軌跡）の細い線画 */
+  .michi{ margin:clamp(40px,9vw,68px) auto 0; max-width:460px; opacity:.9; }
+  .michi svg{ width:100%; height:auto; display:block }
+
+  /* ===== 章 ===== */
+  section{ padding:clamp(8px,2vw,16px) 0; }
+  .chapter-no{
+    text-align:center; font-size:12px; letter-spacing:.42em; color:var(--taisha);
+    text-indent:.42em; margin-bottom:.4em;
+  }
+  h2{
+    font-weight:600; letter-spacing:.14em; text-align:center;
+    font-size:clamp(23px,5.6vw,34px); line-height:1.5; margin:.1em auto .1em; color:var(--sumi);
+    text-indent:.14em;
+  }
+  .lead{ text-align:center; color:var(--muted); max-width:30rem; margin:1.1em auto 0;
+    font-size:clamp(15px,3.2vw,16.5px); line-height:2.1; }
+
+  /* 縦書き風の引用ブロック */
+  .quote-jp{
+    margin:clamp(30px,6vw,46px) auto; max-width:fit-content;
+    writing-mode:vertical-rl; text-orientation:upright;
+    font-size:clamp(17px,4.4vw,22px); letter-spacing:.34em; line-height:2.1;
+    color:var(--sumi-soft); height:clamp(180px,42vw,260px);
+    padding:6px 4px; border-right:1px solid var(--line); border-left:1px solid var(--line);
+  }
+  .quote-jp .accent{ color:var(--taisha); }
+
+  /* 道中の三つの所作（縦に積む。余白で間を取る） */
+  .steps{ margin:clamp(28px,6vw,44px) auto 0; max-width:30rem; display:flex; flex-direction:column; gap:clamp(26px,5vw,40px); }
+  .step{ text-align:center; }
+  .step .ji{
+    font-size:26px; color:var(--ai); line-height:1; margin-bottom:.5em; font-weight:500;
+    letter-spacing:.1em;
+  }
+  .step h3{ font-weight:600; font-size:18px; letter-spacing:.1em; margin:.1em 0 .35em; }
+  .step p{ margin:0 auto; color:var(--muted); font-size:14.5px; max-width:24rem; line-height:2; }
+
+  /* 巡り合ひ（すれ違い）— 一行ずつの所作書き */
+  .gather{ margin:clamp(28px,6vw,44px) auto 0; max-width:30rem; }
+  .gather .item{ padding:clamp(18px,4vw,26px) 0; border-top:1px solid var(--line-soft); text-align:center; }
+  .gather .item:first-child{ border-top:none; }
+  .gather .item h3{ font-weight:600; font-size:17px; letter-spacing:.1em; margin:0 0 .35em; color:var(--sumi); }
+  .gather .item p{ margin:0 auto; color:var(--muted); font-size:14px; max-width:24rem; line-height:2; }
+
+  /* 足あとは残る（濃い墨の章） */
+  .ink{
+    background:linear-gradient(165deg,#2a2620,#201d18); color:var(--washi);
+    padding:clamp(44px,9vw,72px) clamp(26px,6vw,48px); text-align:center;
+    border-radius:2px;
+  }
+  .ink .chapter-no{ color:var(--kin); }
+  .ink h2{ color:var(--washi); }
+  .ink .lead{ color:#d8cdb8; }
+  .ink .three{ margin:clamp(30px,6vw,46px) auto 0; max-width:28rem; display:flex; flex-direction:column; gap:clamp(22px,4vw,34px); }
+  .ink .three .t h3{ font-weight:600; font-size:16.5px; letter-spacing:.1em; margin:0 0 .3em; color:var(--washi); }
+  .ink .three .t p{ margin:0 auto; font-size:14px; color:#cabfa9; max-width:24rem; line-height:2; }
+
+  /* 結び */
+  .closing{ text-align:center; }
+  .closing .haiku{
+    font-size:clamp(16px,3.8vw,19px); color:var(--sumi-soft); line-height:2.5; letter-spacing:.14em;
+    margin:0 auto 1.6em; max-width:24rem;
+  }
+
+  footer{ text-align:center; padding:clamp(50px,10vw,84px) 0 56px; color:var(--faint); font-size:12.5px; line-height:2.2; letter-spacing:.06em; }
+  footer a{ color:var(--ai); text-decoration:none; border-bottom:1px solid var(--line); }
+  .footnote{ margin-top:14px; font-size:11.5px; color:var(--faint); line-height:2.1; }
+
+  .reveal{ opacity:0; transform:translateY(14px); transition:opacity 1s ease, transform 1s ease; }
+  .reveal.in{ opacity:1; transform:none; }
+  @media(prefers-reduced-motion:reduce){ .reveal{opacity:1;transform:none;transition:none} html{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+
+<!-- ===== 序 ===== -->
+<header class="hero shell">
+  <p class="haiku-open">
+    <b>月日は百代の過客にして、</b><br />
+    <b>行き交ふ年もまた旅人なり。</b>
+  </p>
+  <h1>すれ違い通信</h1>
+  <p class="yomi">SURECHIGAI&nbsp;TSUSHIN</p>
+  <p class="lead">人生は、旅である。<br />あなたの移動もまた、ひとつの道中記になる。</p>
+  <p class="sub">歩いた場所が、足あととなって残る。<br />あとから「あの日、あんな場所を歩いたな」と、たどれる。</p>
+  <div class="cta-row">
+    <a class="btn btn-x" href="https://surechigai-romi.link">𝕏 で旅をはじめる</a>
+    <a class="btn btn-ghost" href="#michi">道のことを</a>
+  </div>
+
+  <div class="michi" aria-hidden="true">
+    <svg viewBox="0 0 460 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 74 C 110 74, 130 26, 226 38 S 360 70, 446 22"
+            stroke="#3a352c" stroke-opacity=".55" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="1.5 10"/>
+      <circle cx="14" cy="74" r="4" fill="none" stroke="#3c5a6e" stroke-width="1.4"/>
+      <circle cx="226" cy="38" r="4" fill="none" stroke="#6f6656" stroke-width="1.4"/>
+      <circle cx="446" cy="22" r="5" fill="#a8572f"/>
+    </svg>
+  </div>
+</header>
+
+<div class="rule"><span class="mark"></span></div>
+
+<!-- ===== 一の章：おもひ出 ===== -->
+<section class="shell reveal">
+  <p class="chapter-no">一の章</p>
+  <h2>そういへば、あの日</h2>
+  <div class="quote-jp">いづれの場所も<span class="accent"> </span>旅の途中なり</div>
+  <p class="lead">予定でもなく、写真でもなく。<br />ただ通り過ぎただけの場所が、いつのまにか、思ひ出になっている。<br />すれ違い通信は、その"なんでもない足あと"を、そっと書き留めます。</p>
+</section>
+
+<div class="rule"><span class="mark"></span></div>
+
+<!-- ===== 二の章：道中の所作 ===== -->
+<section id="michi" class="shell reveal">
+  <p class="chapter-no">二の章</p>
+  <h2>道中の、三つの所作</h2>
+  <p class="lead">むずかしいことは要りません。歩けば、ひとりでに道中記が育ちます。</p>
+  <div class="steps">
+    <div class="step">
+      <div class="ji">記</div>
+      <h3>その場に、しるす</h3>
+      <p>気が向いたら「今ここ」を一つ。ささやかな一歩が、足あとになります。</p>
+    </div>
+    <div class="step">
+      <div class="ji">巡</div>
+      <h3>軌跡が、めぐる</h3>
+      <p>通った街、訪れた国。四十七の地がひとつずつ埋まり、あなただけの道中図に。</p>
+    </div>
+    <div class="step">
+      <div class="ji">顧</div>
+      <h3>のちに、かへりみる</h3>
+      <p>帰り道や、ふとした夜更けに。自分の歩いた道を、ゆるりとたどれます。</p>
+    </div>
+  </div>
+</section>
+
+<div class="rule"><span class="mark"></span></div>
+
+<!-- ===== 三の章：巡り合ひ ===== -->
+<section class="shell reveal">
+  <p class="chapter-no">三の章</p>
+  <h2>巡り合ひ、すれ違ひ</h2>
+  <p class="lead">同じ道を踏んだ、見知らぬ誰か。同じ時でなくとも、過ぎし三十日のうちに同じ場所を歩いた人と、そっとすれ違えます。</p>
+  <div class="gather">
+    <div class="item">
+      <h3>文（ふみ）、あとで届く</h3>
+      <p>移動の副産物として、すれ違いが文に溜まる。帰ってから開けば、もう何かが起きている。あの感覚のままに。</p>
+    </div>
+    <div class="item">
+      <h3>時を越えて、出会ふ</h3>
+      <p>同じ刻に居合わせずとも構わない。過ぎた三十日の道のりが、人と人をそっと結びます。</p>
+    </div>
+    <div class="item">
+      <h3>言葉は、いらず</h3>
+      <p>やりとりは、ひとつの印だけ。深い詮索はありません。気が向けば、Xでゆるりと。</p>
+    </div>
+  </div>
+</section>
+
+<div class="rule"><span class="mark"></span></div>
+
+<!-- ===== 四の章：足あとは残る ===== -->
+<section class="shell reveal">
+  <div class="ink">
+    <p class="chapter-no">四の章</p>
+    <h2>足あとは、ずっと残る</h2>
+    <p class="lead">消えてしまっては、思ひ出になりません。だから、あなたの軌跡はちゃんと残しておく。<br />幾年たっても、あの日の道をたどれるように。</p>
+    <div class="three">
+      <div class="t">
+        <h3>行きし場所を、たしかに</h3>
+        <p>通った道も、立ち寄った場所も。足あとを正確に書き留めるから、あとから細やかに顧みられます。</p>
+      </div>
+      <div class="t">
+        <h3>消さずに、積み重ねる</h3>
+        <p>記録は消えません。日を重ねるほど軌跡は厚みを増し、あなただけの「移動の年譜」になっていきます。</p>
+      </div>
+      <div class="t">
+        <h3>気ままに、自分の間で</h3>
+        <p>入り口はXのみ。そっと残したい時は、移動専用の名で歩むのも自由。あなたの間合いで。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"><span class="mark"></span></div>
+
+<!-- ===== 結び ===== -->
+<section class="closing shell reveal">
+  <p class="chapter-no">結びに</p>
+  <p class="haiku">今日の一歩、<br />いづれ懐かしき<br />道となる</p>
+  <h2>さあ、旅をはじめよう</h2>
+  <p class="lead">特別な支度は要りません。いつもの移動が、そのまま物語になります。</p>
+  <div class="cta-row">
+    <a class="btn btn-x" href="https://surechigai-romi.link">𝕏 で旅をはじめる</a>
+  </div>
+</section>
+
+<footer class="shell">
+  <p>すれ違い通信 ／ <a href="https://surechigai-romi.link">surechigai-romi.link</a></p>
+  <p class="footnote">
+    ※「すれ違い通信」はニンテンドーDSの体験へのオマージュです。任天堂とは関係ありません。<br />
+    冒頭の一節は松尾芭蕉『おくのほそ道』より。<br />
+    入り口はX (Twitter) のみ。居場所をそっと残したい折は、移動専用の名でのご利用もどうぞ。
+  </p>
+</footer>
+
+<script>
+  (function(){
+    var els = document.querySelectorAll('.reveal');
+    if(!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in')}); return; }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { threshold:.12 });
+    els.forEach(function(e){ io.observe(e); });
+  })();
+</script>
+</body>
+</html>
