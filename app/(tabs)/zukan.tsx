@@ -18,6 +18,7 @@ import { useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
+import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -105,16 +106,13 @@ export default function ZukanScreen() {
 
   if (!isAuthenticated) {
     return (
-      <ScreenContainer containerClassName="bg-background">
-        <AppHeader title="図鑑" showCharacters={false} isDesktop={isDesktop} showMenu={true} showLoginButton />
-        <View style={styles.loginGate}>
-          <MaterialIcons name="menu-book" size={64} color={color.accentAlt} />
-          <Text style={styles.loginGateTitle}>ログインして{"\n"}図鑑を開こう</Text>
-          <Text style={styles.loginGateSubtitle}>
-            訪問した都道府県や{"\n"}すれ違い相手の出身地が記録されます
-          </Text>
-        </View>
-      </ScreenContainer>
+      <GlobalLoginGate
+        title="図鑑"
+        subtitle={`訪問した都道府県や\nすれ違い相手の出身地が記録されます`}
+        onLogin={login}
+        headerTitle="図鑑"
+        isDesktop={isDesktop}
+      />
     );
   }
 

@@ -23,6 +23,7 @@ import { useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
+import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -151,16 +152,13 @@ export default function MapScreen() {
 
   if (!isAuthenticated) {
     return (
-      <ScreenContainer containerClassName="bg-background">
-        <AppHeader title="軌跡" showCharacters={false} isDesktop={isDesktop} showMenu showLoginButton />
-        <View style={styles.loginGate}>
-          <MaterialIcons name="map" size={64} color={color.accentIndigo} />
-          <Text style={styles.loginGateTitle}>ログインして{"\n"}軌跡を記録しよう</Text>
-          <Text style={styles.loginGateSubtitle}>
-            チェックインした場所が{"\n"}地図に刻まれます
-          </Text>
-        </View>
-      </ScreenContainer>
+      <GlobalLoginGate
+        title="軌跡"
+        subtitle={`チェックインした場所が\n地図に刻まれます`}
+        onLogin={login}
+        headerTitle="軌跡"
+        isDesktop={isDesktop}
+      />
     );
   }
 

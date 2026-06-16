@@ -143,10 +143,10 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 400,
     backgroundColor: "rgba(13, 17, 23, 0.85)", // dark transparent
-    borderColor: color.accent,
+    borderColor: color.accentPrimary,
     borderWidth: 1,
     borderRadius: 8,
-    shadowColor: color.accent,
+    shadowColor: color.accentPrimary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 10,
@@ -160,13 +160,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: color.accent,
+    borderBottomColor: color.accentPrimary,
   },
   dotRed: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#FF5F56", marginRight: 6 },
   dotYellow: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#FFBD2E", marginRight: 6 },
   dotGreen: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#27C93F", marginRight: 12 },
   cardTitle: {
-    color: color.accent,
+    color: color.accentPrimary,
     fontSize: 12,
     fontWeight: "bold",
     fontFamily: "monospace",
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   introText: {
-    color: color.text,
+    color: color.textPrimary,
     fontSize: 14,
     lineHeight: 22,
     marginBottom: 16,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "rgba(255, 128, 51, 0.2)",
-    borderColor: color.accent,
+    borderColor: color.accentPrimary,
     borderWidth: 1,
     paddingVertical: 12,
     borderRadius: 4,
@@ -198,9 +198,6 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   buttonText: {
-    color: color.accent,
-    fontSize: 14,
-    fontWeight: "bold",
     fontFamily: "monospace",
   },
 });

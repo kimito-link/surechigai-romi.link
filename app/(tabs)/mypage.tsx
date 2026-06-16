@@ -27,6 +27,8 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
+import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
+import { useRouter } from "expo-router";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -138,6 +140,7 @@ function BlockedUserRow({
 export default function MypageScreen() {
   const { isDesktop } = useResponsive();
   const { user, isAuthenticated, isAuthReadyForUI, logout, login } = useAuth();
+  const router = useRouter();
 
   const [hitokotoModalVisible, setHitokotoModalVisible] = useState(false);
   const [showBlockList, setShowBlockList] = useState(false);
@@ -194,20 +197,13 @@ export default function MypageScreen() {
 
   if (!isAuthenticated || !user) {
     return (
-      <ScreenContainer containerClassName="bg-background">
-        <AppHeader title="マイページ" showCharacters={false} isDesktop={isDesktop} showMenu showLoginButton />
-        <View style={styles.loginGate}>
-          <MaterialIcons name="account-circle" size={64} color={color.accentPrimary} />
-          <Text style={styles.loginGateTitle}>ログインして{"\n"}プロフィールを設定</Text>
-          <Pressable
-            onPress={() => login()}
-            style={({ pressed }) => [styles.loginButton, pressed && { opacity: 0.8 }]}
-          >
-            <MaterialIcons name="login" size={20} color={color.textWhite} style={{ marginRight: 8 }} />
-            <Text style={styles.loginButtonText}>X（Twitter）でログイン</Text>
-          </Pressable>
-        </View>
-      </ScreenContainer>
+      <GlobalLoginGate
+        title="プロフィール設定"
+        subtitle="ログインしてプロフィールを設定してください"
+        onLogin={login}
+        headerTitle="マイページ"
+        isDesktop={isDesktop}
+      />
     );
   }
 
@@ -289,6 +285,14 @@ export default function MypageScreen() {
         {/* 設定・ログアウト */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>設定</Text>
+
+          <Pressable
+            onPress={() => router.push("/special-thanks")}
+            style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
+          >
+            <MaterialIcons name="stars" size={20} color={color.accentAlt} style={{ marginRight: 12 }} />
+            <Text style={[styles.menuItemText, { color: color.textPrimary }]}>Special Thanks</Text>
+          </Pressable>
 
           <Pressable
             onPress={handleLogout}

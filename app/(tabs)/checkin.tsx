@@ -31,6 +31,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
+import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -266,22 +267,13 @@ export default function CheckinScreen() {
           <Text style={styles.loadingText}>読み込み中...</Text>
         </View>
       ) : !isAuthenticated ? (
-        /* 未ログイン */
-        <View style={styles.loginGate}>
-          <MaterialIcons name="location-on" size={64} color={color.accentIndigo} />
-          <Text style={styles.loginGateTitle}>ログインして</Text>
-          <Text style={styles.loginGateTitle}>チェックインしよう</Text>
-          <Text style={styles.loginGateSubtitle}>
-            チェックインすると近くにいた人と{"\n"}すれ違いが成立します
-          </Text>
-          <Pressable
-            onPress={() => login()}
-            style={({ pressed }) => [styles.loginButton, pressed && { opacity: 0.8 }]}
-          >
-            <MaterialIcons name="login" size={20} color={color.textWhite} style={{ marginRight: 8 }} />
-            <Text style={styles.loginButtonText}>X（Twitter）でログイン</Text>
-          </Pressable>
-        </View>
+        <GlobalLoginGate
+          title="チェックイン"
+          subtitle={`チェックインすると近くにいた人と\nすれ違いが成立します`}
+          onLogin={login}
+          headerTitle="チェックイン"
+          isDesktop={isDesktop}
+        />
       ) : (
         <View style={styles.content}>
           {/* 説明文 */}

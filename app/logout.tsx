@@ -6,7 +6,6 @@ import { navigateReplace } from "@/lib/navigation/app-routes";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useAuth } from "@/hooks/use-auth";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { LinearGradient } from "expo-linear-gradient";
 import { Button } from "@/components/ui/button";
 import { redirectToTwitterAuth, redirectToTwitterSwitchAccount } from "@/lib/api";
 
@@ -17,14 +16,11 @@ const characterImages = {
   tanuneYukkuri: require("@/assets/images/characters/tanunee/tanuki-yukkuri-smile-mouth-open.png"),
 };
 
-// ロゴ画像
-const logoImage = require("@/assets/images/logo/logo-maru-orange.jpg");
-
 // ログアウトメッセージパターン
 const logoutMessages = [
-  { character: "linkYukkuri", message: "またねー♪", subMessage: "また遊びに来てね！" },
-  { character: "kontaYukkuri", message: "バイバイ！🦊", subMessage: "次も一緒に盛り上げよう！" },
-  { character: "tanuneYukkuri", message: "お疲れさま！🦝", subMessage: "また会えるの楽しみにしてるよ！" },
+  { character: "linkYukkuri", message: "またねー♪", subMessage: "SYSTEM_SHUTDOWN // 接続を解除しました" },
+  { character: "kontaYukkuri", message: "バイバイ！🦊", subMessage: "SESSION_END // 通信を終了しました" },
+  { character: "tanuneYukkuri", message: "お疲れさま！🦝", subMessage: "DISCONNECTED // ログアウト完了" },
 ];
 
 export default function LogoutScreen() {
@@ -65,20 +61,7 @@ export default function LogoutScreen() {
   };
 
   return (
-    <ScreenContainer containerClassName="bg-background">
-      {/* グラデーション背景 */}
-      <LinearGradient
-        colors={[palette.blue600, color.bg]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-      />
+    <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
 
       <View style={{ 
         flex: 1, 
@@ -86,163 +69,123 @@ export default function LogoutScreen() {
         justifyContent: "center", 
         padding: 24,
       }}>
-        {/* ロゴ */}
-        <Image 
-          source={logoImage} 
-          style={{ 
-            width: 60, 
-            height: 60,
-            borderRadius: 30,
-            marginBottom: 24,
-          }} 
-          contentFit="contain" 
-        />
 
-        {/* キャラクター */}
-        <View style={{ position: "relative", marginBottom: 16 }}>
-          <Image 
-            source={characterImages[messagePattern.character as keyof typeof characterImages]} 
-            style={{ 
-              width: 100, 
-              height: 100,
-            }} 
-            contentFit="contain" 
-          />
-          {/* チェックマーク */}
-          {logoutComplete && (
-            <View style={{
-              position: "absolute",
-              bottom: -4,
-              right: -4,
-              backgroundColor: color.success,
-              borderRadius: 12,
-              width: 24,
-              height: 24,
-              alignItems: "center",
-              justifyContent: "center",
+        {/* Hacker Auth Card */}
+        <View style={{
+          width: "100%",
+          maxWidth: 400,
+          backgroundColor: "rgba(13, 17, 23, 0.95)",
+          borderColor: logoutComplete ? color.success : color.danger,
+          borderWidth: 1,
+          borderRadius: 8,
+          shadowColor: logoutComplete ? color.success : color.danger,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          shadowRadius: 10,
+          overflow: 'hidden',
+          alignItems: 'center',
+          paddingBottom: 24,
+        }}>
+          
+          {/* Card Header */}
+          <View style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: logoutComplete ? "rgba(39, 201, 63, 0.15)" : "rgba(255, 95, 86, 0.15)",
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderBottomWidth: 1,
+            borderBottomColor: logoutComplete ? color.success : color.danger,
+            width: "100%",
+            marginBottom: 24,
+          }}>
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#FF5F56", marginRight: 6 }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#FFBD2E", marginRight: 6 }} />
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#27C93F", marginRight: 12 }} />
+            <Text style={{
+              color: logoutComplete ? color.success : color.danger,
+              fontSize: 12,
+              fontWeight: "bold",
+              fontFamily: "monospace",
+              letterSpacing: 1,
             }}>
-              <MaterialIcons name="check" size={16} color={color.textWhite} />
+              SYSTEM / {logoutComplete ? "LOGOUT_SUCCESS.exe" : "LOGGING_OUT.exe"}
+            </Text>
+          </View>
+
+          {/* キャラクター */}
+          <View style={{ position: "relative", marginBottom: 16 }}>
+            <Image 
+              source={characterImages[messagePattern.character as keyof typeof characterImages]} 
+              style={{ 
+                width: 120, 
+                height: 120,
+              }} 
+              contentFit="contain" 
+            />
+          </View>
+
+          {/* 吹き出し */}
+          <View style={{
+            backgroundColor: "rgba(255,255,255,0.05)",
+            borderRadius: 8,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            marginBottom: 24,
+            borderWidth: 1,
+            borderColor: "rgba(255,255,255,0.1)",
+          }}>
+            <Text style={{ color: color.textPrimary, fontSize: 16, fontWeight: "bold", textAlign: "center" }}>
+              {messagePattern.message}
+            </Text>
+          </View>
+
+          {/* ステータスメッセージ */}
+          <View style={{ alignItems: "center", gap: 8, paddingHorizontal: 24 }}>
+            <Text style={{ color: logoutComplete ? color.success : color.textPrimary, fontSize: 18, fontWeight: "bold", fontFamily: "monospace" }}>
+              {isLoggingOut ? "ログアウト処理中..." : logoutComplete ? "SYSTEM OFFLINE" : "ログアウト開始"}
+            </Text>
+            <Text style={{ color: color.textMuted, fontSize: 13, fontFamily: "monospace", textAlign: "center" }}>
+              {isLoggingOut ? "PLEASE WAIT..." : messagePattern.subMessage}
+            </Text>
+          </View>
+
+          {/* ボタン */}
+          {logoutComplete && (
+            <View style={{ width: "100%", paddingHorizontal: 24, gap: 12, marginTop: 32 }}>
+              <Button
+                onPress={() => navigateReplace.toHomeRoot()}
+                variant="primary"
+                icon="home"
+                fullWidth
+                style={{ backgroundColor: "rgba(255,255,255,0.1)", borderColor: color.textMuted, borderWidth: 1 }}
+              >
+                ホーム画面へ戻る
+              </Button>
+
+              <Button
+                onPress={handleSameAccountLogin}
+                variant="primary"
+                icon="refresh"
+                fullWidth
+                style={{ backgroundColor: color.accentIndigo }}
+              >
+                同じアカウントで再接続
+              </Button>
+
+              <Button
+                onPress={handleDifferentAccountLogin}
+                variant="outline"
+                icon="swap-horiz"
+                fullWidth
+              >
+                別のアカウントで接続
+              </Button>
             </View>
           )}
+
         </View>
 
-        {/* 吹き出し */}
-        <View style={{
-          backgroundColor: color.surface,
-          borderRadius: 16,
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          marginBottom: 24,
-          borderWidth: 1,
-          borderColor: color.border,
-        }}>
-          <Text style={{ color: color.accentPrimary, fontSize: 18, fontWeight: "bold", textAlign: "center" }}>
-            {messagePattern.message}
-          </Text>
-        </View>
-
-        {/* ステータスメッセージ */}
-        {isLoggingOut ? (
-          <View style={{ alignItems: "center", gap: 8 }}>
-            <Text style={{ color: color.textPrimary, fontSize: 20, fontWeight: "bold" }}>
-              ログアウト中...
-            </Text>
-            <Text style={{ color: color.textSubtle, fontSize: 14 }}>
-              しばらくお待ちください
-            </Text>
-          </View>
-        ) : logoutComplete ? (
-          <View style={{ alignItems: "center", gap: 8 }}>
-            <Text style={{ color: color.textPrimary, fontSize: 20, fontWeight: "bold" }}>
-              ログアウトしました
-            </Text>
-            <Text style={{ color: color.textSubtle, fontSize: 14 }}>
-              またのご利用をお待ちしております
-            </Text>
-          </View>
-        ) : (
-          <View style={{ alignItems: "center", gap: 8 }}>
-            <Text style={{ color: color.textPrimary, fontSize: 20, fontWeight: "bold" }}>
-              ログアウト
-            </Text>
-            <Text style={{ color: color.textSubtle, fontSize: 14 }}>
-              ログアウトを開始します
-            </Text>
-          </View>
-        )}
-
-        {/* 説明文 */}
-        {logoutComplete && (
-          <View style={{
-            backgroundColor: color.blue400 + "15",
-            borderRadius: 12,
-            padding: 16,
-            marginTop: 24,
-            width: "100%",
-            maxWidth: 400,
-          }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-              <MaterialIcons name="info-outline" size={18} color={color.blue400} />
-              <Text style={{ color: color.blue400, fontSize: 14, fontWeight: "bold", marginLeft: 8 }}>
-                ログアウトについて
-              </Text>
-            </View>
-            <Text style={{ color: color.textPrimary, fontSize: 13, lineHeight: 20 }}>
-              アカウント情報は安全に保護されました。{"\n"}
-              別のアカウントでログインする場合は、下の「ログイン」ボタンをクリックしてください。{"\n"}
-              同じアカウントで再度ログインすることもできます。
-            </Text>
-          </View>
-        )}
-
-        {/* ボタン */}
-        {logoutComplete && (
-          <View style={{ width: "100%", maxWidth: 400, gap: 12, marginTop: 24 }}>
-            {/* ホームページに戻る */}
-            <Button
-              onPress={() => navigateReplace.toHomeRoot()}
-              variant="primary"
-              icon="home"
-              fullWidth
-              style={{ backgroundColor: color.info }}
-            >
-              ホームページに戻る
-            </Button>
-
-            {/* 同じアカウントで再ログイン */}
-            <Button
-              onPress={handleSameAccountLogin}
-              variant="primary"
-              icon="refresh"
-              fullWidth
-              style={{ backgroundColor: color.successDark }}
-            >
-              同じアカウントで再ログイン
-            </Button>
-
-            {/* 別のアカウントでログイン */}
-            <Button
-              onPress={handleDifferentAccountLogin}
-              variant="outline"
-              icon="swap-horiz"
-              fullWidth
-            >
-              別のアカウントでログイン
-            </Button>
-          </View>
-        )}
-
-        {/* サブメッセージ */}
-        {logoutComplete && (
-          <Text style={{ 
-            color: color.textSubtle, 
-            fontSize: 13,
-            marginTop: 24,
-            textAlign: "center",
-          }}>
-            {messagePattern.subMessage}
-          </Text>
-        )}
       </View>
     </ScreenContainer>
   );
