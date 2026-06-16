@@ -112,15 +112,14 @@
       sceneEls.forEach(function(e){ var r=e.getBoundingClientRect();
         if(r.bottom>0 && r.top<vh){ var c=(r.top+r.bottom)/2, d=Math.abs(c-mid); if(d<bestDist){ bestDist=d; best=e; } }
       });
+      var curNight=false;
       if(best){ var scene=best.getAttribute('data-scene');
+        curNight = best.classList.contains('night') || best.getAttribute('data-sub')==='night';
         if(scene!==activeScene){ activeScene=scene;
           body.setAttribute('data-scene', scene);
           var sub=best.getAttribute('data-sub')||'day'; body.setAttribute('data-sub', sub);
           setSeasonTarget(scene); manageAmbient(scene, sub);
         }
-        /* いまの章の実写背景を出す（クロスフェード）。夜章は暗いtintに。 */
-        var isNight = best.classList.contains('night') || best.getAttribute('data-sub')==='night';
-        setPhoto(best.getAttribute('data-bg'), isNight);
       }
       /* トリガー（章ごとの一度きり演出）は、その章の「冒頭」が画面に入ったら発火。
          章は数画面ぶん縦に長いので“中央”を待つと演出が遅れる。章の上端が画面中央より上に来た時点
@@ -136,13 +135,50 @@
       });
       sasoEls.forEach(function(s){ var r=s.getBoundingClientRect(); if(r.top<vh*0.8 && r.bottom>0) s.classList.add('lit'); });
 
-      /* 文：中心が画面中央±28%に入っていれば lit。中心が中央より上に抜けたら gone（薄く残る）。 */
+      /* 文：中心が画面中央±28%に入っていれば lit。中心が中央より上に抜けたら gone（薄く残る）。
+         さらに「文ごとの情景」をここで適用する＝サウンドノベルの肝：
+         - data-img: その文の情景写真へ背景を切替（最後に中央を通過した指定を採用）
+         - data-fx : その文が中央に来た瞬間に一度だけ、動き＋効果音を発火 */
       var bandTop=vh*0.22, bandBottom=vh*0.78;
+      var imgPick=null, imgPickDist=1e9;
       phs.forEach(function(p){ var r=p.getBoundingClientRect(); var c=(r.top+r.bottom)/2;
-        if(c>=bandTop && c<=bandBottom){ p.classList.add('lit'); p.classList.remove('gone'); }
+        var inBand = (c>=bandTop && c<=bandBottom);
+        if(inBand){ p.classList.add('lit'); p.classList.remove('gone'); }
         else if(c<bandTop){ if(p.classList.contains('lit')) p.classList.add('gone'); }
-        else { /* まだ下：何もしない（初期の伏せた状態のまま） */ }
+
+        /* 背景画像：中央(mid)に最も近い data-img 文を選ぶ。
+           「中央より少しでも上に来た（読み始めた）」文まで候補にして、景色が文に先んじて出るように。 */
+        var di=p.getAttribute('data-img');
+        if(di && c<=bandBottom){ var d=Math.abs(c-mid); if(d<imgPickDist){ imgPickDist=d; imgPick=di; } }
+
+        /* 演出（data-fx）：中央バンドに入った瞬間に一度だけ。離れたらフラグを戻し、再訪で再発火可能に。 */
+        var fx=p.getAttribute('data-fx');
+        if(fx){ if(inBand){ if(!p.dataset.fxOn){ p.dataset.fxOn='1'; playFx(fx); } } else { if(c>bandBottom) p.dataset.fxOn=''; } }
       });
+      if(imgPick!==null) setPhoto(imgPick, curNight);
+    }
+
+    /* data-fx の名前 → 既存の演出関数/SVGアニメ＋効果音 */
+    function playFx(name){
+      switch(name){
+        case 'whistle': whistle(); break;
+        case 'clack': startClack(2600); break;
+        case 'walk': walkSnow(); break;
+        case 'footstep': footstep(); break;
+        case 'bird': birdsong(); break;
+        case 'rikisha': { var r=document.getElementById('jinrikisha'); if(r){ r.classList.remove('go'); void r.offsetWidth; r.classList.add('go'); } break; }
+        case 'konk': konk(); break;
+        case 'semi': /* 蝉は環境音で継続。視覚は固定SVGで既出 */ chime&&0; break;
+        case 'fish': jumpFish(); break;
+        case 'furin': chime(); break;
+        case 'nukegara': break;
+        case 'kakigori': break;
+        case 'boom': boom(); break;
+        case 'senko': { var s=document.getElementById('senko'); if(s){ s.classList.remove('show'); void s.offsetWidth; s.classList.add('show'); } break; }
+        case 'boushi': { var b=document.getElementById('boushi'); if(b){ b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); } break; }
+        case 'yakiimo': break;
+        case 'nagareboshi': shootStar(); break;
+      }
     }
 
     /* 季節重みのアニメ＋語りの送りを常時回す */
@@ -201,10 +237,12 @@
     var hanabiTimer=null;
 
     /* 実写背景ステージ：画面固定の2枚(pfA/pfB)を使い、章ごとに写真をクロスフェード差し替えする。 */
-    var PHOTOS={ yukiguni:'img/yukiguni.png', kisha:'img/kisha.png', yukimichi:'img/yukimichi.png',
+    var PHOTOS={ yukiguni:'img/yukiguni.png', kisha:'img/kisha.png', yukinohara:'img/yukinohara.png',
+      yukimichi:'img/yukimichi.png', 'onsen-saru':'img/onsen-saru.png',
       sakura:'img/sakura.png', chashitsu:'img/chashitsu.png', shishiodoshi:'img/shishiodoshi.png',
-      taki:'img/taki.png', tekiya:'img/tekiya.png', hanabi:'img/hanabi.png',
-      hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', tanbo:'img/tanbo.png' };
+      nyudogumo:'img/nyudogumo.png', kawa:'img/kawa.png', taki:'img/taki.png',
+      tekiya:'img/tekiya.png', hanabi:'img/hanabi.png',
+      momiji:'img/momiji.png', hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', tanbo:'img/tanbo.png' };
     var pfStage=document.getElementById('photoStage'), pfA=document.getElementById('pfA'), pfB=document.getElementById('pfB');
     var pfFront=pfA, pfBack=pfB, curBg=null;
     /* 先読み（チラつき防止） */
@@ -212,8 +250,8 @@
     function setPhoto(bg, night){
       if(pfStage){ pfStage.classList.toggle('night', !!night); }
       if(bg===curBg) return; curBg=bg;
-      if(!bg || !PHOTOS[bg]){ if(pfFront) pfFront.classList.remove('on'); if(pfBack) pfBack.classList.remove('on'); if(pfStage) pfStage.classList.remove('has-photo'); return; }
-      if(pfStage) pfStage.classList.add('has-photo');
+      if(!bg || !PHOTOS[bg]){ if(pfFront) pfFront.classList.remove('on'); if(pfBack) pfBack.classList.remove('on'); if(pfStage) pfStage.classList.remove('has-photo'); body.classList.remove('photo-active'); return; }
+      if(pfStage) pfStage.classList.add('has-photo'); body.classList.add('photo-active');
       /* 裏面に次の写真を入れてフェードイン、表を裏に */
       if(pfBack){ pfBack.style.backgroundImage="url('"+PHOTOS[bg]+"')"; pfBack.classList.add('on'); }
       if(pfFront){ pfFront.classList.remove('on'); }
@@ -260,6 +298,28 @@
     function tone(freq, type, dur, peak, t0){ if(!soundOn||!actx) return; var t=t0||actx.currentTime, o=actx.createOscillator(), g=actx.createGain(); o.type=type||'sine'; o.frequency.value=freq;
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak||0.3,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05); return o; }
     function chime(){ if(!soundOn) return; var b=1200+Math.random()*500; [1,2.76,5.4].forEach(function(m,i){ tone(b*m,'sine',2.6+i*0.4,(i===0?0.4:0.14)/(i+1)); }); }
+    /* 春の小鳥のさえずり：細かく上下する笛のような囀り。さえずりを2〜3節、ランダムに。 */
+    function chirp(t0, base){ if(!actx) return; var o=actx.createOscillator(), g=actx.createGain(); o.type='sine';
+      var t=t0; o.frequency.setValueAtTime(base,t);
+      // 細かく上下（鳥のさえずり特有の節）
+      for(var i=0;i<5;i++){ var tt=t+0.04+i*0.05; o.frequency.exponentialRampToValueAtTime(base*(1+(i%2?0.5:-0.18)),tt); }
+      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.10,t+0.02); g.gain.setValueAtTime(0.10,t+0.22); g.gain.exponentialRampToValueAtTime(0.0001,t+0.33);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t+0.4); }
+    function birdsong(){ if(!soundOn||!actx) return; var t=actx.currentTime;
+      var n=2+((Math.random()*2)|0);
+      for(var i=0;i<n;i++){ chirp(t + i*(0.35+Math.random()*0.25), 2400+Math.random()*900); }
+    }
+    /* 流れ星「ヒュー…」：高めから滑り落ちる細い音 */
+    function shootStarSound(){ if(!soundOn||!actx) return; var t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(2200,t); o.frequency.exponentialRampToValueAtTime(700,t+1.0);
+      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.08,t+0.1); g.gain.exponentialRampToValueAtTime(0.0001,t+1.1);
+      o.connect(g); g.connect(master); o.start(t); o.stop(t+1.2); }
+    /* 結章の扉に流れ星を1本走らせ、音も鳴らす */
+    function shootStar(){ shootStarSound();
+      var nv=document.querySelector('.story[data-veil="dusk"][data-scene="clear"]') || document.querySelector('.novel');
+      if(!nv||reduce) return; var s=document.createElement('span'); s.className='nagareboshi';
+      s.style.left=(40+Math.random()*30)+'%'; s.style.top=(10+Math.random()*20)+'%'; nv.appendChild(s);
+      void s.offsetWidth; s.classList.add('go'); setTimeout(function(){ s.remove(); },1500); }
     /* ししおどし「スコーン！」: 竹が石を打つ鋭いアタック＋木胴の共鳴＋抜ける高い余韻＋ひと反響 */
     function konk(){ if(!soundOn||!actx) return; var t=actx.currentTime;
       // 木胴の共鳴（低め・コッ）
@@ -378,11 +438,14 @@
       amb.semi={s:s,g:g,lfo:lfo}; }
     function startKawa(){ if(amb.kawa||!soundOn||!actx) return; var s=noiseSource(), f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=2400; f.Q.value=1.2; var g=actx.createGain(); g.gain.value=0; s.connect(f); f.connect(g); g.connect(master); s.start(); g.gain.setTargetAtTime(0.05,actx.currentTime,0.8); amb.kawa={s:s,g:g}; }
     function stopAmb(key){ if(amb[key]){ try{ amb[key].g.gain.setTargetAtTime(0,actx.currentTime,0.4); var a=amb[key]; setTimeout(function(){ try{a.s.stop();}catch(e){} }, 800); if(a.lfo) clearInterval(a.lfo); }catch(e){} amb[key]=null; } }
-    var chimeTimer=null;
+    var chimeTimer=null, birdTimer=null;
     function manageAmbient(scene, sub){
       if(!soundOn||!actx){ return; }
       // 冬の風
       if(scene==='winter'){ startWind(); } else { stopAmb('wind'); }
+      // 春：小鳥のさえずりを時々（環境音）
+      if(scene==='spring'){ if(!birdTimer){ setTimeout(birdsong,400); birdTimer=setInterval(function(){ if(body.getAttribute('data-scene')==='spring') birdsong(); }, 4200+Math.random()*1500); } }
+      else { if(birdTimer){ clearInterval(birdTimer); birdTimer=null; } }
       // 夏（昼）蝉＋川＋風鈴
       if(scene==='summer' && sub!=='night'){ startSemi(); startKawa(); if(!chimeTimer){ chime(); chimeTimer=setInterval(function(){ if(body.getAttribute('data-scene')==='summer'&&body.getAttribute('data-sub')!=='night') chime(); }, 5000); } }
       else { stopAmb('semi'); stopAmb('kawa'); if(chimeTimer){ clearInterval(chimeTimer); chimeTimer=null; } }

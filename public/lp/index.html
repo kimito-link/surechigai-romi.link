@@ -476,12 +476,16 @@
   /* 実写背景：画面に固定した1枚レイヤー(#photoStage)に、いまの章の写真を出す。
      JS(updateNarrative)が、画面中央にある章の data-bg に応じて画像を差し替え、クロスフェードする。
      sticky/background-attachment:fixed の不安定さを避け、どの端末でも“章ごとに景色が変わる”を確実に出す。 */
+  /* 写真ステージは固定背景(.scenery z:1)より前に出す（写真を主役に）。本文(.story z:2)より後ろ。 */
   #photoStage{ position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
   #photoStage .pf{ position:absolute; inset:0; background-size:cover; background-position:center;
     opacity:0; transition:opacity 1.2s ease;
-    -webkit-mask-image:radial-gradient(ellipse 100% 96% at 50% 50%, #000 70%, transparent 100%);
-    mask-image:radial-gradient(ellipse 100% 96% at 50% 50%, #000 70%, transparent 100%); }
-  #photoStage .pf.on{ opacity:.66; }
+    -webkit-mask-image:radial-gradient(ellipse 130% 120% at 50% 48%, #000 86%, transparent 100%);
+    mask-image:radial-gradient(ellipse 130% 120% at 50% 48%, #000 86%, transparent 100%); }
+  #photoStage .pf.on{ opacity:.88; }
+  /* 写真が出ている間は、固定背景の富士・雪・霞などを大きく薄めて、実写を主役にする */
+  body.photo-active .scenery{ opacity:.3; transition:opacity 1s ease; }
+  body.photo-active .kasumi, body.photo-active .whiteout, body.photo-active .blizzard{ opacity:.12 !important; }
   /* 写真の上の明暗（昼は淡い白、夜は淡い暗）。 */
   #photoStage .pf-tint{ position:absolute; inset:0; opacity:0; transition:opacity 1.2s ease;
     background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 24%, transparent 72%, rgba(255,255,255,.18)); }
@@ -631,13 +635,13 @@
 <section class="story photo-bg" data-scene="winter" data-trigger="kisha" data-veil="mist" data-bg="kisha">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">一 章</span><span class="ep-label">― 雪国へ ―</span></div>
-  <p class="ph">汽笛が、ポオォと尾を引いた。</p>
-  <p class="ph">列車は、長いトンネルへ吸い込まれてゆく。</p>
-  <p class="ph">ガタン、ゴトン。闇のなかを、ただ運ばれる。</p>
-  <p class="ph key">――トンネルを抜けると、そこは雪国であった。</p>
-  <p class="ph">窓の外は、見わたすかぎりの白。</p>
+  <p class="ph" data-img="kisha" data-fx="whistle">汽笛が、ポオォと尾を引いた。</p>
+  <p class="ph" data-fx="clack">列車は、長いトンネルへ吸い込まれてゆく。</p>
+  <p class="ph" data-fx="clack">ガタン、ゴトン。闇のなかを、ただ運ばれる。</p>
+  <p class="ph key" data-img="yukinohara">――トンネルを抜けると、そこは雪国であった。</p>
+  <p class="ph" data-img="yukinohara">窓の外は、見わたすかぎりの白。</p>
   <p class="ph">雪は、しんしんと降りつもる。</p>
-  <p class="ph">温泉に、猿が一匹、目を閉じていた。</p>
+  <p class="ph" data-img="onsen-saru">温泉に、猿が一匹、目を閉じていた。</p>
   <p class="ph">この景色を、私は誰かに見せたかった気がする。</p>
   <p class="ph">けれど、隣の席は、もう空いていた。</p>
   <div class="ep-rule"></div>
@@ -647,8 +651,8 @@
 <section class="story photo-bg" data-scene="winter" data-trigger="yukimichi" data-veil="mist" data-bg="yukimichi">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">二 章</span><span class="ep-label">― 雪の一本道 ―</span></div>
-  <p class="ph">駅を出て、雪の一本道を歩く。</p>
-  <p class="ph">ザッ、ザッ、と、雪を踏みしめる音だけが響く。</p>
+  <p class="ph" data-img="yukimichi" data-fx="walk">駅を出て、雪の一本道を歩く。</p>
+  <p class="ph" data-fx="footstep">ザッ、ザッ、と、雪を踏みしめる音だけが響く。</p>
   <p class="ph">ふと前を見ると――足跡が、続いていた。</p>
   <p class="ph key">私のものではない。誰かが、先に通ったのだ。</p>
   <p class="ph">その人も、ひとりだったのだろうか。</p>
@@ -662,23 +666,23 @@
 <section class="story photo-bg" data-scene="spring" data-trigger="rikisha" data-veil="soft" data-bg="sakura">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">三 章</span><span class="ep-label">― 春、すれ違ふ ―</span></div>
-  <p class="ph">峠を下るほどに、雪は、霞へと変わった。</p>
-  <p class="ph">気づけば桜が、ひとひら、頬をかすめる。</p>
-  <p class="ph">からから、と、人力車が過ぎてゆく。</p>
+  <p class="ph" data-img="sakura" data-fx="bird">峠を下るほどに、雪は、霞へと変わった。</p>
+  <p class="ph" data-img="sakura" data-fx="sakura">気づけば桜が、ひとひら、頬をかすめる。</p>
+  <p class="ph" data-fx="rikisha">からから、と、人力車が過ぎてゆく。</p>
   <p class="ph">ただ通り過ぎただけの、なんでもない辻。</p>
   <p class="ph">けれどその辻を、私はあとで思い出すことになる。</p>
   <p class="ph key">「いづれの場所も、旅の途中なり」</p>
-  <p class="ph">道ばたの地蔵に、誰かの供えた花が、まだ新しい。</p>
-  <p class="ph">私より先に、ここで手を合わせた人がいる。</p>
+  <p class="ph" data-img="chashitsu">縁側に、湯呑みがふたつ。片方は、まだ温かい。</p>
+  <p class="ph">私より先に、ここで一服した人がいる。</p>
   <p class="ph">すれ違ふとは、こういうことかもしれない。</p>
   <div class="ep-rule"></div>
 </section>
 
 <!-- ════════════════ 四章・一服の間（茶室・鹿威し・間／ま） ════════════════ -->
-<section class="story photo-bg" data-scene="spring" data-veil="soft" data-bg="shishiodoshi">
+<section class="story photo-bg" data-scene="spring" data-veil="soft" data-bg="chashitsu">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">四 章</span><span class="ep-label">― 一服の間（ま） ―</span></div>
-  <p class="ph">街道の茶屋で、ひと息つくことにした。</p>
+  <p class="ph" data-img="chashitsu">街道の茶屋で、ひと息つくことにした。</p>
   <p class="ph">一服の茶が、冷えた指に、しみわたる。</p>
   <p class="ph">庭の隅で、鹿威しが、水を溜めている。</p>
   <!-- 鹿威し（庭・主役。コトンと鳴る） -->
@@ -713,8 +717,8 @@
     </svg>
   </div>
   <p class="ph ma">……</p>
-  <p class="ph key">コトン。</p>
-  <p class="ph">竹が石を打つ、その音だけが、時を刻む。</p>
+  <p class="ph key" data-fx="konk">コトン。</p>
+  <p class="ph" data-fx="konk">竹が石を打つ、その音だけが、時を刻む。</p>
   <p class="ph">静けさが、かえって、深くなる。</p>
   <p class="ph">一期一会、と、誰かが言った。</p>
   <p class="ph">この一杯も、この一刻も、二度とは巡らない。</p>
@@ -725,15 +729,15 @@
 <section id="michi" class="story photo-bg" data-scene="summer" data-sub="day" data-trigger="natsu-hiru" data-veil="soft" data-bg="taki">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">五 章</span><span class="ep-label">― 夏の、昼 ―</span></div>
-  <p class="ph">季節は、いつのまにか、夏になっていた。</p>
-  <p class="ph">蝉時雨が、降るように、満ちている。</p>
-  <p class="ph">川がさらさらと流れ、魚が、ひとつ跳ねた。</p>
-  <p class="ph">風鈴が、ちりりと鳴る。</p>
-  <p class="ph">幹には、抜け殻がひとつ。もう、鳴かない。</p>
-  <p class="ph">かき氷は、紅い雫を残して、溶けてゆく。</p>
+  <p class="ph" data-img="nyudogumo" data-fx="semi">季節は、いつのまにか、夏になっていた。</p>
+  <p class="ph" data-fx="semi">蝉時雨が、降るように、満ちている。</p>
+  <p class="ph" data-img="kawa" data-fx="fish">川がさらさらと流れ、魚が、ひとつ跳ねた。</p>
+  <p class="ph" data-fx="furin">風鈴が、ちりりと鳴る。</p>
+  <p class="ph" data-fx="nukegara">幹には、抜け殻がひとつ。もう、鳴かない。</p>
+  <p class="ph" data-fx="kakigori">かき氷は、紅い雫を残して、溶けてゆく。</p>
   <p class="ph key">夏は、いつか終わる。</p>
   <p class="ph">だからこそ、歩いた今日が、あとで愛おしくなる。</p>
-  <p class="ph">麦わら帽子が、ふわりと、風にさらわれた。</p>
+  <p class="ph" data-fx="boushi">麦わら帽子が、ふわりと、風にさらわれた。</p>
   <div class="ep-rule"></div>
 </section>
 
@@ -741,15 +745,15 @@
 <section class="story night photo-bg" data-scene="summer" data-sub="night" data-trigger="natsu-yoru" data-veil="dusk" data-bg="tekiya">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">六 章</span><span class="ep-label">― 夏の、夜祭り ―</span></div>
-  <p class="ph">日が暮れて、遠くに、祭りの灯が見えた。</p>
-  <p class="ph">たこ焼き、焼きそば、提灯の列。</p>
+  <p class="ph" data-img="tekiya">日が暮れて、遠くに、祭りの灯が見えた。</p>
+  <p class="ph" data-img="tekiya">たこ焼き、焼きそば、提灯の列。</p>
   <p class="ph">人ごみのなか、誰かと肩がふれた。</p>
   <p class="ph">振り向いたが、もう、その背中は人波に消えていた。</p>
-  <p class="ph key">ドオン――と、花火が、夜空をひらく。</p>
+  <p class="ph key" data-img="hanabi" data-fx="boom">ドオン――と、花火が、夜空をひらく。</p>
   <p class="ph">同じ花火を、見上げている誰かが、いるはずだ。</p>
   <p class="ph">言葉は、交わさなくていい。</p>
   <p class="ph">ただ、同じ道を、同じ夜を、踏んだという、それだけで。</p>
-  <p class="ph">線香花火が、ぽとりと、落ちた。</p>
+  <p class="ph" data-fx="senko">線香花火が、ぽとりと、落ちた。</p>
   <p class="ph">すれ違いとは、さみしさの、もうひとつの名前だ。</p>
   <div class="ep-rule"></div>
 </section>
@@ -773,9 +777,9 @@
 <section class="story photo-bg" data-scene="autumn" data-trigger="aki" data-veil="soft" data-bg="hosomichi">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">八 章</span><span class="ep-label">― 秋、残るもの ―</span></div>
-  <p class="ph">木々が、燃えるように、色づいていた。</p>
-  <p class="ph">落ち葉を踏む音が、かさり、と鳴る。</p>
-  <p class="ph">どこからか、焼き芋の、匂い。</p>
+  <p class="ph" data-img="momiji">木々が、燃えるように、色づいていた。</p>
+  <p class="ph" data-img="momiji">落ち葉を踏む音が、かさり、と鳴る。</p>
+  <p class="ph" data-fx="yakiimo">どこからか、焼き芋の、匂い。</p>
   <p class="ph">消えてしまっては、思い出には、ならない。</p>
   <p class="ph key">だから私は、歩いた道を、消さずにおく。</p>
   <p class="ph">幾年たっても、あの日の辻へ、帰れるように。</p>
@@ -789,9 +793,9 @@
 <section class="story night photo-bg" data-scene="clear" data-veil="dusk" data-bg="fuji">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">結 章</span><span class="ep-label">― 晴れて、富士 ―</span></div>
-  <p class="ph">雲が晴れ、はじめて、富士が見えた。</p>
-  <p class="ph">湖に、月が、逆さに浮かんでいる。</p>
-  <p class="ph">すうっと、流れ星が、ひとつ。</p>
+  <p class="ph" data-img="fuji">雲が晴れ、はじめて、富士が見えた。</p>
+  <p class="ph" data-img="fuji">湖に、月が、逆さに浮かんでいる。</p>
+  <p class="ph" data-fx="nagareboshi">すうっと、流れ星が、ひとつ。</p>
   <p class="ph">願いを言う間もなく、消えていった。</p>
   <p class="ph key">けれど――願いは、もう、足が叶えている。</p>
   <p class="ph">想いが強ければ、足は、自ずと動いているのだから。</p>
@@ -814,6 +818,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=9"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>
