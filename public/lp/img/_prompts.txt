@@ -53,6 +53,71 @@ text, watermark, people, bright colors, daytime, modern, cartoon
 [設定] 768x432 (横長)、Steps 28、CFG 6.5
 
 ──────────────────────────────────────────
+④ 夏の田んぼ（青田・畦道・遠くの里山）  → ファイル名: tanbo.png
+   用途: 「夏・里」章の背景
+──────────────────────────────────────────
+[Prompt]
+japanese summer rice paddy field, lush green rice plants, narrow earthen
+path between paddies, distant low mountains, small farm village, blue sky
+with cumulus clouds, midsummer afternoon light, photorealistic, nostalgic,
+satoyama landscape, gentle breeze over the field, film grain, calm
+
+[Negative]
+text, letters, watermark, people, modern buildings, cars, power lines,
+neon, oversaturated, cartoon, anime
+
+[設定] 768x432 (横長)、Steps 28、CFG 6.5
+
+──────────────────────────────────────────
+⑤ 川辺で串に刺して焼く鮎の塩焼き（炭火・串・清流）  → ファイル名: ayu.png
+   用途: 「夏・里」章の手前に重ねる／差し替え背景の候補
+──────────────────────────────────────────
+[Prompt]
+grilled ayu sweetfish on bamboo skewers stuck in the ground around a
+charcoal fire by a clear mountain river, salt-grilled fish, rising heat
+haze and faint smoke, riverside stones, dappled summer light, close-up,
+photorealistic, appetizing, rustic japanese countryside, shallow depth of
+field, film grain
+
+[Negative]
+text, watermark, people, hands, plates, modern kitchen, indoor, neon,
+oversaturated, cartoon, anime
+
+[設定] 768x432 (横長) または 512x768、Steps 28、CFG 6.5
+
+──────────────────────────────────────────
+⑥ スイカ畑 / 井戸で冷やすスイカ（任意・里章の差し色）  → ファイル名: suika.png
+   用途: 「夏・里」章の差し替え背景の候補（任意）
+──────────────────────────────────────────
+[Prompt]
+fresh watermelons cooling in a wooden bucket of well water, or a summer
+watermelon patch with ripe striped watermelons among green leaves,
+bright midsummer sun, japanese countryside, photorealistic, vivid but
+natural, nostalgic summer, film grain
+
+[Negative]
+text, watermark, people, hands, plates, modern, neon, oversaturated,
+cartoon, anime
+
+[設定] 768x432 (横長)、Steps 28、CFG 6.5
+
+──────────────────────────────────────────
+⑦ 夏祭りの夜店・的屋（射的・ヨーヨー・提灯の灯り）  → ファイル名: tekiya.png
+   用途: 「夏・夜祭り」章の背景
+──────────────────────────────────────────
+[Prompt]
+japanese summer festival night stalls, tekiya shooting gallery with prizes
+on shelves, paper lanterns glowing warm orange, water yo-yo balloons,
+festival crowd atmosphere at dusk, bokeh lights, deep blue night sky,
+photorealistic, nostalgic, warm lantern glow, festive, film grain
+
+[Negative]
+text, watermark, daytime, modern signage, cars, neon billboards,
+oversaturated, cartoon, anime
+
+[設定] 768x432 (横長)、Steps 28、CFG 6.5
+
+──────────────────────────────────────────
 保存のコツ:
 - 縦長(茶室)は 9〜16:11 くらい、横長(細道/富士)は 16:9 が組み込みやすい。
 - 1枚 200〜500KB 程度に（PNGで大きすぎたら後でこちらで圧縮します）。

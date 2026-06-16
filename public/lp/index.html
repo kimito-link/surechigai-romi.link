@@ -105,6 +105,21 @@
   .boushi.fly{ animation:tobu 3.4s ease-in forwards; }
   @keyframes tobu{ 0%{opacity:0; transform:translate(0,0) rotate(0)} 10%{opacity:.95} 100%{opacity:0; transform:translate(120vw,-40px) rotate(220deg)} }
 
+  /* 夏・里：田んぼ（風にそよぐ稲）／吊るし鮎の塩焼き（炎ゆらぎ）／スイカ割り（棒ふりおろし）／的屋の的 */
+  .tanbo{ left:0; right:0; bottom:5%; height:min(14vh,90px); }
+  .tanbo svg{ width:100%; height:100%; display:block; }
+  .tanbo .ine{ transform-box:fill-box; transform-origin:50% 100%; animation:soyogu 3.4s ease-in-out infinite; }
+  @keyframes soyogu{ 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
+  .ayu{ bottom:22%; left:16%; width:clamp(60px,14vw,80px); } .ayu svg{width:100%;display:block;overflow:visible}
+  .ayu .hono{ transform-box:fill-box; transform-origin:50% 100%; animation:honoo 1.5s ease-in-out infinite; }
+  @keyframes honoo{ 0%,100%{transform:scaleY(.85) translateX(-1px); opacity:.55} 50%{transform:scaleY(1.1) translateX(1px); opacity:.8} }
+  .suikawari{ top:clamp(150px,28vw,240px); right:11%; width:46px; } .suikawari svg{width:100%;display:block;overflow:visible}
+  .suikawari .bou{ transform-box:fill-box; transform-origin:90% 10%; animation:furioroshi 3.2s ease-in-out infinite; }
+  @keyframes furioroshi{ 0%,60%,100%{transform:rotate(0)} 72%{transform:rotate(-34deg)} 84%{transform:rotate(6deg)} }
+  .mato{ top:clamp(90px,18vw,160px); right:22%; width:clamp(40px,9vw,56px); } .mato svg{width:100%;display:block}
+  .mato .mato-c{ transform-box:fill-box; transform-origin:50% 50%; animation:mato 5s ease-in-out infinite; }
+  @keyframes mato{ 0%,86%,100%{transform:scale(1); opacity:.9} 90%{transform:scale(.5) translate(6px,-3px); opacity:.5} }
+
   /* 夏祭り（夜） */
   .matsuri-el{ position:absolute; opacity:0; transition:opacity 1.2s ease; }
   .yatai{ bottom:6%; width:118px; } .yatai svg{width:100%;display:block}
@@ -314,11 +329,13 @@
   .photo-bg[data-bg="fuji"]::before{ background-image:url('img/fuji.png'); opacity:.28; }
   .photo-bg[data-bg="sakura"]::before{ background-image:url('img/sakura.png'); opacity:.26; }
   .photo-bg[data-bg="taki"]::before{ background-image:url('img/taki.png'); opacity:.24; }
+  .photo-bg[data-bg="tanbo"]::before{ background-image:url('img/tanbo.png'); opacity:.26; }
+  .photo-bg[data-bg="tekiya"]::before{ background-image:url('img/tekiya.png'); opacity:.30; }
 
   .reveal{ opacity:0; transform:translateY(16px); transition:opacity 1.1s ease, transform 1.1s ease } .reveal.in{ opacity:1; transform:none }
   @media(prefers-reduced-motion:reduce){
     .reveal,.kisetsu{opacity:1;transform:none;transition:none} html{scroll-behavior:auto}
-    .flake,.semi,.furin .bell,.yakiimo .yuge,.onsen .yuge2,.onsen .saru,.yukimichi .ato,.yukimichi .tabibito,.ma.in .shishi .tsutsu,.blizzard .gust,.kagerou,.scroll-hint::after,.kisha .kemuri,.senko .tama{ animation:none !important }
+    .flake,.semi,.furin .bell,.yakiimo .yuge,.onsen .yuge2,.onsen .saru,.yukimichi .ato,.yukimichi .tabibito,.ma.in .shishi .tsutsu,.blizzard .gust,.kagerou,.scroll-hint::after,.kisha .kemuri,.senko .tama,.tanbo .ine,.ayu .hono,.suikawari .bou,.mato .mato-c{ animation:none !important }
   }
 </style>
 </head>
@@ -369,6 +386,15 @@
   <div class="matsuri-el yatai b" id="yataiB"><svg viewBox="0 0 106 80"><rect x="8" y="30" width="90" height="6" rx="2" class="akari" fill="#e08b4c"/><line x1="14" y1="36" x2="14" y2="74" stroke="#3a352c" stroke-width="2"/><line x1="92" y1="36" x2="92" y2="74" stroke="#3a352c" stroke-width="2"/><rect x="20" y="56" width="66" height="18" rx="2" fill="#4a4334"/><text x="53" y="26" font-size="11" text-anchor="middle" fill="#e6dcc6" font-family="serif">焼そば</text><path d="M30 64 Q40 60 50 64 T70 64" stroke="#b4471f" stroke-width="2" fill="none"/></svg></div>
   <div class="matsuri-el hanabi" id="hanabi"></div>
   <div class="matsuri-el senko" id="senko"><svg viewBox="0 0 30 70"><line x1="15" y1="0" x2="15" y2="52" stroke="#3a352c" stroke-width="1"/><g class="tama"><circle cx="15" cy="54" r="3" fill="#e08b4c"/></g></svg></div>
+
+  <!-- 夏・里（田んぼ／吊るし鮎の塩焼き／スイカ割り／的屋の的） -->
+  <div class="summer-el tanbo" id="tanbo"><svg viewBox="0 0 160 70"><g fill="none" stroke="#3f6b32" stroke-width="1.5" stroke-opacity=".55" stroke-linecap="round"><path class="ine" d="M18 60 L18 40 M14 48 L18 40 L22 48 M11 54 L18 44 M25 54 L18 44"/><path class="ine" d="M40 62 L40 42 M36 50 L40 42 L44 50 M33 56 L40 46 M47 56 L40 46" style="animation-delay:.4s"/><path class="ine" d="M62 60 L62 40 M58 48 L62 40 L66 48 M55 54 L62 44 M69 54 L62 44" style="animation-delay:.8s"/><path class="ine" d="M84 62 L84 42 M80 50 L84 42 L88 50 M77 56 L84 46 M91 56 L84 46" style="animation-delay:.2s"/><path class="ine" d="M106 60 L106 40 M102 48 L106 40 L110 48 M99 54 L106 44 M113 54 L106 44" style="animation-delay:.6s"/><path class="ine" d="M128 62 L128 42 M124 50 L128 42 L132 50 M121 56 L128 46 M135 56 L128 46" style="animation-delay:1s"/></g><path d="M0 64 Q80 56 160 64" fill="none" stroke="#7a6b48" stroke-width="2.4" stroke-opacity=".5"/></svg></div>
+
+  <div class="summer-el ayu" id="ayu"><svg viewBox="0 0 90 70"><g stroke="#3a352c" stroke-width="1.6" fill="none" stroke-linecap="round"><path class="hono" d="M14 60 C 10 50, 18 48, 14 38" stroke="#b4471f" stroke-opacity=".7"/><path class="hono" d="M30 62 C 26 51, 34 49, 30 39" stroke="#d15d88" stroke-opacity=".55" style="animation-delay:.5s"/><path class="hono" d="M46 60 C 42 50, 50 48, 46 38" stroke="#e08b4c" stroke-opacity=".65" style="animation-delay:.9s"/></g><g fill="#7a6b48"><ellipse cx="20" cy="22" rx="13" ry="5" transform="rotate(-22 20 22)"/><ellipse cx="44" cy="20" rx="13" ry="5" transform="rotate(-8 44 20)"/><ellipse cx="68" cy="24" rx="13" ry="5" transform="rotate(12 68 24)"/></g><g stroke="#3a352c" stroke-width="1.4"><line x1="20" y1="22" x2="20" y2="62"/><line x1="44" y1="20" x2="44" y2="64"/><line x1="68" y1="24" x2="68" y2="62"/></g></svg></div>
+
+  <div class="summer-el suikawari" id="suikawari"><svg viewBox="0 0 70 60"><path d="M6 44 A26 26 0 0 1 58 44 Z" fill="#3f6b32"/><path d="M11 44 A21 21 0 0 1 53 44 Z" fill="#c0392b"/><circle cx="24" cy="40" r="1.2" fill="#23201b"/><circle cx="34" cy="36" r="1.2" fill="#23201b"/><circle cx="42" cy="40" r="1.2" fill="#23201b"/><g class="bou"><rect x="58" y="6" width="5" height="34" rx="2" fill="#9c7a3e" transform="rotate(28 60 24)"/></g></svg></div>
+
+  <div class="summer-el mato" id="mato"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="none" stroke="#e6dcc6" stroke-width="2.4" stroke-opacity=".5"/><circle cx="30" cy="30" r="18" fill="none" stroke="#e08b4c" stroke-width="2.4" stroke-opacity=".6"/><circle cx="30" cy="30" r="10" fill="none" stroke="#d15d88" stroke-width="2.4" stroke-opacity=".6"/><circle class="mato-c" cx="30" cy="30" r="4" fill="#c0392b"/></svg></div>
 
   <!-- 秋 -->
   <div class="yakiimo" id="yakiimo"><svg viewBox="0 0 60 60"><path class="yuge" d="M22 26 C 18 18, 26 16, 22 8" stroke="#8a8170" stroke-width="1.4" fill="none" stroke-linecap="round"/><path class="yuge" d="M34 26 C 30 17, 39 15, 34 6" stroke="#8a8170" stroke-width="1.4" fill="none" stroke-linecap="round" style="animation-delay:1.4s"/><ellipse cx="30" cy="40" rx="20" ry="9" fill="#7a3b1c"/><ellipse cx="30" cy="38" rx="20" ry="9" fill="#9c5a2c"/></svg></div>
@@ -471,8 +497,20 @@
 
 <div class="ma" data-koton><span class="niwa"><svg viewBox="0 0 520 150"><g fill="none" stroke="#3a352c" stroke-opacity=".4" stroke-width="1.2"><path d="M0 96 Q130 78 260 96 T520 96"/><path d="M0 110 Q130 92 260 110 T520 110"/></g><ellipse cx="180" cy="96" rx="22" ry="13" fill="#3a352c" fill-opacity=".16"/><ellipse cx="360" cy="116" rx="13" ry="8" fill="#3a352c" fill-opacity=".14"/></svg></span><span class="shishi"><svg viewBox="0 0 90 64"><ellipse cx="46" cy="58" rx="34" ry="5" fill="#3a352c" fill-opacity=".12"/><path d="M16 56 Q46 46 76 56" fill="none" stroke="#3c5a6e" stroke-width="2" stroke-opacity=".5"/><line x1="24" y1="56" x2="24" y2="30" stroke="#3a352c" stroke-width="2.4"/><g class="tsutsu"><rect x="22" y="14" width="44" height="11" rx="5" fill="#7a6b48" stroke="#3a352c" stroke-width="2" transform="rotate(-16 34 40)"/></g><circle class="shizuku" cx="64" cy="40" r="2.6" fill="#3c5a6e" fill-opacity=".7"/></svg></span><span class="ku fude">蝉時雨のなか</span></div>
 
+<!-- 二の章 余話（夏・里） -->
+<section class="chap shell reveal photo-bg" data-scene="summer" data-sub="day" data-trigger="natsu-sato" data-bg="tanbo">
+  <p class="kisetsu">― 夏・里 ―</p>
+  <h2>あの夏の、寄り道</h2>
+  <p class="lead">青田が風にうねり、畦道のむこうで里山が眠る。川辺では串に刺した鮎が、ぱちぱちと塩を弾いて焼ける。井戸で冷やしたスイカを割れば、夕立のまえの匂いがした。<br />名所でなくていい。何でもない一本道こそ、後で無性にたどりたくなる。</p>
+  <div class="steps">
+    <div class="step"><div class="ji">田</div><h3>あぜ道を、ゆく</h3><p>青田のあいだの細道も、ちゃんと足あとに。あの夏に通った田んぼへ、また帰れます。</p></div>
+    <div class="step"><div class="ji">鮎</div><h3>川辺で、ひと息</h3><p>立ち寄った川、頬張った塩焼き。場所の記憶ごと、軌跡に焼き付きます。</p></div>
+    <div class="step"><div class="ji">西</div><h3>冷えた西瓜を、割る</h3><p>たわいない寄り道が、いちばん濃い思い出に。だから消さずに、残しておく。</p></div>
+  </div>
+</section>
+
 <!-- 三の章（夏・夜祭り） -->
-<section class="chap shell reveal" data-scene="summer" data-sub="night" data-trigger="natsu-yoru">
+<section class="chap shell reveal photo-bg" data-scene="summer" data-sub="night" data-trigger="natsu-yoru" data-bg="tekiya">
   <p class="chapter-no">三の章</p><p class="kisetsu">― 夏・夜祭り ―</p>
   <h2>巡り合ひ、すれ違ひ</h2>
   <p class="lead">屋台のたこ焼き、焼きそばの匂い。ドオン――と打ち上げ花火。そして、線香花火のさみしさ。<br />同じ道を踏んだ誰かと、過ぎし三十日のうちにそっとすれ違えます。推しの歩いた道を、ファンがたどる旅も。</p>
@@ -581,6 +619,7 @@
 
     var els={ semi:'semi',furin:'furin',suika:'suika',kawa:'kawa',tsuri:'tsuri',uo:'uo',boushi:'boushi',
       yataiA:'yataiA',yataiB:'yataiB',hanabi:'hanabi',senko:'senko',kagerou:'kagerou',yakiimo:'yakiimo',
+      tanbo:'tanbo',ayu:'ayu',suikawari:'suikawari',mato:'mato',
       yuki:'yukimichi',onsen:'onsen',hikari:'hikari' };
     Object.keys(els).forEach(function(k){ els[k]=document.getElementById(els[k]); });
     var dots=[].slice.call(document.querySelectorAll('.kisetsu-bar .dot'));
@@ -610,7 +649,7 @@
          夜章では夜物をやや強調するが、昼物が消えて寂しくならないよう最低限は残す。 */
       var sub=body.getAttribute('data-sub'); var night=(sub==='night');
       var dayW=wNatsu*(night?0.45:1), nightW=wNatsu*(night?1:0.6);
-      [els.semi,els.furin,els.suika,els.kawa,els.tsuri].forEach(function(e){ if(e) e.style.opacity=dayW; });
+      [els.semi,els.furin,els.suika,els.kawa,els.tsuri,els.tanbo,els.ayu,els.suikawari,els.mato].forEach(function(e){ if(e) e.style.opacity=dayW; });
       els.semi.classList.toggle('show', wNatsu>0.1); els.furin.classList.toggle('show', wNatsu>0.1);
       [els.yataiA,els.yataiB,els.senko].forEach(function(e){ if(e) e.style.opacity=nightW; });
       els.senko.classList.toggle('show', wNatsu>0.1);
