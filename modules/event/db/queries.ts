@@ -5,7 +5,7 @@
  * DBクライアントを引数で受け取る（encounter モジュールと同じ規約）。
  */
 
-import { and, eq, gte, lt, desc, asc, sql } from "drizzle-orm";
+import { and, eq, gte, gt, lt, desc, asc, sql, isNull, or, inArray } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../../../drizzle/schema";
 import { events } from "../../../drizzle/schema";
@@ -63,7 +63,7 @@ export async function listLivePublic(
     eq(events.visibility, "public"),
     eq(events.status, "live"),
     sql`${events.liveCheckinAt} IS NOT NULL`,
-    sql`(${events.endAt} IS NULL OR ${events.endAt} > ${now})`,
+    or(isNull(events.endAt), gt(events.endAt, now)),
   ];
   if (prefecture) conds.push(eq(events.prefecture, prefecture));
 
@@ -93,8 +93,8 @@ export async function countByPrefecture(
         eq(events.visibility, "public"),
         eq(events.locationType, "offline"),
         sql`${events.prefecture} IS NOT NULL`,
-        sql`${events.status} IN ('upcoming','live')`,
-        sql`(${events.endAt} IS NULL OR ${events.endAt} > ${now})`
+        inArray(events.status, ["upcoming", "live"]),
+        or(isNull(events.endAt), gt(events.endAt, now))
       )
     )
     .groupBy(events.prefecture);
