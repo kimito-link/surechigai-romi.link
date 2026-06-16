@@ -207,6 +207,29 @@
   .shodo-line{ stroke-dasharray:1; stroke-dashoffset:1; } .ma.in .shodo-line{ animation:fude-run 2.4s ease forwards .4s; }
   @keyframes fude-run{ to{ stroke-dashoffset:0 } }
 
+  /* ===== サウンドノベル風の扉（かまいたちの夜/弟切草の青いシルエット質感） ===== */
+  .novel{ position:relative; z-index:3; min-height:118vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:clamp(40px,8vw,90px) var(--shell); overflow:hidden;
+    background:linear-gradient(180deg,#0a1424 0%,#0f2036 46%,#13284a 100%); }
+  /* 実写を加工したような粒状ノイズ */
+  .novel::before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.5; mix-blend-mode:overlay;
+    background-image:repeating-radial-gradient(circle at 30% 20%, rgba(255,255,255,.05) 0 1px, transparent 1px 3px),
+      repeating-radial-gradient(circle at 70% 80%, rgba(255,255,255,.04) 0 1px, transparent 1px 4px); }
+  /* 上下の暗いビネット */
+  .novel::after{ content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 70% at 50% 50%, transparent 40%, rgba(5,9,18,.7) 100%); }
+  .novel .silhouette{ position:absolute; left:0; right:0; bottom:0; width:100%; height:auto; opacity:.9; z-index:1; }
+  .novel .nv-inner{ position:relative; z-index:2; max-width:30rem; }
+  .novel .nv-label{ font-family:var(--fude); font-size:12px; letter-spacing:.5em; color:#6f93b8; text-indent:.5em; margin-bottom:1.6em; }
+  .novel .nv-text{ font-family:var(--mincho); font-size:clamp(16px,4vw,21px); line-height:2.7; letter-spacing:.1em; color:#dce6f2; }
+  .novel .nv-text .l{ display:block; opacity:0; transform:translateY(8px); transition:opacity 1.1s ease, transform 1.1s ease; }
+  .novel.in .nv-text .l{ opacity:1; transform:none; }
+  .novel.in .nv-text .l:nth-child(2){ transition-delay:.5s } .novel.in .nv-text .l:nth-child(3){ transition-delay:1.0s }
+  .novel.in .nv-text .l:nth-child(4){ transition-delay:1.5s } .novel.in .nv-text .l:nth-child(5){ transition-delay:2.0s }
+  .novel .hoshi{ position:absolute; width:2px; height:2px; background:#cfe0f5; border-radius:50%; opacity:.0; z-index:1; }
+  .novel.in .hoshi{ animation:matataki 4s ease-in-out infinite; }
+  @keyframes matataki{ 0%,100%{opacity:.15} 50%{opacity:.7} }
+
   /* ===== 序・章 ===== */
   .hero{ text-align:center; min-height:118vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(80px,16vw,150px) 0 clamp(40px,8vw,70px); }
   .haiku-open{ font-family:var(--fude); font-size:clamp(16px,3.8vw,19px); color:var(--sumi-soft); line-height:2.5; letter-spacing:.14em; margin:0 auto; max-width:30rem; }
@@ -330,6 +353,27 @@
   <div class="karesansui"></div><div class="ishi a"></div><div class="ishi b"></div>
 </div>
 
+<!-- ===== プロローグの扉（サウンドノベル風） ===== -->
+<section class="novel reveal" data-scene="winter">
+  <svg class="silhouette" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <path d="M0 300 L0 180 Q150 120 300 160 T600 150 Q780 110 900 165 T1200 140 L1200 300 Z" fill="#060c18"/>
+    <path d="M0 300 L0 230 Q200 190 420 220 T820 210 Q1000 185 1200 215 L1200 300 Z" fill="#0a1322"/>
+    <g fill="#05080f"><path d="M560 300 L560 210 L566 205 L572 210 L572 300 Z"/><path d="M576 300 L576 215 L582 210 L588 215 L588 300 Z"/></g>
+    <ellipse cx="624" cy="298" rx="16" ry="4" fill="#05080f"/>
+    <g fill="#05080f" transform="translate(616 244)"><path d="M0 0 Q8 -18 16 0 Z"/><rect x="2" y="2" width="12" height="6" rx="2"/><path d="M4 8 L4 40 M12 8 L12 40 M4 22 L0 30 M12 22 L16 30" stroke="#05080f" stroke-width="3" fill="none" stroke-linecap="round"/></g>
+  </svg>
+  <div class="nv-inner">
+    <p class="nv-label">― 序 ―</p>
+    <p class="nv-text">
+      <span class="l">――その道を、確かに歩いた。</span>
+      <span class="l">けれど、いつのまにか</span>
+      <span class="l">記憶は薄れ、景色は溶けてゆく。</span>
+      <span class="l">消えてしまう前に。</span>
+      <span class="l">さあ、足あとを刻む旅へ。</span>
+    </p>
+  </div>
+</section>
+
 <!-- ===== 序（冬・吹雪） ===== -->
 <header class="hero shell" data-scene="winter">
   <p class="haiku-open">月日は百代の過客にして、<br />行き交ふ年もまた旅人なり。</p>
@@ -420,6 +464,26 @@
   <p class="lead">同じ道、同じ景色は、二度とない。<br />だからこそ、その一度きりの足あとを、消さずに刻む。<br />吹雪は晴れ、遠くに富士。その先は、竹林の細道へ。<br />いつもの移動が、そのまま、あなただけの物語になります。</p>
   <div class="cta-row"><a class="btn btn-x" href="https://surechigai-romi.link">𝕏 で旅をはじめる</a></div>
   <div class="chikurin" id="chikurin" aria-hidden="true"><div class="michi"></div></div>
+</section>
+
+<!-- ===== エピローグの扉（サウンドノベル風） ===== -->
+<section class="novel reveal" data-scene="clear">
+  <svg class="silhouette" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <path d="M0 300 L0 200 Q180 150 360 180 T760 170 Q960 140 1200 175 L1200 300 Z" fill="#060c18"/>
+    <path d="M0 300 L0 240 Q220 205 460 230 T900 220 Q1060 200 1200 225 L1200 300 Z" fill="#0a1322"/>
+    <ellipse cx="600" cy="298" rx="20" ry="5" fill="#05080f"/>
+    <g fill="#05080f" transform="translate(592 240)"><path d="M0 0 Q8 -18 16 0 Z"/><rect x="2" y="2" width="12" height="6" rx="2"/><path d="M4 8 L4 44 M12 8 L12 44 M4 24 L0 32 M12 24 L16 32" stroke="#05080f" stroke-width="3" fill="none" stroke-linecap="round"/></g>
+  </svg>
+  <div class="nv-inner">
+    <p class="nv-label">― 結 ―</p>
+    <p class="nv-text">
+      <span class="l">同じ道は、二度とない。</span>
+      <span class="l">だからこそ、刻まれた足あとは</span>
+      <span class="l">いつまでも、消えずに残る。</span>
+      <span class="l">それが、一期一会の旅。</span>
+      <span class="l">あなたの物語を、はじめよう。</span>
+    </p>
+  </div>
 </section>
 
 <footer class="shell">
@@ -628,6 +692,12 @@
     if(AC && !reduce){ window.addEventListener('pointerdown',arm,{passive:true}); window.addEventListener('touchstart',arm,{passive:true}); window.addEventListener('keydown',arm);
       if(otoHint) setTimeout(function(){ if(!armed) otoHint.classList.add('show'); },1200); }
     if(otoBtn) otoBtn.addEventListener('click', function(ev){ ev.stopPropagation(); if(!armed){ arm(); return; } ensureCtx(); if(actx&&actx.state==='suspended') actx.resume(); setOn(!soundOn); });
+
+    /* サウンドノベルの扉に瞬く星を散りばめる */
+    (function(){ var novels=document.querySelectorAll('.novel'); novels.forEach(function(nv){ var n=reduce?0:40;
+      for(var i=0;i<n;i++){ var h=document.createElement('span'); h.className='hoshi';
+        h.style.left=((i*53)%100)+'%'; h.style.top=((i*29)%70)+'%';
+        h.style.animationDelay=(-(i*0.37))+'s'; h.style.transform='scale('+(0.6+((i*13)%100)/100*1.2).toFixed(2)+')'; nv.appendChild(h); } }); })();
 
     /* 竹林生成 */
     (function(){ var c=document.getElementById('chikurin'); if(!c) return; var n=reduce?9:16;
