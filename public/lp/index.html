@@ -62,11 +62,12 @@
 
   /* 吹雪 */
   .blizzard{ position:absolute; inset:0; opacity:var(--blizzard); }
+  /* 吹雪の風筋：細く密でやわらかい白い流れ（太い線だと“刃”に見えるので、細線・低不透明度に） */
   .blizzard .gust{ position:absolute; inset:-20%;
-    background:repeating-linear-gradient(72deg, transparent 0 24px, rgba(255,255,255,.55) 24px 26px, transparent 26px 52px);
-    animation:gust 1.1s linear infinite; opacity:.55; }
-  .blizzard .gust.b{ animation-duration:1.9s; opacity:.32; background:repeating-linear-gradient(70deg, transparent 0 38px, rgba(255,255,255,.6) 38px 39px, transparent 39px 76px); }
-  @keyframes gust{ to{ transform:translate(-52px,16px); } }
+    background:repeating-linear-gradient(74deg, transparent 0 34px, rgba(255,255,255,.22) 34px 34.7px, transparent 34.7px 64px);
+    animation:gust 1.0s linear infinite; opacity:.5; }
+  .blizzard .gust.b{ animation-duration:1.7s; opacity:.3; background:repeating-linear-gradient(71deg, transparent 0 52px, rgba(255,255,255,.18) 52px 52.6px, transparent 52.6px 96px); }
+  @keyframes gust{ to{ transform:translate(-64px,20px); } }
   .whiteout{ position:absolute; inset:0; background:radial-gradient(ellipse 78% 66% at 50% 38%, transparent 26%, rgba(244,246,247,.6) 100%); opacity:var(--blizzard); }
 
   /* 降りもの */
@@ -216,10 +217,13 @@
   .ma{ min-height:135vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(24px,6vw,52px); position:relative; z-index:2; }
   .ma .niwa{ width:min(520px,86vw); opacity:0; transform:translateY(20px); transition:opacity 1.3s ease, transform 1.3s ease; }
   .ma.in .niwa{ opacity:.8; transform:none; } .ma .niwa svg{ width:100%; display:block }
-  .ma .shishi{ width:clamp(110px,26vw,148px); height:auto; opacity:.92 } .ma .shishi svg{ width:100%; display:block; overflow:visible }
+  .ma .shishi, .shishi-stage{ width:clamp(110px,26vw,148px); height:auto; opacity:.92 } .ma .shishi svg, .shishi-stage svg{ width:100%; display:block; overflow:visible }
+  /* 四章（物語）の鹿威しは中央に大きく据える（庭の主役） */
+  .shishi-stage{ margin:6vh auto 8vh; width:clamp(150px,42vw,220px); opacity:0; transform:translateY(16px); transition:opacity 1.4s ease, transform 1.4s ease; }
+  .story.lead-in .shishi-stage{ opacity:.95; transform:none; }
   /* 竹筒：水が溜まって傾き→コトン（石を打つ）→弾んで戻る→静止→また溜まる */
-  .ma .shishi .tsutsu{ transform-box:fill-box; transform-origin:48% 82%; }
-  .ma.in .shishi .tsutsu{ animation:koton 3.6s cubic-bezier(.4,0,.2,1) infinite; }
+  .ma .shishi .tsutsu, .shishi-stage .tsutsu{ transform-box:fill-box; transform-origin:48% 82%; }
+  .ma.in .shishi .tsutsu, .shishi-stage .tsutsu{ animation:koton 3.6s cubic-bezier(.4,0,.2,1) infinite; }
   @keyframes koton{
     0%    { transform:rotate(0deg) }
     38%   { transform:rotate(0deg) }   /* 水が溜まる静止 */
@@ -232,8 +236,8 @@
     100%  { transform:rotate(0deg) }
   }
   /* コトン：水しぶきが石に飛び散る */
-  .ma .shishi .tobimizu{ opacity:0; transform-box:fill-box; transform-origin:50% 100%; }
-  .ma.in .shishi .tobimizu{ animation:tobimizu 3.6s cubic-bezier(.4,0,.2,1) infinite; }
+  .ma .shishi .tobimizu, .shishi-stage .tobimizu{ opacity:0; transform-box:fill-box; transform-origin:50% 100%; }
+  .ma.in .shishi .tobimizu, .shishi-stage .tobimizu{ animation:tobimizu 3.6s cubic-bezier(.4,0,.2,1) infinite; }
   @keyframes tobimizu{
     0%,55%  { opacity:0; transform:scale(.3) }
     60%     { opacity:.85; transform:scale(1) }
@@ -241,10 +245,10 @@
     100%    { opacity:0 }
   }
   /* 水受けの揺れる水面 */
-  .ma .shishi .mizumo{ transform-box:fill-box; transform-origin:50% 50%; animation:mizumo 2.8s ease-in-out infinite; }
+  .ma .shishi .mizumo, .shishi-stage .mizumo{ transform-box:fill-box; transform-origin:50% 50%; animation:mizumo 2.8s ease-in-out infinite; }
   @keyframes mizumo{ 0%,100%{ transform:scaleX(1) } 50%{ transform:scaleX(.92) } }
   /* 水滴：筒口から落ちて受けに入る */
-  .ma .shishi .shizuku{ opacity:0; } .ma.in .shishi .shizuku{ animation:shizuku 3.6s cubic-bezier(.4,0,.2,1) infinite; }
+  .ma .shishi .shizuku, .shishi-stage .shizuku{ opacity:0; } .ma.in .shishi .shizuku, .shishi-stage .shizuku{ animation:shizuku 3.6s cubic-bezier(.4,0,.2,1) infinite; }
   @keyframes shizuku{ 0%,48%{opacity:0; transform:translateY(0)} 54%{opacity:.8} 72%{opacity:0; transform:translateY(12px)} 100%{opacity:0} }
   .ma .ku{ writing-mode:vertical-rl; font-size:clamp(14px,3.4vw,17px); letter-spacing:.34em; color:var(--muted); height:clamp(120px,30vw,180px); opacity:.85; }
 
@@ -359,7 +363,55 @@
   .novel .sky-drift{ animation:miageru 24s linear infinite; }
   @keyframes miageru{ from{ transform:translateY(0) } to{ transform:translateY(20px) } }
 
-  /* ===== 序・章 ===== */
+  /* ===== サウンドノベル：一文ずつ送られる語り（かまいたちの夜/弟切草） ===== */
+  /* 各章は縦長。文(.ph)はスクロールで画面中央に来たとき、ふっと浮かび上がる。
+     読み終えてスクロールすると次の文が送られてくる――サウンドノベルの「送り」を、スクロールで再現。 */
+  .story{ position:relative; z-index:2; padding:38vh 0; }
+  .story .ep-head{ text-align:center; margin-bottom:30vh; opacity:0; transform:translateY(16px); transition:opacity 1.4s ease, transform 1.4s ease; }
+  .story.lead-in .ep-head{ opacity:1; transform:none; }
+  .story .ep-no{ font-family:var(--fude); font-size:12px; letter-spacing:.5em; color:var(--taisha); text-indent:.5em; display:block; margin-bottom:1em; }
+  .story .ep-label{ font-family:var(--fude); font-size:clamp(15px,4vw,19px); letter-spacing:.42em; color:var(--sumi-soft); text-indent:.42em; }
+  /* 語りの一文 */
+  .story .ph{
+    display:block; text-align:center; margin:0 auto;
+    min-height:46vh; display:flex; align-items:center; justify-content:center;
+    padding:0 var(--shell);
+    font-family:var(--mincho); font-size:clamp(18px,5vw,25px); line-height:2.5; letter-spacing:.1em;
+    color:var(--sumi); max-width:30rem;
+    opacity:0; transform:translateY(18px); filter:blur(2px);
+    transition:opacity .7s ease, transform .7s ease, filter .7s ease;
+  }
+  .story .ph.lit{ opacity:1; transform:none; filter:none; }
+  .story .ph.gone{ opacity:.18; filter:blur(1px); transition:opacity 1.6s ease, filter 1.6s ease; }
+  /* 強い一節（章の核）はやや大きく、間も長く */
+  .story .ph.key{ font-family:var(--fude); font-size:clamp(22px,6.4vw,34px); line-height:2.1; letter-spacing:.16em; color:var(--sumi); min-height:54vh; }
+  /* 沈黙の「間（ま）」：…… や記号だけの一行は、たっぷり余白を取る */
+  .story .ph.ma{ min-height:64vh; color:var(--faint); letter-spacing:.5em; }
+  /* 夜・暗い章は本文を白く。data-night の章に適用 */
+  .story.night .ph{ color:#e7eef7; text-shadow:0 1px 18px rgba(8,16,30,.6); }
+  .story.night .ph.key{ color:#f2f6fc; }
+  .story.night .ep-label{ color:#aac3df; } .story.night .ep-no{ color:#6f93b8; }
+  /* 章ごとの暗幕（情景を引き締める）。季節で濃さを変える */
+  .story .veil{ position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:0; transition:opacity 1.4s ease; }
+  .story.lead-in .veil{ opacity:1; }
+  .story[data-veil="dark"] .veil{ background:radial-gradient(ellipse 100% 80% at 50% 45%, rgba(8,14,28,.30), rgba(6,10,22,.74)); }
+  .story[data-veil="dusk"] .veil{ background:radial-gradient(ellipse 100% 80% at 50% 45%, rgba(20,18,34,.10), rgba(14,12,26,.5)); }
+  .story[data-veil="soft"] .veil{ background:radial-gradient(ellipse 100% 90% at 50% 50%, transparent 40%, rgba(30,26,20,.18)); }
+  /* 章の終わりの罫（次章への余韻） */
+  .story .ep-rule{ width:1px; height:clamp(40px,8vw,70px); margin:18vh auto 0; background:linear-gradient(180deg, var(--line), transparent); opacity:0; transition:opacity 1.4s ease; }
+  .story.lead-in .ep-rule{ opacity:.6; }
+  /* 結びのX誘導ボタン（物語の最後に静かに） */
+  .story .saso{ text-align:center; margin-top:14vh; opacity:0; transform:translateY(16px); transition:opacity 1.4s ease, transform 1.4s ease; }
+  .story .saso.lit{ opacity:1; transform:none; }
+  .story.night .saso .btn-x{ background:#e7eef7; color:#0a1424; }
+  .story.night .saso .btn-ghost{ color:#dce6f2; border-color:rgba(220,230,242,.4); }
+
+  @media(prefers-reduced-motion:reduce){
+    .story .ph,.story .ep-head,.story .veil,.story .ep-rule,.story .saso{ opacity:1 !important; transform:none !important; filter:none !important; }
+    .story .ph.gone{ opacity:1 !important; }
+  }
+
+  /* ===== 序・章（旧LP互換／hero等は結びでも一部利用） ===== */
   .hero{ text-align:center; min-height:118vh; display:flex; flex-direction:column; justify-content:center; padding:clamp(80px,16vw,150px) 0 clamp(40px,8vw,70px); }
   .haiku-open{ font-family:var(--fude); font-size:clamp(16px,3.8vw,19px); color:var(--sumi-soft); line-height:2.5; letter-spacing:.14em; margin:0 auto; max-width:30rem; }
   .hero h1{ font-family:var(--fude); font-weight:400; letter-spacing:.3em; font-size:clamp(40px,12vw,80px); line-height:1.25; margin:.55em 0 .1em; color:var(--sumi); text-indent:.3em; }
@@ -423,7 +475,7 @@
   .reveal{ opacity:0; transform:translateY(16px); transition:opacity 1.1s ease, transform 1.1s ease } .reveal.in{ opacity:1; transform:none }
   @media(prefers-reduced-motion:reduce){
     .reveal,.kisetsu{opacity:1;transform:none;transition:none} html{scroll-behavior:auto}
-    .flake,.semi,.furin .bell,.yakiimo .yuge,.onsen .yuge2,.onsen .saru,.yukimichi .ato,.yukimichi .tabibito,.ma.in .shishi .tsutsu,.blizzard .gust,.kagerou,.scroll-hint::after,.kisha .kemuri,.senko .tama,.tanbo .ine,.ayu .hono,.suikawari .bou,.mato .mato-c,.nukegara,.kakigori .shizuku,.kakigori .kira,.ma .shishi .tobimizu,.ma .shishi .mizumo{ animation:none !important }
+    .flake,.semi,.furin .bell,.yakiimo .yuge,.onsen .yuge2,.onsen .saru,.yukimichi .ato,.yukimichi .tabibito,.ma.in .shishi .tsutsu,.blizzard .gust,.kagerou,.scroll-hint::after,.kisha .kemuri,.senko .tama,.tanbo .ine,.ayu .hono,.suikawari .bou,.mato .mato-c,.nukegara,.kakigori .shizuku,.kakigori .kira,.ma .shishi .tobimizu,.ma .shishi .mizumo,.shishi-stage .tsutsu,.shishi-stage .tobimizu,.shishi-stage .mizumo,.shishi-stage .shizuku{ animation:none !important }
   }
 </style>
 </head>
@@ -513,7 +565,7 @@
   <div class="karesansui"></div><div class="ishi a"></div><div class="ishi b"></div>
 </div>
 
-<!-- ===== プロローグの扉（サウンドノベル風） ===== -->
+<!-- ════════════════ 序章・扉（冬の闇に語りが浮かぶ） ════════════════ -->
 <section class="novel reveal" data-scene="winter">
   <svg class="silhouette" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
     <path d="M0 300 L0 180 Q150 120 300 160 T600 150 Q780 110 900 165 T1200 140 L1200 300 Z" fill="#060c18"/>
@@ -526,7 +578,6 @@
   <div class="mizu"></div>
   <div class="tsuki-kage"></div>
   <svg class="fuji-yo" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path d="M0 220 L0 150 Q420 28 560 24 Q700 28 1120 150 L1200 160 L1200 220 Z" fill="#0a1626"/><path d="M500 64 Q560 22 560 24 Q560 22 620 64 Q596 54 580 66 Q566 50 552 66 Q536 54 500 64 Z" fill="#26405e"/></svg>
-  <!-- かまいたち：風の刃が扉を走る -->
   <div class="kama" aria-hidden="true">
     <div class="ha"></div><div class="ha"></div><div class="ha"></div><div class="ha"></div><div class="ha"></div>
     <div class="flash"></div>
@@ -534,300 +585,205 @@
   <div class="nv-inner">
     <p class="nv-label">― 序 ―</p>
     <p class="nv-text">
-      <span class="l">流れ星に願いが叶うのは、</span>
-      <span class="l">流れる一瞬で言えるほど、</span>
-      <span class="l">その願いを、ずっと思っているから。</span>
-      <span class="l">想いが強ければ、足は自ずと動いている。</span>
-      <span class="l">――だから、消えてしまう前に。</span>
+      <span class="l">月日は百代の過客にして、</span>
+      <span class="l">行き交ふ年もまた旅人なり。</span>
+      <span class="l">――これは、ある旅人の道中記。</span>
+      <span class="l">歩いた足あとが、消えずに残る話。</span>
+      <span class="l">どうか、ゆっくり、下ってゆかれよ。</span>
     </p>
   </div>
 </section>
 
-<!-- ===== 序（冬・吹雪） ===== -->
-<header class="hero shell" data-scene="winter">
-  <p class="haiku-open">月日は百代の過客にして、<br />行き交ふ年もまた旅人なり。</p>
-  <h1>すれ違ひ通信</h1>
-  <p class="yomi">SURECHIGAI&nbsp;TSUSHIN</p>
-  <p class="lead">人生は、旅である。<br />あなたの移動もまた、ひとつの道中記になる。</p>
-  <p class="sub">ゴオォ――。吹雪く道に、まだ富士は見えない。<br />それでも歩けば、足あとは残ってゆく。</p>
-  <div class="cta-row"><a class="btn btn-x" href="https://surechigai-romi.link">𝕏 で旅をはじめる</a><a class="btn btn-ghost" href="#michi">道のことを</a></div>
-  <p class="scroll-hint">道を下る</p>
-</header>
-
-<!-- 蒸気機関車→トンネル→雪国 -->
-<section class="chap shell reveal" data-scene="winter" data-trigger="kisha">
-  <p class="chapter-no">序の道</p><p class="kisetsu">― 雪国へ ―</p>
-  <h2>トンネルを抜けると</h2>
-  <p class="lead">汽笛がポオォと尾を引いて、長いトンネルへ。<br />――抜けると、そこは雪国であった。<br />温泉に猿がのんびり、雪はしんしんと降りつもる。</p>
+<!-- ════════════════ 序章・語り（冬の夜のはじまり） ════════════════ -->
+<section class="story night" data-scene="winter" data-veil="dark">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">序 章</span><span class="ep-label">― 旅のはじまり ―</span></div>
+  <p class="ph">ある冬の夜のことを、まだ覚えている。</p>
+  <p class="ph">ひとり、雪の峠を越えようとしていた。</p>
+  <p class="ph">なぜ歩いていたのか、いまはもう、思い出せない。</p>
+  <p class="ph">ただ、行かねばならぬ気が、していた。</p>
+  <p class="ph key">――旅は、もう、はじまっていた。</p>
+  <div class="ep-rule"></div>
 </section>
 
-<div class="ma" data-koton><span class="niwa"><svg viewBox="0 0 520 150"><g fill="none" stroke="#3a352c" stroke-opacity=".4" stroke-width="1.2"><path d="M0 96 Q130 78 260 96 T520 96"/><path d="M0 108 Q130 90 260 108 T520 108"/><path d="M0 120 Q130 102 260 120 T520 120"/></g><g stroke="#3a352c" stroke-opacity=".5" stroke-width="1.2" fill="none"><ellipse cx="180" cy="92" rx="34" ry="14"/><ellipse cx="180" cy="92" rx="46" ry="20"/></g><ellipse cx="180" cy="92" rx="22" ry="13" fill="#3a352c" fill-opacity=".16"/></svg></span><span class="shishi"><svg viewBox="0 0 110 90" overflow="visible">
-<!-- 地面・台石 -->
-<ellipse cx="55" cy="84" rx="46" ry="6" fill="#3a352c" fill-opacity=".10"/>
-<rect x="30" y="72" width="50" height="10" rx="3" fill="#7a6b48" fill-opacity=".55" stroke="#3a352c" stroke-width="1" stroke-opacity=".3"/>
-<!-- 受け石（水受けを載せる台） -->
-<rect x="38" y="65" width="34" height="8" rx="2" fill="#9c7a3e" fill-opacity=".45" stroke="#3a352c" stroke-width="1" stroke-opacity=".25"/>
-<!-- 水受け（半楕円の水槽） -->
-<path d="M40 65 Q55 75 70 65" fill="none" stroke="#3c5a6e" stroke-width="1.6" stroke-opacity=".6"/>
-<path d="M42 65 Q55 72 68 65 L68 68 Q55 75 42 68 Z" fill="#3c5a6e" fill-opacity=".18"/>
-<!-- 水受けの水面（揺れ） -->
-<ellipse class="mizumo" cx="55" cy="65" rx="12" ry="2" fill="#3c5a6e" fill-opacity=".28"/>
-<!-- 竹の支柱（固定、後ろ） -->
-<line x1="28" y1="72" x2="28" y2="14" stroke="#7a6b48" stroke-width="3" stroke-linecap="round"/>
-<line x1="28" y1="30" x2="33" y2="30" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<line x1="28" y1="46" x2="33" y2="46" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<line x1="28" y1="62" x2="33" y2="62" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<!-- 竹筒（可動部、節入り） -->
-<g class="tsutsu">
-  <!-- 竹筒本体 -->
-  <rect x="26" y="10" width="52" height="12" rx="6" fill="#8a6a3a" stroke="#3a352c" stroke-width="1.6" transform="rotate(-14 30 38)"/>
-  <!-- 竹筒の節（2本） -->
-  <line x1="50" y1="9" x2="48" y2="20" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-  <line x1="64" y1="7" x2="62" y2="18" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-  <!-- 筒口 -->
-  <ellipse cx="79" cy="12" rx="6" ry="3" fill="#6b5228" stroke="#3a352c" stroke-width="1" transform="rotate(-14 30 38)"/>
-</g>
-<!-- 水しぶき（コトン直後に飛び散る） -->
-<g class="tobimizu">
-  <circle cx="55" cy="62" r="1.4" fill="#3c5a6e" fill-opacity=".7"/>
-  <circle cx="49" cy="59" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-  <circle cx="61" cy="58" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-  <circle cx="45" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-  <circle cx="65" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-  <line x1="55" y1="62" x2="52" y2="56" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-  <line x1="55" y1="62" x2="59" y2="55" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-</g>
-<!-- 水滴（筒口から落ちる） -->
-<circle class="shizuku" cx="55" cy="62" r="2.2" fill="#3c5a6e" fill-opacity=".65"/>
-</svg></span><span class="ku fude">雪は深々と</span></div>
-
-<!-- 一の章（春・人力車） -->
-<section class="chap shell reveal photo-bg" data-scene="spring" data-trigger="rikisha" data-bg="sakura">
-  <p class="chapter-no">一の章</p><p class="kisetsu">― 春 ―</p>
-  <h2>そういへば、あの日</h2>
-  <div class="quote-jp">いづれの場所も<span> </span>旅の途中なり</div>
-  <p class="lead">雪がやみ、霞が晴れて、桜がひとひら。人力車がからからと過ぎてゆく。<br />ただ通り過ぎただけの場所が、いつのまにか、思ひ出になっている。<br />すれ違い通信は、その"なんでもない足あと"を、正確に書き留めます。</p>
+<!-- ════════════════ 一章・雪国へ（汽車・トンネル・雪国） ════════════════ -->
+<section class="story night" data-scene="winter" data-trigger="kisha" data-veil="dark">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">一 章</span><span class="ep-label">― 雪国へ ―</span></div>
+  <p class="ph">汽笛が、ポオォと尾を引いた。</p>
+  <p class="ph">列車は、長いトンネルへ吸い込まれてゆく。</p>
+  <p class="ph">ガタン、ゴトン。闇のなかを、ただ運ばれる。</p>
+  <p class="ph key">――トンネルを抜けると、そこは雪国であった。</p>
+  <p class="ph">窓の外は、見わたすかぎりの白。</p>
+  <p class="ph">雪は、しんしんと降りつもる。</p>
+  <p class="ph">温泉に、猿が一匹、目を閉じていた。</p>
+  <p class="ph">この景色を、私は誰かに見せたかった気がする。</p>
+  <p class="ph">けれど、隣の席は、もう空いていた。</p>
+  <div class="ep-rule"></div>
 </section>
 
-<!-- 休憩の間：茶道・和菓子・書道 -->
-<div class="ma photo-bg" data-koton data-bg="chashitsu">
-  <div class="chakyu">
-    <div class="item"><svg viewBox="0 0 70 60"><path class="yuge2" d="M30 18 C 26 10, 34 8, 30 0" stroke="#cfcabf" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M14 28 Q35 50 56 28 Z" fill="#3f6b5e"/><path d="M14 28 Q35 34 56 28" fill="none" stroke="#23201b" stroke-width="1.2"/><ellipse cx="35" cy="28" rx="21" ry="4" fill="none" stroke="#23201b" stroke-width="1.2"/></svg><p class="nm">一服の茶</p></div>
-    <div class="item"><svg viewBox="0 0 70 60"><rect x="16" y="34" width="38" height="6" rx="2" fill="#8a6a3a"/><path d="M22 34 Q35 16 48 34 Z" fill="#d8849c"/><circle cx="35" cy="28" r="3" fill="#a8572f"/></svg><p class="nm">和菓子</p></div>
-    <div class="item"><svg viewBox="0 0 70 60"><rect x="10" y="10" width="50" height="40" rx="1" fill="#f4eee3" stroke="#cdbfa6" stroke-width="1"/><path class="shodo-line" pathLength="1" d="M24 18 C 30 26, 26 34, 34 30 C 42 26, 38 42, 46 38" stroke="#23201b" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg><p class="nm">書の一筆</p></div>
+<!-- ════════════════ 二章・雪道の足跡（先に通った誰か） ════════════════ -->
+<section class="story night" data-scene="winter" data-trigger="yukimichi" data-veil="dark">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">二 章</span><span class="ep-label">― 雪の一本道 ―</span></div>
+  <p class="ph">駅を出て、雪の一本道を歩く。</p>
+  <p class="ph">ザッ、ザッ、と、雪を踏みしめる音だけが響く。</p>
+  <p class="ph">ふと前を見ると――足跡が、続いていた。</p>
+  <p class="ph key">私のものではない。誰かが、先に通ったのだ。</p>
+  <p class="ph">その人も、ひとりだったのだろうか。</p>
+  <p class="ph">足跡は、消えずに、白い道に刻まれていた。</p>
+  <p class="ph">私もいま、足跡を残している。</p>
+  <p class="ph">いつか誰かが、これをたどるのかもしれない。</p>
+  <div class="ep-rule"></div>
+</section>
+
+<!-- ════════════════ 三章・春（雪解け・桜・人力車・地蔵の花） ════════════════ -->
+<section class="story" data-scene="spring" data-trigger="rikisha" data-veil="soft" data-bg="sakura">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">三 章</span><span class="ep-label">― 春、すれ違ふ ―</span></div>
+  <p class="ph">峠を下るほどに、雪は、霞へと変わった。</p>
+  <p class="ph">気づけば桜が、ひとひら、頬をかすめる。</p>
+  <p class="ph">からから、と、人力車が過ぎてゆく。</p>
+  <p class="ph">ただ通り過ぎただけの、なんでもない辻。</p>
+  <p class="ph">けれどその辻を、私はあとで思い出すことになる。</p>
+  <p class="ph key">「いづれの場所も、旅の途中なり」</p>
+  <p class="ph">道ばたの地蔵に、誰かの供えた花が、まだ新しい。</p>
+  <p class="ph">私より先に、ここで手を合わせた人がいる。</p>
+  <p class="ph">すれ違ふとは、こういうことかもしれない。</p>
+  <div class="ep-rule"></div>
+</section>
+
+<!-- ════════════════ 四章・一服の間（茶室・鹿威し・間／ま） ════════════════ -->
+<section class="story" data-scene="spring" data-veil="soft" data-bg="chashitsu">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">四 章</span><span class="ep-label">― 一服の間（ま） ―</span></div>
+  <p class="ph">街道の茶屋で、ひと息つくことにした。</p>
+  <p class="ph">一服の茶が、冷えた指に、しみわたる。</p>
+  <p class="ph">庭の隅で、鹿威しが、水を溜めている。</p>
+  <!-- 鹿威し（庭・主役。コトンと鳴る） -->
+  <div class="shishi-stage" id="shishiStage" aria-hidden="true">
+    <svg viewBox="0 0 110 90" overflow="visible">
+      <ellipse cx="55" cy="84" rx="46" ry="6" fill="#3a352c" fill-opacity=".10"/>
+      <rect x="30" y="72" width="50" height="10" rx="3" fill="#7a6b48" fill-opacity=".55" stroke="#3a352c" stroke-width="1" stroke-opacity=".3"/>
+      <rect x="38" y="65" width="34" height="8" rx="2" fill="#9c7a3e" fill-opacity=".45" stroke="#3a352c" stroke-width="1" stroke-opacity=".25"/>
+      <path d="M40 65 Q55 75 70 65" fill="none" stroke="#3c5a6e" stroke-width="1.6" stroke-opacity=".6"/>
+      <path d="M42 65 Q55 72 68 65 L68 68 Q55 75 42 68 Z" fill="#3c5a6e" fill-opacity=".18"/>
+      <ellipse class="mizumo" cx="55" cy="65" rx="12" ry="2" fill="#3c5a6e" fill-opacity=".28"/>
+      <line x1="28" y1="72" x2="28" y2="14" stroke="#7a6b48" stroke-width="3" stroke-linecap="round"/>
+      <line x1="28" y1="30" x2="33" y2="30" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
+      <line x1="28" y1="46" x2="33" y2="46" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
+      <line x1="28" y1="62" x2="33" y2="62" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
+      <g class="tsutsu">
+        <rect x="26" y="10" width="52" height="12" rx="6" fill="#8a6a3a" stroke="#3a352c" stroke-width="1.6" transform="rotate(-14 30 38)"/>
+        <line x1="50" y1="9" x2="48" y2="20" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
+        <line x1="64" y1="7" x2="62" y2="18" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
+        <ellipse cx="79" cy="12" rx="6" ry="3" fill="#6b5228" stroke="#3a352c" stroke-width="1" transform="rotate(-14 30 38)"/>
+      </g>
+      <g class="tobimizu">
+        <circle cx="55" cy="62" r="1.4" fill="#3c5a6e" fill-opacity=".7"/>
+        <circle cx="49" cy="59" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
+        <circle cx="61" cy="58" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
+        <circle cx="45" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
+        <circle cx="65" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
+        <line x1="55" y1="62" x2="52" y2="56" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
+        <line x1="55" y1="62" x2="59" y2="55" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
+      </g>
+      <circle class="shizuku" cx="55" cy="62" r="2.2" fill="#3c5a6e" fill-opacity=".65"/>
+    </svg>
   </div>
-  <span class="ku fude">一期一会の茶を</span>
-</div>
-
-<!-- 二の章（夏・昼） -->
-<section id="michi" class="chap shell reveal photo-bg" data-scene="summer" data-sub="day" data-trigger="natsu-hiru" data-bg="taki">
-  <p class="chapter-no">二の章</p><p class="kisetsu">― 夏・昼 ―</p>
-  <h2>道中の、三つの所作</h2>
-  <p class="lead">蝉時雨のなか、川がさらさら流れ、魚が跳ねる。風鈴がちりりと鳴り、麦わら帽子がふわりと舞った。<br />幹には抜け殻がひとつ、もう鳴かない。かき氷は、紅い雫を残して溶けてゆく。<br />夏はいつか終わる。だからこそ、歩いた今日が後で愛おしくなる。歩けば、ひとりでに道中記が育ちます。</p>
-  <div class="steps">
-    <div class="step"><div class="ji">記</div><h3>その場に、しるす</h3><p>気が向いたら「今ここ」を一つ。後で行ける精度の足あとになります。</p></div>
-    <div class="step"><div class="ji">巡</div><h3>軌跡が、めぐる</h3><p>通った街、訪れた国。四十七の地がひとつずつ埋まり、あなただけの道中図に。</p></div>
-    <div class="step"><div class="ji">顧</div><h3>のちに、かへりみる</h3><p>歩いた道を、その場所まで、たどれます。</p></div>
-  </div>
+  <p class="ph ma">……</p>
+  <p class="ph key">コトン。</p>
+  <p class="ph">竹が石を打つ、その音だけが、時を刻む。</p>
+  <p class="ph">静けさが、かえって、深くなる。</p>
+  <p class="ph">一期一会、と、誰かが言った。</p>
+  <p class="ph">この一杯も、この一刻も、二度とは巡らない。</p>
+  <div class="ep-rule"></div>
 </section>
 
-<div class="ma" data-koton><span class="niwa"><svg viewBox="0 0 520 150"><g fill="none" stroke="#3a352c" stroke-opacity=".4" stroke-width="1.2"><path d="M0 96 Q130 78 260 96 T520 96"/><path d="M0 110 Q130 92 260 110 T520 110"/></g><ellipse cx="180" cy="96" rx="22" ry="13" fill="#3a352c" fill-opacity=".16"/><ellipse cx="360" cy="116" rx="13" ry="8" fill="#3a352c" fill-opacity=".14"/></svg></span><span class="shishi"><svg viewBox="0 0 110 90" overflow="visible">
-<!-- 地面・台石 -->
-<ellipse cx="55" cy="84" rx="46" ry="6" fill="#3a352c" fill-opacity=".10"/>
-<rect x="30" y="72" width="50" height="10" rx="3" fill="#7a6b48" fill-opacity=".55" stroke="#3a352c" stroke-width="1" stroke-opacity=".3"/>
-<!-- 受け石（水受けを載せる台） -->
-<rect x="38" y="65" width="34" height="8" rx="2" fill="#9c7a3e" fill-opacity=".45" stroke="#3a352c" stroke-width="1" stroke-opacity=".25"/>
-<!-- 水受け（半楕円の水槽） -->
-<path d="M40 65 Q55 75 70 65" fill="none" stroke="#3c5a6e" stroke-width="1.6" stroke-opacity=".6"/>
-<path d="M42 65 Q55 72 68 65 L68 68 Q55 75 42 68 Z" fill="#3c5a6e" fill-opacity=".18"/>
-<!-- 水受けの水面（揺れ） -->
-<ellipse class="mizumo" cx="55" cy="65" rx="12" ry="2" fill="#3c5a6e" fill-opacity=".28"/>
-<!-- 竹の支柱（固定、後ろ） -->
-<line x1="28" y1="72" x2="28" y2="14" stroke="#7a6b48" stroke-width="3" stroke-linecap="round"/>
-<line x1="28" y1="30" x2="33" y2="30" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<line x1="28" y1="46" x2="33" y2="46" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<line x1="28" y1="62" x2="33" y2="62" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<!-- 竹筒（可動部、節入り） -->
-<g class="tsutsu">
-  <!-- 竹筒本体 -->
-  <rect x="26" y="10" width="52" height="12" rx="6" fill="#8a6a3a" stroke="#3a352c" stroke-width="1.6" transform="rotate(-14 30 38)"/>
-  <!-- 竹筒の節（2本） -->
-  <line x1="50" y1="9" x2="48" y2="20" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-  <line x1="64" y1="7" x2="62" y2="18" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-  <!-- 筒口 -->
-  <ellipse cx="79" cy="12" rx="6" ry="3" fill="#6b5228" stroke="#3a352c" stroke-width="1" transform="rotate(-14 30 38)"/>
-</g>
-<!-- 水しぶき（コトン直後に飛び散る） -->
-<g class="tobimizu">
-  <circle cx="55" cy="62" r="1.4" fill="#3c5a6e" fill-opacity=".7"/>
-  <circle cx="49" cy="59" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-  <circle cx="61" cy="58" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-  <circle cx="45" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-  <circle cx="65" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-  <line x1="55" y1="62" x2="52" y2="56" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-  <line x1="55" y1="62" x2="59" y2="55" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-</g>
-<!-- 水滴（筒口から落ちる） -->
-<circle class="shizuku" cx="55" cy="62" r="2.2" fill="#3c5a6e" fill-opacity=".65"/>
-</svg></span><span class="ku fude">蝉時雨のなか</span></div>
-
-<!-- 二の章 余話（夏・里） -->
-<section class="chap shell reveal photo-bg" data-scene="summer" data-sub="day" data-trigger="natsu-sato" data-bg="tanbo">
-  <p class="kisetsu">― 夏・里 ―</p>
-  <h2>あの夏の、寄り道</h2>
-  <p class="lead">青田が風にうねり、畦道のむこうで里山が眠る。川辺では串に刺した鮎が、ぱちぱちと塩を弾いて焼ける。井戸で冷やしたスイカを割れば、夕立のまえの匂いがした。<br />名所でなくていい。何でもない一本道こそ、後で無性にたどりたくなる。</p>
-  <div class="steps">
-    <div class="step"><div class="ji">田</div><h3>あぜ道を、ゆく</h3><p>青田のあいだの細道も、ちゃんと足あとに。あの夏に通った田んぼへ、また帰れます。</p></div>
-    <div class="step"><div class="ji">鮎</div><h3>川辺で、ひと息</h3><p>立ち寄った川、頬張った塩焼き。場所の記憶ごと、軌跡に焼き付きます。</p></div>
-    <div class="step"><div class="ji">西</div><h3>冷えた西瓜を、割る</h3><p>たわいない寄り道が、いちばん濃い思い出に。だから消さずに、残しておく。</p></div>
-  </div>
+<!-- ════════════════ 五章・夏昼（蝉・川・かき氷・儚さ） ════════════════ -->
+<section id="michi" class="story" data-scene="summer" data-sub="day" data-trigger="natsu-hiru" data-veil="soft" data-bg="taki">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">五 章</span><span class="ep-label">― 夏の、昼 ―</span></div>
+  <p class="ph">季節は、いつのまにか、夏になっていた。</p>
+  <p class="ph">蝉時雨が、降るように、満ちている。</p>
+  <p class="ph">川がさらさらと流れ、魚が、ひとつ跳ねた。</p>
+  <p class="ph">風鈴が、ちりりと鳴る。</p>
+  <p class="ph">幹には、抜け殻がひとつ。もう、鳴かない。</p>
+  <p class="ph">かき氷は、紅い雫を残して、溶けてゆく。</p>
+  <p class="ph key">夏は、いつか終わる。</p>
+  <p class="ph">だからこそ、歩いた今日が、あとで愛おしくなる。</p>
+  <p class="ph">麦わら帽子が、ふわりと、風にさらわれた。</p>
+  <div class="ep-rule"></div>
 </section>
 
-<!-- 三の章（夏・夜祭り） -->
-<section class="chap shell reveal photo-bg" data-scene="summer" data-sub="night" data-trigger="natsu-yoru" data-bg="tekiya">
-  <p class="chapter-no">三の章</p><p class="kisetsu">― 夏・夜祭り ―</p>
-  <h2>巡り合ひ、すれ違ひ</h2>
-  <p class="lead">屋台のたこ焼き、焼きそばの匂い。ドオン――と打ち上げ花火。そして、線香花火のさみしさ。<br />同じ道を踏んだ誰かと、過ぎし三十日のうちにそっとすれ違えます。推しの歩いた道を、ファンがたどる旅も。</p>
-  <div class="gather">
-    <div class="item"><h3>文（ふみ）、あとで届く</h3><p>移動の副産物として、すれ違いが文に溜まる。帰ってから開けば、もう何かが起きている。</p></div>
-    <div class="item"><h3>時を越えて、出会ふ</h3><p>同じ刻に居合わせずとも構わない。過ぎた三十日の道のりが、人と人をそっと結びます。</p></div>
-    <div class="item"><h3>言葉は、いらず</h3><p>やりとりは、ひとつの印だけ。気が向けば、Xでゆるりと。</p></div>
-  </div>
+<!-- ════════════════ 六章・夏夜祭り（屋台・花火・すれ違い・線香花火） ════════════════ -->
+<section class="story night" data-scene="summer" data-sub="night" data-trigger="natsu-yoru" data-veil="dusk" data-bg="tekiya">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">六 章</span><span class="ep-label">― 夏の、夜祭り ―</span></div>
+  <p class="ph">日が暮れて、遠くに、祭りの灯が見えた。</p>
+  <p class="ph">たこ焼き、焼きそば、提灯の列。</p>
+  <p class="ph">人ごみのなか、誰かと肩がふれた。</p>
+  <p class="ph">振り向いたが、もう、その背中は人波に消えていた。</p>
+  <p class="ph key">ドオン――と、花火が、夜空をひらく。</p>
+  <p class="ph">同じ花火を、見上げている誰かが、いるはずだ。</p>
+  <p class="ph">言葉は、交わさなくていい。</p>
+  <p class="ph">ただ、同じ道を、同じ夜を、踏んだという、それだけで。</p>
+  <p class="ph">線香花火が、ぽとりと、落ちた。</p>
+  <p class="ph">すれ違いとは、さみしさの、もうひとつの名前だ。</p>
+  <div class="ep-rule"></div>
 </section>
 
-<div class="ma" data-koton><span class="niwa"><svg viewBox="0 0 520 150"><g fill="none" stroke="#3a352c" stroke-opacity=".4" stroke-width="1.2"><path d="M0 100 Q130 82 260 100 T520 100"/><path d="M0 114 Q130 96 260 114 T520 114"/></g><ellipse cx="200" cy="98" rx="20" ry="12" fill="#3a352c" fill-opacity=".15"/></svg></span><span class="shishi"><svg viewBox="0 0 110 90" overflow="visible">
-<!-- 地面・台石 -->
-<ellipse cx="55" cy="84" rx="46" ry="6" fill="#3a352c" fill-opacity=".10"/>
-<rect x="30" y="72" width="50" height="10" rx="3" fill="#7a6b48" fill-opacity=".55" stroke="#3a352c" stroke-width="1" stroke-opacity=".3"/>
-<!-- 受け石（水受けを載せる台） -->
-<rect x="38" y="65" width="34" height="8" rx="2" fill="#9c7a3e" fill-opacity=".45" stroke="#3a352c" stroke-width="1" stroke-opacity=".25"/>
-<!-- 水受け（半楕円の水槽） -->
-<path d="M40 65 Q55 75 70 65" fill="none" stroke="#3c5a6e" stroke-width="1.6" stroke-opacity=".6"/>
-<path d="M42 65 Q55 72 68 65 L68 68 Q55 75 42 68 Z" fill="#3c5a6e" fill-opacity=".18"/>
-<!-- 水受けの水面（揺れ） -->
-<ellipse class="mizumo" cx="55" cy="65" rx="12" ry="2" fill="#3c5a6e" fill-opacity=".28"/>
-<!-- 竹の支柱（固定、後ろ） -->
-<line x1="28" y1="72" x2="28" y2="14" stroke="#7a6b48" stroke-width="3" stroke-linecap="round"/>
-<line x1="28" y1="30" x2="33" y2="30" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<line x1="28" y1="46" x2="33" y2="46" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<line x1="28" y1="62" x2="33" y2="62" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<!-- 竹筒（可動部、節入り） -->
-<g class="tsutsu">
-  <!-- 竹筒本体 -->
-  <rect x="26" y="10" width="52" height="12" rx="6" fill="#8a6a3a" stroke="#3a352c" stroke-width="1.6" transform="rotate(-14 30 38)"/>
-  <!-- 竹筒の節（2本） -->
-  <line x1="50" y1="9" x2="48" y2="20" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-  <line x1="64" y1="7" x2="62" y2="18" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-  <!-- 筒口 -->
-  <ellipse cx="79" cy="12" rx="6" ry="3" fill="#6b5228" stroke="#3a352c" stroke-width="1" transform="rotate(-14 30 38)"/>
-</g>
-<!-- 水しぶき（コトン直後に飛び散る） -->
-<g class="tobimizu">
-  <circle cx="55" cy="62" r="1.4" fill="#3c5a6e" fill-opacity=".7"/>
-  <circle cx="49" cy="59" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-  <circle cx="61" cy="58" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-  <circle cx="45" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-  <circle cx="65" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-  <line x1="55" y1="62" x2="52" y2="56" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-  <line x1="55" y1="62" x2="59" y2="55" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-</g>
-<!-- 水滴（筒口から落ちる） -->
-<circle class="shizuku" cx="55" cy="62" r="2.2" fill="#3c5a6e" fill-opacity=".65"/>
-</svg></span><span class="ku fude">紅葉散り敷く</span></div>
+<!-- ════════════════ 七章・時を越えて（タイムシフト・推しの軌跡） ════════════════ -->
+<section class="story night" data-scene="summer" data-sub="night" data-veil="dusk">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">七 章</span><span class="ep-label">― 時を越えて ―</span></div>
+  <p class="ph">祭りのあと、私は、ひとつのことに気づいた。</p>
+  <p class="ph">同じ刻に、居合わせなくても、いいのだと。</p>
+  <p class="ph key">過ぎた三十日の道のりが、人と人を、そっと結ぶ。</p>
+  <p class="ph">私が今日たどった道を、昨日、誰かが歩いていた。</p>
+  <p class="ph">その人の足あとを、私は、知らずに踏んでいた。</p>
+  <p class="ph">慕わしいあの人の通った道さえ、たどれるという。</p>
+  <p class="ph">会えずとも、同じ景色を、確かに、見た。</p>
+  <p class="ph key">それは、時を越えた、すれ違い。</p>
+  <div class="ep-rule"></div>
+</section>
 
-<!-- 四の章（秋） -->
-<section class="chap shell reveal photo-bg" data-scene="autumn" data-trigger="aki" data-bg="hosomichi">
-  <div class="ink">
-    <p class="chapter-no">四の章</p><p class="kisetsu">― 秋 ―</p>
-    <h2>足あとは、ずっと残る</h2>
-    <p class="lead">紅葉が散り、落ち葉を踏む音。どこからか、焼き芋の匂い。<br />消えてしまっては、思ひ出になりません。だから軌跡はちゃんと残しておく。幾年たっても、あの日の道をたどれるように。</p>
-    <div class="three">
-      <div class="t"><h3>行きし場所を、たしかに</h3><p>後でその場所に行ける精度で残すから、細やかに顧みられます。</p></div>
-      <div class="t"><h3>消さずに、積み重ねる</h3><p>記録は消えません。日を重ねるほど軌跡は厚みを増し、移動の年譜になっていきます。</p></div>
-      <div class="t"><h3>気ままに、自分の間で</h3><p>入り口はXのみ。そっと残したい時は、移動専用の名で歩むのも自由。</p></div>
+<!-- ════════════════ 八章・秋（紅葉・落ち葉・足あとは消えない） ════════════════ -->
+<section class="story" data-scene="autumn" data-trigger="aki" data-veil="soft" data-bg="hosomichi">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">八 章</span><span class="ep-label">― 秋、残るもの ―</span></div>
+  <p class="ph">木々が、燃えるように、色づいていた。</p>
+  <p class="ph">落ち葉を踏む音が、かさり、と鳴る。</p>
+  <p class="ph">どこからか、焼き芋の、匂い。</p>
+  <p class="ph">消えてしまっては、思い出には、ならない。</p>
+  <p class="ph key">だから私は、歩いた道を、消さずにおく。</p>
+  <p class="ph">幾年たっても、あの日の辻へ、帰れるように。</p>
+  <p class="ph">ふり返れば、足あとは、ずっと続いていた。</p>
+  <p class="ph">冬の雪道の、あの足跡まで、ひと続きに。</p>
+  <p class="ph key">旅とは、消えない一本の線を、引くことだった。</p>
+  <div class="ep-rule"></div>
+</section>
+
+<!-- ════════════════ 結章・扉（富士・月・流れ星・Xへの誘い） ════════════════ -->
+<section class="story night" data-scene="clear" data-veil="dusk">
+  <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">結 章</span><span class="ep-label">― 晴れて、富士 ―</span></div>
+  <p class="ph">雲が晴れ、はじめて、富士が見えた。</p>
+  <p class="ph">湖に、月が、逆さに浮かんでいる。</p>
+  <p class="ph">すうっと、流れ星が、ひとつ。</p>
+  <p class="ph">願いを言う間もなく、消えていった。</p>
+  <p class="ph key">けれど――願いは、もう、足が叶えている。</p>
+  <p class="ph">想いが強ければ、足は、自ずと動いているのだから。</p>
+  <p class="ph key">同じ道は、二度とない。だから、足あとは消えない。</p>
+  <p class="ph">あなたの旅も、ここから、はじまる。</p>
+  <div class="saso" id="sasoBtn">
+    <p class="ph key" style="min-height:auto;margin-bottom:1.6em">――さあ、消えてしまふ前に。</p>
+    <div class="cta-row">
+      <a class="btn btn-x" href="https://surechigai-romi.link">𝕏 で旅をはじめる</a>
+      <a class="btn btn-ghost" href="https://surechigai-romi.link">道のことを、もう少し</a>
     </div>
   </div>
 </section>
-
-<div class="ma" data-koton><span class="shishi"><svg viewBox="0 0 110 90" overflow="visible">
-<!-- 地面・台石 -->
-<ellipse cx="55" cy="84" rx="46" ry="6" fill="#3a352c" fill-opacity=".10"/>
-<rect x="30" y="72" width="50" height="10" rx="3" fill="#7a6b48" fill-opacity=".55" stroke="#3a352c" stroke-width="1" stroke-opacity=".3"/>
-<!-- 受け石（水受けを載せる台） -->
-<rect x="38" y="65" width="34" height="8" rx="2" fill="#9c7a3e" fill-opacity=".45" stroke="#3a352c" stroke-width="1" stroke-opacity=".25"/>
-<!-- 水受け（半楕円の水槽） -->
-<path d="M40 65 Q55 75 70 65" fill="none" stroke="#3c5a6e" stroke-width="1.6" stroke-opacity=".6"/>
-<path d="M42 65 Q55 72 68 65 L68 68 Q55 75 42 68 Z" fill="#3c5a6e" fill-opacity=".18"/>
-<!-- 水受けの水面（揺れ） -->
-<ellipse class="mizumo" cx="55" cy="65" rx="12" ry="2" fill="#3c5a6e" fill-opacity=".28"/>
-<!-- 竹の支柱（固定、後ろ） -->
-<line x1="28" y1="72" x2="28" y2="14" stroke="#7a6b48" stroke-width="3" stroke-linecap="round"/>
-<line x1="28" y1="30" x2="33" y2="30" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<line x1="28" y1="46" x2="33" y2="46" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<line x1="28" y1="62" x2="33" y2="62" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-<!-- 竹筒（可動部、節入り） -->
-<g class="tsutsu">
-  <!-- 竹筒本体 -->
-  <rect x="26" y="10" width="52" height="12" rx="6" fill="#8a6a3a" stroke="#3a352c" stroke-width="1.6" transform="rotate(-14 30 38)"/>
-  <!-- 竹筒の節（2本） -->
-  <line x1="50" y1="9" x2="48" y2="20" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-  <line x1="64" y1="7" x2="62" y2="18" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-  <!-- 筒口 -->
-  <ellipse cx="79" cy="12" rx="6" ry="3" fill="#6b5228" stroke="#3a352c" stroke-width="1" transform="rotate(-14 30 38)"/>
-</g>
-<!-- 水しぶき（コトン直後に飛び散る） -->
-<g class="tobimizu">
-  <circle cx="55" cy="62" r="1.4" fill="#3c5a6e" fill-opacity=".7"/>
-  <circle cx="49" cy="59" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-  <circle cx="61" cy="58" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-  <circle cx="45" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-  <circle cx="65" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-  <line x1="55" y1="62" x2="52" y2="56" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-  <line x1="55" y1="62" x2="59" y2="55" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-</g>
-<!-- 水滴（筒口から落ちる） -->
-<circle class="shizuku" cx="55" cy="62" r="2.2" fill="#3c5a6e" fill-opacity=".65"/>
-</svg></span><span class="ku fude">空、晴れわたる</span></div>
-
-<!-- 結び -->
-<section class="closing shell reveal photo-bg" data-scene="clear" data-bg="fuji">
-  <p class="ichigo">結びに</p>
-  <h2 class="kessui">一期一会の旅の<br />思い出を、刻む</h2>
-  <p class="haiku">今日の一歩、<br />いづれ懐かしき<br />道となる</p>
-  <p class="lead">同じ道、同じ景色は、二度とない。<br />だからこそ、その一度きりの足あとを、消さずに刻む。<br />吹雪は晴れ、遠くに富士。その先は、竹林の細道へ。<br />いつもの移動が、そのまま、あなただけの物語になります。</p>
-  <div class="cta-row"><a class="btn btn-x" href="https://surechigai-romi.link">𝕏 で旅をはじめる</a></div>
-  <div class="chikurin" id="chikurin" aria-hidden="true"><div class="michi"></div></div>
-</section>
-
-<!-- ===== エピローグの扉（サウンドノベル風） ===== -->
-<section class="novel reveal" data-scene="clear">
-  <svg class="silhouette" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-    <path d="M0 300 L0 200 Q180 150 360 180 T760 170 Q960 140 1200 175 L1200 300 Z" fill="#060c18"/>
-    <path d="M0 300 L0 240 Q220 205 460 230 T900 220 Q1060 200 1200 225 L1200 300 Z" fill="#0a1322"/>
-    <ellipse cx="600" cy="298" rx="20" ry="5" fill="#05080f"/>
-    <g fill="#05080f" transform="translate(592 240)"><path d="M0 0 Q8 -18 16 0 Z"/><rect x="2" y="2" width="12" height="6" rx="2"/><path d="M4 8 L4 44 M12 8 L12 44 M4 24 L0 32 M12 24 L16 32" stroke="#05080f" stroke-width="3" fill="none" stroke-linecap="round"/></g>
-  </svg>
-  <div class="tsuki"></div>
-  <div class="mizu"></div>
-  <div class="tsuki-kage"></div>
-  <svg class="fuji-yo" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path d="M0 220 L0 150 Q420 28 560 24 Q700 28 1120 150 L1200 160 L1200 220 Z" fill="#0a1626"/><path d="M500 64 Q560 22 560 24 Q560 22 620 64 Q596 54 580 66 Q566 50 552 66 Q536 54 500 64 Z" fill="#26405e"/></svg>
-  <!-- かまいたち：風の刃が扉を走る -->
-  <div class="kama" aria-hidden="true">
-    <div class="ha"></div><div class="ha"></div><div class="ha"></div><div class="ha"></div><div class="ha"></div>
-    <div class="flash"></div>
-  </div>
-  <div class="nv-inner">
-    <p class="nv-label">― 結 ―</p>
-    <p class="nv-text">
-      <span class="l">同じ道は、二度とない。</span>
-      <span class="l">だからこそ、刻まれた足あとは</span>
-      <span class="l">いつまでも、消えずに残る。</span>
-      <span class="l">それが、一期一会の旅。</span>
-      <span class="l">願いを込めて、物語をはじめよう。</span>
-    </p>
-  </div>
-</section>
-
 <footer class="shell">
   <p>すれ違い通信 ／ <a href="https://surechigai-romi.link">surechigai-romi.link</a></p>
   <p class="footnote">
@@ -837,269 +793,6 @@
   </p>
 </footer>
 
-<script>
-  (function(){
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var root = document.documentElement, body=document.body;
-
-    /* reveal + 間のししおどし(音) */
-    var obs = document.querySelectorAll('.reveal, .ma[data-koton]');
-    if('IntersectionObserver' in window){
-      var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in');
-        if(e.target.hasAttribute('data-koton') && !e.target.dataset.rang){ e.target.dataset.rang='1'; setTimeout(function(){konk();}, 850); } } }); }, { threshold:.2 });
-      obs.forEach(function(e){ io.observe(e); });
-    } else { obs.forEach(function(e){ e.classList.add('in'); }); }
-
-    function hex(h){ h=h.replace('#',''); return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)]; }
-    function mix(a,b,t){ return 'rgb('+Math.round(a[0]+(b[0]-a[0])*t)+','+Math.round(a[1]+(b[1]-a[1])*t)+','+Math.round(a[2]+(b[2]-a[2])*t)+')'; }
-    function lerp(a,b,t){ return a+(b-a)*t; }
-
-    var KF = [
-      { at:0.00, skyT:'#c2ccd3', skyB:'#dfe2de', tint:[150,170,185], tintA:.16, fuji:.05, clear:0,  kasumi:1.0, bliz:1.0, lx:82, lsp:48, lop:.30, lc:[214,228,240] },
-      /* 雪国（トンネルを抜けた先）：吹雪が和らぎ、温泉の猿が見える静かな雪景色 */
-      { at:0.14, skyT:'#cdd6dd', skyB:'#e4e2da', tint:[150,168,182], tintA:.12, fuji:.10, clear:.2, kasumi:.8, bliz:0.28, lx:78, lsp:54, lop:.34, lc:[224,234,242] },
-      { at:0.30, skyT:'#e6e0e8', skyB:'#f0e8da', tint:[220,160,185], tintA:.07, fuji:.18, clear:.5, kasumi:.5, bliz:0.0, lx:62, lsp:70, lop:.42, lc:[255,244,236] },
-      { at:0.58, skyT:'#d6e7ea', skyB:'#efe7d6', tint:[70,120,90],   tintA:.06, fuji:.26, clear:1,  kasumi:.15, bliz:0.0, lx:50, lsp:42, lop:.62, lc:[255,252,232] },
-      { at:0.82, skyT:'#ecdfce', skyB:'#e8dcc6', tint:[168,87,47],   tintA:.09, fuji:.30, clear:1,  kasumi:.06, bliz:0.0, lx:24, lsp:64, lop:.5,  lc:[255,206,150] },
-      { at:1.00, skyT:'#dfeaf0', skyB:'#ece1cd', tint:[120,150,170], tintA:.05, fuji:.40, clear:1,  kasumi:0.0, bliz:0.0, lx:34, lsp:72, lop:.38, lc:[255,234,206] }
-    ];
-    KF.forEach(function(k){ k._t=hex(k.skyT); k._b=hex(k.skyB); });
-    function seg(p){ for(var i=0;i<KF.length-1;i++){ if(p<=KF[i+1].at){ var a=KF[i],b=KF[i+1],t=(p-a.at)/(b.at-a.at||1); return {a:a,b:b,t:Math.max(0,Math.min(1,t))}; } } return {a:KF[4],b:KF[4],t:0}; }
-
-    var layers={ snow:document.getElementById('L-snow'), sakura:document.getElementById('L-sakura'), momiji:document.getElementById('L-momiji') }, built={};
-    function build(id, kind){ if(reduce||built[id]) return; built[id]=true; var host=layers[id], n=(kind==='snow'?70:54);
-      for(var i=0;i<n;i++){ var el=document.createElement('div'); el.className='flake '+kind; var dur=(kind==='snow'?7:9)+(i%9); var sc=0.6+((i*29)%100)/100*1.3;
-        el.style.left=((i*37)%100)+'%'; el.style.setProperty('--dx',(((i*53)%280)-140)+'px'); el.style.setProperty('--rot',(kind==='snow'?(180+(i%3)*180):(540+(i%3)*360))+'deg');
-        el.style.transform='scale('+sc.toFixed(2)+')'; el.style.opacity=(0.55+((i*17)%45)/100).toFixed(2); el.style.animation='drift '+dur+'s linear '+(-(i*0.7))+'s infinite'; host.appendChild(el); } }
-
-    var els={ semi:'semi',furin:'furin',suika:'suika',kawa:'kawa',tsuri:'tsuri',uo:'uo',boushi:'boushi',
-      yataiA:'yataiA',yataiB:'yataiB',hanabi:'hanabi',senko:'senko',kagerou:'kagerou',yakiimo:'yakiimo',
-      tanbo:'tanbo',ayu:'ayu',suikawari:'suikawari',mato:'mato',nukegara:'nukegara',kakigori:'kakigori',
-      yuki:'yukimichi',onsen:'onsen',hikari:'hikari' };
-    Object.keys(els).forEach(function(k){ els[k]=document.getElementById(els[k]); });
-    var dots=[].slice.call(document.querySelectorAll('.kisetsu-bar .dot'));
-    function win(p,c,h){ return Math.max(0,1-Math.abs(p-c)/h); }
-
-    function render(p){
-      var s=seg(p);
-      root.style.setProperty('--sky-top', mix(s.a._t,s.b._t,s.t));
-      root.style.setProperty('--sky-bottom', mix(s.a._b,s.b._b,s.t));
-      var tn=[Math.round(lerp(s.a.tint[0],s.b.tint[0],s.t)),Math.round(lerp(s.a.tint[1],s.b.tint[1],s.t)),Math.round(lerp(s.a.tint[2],s.b.tint[2],s.t))];
-      root.style.setProperty('--season-tint','rgba('+tn[0]+','+tn[1]+','+tn[2]+','+lerp(s.a.tintA,s.b.tintA,s.t)+')');
-      root.style.setProperty('--fuji-opacity', lerp(s.a.fuji,s.b.fuji,s.t).toFixed(3));
-      root.style.setProperty('--fuji-clear', lerp(s.a.clear,s.b.clear,s.t).toFixed(3));
-      root.style.setProperty('--kasumi', lerp(s.a.kasumi,s.b.kasumi,s.t).toFixed(3));
-      root.style.setProperty('--blizzard', lerp(s.a.bliz,s.b.bliz,s.t).toFixed(3));
-      root.style.setProperty('--light-x', lerp(s.a.lx,s.b.lx,s.t).toFixed(1)+'%');
-      root.style.setProperty('--light-spread', lerp(s.a.lsp,s.b.lsp,s.t).toFixed(1)+'%');
-      root.style.setProperty('--light-op', lerp(s.a.lop,s.b.lop,s.t).toFixed(3));
-      var lc=[Math.round(lerp(s.a.lc[0],s.b.lc[0],s.t)),Math.round(lerp(s.a.lc[1],s.b.lc[1],s.t)),Math.round(lerp(s.a.lc[2],s.b.lc[2],s.t))];
-      root.style.setProperty('--light-color','rgba('+lc[0]+','+lc[1]+','+lc[2]+',.9)');
-
-      var wSnow=win(p,0.0,0.20), wSakura=win(p,0.30,0.20), wMomiji=win(p,0.82,0.22), wNatsu=win(p,0.58,0.22), wYuki=win(p,0.0,0.20);
-      if(wSnow>0.05) build('snow','snow'); if(wSakura>0.05) build('sakura','sakura'); if(wMomiji>0.05) build('momiji','momiji');
-      layers.snow.style.opacity=wSnow; layers.sakura.style.opacity=wSakura; layers.momiji.style.opacity=wMomiji;
-      els.kagerou.style.opacity=wNatsu*0.8;
-      /* 夏は昼物(蝉/風鈴/スイカ/川/釣り)も夜祭り物(屋台/線香花火)も、夏である限り両方しっかり出す。
-         夜章では夜物をやや強調するが、昼物が消えて寂しくならないよう最低限は残す。 */
-      var sub=body.getAttribute('data-sub'); var night=(sub==='night');
-      var dayW=wNatsu*(night?0.45:1), nightW=wNatsu*(night?1:0.6);
-      [els.semi,els.furin,els.suika,els.kawa,els.tsuri,els.tanbo,els.ayu,els.suikawari,els.mato,els.nukegara,els.kakigori].forEach(function(e){ if(e) e.style.opacity=dayW; });
-      els.semi.classList.toggle('show', wNatsu>0.1); els.furin.classList.toggle('show', wNatsu>0.1); els.nukegara.classList.toggle('show', wNatsu>0.1);
-      [els.yataiA,els.yataiB,els.senko].forEach(function(e){ if(e) e.style.opacity=nightW; });
-      els.senko.classList.toggle('show', wNatsu>0.1);
-      if(els.hanabi) els.hanabi.style.opacity=(wNatsu>0.1?1:0);  /* 花火コンテナを夏で可視化 */
-      els.yakiimo.style.opacity=wMomiji; els.yuki.style.opacity=wYuki;
-      /* 温泉の猿は「雪国」章(p≈0.08〜0.26)で主役に。吹雪が薄れるこの帯でしっかり見せる。 */
-      var wOnsen=win(p,0.13,0.13); els.onsen.style.opacity=wOnsen;
-      var si=Math.min(3,Math.floor(p*4+0.0001)); dots.forEach(function(d,i){ d.classList.toggle('on', i===si); });
-    }
-
-    /* シーン入場：season + sub + 一度きりトリガー */
-    var sceneEls=document.querySelectorAll('[data-scene]');
-    if('IntersectionObserver' in window){
-      var sio=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){
-        body.setAttribute('data-scene', e.target.getAttribute('data-scene'));
-        var sub=e.target.getAttribute('data-sub'); body.setAttribute('data-sub', sub||'day');
-        manageAmbient(e.target.getAttribute('data-scene'), sub||'day');
-        var tg=e.target.getAttribute('data-trigger'); if(tg && !e.target.dataset.fired){ e.target.dataset.fired='1'; fireTrigger(tg); }
-      } }); }, { threshold:.45 });
-      sceneEls.forEach(function(e){ sio.observe(e); });
-    }
-
-    /* 一度きりの演出トリガー */
-    function fireTrigger(tg){
-      if(tg==='kisha'){ var sc=document.getElementById('kishaScene');
-        if(sc){ sc.classList.add('run'); whistle();
-          /* 高速道路でトンネルを抜ける一人称: --tunnel を 0→1 へ進め、出口の光が拡大して明るくなる */
-          if(!reduce){ var t0=performance.now(), dur=3400;
-            (function step(now){ var k=Math.min(1,(now-t0)/dur); sc.style.setProperty('--tunnel', k.toFixed(3));
-              if(k<1){ requestAnimationFrame(step); } else { setTimeout(function(){ sc.classList.remove('run'); sc.style.opacity='0'; sc.style.setProperty('--tunnel','0'); }, 600); }
-            })(t0); }
-          else { sc.style.setProperty('--tunnel','1'); setTimeout(function(){ sc.classList.remove('run'); sc.style.opacity='0'; }, 800); }
-        }
-        setTimeout(walkSnow, 4200); }  /* トンネルを抜けて雪国に出たら、雪道をザッザッと歩く */
-      if(tg==='rikisha'){ var r=document.getElementById('jinrikisha'); if(r){ r.classList.remove('go'); void r.offsetWidth; r.classList.add('go'); }
-        var yk=document.getElementById('yajikita'); if(yk){ setTimeout(function(){ yk.classList.remove('go'); void yk.offsetWidth; yk.classList.add('go'); }, 2600); } }  /* 弥次喜多が少し遅れて街道をてくてく */
-      if(tg==='natsu-hiru'){ jumpFish(); var b=document.getElementById('boushi'); if(b){ setTimeout(function(){ b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); }, 1400); } boom(); }
-      if(tg==='natsu-yoru'){ boom(); jumpFish(); }
-    }
-    /* 雪道を「ザッ・ザッ・ザッ」と歩き、足跡を一つずつ刻む（消えずに残る＝一期一会を刻む） */
-    function walkSnow(){
-      var y=document.getElementById('yukimichi'); if(!y) return;
-      var atos=[].slice.call(y.querySelectorAll('.ato')); if(!atos.length) return;
-      atos.forEach(function(a){ a.classList.remove('step'); a.style.opacity='0'; });  /* 一旦リセット */
-      atos.forEach(function(a,i){ setTimeout(function(){
-        a.classList.add('step'); footstep();   /* 踏みしめる音「ザッ」 */
-      }, 650 + i*620); });   /* 約0.62秒間隔のリズム＝ザッ・ザッ・ザッ */
-    }
-    function jumpFish(){ if(reduce) return; var u=document.getElementById('uo'); if(!u) return; u.classList.remove('jump'); void u.offsetWidth; u.classList.add('jump'); splash(); setTimeout(function(){ if(body.getAttribute('data-scene')==='summer'){ u.classList.remove('jump'); void u.offsetWidth; u.classList.add('jump'); splash(); } }, 4500); }
-    function boom(){ var h=document.getElementById('hanabi'); if(!h||reduce) return;
-      function fire(){ if(body.getAttribute('data-scene')!=='summer') return; h.innerHTML=''; var cx=20+Math.random()*60, cy=15+Math.random()*25, cols=['#e08b4c','#d15d88','#b08a3e','#e6dcc6'], col=cols[(Math.random()*cols.length)|0];
-        for(var i=0;i<22;i++){ var a=i/22*Math.PI*2, r=60+Math.random()*30, b=document.createElement('div'); b.className='burst'; b.style.left=cx+'%'; b.style.top=cy+'%'; b.style.background=col; b.style.setProperty('--hx',Math.cos(a)*r+'px'); b.style.setProperty('--hy',Math.sin(a)*r+'px'); h.appendChild(b); }
-        h.classList.remove('boom'); void h.offsetWidth; h.classList.add('boom'); boomSound(); }
-      fire(); if(hanabiTimer) clearInterval(hanabiTimer); hanabiTimer=setInterval(fire, 5000);
-    }
-    var hanabiTimer=null;
-
-    function onScroll(){ var h=document.documentElement.scrollHeight-window.innerHeight, p=h>0?Math.min(1,Math.max(0,window.scrollY/h)):0; render(p); }
-    body.setAttribute('data-scene','winter'); body.setAttribute('data-sub','day'); render(0);
-    window.addEventListener('scroll', function(){ requestAnimationFrame(onScroll); }, { passive:true });
-    window.addEventListener('resize', onScroll, { passive:true });
-    onScroll();
-
-    /* ===== 音（Web Audio合成・最初のふれあいで灯る） ===== */
-    var AC=window.AudioContext||window.webkitAudioContext, actx=null, master=null, soundOn=false, armed=false;
-    var otoBtn=document.getElementById('oto'), otoHint=document.getElementById('otoHint');
-    function ensureCtx(){ if(actx||!AC) return; actx=new AC(); master=actx.createGain(); master.gain.value=0; master.connect(actx.destination); }
-    function setOn(on){ soundOn=on; if(otoBtn) otoBtn.classList.toggle('muted', !on); if(master) master.gain.setTargetAtTime(on?0.5:0, actx.currentTime, .05); manageAmbient(body.getAttribute('data-scene'), body.getAttribute('data-sub')); }
-    function tone(freq, type, dur, peak, t0){ if(!soundOn||!actx) return; var t=t0||actx.currentTime, o=actx.createOscillator(), g=actx.createGain(); o.type=type||'sine'; o.frequency.value=freq;
-      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak||0.3,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05); return o; }
-    function chime(){ if(!soundOn) return; var b=1200+Math.random()*500; [1,2.76,5.4].forEach(function(m,i){ tone(b*m,'sine',2.6+i*0.4,(i===0?0.4:0.14)/(i+1)); }); }
-    /* ししおどし「スコーン！」: 竹が石を打つ鋭いアタック＋木胴の共鳴＋抜ける高い余韻＋ひと反響 */
-    function konk(){ if(!soundOn||!actx) return; var t=actx.currentTime;
-      // 木胴の共鳴（低め・コッ）
-      var o=actx.createOscillator(), g=actx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(85,t+0.16);
-      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.5,t+0.004); g.gain.exponentialRampToValueAtTime(0.0001,t+0.45); o.connect(g); g.connect(master); o.start(t); o.stop(t+0.55);
-      // 抜ける高い余韻（コーン…）
-      var o2=actx.createOscillator(), g2=actx.createGain(); o2.type='sine'; o2.frequency.setValueAtTime(820,t); o2.frequency.exponentialRampToValueAtTime(540,t+0.5);
-      g2.gain.setValueAtTime(0.0001,t+0.005); g2.gain.linearRampToValueAtTime(0.18,t+0.02); g2.gain.exponentialRampToValueAtTime(0.0001,t+0.8); o2.connect(g2); g2.connect(master); o2.start(t); o2.stop(t+0.9);
-      // 打撃のアタック（カッ）
-      var n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.04,actx.sampleRate), ch=bf.getChannelData(0); for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,2); n.buffer=bf;
-      var nf=actx.createBiquadFilter(); nf.type='highpass'; nf.frequency.value=1200; var ng=actx.createGain(); ng.gain.value=0.28; n.connect(nf); nf.connect(ng); ng.connect(master); n.start(t);
-      // 軽い反響（庭の静けさ）
-      var o3=actx.createOscillator(), g3=actx.createGain(); o3.type='sine'; o3.frequency.setValueAtTime(540,t+0.18); o3.frequency.exponentialRampToValueAtTime(440,t+0.6);
-      g3.gain.setValueAtTime(0.0001,t+0.18); g3.gain.linearRampToValueAtTime(0.06,t+0.2); g3.gain.exponentialRampToValueAtTime(0.0001,t+0.7); o3.connect(g3); g3.connect(master); o3.start(t+0.18); o3.stop(t+0.75); }
-    function whistle(){ if(!soundOn||!actx) return; var t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain(); o.type='sine'; o.frequency.setValueAtTime(520,t); o.frequency.linearRampToValueAtTime(440,t+1.4);
-      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.3,t+0.2); g.gain.setValueAtTime(0.3,t+1.0); g.gain.exponentialRampToValueAtTime(0.0001,t+1.8); o.connect(g); g.connect(master); o.start(t); o.stop(t+2); }
-    /* 花火「ドオォン → パチパチパチ」。爆発音の後に小さな破裂が散発的に弾ける。 */
-    function boomSound(){ if(!soundOn||!actx) return; var t=actx.currentTime;
-      // ① ドオォン（低音の爆発＋胴鳴り）
-      var n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.9,actx.sampleRate), ch=bf.getChannelData(0);
-      for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,2.2); n.buffer=bf;
-      var f=actx.createBiquadFilter(); f.type='lowpass'; f.frequency.setValueAtTime(900,t); f.frequency.exponentialRampToValueAtTime(120,t+0.5);
-      var g=actx.createGain(); g.gain.setValueAtTime(0.7,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.9);
-      n.connect(f); f.connect(g); g.connect(master); n.start(t);
-      // 低い余韻（ズーン）
-      var o=actx.createOscillator(), og=actx.createGain(); o.type='sine'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(40,t+0.5);
-      og.gain.setValueAtTime(0.4,t); og.gain.exponentialRampToValueAtTime(0.0001,t+0.6); o.connect(og); og.connect(master); o.start(t); o.stop(t+0.7);
-      // 破裂音を1つ鳴らす小関数（dt=遅延, amp=音量, freq=中心周波数）
-      function crack(dt, amp, freq){
-        var cn=actx.createBufferSource(), cbf=actx.createBuffer(1,actx.sampleRate*0.05,actx.sampleRate), cc=cbf.getChannelData(0);
-        for(var m=0;m<cc.length;m++) cc[m]=(Math.random()*2-1)*Math.pow(1-m/cc.length,3); cn.buffer=cbf;
-        var cf=actx.createBiquadFilter(); cf.type='bandpass'; cf.frequency.value=freq; cf.Q.value=3;
-        var cg=actx.createGain(); cg.gain.setValueAtTime(0.0001,t+dt); cg.gain.linearRampToValueAtTime(amp,t+dt+0.004); cg.gain.exponentialRampToValueAtTime(0.0001,t+dt+0.06);
-        cn.connect(cf); cf.connect(cg); cg.connect(master); cn.start(t+dt);
-      }
-      // ② 「パ」… 一拍おいて、大きめの破裂がひとつ
-      crack(0.55, 0.26, 2200);
-      // ③ 「パラパラパラ」… その直後から細かい破裂が連続して散る
-      var n2=18+((Math.random()*8)|0);
-      for(var k=0;k<n2;k++){
-        var dt=0.62 + k*0.035 + Math.random()*0.04;   // 0.62秒あたりから次々と
-        crack(dt, 0.08+Math.random()*0.1, 2800+Math.random()*3000);
-      }
-    }
-    /* 雪を踏みしめる「ザッ」：短く詰まったノイズ（中域）＋わずかな沈み込み */
-    function footstep(){ if(!soundOn||!actx) return; var t=actx.currentTime, n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.12,actx.sampleRate), ch=bf.getChannelData(0);
-      for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,1.6); n.buffer=bf;
-      var f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=900; f.Q.value=0.8; var g=actx.createGain(); g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.13);
-      n.connect(f); f.connect(g); g.connect(master); n.start(t); }
-    function splash(){ if(!soundOn||!actx) return; var t=actx.currentTime, n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.15,actx.sampleRate), ch=bf.getChannelData(0);
-      for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*(1-i/ch.length); n.buffer=bf; var f=actx.createBiquadFilter(); f.type='highpass'; f.frequency.value=1800; var g=actx.createGain(); g.gain.value=0.18; n.connect(f); f.connect(g); g.connect(master); n.start(t); }
-
-    /* 環境音（ループ）：冬の風ゴオォ、夏の蝉ジー＋せせらぎ。シーンで出し入れ */
-    var amb={ wind:null, semi:null, kawa:null };
-    function noiseSource(){ var bf=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate), ch=bf.getChannelData(0); for(var i=0;i<ch.length;i++) ch[i]=Math.random()*2-1; var s=actx.createBufferSource(); s.buffer=bf; s.loop=true; return s; }
-    function startWind(){ if(amb.wind||!soundOn||!actx) return; var s=noiseSource(), f=actx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=420; var g=actx.createGain(); g.gain.value=0; s.connect(f); f.connect(g); g.connect(master); s.start(); g.gain.setTargetAtTime(0.16,actx.currentTime,0.6); amb.wind={s:s,g:g};
-      // ゆらぎ
-      amb.wind.lfo=setInterval(function(){ if(amb.wind) amb.wind.g.gain.setTargetAtTime(0.09+Math.random()*0.12, actx.currentTime, 0.5); }, 1800); }
-    function startSemi(){ if(amb.semi||!soundOn||!actx) return;
-      var s=noiseSource(), f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=4800; f.Q.value=8;
-      var f2=actx.createBiquadFilter(); f2.type='bandpass'; f2.frequency.value=6800; f2.Q.value=10;  // 倍音帯でジリジリ感
-      var g=actx.createGain(); g.gain.value=0; s.connect(f); f.connect(f2); f2.connect(g); g.connect(master); s.start();
-      g.gain.setTargetAtTime(0.07,actx.currentTime,0.8);
-      // 「ジー…ジー…」と波打つ蝉らしい音量ゆらぎ
-      var lfo=setInterval(function(){ if(amb.semi){ amb.semi.g.gain.setTargetAtTime(0.03+Math.random()*0.06, actx.currentTime, 0.18); } }, 420);
-      amb.semi={s:s,g:g,lfo:lfo}; }
-    function startKawa(){ if(amb.kawa||!soundOn||!actx) return; var s=noiseSource(), f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=2400; f.Q.value=1.2; var g=actx.createGain(); g.gain.value=0; s.connect(f); f.connect(g); g.connect(master); s.start(); g.gain.setTargetAtTime(0.05,actx.currentTime,0.8); amb.kawa={s:s,g:g}; }
-    function stopAmb(key){ if(amb[key]){ try{ amb[key].g.gain.setTargetAtTime(0,actx.currentTime,0.4); var a=amb[key]; setTimeout(function(){ try{a.s.stop();}catch(e){} }, 800); if(a.lfo) clearInterval(a.lfo); }catch(e){} amb[key]=null; } }
-    var chimeTimer=null;
-    function manageAmbient(scene, sub){
-      if(!soundOn||!actx){ return; }
-      // 冬の風
-      if(scene==='winter'){ startWind(); } else { stopAmb('wind'); }
-      // 夏（昼）蝉＋川＋風鈴
-      if(scene==='summer' && sub!=='night'){ startSemi(); startKawa(); if(!chimeTimer){ chime(); chimeTimer=setInterval(function(){ if(body.getAttribute('data-scene')==='summer'&&body.getAttribute('data-sub')!=='night') chime(); }, 5000); } }
-      else { stopAmb('semi'); stopAmb('kawa'); if(chimeTimer){ clearInterval(chimeTimer); chimeTimer=null; } }
-    }
-
-    function arm(){ if(armed) return; armed=true; ensureCtx(); if(actx&&actx.state==='suspended') actx.resume(); setOn(true); if(otoHint) otoHint.classList.remove('show');
-      window.removeEventListener('pointerdown',arm); window.removeEventListener('touchstart',arm); window.removeEventListener('keydown',arm); }
-    if(AC && !reduce){ window.addEventListener('pointerdown',arm,{passive:true}); window.addEventListener('touchstart',arm,{passive:true}); window.addEventListener('keydown',arm);
-      if(otoHint) setTimeout(function(){ if(!armed) otoHint.classList.add('show'); },1200); }
-    if(otoBtn) otoBtn.addEventListener('click', function(ev){ ev.stopPropagation(); if(!armed){ arm(); return; } ensureCtx(); if(actx&&actx.state==='suspended') actx.resume(); setOn(!soundOn); });
-
-    /* サウンドノベルの扉に瞬く星を散りばめる */
-    (function(){ var novels=document.querySelectorAll('.novel'); novels.forEach(function(nv){ var n=reduce?0:40;
-      for(var i=0;i<n;i++){ var h=document.createElement('span'); h.className='hoshi';
-        h.style.left=((i*53)%100)+'%'; h.style.top=((i*29)%70)+'%';
-        h.style.animationDelay=(-(i*0.37))+'s'; h.style.transform='scale('+(0.6+((i*13)%100)/100*1.2).toFixed(2)+')'; nv.appendChild(h); } }); })();
-
-    /* 流れ星：扉が見えている間、時々スーッと流れて消える。
-       ときどき2つが交差して出会う＝「君とリンク」(人と人が繋がる)演出。 */
-    (function(){
-      if(reduce) return;
-      var novels=document.querySelectorAll('.novel'); if(!novels.length) return;
-      function shoot(nv, x, y, pair){
-        var s=document.createElement('span'); s.className='nagareboshi';
-        s.style.left=x+'%'; s.style.top=y+'%'; nv.appendChild(s);
-        void s.offsetWidth; s.classList.add('go');
-        setTimeout(function(){ s.remove(); }, 1500);
-        if(pair){ /* もう一つを逆向き気味に流して交差させる */
-          var s2=document.createElement('span'); s2.className='nagareboshi';
-          s2.style.left=(x-18)+'%'; s2.style.top=(y+10)+'%'; s2.style.setProperty('--rev','1');
-          nv.appendChild(s2); void s2.offsetWidth; s2.classList.add('go');
-          setTimeout(function(){ s2.remove(); }, 1500);
-        }
-      }
-      var active=null;
-      var io2=new IntersectionObserver(function(es){ es.forEach(function(e){ active = e.isIntersecting ? e.target : (active===e.target?null:active); }); }, { threshold:.3 });
-      novels.forEach(function(nv){ io2.observe(nv); });
-      var tick=0;
-      setInterval(function(){
-        if(!active) return;
-        tick++;
-        var x=55+Math.random()*35, y=8+Math.random()*30;
-        shoot(active, x, y, tick%3===0);   /* 3回に1回は2つ交差(出会い) */
-      }, 2600);
-    })();
-
-    /* 竹林生成 */
-    (function(){ var c=document.getElementById('chikurin'); if(!c) return; var n=reduce?9:16;
-      for(var i=0;i<n;i++){ var t=document.createElement('div'); t.className='take'; var left=(i/(n-1))*100, edge=Math.abs(left-50)/50, h=40+edge*55;
-        t.style.left=left+'%'; t.style.height=h+'%'; t.style.opacity=String(0.5+edge*0.45); t.style.transform='translateX(-50%)'; c.appendChild(t); } })();
-  })();
-</script>
+<script src="app.js?v=2"></script>
 </body>
 </html>
