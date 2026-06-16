@@ -34,7 +34,7 @@ import Animated, {
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
+import { RadarHud } from "@/components/organisms/radar-hud";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -473,31 +473,9 @@ function formatDate(d: Date | string): string {
   return date.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
 }
 
-/** 未ログイン誘導 */
-function LoginGate() {
-  const { login } = useAuth();
-  return (
-    <View style={styles.loginGate}>
-      <MaterialIcons name="mail" size={64} color={color.accentIndigo} />
-      <Text style={styles.loginGateTitle}>Xでログインして</Text>
-      <Text style={styles.loginGateTitle}>すれ違いを楽しもう</Text>
-      <Text style={styles.loginGateSubtitle}>
-        チェックインするとすれ違った人の{"\n"}封筒がここに届きます
-      </Text>
-      <Pressable
-        onPress={() => login()}
-        style={({ pressed }) => [styles.loginButton, pressed && { opacity: 0.8 }]}
-      >
-        <MaterialIcons name="login" size={20} color={color.textWhite} style={{ marginRight: 8 }} />
-        <Text style={styles.loginButtonText}>X（Twitter）でログイン</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 export default function PostScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReadyForUI } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI, login } = useAuth();
 
   const [openItem, setOpenItem] = useState<EncounterItem | null>(null);
   const [openModalVisible, setOpenModalVisible] = useState(false);
@@ -588,21 +566,13 @@ export default function PostScreen() {
   );
 
   return (
-    <ScreenContainer containerClassName="bg-background">
-      <AppHeader
-        title="ポスト"
-        showCharacters={false}
-        isDesktop={isDesktop}
-        showMenu={true}
-        showLoginButton={!isAuthenticated}
-      />
-
+    <ScreenContainer containerClassName="bg-background" edges={[]}>
+      <RadarHud isAuthenticated={isAuthenticated} onLogin={login} />
+      
       {!isAuthReadyForUI ? (
         <View style={styles.center}>
           <Text style={styles.loadingText}>読み込み中...</Text>
         </View>
-      ) : !isAuthenticated ? (
-        <LoginGate />
       ) : (
         <View style={styles.mapContainer}>
           <JapanRadarMap>
