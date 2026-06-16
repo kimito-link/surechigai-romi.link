@@ -137,14 +137,30 @@
   @keyframes saru{ 0%,100%{transform:translateX(0)} 50%{transform:translateX(8px)} }
 
   /* 蒸気機関車＋トンネル */
-  .kisha-scene{ position:absolute; inset:0; opacity:0; transition:opacity 1.2s ease; }
-  .tunnel{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:min(360px,80vw); aspect-ratio:1.4;
-    border-radius:50% 50% 0 0; background:rgba(20,18,16,.9); }
-  .kisha{ position:absolute; top:54%; left:-20%; width:90px; transform:translateY(-50%); } .kisha svg{width:100%;display:block}
-  .kisha-scene.run .kisha{ animation:hashiru 5s ease-in forwards; }
-  @keyframes hashiru{ 0%{left:-20%; opacity:.95} 60%{left:42%; opacity:.95} 75%{opacity:0} 100%{left:60%; opacity:0} }
-  .kisha .kemuri{ transform-box:fill-box; animation:kemuri 1.4s ease-out infinite; }
-  @keyframes kemuri{ 0%{opacity:.6; transform:translateY(0) scale(.6)} 100%{opacity:0; transform:translateY(-22px) scale(1.5)} }
+  /* 一人称トンネル（高速道路でトンネルを抜ける感覚）。--tunnel 0→1 で前進。
+     0=トンネルの奥(暗く、出口は小さな遠い光) → 1=抜けて画面が真っ白に明るくなる。 */
+  .kisha-scene{ position:absolute; inset:0; opacity:0; transition:opacity .8s ease; --tunnel:0; }
+  .kisha-scene.run{ opacity:1; }
+  /* トンネル内の暗がり（手前ほど黒い） */
+  .tunnel-dark{ position:absolute; inset:0; background:radial-gradient(circle at 50% 46%,
+      transparent 0%, transparent calc(2% + var(--tunnel) * 120%), rgba(12,12,16,.96) calc(14% + var(--tunnel) * 130%)); }
+  /* 出口の光（抜けると拡大して画面を覆う＝明るくなる） */
+  .tunnel-light{ position:absolute; top:46%; left:50%; transform:translate(-50%,-50%);
+    width:calc(8% + var(--tunnel) * 260%); aspect-ratio:1; border-radius:50%;
+    background:radial-gradient(circle, rgba(248,248,244,.98) 0%, rgba(236,240,242,.9) 55%, transparent 78%);
+    filter:blur(calc(2px + var(--tunnel) * 6px)); }
+  /* 壁が中心から手前へ流れる速度感 */
+  .tunnel-walls{ position:absolute; inset:0; opacity:calc(.5 - var(--tunnel) * .5);
+    background:repeating-conic-gradient(from 0deg at 50% 46%, rgba(120,120,130,.0) 0deg 8deg, rgba(150,150,160,.10) 8deg 9deg);
+    animation:wallzoom 1.4s linear infinite; }
+  @keyframes wallzoom{ to{ transform:scale(1.5); opacity:0; } }
+
+  /* 膝栗毛の二人連れ（弥次喜多）。春の街道をてくてく歩いてすれ違う */
+  .yajikita{ position:absolute; bottom:11%; left:-12%; width:64px; opacity:0; } .yajikita svg{width:100%;display:block}
+  .yajikita.go{ animation:tochu 9s linear forwards; }
+  @keyframes tochu{ 0%{opacity:0; transform:translateX(0)} 7%{opacity:.92} 93%{opacity:.92} 100%{opacity:0; transform:translateX(128vw)} }
+  .yajikita .ashi{ transform-box:fill-box; transform-origin:50% 100%; animation:teku .5s ease-in-out infinite alternate; }
+  @keyframes teku{ 0%{transform:translateY(0)} 100%{transform:translateY(-1.5px)} }
 
   /* 人力車 */
   .jinrikisha{ position:absolute; bottom:9%; left:-14%; width:80px; opacity:0; } .jinrikisha svg{width:100%;display:block}
@@ -256,8 +272,10 @@
   <div class="fall"><div class="layer" id="L-snow"></div><div class="layer" id="L-sakura"></div><div class="layer" id="L-momiji"></div></div>
 
   <!-- 蒸気機関車＋トンネル（冬の入口） -->
-  <div class="kisha-scene" id="kishaScene"><div class="tunnel"></div>
-    <div class="kisha"><svg viewBox="0 0 90 50"><circle class="kemuri" cx="20" cy="14" r="5" fill="#9a948a"/><rect x="10" y="22" width="40" height="20" rx="3" fill="#2b2820"/><rect x="14" y="16" width="10" height="10" fill="#2b2820"/><rect x="50" y="18" width="30" height="24" rx="2" fill="#3a352c"/><circle cx="22" cy="44" r="6" fill="none" stroke="#2b2820" stroke-width="2"/><circle cx="40" cy="44" r="6" fill="none" stroke="#2b2820" stroke-width="2"/><circle cx="64" cy="44" r="5" fill="none" stroke="#3a352c" stroke-width="2"/></svg></div>
+  <div class="kisha-scene" id="kishaScene">
+    <div class="tunnel-light"></div>
+    <div class="tunnel-walls"></div>
+    <div class="tunnel-dark"></div>
   </div>
 
   <div class="kagerou" id="kagerou"></div>
@@ -294,6 +312,12 @@
 
   <!-- 人力車（春の道中） -->
   <div class="jinrikisha" id="jinrikisha"><svg viewBox="0 0 90 50"><circle cx="30" cy="40" r="9" fill="none" stroke="#2b2820" stroke-width="2"/><path d="M22 32 L52 32 L48 18 L26 18 Z" fill="#7a3b1c"/><path d="M52 32 L72 24" stroke="#3a352c" stroke-width="2"/><circle cx="80" cy="16" r="4" fill="#2b2820"/><path d="M80 20 L80 34 M80 24 L72 28 M80 34 L75 46 M80 34 L85 46" stroke="#2b2820" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+
+  <!-- 膝栗毛の二人連れ（弥次喜多）：荷を背負い、笠をかぶり、てくてく道中 -->
+  <div class="yajikita" id="yajikita"><svg viewBox="0 0 90 50"><g class="ashi">
+    <path d="M10 6 Q20 -2 30 6 Z" fill="#2b2820"/><circle cx="20" cy="12" r="4" fill="#3a352c"/><rect x="13" y="14" width="14" height="9" rx="2" fill="#6f5d3a"/><path d="M20 16 L20 36 M20 22 L13 30 M20 22 L27 30 M20 36 L15 48 M20 36 L25 48" stroke="#2b2820" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <path d="M48 8 Q58 0 68 8 Z" fill="#3a352c"/><circle cx="58" cy="14" r="4" fill="#4a4334"/><rect x="51" y="16" width="14" height="9" rx="2" fill="#7a6b48"/><path d="M58 18 L58 38 M58 24 L51 32 M58 24 L65 32 M58 38 L53 48 M58 38 L63 48" stroke="#3a352c" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  </g></svg></div>
 
   <div class="karesansui"></div><div class="ishi a"></div><div class="ishi b"></div>
 </div>
@@ -491,9 +515,17 @@
     /* 一度きりの演出トリガー */
     function fireTrigger(tg){
       if(tg==='kisha'){ var sc=document.getElementById('kishaScene');
-        if(sc){ sc.style.opacity='1'; sc.classList.add('run'); whistle(); setTimeout(function(){ sc.style.opacity='0'; sc.classList.remove('run'); }, 5200); }
-        setTimeout(walkSnow, 5400); }  /* トンネルを抜けて雪国に出たら、雪道をザッザッと歩く */
-      if(tg==='rikisha'){ var r=document.getElementById('jinrikisha'); if(r){ r.classList.remove('go'); void r.offsetWidth; r.classList.add('go'); } }
+        if(sc){ sc.classList.add('run'); whistle();
+          /* 高速道路でトンネルを抜ける一人称: --tunnel を 0→1 へ進め、出口の光が拡大して明るくなる */
+          if(!reduce){ var t0=performance.now(), dur=3400;
+            (function step(now){ var k=Math.min(1,(now-t0)/dur); sc.style.setProperty('--tunnel', k.toFixed(3));
+              if(k<1){ requestAnimationFrame(step); } else { setTimeout(function(){ sc.classList.remove('run'); sc.style.opacity='0'; sc.style.setProperty('--tunnel','0'); }, 600); }
+            })(t0); }
+          else { sc.style.setProperty('--tunnel','1'); setTimeout(function(){ sc.classList.remove('run'); sc.style.opacity='0'; }, 800); }
+        }
+        setTimeout(walkSnow, 4200); }  /* トンネルを抜けて雪国に出たら、雪道をザッザッと歩く */
+      if(tg==='rikisha'){ var r=document.getElementById('jinrikisha'); if(r){ r.classList.remove('go'); void r.offsetWidth; r.classList.add('go'); }
+        var yk=document.getElementById('yajikita'); if(yk){ setTimeout(function(){ yk.classList.remove('go'); void yk.offsetWidth; yk.classList.add('go'); }, 2600); } }  /* 弥次喜多が少し遅れて街道をてくてく */
       if(tg==='natsu-hiru'){ jumpFish(); var b=document.getElementById('boushi'); if(b){ setTimeout(function(){ b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); }, 1400); } boom(); }
       if(tg==='natsu-yoru'){ boom(); jumpFish(); }
     }
