@@ -153,14 +153,14 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   titleText: {
-    color: color.textPrimary,
+    color: "#FFFFFF",
     fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 8,
   },
   subtitleText: {
-    color: color.textMuted,
+    color: "rgba(255, 255, 255, 0.7)",
     fontSize: 14,
     textAlign: "center",
     marginBottom: 16,
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   introText: {
-    color: color.textPrimary,
+    color: "#FFFFFF",
     fontSize: 13,
     lineHeight: 22,
     marginBottom: 24,

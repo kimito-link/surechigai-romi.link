@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   introText: {
-    color: color.textPrimary,
+    color: "#FFFFFF",
     fontSize: 14,
     lineHeight: 22,
     marginBottom: 16,

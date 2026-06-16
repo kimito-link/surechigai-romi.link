@@ -135,17 +135,17 @@ export default function LogoutScreen() {
             borderWidth: 1,
             borderColor: "rgba(255,255,255,0.1)",
           }}>
-            <Text style={{ color: color.textPrimary, fontSize: 16, fontWeight: "bold", textAlign: "center" }}>
+            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "bold", textAlign: "center" }}>
               {messagePattern.message}
             </Text>
           </View>
 
           {/* ステータスメッセージ */}
           <View style={{ alignItems: "center", gap: 8, paddingHorizontal: 24 }}>
-            <Text style={{ color: logoutComplete ? color.success : color.textPrimary, fontSize: 18, fontWeight: "bold", fontFamily: "monospace" }}>
+            <Text style={{ color: logoutComplete ? color.success : "#FFFFFF", fontSize: 18, fontWeight: "bold", fontFamily: "monospace" }}>
               {isLoggingOut ? "ログアウト処理中..." : logoutComplete ? "SYSTEM OFFLINE" : "ログアウト開始"}
             </Text>
-            <Text style={{ color: color.textMuted, fontSize: 13, fontFamily: "monospace", textAlign: "center" }}>
+            <Text style={{ color: "rgba(255, 255, 255, 0.7)", fontSize: 13, fontFamily: "monospace", textAlign: "center" }}>
               {isLoggingOut ? "PLEASE WAIT..." : messagePattern.subMessage}
             </Text>
           </View>
