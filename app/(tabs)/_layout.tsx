@@ -118,6 +118,17 @@ export default function TabLayout() {
         }}
       />
 
+      {/* 集まり（予定×今ここにいるよ） */}
+      <Tabs.Screen
+        name="events"
+        options={{
+          title: "集まり",
+          tabBarIcon: ({ color: iconColor }) => (
+            <IconSymbol size={26} name="calendar" color={iconColor} />
+          ),
+        }}
+      />
+
       {/* 図鑑 */}
       <Tabs.Screen
         name="zukan"
