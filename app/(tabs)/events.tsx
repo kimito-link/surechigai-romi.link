@@ -19,6 +19,7 @@ import {
   StyleSheet,
   TextInput,
   Platform,
+  Linking,
 } from "react-native";
 import { useState, useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -51,6 +52,9 @@ function formatDateTime(value: string | Date): string {
 
 /** イベント1件のカード。一覧で使う共通表示。 */
 function EventCard({
+  id,
+  creatorName,
+  creatorXUrl,
   title,
   typeTags,
   locationType,
@@ -62,6 +66,9 @@ function EventCard({
   visibility,
   footer,
 }: {
+  id: number;
+  creatorName?: string | null;
+  creatorXUrl?: string | null;
   title: string;
   typeTags: string[];
   locationType: string;
@@ -73,12 +80,52 @@ function EventCard({
   visibility: string;
   footer?: React.ReactNode;
 }) {
+  // 限定イベントの開示状態（合言葉入力で reveal した結果をここに保持）
+  const [revealed, setRevealed] = useState<{ venueName: string | null; onlineUrl: string | null } | null>(null);
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [code, setCode] = useState("");
+  const [revealError, setRevealError] = useState("");
+  const revealMut = trpc.event.reveal.useMutation();
+
+  const isUnlisted = visibility === "unlisted";
+  const effectiveVenue = revealed ? revealed.venueName : venueName;
+  const effectiveUrl = revealed ? revealed.onlineUrl : onlineUrl;
+
   const place =
     locationType === "online"
-      ? onlineUrl
+      ? effectiveUrl
         ? "オンライン"
-        : "オンライン（限定）"
-      : [prefecture, venueName].filter(Boolean).join(" ") || "場所未設定";
+        : isUnlisted
+          ? "オンライン（合言葉で開く）"
+          : "オンライン"
+      : [prefecture, effectiveVenue].filter(Boolean).join(" ") || "場所未設定";
+
+  const openX = useCallback(() => {
+    if (creatorXUrl) Linking.openURL(creatorXUrl).catch(() => {});
+  }, [creatorXUrl]);
+
+  const openLink = useCallback(() => {
+    if (effectiveUrl) Linking.openURL(effectiveUrl).catch(() => {});
+  }, [effectiveUrl]);
+
+  const handleReveal = useCallback(() => {
+    setRevealError("");
+    if (!code.trim()) {
+      setRevealError("合言葉を入れてください");
+      return;
+    }
+    revealMut.mutate(
+      { eventId: id, accessCode: code.trim() },
+      {
+        onSuccess: (data) => {
+          setRevealed(data);
+          setShowCodeInput(false);
+          setCode("");
+        },
+        onError: (err) => setRevealError(err.message),
+      },
+    );
+  }, [code, id, revealMut]);
 
   return (
     <View style={styles.card}>
@@ -94,6 +141,25 @@ function EventCard({
         )}
       </View>
 
+      {/* 主催（誰が＝公開）＋ X送客リンク */}
+      {(creatorName || creatorXUrl) && (
+        <Pressable
+          onPress={openX}
+          disabled={!creatorXUrl}
+          style={({ pressed }) => [styles.creatorRow, pressed && creatorXUrl ? { opacity: 0.7 } : null]}
+        >
+          <MaterialIcons name="person" size={14} color={color.textMuted} />
+          <Text style={styles.creatorName} numberOfLines={1}>
+            {creatorName ?? "クリエイター"}
+          </Text>
+          {creatorXUrl && (
+            <View style={styles.xChip}>
+              <Text style={styles.xChipText}>𝕏で見る</Text>
+            </View>
+          )}
+        </Pressable>
+      )}
+
       <View style={styles.cardMetaRow}>
         <MaterialIcons
           name={locationType === "online" ? "videocam" : "place"}
@@ -103,7 +169,7 @@ function EventCard({
         <Text style={styles.cardMeta}>{place}</Text>
         <MaterialIcons name="schedule" size={14} color={color.textMuted} style={{ marginLeft: 8 }} />
         <Text style={styles.cardMeta}>{formatDateTime(startAt)}</Text>
-        {visibility === "unlisted" && (
+        {isUnlisted && (
           <View style={styles.lockChip}>
             <MaterialIcons name="lock" size={11} color={color.warning} />
             <Text style={styles.lockChipText}>限定</Text>
@@ -118,6 +184,54 @@ function EventCard({
               <Text style={styles.tagChipText}>{TYPE_TAG_LABELS[t] ?? t}</Text>
             </View>
           ))}
+        </View>
+      )}
+
+      {/* オンラインURLが見える場合は参加リンク */}
+      {locationType === "online" && effectiveUrl && (
+        <Pressable
+          onPress={openLink}
+          style={({ pressed }) => [styles.joinBtn, pressed && { opacity: 0.85 }]}
+        >
+          <MaterialIcons name="open-in-new" size={16} color={color.textWhite} />
+          <Text style={styles.joinBtnText}>配信/通話を開く</Text>
+        </Pressable>
+      )}
+
+      {/* 限定イベント: 合言葉で会場/URLを開く */}
+      {isUnlisted && !revealed && (
+        <View style={styles.revealBox}>
+          {!showCodeInput ? (
+            <Pressable
+              onPress={() => setShowCodeInput(true)}
+              style={({ pressed }) => [styles.revealOpenBtn, pressed && { opacity: 0.85 }]}
+            >
+              <MaterialIcons name="lock-open" size={15} color={color.accentIndigo} />
+              <Text style={styles.revealOpenText}>合言葉を入れて場所を見る</Text>
+            </Pressable>
+          ) : (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="合言葉"
+                placeholderTextColor={color.textHint}
+                value={code}
+                onChangeText={setCode}
+                autoCapitalize="none"
+                secureTextEntry
+              />
+              {revealError !== "" && <Text style={styles.formError}>{revealError}</Text>}
+              <Pressable
+                onPress={handleReveal}
+                disabled={revealMut.isPending}
+                style={({ pressed }) => [styles.revealSubmitBtn, pressed && { opacity: 0.85 }]}
+              >
+                <Text style={styles.revealSubmitText}>
+                  {revealMut.isPending ? "確認中..." : "開く"}
+                </Text>
+              </Pressable>
+            </>
+          )}
         </View>
       )}
 
@@ -187,7 +301,29 @@ function HostPanel() {
   const [prefecture, setPrefecture] = useState("");
   const [venueName, setVenueName] = useState("");
   const [startAt, setStartAt] = useState("");
+  const [isUnlisted, setIsUnlisted] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
   const [formError, setFormError] = useState("");
+
+  // 開始時刻のクイック選択（手入力が面倒なので）
+  const quickStart = useCallback((preset: "now" | "1h" | "tonight" | "tomorrow") => {
+    const d = new Date();
+    if (preset === "now") {
+      // そのまま（数分後）
+    } else if (preset === "1h") {
+      d.setHours(d.getHours() + 1);
+    } else if (preset === "tonight") {
+      d.setHours(20, 0, 0, 0);
+      if (d.getTime() < Date.now()) d.setDate(d.getDate() + 1);
+    } else if (preset === "tomorrow") {
+      d.setDate(d.getDate() + 1);
+      d.setHours(20, 0, 0, 0);
+    }
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setStartAt(
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    );
+  }, []);
 
   const handleCreate = useCallback(() => {
     setFormError("");
@@ -204,6 +340,10 @@ function HostPanel() {
       setFormError("開始時刻の形式が正しくありません (例: 2026-07-01 18:00)");
       return;
     }
+    if (isUnlisted && !accessCode.trim()) {
+      setFormError("限定にする場合は合言葉を決めてください");
+      return;
+    }
     createMut.mutate(
       {
         title: title.trim(),
@@ -212,7 +352,8 @@ function HostPanel() {
         prefecture: !isOnline ? prefecture.trim() || undefined : undefined,
         venueName: !isOnline ? venueName.trim() || undefined : undefined,
         startAt: start.toISOString(),
-        visibility: "public",
+        visibility: isUnlisted ? "unlisted" : "public",
+        accessCode: isUnlisted ? accessCode.trim() : undefined,
       },
       {
         onSuccess: () => {
@@ -221,11 +362,13 @@ function HostPanel() {
           setPrefecture("");
           setVenueName("");
           setStartAt("");
+          setIsUnlisted(false);
+          setAccessCode("");
         },
         onError: (err) => setFormError(err.message),
       },
     );
-  }, [title, isOnline, onlineUrl, prefecture, venueName, startAt, createMut]);
+  }, [title, isOnline, onlineUrl, prefecture, venueName, startAt, isUnlisted, accessCode, createMut]);
 
   const items = myQuery.data ?? [];
 
@@ -310,6 +453,52 @@ function HostPanel() {
           onChangeText={setStartAt}
           autoCapitalize="none"
         />
+
+        {/* 開始時刻クイック選択 */}
+        <View style={styles.quickRow}>
+          {(
+            [
+              { key: "now", label: "今すぐ" },
+              { key: "1h", label: "1時間後" },
+              { key: "tonight", label: "今夜20時" },
+              { key: "tomorrow", label: "明日20時" },
+            ] as const
+          ).map((p) => (
+            <Pressable
+              key={p.key}
+              onPress={() => quickStart(p.key)}
+              style={({ pressed }) => [styles.quickChip, pressed && { opacity: 0.7 }]}
+            >
+              <Text style={styles.quickChipText}>{p.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* 公開 / 限定（合言葉）切替 */}
+        <View style={styles.unlistedRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.unlistedTitle}>限定にする（合言葉が要る）</Text>
+            <Text style={styles.unlistedHint}>
+              オフ会など。会場/URLは合言葉を知る人だけに見える
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => setIsUnlisted((v) => !v)}
+            style={[styles.switch, { backgroundColor: isUnlisted ? color.accentPrimary : color.border }]}
+          >
+            <View style={[styles.switchKnob, { transform: [{ translateX: isUnlisted ? 20 : 0 }] }]} />
+          </Pressable>
+        </View>
+        {isUnlisted && (
+          <TextInput
+            style={styles.input}
+            placeholder="合言葉（参加者に伝える）"
+            placeholderTextColor={color.textHint}
+            value={accessCode}
+            onChangeText={setAccessCode}
+            autoCapitalize="none"
+          />
+        )}
 
         {formError !== "" && <Text style={styles.formError}>{formError}</Text>}
 
@@ -675,5 +864,125 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
     lineHeight: 20,
+  },
+  // creator row + X link
+  creatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  creatorName: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: color.textSecondary,
+    flexShrink: 1,
+  },
+  xChip: {
+    backgroundColor: color.textPrimary,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 2,
+  },
+  xChipText: {
+    color: color.textWhite,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  // join online link
+  joinBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: color.accentIndigo,
+    borderRadius: 10,
+    paddingVertical: 10,
+    marginTop: 2,
+  },
+  joinBtnText: {
+    color: color.textWhite,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  // reveal (unlisted)
+  revealBox: {
+    gap: 8,
+    marginTop: 2,
+  },
+  revealOpenBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: color.accentIndigo,
+    borderRadius: 10,
+    paddingVertical: 9,
+  },
+  revealOpenText: {
+    color: color.accentIndigo,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  revealSubmitBtn: {
+    backgroundColor: color.accentIndigo,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  revealSubmitText: {
+    color: color.textWhite,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  // quick start presets
+  quickRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  quickChip: {
+    backgroundColor: color.bg,
+    borderWidth: 1,
+    borderColor: color.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  quickChipText: {
+    fontSize: 12,
+    color: color.textSecondary,
+    fontWeight: "600",
+  },
+  // unlisted toggle
+  unlistedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 2,
+  },
+  unlistedTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: color.textPrimary,
+  },
+  unlistedHint: {
+    fontSize: 11,
+    color: color.textMuted,
+    marginTop: 2,
+  },
+  switch: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  switchKnob: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: color.textWhite,
   },
 });

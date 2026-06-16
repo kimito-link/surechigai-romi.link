@@ -35,6 +35,16 @@ export const events = pgTable(
     id: serial("id").primaryKey(),
     /** 主催クリエイターの users.id */
     creatorId: integer("creatorId").notNull(),
+    /**
+     * 主催の表示名（作成時にキャッシュ。一覧でJOINせず出すため）。
+     * 「誰が＝公開」側。X由来の名前。
+     */
+    creatorName: text("creatorName"),
+    /**
+     * 主催の X 数値ID（openId の "twitter:12345" の後半）。
+     * X送客リンク https://x.com/i/user/<id> に使う。NULL可（管理者投稿など）。
+     */
+    creatorXId: varchar("creatorXId", { length: 64 }),
 
     // --- 内容（配信に密結合しない汎用フィールド） ---
     title: varchar("title", { length: 80 }).notNull(),

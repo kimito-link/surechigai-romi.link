@@ -36,12 +36,23 @@ import {
   updateEventStatus,
 } from "../db/queries.js";
 
+/** openId "twitter:12345" から X 数値ID "12345" を取り出す。それ以外は null。 */
+function extractXId(openId: string | null | undefined): string | null {
+  if (!openId) return null;
+  const m = /^twitter:(.+)$/.exec(openId);
+  return m ? m[1] : null;
+}
+
 /** 公開一覧で返す形。unlisted の秘匿フィールドは落とす。 */
 function toPublicView(e: Event) {
   const isUnlisted = e.visibility === "unlisted";
   return {
     id: e.id,
     creatorId: e.creatorId,
+    creatorName: e.creatorName,
+    creatorXId: e.creatorXId,
+    // X送客リンク（DM禁止＝交流はXへ委譲、の導線）。creatorXId があれば組み立てる。
+    creatorXUrl: e.creatorXId ? `https://x.com/i/user/${e.creatorXId}` : null,
     title: e.title,
     description: e.description,
     typeTags: parseTypeTags(e.typeTags),
@@ -121,6 +132,8 @@ export const eventRouter = router({
 
       const created = await insertEvent(db, {
         creatorId: ctx.user.id,
+        creatorName: ctx.user.name ?? null,
+        creatorXId: extractXId(ctx.user.openId),
         title: input.title,
         description: input.description ?? null,
         typeTags: serializeTypeTags(input.typeTags ?? []),
