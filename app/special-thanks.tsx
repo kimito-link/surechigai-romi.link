@@ -1,49 +1,79 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from "react-native";
-import { color, palette } from "@/theme/tokens";
-import { AppHeader } from "@/components/organisms/app-header";
+import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { color } from "@/theme/tokens";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useResponsive } from "@/hooks/use-responsive";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
+import { Image } from "expo-image";
 
 export default function SpecialThanksScreen() {
   const { isDesktop } = useResponsive();
   const router = useRouter();
 
   return (
-    <ScreenContainer containerClassName="bg-background">
-      <AppHeader title="Special Thanks" showCharacters={false} isDesktop={isDesktop} />
-
+    <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
       <ScrollView contentContainerStyle={styles.content}>
         
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <MaterialIcons name="code" size={24} color={color.accentAlt} />
-            <Text style={styles.cardTitle}>Source Code Provider</Text>
+        {/* Terminal Window Wrapper */}
+        <View style={styles.terminalCard}>
+          {/* Header */}
+          <View style={styles.terminalHeader}>
+            <View style={styles.windowControls}>
+              <View style={styles.dotRed} />
+              <View style={styles.dotYellow} />
+              <View style={styles.dotGreen} />
+            </View>
+            <Text style={styles.terminalTitle}>SYSTEM / SPECIAL_THANKS.exe</Text>
+            <Pressable onPress={() => router.back()} style={styles.closeButton}>
+              <MaterialIcons name="close" size={20} color={color.textWhite} />
+            </Pressable>
           </View>
-          
-          <View style={styles.cardBody}>
-            <Text style={styles.name}>星野ロミ (Hoshino Romi)</Text>
-            <Text style={styles.description}>
-              本アプリケーション「Kimito-link（すれちがいロミ）」のベースとなるソースコードおよび、基本的なハッカー/サイバーパンクの世界観のアイデアをご提供いただきました。{"\n"}
-              クリエイター同士のすれ違い体験を実現するための基礎技術として、多大なるご協力をいただきました。この場を借りて深く感謝申し上げます。
-            </Text>
-          </View>
-        </View>
 
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <MaterialIcons name="groups" size={24} color={color.accentIndigo} />
-            <Text style={styles.cardTitle}>Characters</Text>
-          </View>
-          
-          <View style={styles.cardBody}>
-            <Text style={styles.description}>
-              リンク (Rinku){"\n"}
-              コンタ (Konta){"\n"}
-              タヌネ (Tanune)
-            </Text>
+          {/* Body */}
+          <View style={styles.terminalBody}>
+            <View style={styles.heroSection}>
+              <MaterialIcons name="code" size={48} color={color.accentPrimary} style={{ marginBottom: 16 }} />
+              
+              <Text style={styles.heroText}>
+                「星野ロミさんから{"\n"}ソースコード頂きました」
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
+            
+            <View style={styles.detailsSection}>
+              <Text style={styles.cmdText}>
+                <Text style={styles.prompt}>$</Text> fetch --provider
+              </Text>
+              <Text style={styles.infoText}>
+                Provider: <Text style={styles.highlightText}>星野ロミ (Hoshino Romi)</Text>
+              </Text>
+              
+              <Text style={styles.cmdText}>
+                <Text style={styles.prompt}>$</Text> view --message
+              </Text>
+              <Text style={styles.infoText}>
+                本アプリケーション「Kimito-link（すれちがいロミ）」のベースとなるソースコードおよび、基本的なハッカー/サイバーパンクの世界観のアイデアをご提供いただきました。{"\n"}
+                クリエイター同士のすれ違い体験を実現するための基礎技術として、多大なるご協力をいただきました。この場を借りて深く感謝申し上げます。
+              </Text>
+
+              <Text style={styles.cmdText}>
+                <Text style={styles.prompt}>$</Text> fetch --characters
+              </Text>
+              <Text style={styles.infoText}>
+                <Text style={styles.highlightText}>リンク (Rinku)</Text> - Operator / Linker{"\n"}
+                <Text style={styles.highlightText}>コンタ (Konta)</Text> - Fox agent{"\n"}
+                <Text style={styles.highlightText}>タヌネ (Tanune)</Text> - Raccoon dog agent
+              </Text>
+
+              <Text style={styles.cmdText}>
+                <Text style={styles.prompt}>$</Text> status
+              </Text>
+              <Text style={styles.infoTextSuccess}>
+                ✓ SYSTEM_INTEGRATION_COMPLETE
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -51,7 +81,7 @@ export default function SpecialThanksScreen() {
           style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.8 }]}
           onPress={() => router.back()}
         >
-          <Text style={styles.backButtonText}>戻る</Text>
+          <Text style={styles.backButtonText}>[ 戻る ]</Text>
         </Pressable>
 
       </ScrollView>
@@ -61,60 +91,121 @@ export default function SpecialThanksScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    padding: 24,
-    gap: 24,
+    padding: 16,
+    paddingTop: 48,
+    gap: 32,
     alignItems: "center",
+    minHeight: "100%",
   },
-  card: {
+  terminalCard: {
     width: "100%",
     maxWidth: 600,
-    backgroundColor: color.surface,
-    borderRadius: 12,
+    backgroundColor: "rgba(13, 17, 23, 0.95)",
+    borderColor: color.accentPrimary,
     borderWidth: 1,
-    borderColor: color.border,
+    borderRadius: 8,
+    shadowColor: color.accentPrimary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
     overflow: "hidden",
   },
-  cardHeader: {
+  terminalHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.02)",
-    padding: 16,
+    justifyContent: "space-between",
+    backgroundColor: "rgba(255, 95, 86, 0.15)",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: color.border,
-    gap: 12,
+    borderBottomColor: color.accentPrimary,
   },
-  cardTitle: {
-    color: color.textPrimary,
-    fontSize: 18,
+  windowControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: 60, // Fixed width to keep title centered
+  },
+  dotRed: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#FF5F56", marginRight: 8 },
+  dotYellow: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#FFBD2E", marginRight: 8 },
+  dotGreen: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#27C93F" },
+  terminalTitle: {
+    color: color.accentPrimary,
+    fontSize: 14,
     fontWeight: "bold",
     fontFamily: "monospace",
+    letterSpacing: 2,
+    flex: 1,
+    textAlign: "center",
   },
-  cardBody: {
-    padding: 20,
-    gap: 12,
+  closeButton: {
+    width: 60, // Fixed width to keep title centered
+    alignItems: "flex-end",
   },
-  name: {
-    color: color.accentPrimary,
-    fontSize: 22,
+  terminalBody: {
+    padding: 24,
+  },
+  heroSection: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  heroText: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "900",
+    textAlign: "center",
+    lineHeight: 36,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    marginVertical: 24,
+  },
+  detailsSection: {
+    gap: 16,
+  },
+  cmdText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontFamily: "monospace",
     fontWeight: "bold",
   },
-  description: {
-    color: color.textSecondary,
+  prompt: {
+    color: color.accentPrimary,
+  },
+  infoText: {
+    color: "rgba(255, 255, 255, 0.75)",
     fontSize: 14,
+    fontFamily: "monospace",
     lineHeight: 24,
+    paddingLeft: 12,
+    borderLeftWidth: 2,
+    borderLeftColor: "rgba(255, 255, 255, 0.2)",
+    marginBottom: 8,
+  },
+  infoTextSuccess: {
+    color: color.success,
+    fontSize: 14,
+    fontFamily: "monospace",
+    fontWeight: "bold",
+    paddingLeft: 12,
+  },
+  highlightText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
   backButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 24,
-    backgroundColor: color.surfaceAlt,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 4,
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: color.border,
+    borderColor: "rgba(255, 255, 255, 0.3)",
     marginTop: 16,
   },
   backButtonText: {
-    color: color.textPrimary,
+    color: "#FFFFFF",
     fontSize: 16,
+    fontFamily: "monospace",
     fontWeight: "bold",
   },
 });
