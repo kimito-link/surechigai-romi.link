@@ -137,7 +137,7 @@ function BlockedUserRow({
 
 export default function MypageScreen() {
   const { isDesktop } = useResponsive();
-  const { user, isAuthenticated, isAuthReady, logout, login } = useAuth();
+  const { user, isAuthenticated, isAuthReadyForUI, logout, login } = useAuth();
 
   const [hitokotoModalVisible, setHitokotoModalVisible] = useState(false);
   const [showBlockList, setShowBlockList] = useState(false);
@@ -181,7 +181,7 @@ export default function MypageScreen() {
     navigate.toHome();
   }, [logout]);
 
-  if (!isAuthReady) {
+  if (!isAuthReadyForUI) {
     return (
       <ScreenContainer containerClassName="bg-background">
         <AppHeader title="マイページ" showCharacters={false} isDesktop={isDesktop} showMenu />

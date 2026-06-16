@@ -21,7 +21,7 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Image } from "expo-image";
 import Animated, {
   useSharedValue,
@@ -40,6 +40,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
+import { JapanRadarMap } from "@/components/organisms/japan-radar-map";
+import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
 
 // ティアラベル
 const TIER_LABELS: Record<number, string> = {
@@ -257,18 +259,38 @@ function OpenModal({
   onBlock: (userId: number) => void;
   onReport: (item: EncounterItem) => void;
 }) {
-  const scale = useSharedValue(0.8);
+  const scale = useSharedValue(0.1);
   const opacity = useSharedValue(0);
+  const rotation = useSharedValue(0);
 
   const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.value }, { rotate: `${rotation.value}deg` }],
     opacity: opacity.value,
   }));
 
-  if (visible && scale.value < 1) {
-    scale.value = withSpring(1, { damping: 15 });
-    opacity.value = withTiming(1, { duration: 200 });
-  }
+  useEffect(() => {
+    if (visible && item) {
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      // Gacha flash animation
+      opacity.value = 1;
+      rotation.value = withSequence(
+        withTiming(-10, { duration: 50 }),
+        withTiming(10, { duration: 50 }),
+        withTiming(-5, { duration: 50 }),
+        withTiming(5, { duration: 50 }),
+        withTiming(0, { duration: 50 })
+      );
+      scale.value = withSequence(
+        withTiming(1.2, { duration: 150 }),
+        withSpring(1, { damping: 10, stiffness: 100 })
+      );
+    } else {
+      scale.value = 0.1;
+      opacity.value = 0;
+    }
+  }, [visible, item]);
 
   if (!item) return null;
 
@@ -280,9 +302,9 @@ function OpenModal({
         <Animated.View style={[styles.modalCard, animStyle]}>
           <Pressable onPress={(e) => e.stopPropagation()}>
             {/* ティアバナー */}
-            <View style={[styles.modalTierBanner, { backgroundColor: tierColor + "33" }]}>
-              <Text style={[styles.modalTierText, { color: tierColor }]}>
-                {TIER_LABELS[item.tier] || `Tier ${item.tier}`} のすれ違い
+            <View style={[styles.modalTierBanner, { backgroundColor: tierColor + "33", borderColor: tierColor, borderWidth: 1 }]}>
+              <Text style={[styles.modalTierText, { color: tierColor, textShadowColor: tierColor, textShadowOffset: {width:0, height:0}, textShadowRadius: 8 }]}>
+                {TIER_LABELS[item.tier] || `Tier ${item.tier}`} シグナルデコード成功
               </Text>
             </View>
 
@@ -582,52 +604,31 @@ export default function PostScreen() {
       ) : !isAuthenticated ? (
         <LoginGate />
       ) : (
-        <>
-          {/* 未開封セクション */}
-          {unopened.length > 0 && (
-            <View style={styles.sectionHeader}>
-              <MaterialIcons name="mail" size={18} color={color.accentPrimary} />
-              <Text style={styles.sectionTitle}>未開封の封筒 ({unopened.length})</Text>
+        <View style={styles.mapContainer}>
+          <JapanRadarMap>
+            {unopened.map((item, index) => {
+              // Pseudo-random position based on item id for MVP
+              const randomX = 10 + (Math.sin(item.id * 123) * 0.5 + 0.5) * 80;
+              const randomY = 10 + (Math.cos(item.id * 321) * 0.5 + 0.5) * 80;
+              return (
+                <EnvelopePulse
+                  key={item.id}
+                  x={randomX}
+                  y={randomY}
+                  onPress={() => handleOpen(item)}
+                />
+              );
+            })}
+          </JapanRadarMap>
+          
+          {unopened.length === 0 && (
+            <View style={styles.emptyOverlay}>
+              <Text style={styles.emptyOverlayText}>
+                現在傍受可能なシグナルはありません
+              </Text>
             </View>
           )}
-
-          <FlatList
-            data={encounters ?? []}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={renderItem}
-            refreshControl={
-              <RefreshControl
-                refreshing={isFetching}
-                onRefresh={onRefresh}
-                tintColor={color.accentPrimary}
-              />
-            }
-            ListHeaderComponent={null}
-            ListEmptyComponent={
-              <View style={styles.emptyWrap}>
-                <MaterialIcons name="mail-outline" size={64} color={color.textMuted} />
-                <Text style={styles.emptyTitle}>まだ封筒がありません</Text>
-                <Text style={styles.emptySubtitle}>
-                  チェックインして移動すると{"\n"}すれ違った人の封筒が届きます
-                </Text>
-                <Pressable
-                  onPress={() => navigate.toHome()}
-                  style={({ pressed }) => [styles.checkinButton, pressed && { opacity: 0.8 }]}
-                >
-                  <Text style={styles.checkinButtonText}>チェックインへ</Text>
-                </Pressable>
-              </View>
-            }
-            contentContainerStyle={styles.listContent}
-          />
-
-          {/* 開封済みセクション見出し */}
-          {opened.length > 0 && unopened.length > 0 && (
-            <View style={styles.dividerWrap}>
-              <View style={styles.divider} />
-            </View>
-          )}
-        </>
+        </View>
       )}
 
       {/* 開封モーダル */}
@@ -656,6 +657,27 @@ export default function PostScreen() {
 }
 
 const styles = StyleSheet.create({
+  mapContainer: {
+    flex: 1,
+    position: "relative",
+    backgroundColor: "#020817", // Kimito-link universe dark
+  },
+  emptyOverlay: {
+    position: "absolute",
+    top: "50%",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  emptyOverlayText: {
+    color: color.accentAlt,
+    fontSize: 14,
+    fontWeight: "bold",
+    opacity: 0.8,
+    textShadowColor: color.accentPrimary,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
   center: {
     flex: 1,
     alignItems: "center",
