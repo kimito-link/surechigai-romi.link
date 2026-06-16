@@ -239,7 +239,7 @@
     /* 実写背景ステージ：画面固定の2枚(pfA/pfB)を使い、章ごとに写真をクロスフェード差し替えする。 */
     var PHOTOS={ yukiguni:'img/yukiguni.png', kisha:'img/kisha.png', yukinohara:'img/yukinohara.png',
       yukimichi:'img/yukimichi.png', 'onsen-saru':'img/onsen-saru.png',
-      sakura:'img/sakura.png', chashitsu:'img/chashitsu.png', shishiodoshi:'img/shishiodoshi.png',
+      sakura:'img/sakura.png', chashitsu:'img/chashitsu.png',
       nyudogumo:'img/nyudogumo.png', kawa:'img/kawa.png', taki:'img/taki.png',
       tekiya:'img/tekiya.png', hanabi:'img/hanabi.png',
       momiji:'img/momiji.png', hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', tanbo:'img/tanbo.png' };
@@ -285,7 +285,28 @@
     /* ===== 音（Web Audio合成・最初のふれあいで灯る） ===== */
     var AC=window.AudioContext||window.webkitAudioContext, actx=null, master=null, soundOn=false, armed=false;
     var otoBtn=document.getElementById('oto'), otoHint=document.getElementById('otoHint');
-    function ensureCtx(){ if(actx||!AC) return; actx=new AC(); master=actx.createGain(); master.gain.value=0; master.connect(actx.destination); }
+    var reverb=null, masterDry=null, masterWet=null;
+    /* 残響(リバーブ)用のインパルス応答を合成：指数減衰のステレオノイズ。空間の広がりを与える。 */
+    function makeImpulse(seconds, decay){
+      var rate=actx.sampleRate, len=Math.floor(rate*seconds), buf=actx.createBuffer(2,len,rate);
+      for(var ch=0;ch<2;ch++){ var d=buf.getChannelData(ch);
+        for(var i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len, decay); } }
+      return buf;
+    }
+    function ensureCtx(){ if(actx||!AC) return; actx=new AC();
+      master=actx.createGain(); master.gain.value=0;
+      /* master → (dry + reverb wet) → compressor → destination。
+         コンプで音を整え、リバーブで“しょぼさ”を消して空間に溶かす。 */
+      var comp=actx.createDynamicsCompressor();
+      comp.threshold.value=-18; comp.knee.value=24; comp.ratio.value=3; comp.attack.value=0.005; comp.release.value=0.25;
+      comp.connect(actx.destination);
+      masterDry=actx.createGain(); masterDry.gain.value=0.82; master.connect(masterDry); masterDry.connect(comp);
+      try{
+        reverb=actx.createConvolver(); reverb.buffer=makeImpulse(2.6, 2.4);
+        masterWet=actx.createGain(); masterWet.gain.value=0.34;
+        master.connect(reverb); reverb.connect(masterWet); masterWet.connect(comp);
+      }catch(e){ /* Convolver非対応環境はdryのみ */ }
+    }
     /* iOS/Safari アンロック：ユーザー操作の同期フレーム内で「無音を1回 start」して AudioContext を解錠する。
        これをやらないと、touchstartで resume しても実際の音が鳴らない端末がある。 */
     function unlockIOS(){ if(!actx) return;
