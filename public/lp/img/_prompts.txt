@@ -118,6 +118,40 @@ oversaturated, cartoon, anime
 [設定] 768x432 (横長)、Steps 28、CFG 6.5
 
 ──────────────────────────────────────────
+⑧ 蝉の抜け殻（木の幹にしがみつく空の殻・夏の終わりの儚さ）  → ファイル名: nukegara.png
+   用途: 「夏・昼」章の背景／儚さの差し色（任意）
+──────────────────────────────────────────
+[Prompt]
+empty cicada shell (exuvia) clinging to a tree trunk, translucent amber
+husk with a split down the back, soft late-summer afternoon light through
+green leaves, extreme close-up, shallow depth of field, bokeh, mono no
+aware, transience and impermanence, photorealistic, quiet, melancholic,
+muted natural tones, film grain
+
+[Negative]
+text, letters, watermark, people, hands, living cicada, bright saturated
+colors, neon, modern objects, cartoon, anime
+
+[設定] 512x768 (縦) または 768x432、Steps 28、CFG 6.5
+
+──────────────────────────────────────────
+⑨ かき氷（溶けてゆく宇治金時 / イチゴ・夏の儚さ）  → ファイル名: kakigori.png
+   用途: 「夏・昼」章の背景／儚さの差し色（任意）
+──────────────────────────────────────────
+[Prompt]
+japanese shaved ice kakigori in a glass bowl, melting red strawberry syrup
+dripping down translucent ice, a drop of meltwater falling, condensation,
+sunlight catching the ice, summer afternoon by a window, close-up, shallow
+depth of field, photorealistic, nostalgic, bittersweet, transience of
+summer, film grain
+
+[Negative]
+text, watermark, people, hands, modern plastic, neon, oversaturated,
+cluttered background, cartoon, anime
+
+[設定] 768x432 (横長) または 512x768、Steps 28、CFG 6.5
+
+──────────────────────────────────────────
 保存のコツ:
 - 縦長(茶室)は 9〜16:11 くらい、横長(細道/富士)は 16:9 が組み込みやすい。
 - 1枚 200〜500KB 程度に（PNGで大きすぎたら後でこちらで圧縮します）。
