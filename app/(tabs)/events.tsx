@@ -21,10 +21,11 @@ import {
   Platform,
   Linking,
 } from "react-native";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
+import { EventCalendar, toDateKey } from "@/components/molecules/event-calendar";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -240,18 +241,60 @@ function EventCard({
   );
 }
 
-/** 予定（カレンダー）タブ。 */
+/** 予定（カレンダー）タブ。月めくりカレンダー＋選択日のイベント一覧。 */
 function CalendarList() {
-  const q = trpc.event.listUpcoming.useQuery({ limit: 50 });
+  const q = trpc.event.listUpcoming.useQuery({ limit: 100 });
+  // 表示中の月（その月の1日アンカー）。初期は今月。
+  const [monthAnchor, setMonthAnchor] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  // 選択中の日（YYYY-MM-DD）。初期は今日。
+  const [selectedKey, setSelectedKey] = useState<string>(() => toDateKey(new Date()));
+
+  const items = useMemo(() => q.data ?? [], [q.data]);
+
+  const changeMonth = useCallback((delta: number) => {
+    setMonthAnchor((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+  }, []);
+
+  // 選択日のイベント（時刻順）
+  const selectedEvents = useMemo(
+    () =>
+      items
+        .filter((e) => toDateKey(e.startAt) === selectedKey)
+        .sort(
+          (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+        ),
+    [items, selectedKey],
+  );
+
+  // 選択日見出し用（M月D日(曜)）
+  const selectedLabel = useMemo(() => {
+    const [y, m, d] = selectedKey.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    const wd = ["日", "月", "火", "水", "木", "金", "土"][date.getDay()];
+    return `${m}月${d}日(${wd})`;
+  }, [selectedKey]);
+
   if (q.isLoading) return <EmptyOrLoading loading />;
-  const items = q.data ?? [];
-  if (items.length === 0)
-    return <EmptyOrLoading message={"これからの予定はまだありません\n誰かが「集まり」を立てるとここに並びます"} />;
+
   return (
     <View style={styles.list}>
-      {items.map((e) => (
-        <EventCard key={e.id} {...e} />
-      ))}
+      <EventCalendar
+        events={items}
+        monthAnchor={monthAnchor}
+        selectedKey={selectedKey}
+        onSelectDate={setSelectedKey}
+        onChangeMonth={changeMonth}
+      />
+
+      <Text style={styles.sectionLabel}>{selectedLabel}の予定</Text>
+      {selectedEvents.length === 0 ? (
+        <EmptyOrLoading message={"この日の予定はありません\nカレンダーの色つきの日をタップしてみてください"} />
+      ) : (
+        selectedEvents.map((e) => <EventCard key={e.id} {...e} />)
+      )}
     </View>
   );
 }
