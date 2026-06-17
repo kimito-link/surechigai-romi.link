@@ -10,7 +10,9 @@ function resolveReturnUrl(returnUrl?: string): string | undefined {
   if (typeof window === "undefined") {
     return undefined;
   }
-  if (!returnUrl) {
+  // onPress={login} のように渡されると第1引数に press イベントが入りうる。
+  // 文字列でなければ returnUrl 指定なしとして扱う（returnUrl.startsWith クラッシュ防止）。
+  if (typeof returnUrl !== "string" || !returnUrl) {
     return undefined;
   }
   const origin = window.location.origin;
@@ -67,11 +69,13 @@ export function useAuth() {
   const login = useCallback(
     async (returnUrl?: string, _forceSwitch = false) => {
       try {
-        if (returnUrl) {
+        // onPress={login} 経由だと press イベントが returnUrl に入る。文字列のみ採用する。
+        const safeReturnUrl = typeof returnUrl === "string" ? returnUrl : undefined;
+        if (safeReturnUrl) {
           if (Platform.OS === "web" && typeof window !== "undefined") {
-            localStorage.setItem("auth_return_url", returnUrl);
+            localStorage.setItem("auth_return_url", safeReturnUrl);
           } else {
-            await AsyncStorage.setItem("auth_return_url", returnUrl);
+            await AsyncStorage.setItem("auth_return_url", safeReturnUrl);
           }
         }
 
@@ -80,7 +84,7 @@ export function useAuth() {
             throw new Error("Sign-in instance is not ready");
           }
           const origin = window.location.origin;
-          const redirectComplete = resolveReturnUrl(returnUrl) ?? origin;
+          const redirectComplete = resolveReturnUrl(safeReturnUrl) ?? origin;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await (signIn as any).authenticateWithRedirect({
             strategy: "oauth_x",
