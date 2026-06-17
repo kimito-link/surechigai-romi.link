@@ -48,7 +48,7 @@ const JOBS = [
   // 「湖に、月が、逆さに浮かんでいる」専用：水面に映る逆さの満月が主役
   { id:'tsuki-mizu', w:768, h:432, prompt:'a large bright full moon perfectly reflected upside down on the still mirror-like surface of a dark calm lake at night, the moon reflection is the main subject in the center of the water, deep indigo night, faint stars, total silence and stillness, gentle ripples, photorealistic, minimal, serene, cinematic, film grain, poetic moonlight on water' },
   // 鹿威し（添水）：竹筒が支点で傾き石を打つ。手水鉢/つくばいにならないよう構造を強調
-  { id:'sozu', w:768, h:432, prompt:'a japanese tsukubai garden with a long bamboo sozu shishi-odoshi tube balanced on a horizontal wooden pivot, the tilted bamboo tube pouring water onto a flat stone below, water streaming out of the open end of the bamboo, lush green moss, wet dark stones, bamboo water spout, side profile clearly showing the see-saw bamboo and the stone it strikes, traditional japanese tea garden, photorealistic, shallow depth of field, soft dappled light, water droplets, film grain, tranquil, serene wabi-sabi' },
+  { id:'sozu', w:768, h:432, prompt:'shishi-odoshi, a single thick bamboo tube on a pivot in a japanese garden, the bamboo tube tipped down pouring a stream of water onto a dark wet stone, clear side view, green moss, stone basin, bamboo spout above feeding water, japanese tea garden, photorealistic, close-up, soft natural light, water splashing on stone, film grain, serene', neg_extra:'people, person, fountain, drinking fountain, faucet, building, room, indoor' },
 ];
 
 async function setModelReady(){

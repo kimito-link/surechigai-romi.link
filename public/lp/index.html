@@ -671,7 +671,7 @@
 <section class="story photo-bg" data-scene="winter" data-veil="mist" data-bg="yukiguni">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">序 章</span><span class="ep-label">― 旅のはじまり ―</span></div>
-  <p class="ph">ある冬の夜のことを、まだ覚えている。</p>
+  <p class="ph" data-img="yukiguni">ある冬の夜のことを、まだ覚えている。</p>
   <p class="ph">ひとり、雪の峠を越えようとしていた。</p>
   <p class="ph">なぜ歩いていたのか、いまはもう、思い出せない。</p>
   <p class="ph">ただ、行かねばならぬ気が、していた。</p>
@@ -732,42 +732,11 @@
   <div class="ep-head"><span class="ep-no">四 章</span><span class="ep-label">― 一服の間（ま） ―</span></div>
   <p class="ph" data-img="chashitsu">街道の茶屋で、ひと息つくことにした。</p>
   <p class="ph">一服の茶が、冷えた指に、しみわたる。</p>
-  <p class="ph">庭の隅で、鹿威しが、水を溜めている。</p>
-  <!-- 鹿威し（庭・主役。コトンと鳴る） -->
-  <div class="shishi-stage" id="shishiStage" aria-hidden="true">
-    <svg viewBox="0 0 110 90" overflow="visible">
-      <ellipse cx="55" cy="84" rx="46" ry="6" fill="#3a352c" fill-opacity=".10"/>
-      <rect x="30" y="72" width="50" height="10" rx="3" fill="#7a6b48" fill-opacity=".55" stroke="#3a352c" stroke-width="1" stroke-opacity=".3"/>
-      <rect x="38" y="65" width="34" height="8" rx="2" fill="#9c7a3e" fill-opacity=".45" stroke="#3a352c" stroke-width="1" stroke-opacity=".25"/>
-      <path d="M40 65 Q55 75 70 65" fill="none" stroke="#3c5a6e" stroke-width="1.6" stroke-opacity=".6"/>
-      <path d="M42 65 Q55 72 68 65 L68 68 Q55 75 42 68 Z" fill="#3c5a6e" fill-opacity=".18"/>
-      <ellipse class="mizumo" cx="55" cy="65" rx="12" ry="2" fill="#3c5a6e" fill-opacity=".28"/>
-      <line x1="28" y1="72" x2="28" y2="14" stroke="#7a6b48" stroke-width="3" stroke-linecap="round"/>
-      <line x1="28" y1="30" x2="33" y2="30" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-      <line x1="28" y1="46" x2="33" y2="46" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-      <line x1="28" y1="62" x2="33" y2="62" stroke="#5c4f32" stroke-width="1.5" stroke-opacity=".7"/>
-      <g class="tsutsu">
-        <rect x="26" y="10" width="52" height="12" rx="6" fill="#8a6a3a" stroke="#3a352c" stroke-width="1.6" transform="rotate(-14 30 38)"/>
-        <line x1="50" y1="9" x2="48" y2="20" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-        <line x1="64" y1="7" x2="62" y2="18" stroke="#5c4f32" stroke-width="1.2" stroke-opacity=".6" transform="rotate(-14 30 38)"/>
-        <ellipse cx="79" cy="12" rx="6" ry="3" fill="#6b5228" stroke="#3a352c" stroke-width="1" transform="rotate(-14 30 38)"/>
-      </g>
-      <g class="tobimizu">
-        <circle cx="55" cy="62" r="1.4" fill="#3c5a6e" fill-opacity=".7"/>
-        <circle cx="49" cy="59" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-        <circle cx="61" cy="58" r="1.0" fill="#3c5a6e" fill-opacity=".6"/>
-        <circle cx="45" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-        <circle cx="65" cy="63" r="0.8" fill="#3c5a6e" fill-opacity=".5"/>
-        <line x1="55" y1="62" x2="52" y2="56" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-        <line x1="55" y1="62" x2="59" y2="55" stroke="#3c5a6e" stroke-width="0.7" stroke-opacity=".4"/>
-      </g>
-      <circle class="shizuku" cx="55" cy="62" r="2.2" fill="#3c5a6e" fill-opacity=".65"/>
-    </svg>
-  </div>
-  <p class="ph ma">……</p>
-  <p class="ph key" data-fx="konk">コトン。</p>
-  <p class="ph" data-fx="konk">竹が石を打つ、その音だけが、時を刻む。</p>
-  <p class="ph">静けさが、かえって、深くなる。</p>
+  <p class="ph" data-img="niwa">庭の隅で、鹿威しが、水を溜めている。</p>
+  <p class="ph ma" data-img="niwa">……</p>
+  <p class="ph key" data-img="niwa" data-fx="konk">コトン。</p>
+  <p class="ph" data-img="niwa" data-fx="konk">竹が石を打つ、その音だけが、時を刻む。</p>
+  <p class="ph" data-img="niwa">静けさが、かえって、深くなる。</p>
   <p class="ph">一期一会、と、誰かが言った。</p>
   <p class="ph">この一杯も、この一刻も、二度とは巡らない。</p>
   <div class="ep-rule"></div>
@@ -844,11 +813,11 @@
   <p class="ph" data-img="fuji-yoru">雲が晴れ、はじめて、富士が見えた。</p>
   <p class="ph" data-img="tsuki-mizu">湖に、月が、逆さに浮かんでいる。</p>
   <p class="ph" data-img="fuji-yoru" data-fx="nagareboshi">すうっと、流れ星が、ひとつ。</p>
-  <p class="ph">願いを言う間もなく、消えていった。</p>
-  <p class="ph key">けれど――願いは、もう、足が叶えている。</p>
-  <p class="ph">想いが強ければ、足は、自ずと動いているのだから。</p>
-  <p class="ph key" data-img="hitosuji">同じ道は、二度とない。だから、足あとは消えない。</p>
-  <p class="ph" data-img="kiseki">あなたの旅も、ここから、はじまる。</p>
+  <p class="ph" data-img="fuji-yoru" data-fx="nagareboshi">願いを言う間もなく、消えていった。</p>
+  <p class="ph key" data-img="hitosuji">けれど――願いは、もう、足が叶えている。</p>
+  <p class="ph" data-img="hitosuji">想いが強ければ、足は、自ずと動いているのだから。</p>
+  <p class="ph key" data-img="kiseki">同じ道は、二度とない。だから、足あとは消えない。</p>
+  <p class="ph" data-img="yoake">あなたの旅も、ここから、はじまる。</p>
   <div class="saso" id="sasoBtn">
     <p class="saso-copy">キミの思い出を、<br />ボクとともに刻もう。</p>
     <p class="ph key" style="min-height:auto;margin-bottom:1.6em">――さあ、消えてしまふ前に。</p>
@@ -897,6 +866,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=17"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

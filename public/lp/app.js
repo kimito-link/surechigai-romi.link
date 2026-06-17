@@ -239,7 +239,7 @@
     /* 実写背景ステージ：画面固定の2枚(pfA/pfB)を使い、章ごとに写真をクロスフェード差し替えする。 */
     var PHOTOS={ yukiguni:'img/yukiguni.png', kisha:'img/kisha.png', yukinohara:'img/yukinohara.png',
       yukimichi:'img/yukimichi.png', ashiato:'img/ashiato.png', 'onsen-saru':'img/onsen-saru.png',
-      sakura:'img/sakura.png', rikisha:'img/rikisha.png', chashitsu:'img/chashitsu.png',
+      sakura:'img/sakura.png', rikisha:'img/rikisha.png', chashitsu:'img/chashitsu.png', niwa:'img/niwa.png',
       nyudogumo:'img/nyudogumo.png', kawa:'img/kawa.png', kakigori:'img/kakigori.png', taki:'img/taki.png',
       mugiwara:'img/mugiwara.png',
       tekiya:'img/tekiya.png', takoyaki:'img/takoyaki.png', 'matsuri-hito':'img/matsuri-hito.png',
