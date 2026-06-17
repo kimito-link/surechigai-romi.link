@@ -161,10 +161,11 @@
         var fx=p.getAttribute('data-fx');
         if(fx){ if(inBand){ if(!p.dataset.fxOn){ p.dataset.fxOn='1'; playFx(fx); } } else { if(c>bandBottom) p.dataset.fxOn=''; } }
       });
-      /* 麦わら帽子の専用シーン on/off（写真ステージは隠す） */
-      var hatOn = (specialActive==='hat');
+      /* 専用シーン on/off（麦わら帽子・鹿威し）。アクティブな間は通常写真ステージを消す */
+      var hatOn = (specialActive==='hat'), sozuOn = (specialActive==='sozu');
       body.classList.toggle('hat-active', hatOn);
-      if(hatOn){ setPhoto(null, curNight); }       /* 帽子シーン中は通常写真を消す */
+      body.classList.toggle('sozu-active', sozuOn);
+      if(hatOn||sozuOn){ setPhoto(null, curNight); }
       else if(imgPick!==null){ setPhoto(imgPick, curNight); }
     }
 
