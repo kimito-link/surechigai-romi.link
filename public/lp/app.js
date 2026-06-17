@@ -277,9 +277,7 @@
       if(!bg || !PHOTOS[bg]){ if(pfFront) pfFront.classList.remove('on'); if(pfBack) pfBack.classList.remove('on'); if(pfStage) pfStage.classList.remove('has-photo'); body.classList.remove('photo-active'); return; }
       if(pfStage) pfStage.classList.add('has-photo'); body.classList.add('photo-active');
       /* 裏面に次の写真を入れてフェードイン、表を裏に */
-      /* 横長すぎて縦画面だと中央だけ拡大される写真は contain で全景を見せる */
-      var fitContain = (bg==='kakigori');
-      if(pfBack){ pfBack.style.backgroundImage="url('"+PHOTOS[bg]+"')"; pfBack.classList.toggle('pf-contain', fitContain); pfBack.classList.add('on'); }
+      if(pfBack){ pfBack.style.backgroundImage="url('"+PHOTOS[bg]+"')"; pfBack.classList.add('on'); }
       if(pfFront){ pfFront.classList.remove('on'); }
       var t=pfFront; pfFront=pfBack; pfBack=t;
     }
