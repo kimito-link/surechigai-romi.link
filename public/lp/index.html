@@ -487,10 +487,10 @@
   @media(prefers-reduced-motion:reduce){ #yukkuri .yk{ animation:none !important } }
   @media(max-width:560px){ #yukkuri{ opacity:.5; gap:0 } }
   /* 制作クレジット＋ロゴ */
-  .credit{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:1.4em; }
-  .credit-logo{ width:clamp(44px,11vw,56px); height:auto; border-radius:50%; box-shadow:0 2px 14px rgba(168,87,47,.25); }
-  .credit-name{ margin:0; text-align:left; font-family:var(--mincho); font-size:14px; letter-spacing:.08em; color:var(--sumi-soft); line-height:1.7; }
-  .credit-name span{ font-size:11px; color:var(--faint); letter-spacing:.14em; }
+  .credit{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; margin-bottom:1.6em; }
+  .credit-logo{ width:clamp(150px,44vw,210px); height:auto; display:block; }
+  .credit-name{ margin:0; text-align:center; font-family:var(--mincho); font-size:13.5px; letter-spacing:.08em; color:var(--sumi-soft); line-height:1.7; }
+  .credit-name span{ font-size:11px; color:var(--faint); letter-spacing:.1em; }
   /* 結章のキャッチコピー */
   .story .saso-copy{ font-family:var(--fude); font-size:clamp(22px,6.2vw,32px); line-height:1.9; letter-spacing:.14em; color:#f3f7fc; text-indent:.14em; margin:0 0 1.4em; text-shadow:0 2px 20px rgba(8,16,30,.7); }
 
@@ -847,8 +847,8 @@
 </section>
 <footer class="shell">
   <div class="credit">
-    <img class="credit-logo" src="/logo512.png" width="56" height="56" alt="Kimito-Link Project ロゴ" />
-    <p class="credit-name">制作：Kimito-Link Project<br /><span>キミトリンクプロジェクト</span></p>
+    <img class="credit-logo" src="img/logo-kimitolink.png" width="220" height="165" alt="Kimito-Link ロゴ" />
+    <p class="credit-name">制作：Kimito-Link Project<span>（キミトリンクプロジェクト）</span></p>
   </div>
   <p>君斗りんくのすれ違ひ通信 ／ <a href="https://surechigai-romi.link">surechigai-romi.link</a></p>
   <p class="footnote">
