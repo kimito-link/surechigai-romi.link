@@ -525,7 +525,7 @@
   /* 写真ステージは固定背景(.scenery z:1)より前に出す（写真を主役に）。本文(.story z:2)より後ろ。 */
   #photoStage{ position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
   #photoStage .pf{ position:absolute; inset:0; background-size:cover; background-position:center;
-    opacity:0; transition:opacity 1.2s ease;
+    opacity:0; transition:opacity .55s ease;
     -webkit-mask-image:radial-gradient(ellipse 130% 120% at 50% 48%, #000 86%, transparent 100%);
     mask-image:radial-gradient(ellipse 130% 120% at 50% 48%, #000 86%, transparent 100%); }
   #photoStage .pf.on{ opacity:.88; }
