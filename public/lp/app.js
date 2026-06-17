@@ -258,7 +258,12 @@
       hanabi:'img/hanabi.png', senkohanabi:'img/senkohanabi.png',
       'futari-ashiato':'img/futari-ashiato.png', yoake:'img/yoake.png',
       momiji:'img/momiji.png', yakiimo:'img/yakiimo.png', hitosuji:'img/hitosuji.png', kiseki:'img/kiseki.png',
-      hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', 'fuji-yoru':'img/fuji-yoru.png', 'tsuki-mizu':'img/tsuki-mizu.png', tanbo:'img/tanbo.png' };
+      hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', 'fuji-yoru':'img/fuji-yoru.png', 'tsuki-mizu':'img/tsuki-mizu.png',
+      /* 終盤の固有映像（足跡・道の使い回し解消） */
+      'sanjunichi-michi':'img/sanjunichi-michi.png', 'kasanaru-ashiato':'img/kasanaru-ashiato.png',
+      'oshi-no-michi':'img/oshi-no-michi.png', 'toki-no-surechigai':'img/toki-no-surechigai.png',
+      'kienai-ashiato-aki':'img/kienai-ashiato-aki.png', 'fumidasu-ashi':'img/fumidasu-ashi.png',
+      'ichigo-ashiato':'img/ichigo-ashiato.png' };
     var pfStage=document.getElementById('photoStage'), pfA=document.getElementById('pfA'), pfB=document.getElementById('pfB');
     var pfFront=pfA, pfBack=pfB, curBg=null;
     /* 先読み（チラつき防止） */
