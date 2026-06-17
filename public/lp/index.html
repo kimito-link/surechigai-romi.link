@@ -537,6 +537,27 @@
     background:linear-gradient(180deg, rgba(255,255,255,.12), transparent 24%, transparent 72%, rgba(255,255,255,.18)); }
   #photoStage.night .pf-tint{ background:linear-gradient(180deg, rgba(8,12,26,.32), transparent 28%, transparent 66%, rgba(8,12,26,.44)); }
   #photoStage.has-photo .pf-tint{ opacity:1; }
+
+  /* ===== 麦わら帽子のシーン（坂道＋リンクちゃん＋風に舞う帽子。あだち充風） ===== */
+  #hatScene{ position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; opacity:0; transition:opacity .6s ease; }
+  body.hat-active #hatScene{ opacity:1; }
+  #hatScene .hat-bg{ position:absolute; inset:0; background:url('img/mugiwara-bg.png') center/cover no-repeat;
+    -webkit-mask-image:radial-gradient(ellipse 130% 120% at 50% 48%, #000 86%, transparent 100%);
+    mask-image:radial-gradient(ellipse 130% 120% at 50% 48%, #000 86%, transparent 100%); }
+  /* リンクちゃん：右寄りの坂道に立ち、左上に飛ぶ帽子を見送る。本文(中央)と重ならないよう右へ */
+  #hatScene .hat-link{ position:absolute; left:74%; bottom:0; width:clamp(140px,32vw,250px); height:auto;
+    transform:translateX(-50%); filter:drop-shadow(0 6px 16px rgba(20,30,40,.3)); }
+  body.hat-active #hatScene .hat-link{ animation:hatLinkIn 1s ease both; }
+  @keyframes hatLinkIn{ from{ transform:translateX(-50%) translateY(20px); opacity:0 } to{ transform:translateX(-50%) translateY(0); opacity:1 } }
+  /* 帽子：左上の空を、風でくるくる舞う（リンクちゃんの視線の先） */
+  #hatScene .hat-hat{ position:absolute; top:clamp(40px,12vh,110px); left:clamp(40px,14vw,170px); width:clamp(58px,13vw,100px); height:auto; }
+  body.hat-active #hatScene .hat-hat{ animation:hatFly 5s ease-in-out infinite; }
+  @keyframes hatFly{ 0%{ transform:translate(0,0) rotate(-8deg) } 30%{ transform:translate(20px,-14px) rotate(14deg) } 60%{ transform:translate(-16px,6px) rotate(-6deg) } 100%{ transform:translate(0,0) rotate(-8deg) } }
+  @media(prefers-reduced-motion:reduce){ #hatScene .hat-link, #hatScene .hat-hat{ animation:none !important } }
+  /* 麦わら帽子の文：坂道背景の上で白文字＋濃い影。やや上寄せでリンクちゃんと重ねない */
+  body.hat-active .ph-hat{ color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.9), 0 2px 16px rgba(0,0,0,.7); }
+  body.hat-active .ph-hat::before{ content:""; position:absolute; z-index:-1; left:50%; top:50%; transform:translate(-50%,-50%); width:min(30rem,80vw); height:6em; background:radial-gradient(ellipse 60% 55% at 50% 50%, rgba(12,14,22,.45), transparent 75%); }
+
   /* 本文・章見出しは写真レイヤーより前に（.story は z:2 なので元々前だが念のため） */
   .photo-bg .ep-head, .photo-bg .ph, .photo-bg .ep-rule, .photo-bg .saso, .photo-bg .shishi-stage{ position:relative; z-index:2; }
 
@@ -559,6 +580,13 @@
 
 <!-- 実写背景ステージ（章ごとに写真をクロスフェード差し替え） -->
 <div id="photoStage" aria-hidden="true"><div class="pf" id="pfA"></div><div class="pf" id="pfB"></div><div class="pf-tint"></div></div>
+
+<!-- 麦わら帽子のシーン専用（坂道背景＋リンクちゃん＋風に舞う帽子。あだち充風） -->
+<div id="hatScene" aria-hidden="true">
+  <div class="hat-bg"></div>
+  <img class="hat-link" src="img/chara/link-full.png" alt="" />
+  <svg class="hat-hat" viewBox="0 0 120 70"><ellipse cx="60" cy="46" rx="54" ry="16" fill="#d8b271"/><ellipse cx="60" cy="42" rx="30" ry="13" fill="#c79a4e"/><path d="M30 44 Q60 30 90 44" fill="none" stroke="#a8572f" stroke-width="4"/><ellipse cx="60" cy="46" rx="54" ry="16" fill="none" stroke="#a87a32" stroke-width="1.6" opacity=".5"/></svg>
+</div>
 
 
 <!-- 固定背景 -->
@@ -754,7 +782,7 @@
   <p class="ph" data-img="kakigori" data-fx="kakigori">かき氷は、紅い雫を残して、溶けてゆく。</p>
   <p class="ph key">夏は、いつか終わる。</p>
   <p class="ph">だからこそ、歩いた今日が、あとで愛おしくなる。</p>
-  <p class="ph" data-img="mugiwara" data-fx="boushi">麦わら帽子が、ふわりと、風にさらわれた。</p>
+  <p class="ph ph-hat" data-special="hat">麦わら帽子が、ふわりと、風にさらわれた。</p>
   <div class="ep-rule"></div>
 </section>
 
@@ -866,6 +894,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=18"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>

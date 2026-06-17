@@ -84,15 +84,15 @@
       els.kagerou.style.opacity=wNatsu*0.8;
       /* 夏：昼物も夜祭り物も、夏である限り両方しっかり出す。夜章では夜物を強調しつつ昼物も最低限残す。 */
       var sub=body.getAttribute('data-sub'); var night=(sub==='night');
-      var dayW=wNatsu*(night?0.45:1), nightW=wNatsu*(night?1:0.6);
-      [els.semi,els.furin,els.suika,els.kawa,els.tsuri,els.tanbo,els.ayu,els.suikawari,els.mato,els.nukegara,els.kakigori].forEach(function(e){ if(e) e.style.opacity=dayW; });
-      if(els.semi) els.semi.classList.toggle('show', wNatsu>0.1); if(els.furin) els.furin.classList.toggle('show', wNatsu>0.1); if(els.nukegara) els.nukegara.classList.toggle('show', wNatsu>0.1);
-      [els.yataiA,els.yataiB,els.senko].forEach(function(e){ if(e) e.style.opacity=nightW; });
-      if(els.senko) els.senko.classList.toggle('show', wNatsu>0.1);
-      if(els.hanabi) els.hanabi.style.opacity=(wNatsu>0.1&&night?1:0);  /* 花火は夜章でのみ */
-      els.yakiimo.style.opacity=wMomiji; els.yuki.style.opacity=wYuki;
-      /* 温泉の猿は雪国（winter）でしっかり見せる。 */
-      els.onsen.style.opacity=wSnow;
+      /* ===== 写真を主役にするため、季節ごとにベタ表示していたSVG装飾群は隠す =====
+         蝉・風鈴・スイカ・川・釣り・田んぼ・鮎・スイカ割り・的・抜け殻・かき氷・屋台・花火・温泉の猿などを
+         常時表示すると画面がゴチャつき、実写写真の邪魔になる。サウンドノベルとして「今の文の写真」だけを
+         静かに見せたいので、これらは全て非表示にする（演出は data-fx で文ごとに一度だけ動かす）。 */
+      [els.semi,els.furin,els.suika,els.kawa,els.tsuri,els.tanbo,els.ayu,els.suikawari,els.mato,
+       els.nukegara,els.kakigori,els.yataiA,els.yataiB,els.senko,els.hanabi,els.yakiimo,els.onsen].forEach(function(e){ if(e) e.style.opacity=0; });
+      if(els.semi) els.semi.classList.remove('show'); if(els.furin) els.furin.classList.remove('show');
+      if(els.nukegara) els.nukegara.classList.remove('show'); if(els.senko) els.senko.classList.remove('show');
+      els.yuki.style.opacity=0;
     }
     /* ===== サウンドノベル：スクロール位置で「一文ずつ送る」 =====
        IntersectionObserver は環境によって発火が不安定なため、毎フレーム自前で位置を計算する確実な方式にする。
@@ -140,7 +140,7 @@
          - data-img: その文の情景写真へ背景を切替（最後に中央を通過した指定を採用）
          - data-fx : その文が中央に来た瞬間に一度だけ、動き＋効果音を発火 */
       var bandTop=vh*0.22, bandBottom=vh*0.78;
-      var imgPick=null, imgPickDist=1e9;
+      var imgPick=null, imgPickDist=1e9, specialActive=null;
       phs.forEach(function(p){ var r=p.getBoundingClientRect(); var c=(r.top+r.bottom)/2;
         var inBand = (c>=bandTop && c<=bandBottom);
         if(inBand){ p.classList.add('lit'); p.classList.remove('gone'); }
@@ -151,11 +151,19 @@
         var di=p.getAttribute('data-img');
         if(di && c<=bandBottom){ var d=Math.abs(c-mid); if(d<imgPickDist){ imgPickDist=d; imgPick=di; } }
 
+        /* 特別シーン（data-special, 例: 麦わら帽子）：その文が画面の中央寄りに来たら専用演出を出す */
+        var sp=p.getAttribute('data-special');
+        if(sp && c<vh*0.9 && r.bottom>vh*0.1) specialActive=sp;
+
         /* 演出（data-fx）：中央バンドに入った瞬間に一度だけ。離れたらフラグを戻し、再訪で再発火可能に。 */
         var fx=p.getAttribute('data-fx');
         if(fx){ if(inBand){ if(!p.dataset.fxOn){ p.dataset.fxOn='1'; playFx(fx); } } else { if(c>bandBottom) p.dataset.fxOn=''; } }
       });
-      if(imgPick!==null) setPhoto(imgPick, curNight);
+      /* 麦わら帽子の専用シーン on/off（写真ステージは隠す） */
+      var hatOn = (specialActive==='hat');
+      body.classList.toggle('hat-active', hatOn);
+      if(hatOn){ setPhoto(null, curNight); }       /* 帽子シーン中は通常写真を消す */
+      else if(imgPick!==null){ setPhoto(imgPick, curNight); }
     }
 
     /* data-fx の名前 → 既存の演出関数/SVGアニメ＋効果音 */
