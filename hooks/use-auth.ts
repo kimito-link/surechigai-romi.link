@@ -4,7 +4,7 @@ import { clearAllTokenData } from "@/lib/token-manager";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useUser, useAuth as useClerkAuth, useOAuth } from "@clerk/expo";
+import { useUser, useAuth as useClerkAuth, useOAuth, getClerkInstance } from "@clerk/expo";
 
 function resolveReturnUrl(returnUrl?: string): string | undefined {
   if (typeof window === "undefined") {
@@ -78,13 +78,23 @@ export function useAuth() {
         }
 
         if (Platform.OS === "web" && typeof window !== "undefined") {
-          // Web も useOAuth().startOAuthFlow を使う（旧 signIn.authenticateWithRedirect は
-          // 現行 @clerk/expo に存在せず "is not a function" になる）。
-          // Web では redirectUrl にアプリ内の戻り先(origin)を渡すと Clerk が X の OAuth 画面へ自動遷移する。
+          // Web は clerk.client.signIn.authenticateWithRedirect で「同じタブ」のまま X へ遷移する。
+          // （useOAuth().startOAuthFlow は Web だと expo-web-browser のポップアップを開き使いづらい。
+          //   また useSignIn() の新 signals 版 signIn には authenticateWithRedirect が無い＝
+          //   従来の clerk.client.signIn を使う必要がある）
+          const clerk = getClerkInstance();
+          const clientSignIn = clerk.client?.signIn;
+          if (!clientSignIn) {
+            throw new Error("認証の準備中です。少し待ってからもう一度お試しください。");
+          }
           const origin = window.location.origin;
           const redirectComplete = resolveReturnUrl(safeReturnUrl) ?? origin;
-          await startOAuthFlow({
-            redirectUrl: redirectComplete,
+          await clientSignIn.authenticateWithRedirect({
+            strategy: "oauth_x",
+            // X 認証後に Clerk が一旦受ける先（origin に戻す）
+            redirectUrl: origin,
+            // 認証完了後に最終的に戻すアプリURL
+            redirectUrlComplete: redirectComplete,
           });
           return;
         }
