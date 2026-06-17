@@ -34,7 +34,7 @@
 
     var els={ semi:'semi',furin:'furin',suika:'suika',kawa:'kawa',tsuri:'tsuri',uo:'uo',boushi:'boushi',
       yataiA:'yataiA',yataiB:'yataiB',hanabi:'hanabi',senko:'senko',kagerou:'kagerou',yakiimo:'yakiimo',
-      tanbo:'tanbo',ayu:'ayu',suikawari:'suikawari',mato:'mato',nukegara:'nukegara',kakigori:'kakigori',
+      tanbo:'tanbo',ayu:'ayu',suikawari:'suikawari',mato:'mato',nukegara:'nukegara',
       yuki:'yukimichi',onsen:'onsen',hikari:'hikari' };
     Object.keys(els).forEach(function(k){ els[k]=document.getElementById(els[k]); });
     var dots=[].slice.call(document.querySelectorAll('.kisetsu-bar .dot'));
@@ -88,7 +88,7 @@
          常時表示すると画面がゴチャつき写真の邪魔になるので非表示。ただし data-fx で「その文の演出」が
          発火している要素(fxShow)は、その間だけ表示して動かす（魚跳ね・鹿威し・線香花火など）。 */
       [els.semi,els.furin,els.suika,els.kawa,els.tsuri,els.tanbo,els.ayu,els.suikawari,els.mato,
-       els.nukegara,els.kakigori,els.yataiA,els.yataiB,els.senko,els.hanabi,els.yakiimo,els.onsen].forEach(function(e){
+       els.nukegara,els.yataiA,els.yataiB,els.senko,els.hanabi,els.yakiimo,els.onsen].forEach(function(e){
          if(!e) return; e.style.opacity = (e.dataset.fxShow==='1') ? 1 : 0;
        });
       els.yuki.style.opacity=0;
@@ -184,7 +184,6 @@
         case 'fish': jumpFish(); break;   /* 川の写真(data-img=kawa)の上で、魚SVGが大きく跳ねる */
         case 'furin': showFxEl(els.furin,6000); if(els.furin) els.furin.classList.add('show'); chime(); break;
         case 'nukegara': showFxEl(els.nukegara,6000); if(els.nukegara) els.nukegara.classList.add('show'); break;
-        case 'kakigori': showFxEl(els.kakigori,6000); break;
         case 'boom': showFxEl(els.hanabi,7000); boom(); break;
         case 'senko': { showFxEl(els.senko,6000); var s=document.getElementById('senko'); if(s){ s.classList.add('show'); s.classList.remove('show'); void s.offsetWidth; s.classList.add('show'); } break; }
         case 'boushi': { var b=document.getElementById('boushi'); if(b){ showFxEl(b,4000); b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); } break; }
@@ -278,7 +277,9 @@
       if(!bg || !PHOTOS[bg]){ if(pfFront) pfFront.classList.remove('on'); if(pfBack) pfBack.classList.remove('on'); if(pfStage) pfStage.classList.remove('has-photo'); body.classList.remove('photo-active'); return; }
       if(pfStage) pfStage.classList.add('has-photo'); body.classList.add('photo-active');
       /* 裏面に次の写真を入れてフェードイン、表を裏に */
-      if(pfBack){ pfBack.style.backgroundImage="url('"+PHOTOS[bg]+"')"; pfBack.classList.add('on'); }
+      /* 横長すぎて縦画面だと中央だけ拡大される写真は contain で全景を見せる */
+      var fitContain = (bg==='kakigori');
+      if(pfBack){ pfBack.style.backgroundImage="url('"+PHOTOS[bg]+"')"; pfBack.classList.toggle('pf-contain', fitContain); pfBack.classList.add('on'); }
       if(pfFront){ pfFront.classList.remove('on'); }
       var t=pfFront; pfFront=pfBack; pfBack=t;
     }
