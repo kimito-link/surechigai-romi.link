@@ -84,16 +84,18 @@
       els.kagerou.style.opacity=wNatsu*0.8;
       /* 夏：昼物も夜祭り物も、夏である限り両方しっかり出す。夜章では夜物を強調しつつ昼物も最低限残す。 */
       var sub=body.getAttribute('data-sub'); var night=(sub==='night');
-      /* ===== 写真を主役にするため、季節ごとにベタ表示していたSVG装飾群は隠す =====
-         蝉・風鈴・スイカ・川・釣り・田んぼ・鮎・スイカ割り・的・抜け殻・かき氷・屋台・花火・温泉の猿などを
-         常時表示すると画面がゴチャつき、実写写真の邪魔になる。サウンドノベルとして「今の文の写真」だけを
-         静かに見せたいので、これらは全て非表示にする（演出は data-fx で文ごとに一度だけ動かす）。 */
+      /* ===== 写真を主役にするため、季節ごとにベタ表示していたSVG装飾群は基本は隠す =====
+         常時表示すると画面がゴチャつき写真の邪魔になるので非表示。ただし data-fx で「その文の演出」が
+         発火している要素(fxShow)は、その間だけ表示して動かす（魚跳ね・鹿威し・線香花火など）。 */
       [els.semi,els.furin,els.suika,els.kawa,els.tsuri,els.tanbo,els.ayu,els.suikawari,els.mato,
-       els.nukegara,els.kakigori,els.yataiA,els.yataiB,els.senko,els.hanabi,els.yakiimo,els.onsen].forEach(function(e){ if(e) e.style.opacity=0; });
-      if(els.semi) els.semi.classList.remove('show'); if(els.furin) els.furin.classList.remove('show');
-      if(els.nukegara) els.nukegara.classList.remove('show'); if(els.senko) els.senko.classList.remove('show');
+       els.nukegara,els.kakigori,els.yataiA,els.yataiB,els.senko,els.hanabi,els.yakiimo,els.onsen].forEach(function(e){
+         if(!e) return; e.style.opacity = (e.dataset.fxShow==='1') ? 1 : 0;
+       });
       els.yuki.style.opacity=0;
     }
+    /* 演出のあいだだけ、その要素を表示する（render が尊重する）。durミリ秒後に隠す。 */
+    function showFxEl(el, dur){ if(!el) return; el.dataset.fxShow='1';
+      clearTimeout(el._fxT); el._fxT=setTimeout(function(){ el.dataset.fxShow=''; }, dur||4000); }
     /* ===== サウンドノベル：スクロール位置で「一文ずつ送る」 =====
        IntersectionObserver は環境によって発火が不安定なため、毎フレーム自前で位置を計算する確実な方式にする。
        ・各章(.story)が画面に入ったら lead-in（見出し・暗幕・罫を出す）＋ data-scene 適用＋一度きりトリガー
@@ -166,25 +168,26 @@
       else if(imgPick!==null){ setPhoto(imgPick, curNight); }
     }
 
-    /* data-fx の名前 → 既存の演出関数/SVGアニメ＋効果音 */
+    /* data-fx の名前 → 既存の演出関数/SVGアニメ＋効果音。
+       SVGで見せる演出は showFxEl でその要素を一時表示してから動かす（写真の上に重ねる）。 */
     function playFx(name){
       switch(name){
         case 'whistle': whistle(); break;
         case 'clack': startClack(2600); break;
-        case 'walk': walkSnow(); break;
-        case 'footstep': footstep(); break;
+        case 'walk': showFxEl(els.yuki,7000); walkSnow(); break;   /* 雪道の足跡 */
+        case 'footstep': showFxEl(els.yuki,7000); footstep(); break;
         case 'bird': birdsong(); break;
         case 'rikisha': { var r=document.getElementById('jinrikisha'); if(r){ r.classList.remove('go'); void r.offsetWidth; r.classList.add('go'); } break; }
         case 'konk': konk(); break;
-        case 'semi': /* 蝉は環境音で継続。視覚は固定SVGで既出 */ chime&&0; break;
-        case 'fish': jumpFish(); break;
-        case 'furin': chime(); break;
-        case 'nukegara': break;
-        case 'kakigori': break;
-        case 'boom': boom(); break;
-        case 'senko': { var s=document.getElementById('senko'); if(s){ s.classList.remove('show'); void s.offsetWidth; s.classList.add('show'); } break; }
-        case 'boushi': { var b=document.getElementById('boushi'); if(b){ b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); } break; }
-        case 'yakiimo': break;
+        case 'semi': showFxEl(els.semi,6000); if(els.semi) els.semi.classList.add('show'); break;
+        case 'fish': jumpFish(); break;   /* 川の写真(data-img=kawa)の上で、魚SVGが大きく跳ねる */
+        case 'furin': showFxEl(els.furin,6000); if(els.furin) els.furin.classList.add('show'); chime(); break;
+        case 'nukegara': showFxEl(els.nukegara,6000); if(els.nukegara) els.nukegara.classList.add('show'); break;
+        case 'kakigori': showFxEl(els.kakigori,6000); break;
+        case 'boom': showFxEl(els.hanabi,7000); boom(); break;
+        case 'senko': { showFxEl(els.senko,6000); var s=document.getElementById('senko'); if(s){ s.classList.add('show'); s.classList.remove('show'); void s.offsetWidth; s.classList.add('show'); } break; }
+        case 'boushi': { var b=document.getElementById('boushi'); if(b){ showFxEl(b,4000); b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); } break; }
+        case 'yakiimo': showFxEl(els.yakiimo,6000); break;
         case 'nagareboshi': shootStar(); break;
       }
     }

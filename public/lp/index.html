@@ -99,9 +99,9 @@
   .kawa .hito{ position:absolute; bottom:30%; transform-box:fill-box; transform-origin:50% 100%; animation:hane 2.2s ease-in-out infinite; }
   @keyframes hane{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
   .tsuri{ bottom:30%; right:20%; width:26px; } .tsuri svg{width:100%;display:block}
-  .uo{ position:absolute; bottom:24%; right:32%; width:18px; opacity:0; } .uo svg{width:100%;display:block}
-  .uo.jump{ animation:hane-uo 1.1s ease-out forwards; }
-  @keyframes hane-uo{ 0%{opacity:0; transform:translateY(8px) rotate(20deg)} 20%{opacity:.9} 50%{transform:translateY(-26px) rotate(-12deg)} 100%{opacity:0; transform:translateY(10px) rotate(40deg)} }
+  .uo{ position:absolute; bottom:30%; left:50%; margin-left:-32px; width:clamp(46px,9vw,68px); opacity:0; z-index:2; filter:drop-shadow(0 3px 7px rgba(20,40,60,.45)); } .uo svg{width:100%;display:block}
+  .uo.jump{ animation:hane-uo 1.5s ease-out forwards; }
+  @keyframes hane-uo{ 0%{opacity:0; transform:translateY(50px) rotate(26deg) scale(.7)} 15%{opacity:1} 45%{transform:translateY(-100px) rotate(-18deg) scale(1.05)} 72%{opacity:1} 100%{opacity:0; transform:translateY(36px) rotate(50deg) scale(.8)} }
   .boushi{ position:absolute; top:40%; left:-12%; width:46px; opacity:0; } .boushi svg{width:100%;display:block}
   .boushi.fly{ animation:tobu 3.4s ease-in forwards; }
   @keyframes tobu{ 0%{opacity:0; transform:translate(0,0) rotate(0)} 10%{opacity:.95} 100%{opacity:0; transform:translate(120vw,-40px) rotate(220deg)} }
@@ -894,6 +894,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=21"></script>
+<script src="app.js?v=23"></script>
 </body>
 </html>
