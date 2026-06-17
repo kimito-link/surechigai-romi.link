@@ -109,6 +109,21 @@ function EventCard({
     if (effectiveUrl) Linking.openURL(effectiveUrl).catch(() => {});
   }, [effectiveUrl]);
 
+  /** Xシェア: タイトル・日時・場所をツイートテキストにして intent/tweet へ飛ばす */
+  const shareOnX = useCallback(() => {
+    const d = typeof startAt === "string" ? new Date(startAt) : startAt;
+    const mm = d.getMonth() + 1;
+    const dd = d.getDate();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mi = String(d.getMinutes()).padStart(2, "0");
+    const placeStr =
+      locationType === "online"
+        ? "オンライン"
+        : [prefecture, venueName].filter(Boolean).join(" ") || "場所未定";
+    const text = `【集まり】${title}\n${mm}/${dd} ${hh}:${mi}〜 ${placeStr}\n#すれちがいロミ`;
+    Linking.openURL(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`).catch(() => {});
+  }, [title, startAt, locationType, prefecture, venueName]);
+
   const handleReveal = useCallback(() => {
     setRevealError("");
     if (!code.trim()) {
@@ -234,6 +249,16 @@ function EventCard({
             </>
           )}
         </View>
+      )}
+
+      {/* Xシェアボタン（公開イベントのみ。unlisted は合言葉が要るため省略） */}
+      {visibility === "public" && (
+        <Pressable
+          onPress={shareOnX}
+          style={({ pressed }) => [styles.xShareBtn, pressed && { opacity: 0.7 }]}
+        >
+          <Text style={styles.xShareText}>𝕏でシェア</Text>
+        </Pressable>
       )}
 
       {footer}
@@ -1027,5 +1052,21 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     backgroundColor: color.textWhite,
+  },
+  // X share button (public events only)
+  xShareBtn: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: color.textPrimary,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginTop: 2,
+  },
+  xShareText: {
+    color: color.textWhite,
+    fontSize: 12,
+    fontWeight: "700",
   },
 });

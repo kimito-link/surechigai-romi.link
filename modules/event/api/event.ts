@@ -239,6 +239,20 @@ export const eventRouter = router({
     }),
 
   /**
+   * イベント1件を公開情報として取得（Xシェアリンク・OGP用）。
+   * public / unlisted どちらでも取得可。unlisted は会場/URLは隠す（reveal 手続き経由）。
+   */
+  getById: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
+      const ev = await getEventById(db, input.id);
+      if (!ev) throw new TRPCError({ code: "NOT_FOUND", message: "イベントが見つかりません" });
+      return toPublicView(ev);
+    }),
+
+  /**
    * 限定イベントの会場/URLを合言葉で開示する。
    * 合言葉が一致した場合のみ venueName / onlineUrl を返す（非対称マスクの解除）。
    */
