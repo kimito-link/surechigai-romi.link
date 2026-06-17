@@ -98,7 +98,7 @@ export function OnboardingNavigation({
           style={[styles.nextButton, isLastSlide && styles.completeButton]}
         >
           <Text style={[styles.nextButtonText, isLastSlide && styles.completeButtonText]}>
-            {isLastSlide ? "始める" : "次へ"}
+            {isLastSlide ? "✨ 始める" : "次へ →"}
           </Text>
         </TouchableOpacity>
       </View>

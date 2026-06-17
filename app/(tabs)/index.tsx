@@ -589,8 +589,12 @@ export default function PostScreen() {
           
           {unopened.length === 0 && (
             <View style={styles.emptyOverlay}>
+              <Text style={styles.emptyOverlayEmoji}>📭</Text>
+              <Text style={styles.emptyOverlayTitle}>
+                まだ封筒は届いていません
+              </Text>
               <Text style={styles.emptyOverlayText}>
-                現在傍受可能なシグナルはありません
+                チェックインすると{"\n"}近くにいたファンの封筒が届くかも
               </Text>
             </View>
           )}
@@ -630,19 +634,31 @@ const styles = StyleSheet.create({
   },
   emptyOverlay: {
     position: "absolute",
-    top: "50%",
+    top: "45%",
     left: 0,
     right: 0,
     alignItems: "center",
+    paddingHorizontal: 32,
+    gap: 6,
   },
-  emptyOverlayText: {
-    color: color.accentAlt,
-    fontSize: 14,
-    fontWeight: "bold",
-    opacity: 0.8,
+  emptyOverlayEmoji: {
+    fontSize: 40,
+    marginBottom: 4,
+  },
+  emptyOverlayTitle: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "center",
     textShadowColor: color.accentPrimary,
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+    textShadowRadius: 12,
+  },
+  emptyOverlayText: {
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 20,
   },
   center: {
     flex: 1,
