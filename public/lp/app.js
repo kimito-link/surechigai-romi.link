@@ -241,8 +241,12 @@
       yukimichi:'img/yukimichi.png', ashiato:'img/ashiato.png', 'onsen-saru':'img/onsen-saru.png',
       sakura:'img/sakura.png', rikisha:'img/rikisha.png', chashitsu:'img/chashitsu.png',
       nyudogumo:'img/nyudogumo.png', kawa:'img/kawa.png', kakigori:'img/kakigori.png', taki:'img/taki.png',
-      tekiya:'img/tekiya.png', 'matsuri-hito':'img/matsuri-hito.png', hanabi:'img/hanabi.png',
-      momiji:'img/momiji.png', hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', tanbo:'img/tanbo.png' };
+      mugiwara:'img/mugiwara.png',
+      tekiya:'img/tekiya.png', takoyaki:'img/takoyaki.png', 'matsuri-hito':'img/matsuri-hito.png',
+      hanabi:'img/hanabi.png', senkohanabi:'img/senkohanabi.png',
+      'futari-ashiato':'img/futari-ashiato.png', yoake:'img/yoake.png',
+      momiji:'img/momiji.png', yakiimo:'img/yakiimo.png', hitosuji:'img/hitosuji.png', kiseki:'img/kiseki.png',
+      hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', 'fuji-yoru':'img/fuji-yoru.png', tanbo:'img/tanbo.png' };
     var pfStage=document.getElementById('photoStage'), pfA=document.getElementById('pfA'), pfB=document.getElementById('pfB');
     var pfFront=pfA, pfBack=pfB, curBg=null;
     /* 先読み（チラつき防止） */
