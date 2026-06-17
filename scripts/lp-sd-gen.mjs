@@ -34,7 +34,7 @@ const JOBS = [
   { id:'matsuri-hito', w:768, h:432, prompt:'a crowded japanese summer festival at night seen from behind, people in yukata walking among glowing red lanterns and food stalls, warm bokeh lights, one person turning away into the crowd, deep blue night, photorealistic, nostalgic, atmospheric, film grain' },
   { id:'ashiato', w:768, h:432, prompt:'a single line of footprints in fresh deep snow stretching into the distance, soft overcast winter light, untouched white snowfield, quiet and lonely, japanese landscape, photorealistic, melancholic, film grain' },
   { id:'rikisha', w:768, h:432, prompt:'a traditional japanese rickshaw (jinrikisha) on an old town street lined with cherry blossom trees in spring, falling petals, soft afternoon light, nostalgic taisho era atmosphere, photorealistic, warm tones, film grain', neg_extra:'' },
-  { id:'mugiwara', w:768, h:432, prompt:'a straw hat (mugiwara boushi) flying through the air caught by the summer wind over a green field, blue sky with clouds, motion blur, sense of a gust of wind, nostalgic japanese summer, photorealistic, bright and airy, film grain' },
+  { id:'mugiwara', w:768, h:432, prompt:'a single empty straw hat tumbling through the air high in a bright blue summer sky, blown away by a gust of wind, white clouds, green field far below, the hat alone in mid-air with motion, no people, nostalgic japanese summer, photorealistic, bright and airy, sense of wind, film grain', neg_extra:'person, people, human, face, woman, man, child, girl, boy, body, hand, head' },
   { id:'takoyaki', w:768, h:432, prompt:'close-up of a japanese festival food stall at night, freshly made takoyaki and yakisoba on a hot griddle, steam rising, red paper lanterns glowing warm above, bokeh festival lights, deep blue night, photorealistic, appetizing, warm lantern glow, film grain' },
   { id:'senkohanabi', w:768, h:432, prompt:'a single senko hanabi sparkler held in the dark, tiny crackling orange sparks bursting from a glowing ball at the tip, a spark about to fall, deep black background, intimate and fleeting, japanese summer night, photorealistic, bokeh, shallow depth of field, film grain' },
   { id:'futari-ashiato', w:768, h:432, prompt:'two separate lines of footprints on a path at dawn, overlapping and crossing on the same road, soft pre-dawn blue and gold light, a quiet country road, sense of two people who walked the same way at different times, photorealistic, poetic, atmospheric, film grain' },
@@ -45,6 +45,10 @@ const JOBS = [
   { id:'kiseki', w:768, h:432, prompt:'a long footpath stretching to the horizon at golden hour, a soft glowing line of light following the path into the far distance, gentle hills, a sense of looking back over the entire way one has walked, warm nostalgic light, photorealistic, hopeful and emotional, the road never disappearing, film grain' },
   // 結章：夜の富士＋湖に逆さに映る月＋流れ星（アプリの一番のメッセージ）
   { id:'fuji-yoru', w:768, h:432, prompt:'mount fuji at night under a clear starry sky, a bright full moon reflected upside down on the calm mirror-like surface of a lake in the foreground, a single shooting star streaking across the deep indigo night sky, serene, snow-capped peak faintly lit, deep blue and silver tones, photorealistic, cinematic, breathtaking, film grain, tranquil and hopeful' },
+  // 「湖に、月が、逆さに浮かんでいる」専用：水面に映る逆さの満月が主役
+  { id:'tsuki-mizu', w:768, h:432, prompt:'a large bright full moon perfectly reflected upside down on the still mirror-like surface of a dark calm lake at night, the moon reflection is the main subject in the center of the water, deep indigo night, faint stars, total silence and stillness, gentle ripples, photorealistic, minimal, serene, cinematic, film grain, poetic moonlight on water' },
+  // 鹿威し（添水）：竹筒が支点で傾き石を打つ。手水鉢/つくばいにならないよう構造を強調
+  { id:'sozu', w:768, h:432, prompt:'a japanese tsukubai garden with a long bamboo sozu shishi-odoshi tube balanced on a horizontal wooden pivot, the tilted bamboo tube pouring water onto a flat stone below, water streaming out of the open end of the bamboo, lush green moss, wet dark stones, bamboo water spout, side profile clearly showing the see-saw bamboo and the stone it strikes, traditional japanese tea garden, photorealistic, shallow depth of field, soft dappled light, water droplets, film grain, tranquil, serene wabi-sabi' },
 ];
 
 async function setModelReady(){
@@ -59,7 +63,7 @@ async function setModelReady(){
 async function gen(job){
   const body = {
     prompt: job.prompt,
-    negative_prompt: NEG,
+    negative_prompt: NEG + (job.neg_extra ? ', ' + job.neg_extra : ''),
     width: job.w, height: job.h,
     steps: 28, cfg_scale: 6.5,
     sampler_name: 'DPM++ 2M Karras',

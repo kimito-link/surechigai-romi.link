@@ -476,21 +476,40 @@
   footer{ text-align:center; padding:clamp(40px,8vw,70px) 0 56px; color:var(--faint); font-size:12.5px; line-height:2.2; letter-spacing:.06em; position:relative; z-index:2 }
   footer a{ color:var(--ai); text-decoration:none; border-bottom:1px solid var(--line) }
   .footnote{ margin-top:14px; font-size:11.5px; color:var(--faint); line-height:2.1 }
-  /* ゆっくり3人（道連れ）：左下の隅にそっと。小さく半透明、ふよふよ浮く。本文や操作の邪魔をしない。 */
-  #yukkuri{ position:fixed; left:clamp(8px,2vw,18px); bottom:clamp(10px,2.5vw,22px); z-index:3; pointer-events:none; display:flex; align-items:flex-end; gap:2px; opacity:.62; }
-  #yukkuri .yk{ display:block; width:clamp(26px,6vw,38px); }
-  #yukkuri .yk svg{ width:100%; height:auto; display:block; filter:drop-shadow(0 2px 4px rgba(35,32,27,.18)); }
-  #yukkuri .yk1{ animation:ykfloat 3.2s ease-in-out infinite; }
-  #yukkuri .yk2{ width:clamp(30px,7vw,44px); animation:ykfloat 3.8s ease-in-out .5s infinite; }
-  #yukkuri .yk3{ animation:ykfloat 3.5s ease-in-out 1s infinite; }
-  @keyframes ykfloat{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-5px) } }
-  @media(prefers-reduced-motion:reduce){ #yukkuri .yk{ animation:none !important } }
-  @media(max-width:560px){ #yukkuri{ opacity:.5; gap:0 } }
+  /* エンドロールの登場キャラクター（本物の3キャラ画像）。ふよふよ浮く。 */
+  .chara-row{ display:flex; align-items:flex-end; justify-content:center; gap:clamp(6px,2vw,18px); margin:clamp(28px,6vw,46px) auto clamp(20px,5vw,36px); }
+  .chara-row .chara{ width:clamp(72px,20vw,118px); height:auto; display:block; filter:drop-shadow(0 4px 10px rgba(35,32,27,.18)); }
+  .chara-row .chara:nth-child(1){ animation:ykfloat 3.2s ease-in-out infinite; }
+  .chara-row .chara:nth-child(2){ width:clamp(82px,22vw,132px); animation:ykfloat 3.8s ease-in-out .5s infinite; }
+  .chara-row .chara:nth-child(3){ animation:ykfloat 3.5s ease-in-out 1s infinite; }
+  @keyframes ykfloat{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-6px) } }
+  @media(prefers-reduced-motion:reduce){ .chara-row .chara{ animation:none !important } }
+  /* ===== 作品クレジット（エンドロール風の大きなセクション） ===== */
+  /* 写真や固定背景が透けて文字が読みにくくならないよう、和紙色の無地を全面に敷く（最前面 z:5）。 */
+  .endroll{ position:relative; z-index:5; padding:clamp(70px,16vw,130px) 0 clamp(56px,10vw,90px); background:var(--washi); }
+  .endroll::before{ content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg, var(--washi-2), var(--washi) 18%); }
+  .endroll *{ position:relative; }
+  .endroll-title{ font-family:var(--fude); font-weight:400; font-size:clamp(30px,9vw,52px); line-height:1.5; letter-spacing:.2em; text-indent:.2em; color:var(--sumi); margin:0 0 .4em; }
+  .endroll-yomi{ font-size:11px; letter-spacing:.5em; color:var(--faint); text-indent:.5em; margin:0 0 clamp(36px,8vw,60px); }
+  .endroll-row{ margin:clamp(24px,5vw,38px) auto; max-width:24rem; }
+  .endroll-label{ display:block; font-family:var(--fude); font-size:12px; letter-spacing:.4em; color:var(--taisha); text-indent:.4em; margin-bottom:.7em; }
+  .endroll-val{ display:block; font-family:var(--mincho); font-size:clamp(15px,4vw,18px); letter-spacing:.06em; color:var(--sumi-soft); line-height:1.9; }
+  .endroll-val small{ font-size:12.5px; color:var(--muted); }
+  .endroll-val a{ color:var(--ai); }
+  /* SocialXup（運営サービス）紹介カード */
+  .endroll-svc{ max-width:26rem; }
+  .svc-link{ display:block; text-decoration:none; border:1px solid var(--line); border-radius:6px; padding:clamp(16px,4vw,22px) clamp(18px,5vw,26px); background:rgba(255,255,255,.35); transition:border-color .2s; }
+  .svc-link:hover{ border-color:var(--ai); }
+  .svc-name{ display:block; font-family:var(--mincho); font-weight:600; font-size:clamp(18px,5vw,22px); letter-spacing:.06em; color:var(--ai); margin-bottom:.5em; }
+  .svc-desc{ display:block; font-size:12.5px; line-height:1.95; color:var(--muted); margin-bottom:.7em; }
+  .svc-by{ display:block; font-family:var(--fude); font-size:12px; letter-spacing:.12em; color:var(--taisha); }
+  .endroll-site{ margin:clamp(28px,6vw,44px) 0 0; font-size:14px; letter-spacing:.12em; }
+  .endroll-site a{ font-family:var(--mincho); }
   /* 制作クレジット＋ロゴ */
-  .credit{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; margin-bottom:1.6em; }
-  .credit-logo{ width:clamp(150px,44vw,210px); height:auto; display:block; }
-  .credit-name{ margin:0; text-align:center; font-family:var(--mincho); font-size:13.5px; letter-spacing:.08em; color:var(--sumi-soft); line-height:1.7; }
-  .credit-name span{ font-size:11px; color:var(--faint); letter-spacing:.1em; }
+  .credit{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; margin:clamp(24px,5vw,40px) auto; }
+  .credit-logo{ width:clamp(200px,56vw,300px); height:auto; display:block; }
+  .credit-name{ margin:0; text-align:center; font-family:var(--mincho); font-size:15px; letter-spacing:.14em; color:var(--sumi-soft); line-height:1.9; }
+  .credit-name span{ display:block; font-size:11.5px; color:var(--faint); letter-spacing:.18em; }
   /* 結章のキャッチコピー */
   .story .saso-copy{ font-family:var(--fude); font-size:clamp(22px,6.2vw,32px); line-height:1.9; letter-spacing:.14em; color:#f3f7fc; text-indent:.14em; margin:0 0 1.4em; text-shadow:0 2px 20px rgba(8,16,30,.7); }
 
@@ -541,12 +560,6 @@
 <!-- 実写背景ステージ（章ごとに写真をクロスフェード差し替え） -->
 <div id="photoStage" aria-hidden="true"><div class="pf" id="pfA"></div><div class="pf" id="pfB"></div><div class="pf-tint"></div></div>
 
-<!-- ゆっくり風の3人（道連れ）。画面の隅にそっと、コンテンツを邪魔しない程度に -->
-<div id="yukkuri" aria-hidden="true">
-  <span class="yk yk1"><svg viewBox="0 0 60 56"><ellipse cx="30" cy="31" rx="26" ry="23" fill="#f3e6cf"/><path d="M6 19 Q30 3 54 19 L52 25 Q30 13 8 25 Z" fill="#3a2f25"/><path d="M14 15 L8 7 M30 12 L30 3 M46 15 L52 7" stroke="#c0392b" stroke-width="2.4" stroke-linecap="round"/><circle cx="21" cy="31" r="3.1" fill="#23201b"/><circle cx="39" cy="31" r="3.1" fill="#23201b"/><circle cx="14" cy="38" r="3" fill="#e58fa0" opacity=".7"/><circle cx="46" cy="38" r="3" fill="#e58fa0" opacity=".7"/><path d="M25 41 Q30 45 35 41" fill="none" stroke="#23201b" stroke-width="1.7" stroke-linecap="round"/></svg></span>
-  <span class="yk yk2"><svg viewBox="0 0 60 56"><ellipse cx="30" cy="31" rx="26" ry="23" fill="#f6efe0"/><path d="M5 21 Q30 5 55 21 L54 27 Q30 15 6 27 Z" fill="#d9b34a"/><rect x="16" y="7" width="28" height="9" rx="2" fill="#3a352c"/><rect x="12" y="15" width="36" height="4" rx="2" fill="#3a352c"/><circle cx="21" cy="32" r="3.1" fill="#23201b"/><circle cx="39" cy="32" r="3.1" fill="#23201b"/><circle cx="14" cy="39" r="3" fill="#e58fa0" opacity=".7"/><circle cx="46" cy="39" r="3" fill="#e58fa0" opacity=".7"/><path d="M24 42 Q30 46 36 42" fill="none" stroke="#23201b" stroke-width="1.7" stroke-linecap="round"/></svg></span>
-  <span class="yk yk3"><svg viewBox="0 0 60 56"><ellipse cx="30" cy="31" rx="26" ry="23" fill="#efe7d6"/><path d="M7 20 Q30 4 53 20 L51 26 Q30 14 9 26 Z" fill="#a8572f"/><circle cx="30" cy="9" r="4" fill="#c0392b"/><circle cx="21" cy="32" r="3.1" fill="#23201b"/><circle cx="39" cy="32" r="3.1" fill="#23201b"/><circle cx="14" cy="39" r="3" fill="#e58fa0" opacity=".7"/><circle cx="46" cy="39" r="3" fill="#e58fa0" opacity=".7"/><path d="M25 41 Q30 46 35 41" fill="none" stroke="#23201b" stroke-width="1.7" stroke-linecap="round"/></svg></span>
-</div>
 
 <!-- 固定背景 -->
 <div class="scenery" aria-hidden="true">
@@ -829,7 +842,7 @@
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">結 章</span><span class="ep-label">― 晴れて、富士 ―</span></div>
   <p class="ph" data-img="fuji-yoru">雲が晴れ、はじめて、富士が見えた。</p>
-  <p class="ph" data-img="fuji-yoru">湖に、月が、逆さに浮かんでいる。</p>
+  <p class="ph" data-img="tsuki-mizu">湖に、月が、逆さに浮かんでいる。</p>
   <p class="ph" data-img="fuji-yoru" data-fx="nagareboshi">すうっと、流れ星が、ひとつ。</p>
   <p class="ph">願いを言う間もなく、消えていった。</p>
   <p class="ph key">けれど――願いは、もう、足が叶えている。</p>
@@ -845,12 +858,38 @@
     </div>
   </div>
 </section>
-<footer class="shell">
-  <div class="credit">
-    <img class="credit-logo" src="img/logo-kimitolink.png" width="220" height="165" alt="Kimito-Link ロゴ" />
-    <p class="credit-name">制作：Kimito-Link Project<span>（キミトリンクプロジェクト）</span></p>
+<!-- ════════════════ 作品クレジット（エンドロール風の大きなセクション） ════════════════ -->
+<footer class="shell endroll">
+  <p class="endroll-title">君斗りんくの<br />すれ違ひ通信</p>
+  <p class="endroll-yomi">SURECHIGAI&nbsp;TSUSHIN</p>
+
+  <div class="chara-row">
+    <img class="chara" src="img/chara/konta.png" alt="コンタ" width="120" height="120" />
+    <img class="chara" src="img/chara/link.png" alt="リンク" width="130" height="130" />
+    <img class="chara" src="img/chara/tanunee.png" alt="タヌ姉" width="120" height="120" />
   </div>
-  <p>君斗りんくのすれ違ひ通信 ／ <a href="https://surechigai-romi.link">surechigai-romi.link</a></p>
+
+  <div class="credit">
+    <img class="credit-logo" src="img/logo-kimitolink.png" width="260" height="195" alt="Kimito-Link ロゴ" />
+    <p class="credit-name">制作　Kimito-Link Project<span>キミトリンクプロジェクト</span></p>
+  </div>
+
+  <div class="endroll-row">
+    <span class="endroll-label">Special Thanks</span>
+    <span class="endroll-val">星野ロミ <a href="https://x.com/romi_hoshino" target="_blank" rel="noopener">@romi_hoshino</a><br />
+      <small>ソースコード提供</small></span>
+  </div>
+
+  <div class="endroll-row endroll-svc">
+    <a class="svc-link" href="https://socialxup.com/romi_hoshino" target="_blank" rel="noopener">
+      <span class="svc-name">SocialXup</span>
+      <span class="svc-desc">Xのフォロー数・フォロワー数の推移を、かんたんに確認・共有。<br />凍結で消えたアカウントの情報も保存し、いつ消えたかも追える。</span>
+      <span class="svc-by">― 星野ロミ 運営</span>
+    </a>
+  </div>
+
+  <p class="endroll-site"><a href="https://surechigai-romi.link">surechigai-romi.link</a></p>
+
   <p class="footnote">
     ※「すれ違い通信」はニンテンドーDSの体験へのオマージュです。任天堂とは関係ありません。<br />
     冒頭の一節は松尾芭蕉『おくのほそ道』、「トンネルを抜けると…」は川端康成『雪国』に着想を得ています。<br />
@@ -858,6 +897,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=16"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>
