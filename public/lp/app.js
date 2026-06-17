@@ -263,7 +263,11 @@
       'sanjunichi-michi':'img/sanjunichi-michi.png', 'kasanaru-ashiato':'img/kasanaru-ashiato.png',
       'oshi-no-michi':'img/oshi-no-michi.png', 'toki-no-surechigai':'img/toki-no-surechigai.png',
       'kienai-ashiato-aki':'img/kienai-ashiato-aki.png', 'fumidasu-ashi':'img/fumidasu-ashi.png',
-      'ichigo-ashiato':'img/ichigo-ashiato.png' };
+      'ichigo-ashiato':'img/ichigo-ashiato.png',
+      /* 結章：雪道足跡＋星空夜道（山道で統一） */
+      'yuki-ashiato':'img/yuki-ashiato.png',
+      'hoshizora-michi-a':'img/hoshizora-michi-a.png', 'hoshizora-michi-b':'img/hoshizora-michi-b.png',
+      'hoshizora-michi-c':'img/hoshizora-michi-c.png' };
     var pfStage=document.getElementById('photoStage'), pfA=document.getElementById('pfA'), pfB=document.getElementById('pfB');
     var pfFront=pfA, pfBack=pfB, curBg=null;
     /* 先読み（チラつき防止） */
