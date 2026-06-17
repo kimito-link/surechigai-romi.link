@@ -1,4 +1,8 @@
-import "dotenv/config";
+// 環境変数は .env.local を優先で読む（Expo/Metro 側と同じファイルを参照する）。
+// dotenv/config はデフォルトで .env しか読まないため、明示的に .env.local → .env の順でロードする。
+import { config as loadEnv } from "dotenv";
+loadEnv({ path: ".env.local" });
+loadEnv();
 import express from "express";
 import { createServer } from "http";
 import net from "net";
