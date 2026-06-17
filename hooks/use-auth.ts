@@ -4,7 +4,7 @@ import { clearAllTokenData } from "@/lib/token-manager";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useUser, useAuth as useClerkAuth, useOAuth, useSignIn } from "@clerk/expo";
+import { useUser, useAuth as useClerkAuth, useOAuth } from "@clerk/expo";
 
 function resolveReturnUrl(returnUrl?: string): string | undefined {
   if (typeof window === "undefined") {
@@ -63,8 +63,6 @@ export function useAuth() {
   const isLoaded = clerkIsLoaded || globalAuthReady;
   const { signOut, getToken } = useClerkAuth();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_x" });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { signIn } = useSignIn();
 
   const login = useCallback(
     async (returnUrl?: string, _forceSwitch = false) => {
@@ -80,16 +78,13 @@ export function useAuth() {
         }
 
         if (Platform.OS === "web" && typeof window !== "undefined") {
-          if (!signIn) {
-            throw new Error("Sign-in instance is not ready");
-          }
+          // Web も useOAuth().startOAuthFlow を使う（旧 signIn.authenticateWithRedirect は
+          // 現行 @clerk/expo に存在せず "is not a function" になる）。
+          // Web では redirectUrl にアプリ内の戻り先(origin)を渡すと Clerk が X の OAuth 画面へ自動遷移する。
           const origin = window.location.origin;
           const redirectComplete = resolveReturnUrl(safeReturnUrl) ?? origin;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (signIn as any).authenticateWithRedirect({
-            strategy: "oauth_x",
-            redirectUrl: origin,
-            redirectUrlComplete: redirectComplete,
+          await startOAuthFlow({
+            redirectUrl: redirectComplete,
           });
           return;
         }
@@ -120,7 +115,7 @@ export function useAuth() {
         console.error("[Auth] OAuth login error:", err);
       }
     },
-    [startOAuthFlow, getToken, signIn],
+    [startOAuthFlow, getToken],
   );
 
   const logout = useCallback(async () => {
