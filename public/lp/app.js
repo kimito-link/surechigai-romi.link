@@ -238,10 +238,10 @@
 
     /* 実写背景ステージ：画面固定の2枚(pfA/pfB)を使い、章ごとに写真をクロスフェード差し替えする。 */
     var PHOTOS={ yukiguni:'img/yukiguni.png', kisha:'img/kisha.png', yukinohara:'img/yukinohara.png',
-      yukimichi:'img/yukimichi.png', 'onsen-saru':'img/onsen-saru.png',
-      sakura:'img/sakura.png', chashitsu:'img/chashitsu.png',
-      nyudogumo:'img/nyudogumo.png', kawa:'img/kawa.png', taki:'img/taki.png',
-      tekiya:'img/tekiya.png', hanabi:'img/hanabi.png',
+      yukimichi:'img/yukimichi.png', ashiato:'img/ashiato.png', 'onsen-saru':'img/onsen-saru.png',
+      sakura:'img/sakura.png', rikisha:'img/rikisha.png', chashitsu:'img/chashitsu.png',
+      nyudogumo:'img/nyudogumo.png', kawa:'img/kawa.png', kakigori:'img/kakigori.png', taki:'img/taki.png',
+      tekiya:'img/tekiya.png', 'matsuri-hito':'img/matsuri-hito.png', hanabi:'img/hanabi.png',
       momiji:'img/momiji.png', hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', tanbo:'img/tanbo.png' };
     var pfStage=document.getElementById('photoStage'), pfA=document.getElementById('pfA'), pfB=document.getElementById('pfB');
     var pfFront=pfA, pfBack=pfB, curBg=null;
@@ -315,7 +315,7 @@
         if(actx.resume) actx.resume();
       }catch(e){}
     }
-    function setOn(on){ soundOn=on; if(otoBtn) otoBtn.classList.toggle('muted', !on); if(master) master.gain.setTargetAtTime(on?0.5:0, actx.currentTime, .05); manageAmbient(body.getAttribute('data-scene'), body.getAttribute('data-sub')); }
+    function setOn(on){ soundOn=on; if(otoBtn) otoBtn.classList.toggle('muted', !on); if(master) master.gain.setTargetAtTime(on?0.72:0, actx.currentTime, .05); manageAmbient(body.getAttribute('data-scene'), body.getAttribute('data-sub')); }
     function tone(freq, type, dur, peak, t0){ if(!soundOn||!actx) return; var t=t0||actx.currentTime, o=actx.createOscillator(), g=actx.createGain(); o.type=type||'sine'; o.frequency.value=freq;
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak||0.3,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05); return o; }
     function chime(){ if(!soundOn) return; var b=1200+Math.random()*500; [1,2.76,5.4].forEach(function(m,i){ tone(b*m,'sine',2.6+i*0.4,(i===0?0.4:0.14)/(i+1)); }); }
@@ -446,19 +446,36 @@
     /* 環境音（ループ）：冬の風ゴオォ、夏の蝉ジー＋せせらぎ。シーンで出し入れ */
     var amb={ wind:null, semi:null, kawa:null };
     function noiseSource(){ var bf=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate), ch=bf.getChannelData(0); for(var i=0;i<ch.length;i++) ch[i]=Math.random()*2-1; var s=actx.createBufferSource(); s.buffer=bf; s.loop=true; return s; }
-    function startWind(){ if(amb.wind||!soundOn||!actx) return; var s=noiseSource(), f=actx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=420; var g=actx.createGain(); g.gain.value=0; s.connect(f); f.connect(g); g.connect(master); s.start(); g.gain.setTargetAtTime(0.16,actx.currentTime,0.6); amb.wind={s:s,g:g};
-      // ゆらぎ
-      amb.wind.lfo=setInterval(function(){ if(amb.wind) amb.wind.g.gain.setTargetAtTime(0.09+Math.random()*0.12, actx.currentTime, 0.5); }, 1800); }
+    function startWind(){ if(amb.wind||!soundOn||!actx) return; var t=actx.currentTime;
+      // 低い唸り（ゴオォ）
+      var s=noiseSource(), f=actx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=380; f.Q.value=0.7;
+      var g=actx.createGain(); g.gain.value=0; s.connect(f); f.connect(g); g.connect(master); s.start(); g.gain.setTargetAtTime(0.2,t,0.8);
+      // 高い擦過音（ヒュウゥ）を薄く重ねて吹雪の鋭さを出す
+      var s2=noiseSource(), hf=actx.createBiquadFilter(); hf.type='bandpass'; hf.frequency.value=1600; hf.Q.value=0.9;
+      var g2=actx.createGain(); g2.gain.value=0; s2.connect(hf); hf.connect(g2); g2.connect(master); s2.start(); g2.gain.setTargetAtTime(0.05,t,1.0);
+      amb.wind={s:s,g:g,s2:s2,g2:g2};
+      // うねり：ゴオォ…と強弱（フィルタ周波数も動かして“風が吹き寄せる”感じ）
+      amb.wind.lfo=setInterval(function(){ if(amb.wind){ var v=0.12+Math.random()*0.16; amb.wind.g.gain.setTargetAtTime(v, actx.currentTime, 0.7); if(amb.wind.g2) amb.wind.g2.gain.setTargetAtTime(0.02+Math.random()*0.06, actx.currentTime, 0.7); try{ f.frequency.setTargetAtTime(300+Math.random()*260, actx.currentTime, 0.8); }catch(e){} } }, 1500); }
     function startSemi(){ if(amb.semi||!soundOn||!actx) return;
-      var s=noiseSource(), f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=4800; f.Q.value=8;
-      var f2=actx.createBiquadFilter(); f2.type='bandpass'; f2.frequency.value=6800; f2.Q.value=10;  // 倍音帯でジリジリ感
-      var g=actx.createGain(); g.gain.value=0; s.connect(f); f.connect(f2); f2.connect(g); g.connect(master); s.start();
-      g.gain.setTargetAtTime(0.07,actx.currentTime,0.8);
-      // 「ジー…ジー…」と波打つ蝉らしい音量ゆらぎ
-      var lfo=setInterval(function(){ if(amb.semi){ amb.semi.g.gain.setTargetAtTime(0.03+Math.random()*0.06, actx.currentTime, 0.18); } }, 420);
-      amb.semi={s:s,g:g,lfo:lfo}; }
+      var t=actx.currentTime;
+      // アブラゼミの「ジリジリジリ」：高域ノイズを、速いトレモロ(振幅変調)で刻む
+      var s=noiseSource(), f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=5200; f.Q.value=6;
+      var f2=actx.createBiquadFilter(); f2.type='bandpass'; f2.frequency.value=7400; f2.Q.value=9;
+      var g=actx.createGain(); g.gain.value=0.001; s.connect(f); f.connect(f2); f2.connect(g); g.connect(master); s.start();
+      // 速いトレモロ＝「ジリジリ」の正体。LFO(約60Hz相当を擬似)で振幅を細かく刻む
+      var trem=actx.createOscillator(), tg=actx.createGain(); trem.type='sawtooth'; trem.frequency.value=58; tg.gain.value=0.05;
+      trem.connect(tg); tg.connect(g.gain); trem.start(t);
+      g.gain.setTargetAtTime(0.12,t,1.2);
+      // ミンミンゼミ的な、もう一声（少し低い帯・ゆっくりうねる）を重ねて“蝉時雨”の層を作る
+      var s2=noiseSource(), mf=actx.createBiquadFilter(); mf.type='bandpass'; mf.frequency.value=3400; mf.Q.value=7;
+      var g2=actx.createGain(); g2.gain.value=0; s2.connect(mf); mf.connect(g2); g2.connect(master); s2.start();
+      var minmin=actx.createOscillator(), mg=actx.createGain(); minmin.type='sine'; minmin.frequency.value=6.5; mg.gain.value=0.045;
+      minmin.connect(mg); mg.connect(g2.gain); minmin.start(t); g2.gain.setTargetAtTime(0.05,t,1.5);
+      // 全体のうねり（鳴いては止む蝉時雨）
+      var lfo=setInterval(function(){ if(amb.semi){ amb.semi.g.gain.setTargetAtTime(0.08+Math.random()*0.08, actx.currentTime, 0.5); } }, 900);
+      amb.semi={s:s,g:g,s2:s2,trem:trem,minmin:minmin,lfo:lfo}; }
     function startKawa(){ if(amb.kawa||!soundOn||!actx) return; var s=noiseSource(), f=actx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=2400; f.Q.value=1.2; var g=actx.createGain(); g.gain.value=0; s.connect(f); f.connect(g); g.connect(master); s.start(); g.gain.setTargetAtTime(0.05,actx.currentTime,0.8); amb.kawa={s:s,g:g}; }
-    function stopAmb(key){ if(amb[key]){ try{ amb[key].g.gain.setTargetAtTime(0,actx.currentTime,0.4); var a=amb[key]; setTimeout(function(){ try{a.s.stop();}catch(e){} }, 800); if(a.lfo) clearInterval(a.lfo); }catch(e){} amb[key]=null; } }
+    function stopAmb(key){ if(amb[key]){ try{ amb[key].g.gain.setTargetAtTime(0,actx.currentTime,0.4); if(amb[key].g2) amb[key].g2.gain.setTargetAtTime(0,actx.currentTime,0.4); var a=amb[key]; setTimeout(function(){ ['s','s2','trem','minmin'].forEach(function(k){ try{ if(a[k]) a[k].stop(); }catch(e){} }); }, 800); if(a.lfo) clearInterval(a.lfo); }catch(e){} amb[key]=null; } }
     var chimeTimer=null, birdTimer=null;
     function manageAmbient(scene, sub){
       if(!soundOn||!actx){ return; }

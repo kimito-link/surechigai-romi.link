@@ -396,6 +396,15 @@
   .story .ph.ma{ min-height:64vh; color:var(--faint); letter-spacing:.5em; }
   /* 明るい章の本文：濃い墨色＋淡い白縁で、どんな背景でもくっきり読める */
   .story .ph{ text-shadow:0 1px 2px rgba(255,255,255,.7), 0 0 22px rgba(255,255,255,.55); }
+  /* 実写写真の上は明暗が一定しないので、本文を白文字＋濃い影にして必ず読めるようにする。
+     さらに文の背後に放射状のソフトな暗がりを敷き、明るい写真(茶室・雪原など)でも文字を浮かせる。 */
+  body.photo-active .story.photo-bg .ph{ color:#f6f9fd;
+    text-shadow:0 1px 2px rgba(0,0,0,.85), 0 2px 14px rgba(0,0,0,.7), 0 0 30px rgba(0,0,0,.55); }
+  body.photo-active .story.photo-bg .ph::before{ content:""; position:absolute; z-index:-1;
+    left:50%; top:50%; transform:translate(-50%,-50%); width:min(34rem,86vw); height:7.5em;
+    background:radial-gradient(ellipse 60% 55% at 50% 50%, rgba(12,14,22,.5), rgba(12,14,22,.22) 55%, transparent 78%);
+    pointer-events:none; }
+  body.photo-active .story.photo-bg .ph.key::before{ height:5.5em; }
   /* 夜・暗い章だけ本文を白く（夏夜・結章など data-veil=dusk/night） */
   .story.night .ph{ color:#f3f7fc; text-shadow:0 1px 3px rgba(6,12,26,.9), 0 0 22px rgba(6,12,26,.7); }
   .story.night .ph.key{ color:#fff; }
@@ -679,8 +688,8 @@
   <div class="ep-head"><span class="ep-no">二 章</span><span class="ep-label">― 雪の一本道 ―</span></div>
   <p class="ph" data-img="yukimichi" data-fx="walk">駅を出て、雪の一本道を歩く。</p>
   <p class="ph" data-fx="footstep">ザッ、ザッ、と、雪を踏みしめる音だけが響く。</p>
-  <p class="ph">ふと前を見ると――足跡が、続いていた。</p>
-  <p class="ph key">私のものではない。誰かが、先に通ったのだ。</p>
+  <p class="ph" data-img="ashiato">ふと前を見ると――足跡が、続いていた。</p>
+  <p class="ph key" data-img="ashiato">私のものではない。誰かが、先に通ったのだ。</p>
   <p class="ph">その人も、ひとりだったのだろうか。</p>
   <p class="ph">足跡は、消えずに、白い道に刻まれていた。</p>
   <p class="ph">私もいま、足跡を残している。</p>
@@ -694,7 +703,7 @@
   <div class="ep-head"><span class="ep-no">三 章</span><span class="ep-label">― 春、すれ違ふ ―</span></div>
   <p class="ph" data-img="sakura" data-fx="bird">峠を下るほどに、雪は、霞へと変わった。</p>
   <p class="ph" data-img="sakura" data-fx="sakura">気づけば桜が、ひとひら、頬をかすめる。</p>
-  <p class="ph" data-fx="rikisha">からから、と、人力車が過ぎてゆく。</p>
+  <p class="ph" data-img="rikisha" data-fx="rikisha">からから、と、人力車が過ぎてゆく。</p>
   <p class="ph">ただ通り過ぎただけの、なんでもない辻。</p>
   <p class="ph">けれどその辻を、私はあとで思い出すことになる。</p>
   <p class="ph key">「いづれの場所も、旅の途中なり」</p>
@@ -760,7 +769,7 @@
   <p class="ph" data-img="kawa" data-fx="fish">川がさらさらと流れ、魚が、ひとつ跳ねた。</p>
   <p class="ph" data-fx="furin">風鈴が、ちりりと鳴る。</p>
   <p class="ph" data-fx="nukegara">幹には、抜け殻がひとつ。もう、鳴かない。</p>
-  <p class="ph" data-fx="kakigori">かき氷は、紅い雫を残して、溶けてゆく。</p>
+  <p class="ph" data-img="kakigori" data-fx="kakigori">かき氷は、紅い雫を残して、溶けてゆく。</p>
   <p class="ph key">夏は、いつか終わる。</p>
   <p class="ph">だからこそ、歩いた今日が、あとで愛おしくなる。</p>
   <p class="ph" data-fx="boushi">麦わら帽子が、ふわりと、風にさらわれた。</p>
@@ -773,8 +782,8 @@
   <div class="ep-head"><span class="ep-no">六 章</span><span class="ep-label">― 夏の、夜祭り ―</span></div>
   <p class="ph" data-img="tekiya">日が暮れて、遠くに、祭りの灯が見えた。</p>
   <p class="ph" data-img="tekiya">たこ焼き、焼きそば、提灯の列。</p>
-  <p class="ph">人ごみのなか、誰かと肩がふれた。</p>
-  <p class="ph">振り向いたが、もう、その背中は人波に消えていた。</p>
+  <p class="ph" data-img="matsuri-hito">人ごみのなか、誰かと肩がふれた。</p>
+  <p class="ph" data-img="matsuri-hito">振り向いたが、もう、その背中は人波に消えていた。</p>
   <p class="ph key" data-img="hanabi" data-fx="boom">ドオン――と、花火が、夜空をひらく。</p>
   <p class="ph">同じ花火を、見上げている誰かが、いるはずだ。</p>
   <p class="ph">言葉は、交わさなくていい。</p>
@@ -849,6 +858,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=14"></script>
+<script src="app.js?v=15"></script>
 </body>
 </html>

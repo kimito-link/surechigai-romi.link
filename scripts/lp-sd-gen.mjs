@@ -30,6 +30,10 @@ const JOBS = [
   { id:'yukinohara', w:768, h:432, prompt:'a vast silent snowfield under a soft pale winter sky, gently falling snow, distant snow-laden trees, untouched white snow stretching to the horizon, serene and quiet, japanese landscape, photorealistic, luminous soft light, film grain' },
   { id:'kawa', w:768, h:432, prompt:'a clear shallow mountain stream flowing over smooth stones in summer, sparkling water, dappled sunlight through green leaves, a small fish leaping above the water surface with splash, lush riverbank, japanese countryside, photorealistic, fresh and cool, film grain' },
   { id:'momiji', w:768, h:432, prompt:'a path covered with fallen autumn leaves in a japanese forest, brilliant red and orange maple trees, soft afternoon light, fallen leaves on the ground, nostalgic, photorealistic, warm autumn tones, film grain, serene' },
+  { id:'kakigori', w:768, h:432, prompt:'a glass bowl of japanese shaved ice kakigori with bright red strawberry syrup, melting ice, a red droplet of syrup running down, condensation on the glass, bright summer light by a window, close-up, photorealistic, vivid, refreshing yet bittersweet, shallow depth of field, film grain' },
+  { id:'matsuri-hito', w:768, h:432, prompt:'a crowded japanese summer festival at night seen from behind, people in yukata walking among glowing red lanterns and food stalls, warm bokeh lights, one person turning away into the crowd, deep blue night, photorealistic, nostalgic, atmospheric, film grain' },
+  { id:'ashiato', w:768, h:432, prompt:'a single line of footprints in fresh deep snow stretching into the distance, soft overcast winter light, untouched white snowfield, quiet and lonely, japanese landscape, photorealistic, melancholic, film grain' },
+  { id:'rikisha', w:768, h:432, prompt:'a traditional japanese rickshaw (jinrikisha) on an old town street lined with cherry blossom trees in spring, falling petals, soft afternoon light, nostalgic taisho era atmosphere, photorealistic, warm tones, film grain', neg_extra:'' },
 ];
 
 async function setModelReady(){
