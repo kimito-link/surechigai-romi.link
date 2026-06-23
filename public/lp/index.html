@@ -282,10 +282,6 @@
   /* 星空を見上げる人影（山の上に小さく佇む＝「会いたい君」の余韻） */
   .novel .hitokage{ position:absolute; left:50%; bottom:21%; transform:translateX(-50%); z-index:1; width:clamp(44px,11vw,68px); height:auto; opacity:.96; }
   .novel .nv-inner{ position:relative; z-index:2; max-width:30rem; }
-  /* キャッチコピー（タイトル下・旅情トーン） */
-  .novel .nv-catch{ font-family:var(--fude); font-size:clamp(15px,4.4vw,22px); letter-spacing:.14em; color:#dfe9f6;
-    text-shadow:0 2px 18px rgba(8,16,30,.85); margin:0 0 .5em; line-height:1.8; }
-  .novel .nv-catch .q{ display:block; font-size:.82em; color:#9fc0e6; letter-spacing:.2em; margin-top:.4em; }
   .novel .nv-title{ font-family:var(--fude); font-weight:400; font-size:clamp(28px,8vw,46px); line-height:1.5; letter-spacing:.18em; color:#eef4fb; text-indent:.18em; margin:0 0 1.4em; text-shadow:0 2px 24px rgba(8,16,30,.8); }
   .novel .nv-label{ font-family:var(--fude); font-size:12px; letter-spacing:.5em; color:#6f93b8; text-indent:.5em; margin-bottom:1.6em; }
   .novel .nv-text{ font-family:var(--mincho); font-size:clamp(16px,4vw,21px); line-height:2.7; letter-spacing:.1em; color:#dce6f2; }
@@ -499,6 +495,31 @@
   @media(prefers-reduced-motion:reduce){ .chara-row .chara{ animation:none !important } }
   /* ===== 作品クレジット（エンドロール風の大きなセクション） ===== */
   /* 写真や固定背景が透けて文字が読みにくくならないよう、和紙色の無地を全面に敷く（最前面 z:5）。 */
+  /* ===== フィナーレ：夜空＋大きな日本地図＋アプリ導線 ===== */
+  .finale{ position:relative; z-index:5; overflow:hidden; min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding:clamp(60px,12vw,120px) var(--shell);
+    background:linear-gradient(180deg,#040714 0%,#0a1428 45%,#0f1f3a 100%); }
+  .finale::before{ content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-54%);
+    width:min(720px,108vw); aspect-ratio:1/1; z-index:0; pointer-events:none;
+    background:url("img/japan.svg") center/contain no-repeat; opacity:.16;
+    filter:brightness(1.6) saturate(.4) drop-shadow(0 0 18px rgba(120,170,235,.4)); }
+  /* 天の川（フィナーレ版） */
+  .finale .fin-amanogawa{ position:absolute; left:-10%; right:-10%; top:2%; height:56%; z-index:0; pointer-events:none;
+    background:linear-gradient(120deg, transparent 42%, rgba(120,170,235,.16) 49%, rgba(150,130,220,.2) 53%, transparent 64%);
+    filter:blur(7px); transform:rotate(-5deg); }
+  .finale .fin-stars{ position:absolute; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      repeating-radial-gradient(circle at 20% 18%, rgba(255,255,255,.5) 0 1px, transparent 1px 60px),
+      repeating-radial-gradient(circle at 72% 30%, rgba(220,235,255,.4) 0 1px, transparent 1px 90px),
+      repeating-radial-gradient(circle at 44% 66%, rgba(255,255,255,.35) 0 1px, transparent 1px 120px); }
+  .finale .fin-inner{ position:relative; z-index:2; max-width:30rem; }
+  .finale .fin-catch{ font-family:var(--fude); font-size:clamp(26px,7.5vw,44px); line-height:1.7; letter-spacing:.16em;
+    color:#eef4fb; text-shadow:0 2px 24px rgba(8,16,30,.9); margin:0 0 .4em; }
+  .finale .fin-q{ font-family:var(--fude); font-size:clamp(15px,4.4vw,22px); letter-spacing:.2em; color:#9fc0e6; margin:0 0 2em; }
+  .finale .fin-cta{ display:inline-flex; align-items:center; gap:.5em; min-height:52px; padding:14px 30px; border-radius:30px;
+    font-family:var(--mincho); font-size:clamp(15px,4vw,18px); letter-spacing:.08em; text-decoration:none;
+    background:linear-gradient(135deg,#3b6bd8,#6a4fd0); color:#fff; box-shadow:0 6px 28px rgba(80,110,220,.45); }
+  .finale .fin-sub{ display:block; margin-top:1.4em; font-family:var(--mincho); font-size:13px; letter-spacing:.08em; color:#8fa8c8; }
   .endroll{ position:relative; z-index:5; overflow:hidden; padding:clamp(70px,16vw,130px) 0 clamp(56px,10vw,90px); background:var(--washi); }
   .endroll::before{ content:""; position:absolute; inset:0; z-index:-2; background:linear-gradient(180deg, var(--washi-2), var(--washi) 18%); }
   /* 背景に日本地図を淡く透かす（旅の舞台＝日本。和紙に墨で描いた地図の趣。文字より後ろ z:-1）。 */
@@ -728,7 +749,6 @@
   </svg>
   <div class="nv-inner">
     <p class="nv-title">君斗りんくの<br />すれ違ひ通信</p>
-    <p class="nv-catch">会いたい君がゐる、現在地。<span class="q">― キミは今、どこにゐる？ ―</span></p>
     <p class="nv-label">― 序 ―</p>
     <p class="nv-text">
       <span class="l">月日は百代の過客にして、</span>
@@ -901,6 +921,18 @@
     </div>
   </div>
 </section>
+<!-- ════════════════ フィナーレ（夜空＋大きな日本地図＋アプリ導線） ════════════════ -->
+<section class="finale reveal">
+  <div class="fin-amanogawa" aria-hidden="true"></div>
+  <div class="fin-stars" aria-hidden="true"></div>
+  <div class="fin-inner">
+    <p class="fin-catch">会いたい君がゐる、<br />現在地。</p>
+    <p class="fin-q">― キミは今、どこにゐる？ ―</p>
+    <a class="fin-cta" href="https://surechigai-romi.link">𝕏 で、旅をはじめる</a>
+    <span class="fin-sub">この夜空の、どこかですれ違った誰かへ。</span>
+  </div>
+</section>
+
 <!-- ════════════════ 作品クレジット（エンドロール風の大きなセクション） ════════════════ -->
 <footer class="shell endroll">
   <p class="endroll-title">君斗りんくの<br />すれ違ひ通信</p>

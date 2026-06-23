@@ -91,18 +91,40 @@ export function NightSkyBackdrop() {
       <ShootingStar delay={3200} topPct={26} durationMs={1100} />
       <ShootingStar delay={5200} topPct={8} durationMs={800} />
 
-      {/* 富士山のシルエット（最下部・夜のシルエット） */}
+      {/* 富士山のシルエット（最下部・夜のシルエット。地図の手前にうっすら見えるよう明るめ） */}
       <Svg
         style={styles.fuji}
         width="100%"
-        height="34%"
-        viewBox="0 0 1200 220"
+        height="42%"
+        viewBox="0 0 1200 240"
         preserveAspectRatio="xMidYMax slice"
       >
-        <Path d="M0 220 L0 150 Q420 28 560 24 Q700 28 1120 150 L1200 160 L1200 220 Z" fill="#0a1626" />
+        {/* 裾野の街明かり（夜空のある町感）：地平線に淡いオレンジの帯 */}
+        <Rect x="0" y="196" width="1200" height="44" fill="#1a2540" opacity="0.9" />
+        <Rect x="0" y="196" width="1200" height="10" fill="#3a4a2a" opacity="0.5" />
+        {/* 富士本体 */}
+        <Path d="M0 240 L0 168 Q420 44 560 40 Q700 44 1120 168 L1200 178 L1200 240 Z" fill="#1b2c47" />
         {/* 冠雪 */}
-        <Path d="M500 64 Q560 22 560 24 Q560 22 620 64 Q596 54 580 66 Q566 50 552 66 Q536 54 500 64 Z" fill="#26405e" />
+        <Path d="M498 82 Q560 38 560 40 Q560 38 622 82 Q596 70 580 84 Q565 66 551 84 Q535 70 498 82 Z" fill="#cdddf0" opacity="0.85" />
       </Svg>
+      {/* 街明かり（地平線のともしび。点々と灯る家々） */}
+      <View style={styles.townLights} pointerEvents="none">
+        {Array.from({ length: 22 }, (_, i) => (
+          <View
+            key={i}
+            style={{
+              position: "absolute",
+              left: `${(i / 22) * 100 + ((i * 7) % 4)}%`,
+              bottom: 4 + ((i * 5) % 10),
+              width: 2,
+              height: 2,
+              borderRadius: 1,
+              backgroundColor: i % 3 === 0 ? "#ffd9a0" : "#ffe9c8",
+              opacity: 0.7,
+            }}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -126,5 +148,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  townLights: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 24,
   },
 });

@@ -21,13 +21,15 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated, on
       style={[StyleSheet.absoluteFill, { paddingTop: insets.top + 16, zIndex: 100 }]}
       pointerEvents="box-none"
     >
-      {/* HUD HEADER: Kimito-link Logo + キャッチコピー */}
+      {/* HERO HEADER: 大タイトル + 読み + キャッチコピー */}
       <View style={styles.header} pointerEvents="none">
         <Image
           source={require("@/assets/images/logos/kimitolink-logo.webp")}
           style={styles.logo}
           resizeMode="contain"
         />
+        <Text style={styles.heroTitle}>君斗りんくの{"\n"}すれ違ひ通信</Text>
+        <Text style={styles.heroReading}>SURECHIGAI TSUSHIN</Text>
         <Text style={styles.catchMain}>会いたい君がいる現在地</Text>
         <Text style={styles.catchSub}>― キミは今、どこにいる？ ―</Text>
       </View>
@@ -102,16 +104,35 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logo: {
-    width: 240,
-    height: 80,
-    opacity: 0.9,
+    width: 150,
+    height: 50,
+    opacity: 0.85,
+  },
+  heroTitle: {
+    color: "#eef4fb",
+    fontSize: 34,
+    fontWeight: "700",
+    lineHeight: 46,
+    letterSpacing: 4,
+    textAlign: "center",
+    marginTop: 14,
+    textShadowColor: "rgba(8,16,30,0.9)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 22,
+  },
+  heroReading: {
+    color: "#7f9fc4",
+    fontSize: 11,
+    letterSpacing: 6,
+    marginTop: 10,
+    fontFamily: "monospace",
   },
   catchMain: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     letterSpacing: 2,
-    marginTop: 10,
+    marginTop: 18,
     textShadowColor: color.accentPrimary,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 14,
