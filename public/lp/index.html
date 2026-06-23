@@ -513,6 +513,8 @@
       repeating-radial-gradient(circle at 72% 30%, rgba(220,235,255,.4) 0 1px, transparent 1px 90px),
       repeating-radial-gradient(circle at 44% 66%, rgba(255,255,255,.35) 0 1px, transparent 1px 120px); }
   .finale .fin-inner{ position:relative; z-index:2; max-width:30rem; }
+  .finale .fin-rinku{ display:block; width:clamp(160px,42vw,240px); height:auto; margin:0 auto clamp(18px,4vw,28px);
+    filter:drop-shadow(0 8px 30px rgba(80,110,220,.45)); }
   .finale .fin-catch{ font-family:var(--fude); font-size:clamp(26px,7.5vw,44px); line-height:1.7; letter-spacing:.16em;
     color:#eef4fb; text-shadow:0 2px 24px rgba(8,16,30,.9); margin:0 0 .4em; }
   .finale .fin-q{ font-family:var(--fude); font-size:clamp(15px,4.4vw,22px); letter-spacing:.2em; color:#9fc0e6; margin:0 0 2em; }
@@ -913,7 +915,7 @@
   <p class="ph" data-img="hoshizora-michi-c">その足あとを、まだ消さないで。ひとつ分けて、誰かの道しるべに。</p>
   <p class="ph" data-img="yoake">あなたの旅も、ここから、はじまる。</p>
   <div class="saso" id="sasoBtn">
-    <p class="saso-copy">キミの思い出を、<br />ボクとともに刻もう。</p>
+    <p class="saso-copy">キミの思い出を、<br />ここに刻もう。</p>
     <p class="ph key" style="min-height:auto;margin-bottom:1.6em">――さあ、消えてしまふ前に。</p>
     <div class="cta-row">
       <a class="btn btn-x" href="https://surechigai-romi.link">𝕏 で旅をはじめる</a>
@@ -926,6 +928,7 @@
   <div class="fin-amanogawa" aria-hidden="true"></div>
   <div class="fin-stars" aria-hidden="true"></div>
   <div class="fin-inner">
+    <img class="fin-rinku" src="img/chara/link-full.png" alt="りんく" width="492" height="750" />
     <p class="fin-catch">会いたい君がゐる、<br />現在地。</p>
     <p class="fin-q">― キミは今、どこにゐる？ ―</p>
     <a class="fin-cta" href="https://surechigai-romi.link">𝕏 で、旅をはじめる</a>

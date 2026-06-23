@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from "react-native";
 import { color } from "@/theme/tokens";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -14,7 +14,37 @@ export default function SpecialThanksScreen() {
   return (
     <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
       <ScrollView contentContainerStyle={styles.content}>
-        
+
+        {/* ===== 和テイストのクレジットバナー ===== */}
+        <View style={styles.creditBanner}>
+          <Text style={styles.creditTitle}>君斗りんくの{"\n"}すれ違ひ通信</Text>
+          <Text style={styles.creditReading}>SURECHIGAI TSUSHIN</Text>
+
+          {/* 3キャラ */}
+          <View style={styles.creditChars}>
+            <Image source={require("@/assets/images/characters/konta.png")} style={styles.creditCharSide} contentFit="contain" />
+            <Image source={require("@/assets/images/characters/rinku.png")} style={styles.creditCharMain} contentFit="contain" />
+            <Image source={require("@/assets/images/characters/tanune.png")} style={styles.creditCharSide} contentFit="contain" />
+          </View>
+
+          {/* 等身大りんく（主役） */}
+          <Image source={require("@/assets/images/characters/rinku-full.png")} style={styles.creditFull} contentFit="contain" />
+
+          {/* ロゴ */}
+          <Image source={require("@/assets/images/logos/kimitolink-logo.webp")} style={styles.creditLogo} contentFit="contain" />
+          <Text style={styles.creditMaker}>制作　Kimito-Link Project</Text>
+          <Text style={styles.creditMakerSub}>キミトリンクプロジェクト</Text>
+
+          {/* 公式サイトリンク */}
+          <Pressable
+            style={({ pressed }) => [styles.officialLink, pressed && { opacity: 0.7 }]}
+            onPress={() => Linking.openURL("https://kimito-link.com")}
+          >
+            <MaterialIcons name="public" size={16} color={color.accentAlt} style={{ marginRight: 8 }} />
+            <Text style={styles.officialLinkText}>公式サイト kimito-link.com</Text>
+          </Pressable>
+        </View>
+
         {/* Terminal Window Wrapper */}
         <View style={styles.terminalCard}>
           {/* Header */}
@@ -54,7 +84,7 @@ export default function SpecialThanksScreen() {
                 <Text style={styles.prompt}>$</Text> view --message
               </Text>
               <Text style={styles.infoText}>
-                本アプリケーション「Kimito-link（すれちがいロミ）」のベースとなるソースコードおよび、基本的なハッカー/サイバーパンクの世界観のアイデアをご提供いただきました。{"\n"}
+                本アプリケーション「Kimito-link（君斗りんくのすれ違ひ通信）」のベースとなるソースコードおよび、基本的なハッカー/サイバーパンクの世界観のアイデアをご提供いただきました。{"\n"}
                 クリエイター同士のすれ違い体験を実現するための基礎技術として、多大なるご協力をいただきました。この場を借りて深く感謝申し上げます。
               </Text>
 
@@ -96,6 +126,78 @@ const styles = StyleSheet.create({
     gap: 32,
     alignItems: "center",
     minHeight: "100%",
+  },
+  // 和テイストのクレジットバナー（和紙トーン）
+  creditBanner: {
+    width: "100%",
+    maxWidth: 600,
+    backgroundColor: "#f3efe3",
+    borderRadius: 16,
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  creditTitle: {
+    color: "#2b2820",
+    fontSize: 38,
+    fontWeight: "800",
+    lineHeight: 52,
+    letterSpacing: 6,
+    textAlign: "center",
+  },
+  creditReading: {
+    color: "#9a8f7a",
+    fontSize: 11,
+    letterSpacing: 6,
+    marginTop: 12,
+    fontFamily: "monospace",
+  },
+  creditChars: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    gap: 10,
+    marginTop: 28,
+  },
+  creditCharMain: { width: 92, height: 92 },
+  creditCharSide: { width: 76, height: 76 },
+  creditFull: {
+    width: 220,
+    height: 335,
+    marginTop: 20,
+  },
+  creditLogo: {
+    width: 200,
+    height: 64,
+    marginTop: 16,
+  },
+  creditMaker: {
+    color: "#3a352c",
+    fontSize: 15,
+    letterSpacing: 2,
+    marginTop: 12,
+  },
+  creditMakerSub: {
+    color: "#9a8f7a",
+    fontSize: 11,
+    letterSpacing: 3,
+    marginTop: 4,
+  },
+  officialLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 22,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(0,66,123,0.3)",
+    backgroundColor: "rgba(255,255,255,0.6)",
+  },
+  officialLinkText: {
+    color: "#00427b",
+    fontSize: 14,
+    fontWeight: "600",
   },
   terminalCard: {
     width: "100%",

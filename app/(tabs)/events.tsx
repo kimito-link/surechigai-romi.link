@@ -120,7 +120,7 @@ function EventCard({
       locationType === "online"
         ? "オンライン"
         : [prefecture, venueName].filter(Boolean).join(" ") || "場所未定";
-    const text = `【集まり】${title}\n${mm}/${dd} ${hh}:${mi}〜 ${placeStr}\n#すれちがいロミ`;
+    const text = `【集まり】${title}\n${mm}/${dd} ${hh}:${mi}〜 ${placeStr}\n#君斗りんくのすれ違ひ通信`;
     Linking.openURL(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`).catch(() => {});
   }, [title, startAt, locationType, prefecture, venueName]);
 

@@ -58,7 +58,7 @@ export function AppHeader({
               fontSize: isDesktop ? 16 : 13,
               fontWeight: "bold",
             }}>
-              {title || "すれちがいロミ"}
+              {title || "君斗りんくのすれ違ひ通信"}
             </Text>
           </View>
 
