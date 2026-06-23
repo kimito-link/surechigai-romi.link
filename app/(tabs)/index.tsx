@@ -42,6 +42,7 @@ import { color, palette } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
 import { JapanRadarMap } from "@/components/organisms/japan-radar-map";
 import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
+import appConfig from "@/app.config.json";
 
 // ティアラベル
 const TIER_LABELS: Record<number, string> = {
@@ -598,6 +599,22 @@ export default function PostScreen() {
               </Text>
             </View>
           )}
+
+          {/* 姉妹サービス導線：同じシグナルID(アカウント)で接続できる別サービスへ。地図下部に固定。 */}
+          {(appConfig.siblingServices ?? []).map((svc) => (
+            <Pressable
+              key={svc.url}
+              onPress={() => Linking.openURL(svc.url)}
+              style={({ pressed }) => [styles.sisterBanner, pressed && { opacity: 0.75 }]}
+            >
+              <MaterialIcons name="hub" size={16} color={color.accentPrimary} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.sisterBannerLabel}>SISTER_SERVICE</Text>
+                <Text style={styles.sisterBannerName} numberOfLines={1}>{svc.name}</Text>
+              </View>
+              <MaterialIcons name="open-in-new" size={14} color="rgba(255,255,255,0.5)" />
+            </Pressable>
+          ))}
         </View>
       )}
 
@@ -1094,5 +1111,34 @@ const styles = StyleSheet.create({
     color: color.textWhite,
     fontSize: 14,
     fontWeight: "600",
+  },
+  // 姉妹サービス導線（地図下部に固定・サイバー風）
+  sisterBanner: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "rgba(2,8,23,0.85)",
+    borderWidth: 1,
+    borderColor: color.accentPrimary + "55",
+  },
+  sisterBannerLabel: {
+    color: color.accentPrimary,
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 1,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+  sisterBannerName: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 1,
   },
 });

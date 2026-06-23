@@ -24,6 +24,7 @@ import {
 import { useState, useCallback } from "react";
 import { Image } from "expo-image";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import appConfig from "@/app.config.json";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
@@ -290,6 +291,26 @@ export default function MypageScreen() {
             <MaterialIcons name="stars" size={20} color={color.accentAlt} style={{ marginRight: 12 }} />
             <Text style={[styles.menuItemText, { color: color.textPrimary }]}>Special Thanks</Text>
           </Pressable>
+
+          {/* 姉妹サービス導線：同じアカウント(シグナルID)でそのまま接続できる別サービスへ。 */}
+          {(appConfig.siblingServices ?? []).map((svc) => (
+            <Pressable
+              key={svc.url}
+              onPress={() => Linking.openURL(svc.url)}
+              style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
+            >
+              <MaterialIcons name="hub" size={20} color={color.accentAlt} style={{ marginRight: 12 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.menuItemText, { color: color.textPrimary }]}>{svc.name}</Text>
+                {svc.sharedAccount && (
+                  <Text style={{ color: color.textMuted, fontSize: 11, marginTop: 2 }}>
+                    同じアカウントで接続 / 登録不要
+                  </Text>
+                )}
+              </View>
+              <MaterialIcons name="open-in-new" size={16} color={color.textMuted} />
+            </Pressable>
+          ))}
 
           <Pressable
             onPress={handleLogout}

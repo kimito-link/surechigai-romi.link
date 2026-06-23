@@ -78,7 +78,29 @@ export function useAuth() {
         }
 
         if (Platform.OS === "web" && typeof window !== "undefined") {
-          // Web は clerk.client.signIn.authenticateWithRedirect で「同じタブ」のまま X へ遷移する。
+          const origin = window.location.origin;
+          const redirectComplete = resolveReturnUrl(safeReturnUrl) ?? origin;
+
+          // 方式A(Clerk Satellite): このアプリがサテライトのとき、サインインは
+          // サテライト側で開始できない(Clerk が 403 "not allowed on a satellite domain")。
+          // ★手動で primary の URL へ飛ばすのはNG。Clerk.buildSignInUrl() を使うと
+          //   __clerk_synced パラメータが自動付与され、primary でログイン後にサテライトへ
+          //   戻った時に SDK がセッションを同期する(これが無いとログイン状態が渡らない)。
+          const isSatellite = process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE === "true";
+          if (isSatellite) {
+            const clerk = getClerkInstance();
+            if (typeof clerk.buildSignInUrl !== "function") {
+              throw new Error("認証の準備中です。少し待ってからもう一度お試しください。");
+            }
+            // 認証完了後にこのサテライトの最終遷移先へ戻す
+            const syncedSignInUrl = clerk.buildSignInUrl({
+              redirectUrl: redirectComplete,
+            });
+            window.location.href = syncedSignInUrl;
+            return;
+          }
+
+          // 非サテライト(単独インスタンス)は従来どおり、同じタブのまま X へ遷移する。
           // （useOAuth().startOAuthFlow は Web だと expo-web-browser のポップアップを開き使いづらい。
           //   また useSignIn() の新 signals 版 signIn には authenticateWithRedirect が無い＝
           //   従来の clerk.client.signIn を使う必要がある）
@@ -87,8 +109,6 @@ export function useAuth() {
           if (!clientSignIn) {
             throw new Error("認証の準備中です。少し待ってからもう一度お試しください。");
           }
-          const origin = window.location.origin;
-          const redirectComplete = resolveReturnUrl(safeReturnUrl) ?? origin;
           await clientSignIn.authenticateWithRedirect({
             strategy: "oauth_x",
             // X 認証後に Clerk が一旦受ける先（origin に戻す）

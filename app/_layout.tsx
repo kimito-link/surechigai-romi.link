@@ -127,6 +127,20 @@ export default function RootLayout() {
   const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const isMissingClerkKey = !clerkKey;
 
+  // 方式A(Clerk インスタンス共有): surechigai-romi.link は kimito の Clerk(clerk.kimito.link)を
+  // サテライトドメインとして共有する。EXPO_PUBLIC_CLERK_IS_SATELLITE=true のときだけ satellite 化。
+  // (env が無い=従来どおりの単独インスタンス動作。安全側のフォールバック)
+  const isSatellite = process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE === "true";
+  const satelliteDomain = process.env.EXPO_PUBLIC_CLERK_DOMAIN; // 例: surechigai-romi.link
+  const primarySignInUrl = process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL; // 例: https://kimito.link/sign-in
+  const clerkSatelliteProps = isSatellite
+    ? {
+        isSatellite: true as const,
+        domain: satelliteDomain,
+        ...(primarySignInUrl ? { signInUrl: primarySignInUrl } : {}),
+      }
+    : {};
+
   const content = (
     <ErrorBoundary screenName="App">
       <GestureHandlerRootView style={{ flex: 1, overflow: "hidden" }}>
@@ -179,6 +193,7 @@ export default function RootLayout() {
       <ClerkProvider
         publishableKey={clerkKey!}
         tokenCache={tokenCache}
+        {...clerkSatelliteProps}
       >
         <ClerkTokenSync />
         <ThemeProvider>
@@ -198,6 +213,7 @@ export default function RootLayout() {
     <ClerkProvider
       publishableKey={clerkKey!}
       tokenCache={tokenCache}
+      {...clerkSatelliteProps}
     >
       <ClerkTokenSync />
       <ThemeProvider>
