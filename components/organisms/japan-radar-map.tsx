@@ -266,7 +266,7 @@ export function JapanRadarMap({ children }: { children?: React.ReactNode }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent', // 背面の夜空(NightSkyBackdrop)を透かす
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     width: '150%',
     height: '150%',
     position: 'absolute',
-    opacity: 0.8, // Make it visible on white
+    opacity: 0.5, // 夜空に薄く浮かぶ日本列島（暗背景に明色SVGが映える）
   },
   radarContainer: {
     ...StyleSheet.absoluteFillObject,

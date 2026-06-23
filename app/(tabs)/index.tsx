@@ -42,6 +42,7 @@ import { color, palette } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
 import { JapanRadarMap } from "@/components/organisms/japan-radar-map";
 import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
+import { NightSkyBackdrop } from "@/components/organisms/night-sky-backdrop";
 import appConfig from "@/app.config.json";
 
 // ティアラベル
@@ -572,6 +573,8 @@ export default function PostScreen() {
       
       {!isAuthReadyForUI ? null : (
         <View style={styles.mapContainer}>
+          {/* 夜空（星・天の川・富士・流れ星）を地図の背面に敷く */}
+          <NightSkyBackdrop />
           <JapanRadarMap>
             {unopened.map((item, index) => {
               // Pseudo-random position based on item id for MVP

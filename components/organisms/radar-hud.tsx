@@ -21,13 +21,15 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated, on
       style={[StyleSheet.absoluteFill, { paddingTop: insets.top + 16, zIndex: 100 }]}
       pointerEvents="box-none"
     >
-      {/* HUD HEADER: Kimito-link Logo */}
+      {/* HUD HEADER: Kimito-link Logo + キャッチコピー */}
       <View style={styles.header} pointerEvents="none">
         <Image
           source={require("@/assets/images/logos/kimitolink-logo.webp")}
           style={styles.logo}
           resizeMode="contain"
         />
+        <Text style={styles.catchMain}>会いたい君がいる現在地</Text>
+        <Text style={styles.catchSub}>― キミは今、どこにいる？ ―</Text>
       </View>
 
       {/* INTRO CARD & CHARACTERS */}
@@ -103,6 +105,23 @@ const styles = StyleSheet.create({
     width: 240,
     height: 80,
     opacity: 0.9,
+  },
+  catchMain: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: 2,
+    marginTop: 10,
+    textShadowColor: color.accentPrimary,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 14,
+  },
+  catchSub: {
+    color: "#9fc0e6",
+    fontSize: 12,
+    letterSpacing: 3,
+    marginTop: 6,
+    fontFamily: "monospace",
   },
   bottomSection: {
     flex: 1,
