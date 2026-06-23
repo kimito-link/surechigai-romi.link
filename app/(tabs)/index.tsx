@@ -35,6 +35,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { RadarHud } from "@/components/organisms/radar-hud";
+import { AppHeader } from "@/components/organisms/app-header";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -569,9 +570,14 @@ export default function PostScreen() {
   );
 
   return (
-    <ScreenContainer style={{ backgroundColor: "#FFFFFF" }} edges={[]}>
-      <RadarHud isAuthenticated={isAuthenticated} onLogin={login} />
-      
+    <ScreenContainer style={{ backgroundColor: "#020817" }} edges={[]}>
+      {/* ログイン後は共通ヘッダー(ログイン中表示＋メニュー＝ログアウト)。未ログインはヒーロー演出。 */}
+      {isAuthenticated ? (
+        <AppHeader />
+      ) : (
+        <RadarHud isAuthenticated={isAuthenticated} onLogin={login} />
+      )}
+
       {!isAuthReadyForUI ? null : (
         <View style={styles.mapContainer}>
           {/* 夜空（星・天の川・富士・流れ星）を地図の背面に敷く */}
@@ -593,8 +599,8 @@ export default function PostScreen() {
 
             {/* キャラの現在地（吹き出し「○○にいるよ」）。中央の文字を避け、日本各地の縁に配置。 */}
             <CharacterHere source={require("@/assets/images/characters/rinku.png")} name="りんく" place="小樽" x={74} y={12} delay={0} />
-            <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={16} y={84} delay={400} />
-            <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={26} y={72} delay={800} />
+            <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={7} y={85} delay={400} />
+            <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={20} y={83} delay={800} />
           </JapanRadarMap>
           
           {unopened.length === 0 && (
