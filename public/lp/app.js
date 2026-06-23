@@ -187,10 +187,10 @@
         case 'rikisha': { var r=document.getElementById('jinrikisha'); if(r){ r.classList.remove('go'); void r.offsetWidth; r.classList.add('go'); } break; }
         case 'konk': konk(); break;
         case 'semi': showFxEl(els.semi,6000); if(els.semi) els.semi.classList.add('show'); break;
-        case 'fish': jumpFish(); playSample('river',0.5); break;   /* 川の写真(data-img=kawa)の上で、魚SVGが大きく跳ねる＋川のせせらぎ */
-        case 'furin': showFxEl(els.furin,6000); if(els.furin) els.furin.classList.add('show'); chime(); break;
+        case 'fish': jumpFish(); playSample('river',0.45); playSample('fishSplash',0.7); break;   /* 川の写真(data-img=kawa)の上で魚SVGが跳ねる＋せせらぎ＋水面の跳ね音 */
+        case 'furin': showFxEl(els.furin,6000); if(els.furin) els.furin.classList.add('show'); if(!playSample('furin',0.6)) chime(); break;
         case 'nukegara': showFxEl(els.nukegara,6000); if(els.nukegara) els.nukegara.classList.add('show'); break;
-        case 'boom': showFxEl(els.hanabi,7000); boom(); break;
+        case 'boom': showFxEl(els.hanabi,7000); if(!playSample('hanabi',0.7)) boom(); break;
         case 'senko': { showFxEl(els.senko,6000); var s=document.getElementById('senko'); if(s){ s.classList.add('show'); s.classList.remove('show'); void s.offsetWidth; s.classList.add('show'); } break; }
         case 'boushi': { var b=document.getElementById('boushi'); if(b){ showFxEl(b,4000); b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); } break; }
         case 'yakiimo': showFxEl(els.yakiimo,6000); break;
@@ -352,7 +352,9 @@
     var SAMPLES={ whistle:'sounds/kisha-whistle.mp3', clack:'sounds/train-clack.mp3',
                   depart:'sounds/kisha-depart.mp3', idle:'sounds/kisha-idle.mp3',
                   sozu:'sounds/sozu.mp3', sozuEcho:'sounds/sozu-echo.mp3',
-                  river:'sounds/river.mp3' };
+                  river:'sounds/river.mp3', fishSplash:'sounds/fish-splash.mp3', fishCatch:'sounds/fish-catch.mp3',
+                  hanabi:'sounds/hanabi.mp3', hanabiFes:'sounds/hanabi-fes.mp3',
+                  furin:'sounds/furin.mp3', furin2:'sounds/furin2.mp3' };
     var sampleCache={}, sampleOk={};
     Object.keys(SAMPLES).forEach(function(k){
       try{ var a=new Audio(); a.preload='auto'; a.src=SAMPLES[k];
