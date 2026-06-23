@@ -481,8 +481,16 @@
   @media(prefers-reduced-motion:reduce){ .chara-row .chara{ animation:none !important } }
   /* ===== 作品クレジット（エンドロール風の大きなセクション） ===== */
   /* 写真や固定背景が透けて文字が読みにくくならないよう、和紙色の無地を全面に敷く（最前面 z:5）。 */
-  .endroll{ position:relative; z-index:5; padding:clamp(70px,16vw,130px) 0 clamp(56px,10vw,90px); background:var(--washi); }
-  .endroll::before{ content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg, var(--washi-2), var(--washi) 18%); }
+  .endroll{ position:relative; z-index:5; overflow:hidden; padding:clamp(70px,16vw,130px) 0 clamp(56px,10vw,90px); background:var(--washi); }
+  .endroll::before{ content:""; position:absolute; inset:0; z-index:-2; background:linear-gradient(180deg, var(--washi-2), var(--washi) 18%); }
+  /* 背景に日本地図を淡く透かす（旅の舞台＝日本。和紙に墨で描いた地図の趣。文字より後ろ z:-1）。 */
+  .endroll::after{
+    content:""; position:absolute; left:50%; top:clamp(40px,9vw,90px); transform:translateX(-50%);
+    width:min(560px,92vw); aspect-ratio:1/1; z-index:-1; pointer-events:none;
+    background:url("img/japan.svg") center/contain no-repeat;
+    opacity:.08; filter:grayscale(1) brightness(.35) sepia(.3);
+  }
+  @media(prefers-reduced-motion:reduce){ .endroll::after{ opacity:.06; } }
   .endroll *{ position:relative; }
   .endroll-title{ font-family:var(--fude); font-weight:400; font-size:clamp(30px,9vw,52px); line-height:1.5; letter-spacing:.2em; text-indent:.2em; color:var(--sumi); margin:0 0 .4em; }
   .endroll-yomi{ font-size:11px; letter-spacing:.5em; color:var(--faint); text-indent:.5em; margin:0 0 clamp(36px,8vw,60px); }
