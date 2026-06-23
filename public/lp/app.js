@@ -345,7 +345,10 @@
         if(actx.resume) actx.resume();
       }catch(e){}
     }
-    function setOn(on){ soundOn=on; if(otoBtn) otoBtn.classList.toggle('muted', !on); if(master) master.gain.setTargetAtTime(on?0.72:0, actx.currentTime, .05); manageAmbient(body.getAttribute('data-scene'), body.getAttribute('data-sub')); }
+    function setOn(on){ soundOn=on; if(otoBtn) otoBtn.classList.toggle('muted', !on); if(master) master.gain.setTargetAtTime(on?0.72:0, actx.currentTime, .05);
+      /* HTMLAudio のループ素材は master を通らないので、ミュート時は明示的に止める */
+      if(!on){ Object.keys(sampleAmb).forEach(stopSampleAmb); }
+      manageAmbient(body.getAttribute('data-scene'), body.getAttribute('data-sub')); }
     /* 効果音ファイル（本物の素材）。存在すれば合成音より優先して鳴らす。
        sounds/ に置いた mp3 を HTMLAudio でプリロードし、soundOn のときだけ再生。
        読み込み失敗(ファイル未配置)時は false を返し、各関数が合成音にフォールバックする。 */
@@ -507,6 +510,25 @@
 
     /* 環境音（ループ）：冬の風ゴオォ、夏の蝉ジー＋せせらぎ。シーンで出し入れ */
     var amb={ wind:null, semi:null, kawa:null };
+    /* 本物の素材を環境音としてループ再生する（HTMLAudio）。amb とは別枠で管理。
+       シーンに入ったら start、離れたら stop（フェードアウトしてから pause）。 */
+    var sampleAmb={};
+    function startSampleAmb(key, name, vol){
+      if(sampleAmb[key]||!soundOn) return;
+      var node=playSample(name, 0, true);   /* loop=true で開始、まず無音から */
+      if(!node){ return; }
+      sampleAmb[key]=node;
+      try{ var target=(vol==null?0.5:vol), steps=8, i=0;
+        node._fade=setInterval(function(){ i++; try{ node.volume=Math.min(target, target*i/steps); }catch(e){} if(i>=steps){ clearInterval(node._fade); node._fade=null; } }, 80);
+      }catch(e){ try{ node.volume=(vol==null?0.5:vol); }catch(e2){} }
+    }
+    function stopSampleAmb(key){
+      var node=sampleAmb[key]; if(!node) return; sampleAmb[key]=null;
+      try{ if(node._fade){ clearInterval(node._fade); node._fade=null; }
+        var v=node.volume, steps=6, i=0;
+        var fo=setInterval(function(){ i++; try{ node.volume=Math.max(0, v*(1-i/steps)); }catch(e){} if(i>=steps){ clearInterval(fo); try{ node.pause(); }catch(e){} } }, 70);
+      }catch(e){ try{ node.pause(); }catch(e2){} }
+    }
     function noiseSource(){ var bf=actx.createBuffer(1,actx.sampleRate*2,actx.sampleRate), ch=bf.getChannelData(0); for(var i=0;i<ch.length;i++) ch[i]=Math.random()*2-1; var s=actx.createBufferSource(); s.buffer=bf; s.loop=true; return s; }
     function startWind(){ if(amb.wind||!soundOn||!actx) return; var t=actx.currentTime;
       // 低い唸り（ゴオォ）
@@ -546,9 +568,14 @@
       // 春：小鳥のさえずりを時々（環境音）
       if(scene==='spring'){ if(!birdTimer){ setTimeout(birdsong,400); birdTimer=setInterval(function(){ if(body.getAttribute('data-scene')==='spring') birdsong(); }, 4200+Math.random()*1500); } }
       else { if(birdTimer){ clearInterval(birdTimer); birdTimer=null; } }
-      // 夏（昼）蝉＋川＋風鈴
-      if(scene==='summer' && sub!=='night'){ startSemi(); startKawa(); if(!chimeTimer){ chime(); chimeTimer=setInterval(function(){ if(body.getAttribute('data-scene')==='summer'&&body.getAttribute('data-sub')!=='night') chime(); }, 5000); } }
-      else { stopAmb('semi'); stopAmb('kawa'); if(chimeTimer){ clearInterval(chimeTimer); chimeTimer=null; } }
+      // 夏（昼）蝉＋川＋風鈴。風鈴は本物の素材(furin2)をループ。素材が無ければ合成chimeにフォールバック。
+      if(scene==='summer' && sub!=='night'){ startSemi(); startKawa();
+        if(sampleOk.furin2!==false){ startSampleAmb('furin','furin2',0.45); if(chimeTimer){ clearInterval(chimeTimer); chimeTimer=null; } }
+        else if(!chimeTimer){ chime(); chimeTimer=setInterval(function(){ if(body.getAttribute('data-scene')==='summer'&&body.getAttribute('data-sub')!=='night') chime(); }, 5000); } }
+      else { stopAmb('semi'); stopAmb('kawa'); stopSampleAmb('furin'); if(chimeTimer){ clearInterval(chimeTimer); chimeTimer=null; } }
+      // 夏（夜）祭り囃子＝屋台のざわめき。夜祭りの場にいる間ずっと流す。
+      if(scene==='summer' && sub==='night'){ startSampleAmb('matsuri','hanabiFes',0.4); }
+      else { stopSampleAmb('matsuri'); }
     }
 
     function arm(){ if(armed) return; armed=true; ensureCtx(); unlockIOS(); if(actx&&actx.state==='suspended') actx.resume(); setOn(true); if(otoHint) otoHint.classList.remove('show');
