@@ -21,17 +21,17 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated, on
       style={[StyleSheet.absoluteFill, { paddingTop: insets.top + 16, zIndex: 100 }]}
       pointerEvents="box-none"
     >
-      {/* HERO HEADER: 大タイトル + 読み + キャッチコピー */}
-      <View style={styles.header} pointerEvents="none">
+      {/* HERO HEADER: 大タイトル + 読み + キャッチコピー（テキストは選択可能） */}
+      <View style={styles.header} pointerEvents="box-none">
         <Image
           source={require("@/assets/images/logos/kimitolink-logo.webp")}
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.heroTitle}>君斗りんくの{"\n"}すれ違ひ通信</Text>
-        <Text style={styles.heroReading}>SURECHIGAI TSUSHIN</Text>
-        <Text style={styles.catchMain}>会いたい君がいる現在地</Text>
-        <Text style={styles.catchSub}>― キミは今、どこにいる？ ―</Text>
+        <Text selectable style={styles.heroTitle}>君斗りんくの{"\n"}すれ違ひ通信</Text>
+        <Text selectable style={styles.heroReading}>SURECHIGAI TSUSHIN</Text>
+        <Text selectable style={styles.catchMain}>会いたい君がいる現在地</Text>
+        <Text selectable style={styles.catchSub}>― キミは今、どこにいる？ ―</Text>
       </View>
 
       {/* INTRO CARD & CHARACTERS */}
@@ -113,39 +113,39 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: "#eef4fb",
-    fontSize: 46,
+    fontSize: 60,
     fontWeight: "800",
-    lineHeight: 60,
-    letterSpacing: 5,
+    lineHeight: 78,
+    letterSpacing: 6,
     textAlign: "center",
     marginTop: 8,
     textShadowColor: "rgba(8,16,30,0.95)",
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 26,
+    textShadowRadius: 30,
   },
   heroReading: {
     color: "#8fb0d6",
-    fontSize: 12,
-    letterSpacing: 7,
-    marginTop: 12,
+    fontSize: 13,
+    letterSpacing: 8,
+    marginTop: 14,
     fontFamily: "monospace",
   },
   catchMain: {
     color: "#FFFFFF",
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: "700",
     letterSpacing: 3,
-    marginTop: 26,
+    marginTop: 30,
     textAlign: "center",
     textShadowColor: color.accentPrimary,
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 18,
+    textShadowRadius: 20,
   },
   catchSub: {
     color: "#a9c6e8",
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 3,
-    marginTop: 8,
+    marginTop: 10,
     fontFamily: "monospace",
   },
   bottomSection: {
