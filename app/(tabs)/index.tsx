@@ -43,6 +43,7 @@ import { navigate } from "@/lib/navigation";
 import { JapanRadarMap } from "@/components/organisms/japan-radar-map";
 import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
 import { NightSkyBackdrop } from "@/components/organisms/night-sky-backdrop";
+import { CharacterHere } from "@/components/molecules/character-here";
 import appConfig from "@/app.config.json";
 
 // ティアラベル
@@ -589,6 +590,11 @@ export default function PostScreen() {
                 />
               );
             })}
+
+            {/* キャラの現在地（吹き出し「ここにいるよ」）。日本各地に散らす。 */}
+            <CharacterHere source={require("@/assets/images/characters/rinku.png")} name="りんく" x={61} y={45} delay={0} />
+            <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" x={43} y={61} delay={400} />
+            <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" x={67} y={29} delay={800} />
           </JapanRadarMap>
           
           {unopened.length === 0 && (
