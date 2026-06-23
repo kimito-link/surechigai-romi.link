@@ -512,6 +512,7 @@
       repeating-radial-gradient(circle at 20% 18%, rgba(255,255,255,.5) 0 1px, transparent 1px 60px),
       repeating-radial-gradient(circle at 72% 30%, rgba(220,235,255,.4) 0 1px, transparent 1px 90px),
       repeating-radial-gradient(circle at 44% 66%, rgba(255,255,255,.35) 0 1px, transparent 1px 120px); }
+  .finale .fin-zodiac{ position:absolute; left:0; right:0; top:0; width:100%; height:60%; z-index:0; pointer-events:none; }
   .finale .fin-inner{ position:relative; z-index:2; max-width:30rem; }
   .finale .fin-rinku{ display:block; width:clamp(160px,42vw,240px); height:auto; margin:0 auto clamp(18px,4vw,28px);
     filter:drop-shadow(0 8px 30px rgba(80,110,220,.45)); }
@@ -927,6 +928,22 @@
 <section class="finale reveal">
   <div class="fin-amanogawa" aria-hidden="true"></div>
   <div class="fin-stars" aria-hidden="true"></div>
+  <!-- 星座（プラネタリウム風・控えめ） -->
+  <svg class="fin-zodiac" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g stroke="#9fc0e6" stroke-width="0.25" fill="none" opacity="0.6">
+      <!-- 北斗七星風（左上） -->
+      <polyline points="8,12 14,10 20,11 25,15 22,20 16,19 25,15"/>
+      <!-- オリオン座風（右） -->
+      <polyline points="80,18 88,20 84,28 85,29 86,30 82,38 90,36 80,18"/>
+      <!-- カシオペヤ風（中上） -->
+      <polyline points="44,8 50,12 56,9 62,13 68,10"/>
+    </g>
+    <g fill="#eaf3ff" opacity="0.85">
+      <circle cx="8" cy="12" r="0.6"/><circle cx="14" cy="10" r="0.6"/><circle cx="20" cy="11" r="0.6"/><circle cx="25" cy="15" r="0.6"/><circle cx="22" cy="20" r="0.6"/><circle cx="16" cy="19" r="0.6"/>
+      <circle cx="80" cy="18" r="0.6"/><circle cx="88" cy="20" r="0.6"/><circle cx="84" cy="28" r="0.6"/><circle cx="86" cy="30" r="0.6"/><circle cx="82" cy="38" r="0.6"/><circle cx="90" cy="36" r="0.6"/>
+      <circle cx="44" cy="8" r="0.6"/><circle cx="50" cy="12" r="0.6"/><circle cx="56" cy="9" r="0.6"/><circle cx="62" cy="13" r="0.6"/><circle cx="68" cy="10" r="0.6"/>
+    </g>
+  </svg>
   <div class="fin-inner">
     <img class="fin-rinku" src="img/chara/link-full.png" alt="りんく" width="492" height="750" />
     <p class="fin-catch">会いたい君がゐる、<br />現在地。</p>

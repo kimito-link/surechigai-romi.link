@@ -18,12 +18,13 @@ import { color } from "@/theme/tokens";
 type Props = {
   source: number; // require(...) した画像
   name: string;
+  place?: string; // 居場所の地名（例: 小樽）。あれば「○○にいるよ」と表示
   x: number; // 地図上の横位置（%）
   y: number; // 地図上の縦位置（%）
   delay?: number;
 };
 
-export function CharacterHere({ source, name, x, y, delay = 0 }: Props) {
+export function CharacterHere({ source, name, place, x, y, delay = 0 }: Props) {
   const float = useSharedValue(0);
   const pulse = useSharedValue(0.8);
 
@@ -53,7 +54,7 @@ export function CharacterHere({ source, name, x, y, delay = 0 }: Props) {
       {/* 吹き出し */}
       <Animated.View style={[styles.bubbleWrap, floatStyle]}>
         <View style={styles.bubble}>
-          <Text style={styles.bubbleText}>ここにいるよ</Text>
+          <Text style={styles.bubbleText}>{place ? `${place}にいるよ` : "ここにいるよ"}</Text>
         </View>
         <View style={styles.bubbleTail} />
       </Animated.View>

@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useRef } from "react";
 import { View, StyleSheet, Animated, Easing, Platform } from "react-native";
-import Svg, { Path, Defs, LinearGradient, Stop, Rect } from "react-native-svg";
+import Svg, { Path, Defs, LinearGradient, Stop, Rect, Line, Circle, G } from "react-native-svg";
 
 // 星の固定配置（id ベースの擬似ランダム。Math.random は使わず描画を安定させる）。
 const STARS = Array.from({ length: 48 }, (_, i) => ({
@@ -86,6 +86,35 @@ export function NightSkyBackdrop() {
         />
       ))}
 
+      {/* 星座（結線＋星・控えめ）。fujisan-clean のプラネタリウム風に寄せる。 */}
+      <Svg style={styles.constellations} viewBox="0 0 100 100" preserveAspectRatio="xMidYMin slice">
+        {/* 北斗七星風（左上） */}
+        <G opacity={0.55}>
+          <Line x1="10" y1="14" x2="16" y2="12" stroke="#9fc0e6" strokeWidth="0.3" />
+          <Line x1="16" y1="12" x2="22" y2="13" stroke="#9fc0e6" strokeWidth="0.3" />
+          <Line x1="22" y1="13" x2="27" y2="17" stroke="#9fc0e6" strokeWidth="0.3" />
+          <Line x1="27" y1="17" x2="24" y2="22" stroke="#9fc0e6" strokeWidth="0.3" />
+          <Line x1="24" y1="22" x2="18" y2="21" stroke="#9fc0e6" strokeWidth="0.3" />
+          <Line x1="18" y1="21" x2="27" y2="17" stroke="#9fc0e6" strokeWidth="0.3" />
+          {[[10,14],[16,12],[22,13],[27,17],[24,22],[18,21]].map(([cx, cy], i) => (
+            <Circle key={i} cx={cx} cy={cy} r="0.7" fill="#eaf3ff" />
+          ))}
+        </G>
+        {/* オリオン座風（右中・三つ星＋肩腰） */}
+        <G opacity={0.5}>
+          <Line x1="78" y1="20" x2="86" y2="22" stroke="#bcd4f0" strokeWidth="0.3" />
+          <Line x1="86" y1="22" x2="82" y2="30" stroke="#bcd4f0" strokeWidth="0.3" />
+          <Line x1="82" y1="30" x2="83" y2="31" stroke="#bcd4f0" strokeWidth="0.3" />
+          <Line x1="83" y1="31" x2="84" y2="32" stroke="#bcd4f0" strokeWidth="0.3" />
+          <Line x1="84" y1="32" x2="80" y2="40" stroke="#bcd4f0" strokeWidth="0.3" />
+          <Line x1="80" y1="40" x2="88" y2="38" stroke="#bcd4f0" strokeWidth="0.3" />
+          <Line x1="78" y1="20" x2="80" y2="40" stroke="#bcd4f0" strokeWidth="0.3" />
+          {[[78,20],[86,22],[82,30],[83,31],[84,32],[80,40],[88,38]].map(([cx, cy], i) => (
+            <Circle key={i} cx={cx} cy={cy} r="0.7" fill="#eaf3ff" />
+          ))}
+        </G>
+      </Svg>
+
       {/* 流れ星（数本・時間差） */}
       <ShootingStar delay={600} topPct={12} durationMs={900} />
       <ShootingStar delay={3200} topPct={26} durationMs={1100} />
@@ -142,6 +171,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: -8, height: -4 },
     shadowOpacity: 0.8,
     shadowRadius: 6,
+  },
+  constellations: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    height: "55%",
   },
   fuji: {
     position: "absolute",
