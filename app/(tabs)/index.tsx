@@ -599,8 +599,8 @@ export default function PostScreen() {
 
             {/* キャラの現在地（吹き出し「○○にいるよ」）。中央の文字を避け、日本各地の縁に配置。 */}
             <CharacterHere source={require("@/assets/images/characters/rinku.png")} name="りんく" place="小樽" x={74} y={12} delay={0} />
-            <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={7} y={85} delay={400} />
-            <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={20} y={83} delay={800} />
+            <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={6} y={91} delay={400} />
+            <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={33} y={86} delay={800} />
           </JapanRadarMap>
           
           {unopened.length === 0 && (

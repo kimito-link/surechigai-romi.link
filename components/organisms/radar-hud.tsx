@@ -32,6 +32,18 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated, on
         <Text selectable style={styles.heroReading}>SURECHIGAI TSUSHIN</Text>
         <Text selectable style={styles.catchMain}>会いたい君がいる現在地</Text>
         <Text selectable style={styles.catchSub}>― キミは今、どこにいる？ ―</Text>
+
+        {/* ログインボタン（最優先・キャッチ直下に大きく）。未ログイン時のみ。 */}
+        {!isAuthenticated && (
+          <Pressable
+            style={({ pressed }) => [styles.heroLoginButton, pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] }]}
+            onPress={onLogin}
+            pointerEvents="auto"
+          >
+            <Text style={styles.heroLoginText}>𝕏（Twitter）ではじめる</Text>
+            <Text style={styles.heroLoginSub}>無料・1タップ / 新規登録もこちら</Text>
+          </Pressable>
+        )}
       </View>
 
       {/* INTRO CARD & CHARACTERS */}
@@ -56,30 +68,22 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated, on
           />
         </View>
 
-        {/* Intro Card */}
-        <View style={styles.introCard} pointerEvents="auto">
-          <View style={styles.cardHeader}>
-            <View style={styles.dotRed} />
-            <View style={styles.dotYellow} />
-            <View style={styles.dotGreen} />
-            <Text style={styles.cardTitle}>SYSTEM / INTRO.exe</Text>
-          </View>
-          
-          <View style={styles.cardBody}>
-            <Text style={styles.introText}>
-              Kimito-link シグナル傍受システムへようこそ。{"\n"}
-              全国のクリエイターから発信される極秘シグナルをキャッチせよ。{"\n"}
-              レーダー上の光点（すれちがい）をタップして通信をデコードしろ。
-            </Text>
-            
-            {!isAuthenticated ? (
-              <Pressable
-                style={({ pressed }) => [styles.button, styles.loginButton, pressed && styles.buttonPressed]}
-                onPress={onLogin}
-              >
-                <Text style={[styles.buttonText, { color: color.textWhite }]}>[ SYSTEM: X (Twitter) ログイン ]</Text>
-              </Pressable>
-            ) : (
+        {/* Intro Card（ログイン後の「了解／監視を開始」専用。未ログイン時はヒーローのログインボタンで完結）。 */}
+        {isAuthenticated && (
+          <View style={styles.introCard} pointerEvents="auto">
+            <View style={styles.cardHeader}>
+              <View style={styles.dotRed} />
+              <View style={styles.dotYellow} />
+              <View style={styles.dotGreen} />
+              <Text style={styles.cardTitle}>SYSTEM / INTRO.exe</Text>
+            </View>
+
+            <View style={styles.cardBody}>
+              <Text style={styles.introText}>
+                Kimito-link シグナル傍受システムへようこそ。{"\n"}
+                レーダー上の光点（すれちがい）をタップして通信をデコードしろ。
+              </Text>
+
               <Pressable
                 style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
                 onPress={() => {
@@ -89,9 +93,9 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated, on
               >
                 <Text style={styles.buttonText}>[ SYSTEM: 了解 / 監視を開始 ]</Text>
               </Pressable>
-            )}
+            </View>
           </View>
-        </View>
+        )}
 
       </View>
     </View>
@@ -149,6 +153,34 @@ const styles = StyleSheet.create({
     marginTop: 14,
     textAlign: "center",
     fontFamily: "monospace",
+  },
+  heroLoginButton: {
+    marginTop: 34,
+    minWidth: 280,
+    maxWidth: 360,
+    width: "86%",
+    backgroundColor: color.accentIndigo,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 30,
+    alignItems: "center",
+    shadowColor: color.accentIndigo,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  heroLoginText: {
+    color: "#FFFFFF",
+    fontSize: 19,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  heroLoginSub: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 11,
+    marginTop: 4,
+    letterSpacing: 1,
   },
   bottomSection: {
     flex: 1,
