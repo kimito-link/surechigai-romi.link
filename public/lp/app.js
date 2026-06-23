@@ -166,7 +166,13 @@
       body.classList.toggle('hat-active', hatOn);
       body.classList.toggle('sozu-active', sozuOn);
       if(hatOn||sozuOn){ setPhoto(null, curNight); }
-      else if(imgPick!==null){ setPhoto(imgPick, curNight); }
+      else {
+        /* 中央付近に data-img 文が無いとき(章の見出しだけ見えている等)は、
+           前の章の写真を残さず、現在の章(best)の data-bg を背景にする。 */
+        var fallbackBg = (best && best.getAttribute('data-bg')) || null;
+        var pick = (imgPick!==null) ? imgPick : fallbackBg;
+        if(pick!==null){ setPhoto(pick, curNight); }
+      }
     }
 
     /* data-fx の名前 → 既存の演出関数/SVGアニメ＋効果音。
@@ -181,7 +187,7 @@
         case 'rikisha': { var r=document.getElementById('jinrikisha'); if(r){ r.classList.remove('go'); void r.offsetWidth; r.classList.add('go'); } break; }
         case 'konk': konk(); break;
         case 'semi': showFxEl(els.semi,6000); if(els.semi) els.semi.classList.add('show'); break;
-        case 'fish': jumpFish(); break;   /* 川の写真(data-img=kawa)の上で、魚SVGが大きく跳ねる */
+        case 'fish': jumpFish(); playSample('river',0.5); break;   /* 川の写真(data-img=kawa)の上で、魚SVGが大きく跳ねる＋川のせせらぎ */
         case 'furin': showFxEl(els.furin,6000); if(els.furin) els.furin.classList.add('show'); chime(); break;
         case 'nukegara': showFxEl(els.nukegara,6000); if(els.nukegara) els.nukegara.classList.add('show'); break;
         case 'boom': showFxEl(els.hanabi,7000); boom(); break;
@@ -340,6 +346,30 @@
       }catch(e){}
     }
     function setOn(on){ soundOn=on; if(otoBtn) otoBtn.classList.toggle('muted', !on); if(master) master.gain.setTargetAtTime(on?0.72:0, actx.currentTime, .05); manageAmbient(body.getAttribute('data-scene'), body.getAttribute('data-sub')); }
+    /* 効果音ファイル（本物の素材）。存在すれば合成音より優先して鳴らす。
+       sounds/ に置いた mp3 を HTMLAudio でプリロードし、soundOn のときだけ再生。
+       読み込み失敗(ファイル未配置)時は false を返し、各関数が合成音にフォールバックする。 */
+    var SAMPLES={ whistle:'sounds/kisha-whistle.mp3', clack:'sounds/train-clack.mp3',
+                  depart:'sounds/kisha-depart.mp3', idle:'sounds/kisha-idle.mp3',
+                  sozu:'sounds/sozu.mp3', sozuEcho:'sounds/sozu-echo.mp3',
+                  river:'sounds/river.mp3' };
+    var sampleCache={}, sampleOk={};
+    Object.keys(SAMPLES).forEach(function(k){
+      try{ var a=new Audio(); a.preload='auto'; a.src=SAMPLES[k];
+        a.addEventListener('canplaythrough', function(){ sampleOk[k]=true; }, {once:true});
+        a.addEventListener('error', function(){ sampleOk[k]=false; });
+        sampleCache[k]=a;
+      }catch(e){ sampleOk[k]=false; }
+    });
+    function playSample(name, vol, loop){
+      if(!soundOn) return false;
+      var a=sampleCache[name]; if(!a || sampleOk[name]===false) return false;
+      try{ var node = loop ? a : (a.cloneNode ? a.cloneNode() : a);
+        node.loop=!!loop; node.volume=(vol==null?0.8:vol); node.currentTime=0;
+        var p=node.play(); if(p&&p.catch) p.catch(function(){});
+        return node;
+      }catch(e){ return false; }
+    }
     function tone(freq, type, dur, peak, t0){ if(!soundOn||!actx) return; var t=t0||actx.currentTime, o=actx.createOscillator(), g=actx.createGain(); o.type=type||'sine'; o.frequency.value=freq;
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(peak||0.3,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05); return o; }
     function chime(){ if(!soundOn) return; var b=1200+Math.random()*500; [1,2.76,5.4].forEach(function(m,i){ tone(b*m,'sine',2.6+i*0.4,(i===0?0.4:0.14)/(i+1)); }); }
@@ -366,7 +396,7 @@
       s.style.left=(40+Math.random()*30)+'%'; s.style.top=(10+Math.random()*20)+'%'; nv.appendChild(s);
       void s.offsetWidth; s.classList.add('go'); setTimeout(function(){ s.remove(); },1500); }
     /* ししおどし「スコーン！」: 竹が石を打つ鋭いアタック＋木胴の共鳴＋抜ける高い余韻＋ひと反響 */
-    function konk(){ if(!soundOn||!actx) return; var t=actx.currentTime;
+    function konk(){ if(!soundOn) return; if(playSample('sozu',0.8)) return; if(!actx) return; var t=actx.currentTime;
       // 木胴の共鳴（低め・コッ）
       var o=actx.createOscillator(), g=actx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(85,t+0.16);
       g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.5,t+0.004); g.gain.exponentialRampToValueAtTime(0.0001,t+0.45); o.connect(g); g.connect(master); o.start(t); o.stop(t+0.55);
@@ -380,7 +410,7 @@
       var o3=actx.createOscillator(), g3=actx.createGain(); o3.type='sine'; o3.frequency.setValueAtTime(540,t+0.18); o3.frequency.exponentialRampToValueAtTime(440,t+0.6);
       g3.gain.setValueAtTime(0.0001,t+0.18); g3.gain.linearRampToValueAtTime(0.06,t+0.2); g3.gain.exponentialRampToValueAtTime(0.0001,t+0.7); o3.connect(g3); g3.connect(master); o3.start(t+0.18); o3.stop(t+0.75); }
     /* 蒸気機関車の汽笛「ポオオォォ〜」：複数倍音の和音＋ビブラート＋蒸気のノイズ。立ち上がりは速く、尾を長く引く。 */
-    function whistle(){ if(!soundOn||!actx) return; var t=actx.currentTime, dur=2.4;
+    function whistle(){ if(!soundOn) return; if(playSample('whistle',0.85)) return; if(!actx) return; var t=actx.currentTime, dur=2.4;
       // 汽笛は単音でなく不協和な複数管の和音。倍率を少しずらして「ボォ〜」の厚みを出す
       var partials=[ {f:330,a:0.22}, {f:392,a:0.18}, {f:494,a:0.14}, {f:660,a:0.08} ];
       // 共通のビブラート（蒸気のゆらぎ）
@@ -400,7 +430,7 @@
       n.connect(bp); bp.connect(ng); ng.connect(master); n.start(t); n.stop(t+dur); }
 
     /* 機関車のガタゴト：「ガタン・ゴトン」を一定リズムで ms 間刻む。レール継ぎ目の二連打＋蒸気のシュッ。 */
-    var clackTimer=null;
+    var clackTimer=null, clackAudio=null;
     function clack(t0){ if(!soundOn||!actx) return; var t=t0||actx.currentTime;
       // 一回の継ぎ目は二連打（ガタン・ゴトン）。低い打撃音×2
       [0,0.16].forEach(function(dt,idx){
@@ -420,7 +450,13 @@
         sn.connect(hp); hp.connect(sg); sg.connect(master); sn.start(t); sn.stop(t+0.2); }
     }
     /* dur(ms) のあいだ、ガタゴトを周期的に鳴らす（だんだん速く→一定、で疾走感） */
-    function startClack(dur){ if(!soundOn||!actx||reduce){ return; } if(clackTimer) clearInterval(clackTimer);
+    function startClack(dur){ if(!soundOn||reduce){ return; }
+      /* 本物の走行音ファイルがあればループ再生し、dur 後に停止（合成音より優先）。 */
+      var node=playSample('clack',0.55,true);
+      if(node){ if(clackAudio){ try{clackAudio.pause();}catch(e){} } clackAudio=node;
+        setTimeout(function(){ if(clackAudio===node){ try{node.pause();}catch(e){} clackAudio=null; } }, dur);
+        return; }
+      if(!actx) return; if(clackTimer) clearInterval(clackTimer);
       var beat=0.72, count=0, max=Math.ceil((dur/1000)/beat)+2;
       function step(){ if(!soundOn){ stopClack(); return; } clack(); count++;
         if(count>=max){ stopClack(); return; }
@@ -430,7 +466,7 @@
       }
       step();
     }
-    function stopClack(){ if(clackTimer){ clearTimeout(clackTimer); clearInterval(clackTimer); clackTimer=null; } }
+    function stopClack(){ if(clackTimer){ clearTimeout(clackTimer); clearInterval(clackTimer); clackTimer=null; } if(clackAudio){ try{clackAudio.pause();}catch(e){} clackAudio=null; } }
     /* 花火「ドオォン → パチパチパチ」。爆発音の後に小さな破裂が散発的に弾ける。 */
     function boomSound(){ if(!soundOn||!actx) return; var t=actx.currentTime;
       // ① ドオォン（低音の爆発＋胴鳴り）
