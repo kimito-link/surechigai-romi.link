@@ -113,6 +113,17 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
       };
     };
 
+    function publishAuthDebug(payload: {
+      checkedAt: string;
+      hasToken: boolean;
+      tokenLength: number;
+      authMeStatus: number | null;
+      authMeOk: boolean | null;
+    }) {
+      debugWindow.__ROMI_AUTH_DEBUG__ = payload;
+      document.documentElement.setAttribute("data-romi-auth-debug", JSON.stringify(payload));
+    }
+
     async function runAuthDebugProbe() {
       const token = await readClerkToken(getTokenRef.current);
       let authMeStatus: number | null = null;
@@ -136,19 +147,24 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
       }
 
       if (!canceled) {
-        debugWindow.__ROMI_AUTH_DEBUG__ = {
+        publishAuthDebug({
           checkedAt: new Date().toISOString(),
           hasToken: !!token,
           tokenLength: token?.length ?? 0,
           authMeStatus,
           authMeOk,
-        };
+        });
       }
     }
 
-    void runAuthDebugProbe();
+    const timers = [0, 1500, 4000].map((delay) =>
+      setTimeout(() => {
+        void runAuthDebugProbe();
+      }, delay),
+    );
     return () => {
       canceled = true;
+      for (const timer of timers) clearTimeout(timer);
     };
   }, []);
 
