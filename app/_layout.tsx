@@ -64,6 +64,14 @@ const tokenCache = {
 
 type ClerkGetToken = ReturnType<typeof useClerkAuth>["getToken"];
 
+type AuthDebugPayload = {
+  checkedAt: string;
+  hasToken: boolean;
+  tokenLength: number;
+  authMeStatus: number | null;
+  authMeOk: boolean | null;
+};
+
 async function resolveWithTimeout<T>(
   operation: Promise<T>,
   timeoutMs: number,
@@ -119,9 +127,42 @@ async function readClerkToken(getToken: ClerkGetToken): Promise<string | null> {
   }
 }
 
+function isAuthDebugRequested() {
+  return (
+    Platform.OS === "web" &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("romiAuthDebug")
+  );
+}
+
+function AuthDebugPanel({ payload }: { payload: AuthDebugPayload | null }) {
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: "absolute",
+        right: 8,
+        bottom: 76,
+        zIndex: 9999,
+        maxWidth: 520,
+        paddingHorizontal: 8,
+        paddingVertical: 6,
+        borderRadius: 6,
+        backgroundColor: "rgba(0,0,0,0.86)",
+      }}
+    >
+      <Text selectable style={{ color: "#22C55E", fontSize: 11, fontFamily: "monospace" }}>
+        ROMI_AUTH_DEBUG {JSON.stringify(payload ?? { status: "pending" })}
+      </Text>
+    </View>
+  );
+}
+
 function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
   const { getToken } = useClerkAuth();
   const getTokenRef = useRef(getToken);
+  const [authDebugEnabled] = useState(isAuthDebugRequested);
+  const [authDebugPayload, setAuthDebugPayload] = useState<AuthDebugPayload | null>(null);
 
   useEffect(() => {
     getTokenRef.current = getToken;
@@ -129,29 +170,21 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
   }, [getToken]);
 
   useEffect(() => {
-    if (Platform.OS !== "web" || typeof window === "undefined") return;
-    if (!new URLSearchParams(window.location.search).has("romiAuthDebug")) return;
+    if (!authDebugEnabled || typeof window === "undefined") return;
 
     let canceled = false;
     const debugWindow = window as typeof window & {
-      __ROMI_AUTH_DEBUG__?: {
-        checkedAt: string;
-        hasToken: boolean;
-        tokenLength: number;
-        authMeStatus: number | null;
-        authMeOk: boolean | null;
-      };
+      __ROMI_AUTH_DEBUG__?: AuthDebugPayload;
     };
 
-    function publishAuthDebug(payload: {
-      checkedAt: string;
-      hasToken: boolean;
-      tokenLength: number;
-      authMeStatus: number | null;
-      authMeOk: boolean | null;
-    }) {
+    function publishAuthDebug(payload: AuthDebugPayload) {
       debugWindow.__ROMI_AUTH_DEBUG__ = payload;
-      document.documentElement.setAttribute("data-romi-auth-debug", JSON.stringify(payload));
+      setAuthDebugPayload(payload);
+      try {
+        document.documentElement.setAttribute("data-romi-auth-debug", JSON.stringify(payload));
+      } catch {
+        // Some browser automation contexts expose a read-only DOM shim.
+      }
     }
 
     async function runAuthDebugProbe() {
@@ -196,7 +229,7 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
       canceled = true;
       for (const timer of timers) clearTimeout(timer);
     };
-  }, []);
+  }, [authDebugEnabled]);
 
   const [queryClient] = useState(
     () =>
@@ -224,6 +257,7 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
         persistOptions={{ persister: asyncStoragePersister }}
       >
         {children}
+        {authDebugEnabled ? <AuthDebugPanel payload={authDebugPayload} /> : null}
       </PersistQueryClientProvider>
     </trpc.Provider>
   );
