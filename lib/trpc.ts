@@ -34,6 +34,18 @@ async function getAccessToken(): Promise<string | null> {
   }
 }
 
+async function resolveAccessToken(options: { getToken?: TokenGetter }): Promise<string | null> {
+  if (options.getToken) {
+    try {
+      const token = await options.getToken();
+      if (token) return token;
+    } catch (error) {
+      console.error("[tRPC] Failed to get Clerk token:", error);
+    }
+  }
+  return getAccessToken();
+}
+
 /**
  * Creates the tRPC client with proper configuration.
  * Call this once in your app's root layout.
@@ -46,12 +58,7 @@ export function createTRPCClient(options: { getToken?: TokenGetter } = {}) {
         // tRPC v11: transformer MUST be inside link, not at root
         transformer: superjson,
         async headers() {
-          const token = options.getToken
-            ? await options.getToken().catch((error) => {
-                console.error("[tRPC] Failed to get Clerk token:", error);
-                return null;
-              })
-            : await getAccessToken();
+          const token = await resolveAccessToken(options);
           if (token) {
             return { Authorization: `Bearer ${token}` };
           }

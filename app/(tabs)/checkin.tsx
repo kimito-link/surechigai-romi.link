@@ -34,6 +34,7 @@ import { AppHeader } from "@/components/organisms/app-header";
 import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
+import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 
@@ -157,6 +158,11 @@ export default function CheckinScreen() {
     );
 
     try {
+      const authToken = await getAuthToken();
+      if (!authToken) {
+        throw new Error("ログインセッションを確認できません。もう一度Xログインしてください");
+      }
+
       const pos = await getCurrentLocation();
 
       if (pos.accuracy && pos.accuracy > 10000) {

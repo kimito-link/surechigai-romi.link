@@ -1,5 +1,5 @@
 import "@/global.css";
-import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/expo";
+import { ClerkProvider, getClerkInstance, useAuth as useClerkAuth } from "@clerk/expo";
 import * as SecureStore from "expo-secure-store";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -62,14 +62,95 @@ const tokenCache = {
   },
 };
 
+type ClerkGetToken = ReturnType<typeof useClerkAuth>["getToken"];
+
+async function readClerkToken(getToken: ClerkGetToken): Promise<string | null> {
+  try {
+    const freshToken = await getToken({ skipCache: true });
+    if (freshToken) return freshToken;
+  } catch (error) {
+    console.warn("[Auth] Fresh Clerk token fetch failed:", error);
+  }
+
+  try {
+    const cachedToken = await getToken();
+    if (cachedToken) return cachedToken;
+  } catch (error) {
+    console.warn("[Auth] Cached Clerk token fetch failed:", error);
+  }
+
+  try {
+    const clerk = getClerkInstance();
+    const sessionToken = await clerk?.session?.getToken({ skipCache: true });
+    return sessionToken ?? null;
+  } catch (error) {
+    console.warn("[Auth] Clerk session token fallback failed:", error);
+    return null;
+  }
+}
+
 function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
   const { getToken } = useClerkAuth();
   const getTokenRef = useRef(getToken);
 
   useEffect(() => {
     getTokenRef.current = getToken;
-    setClerkTokenGetter(() => getTokenRef.current());
+    setClerkTokenGetter(() => readClerkToken(getTokenRef.current));
   }, [getToken]);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+    if (!new URLSearchParams(window.location.search).has("romiAuthDebug")) return;
+
+    let canceled = false;
+    const debugWindow = window as typeof window & {
+      __ROMI_AUTH_DEBUG__?: {
+        checkedAt: string;
+        hasToken: boolean;
+        tokenLength: number;
+        authMeStatus: number | null;
+        authMeOk: boolean | null;
+      };
+    };
+
+    async function runAuthDebugProbe() {
+      const token = await readClerkToken(getTokenRef.current);
+      let authMeStatus: number | null = null;
+      let authMeOk: boolean | null = null;
+
+      if (token) {
+        try {
+          const response = await fetch("/api/trpc/auth.me?batch=1&input=%7B%7D", {
+            credentials: "include",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          });
+          authMeStatus = response.status;
+          authMeOk = response.ok;
+        } catch {
+          authMeStatus = 0;
+          authMeOk = false;
+        }
+      }
+
+      if (!canceled) {
+        debugWindow.__ROMI_AUTH_DEBUG__ = {
+          checkedAt: new Date().toISOString(),
+          hasToken: !!token,
+          tokenLength: token?.length ?? 0,
+          authMeStatus,
+          authMeOk,
+        };
+      }
+    }
+
+    void runAuthDebugProbe();
+    return () => {
+      canceled = true;
+    };
+  }, []);
 
   const [queryClient] = useState(
     () =>
@@ -87,7 +168,7 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
       }),
   );
   const [trpcClient] = useState(() =>
-    createTRPCClient({ getToken: () => getTokenRef.current() }),
+    createTRPCClient({ getToken: () => readClerkToken(getTokenRef.current) }),
   );
 
   return (
