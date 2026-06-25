@@ -152,6 +152,7 @@ export default function RootLayout() {
     ? {
         isSatellite: true as const,
         domain: satelliteDomain,
+        satelliteAutoSync: true,
         ...(primarySignInUrl ? { signInUrl: primarySignInUrl } : {}),
       }
     : {};
