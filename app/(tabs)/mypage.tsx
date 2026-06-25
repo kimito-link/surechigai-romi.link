@@ -29,7 +29,6 @@ import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
 import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
-import { useRouter } from "expo-router";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -140,8 +139,7 @@ function BlockedUserRow({
 
 export default function MypageScreen() {
   const { isDesktop } = useResponsive();
-  const { user, isAuthenticated, isAuthReadyForUI, logout, login } = useAuth();
-  const router = useRouter();
+  const { user, isAuthenticated, isAuthReadyForUI, logout } = useAuth();
 
   const [hitokotoModalVisible, setHitokotoModalVisible] = useState(false);
   const [showBlockList, setShowBlockList] = useState(false);
@@ -198,7 +196,6 @@ export default function MypageScreen() {
       <GlobalLoginGate
         title="プロフィール設定"
         subtitle="ログインしてプロフィールを設定してください"
-        onLogin={login}
         headerTitle="マイページ"
         isDesktop={isDesktop}
       />
@@ -237,6 +234,14 @@ export default function MypageScreen() {
             {user.username && (
               <Text style={styles.profileUsername}>@{user.username}</Text>
             )}
+            <View style={styles.profileMetaRow}>
+              {user.twitterId && (
+                <Text style={styles.profileMetaText}>ID {user.twitterId}</Text>
+              )}
+              <Text style={styles.profileMetaText}>
+                フォロワー {typeof user.followersCount === "number" ? user.followersCount.toLocaleString("ja-JP") : "取得中"}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -285,7 +290,7 @@ export default function MypageScreen() {
           <Text style={styles.sectionTitle}>設定</Text>
 
           <Pressable
-            onPress={() => router.push("/special-thanks")}
+            onPress={navigate.toSpecialThanks}
             style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
           >
             <MaterialIcons name="stars" size={20} color={color.accentAlt} style={{ marginRight: 12 }} />
@@ -401,6 +406,17 @@ const styles = StyleSheet.create({
     color: color.textMuted,
     fontSize: 14,
     marginTop: 2,
+  },
+  profileMetaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 8,
+  },
+  profileMetaText: {
+    color: color.successDark,
+    fontSize: 12,
+    fontWeight: "700",
   },
   // Section
   section: {

@@ -87,12 +87,13 @@ type CheckinState = "idle" | "loading" | "success" | "error" | "zero";
 
 export default function CheckinScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReadyForUI, login } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
   const [state, setState] = useState<CheckinState>("idle");
   const [newCount, setNewCount] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
   const [isPausing, setIsPausing] = useState(false);
+  const utils = trpc.useUtils();
 
   // アニメーション
   const scale = useSharedValue(1);
@@ -168,6 +169,13 @@ export default function CheckinScreen() {
         accuracy: pos.accuracy,
       });
 
+      await Promise.allSettled([
+        utils.encounter.list.invalidate(),
+        utils.zukan.myAreas.invalidate(),
+        utils.zukan.myTrail.invalidate(),
+        utils.settings.get.invalidate(),
+      ]);
+
       pulse.value = withTiming(1);
 
       if (result.newEncounters > 0) {
@@ -203,25 +211,27 @@ export default function CheckinScreen() {
 
       setTimeout(() => setState("idle"), 4000);
     }
-  }, [state, checkIn, scale, pulse, checkmarkScale, checkmarkOpacity]);
+  }, [state, checkIn, utils, scale, pulse, checkmarkScale, checkmarkOpacity]);
 
   const handlePauseToggle = useCallback(() => {
     if (isPausing) {
       resumeLocation.mutate(undefined, {
         onSuccess: () => {
           setIsPausing(false);
-          settingsQuery.refetch();
+          void settingsQuery.refetch();
+          void utils.settings.get.invalidate();
         },
       });
     } else {
       pauseLocation.mutate({ hours: 1 }, {
         onSuccess: () => {
           setIsPausing(true);
-          settingsQuery.refetch();
+          void settingsQuery.refetch();
+          void utils.settings.get.invalidate();
         },
       });
     }
-  }, [isPausing, pauseLocation, resumeLocation, settingsQuery]);
+  }, [isPausing, pauseLocation, resumeLocation, settingsQuery, utils]);
 
   const getButtonColor = (): string => {
     switch (state) {
@@ -252,6 +262,31 @@ export default function CheckinScreen() {
     }
   };
 
+  if (!isAuthReadyForUI) {
+    return (
+      <ScreenContainer containerClassName="bg-background">
+        <AppHeader
+          title="チェックイン"
+          showCharacters={false}
+          isDesktop={isDesktop}
+          showMenu={true}
+          showLoginButton={!isAuthenticated}
+        />
+      </ScreenContainer>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <GlobalLoginGate
+        title="チェックイン"
+        subtitle={`チェックインすると近くにいた人と\nすれ違いが成立します`}
+        headerTitle="チェックイン"
+        isDesktop={isDesktop}
+      />
+    );
+  }
+
   return (
     <ScreenContainer containerClassName="bg-background">
       <AppHeader
@@ -262,15 +297,6 @@ export default function CheckinScreen() {
         showLoginButton={!isAuthenticated}
       />
 
-      {!isAuthReadyForUI ? null : !isAuthenticated ? (
-        <GlobalLoginGate
-          title="チェックイン"
-          subtitle={`チェックインすると近くにいた人と\nすれ違いが成立します`}
-          onLogin={login}
-          headerTitle="チェックイン"
-          isDesktop={isDesktop}
-        />
-      ) : (
         <View style={styles.content}>
           {/* 説明文 */}
           <Text style={styles.description}>
@@ -394,18 +420,17 @@ export default function CheckinScreen() {
             <View style={styles.infoRow}>
               <MaterialIcons name="security" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
               <Text style={styles.infoText}>
-                正確な位置情報は保存されません（約460m単位で丸めて記録）
+                正確な位置情報を保存し、後から足あとをたどれるようにします
               </Text>
             </View>
             <View style={styles.infoRow}>
               <MaterialIcons name="schedule" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
               <Text style={styles.infoText}>
-                位置データは48時間後に自動削除されます
+                すれ違い判定にはH3セルと丸めたグリッドも併用します
               </Text>
             </View>
           </View>
         </View>
-      )}
     </ScreenContainer>
   );
 }

@@ -68,7 +68,7 @@ function PrefectureCell({
 
 export default function ZukanScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReadyForUI, login } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
   const { data, refetch, isFetching } = trpc.zukan.myAreas.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -106,7 +106,6 @@ export default function ZukanScreen() {
       <GlobalLoginGate
         title="図鑑"
         subtitle={`訪問した都道府県や\nすれ違い相手の出身地が記録されます`}
-        onLogin={login}
         headerTitle="図鑑"
         isDesktop={isDesktop}
       />

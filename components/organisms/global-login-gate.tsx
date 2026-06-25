@@ -1,14 +1,13 @@
-import React from "react";
 import { View, Text, StyleSheet, Image, Pressable } from "react-native";
 import { color } from "@/theme/tokens";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
+import { useLoginGuide } from "@/hooks/use-login-guide";
 
 interface GlobalLoginGateProps {
   title: string;
   subtitle?: string;
-  onLogin: () => void;
   headerTitle: string;
   isDesktop?: boolean;
 }
@@ -16,10 +15,11 @@ interface GlobalLoginGateProps {
 export function GlobalLoginGate({
   title,
   subtitle,
-  onLogin,
   headerTitle,
   isDesktop = false,
 }: GlobalLoginGateProps) {
+  const openLoginGuide = useLoginGuide();
+
   return (
     <ScreenContainer style={{ backgroundColor: "#FFFFFF" }} edges={["top", "left", "right"]}>
       <AppHeader title={headerTitle} showCharacters={false} isDesktop={isDesktop} showMenu showLoginButton={false} />
@@ -62,15 +62,16 @@ export function GlobalLoginGate({
             
             <Text style={styles.introText}>
               アクセス権限がありません。{"\n"}
-              Kimito-linkの機能を利用するには、X (Twitter) の認証プロセスを通過してください。
+              すれちがいロミは kimito.link と同じXログイン基盤を使います。{"\n"}
+              認証後、このアプリへ戻ります。
             </Text>
             
             <Pressable
               style={({ pressed }) => [styles.button, styles.loginButton, pressed && styles.buttonPressed]}
-              onPress={onLogin}
+              onPress={() => openLoginGuide()}
             >
               <MaterialIcons name="login" size={20} color={color.textWhite} style={{ marginRight: 8 }} />
-              <Text style={styles.buttonText}>[ SYSTEM: X (Twitter) ログイン ]</Text>
+              <Text style={styles.buttonText}>[ SYSTEM: Xログインの説明を見る ]</Text>
             </Pressable>
           </View>
         </View>
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
     fontFamily: "monospace",
-    letterSpacing: 1,
+    letterSpacing: 0,
   },
   cardBody: {
     padding: 24,

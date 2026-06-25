@@ -7,6 +7,8 @@ import type { PropsWithChildren } from "react";
  * The contents of this function only run in Node.js environments and do not have access to the DOM or browser APIs.
  */
 export default function Root({ children }: PropsWithChildren) {
+  const enableSpeedInsights = process.env.NODE_ENV === "production";
+
   return (
     <html lang="ja">
       <head>
@@ -36,13 +38,17 @@ export default function Root({ children }: PropsWithChildren) {
       </head>
       <body>
         {children}
-        {/* Vercel Speed Insights: script タグで追加（Metro が @vercel/speed-insights を解決できないため） */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: "window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };",
-          }}
-        />
-        <script defer src="/_vercel/speed-insights/script.js" />
+        {enableSpeedInsights && (
+          <>
+            {/* Vercel Speed Insights: script タグで追加（Metro が @vercel/speed-insights を解決できないため） */}
+            <script
+              dangerouslySetInnerHTML={{
+                __html: "window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };",
+              }}
+            />
+            <script defer src="/_vercel/speed-insights/script.js" />
+          </>
+        )}
       </body>
     </html>
   );

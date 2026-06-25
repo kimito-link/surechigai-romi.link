@@ -11,7 +11,6 @@
  */
 
 import { View, Text, Modal, Pressable } from "react-native";
-import { useColors } from "@/hooks/use-colors";
 import { color, palette } from "@/theme/tokens";
 import { Button } from "../ui/button";
 import Animated, {
@@ -46,7 +45,6 @@ export function LoginModal({
   onConfirm, 
   onCancel 
 }: LoginModalProps) {
-  const colors = useColors();
   const { selectMessage, recordConversion } = useLoginABTest();
   const [currentMessage, setCurrentMessage] = useState<ReturnType<typeof selectMessage> | null>(null);
   const wasVisibleRef = useRef(false);
@@ -112,20 +110,30 @@ export function LoginModal({
       <Pressable 
         style={{ 
           flex: 1, 
-          backgroundColor: palette.gray900 + "80", // 50% opacity
+          backgroundColor: palette.black + "E6",
           justifyContent: "center",
           alignItems: "center",
           padding: 24,
+          zIndex: 10000,
+          elevation: 10000,
         }}
         onPress={onCancel}
       >
         <Pressable 
           style={{ 
-            backgroundColor: colors.background,
+            backgroundColor: color.surface,
             borderRadius: 16,
             padding: 24,
             maxWidth: 500,
             width: "100%",
+            borderWidth: 1,
+            borderColor: color.borderAlt,
+            shadowColor: palette.black,
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.35,
+            shadowRadius: 24,
+            zIndex: 10001,
+            elevation: 10001,
           }}
           onPress={(e) => e.stopPropagation()}
         >
@@ -133,10 +141,10 @@ export function LoginModal({
           <Text style={{ 
             fontSize: 22, 
             fontWeight: "700", 
-            color: colors.foreground,
+            color: color.textPrimary,
             marginBottom: 20,
             textAlign: "center",
-            letterSpacing: 0.5,
+            letterSpacing: 0,
           }}>
             Xでログインしますか？
           </Text>
@@ -145,20 +153,20 @@ export function LoginModal({
           <View style={{ marginBottom: 24 }}>
             <Text style={{ 
               fontSize: 15, 
-              color: colors.muted,
+              color: color.textSecondary,
               marginBottom: 6,
               lineHeight: 22,
               textAlign: "center",
             }}>
-              このあとXの公式画面に移動します。
+              このあとXの公式認証画面に移動します。
             </Text>
             <Text style={{ 
               fontSize: 15, 
-              color: colors.muted,
+              color: color.textSecondary,
               lineHeight: 22,
               textAlign: "center",
             }}>
-              戻ってきたらログイン完了です。
+              kimito.link と同じXログイン基盤を使い、完了後にこのアプリへ戻ります。
             </Text>
           </View>
 
@@ -169,9 +177,9 @@ export function LoginModal({
               flexDirection: "row", 
               alignItems: "flex-start", 
               marginBottom: 28,
-              backgroundColor: colors.surface,
+              backgroundColor: color.surfaceAlt,
               borderWidth: 1,
-              borderColor: colors.border,
+              borderColor: color.border,
               padding: 20,
               borderRadius: 16,
               shadowColor: palette.gray900,
@@ -210,7 +218,7 @@ export function LoginModal({
             >
               <Text style={{ 
                 fontSize: 15, 
-                color: colors.foreground,
+                color: color.textPrimary,
                 lineHeight: 23,
                 fontWeight: "500",
               }}>
@@ -226,7 +234,7 @@ export function LoginModal({
               icon="login"
               style={{ backgroundColor: color.twitter }}
             >
-              Xでログイン
+              説明を確認してXへ進む
             </Button>
             <Button
               onPress={onCancel}

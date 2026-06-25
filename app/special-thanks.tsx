@@ -4,12 +4,11 @@ import { color } from "@/theme/tokens";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useResponsive } from "@/hooks/use-responsive";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useRouter } from "expo-router";
 import { Image } from "expo-image";
+import { navigateBack } from "@/lib/navigation";
 
 export default function SpecialThanksScreen() {
   const { isDesktop } = useResponsive();
-  const router = useRouter();
 
   return (
     <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
@@ -55,7 +54,7 @@ export default function SpecialThanksScreen() {
               <View style={styles.dotGreen} />
             </View>
             <Text style={styles.terminalTitle}>SYSTEM / SPECIAL_THANKS.exe</Text>
-            <Pressable onPress={() => router.back()} style={styles.closeButton}>
+            <Pressable onPress={navigateBack} style={styles.closeButton}>
               <MaterialIcons name="close" size={20} color={color.textWhite} />
             </Pressable>
           </View>
@@ -109,7 +108,7 @@ export default function SpecialThanksScreen() {
 
         <Pressable
           style={({ pressed }) => [styles.backButton, pressed && { opacity: 0.8 }]}
-          onPress={() => router.back()}
+          onPress={navigateBack}
         >
           <Text style={styles.backButtonText}>[ 戻る ]</Text>
         </Pressable>

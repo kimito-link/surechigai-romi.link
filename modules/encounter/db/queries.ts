@@ -6,7 +6,7 @@
  * 純粋関数 (modules/encounter/core/*) とアプリコードとの橋渡しをする。
  */
 
-import { and, eq, gte, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, or, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../../../drizzle/schema";
 import {
@@ -17,6 +17,7 @@ import {
   reports,
   userSettings,
   users,
+  twitterUserCache,
 } from "../../../drizzle/schema";
 import { kRing } from "../core/geo.js";
 import type { NearbyCandidate, TimeshiftCandidate } from "../core/matching.js";
@@ -57,6 +58,64 @@ export async function insertLocation(
     municipality: params.municipality ?? null,
     prefecture: params.prefecture ?? null,
     recordedAt: new Date(),
+  });
+}
+
+export type TrailLocation = {
+  id: number;
+  h3R8: string;
+  latGrid: number;
+  lngGrid: number;
+  lat: number;
+  lng: number;
+  accuracyM: number | null;
+  municipality: string | null;
+  prefecture: string | null;
+  recordedAt: Date;
+};
+
+/**
+ * 自分の正確な足あと。地図表示用なので lat/lng が保存済みの行だけ返す。
+ * 他ユーザーの正確座標はこのクエリでは返さない。
+ */
+export async function getMyTrailLocations(
+  db: DB,
+  selfUserId: number,
+  limit = 120
+): Promise<TrailLocation[]> {
+  const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 500);
+
+  const rows = await db
+    .select({
+      id: locations.id,
+      h3R8: locations.h3R8,
+      latGrid: locations.latGrid,
+      lngGrid: locations.lngGrid,
+      lat: locations.lat,
+      lng: locations.lng,
+      accuracyM: locations.accuracyM,
+      municipality: locations.municipality,
+      prefecture: locations.prefecture,
+      recordedAt: locations.recordedAt,
+    })
+    .from(locations)
+    .where(
+      and(
+        eq(locations.userId, selfUserId),
+        sql`${locations.lat} IS NOT NULL`,
+        sql`${locations.lng} IS NOT NULL`
+      )
+    )
+    .orderBy(desc(locations.recordedAt))
+    .limit(safeLimit);
+
+  return rows.flatMap((row) => {
+    if (row.lat === null || row.lng === null) return [];
+    return [{
+      ...row,
+      lat: row.lat,
+      lng: row.lng,
+    }];
   });
 }
 
@@ -282,6 +341,10 @@ export type EncounterListItem = {
   occurredAt: Date;
   openedByMe: Date | null;
   partnerTotalEncounters: number;
+  partnerUsername: string | null;
+  partnerDisplayName: string | null;
+  partnerProfileImage: string | null;
+  partnerFollowersCount: number | null;
 };
 
 /**
@@ -353,6 +416,21 @@ export async function getMyEncounters(
     const partner = partnerRows[0];
     if (partner.isSuspended) continue;
 
+    const usernameCandidate = (partner.name ?? "").replace(/^@/, "").trim();
+    const cacheRows = usernameCandidate
+      ? await db
+          .select({
+            twitterUsername: twitterUserCache.twitterUsername,
+            displayName: twitterUserCache.displayName,
+            profileImage: twitterUserCache.profileImage,
+            followersCount: twitterUserCache.followersCount,
+          })
+          .from(twitterUserCache)
+          .where(eq(twitterUserCache.twitterUsername, usernameCandidate))
+          .limit(1)
+      : [];
+    const cachedTwitter = cacheRows[0];
+
     // パートナーの累計すれ違い数
     const countRows = await db
       .select({ cnt: sql<number>`count(*)` })
@@ -378,6 +456,10 @@ export async function getMyEncounters(
       occurredAt: row.occurredAt,
       openedByMe,
       partnerTotalEncounters,
+      partnerUsername: (cachedTwitter?.twitterUsername ?? usernameCandidate) || null,
+      partnerDisplayName: cachedTwitter?.displayName ?? partner.name,
+      partnerProfileImage: cachedTwitter?.profileImage ?? null,
+      partnerFollowersCount: cachedTwitter?.followersCount ?? null,
     });
   }
 

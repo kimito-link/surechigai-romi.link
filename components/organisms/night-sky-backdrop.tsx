@@ -43,7 +43,6 @@ function ShootingStar({ delay, topPct, durationMs }: { delay: number; topPct: nu
 
   return (
     <Animated.View
-      pointerEvents="none"
       style={[
         styles.shootingStar,
         { top: `${topPct}%`, opacity, transform: [{ translateX }, { translateY }, { rotate: "28deg" }] },
@@ -56,7 +55,7 @@ export function NightSkyBackdrop() {
   const stars = useMemo(() => STARS, []);
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={styles.backdropRoot}>
       {/* 夜空グラデ（上＝濃紺、下＝地図の宇宙色に馴染ませる） */}
       <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
         <Defs>
@@ -137,7 +136,7 @@ export function NightSkyBackdrop() {
         <Path d="M498 82 Q560 38 560 40 Q560 38 622 82 Q596 70 580 84 Q565 66 551 84 Q535 70 498 82 Z" fill="#cdddf0" opacity="0.85" />
       </Svg>
       {/* 街明かり（地平線のともしび。点々と灯る家々） */}
-      <View style={styles.townLights} pointerEvents="none">
+      <View style={styles.townLights}>
         {Array.from({ length: 22 }, (_, i) => (
           <View
             key={i}
@@ -159,6 +158,10 @@ export function NightSkyBackdrop() {
 }
 
 const styles = StyleSheet.create({
+  backdropRoot: {
+    ...StyleSheet.absoluteFillObject,
+    pointerEvents: "none",
+  },
   shootingStar: {
     position: "absolute",
     left: "8%",
@@ -166,6 +169,7 @@ const styles = StyleSheet.create({
     height: 2,
     borderRadius: 2,
     backgroundColor: "#cfe3ff",
+    pointerEvents: "none",
     // テール風の淡い影
     shadowColor: "#cfe3ff",
     shadowOffset: { width: -8, height: -4 },
@@ -191,5 +195,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: 24,
+    pointerEvents: "none",
   },
 });

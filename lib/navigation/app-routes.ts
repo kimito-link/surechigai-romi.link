@@ -23,7 +23,9 @@ export const STATIC_ROUTES = {
   
   // 認証関連
   OAUTH: "/oauth",
+  LOGIN_GUIDE: "/auth/kimito-link",
   LOGOUT: "/logout",
+  SPECIAL_THANKS: "/special-thanks",
   
   // 設定関連
   SETTINGS: "/settings",
@@ -85,7 +87,9 @@ export type RouteParams = {
   [STATIC_ROUTES.CREATE_TAB]: undefined;
   [STATIC_ROUTES.MYPAGE_TAB]: undefined;
   [STATIC_ROUTES.OAUTH]: undefined;
+  [STATIC_ROUTES.LOGIN_GUIDE]: { returnTo?: string; mode?: "same" | "switch" } | undefined;
   [STATIC_ROUTES.LOGOUT]: undefined;
+  [STATIC_ROUTES.SPECIAL_THANKS]: undefined;
   [STATIC_ROUTES.SETTINGS]: undefined;
   [STATIC_ROUTES.NOTIFICATION_SETTINGS]: undefined;
   [STATIC_ROUTES.PROFILE_EDIT]: undefined;
@@ -148,10 +152,20 @@ export const navigate = {
     console.log("[Navigation] Navigating to OAuth");
     router.push(STATIC_ROUTES.OAUTH as never);
   },
+
+  toLoginGuide: (params?: { returnTo?: string; mode?: "same" | "switch" }) => {
+    console.log("[Navigation] Navigating to login guide");
+    router.push({ pathname: STATIC_ROUTES.LOGIN_GUIDE, params: params ?? {} } as never);
+  },
   
   toLogout: () => {
     console.log("[Navigation] Navigating to logout");
     router.push(STATIC_ROUTES.LOGOUT as never);
+  },
+
+  toSpecialThanks: () => {
+    console.log("[Navigation] Navigating to special thanks");
+    router.push(STATIC_ROUTES.SPECIAL_THANKS as never);
   },
   
   // 設定関連

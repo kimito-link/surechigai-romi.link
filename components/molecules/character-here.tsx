@@ -50,7 +50,7 @@ export function CharacterHere({ source, name, place, x, y, delay = 0 }: Props) {
   }));
 
   return (
-    <View style={[styles.container, { left: `${x}%`, top: `${y}%` }]} pointerEvents="none">
+    <View style={[styles.container, { left: `${x}%`, top: `${y}%` }]}>
       {/* 吹き出し */}
       <Animated.View style={[styles.bubbleWrap, floatStyle]}>
         <View style={styles.bubble}>
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     marginTop: -64,
     alignItems: "center",
     zIndex: 12,
+    pointerEvents: "none",
   },
   bubbleWrap: {
     alignItems: "center",

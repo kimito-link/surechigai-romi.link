@@ -2,7 +2,7 @@ import { View, Text, Pressable, StyleSheet, Modal, Platform } from "react-native
 import { color, palette } from "@/theme/tokens";
 import { Image } from "expo-image";
 import { useColors } from "@/hooks/use-colors";
-import { useAuth } from "@/hooks/use-auth";
+import { useLoginGuide } from "@/hooks/use-login-guide";
 import { useTutorial } from "@/lib/tutorial-context";
 import * as Haptics from "expo-haptics";
 import Animated, { 
@@ -36,7 +36,7 @@ interface LoginPromptModalProps {
  */
 export function LoginPromptModal({ visible, onLogin, onSkip }: LoginPromptModalProps) {
   const colors = useColors();
-  const { login } = useAuth();
+  const openLoginGuide = useLoginGuide();
   const { userType } = useTutorial();
   
   
@@ -61,16 +61,12 @@ export function LoginPromptModal({ visible, onLogin, onSkip }: LoginPromptModalP
     opacity: sparkle.value,
   }));
   
-  const handleLogin = async () => {
+  const handleLogin = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     onLogin();
-    try {
-      await login();
-    } catch (error) {
-      console.error("Login error:", error);
-    }
+    openLoginGuide();
   };
   
   const handleSkip = () => {

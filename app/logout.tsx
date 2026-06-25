@@ -5,9 +5,9 @@ import { Image } from "expo-image";
 import { navigateReplace } from "@/lib/navigation/app-routes";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useAuth } from "@/hooks/use-auth";
+import { useLoginGuide } from "@/hooks/use-login-guide";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Button } from "@/components/ui/button";
-import { redirectToTwitterAuth, redirectToTwitterSwitchAccount } from "@/lib/api";
 
 // キャラクター画像
 const characterImages = {
@@ -26,6 +26,7 @@ const logoutMessages = [
 export default function LogoutScreen() {
 
   const { logout, isAuthenticated } = useAuth();
+  const openLoginGuide = useLoginGuide();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutComplete, setLogoutComplete] = useState(false);
   const [messagePattern] = useState(() => 
@@ -53,11 +54,11 @@ export default function LogoutScreen() {
   }, [isAuthenticated, handleLogout, isLoggingOut, logoutComplete]);
 
   const handleSameAccountLogin = () => {
-    redirectToTwitterAuth();
+    openLoginGuide({ returnTo: "/", mode: "same" });
   };
 
   const handleDifferentAccountLogin = () => {
-    redirectToTwitterSwitchAccount();
+    openLoginGuide({ returnTo: "/", mode: "switch" });
   };
 
   return (
@@ -107,7 +108,7 @@ export default function LogoutScreen() {
               fontSize: 12,
               fontWeight: "bold",
               fontFamily: "monospace",
-              letterSpacing: 1,
+              letterSpacing: 0,
             }}>
               SYSTEM / {logoutComplete ? "LOGOUT_SUCCESS.exe" : "LOGGING_OUT.exe"}
             </Text>

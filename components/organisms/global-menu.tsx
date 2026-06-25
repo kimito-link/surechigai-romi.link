@@ -5,14 +5,14 @@
 import { useState } from "react";
 import { color, palette } from "@/theme/tokens";
 import { View, Text, Modal, Pressable, ScrollView, Platform } from "react-native";
-import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { navigate } from "@/lib/navigation";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/hooks/use-auth";
+import { useLoginGuide } from "@/hooks/use-login-guide";
+import { UserAccountChip } from "@/components/molecules/user-account-chip";
 import { LogoutConfirmModal } from "@/components/molecules/logout-confirm-modal";
 import * as Haptics from "expo-haptics";
-import { getTwitterAuthUrl } from "@/lib/api/twitter-auth";
 
 interface GlobalMenuProps {
   isVisible: boolean;
@@ -21,6 +21,7 @@ interface GlobalMenuProps {
 
 export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
   const { user, isAuthenticated, isAuthReadyForUI } = useAuth();
+  const openLoginGuide = useLoginGuide();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleHaptic = () => {
@@ -32,10 +33,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
   const handleLogin = () => {
     handleHaptic();
     onClose();
-    const authUrl = getTwitterAuthUrl();
-    if (typeof window !== "undefined") {
-      window.location.href = authUrl;
-    }
+    openLoginGuide();
   };
 
   const handleLogout = () => {
@@ -104,33 +102,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
                 {!isAuthReadyForUI ? (
                   <Text style={{ color: color.textMuted, fontSize: 14 }}>読み込み中...</Text>
                 ) : isAuthenticated && user ? (
-                  <View style={{ flexDirection: "row", alignItems: "center" }}>
-                    {user.profileImage ? (
-                      <Image
-                        source={{ uri: user.profileImage }}
-                        style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12 }}
-                        contentFit="cover"
-                      />
-                    ) : (
-                      <View style={{
-                        width: 48, height: 48, borderRadius: 24,
-                        backgroundColor: color.borderAlt,
-                        alignItems: "center", justifyContent: "center", marginRight: 12,
-                      }}>
-                        <MaterialIcons name="person" size={24} color={color.textMuted} />
-                      </View>
-                    )}
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: color.textWhite, fontSize: 16, fontWeight: "600" }} numberOfLines={1}>
-                        {user.name || user.username || "ゲスト"}
-                      </Text>
-                      {user.username && (
-                        <Text style={{ color: color.textMuted, fontSize: 14 }} numberOfLines={1}>
-                          @{user.username}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
+                  <UserAccountChip user={user} />
                 ) : (
                   <Pressable
                     onPress={handleLogin}
@@ -195,6 +167,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
         onCancel={() => setShowLogoutModal(false)}
         onConfirm={confirmLogout}
       />
+
     </>
   );
 }

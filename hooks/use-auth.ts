@@ -1,4 +1,5 @@
 import * as Auth from "@/lib/_core/auth";
+import { USER_INFO_KEY } from "@/constants/oauth";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { clearAllTokenData } from "@/lib/token-manager";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -26,24 +27,97 @@ function resolveReturnUrl(returnUrl?: string): string | undefined {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function firstString(...values: any[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return undefined;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function firstNumber(...values: any[]): number | undefined {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) {
+      return Number(value);
+    }
+  }
+  return undefined;
+}
+
+function getStoredUserSnapshot(): Partial<Auth.User> | null {
+  if (Platform.OS !== "web" || typeof window === "undefined") return null;
+  try {
+    const stored = window.localStorage.getItem(USER_INFO_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildUserFromClerk(clerkUser: any): Auth.User | null {
   if (!clerkUser) return null;
+  const storedUser = getStoredUserSnapshot();
+  const externalAccount =
+    clerkUser.externalAccounts?.find?.((account: any) =>
+      ["oauth_x", "oauth_twitter", "twitter"].includes(account.provider),
+    ) ?? clerkUser.externalAccounts?.[0];
+  const publicMetadata = clerkUser.publicMetadata ?? {};
+  const unsafeMetadata = clerkUser.unsafeMetadata ?? {};
+  const externalPublicMetadata = externalAccount?.publicMetadata ?? {};
+
+  const username = firstString(
+    externalAccount?.username,
+    externalAccount?.handle,
+    externalAccount?.screenName,
+    clerkUser.username,
+    publicMetadata.username,
+    unsafeMetadata.username,
+    storedUser?.username,
+  );
+  const profileImage = firstString(
+    clerkUser.imageUrl,
+    externalAccount?.imageUrl,
+    externalAccount?.picture,
+    publicMetadata.profileImage,
+    unsafeMetadata.profileImage,
+    storedUser?.profileImage,
+  );
+  const followersCount = firstNumber(
+    publicMetadata.followersCount,
+    publicMetadata.followers,
+    unsafeMetadata.followersCount,
+    unsafeMetadata.followers,
+    externalPublicMetadata.followersCount,
+    externalPublicMetadata.followers,
+    externalAccount?.followersCount,
+    storedUser?.followersCount,
+  );
+  const twitterId = firstString(
+    externalAccount?.providerUserId,
+    externalAccount?.externalId,
+    externalAccount?.id,
+    publicMetadata.twitterId,
+    unsafeMetadata.twitterId,
+    storedUser?.twitterId,
+  );
+
   return {
     id: 0,
     openId: `clerk:${clerkUser.id}`,
     name:
       clerkUser.fullName ||
-      clerkUser.username ||
-      clerkUser.externalAccounts?.[0]?.username ||
+      username ||
+      storedUser?.name ||
       null,
     email: clerkUser.primaryEmailAddress?.emailAddress || null,
     loginMethod: "twitter",
     lastSignedIn: new Date(),
-    username:
-      clerkUser.externalAccounts?.[0]?.username ||
-      clerkUser.username ||
-      undefined,
-    profileImage: clerkUser.imageUrl || undefined,
+    username,
+    profileImage,
+    followersCount,
+    twitterId,
   };
 }
 
@@ -65,7 +139,7 @@ export function useAuth() {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_x" });
 
   const login = useCallback(
-    async (returnUrl?: string, _forceSwitch = false) => {
+    async (returnUrl?: string, forceSwitch = false) => {
       try {
         // onPress={login} 経由だと press イベントが returnUrl に入る。文字列のみ採用する。
         const safeReturnUrl = typeof returnUrl === "string" ? returnUrl : undefined;
@@ -74,6 +148,19 @@ export function useAuth() {
             localStorage.setItem("auth_return_url", safeReturnUrl);
           } else {
             await AsyncStorage.setItem("auth_return_url", safeReturnUrl);
+          }
+        }
+
+        if (forceSwitch) {
+          try {
+            await signOut();
+            await Auth.removeSessionToken();
+            await Auth.clearUserInfo();
+            await clearAllTokenData();
+            cachedUser = null;
+            cachedIsAuthenticated = false;
+          } catch (signOutErr) {
+            console.warn("[Auth] signOut before account switch failed:", signOutErr);
           }
         }
 
@@ -145,7 +232,7 @@ export function useAuth() {
         console.error("[Auth] OAuth login error:", err);
       }
     },
-    [startOAuthFlow, getToken],
+    [startOAuthFlow, getToken, signOut],
   );
 
   const logout = useCallback(async () => {

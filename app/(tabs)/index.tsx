@@ -45,6 +45,7 @@ import { JapanRadarMap } from "@/components/organisms/japan-radar-map";
 import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
 import { NightSkyBackdrop } from "@/components/organisms/night-sky-backdrop";
 import { CharacterHere } from "@/components/molecules/character-here";
+import { SignalAccountGrid, type SignalAccountItem } from "@/components/organisms/signal-account-grid";
 import appConfig from "@/app.config.json";
 
 // ティアラベル
@@ -78,6 +79,10 @@ type EncounterItem = {
   occurredAt: Date;
   openedByMe: Date | null;
   partnerTotalEncounters: number;
+  partnerUsername?: string | null;
+  partnerDisplayName?: string | null;
+  partnerProfileImage?: string | null;
+  partnerFollowersCount?: number | null;
 };
 
 /** 封筒カード（未開封） */
@@ -479,7 +484,7 @@ function formatDate(d: Date | string): string {
 
 export default function PostScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReadyForUI, login } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
   const [openItem, setOpenItem] = useState<EncounterItem | null>(null);
   const [openModalVisible, setOpenModalVisible] = useState(false);
@@ -575,7 +580,7 @@ export default function PostScreen() {
       {isAuthenticated ? (
         <AppHeader />
       ) : (
-        <RadarHud isAuthenticated={isAuthenticated} onLogin={login} />
+        <RadarHud isAuthenticated={isAuthenticated} />
       )}
 
       {!isAuthReadyForUI ? null : (
@@ -602,6 +607,19 @@ export default function PostScreen() {
             <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={6} y={91} delay={400} />
             <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={33} y={86} delay={800} />
           </JapanRadarMap>
+
+          {isAuthenticated && (
+            <SignalAccountGrid
+              items={(encounters ?? []) as SignalAccountItem[]}
+              isDesktop={isDesktop}
+              isFetching={isFetching}
+              onPressItem={(item) => handleOpen(item as EncounterItem)}
+              style={[
+                styles.signalPanel,
+                isDesktop ? styles.signalPanelDesktop : styles.signalPanelMobile,
+              ]}
+            />
+          )}
           
           {unopened.length === 0 && (
             <View style={styles.emptyOverlay}>
@@ -663,6 +681,22 @@ const styles = StyleSheet.create({
     flex: 1,
     position: "relative",
     backgroundColor: "#020817", // Kimito-link universe dark
+  },
+  signalPanel: {
+    position: "absolute",
+    zIndex: 30,
+  },
+  signalPanelDesktop: {
+    top: 18,
+    left: 24,
+    right: 24,
+    maxHeight: 360,
+  },
+  signalPanelMobile: {
+    top: 10,
+    left: 10,
+    right: 10,
+    maxHeight: 292,
   },
   emptyOverlay: {
     position: "absolute",

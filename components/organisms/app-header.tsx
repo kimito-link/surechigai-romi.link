@@ -4,9 +4,11 @@
  */
 import { useState } from "react";
 import { color, palette } from "@/theme/tokens";
-import { View, Text, Pressable, Platform } from "react-native";
+import { View, Text, Pressable, Platform, StyleSheet } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/hooks/use-auth";
+import { useLoginGuide } from "@/hooks/use-login-guide";
+import { UserAccountChip } from "@/components/molecules/user-account-chip";
 import { GlobalMenu } from "@/components/organisms/global-menu";
 import * as Haptics from "expo-haptics";
 
@@ -38,10 +40,11 @@ export function AppHeader({
   showLoginButton = false,
 }: AppHeaderProps) {
   const { user, isAuthReady, isAuthReadyForUI } = useAuth();
+  const openLoginGuide = useLoginGuide();
   const [menuVisible, setMenuVisible] = useState(false);
 
   const showLoginButtonStable = showLoginButton && isAuthReadyForUI && !user;
-  const showLoginStatusStable = showLoginStatus && isAuthReady && user;
+  const showLoginStatusStable = Boolean(showLoginStatus && isAuthReady && user);
 
   const handleMenuPress = () => {
     triggerHaptic();
@@ -50,20 +53,46 @@ export function AppHeader({
 
   return (
     <>
-      <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, backgroundColor: color.bg }}>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{
-              color: color.textWhite,
-              fontSize: isDesktop ? 16 : 13,
-              fontWeight: "bold",
-            }}>
+      <View style={styles.shell}>
+        <View style={styles.topRow}>
+          <View style={styles.titleBlock}>
+            <Text
+              style={[
+                styles.title,
+                { fontSize: isDesktop ? 16 : 13 },
+              ]}
+              numberOfLines={1}
+            >
               {title || "君斗りんくのすれ違ひ通信"}
             </Text>
           </View>
 
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View style={styles.actionRow}>
             {rightElement ?? null}
+
+            {showLoginButtonStable && (
+              <Pressable
+                onPress={() => openLoginGuide()}
+                style={({ pressed }) => [
+                  {
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: 40,
+                    paddingHorizontal: 12,
+                    borderRadius: 20,
+                    backgroundColor: color.twitter,
+                    marginRight: 8,
+                  },
+                  pressed && { opacity: 0.75, transform: [{ scale: 0.98 }] },
+                ]}
+              >
+                <MaterialIcons name="login" size={17} color={color.textWhite} style={{ marginRight: 4 }} />
+                <Text style={{ color: color.textWhite, fontSize: 13, fontWeight: "700" }}>
+                  ログイン
+                </Text>
+              </Pressable>
+            )}
 
             {showMenu && (
               <Pressable
@@ -86,28 +115,17 @@ export function AppHeader({
           </View>
         </View>
 
-        {showLoginStatusStable && (
-          <Pressable
+        {showLoginStatusStable && user && (
+          <UserAccountChip
+            user={user}
+            compact={!isDesktop}
             onPress={handleMenuPress}
-            style={({ pressed }) => [
-              {
-                flexDirection: "row",
-                alignItems: "center",
-                marginTop: 8,
-                backgroundColor: palette.green500 + "26",
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 20,
-                alignSelf: "flex-start",
-              },
-              pressed && { opacity: 0.7, transform: [{ scale: 0.97 }] },
-            ]}
-          >
-            <Text style={{ color: color.successDark, fontSize: 12, fontWeight: "600" }}>
-              {user?.name || user?.username || "ゲスト"}でログイン中
-            </Text>
-            <MaterialIcons name="expand-more" size={16} color={color.successDark} style={{ marginLeft: 4 }} />
-          </Pressable>
+            style={{
+              marginTop: 10,
+              width: isDesktop ? 470 : "100%",
+              maxWidth: "100%",
+            }}
+          />
         )}
 
         {subtitle && (
@@ -124,3 +142,35 @@ export function AppHeader({
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  shell: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 9,
+    backgroundColor: color.bg,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.white + "0F",
+  },
+  topRow: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  titleBlock: {
+    minWidth: 0,
+    flex: 1,
+  },
+  title: {
+    color: color.textWhite,
+    fontWeight: "800",
+    letterSpacing: 0,
+  },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+});

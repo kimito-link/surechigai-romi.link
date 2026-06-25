@@ -9,6 +9,7 @@
 import { useReducer, useCallback, useEffect } from "react";
 import { Platform } from "react-native";
 import { useAuth } from "@/hooks/use-auth";
+import { useLoginGuide } from "@/hooks/use-login-guide";
 
 /**
  * 認証UXの状態定義
@@ -161,7 +162,8 @@ function authUxReducer(state: AuthUxState, action: AuthUxAction): AuthUxState {
  */
 export function useAuthUxMachine() {
   const [state, dispatch] = useReducer(authUxReducer, { name: "idle" });
-  const { login, isAuthenticated, error: authError } = useAuth();
+  const { isAuthenticated, error: authError } = useAuth();
+  const openLoginGuide = useLoginGuide();
 
   // Auth Context監視（PR-7: ログイン成否の自動検知）
   useEffect(() => {
@@ -215,7 +217,7 @@ export function useAuthUxMachine() {
   const confirmYes = useCallback(async () => {
     dispatch({ type: "CONFIRM_YES" });
     try {
-      await login();
+      openLoginGuide();
       // Web: window.location.href でページ遷移するので待機画面は不要
       // Native: 外部ブラウザが開くので、短いタイムアウトで待機
       if (Platform.OS !== "web") {
@@ -236,7 +238,7 @@ export function useAuthUxMachine() {
         });
       }
     }
-  }, [login]);
+  }, [openLoginGuide]);
 
   // 確認モーダルで「いいえ」
   const confirmNo = useCallback(() => {
