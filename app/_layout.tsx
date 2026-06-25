@@ -161,13 +161,19 @@ function AuthDebugPanel({ payload }: { payload: AuthDebugPayload | null }) {
 function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
   const { getToken } = useClerkAuth();
   const getTokenRef = useRef(getToken);
-  const [authDebugEnabled] = useState(isAuthDebugRequested);
+  const [authDebugEnabled, setAuthDebugEnabled] = useState(false);
   const [authDebugPayload, setAuthDebugPayload] = useState<AuthDebugPayload | null>(null);
 
   useEffect(() => {
     getTokenRef.current = getToken;
     setClerkTokenGetter(() => readClerkToken(getTokenRef.current));
   }, [getToken]);
+
+  useEffect(() => {
+    if (isAuthDebugRequested()) {
+      setAuthDebugEnabled(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!authDebugEnabled || typeof window === "undefined") return;
