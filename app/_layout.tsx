@@ -64,24 +64,54 @@ const tokenCache = {
 
 type ClerkGetToken = ReturnType<typeof useClerkAuth>["getToken"];
 
-async function readClerkToken(getToken: ClerkGetToken): Promise<string | null> {
-  try {
-    const freshToken = await getToken({ skipCache: true });
-    if (freshToken) return freshToken;
-  } catch (error) {
-    console.warn("[Auth] Fresh Clerk token fetch failed:", error);
-  }
+async function resolveWithTimeout<T>(
+  operation: Promise<T>,
+  timeoutMs: number,
+  label: string,
+): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => {
+      timedOut = true;
+      resolve(null);
+    }, timeoutMs);
+  });
 
   try {
-    const cachedToken = await getToken();
-    if (cachedToken) return cachedToken;
+    const result = await Promise.race([operation, timeout]);
+    if (timedOut) {
+      console.warn(`[Auth] ${label} timed out after ${timeoutMs}ms`);
+    }
+    return result;
   } catch (error) {
-    console.warn("[Auth] Cached Clerk token fetch failed:", error);
+    console.warn(`[Auth] ${label} failed:`, error);
+    return null;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
+}
+
+async function readClerkToken(getToken: ClerkGetToken): Promise<string | null> {
+  const freshToken = await resolveWithTimeout(
+    getToken({ skipCache: true }),
+    2500,
+    "Fresh Clerk token fetch",
+  );
+  if (freshToken) return freshToken;
+
+  const cachedToken = await resolveWithTimeout(getToken(), 1500, "Cached Clerk token fetch");
+  if (cachedToken) return cachedToken;
 
   try {
     const clerk = getClerkInstance();
-    const sessionToken = await clerk?.session?.getToken({ skipCache: true });
+    const sessionTokenRequest = clerk?.session?.getToken({ skipCache: true });
+    if (!sessionTokenRequest) return null;
+    const sessionToken = await resolveWithTimeout(
+      sessionTokenRequest,
+      1500,
+      "Clerk session token fallback",
+    );
     return sessionToken ?? null;
   } catch (error) {
     console.warn("[Auth] Clerk session token fallback failed:", error);
