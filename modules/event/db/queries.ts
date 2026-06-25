@@ -7,8 +7,8 @@
 
 import { and, eq, gte, gt, lt, desc, asc, sql, isNull, or, inArray } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import * as schema from "../../../drizzle/schema";
-import { events } from "../../../drizzle/schema";
+import * as schema from "../../../drizzle/schema/index.js";
+import { events } from "../../../drizzle/schema/index.js";
 import type { InsertEvent, Event } from "../../../drizzle/schema/event.js";
 
 type DB = PostgresJsDatabase<typeof schema>;

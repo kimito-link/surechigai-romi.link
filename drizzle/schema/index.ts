@@ -6,16 +6,16 @@
  */
 
 // Users & Auth
-export * from "./users";
+export * from "./users.js";
 
 // Audit Logs
-export * from "./audit";
+export * from "./audit.js";
 
 // API Usage Tracking
-export * from "./api-usage";
+export * from "./api-usage.js";
 
 // すれちがいロミ: Encounter 関連テーブル
-export * from "./encounter";
+export * from "./encounter.js";
 
 // すれちがいロミ / 動員ちゃれんじ 共通: Event（集まり）関連テーブル
-export * from "./event";
+export * from "./event.js";

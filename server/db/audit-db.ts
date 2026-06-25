@@ -6,8 +6,8 @@
  * v6.41: 監査ログ機能追加
  */
 
-import { getDb, eq, desc, and, gte, lte } from "./connection";
-import { auditLogs, InsertAuditLog, AuditAction, EntityType } from "../../drizzle/schema";
+import { getDb, eq, desc, and, gte, lte } from "./connection.js";
+import { auditLogs, InsertAuditLog, AuditAction, EntityType } from "../../drizzle/schema/index.js";
 
 // =============================================================================
 // 監査ログ記録

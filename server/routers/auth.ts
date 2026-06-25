@@ -4,8 +4,8 @@
  * 認証関連のルーター
  */
 import { COOKIE_NAME } from "../../shared/const.js";
-import { getSessionCookieOptions } from "../_core/cookies";
-import { publicProcedure, router } from "../_core/trpc";
+import { getSessionCookieOptions } from "../_core/cookies.js";
+import { publicProcedure, router } from "../_core/trpc.js";
 
 export const authRouter = router({
   me: publicProcedure.query((opts) => opts.ctx.user),

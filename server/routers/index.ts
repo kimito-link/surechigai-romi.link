@@ -3,12 +3,12 @@
  *
  * 全ルーターを統合してappRouterを作成
  */
-import { router } from "../_core/trpc";
+import { router } from "../_core/trpc.js";
 
 // 個別ルーターをインポート
-import { authRouter } from "./auth";
-import { ogpRouter } from "./ogp";
-import { devRouter } from "./dev";
+import { authRouter } from "./auth.js";
+import { ogpRouter } from "./ogp.js";
+import { devRouter } from "./dev.js";
 
 // encounter モジュールルーター
 import { encounterRouter } from "../../modules/encounter/api/encounter.js";

@@ -5,19 +5,19 @@
  */
 
 // Connection & utilities
-export { getDb, generateSlug, eq, desc, sql, and, ne, or, isNull, asc, like, inArray, gte, lte, count } from "./connection";
+export { getDb, generateSlug, eq, desc, sql, and, ne, or, isNull, asc, like, inArray, gte, lte, count } from "./connection.js";
 
 // User functions
-export * from "./user-db";
+export * from "./user-db.js";
 
 // Badge functions（プレースホルダー）
-export * from "./badge-db";
+export * from "./badge-db.js";
 
 // AI functions（プレースホルダー）
-export * from "./ai-db";
+export * from "./ai-db.js";
 
 // Audit functions
-export * from "./audit-db";
+export * from "./audit-db.js";
 
 // API Usage functions
-export * from "./api-usage-db";
+export * from "./api-usage-db.js";

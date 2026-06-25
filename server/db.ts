@@ -5,4 +5,4 @@
  * 新規コードは直接 server/db/xxx からインポートすることを推奨
  */
 
-export * from "./db/index";
+export * from "./db/index.js";

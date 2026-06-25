@@ -8,7 +8,7 @@
 import { eq, desc, and, sql, isNull, or, gte, lte, lt, inArray, asc, ne, like, count } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import * as schema from "../../drizzle/schema";
+import * as schema from "../../drizzle/schema/index.js";
 
 type DrizzleDB = PostgresJsDatabase<typeof schema>;
 let _db: DrizzleDB | null = null;

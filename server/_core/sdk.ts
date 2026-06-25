@@ -11,8 +11,8 @@ import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
-import * as db from "../db";
-import { ENV } from "./env";
+import * as db from "../db/index.js";
+import { ENV } from "./env.js";
 
 // Utility function
 const isNonEmptyString = (value: unknown): value is string =>
@@ -258,6 +258,5 @@ export function clearActivity(openId: string): void {
 }
 
 export const sdk = new SDKServer();
-
 
 

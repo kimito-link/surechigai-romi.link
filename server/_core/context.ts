@@ -1,6 +1,6 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { sdk } from "./sdk";
+import { sdk } from "./sdk.js";
 
 const ADMIN_SESSION_COOKIE = "admin_session";
 

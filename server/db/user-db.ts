@@ -1,6 +1,6 @@
-import { getDb, eq, desc } from "./connection";
-import { InsertUser, users } from "../../drizzle/schema";
-import { ENV } from "../_core/env";
+import { getDb, eq, desc } from "./connection.js";
+import { InsertUser, users } from "../../drizzle/schema/index.js";
+import { ENV } from "../_core/env.js";
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {

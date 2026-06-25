@@ -4,8 +4,8 @@
  * API使用量とコストの記録・取得を行うDB関数
  */
 
-import { getDb } from "./index";
-import { apiUsage, apiCostSettings, InsertApiUsage, InsertApiCostSettings, type ApiCostSettings } from "../../drizzle/schema";
+import { getDb } from "./index.js";
+import { apiUsage, apiCostSettings, InsertApiUsage, InsertApiCostSettings, type ApiCostSettings } from "../../drizzle/schema/index.js";
 import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
 
 // X APIの従量課金設定

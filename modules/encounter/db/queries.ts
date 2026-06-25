@@ -8,7 +8,7 @@
 
 import { and, desc, eq, gte, inArray, or, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import * as schema from "../../../drizzle/schema";
+import * as schema from "../../../drizzle/schema/index.js";
 import {
   locations,
   encounters,
@@ -18,7 +18,7 @@ import {
   userSettings,
   users,
   twitterUserCache,
-} from "../../../drizzle/schema";
+} from "../../../drizzle/schema/index.js";
 import { kRing } from "../core/geo.js";
 import type { NearbyCandidate, TimeshiftCandidate } from "../core/matching.js";
 

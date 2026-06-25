@@ -5,9 +5,9 @@
  * すれちがいロミ: すれ違いエリアの市区町村OGP画像を生成、集まりのOGPメタ
  */
 import { z } from "zod";
-import { publicProcedure, router } from "../_core/trpc";
-import { getDb } from "../db/connection";
-import { getEventById } from "../../modules/event/db/queries";
+import { publicProcedure, router } from "../_core/trpc.js";
+import { getDb } from "../db/connection.js";
+import { getEventById } from "../../modules/event/db/queries.js";
 import { TRPCError } from "@trpc/server";
 
 export const ogpRouter = router({
