@@ -5,7 +5,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { Platform, View, Text } from "react-native";
@@ -62,12 +62,44 @@ const tokenCache = {
   },
 };
 
-function ClerkTokenSync() {
+function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
   const { getToken } = useClerkAuth();
+  const getTokenRef = useRef(getToken);
+
   useEffect(() => {
-    setClerkTokenGetter(getToken);
+    getTokenRef.current = getToken;
+    setClerkTokenGetter(() => getTokenRef.current());
   }, [getToken]);
-  return null;
+
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        queryCache: createPerformanceQueryCache(),
+        mutationCache: createPerformanceMutationCache(),
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: 1,
+            staleTime: 30 * 60 * 1000,
+            gcTime: 2 * 60 * 60 * 1000,
+          },
+        },
+      }),
+  );
+  const [trpcClient] = useState(() =>
+    createTRPCClient({ getToken: () => getTokenRef.current() }),
+  );
+
+  return (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister: asyncStoragePersister }}
+      >
+        {children}
+      </PersistQueryClientProvider>
+    </trpc.Provider>
+  );
 }
 
 export const unstable_settings = {
@@ -94,23 +126,6 @@ export default function RootLayout() {
       stopNetworkMonitoring();
     };
   }, []);
-
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        queryCache: createPerformanceQueryCache(),
-        mutationCache: createPerformanceMutationCache(),
-        defaultOptions: {
-          queries: {
-            refetchOnWindowFocus: false,
-            retry: 1,
-            staleTime: 30 * 60 * 1000,
-            gcTime: 2 * 60 * 60 * 1000,
-          },
-        },
-      }),
-  );
-  const [trpcClient] = useState(() => createTRPCClient());
 
   const providerInitialMetrics = useMemo(() => {
     const metrics = initialWindowMetrics ?? { insets: initialInsets, frame: initialFrame };
@@ -153,26 +168,21 @@ export default function RootLayout() {
             </Text>
           </View>
         ) : (
-          <trpc.Provider client={trpcClient} queryClient={queryClient}>
-            <PersistQueryClientProvider
-              client={queryClient}
-              persistOptions={{ persister: asyncStoragePersister }}
-            >
-              <AutoLoginProvider>
-                <LoginSuccessProvider>
-                  <ToastProvider>
-                    <Stack screenOptions={{ headerShown: false }}>
-                      <Stack.Screen name="(tabs)" />
-                    </Stack>
-                    <StatusBar style="auto" />
-                    <LoginSuccessModalWrapper />
-                    <OfflineBanner />
-                    <NetworkToast />
-                  </ToastProvider>
-                </LoginSuccessProvider>
-              </AutoLoginProvider>
-            </PersistQueryClientProvider>
-          </trpc.Provider>
+          <ClerkAwareTRPCProvider>
+            <AutoLoginProvider>
+              <LoginSuccessProvider>
+                <ToastProvider>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(tabs)" />
+                  </Stack>
+                  <StatusBar style="auto" />
+                  <LoginSuccessModalWrapper />
+                  <OfflineBanner />
+                  <NetworkToast />
+                </ToastProvider>
+              </LoginSuccessProvider>
+            </AutoLoginProvider>
+          </ClerkAwareTRPCProvider>
         )}
       </GestureHandlerRootView>
     </ErrorBoundary>
@@ -195,7 +205,6 @@ export default function RootLayout() {
         tokenCache={tokenCache}
         {...clerkSatelliteProps}
       >
-        <ClerkTokenSync />
         <ThemeProvider>
           <SafeAreaProvider initialMetrics={providerInitialMetrics}>
             <SafeAreaFrameContext.Provider value={frame}>
@@ -215,7 +224,6 @@ export default function RootLayout() {
       tokenCache={tokenCache}
       {...clerkSatelliteProps}
     >
-      <ClerkTokenSync />
       <ThemeProvider>
         <SafeAreaProvider initialMetrics={providerInitialMetrics}>{content}</SafeAreaProvider>
       </ThemeProvider>

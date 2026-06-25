@@ -8,7 +8,7 @@ import { COOKIE_NAME, SESSION_MAX_AGE_MS } from "../../shared/const.js";
 import { createClerkClient, verifyToken } from "@clerk/backend";
 import { ForbiddenError } from "../../shared/_core/errors.js";
 import { parse as parseCookieHeader } from "cookie";
-import type { Request } from "express";
+import type { Request as ExpressRequest } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db/index.js";
@@ -36,6 +36,139 @@ class SDKServer {
 
     const parsed = parseCookieHeader(cookieHeader);
     return new Map(Object.entries(parsed));
+  }
+
+  private getHeader(req: ExpressRequest, name: string): string | undefined {
+    const value = req.headers[name.toLowerCase()];
+    if (Array.isArray(value)) return value[0];
+    return typeof value === "string" ? value : undefined;
+  }
+
+  private getClerkRequestUrl(req: ExpressRequest): string {
+    const forwardedProto = this.getHeader(req, "x-forwarded-proto")?.split(",")[0]?.trim();
+    const proto = forwardedProto || req.protocol || "https";
+    const forwardedHost = this.getHeader(req, "x-forwarded-host")?.split(",")[0]?.trim();
+    const host =
+      forwardedHost ||
+      this.getHeader(req, "host") ||
+      process.env.VERCEL_URL ||
+      "surechigai-romi.link";
+    const path = req.originalUrl || req.url || "/";
+    return new URL(path, `${proto}://${host}`).toString();
+  }
+
+  private createClerkWebRequest(req: ExpressRequest): Request {
+    const headers = new Headers();
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (value === undefined) continue;
+      if (Array.isArray(value)) {
+        for (const item of value) headers.append(key, String(item));
+      } else {
+        headers.set(key, String(value));
+      }
+    }
+
+    return new Request(this.getClerkRequestUrl(req), {
+      method: req.method || "GET",
+      headers,
+    });
+  }
+
+  private hasClerkAuthSignal(req: ExpressRequest): boolean {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) return true;
+
+    const cookies = this.parseCookies(req.headers.cookie);
+    for (const name of cookies.keys()) {
+      if (
+        name === "__session" ||
+        name === "__client_uat" ||
+        name.startsWith("__clerk") ||
+        name.toLowerCase().includes("clerk")
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private async getOrCreateClerkUser(clerkUserId: string): Promise<User | null> {
+    const openId = `clerk:${clerkUserId}`;
+
+    let user = await db.getUserByOpenId(openId);
+    if (user) return user;
+
+    if (!process.env.CLERK_SECRET_KEY?.trim()) return null;
+
+    const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+    const clerkUser = await clerk.users.getUser(clerkUserId);
+    const twitterAccount = clerkUser.externalAccounts?.find(
+      (account: { provider: string }) =>
+        account.provider === "x" ||
+        account.provider === "oauth_x" ||
+        account.provider === "twitter",
+    );
+
+    await db.upsertUser({
+      openId,
+      name:
+        clerkUser.fullName ||
+        (twitterAccount as { username?: string } | undefined)?.username ||
+        "Unknown",
+      email: clerkUser.primaryEmailAddress?.emailAddress || null,
+      loginMethod: "twitter",
+      lastSignedIn: new Date(),
+    });
+
+    return (await db.getUserByOpenId(openId)) ?? null;
+  }
+
+  private async authenticateWithClerk(req: ExpressRequest): Promise<User | null> {
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (!secretKey?.trim()) return null;
+    if (!this.hasClerkAuthSignal(req)) return null;
+
+    const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+    const domain = process.env.EXPO_PUBLIC_CLERK_DOMAIN;
+    const isSatellite = process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE === "true";
+    const signInUrl = process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL;
+
+    try {
+      const clerk = createClerkClient({
+        secretKey,
+        publishableKey,
+        domain,
+        isSatellite,
+      });
+      const requestState = await clerk.authenticateRequest(this.createClerkWebRequest(req), {
+        secretKey,
+        publishableKey,
+        domain,
+        isSatellite,
+        ...(signInUrl ? { signInUrl } : {}),
+      });
+
+      if (!requestState.isAuthenticated) {
+        console.warn("[Auth] Clerk request auth failed", {
+          reason: requestState.reason,
+          message: requestState.message,
+        });
+        return null;
+      }
+
+      const auth = requestState.toAuth();
+      if (!auth?.userId) return null;
+      return this.getOrCreateClerkUser(auth.userId);
+    } catch (error) {
+      const err = error as { code?: string; message?: string; reason?: string };
+      console.warn("[Auth] Clerk request auth error", {
+        code: err.code,
+        reason: err.reason,
+        message: err.message,
+      });
+      return null;
+    }
   }
 
   private getSessionSecret() {
@@ -120,7 +253,10 @@ class SDKServer {
 
   /**
    * 繝ｪ繧ｯ繧ｨ繧ｹ繝医°繧峨Θ繝ｼ繧ｶ繝ｼ繧定ｪ崎ｨｼ縺吶ｋ縲・   * Bearer 繝医・繧ｯ繝ｳ or 繧ｻ繝・す繝ｧ繝ｳ Cookie 縺ｮ JWT 繧呈､懆ｨｼ縺励．B 縺九ｉ繝ｦ繝ｼ繧ｶ繝ｼ繧貞叙蠕励☆繧九・   */
-  async authenticateRequest(req: Request): Promise<User> {
+  async authenticateRequest(req: ExpressRequest): Promise<User> {
+    const clerkUser = await this.authenticateWithClerk(req);
+    if (clerkUser) return clerkUser;
+
     // Bearer token from Authorization header
     const authHeader = req.headers.authorization || req.headers.Authorization;
     let token: string | undefined;
@@ -138,28 +274,7 @@ class SDKServer {
         if (!clerkUserId) {
           throw ForbiddenError("Invalid token: missing sub claim");
         }
-        const openId = `clerk:${clerkUserId}`;
-
-        let user = await db.getUserByOpenId(openId);
-        if (!user) {
-          const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
-          const clerkUser = await clerk.users.getUser(clerkUserId);
-          const twitterAccount = clerkUser.externalAccounts?.find(
-            (a: { provider: string }) => a.provider === "x" || a.provider === "oauth_x",
-          );
-          await db.upsertUser({
-            openId,
-            name:
-              clerkUser.fullName ||
-              (twitterAccount as { username?: string } | undefined)?.username ||
-              "Unknown",
-            email: clerkUser.primaryEmailAddress?.emailAddress || null,
-            loginMethod: "twitter",
-            lastSignedIn: new Date(),
-          });
-          user = await db.getUserByOpenId(openId);
-        }
-
+        const user = await this.getOrCreateClerkUser(clerkUserId);
         if (user) return user;
       } catch (e) {
         const err = e as { code?: string; message?: string };
@@ -258,5 +373,3 @@ export function clearActivity(openId: string): void {
 }
 
 export const sdk = new SDKServer();
-
-

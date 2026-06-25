@@ -23,6 +23,8 @@ export const trpc = createTRPCReact<AppRouter>();
  */
 export const setClerkTokenGetter = registerClerkTokenGetter;
 
+type TokenGetter = () => Promise<string | null>;
+
 async function getAccessToken(): Promise<string | null> {
   try {
     return await getAuthToken();
@@ -36,7 +38,7 @@ async function getAccessToken(): Promise<string | null> {
  * Creates the tRPC client with proper configuration.
  * Call this once in your app's root layout.
  */
-export function createTRPCClient() {
+export function createTRPCClient(options: { getToken?: TokenGetter } = {}) {
   return trpc.createClient({
     links: [
       httpBatchStreamLink({
@@ -44,9 +46,12 @@ export function createTRPCClient() {
         // tRPC v11: transformer MUST be inside link, not at root
         transformer: superjson,
         async headers() {
-          // Always try to get access token and send in Authorization header
-          // This is required for cross-origin requests (Vercel -> Railway)
-          const token = await getAccessToken();
+          const token = options.getToken
+            ? await options.getToken().catch((error) => {
+                console.error("[tRPC] Failed to get Clerk token:", error);
+                return null;
+              })
+            : await getAccessToken();
           if (token) {
             return { Authorization: `Bearer ${token}` };
           }
