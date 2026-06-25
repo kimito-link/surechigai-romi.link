@@ -121,20 +121,9 @@ function buildUserFromClerk(clerkUser: any): Auth.User | null {
   };
 }
 
-let globalAuthReady = false;
-let cachedUser: Auth.User | null = null;
-let cachedIsAuthenticated = false;
-
 export function useAuth() {
   const { user: clerkUser, isLoaded: clerkIsLoaded } = useUser();
-  
-  if (clerkIsLoaded) {
-    globalAuthReady = true;
-    cachedIsAuthenticated = !!clerkUser;
-    cachedUser = buildUserFromClerk(clerkUser);
-  }
-  
-  const isLoaded = clerkIsLoaded || globalAuthReady;
+  const isLoaded = clerkIsLoaded;
   const { signOut, getToken } = useClerkAuth();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_x" });
 
@@ -157,8 +146,6 @@ export function useAuth() {
             await Auth.removeSessionToken();
             await Auth.clearUserInfo();
             await clearAllTokenData();
-            cachedUser = null;
-            cachedIsAuthenticated = false;
           } catch (signOutErr) {
             console.warn("[Auth] signOut before account switch failed:", signOutErr);
           }
@@ -238,8 +225,6 @@ export function useAuth() {
   const logout = useCallback(async () => {
     try {
       await signOut();
-      cachedUser = null;
-      cachedIsAuthenticated = false;
     } catch (err) {
       console.error("[Auth] Clerk signOut error:", err);
     } finally {
@@ -250,17 +235,12 @@ export function useAuth() {
   }, [signOut]);
 
   const user = useMemo(() => {
-    if (clerkIsLoaded) {
-      return buildUserFromClerk(clerkUser);
-    }
-    return cachedUser;
+    if (!clerkIsLoaded) return null;
+    return buildUserFromClerk(clerkUser);
   }, [clerkUser, clerkIsLoaded]);
 
   const isAuthenticated = useMemo(() => {
-    if (clerkIsLoaded) {
-      return !!clerkUser;
-    }
-    return cachedIsAuthenticated;
+    return clerkIsLoaded && !!clerkUser;
   }, [clerkUser, clerkIsLoaded]);
 
   // Clerkの読み込みが遅い場合、1秒後にログインUIを表示するフォールバック

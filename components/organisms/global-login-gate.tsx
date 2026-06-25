@@ -3,7 +3,9 @@ import { color } from "@/theme/tokens";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
-import { useLoginGuide } from "@/hooks/use-login-guide";
+import { useAuth } from "@/hooks/use-auth";
+import { usePathname } from "expo-router";
+import { useMemo, useState } from "react";
 
 interface GlobalLoginGateProps {
   title: string;
@@ -12,13 +14,32 @@ interface GlobalLoginGateProps {
   isDesktop?: boolean;
 }
 
+function normalizeReturnTo(pathname: string | null): string {
+  if (!pathname || pathname === "/auth/kimito-link") return "/";
+  if (pathname.startsWith("/(tabs)/")) return pathname.replace("/(tabs)", "");
+  if (pathname === "/(tabs)") return "/";
+  return pathname.startsWith("/") ? pathname : `/${pathname}`;
+}
+
 export function GlobalLoginGate({
   title,
   subtitle,
   headerTitle,
   isDesktop = false,
 }: GlobalLoginGateProps) {
-  const openLoginGuide = useLoginGuide();
+  const { login } = useAuth();
+  const pathname = usePathname();
+  const returnTo = useMemo(() => normalizeReturnTo(pathname), [pathname]);
+  const [isStartingLogin, setIsStartingLogin] = useState(false);
+
+  const handleLogin = async () => {
+    setIsStartingLogin(true);
+    try {
+      await login(returnTo);
+    } finally {
+      setIsStartingLogin(false);
+    }
+  };
 
   return (
     <ScreenContainer style={{ backgroundColor: "#FFFFFF" }} edges={["top", "left", "right"]}>
@@ -67,11 +88,19 @@ export function GlobalLoginGate({
             </Text>
             
             <Pressable
-              style={({ pressed }) => [styles.button, styles.loginButton, pressed && styles.buttonPressed]}
-              onPress={() => openLoginGuide()}
+              disabled={isStartingLogin}
+              style={({ pressed }) => [
+                styles.button,
+                styles.loginButton,
+                pressed && styles.buttonPressed,
+                isStartingLogin && styles.buttonDisabled,
+              ]}
+              onPress={handleLogin}
             >
               <MaterialIcons name="login" size={20} color={color.textWhite} style={{ marginRight: 8 }} />
-              <Text style={styles.buttonText}>[ SYSTEM: Xログインの説明を見る ]</Text>
+              <Text style={styles.buttonText}>
+                {isStartingLogin ? "[ SYSTEM: 接続中... ]" : "[ SYSTEM: Xログインへ進む ]"}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -189,6 +218,9 @@ const styles = StyleSheet.create({
   },
   buttonPressed: {
     opacity: 0.8,
+  },
+  buttonDisabled: {
+    opacity: 0.65,
   },
   loginButton: {
     backgroundColor: color.accentIndigo,
