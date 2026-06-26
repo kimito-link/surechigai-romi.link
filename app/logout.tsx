@@ -1,13 +1,21 @@
 /**
  * ログアウト画面
  *
- * kimito.link の /logout/success ページのソースを移植し、見た目・文言・体験を
- * まったく同じにする（出典: kimitolink-linktree/app/(auth)/logout/success/page.tsx）。
+ * kimito.link のログアウト体験を移植し、見た目・文言・演出をまったく同じにする。
+ * - 処理中/エラー: kimitolink-linktree/components/LogoutExperience.tsx
+ * - 完了:          kimitolink-linktree/app/(auth)/logout/success/page.tsx
  * ボタンの遷移先だけ surechigai 用（自サービス内で再ログイン / トップへ）に配線する。
  */
-import { Text, View, ActivityIndicator, Pressable, StyleSheet } from "react-native";
+import {
+  Text,
+  View,
+  Pressable,
+  StyleSheet,
+  Animated,
+  Easing,
+} from "react-native";
 import { color, palette } from "@/theme/tokens";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
@@ -21,6 +29,9 @@ const LINK_CHARACTER = require("@/assets/images/characters/link/link-yukkuri-smi
 
 // kimito ブランドの不透明度付きライン色
 const CARD_BORDER = "#00427B26"; // kimitoBlue 15%
+const LOGOUT_TIMEOUT_MS = 8000;
+
+type LogoutStatus = "working" | "error" | "success";
 
 /** X(旧Twitter) ロゴ。kimito の success ページと同一のパス。 */
 function XGlyph({ size = 16, fill = palette.white }: { size?: number; fill?: string }) {
@@ -34,32 +45,78 @@ function XGlyph({ size = 16, fill = palette.white }: { size?: number; fill?: str
   );
 }
 
-export default function LogoutScreen() {
-  const { logout, isAuthenticated } = useAuth();
-  const openLoginGuide = useLoginGuide();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [logoutComplete, setLogoutComplete] = useState(false);
+/** kimito の border-t スピナーと同じ青リング。 */
+function SpinnerRing() {
+  const spin = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 900,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [spin]);
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+  return (
+    <Animated.View style={[styles.spinner, { transform: [{ rotate }] }]} accessibilityLabel="処理中" />
+  );
+}
 
-  const handleLogout = useCallback(async () => {
-    setIsLoggingOut(true);
+export default function LogoutScreen() {
+  const { logout, isAuthenticated, isAuthReady } = useAuth();
+  const openLoginGuide = useLoginGuide();
+  const [status, setStatus] = useState<LogoutStatus>("working");
+  const startedRef = useRef(false);
+
+  const runLogout = useCallback(async () => {
+    setStatus("working");
     try {
-      await logout();
-      setLogoutComplete(true);
+      await Promise.race([
+        logout(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("logout timed out")), LOGOUT_TIMEOUT_MS),
+        ),
+      ]);
+      setStatus("success");
     } catch (error) {
       console.error("Logout error:", error);
-    } finally {
-      setIsLoggingOut(false);
+      startedRef.current = false;
+      setStatus("error");
     }
   }, [logout]);
 
-  // マウント時に自動ログアウト
+  // 認証状態が確定したら自動でログアウトを開始（既にログアウト済みなら完了表示へ）
   useEffect(() => {
-    if (isAuthenticated && !logoutComplete && !isLoggingOut) {
-      handleLogout();
+    if (!isAuthReady) return;
+    if (startedRef.current) return;
+    startedRef.current = true;
+    if (!isAuthenticated) {
+      setStatus("success");
+      return;
     }
-  }, [isAuthenticated, handleLogout, isLoggingOut, logoutComplete]);
+    void runLogout();
+  }, [isAuthReady, isAuthenticated, runLogout]);
+
+  const handleRetry = () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    void runLogout();
+  };
 
   const handleXLogin = () => openLoginGuide({ returnTo: "/", mode: "same" });
+
+  const kicker =
+    status === "success" ? "またね〜" : status === "error" ? "少しだけ待ってね" : "また会おうね〜";
+  const title =
+    status === "success"
+      ? "ログアウトしました"
+      : status === "error"
+        ? "ログアウトを完了できませんでした"
+        : "ログアウトしています";
 
   return (
     <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
@@ -75,25 +132,29 @@ export default function LogoutScreen() {
           >
             <Image source={LINK_CHARACTER} style={styles.character} contentFit="contain" />
 
-            <Text style={styles.kicker}>またね〜</Text>
-            <Text style={styles.title}>
-              {logoutComplete ? "ログアウトしました" : "ログアウトしています"}
-            </Text>
+            <Text style={styles.kicker}>{kicker}</Text>
+            <Text style={styles.title}>{title}</Text>
 
-            {logoutComplete ? (
+            {status === "success" && (
               <View style={styles.checkCircle}>
                 <Text style={styles.checkMark}>✓</Text>
               </View>
-            ) : (
-              <ActivityIndicator size="small" color={palette.kimitoBlue} style={{ marginTop: 20 }} />
+            )}
+            {status === "working" && (
+              <View style={{ marginTop: 24 }}>
+                <SpinnerRing />
+              </View>
             )}
 
             <Text style={styles.description}>
-              X アカウントとの接続を安全に終了しました。{"\n"}
-              作成したプロフィールやリンクは保存されています。
+              {status === "success"
+                ? "X アカウントとの接続を安全に終了しました。\n作成したプロフィールやリンクは保存されています。"
+                : status === "error"
+                  ? "通信が一時的に不安定です。もう一度お試しください。"
+                  : "安全にセッションを終了しています。通常はすぐに完了します。"}
             </Text>
 
-            {logoutComplete && (
+            {status === "success" && (
               <View style={styles.buttons}>
                 <Pressable
                   onPress={handleXLogin}
@@ -108,6 +169,24 @@ export default function LogoutScreen() {
                   style={({ pressed }) => [styles.btnTop, pressed && styles.pressed]}
                 >
                   <Text style={styles.btnTopText}>トップページへ</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {status === "error" && (
+              <View style={styles.buttons}>
+                <Pressable
+                  onPress={handleRetry}
+                  style={({ pressed }) => [styles.btnPrimary, pressed && styles.pressed]}
+                >
+                  <Text style={styles.btnXText}>もう一度試す</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => navigateReplace.toHomeRoot()}
+                  style={({ pressed }) => [styles.btnTop, pressed && styles.pressed]}
+                >
+                  <Text style={styles.btnTopText}>トップへ戻る</Text>
                 </Pressable>
               </View>
             )}
@@ -177,6 +256,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700",
   },
+  spinner: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 4,
+    borderColor: CARD_BORDER,
+    borderTopColor: palette.kimitoBlue,
+  },
   description: {
     marginTop: 16,
     color: "#334155",
@@ -197,6 +284,14 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 12,
     backgroundColor: palette.black,
+    paddingHorizontal: 20,
+  },
+  btnPrimary: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 48,
+    borderRadius: 12,
+    backgroundColor: palette.kimitoBlue,
     paddingHorizontal: 20,
   },
   btnXText: {

@@ -1,6 +1,7 @@
 import { usePathname } from "expo-router";
 import { useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthHandoff } from "@/lib/auth-handoff-context";
 
 export type LoginGuideMode = "same" | "switch";
 
@@ -24,13 +25,16 @@ function normalizeReturnTo(pathname: string | null): string {
 export function useLoginGuide() {
   const pathname = usePathname();
   const { login } = useAuth();
+  const { showHandoff } = useAuthHandoff();
 
   return useCallback(
     (options: LoginGuideOptions = {}) => {
       const returnTo = options.returnTo ?? normalizeReturnTo(pathname);
       const isSwitch = options.mode === "switch";
+      // kimito と同じ「りんくが鍵を開けています…」演出を遷移直前に被せる。
+      showHandoff("x");
       void login(returnTo, isSwitch);
     },
-    [pathname, login],
+    [pathname, login, showHandoff],
   );
 }

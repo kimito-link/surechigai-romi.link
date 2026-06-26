@@ -15,6 +15,8 @@ import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { LoginSuccessProvider } from "@/lib/login-success-context";
 import { LoginSuccessModalWrapper } from "@/components/molecules/login-success-modal-wrapper";
+import { AuthHandoffProvider } from "@/lib/auth-handoff-context";
+import { AuthHandoffOverlay } from "@/components/organisms/auth-handoff-overlay";
 import { OfflineBanner } from "@/components/organisms/offline-banner";
 import { ToastProvider } from "@/components/atoms/toast";
 import {
@@ -366,6 +368,7 @@ export default function RootLayout() {
         ) : (
           <ClerkAwareTRPCProvider>
             <AutoLoginProvider>
+              <AuthHandoffProvider>
               <LoginSuccessProvider>
                 <ToastProvider>
                   <ExpoThemeProvider value={NavLightTheme}>
@@ -374,6 +377,7 @@ export default function RootLayout() {
                     </Stack>
                   </ExpoThemeProvider>
                   <StatusBar style="auto" />
+                  <AuthHandoffOverlay />
                   <LoginSuccessModalWrapper />
                   <OfflineBanner />
                   <NetworkToast />
@@ -393,6 +397,7 @@ export default function RootLayout() {
                   </View>
                 </ToastProvider>
               </LoginSuccessProvider>
+              </AuthHandoffProvider>
             </AutoLoginProvider>
           </ClerkAwareTRPCProvider>
         )}
