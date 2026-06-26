@@ -68,8 +68,8 @@ type AuthDebugPayload = {
   checkedAt: string;
   hasToken: boolean;
   tokenLength: number;
-  authMeStatus: number | null;
-  authMeOk: boolean | null;
+  protectedStatus: number | null;
+  protectedOk: boolean | null;
 };
 
 async function resolveWithTimeout<T>(
@@ -195,23 +195,23 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
 
     async function runAuthDebugProbe() {
       const token = await readClerkToken(getTokenRef.current);
-      let authMeStatus: number | null = null;
-      let authMeOk: boolean | null = null;
+      let protectedStatus: number | null = null;
+      let protectedOk: boolean | null = null;
 
       if (token) {
         try {
-          const response = await fetch("/api/trpc/auth.me?batch=1&input=%7B%7D", {
+          const response = await fetch("/api/trpc/settings.get?batch=1&input=%7B%7D", {
             credentials: "include",
             headers: {
               Authorization: `Bearer ${token}`,
               Accept: "application/json",
             },
           });
-          authMeStatus = response.status;
-          authMeOk = response.ok;
+          protectedStatus = response.status;
+          protectedOk = response.ok;
         } catch {
-          authMeStatus = 0;
-          authMeOk = false;
+          protectedStatus = 0;
+          protectedOk = false;
         }
       }
 
@@ -220,8 +220,8 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
           checkedAt: new Date().toISOString(),
           hasToken: !!token,
           tokenLength: token?.length ?? 0,
-          authMeStatus,
-          authMeOk,
+          protectedStatus,
+          protectedOk,
         });
       }
     }

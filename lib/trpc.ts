@@ -1,5 +1,5 @@
 import { createTRPCReact } from "@trpc/react-query";
-import { httpBatchStreamLink } from "@trpc/client";
+import { httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import type { AppRouter } from "@/server/routers";
 import { getApiBaseUrl } from "@/constants/oauth";
@@ -12,8 +12,8 @@ import { getAuthToken, registerClerkTokenGetter } from "@/lib/auth-token";
  * NOT at the root createClient level. This ensures client and server
  * use the same serialization format (superjson).
  *
- * httpBatchStreamLink: レスポンスを順次ストリーミングし、
- * 遅いクエリを待たずに速いクエリから表示できる。
+ * httpBatchLink: 標準HTTP link。
+ * 位置送信や認証必須mutationを扱うため、ストリーミング応答ではなく通常JSON応答に固定する。
  */
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -53,7 +53,7 @@ async function resolveAccessToken(options: { getToken?: TokenGetter }): Promise<
 export function createTRPCClient(options: { getToken?: TokenGetter } = {}) {
   return trpc.createClient({
     links: [
-      httpBatchStreamLink({
+      httpBatchLink({
         url: `${getApiBaseUrl()}/api/trpc`,
         // tRPC v11: transformer MUST be inside link, not at root
         transformer: superjson,

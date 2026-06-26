@@ -163,6 +163,12 @@ export default function CheckinScreen() {
         throw new Error("ログインセッションを確認できません。もう一度Xログインしてください");
       }
 
+      try {
+        await utils.settings.get.fetch();
+      } catch {
+        throw new Error("ログインセッションをAPIで確認できません。もう一度Xログインしてください");
+      }
+
       const pos = await getCurrentLocation();
 
       if (pos.accuracy && pos.accuracy > 10000) {
