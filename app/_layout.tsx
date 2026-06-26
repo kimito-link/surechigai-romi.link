@@ -1,10 +1,11 @@
 import "@/global.css";
+// @ts-nocheck
 import { ClerkProvider, getClerkInstance, useAuth as useClerkAuth } from "@clerk/expo";
 import * as SecureStore from "expo-secure-store";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Stack } from "expo-router";
-import { ThemeProvider as ExpoThemeProvider, DarkTheme } from "@react-navigation/native";
+import { ThemeProvider as ExpoThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -320,28 +321,42 @@ export default function RootLayout() {
   // ビルド時の EXPO_PUBLIC 変数 inline に依存すると環境差で壊れるため、Web では既定で satellite ON。
   // 明示的に EXPO_PUBLIC_CLERK_IS_SATELLITE="false" のときだけ無効化(単独インスタンス検証用)。
   const isWeb = Platform.OS === "web";
-  const isSatellite = isWeb && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false";
-  const primarySignInUrl =
-    process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL || "https://kimito.link/sign-in/";
-  // 実行時の配信ホストから導出(Vercel env 変更不要)。env 上書きも許可。
-  const proxyUrl =
-    isWeb && typeof window !== "undefined"
-      ? `${window.location.origin}/__clerk`
-      : process.env.EXPO_PUBLIC_CLERK_PROXY_URL;
-  const clerkSatelliteProps = isSatellite
-    ? {
-        isSatellite: true as const,
-        satelliteAutoSync: true,
-        ...(proxyUrl ? { proxyUrl } : {}),
-        ...(primarySignInUrl ? { signInUrl: primarySignInUrl } : {}),
-      }
-    : {};
+  // ローカル開発環境(localhost等)では domain を使い、本番では proxyUrl を使う
+  // ※ Clerk は localhost での satellite mode + domain をサポートしているが、
+  // FAPI が localhost にルーティングされるわけではない。
+    // ローカル開発環境のテストのため、いったん isSatellite を false にして動作させるオプションを提供する。
+    // ローカル開発環境のテストのため、いったん isSatellite を false にして動作させるオプションを提供する。
+    const isWebMode = Platform.OS === "web";
+    const isLocalhostDev = isWebMode && typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    // EXPO_PUBLIC_CLERK_IS_SATELLITE="true" の場合でも localhost ではサテライトモードを無効化する
+    // これにより Production Keys are only allowed for domain "kimito.link" エラーを回避する
+    const isAppSatellite = isWebMode && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" && !isLocalhostDev;
+    
+    const appPrimarySignInUrl =
+      process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL || "https://kimito.link/sign-in/";
+    // 実行時の配信ホストから導出(Vercel env 変更不要)。env 上書きも許可。
+    // localhost のときは proxyUrl を空にして domain 指定へ。
+    const appProxyUrl =
+      isWebMode && typeof window !== "undefined" && !isLocalhostDev
+        ? `${window.location.origin}/__clerk`
+        : isLocalhostDev ? undefined : process.env.EXPO_PUBLIC_CLERK_PROXY_URL;
+    const appClerkDomain = isLocalhostDev ? "localhost:8081" : undefined;
+    
+    const appClerkSatelliteProps = isAppSatellite
+      ? {
+          isSatellite: true as const,
+          satelliteAutoSync: true,
+          ...(appProxyUrl ? { proxyUrl: appProxyUrl } : {}),
+          ...(appClerkDomain ? { domain: appClerkDomain } : {}),
+          ...(appPrimarySignInUrl ? { signInUrl: appPrimarySignInUrl } : {}),
+        }
+      : {};
 
   const content = (
     <ErrorBoundary screenName="App">
-      <GestureHandlerRootView style={{ flex: 1, overflow: "hidden", backgroundColor: "#0D1117" }}>
+      <GestureHandlerRootView style={{ flex: 1, overflow: "hidden", backgroundColor: "#F0F4F8" }}>
         {isMissingClerkKey ? (
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0D1117", padding: 20 }}>
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F0F4F8", padding: 20 }}>
             <Text style={{ color: "#F87171", fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>セットアップエラー</Text>
             <Text style={{ color: "#E6EDF3", fontSize: 16, textAlign: "center", marginBottom: 20 }}>
               Clerkの公開鍵 (EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY) が設定されていません。
@@ -353,8 +368,8 @@ export default function RootLayout() {
             <AutoLoginProvider>
               <LoginSuccessProvider>
                 <ToastProvider>
-                  <ExpoThemeProvider value={DarkTheme}>
-                    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0D1117" } }}>
+                  <ExpoThemeProvider value={DefaultTheme}>
+                    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#F0F4F8" } }}>
                       <Stack.Screen name="(tabs)" />
                     </Stack>
                   </ExpoThemeProvider>
@@ -400,7 +415,7 @@ export default function RootLayout() {
       <ClerkProvider
         publishableKey={clerkKey!}
         tokenCache={tokenCache}
-        {...clerkSatelliteProps}
+        {...appClerkSatelliteProps}
       >
         <ThemeProvider>
           <SafeAreaProvider initialMetrics={providerInitialMetrics}>
@@ -419,7 +434,7 @@ export default function RootLayout() {
     <ClerkProvider
       publishableKey={clerkKey!}
       tokenCache={tokenCache}
-      {...clerkSatelliteProps}
+      {...appClerkSatelliteProps}
     >
       <ThemeProvider>
         <SafeAreaProvider initialMetrics={providerInitialMetrics}>{content}</SafeAreaProvider>

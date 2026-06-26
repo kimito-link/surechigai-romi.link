@@ -328,7 +328,7 @@ export default function CheckinScreen() {
           showMenu={true}
           showLoginButton={!isAuthenticated}
           leftElement={
-            <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+            <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
               <MaterialIcons name="home" size={24} color={color.textWhite} />
             </Pressable>
           }
@@ -357,7 +357,7 @@ export default function CheckinScreen() {
           showMenu={true}
           showLoginButton={!isAuthenticated}
           leftElement={
-            <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+            <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
               <MaterialIcons name="home" size={24} color={color.textWhite} />
             </Pressable>
           }

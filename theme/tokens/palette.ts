@@ -28,21 +28,25 @@ export const palette = {
   orange500: "#EC4899",       // → primary500 に統一（黄色廃止）
 
   // Neutral (dark UI) - Black Base
-  gray900: "#0a0a0a",         // 背景（黒ベース）
-  gray850: "#121212",         // 画像プレースホルダ等
-  gray800: "#171717",         // surface（カード背景）
-  gray750: "#1f1f1f",         // surface alt
-  gray700: "#262626",         // border
-  gray650: "#3A3F47",         // switch track (dark)
-  gray600: "#404040",         // border alt
+  gray900: "#0F172A",         // 背景（黒ベース）
+  gray850: "#1E293B",         // 画像プレースホルダ等
+  gray800: "#334155",         // surface（カード背景）
+  gray750: "#475569",         // surface alt
+  gray700: "#64748B",         // border
+  gray650: "#94A3B8",         // switch track (dark)
+  gray600: "#94A3B8",         // border alt
 
   // Neutral (text) - 視認性改善（黒背景で読めるよう semantic で gray300/200 を採用）
-  gray500: "#525252",         // 非推奨（黒背景でコントラスト不足）。semantic.textHint は gray300 を使用
-  gray400: "#7a7a7a",         // 非推奨（黒背景でやや薄い）。semantic.textSecondary は gray200 を使用
-  gray300: "#a3a3a3",         // muted / hint（プレースホルダ等）
-  gray200: "#d4d4d4",         // subtle / secondary（本文・ラベル）
-  gray100: "#f5f5f5",         // primary text（最も明るい）
+  gray500: "#CBD5E1",         // 非推奨（黒背景でコントラスト不足）。semantic.textHint は gray300 を使用
+  gray400: "#E2E8F0",         // 非推奨（黒背景でやや薄い）。semantic.textSecondary は gray200 を使用
+  gray300: "#E2E8F0",         // muted / hint（プレースホルダ等）
+  gray200: "#F1F5F9",         // subtle / secondary（本文・ラベル）
+  gray100: "#F8FAFC",         // primary text（最も明るい）
   white: "#FFFFFF",
+  kimitoBg: "#F0F4F8",
+  kimitoBlue: "#0B3A67",
+  kimitoPurple: "#5A4FEA",
+  kimitoBlueSoft: "#D9E8F5",
 
   // Semantic statuses
   green500: "#22C55E",        // success

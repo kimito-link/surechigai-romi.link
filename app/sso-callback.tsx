@@ -16,15 +16,14 @@ export default function SSOCallback() {
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") return;
 
-    const clerk = getClerkInstance();
-
-    // Clerk がまだロードされていなければ少し待つ
-    const tryHandle = async (retries = 10) => {
+    // Clerk がまだロードされていない場合は待機する
+    const tryHandle = async (retries = 15) => {
       for (let i = 0; i < retries; i++) {
         try {
-          if (clerk.client) {
-            await clerk.handleRedirectCallback({});
-            return; // Clerk が最終URLへ自動リダイレクトしてくれる
+          const clerkInstance = typeof window !== "undefined" && (window as any).Clerk ? (window as any).Clerk : getClerkInstance();
+          if (clerkInstance && clerkInstance.client) {
+            await clerkInstance.handleRedirectCallback({});
+            return; // Clerk が最終URLへリダイレクトしてくれる
           }
         } catch (err) {
           console.warn("[SSOCallback] handleRedirectCallback attempt failed:", err);

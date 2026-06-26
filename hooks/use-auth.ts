@@ -5,7 +5,7 @@ import { clearAllTokenData } from "@/lib/token-manager";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useUser, useAuth as useClerkAuth, useOAuth, getClerkInstance } from "@clerk/expo";
+import { useUser, useAuth as useClerkAuth, useOAuth, useClerk } from "@clerk/expo";
 
 function resolveReturnUrl(returnUrl?: string): string | undefined {
   if (typeof window === "undefined") {
@@ -126,6 +126,7 @@ export function useAuth() {
   const isLoaded = clerkIsLoaded;
   const { signOut, getToken } = useClerkAuth();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_x" });
+  const clerk = useClerk();
 
   const login = useCallback(
     async (returnUrl?: string, forceSwitch = false) => {
@@ -161,16 +162,40 @@ export function useAuth() {
           //   __clerk_synced パラメータが自動付与され、primary でログイン後にサテライトへ
           //   戻った時に SDK がセッションを同期する(これが無いとログイン状態が渡らない)。
           // Web は既定でサテライト(方式A)。明示的に "false" のときだけ単独インスタンス扱い。
-          const isSatellite = process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false";
-          if (isSatellite) {
-            const clerk = getClerkInstance();
-            if (typeof clerk.buildSignInUrl !== "function") {
-              throw new Error("認証の準備中です。少し待ってからもう一度お試しください。");
+          const isWebMode = Platform.OS === "web";
+          const isLocalhostDev = isWebMode && typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+          // EXPO_PUBLIC_CLERK_IS_SATELLITE="true" の場合でも localhost ではサテライトモードを無効化する
+          // これにより Production Keys are only allowed for domain "kimito.link" エラーを回避する
+          const isAppSatellite = isWebMode && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" && !isLocalhostDev;
+          
+          if (isAppSatellite) {
+            // Webのサテライトでは window.Clerk を直接参照するのが確実
+            const clerkInstance = typeof window !== "undefined" && (window as any).Clerk ? (window as any).Clerk : clerk;
+            const buildUrl = clerkInstance?.buildSignInUrl;
+            
+            if (typeof buildUrl !== "function") {
+              // localhostで Clerk のロードに失敗している場合のフォールバック
+              const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+              if (isLocalhost) {
+                 const clientSignIn = clerkInstance?.client?.signIn;
+                 if (clientSignIn) {
+                   await clientSignIn.authenticateWithRedirect({
+                     strategy: "oauth_x",
+                     redirectUrl: `${window.location.origin}/sso-callback`,
+                     redirectUrlComplete: redirectComplete,
+                   });
+                   return;
+                 }
+              }
+              throw new Error("認証システムが応答しません。リロードしてお試しください。");
             }
-            // 認証完了後にこのサテライトの最終遷移先へ戻す
-            const syncedSignInUrl = clerk.buildSignInUrl({
+            // 認証基盤へのサテライト最終遷移先を戻す
+            const syncedSignInUrl = buildUrl.call(clerkInstance, {
               redirectUrl: redirectComplete,
             });
+            if (!syncedSignInUrl) {
+              throw new Error("認証システムが応答しません。リロードしてお試しください。");
+            }
             window.location.href = syncedSignInUrl;
             return;
           }
@@ -179,19 +204,18 @@ export function useAuth() {
           // （useOAuth().startOAuthFlow は Web だと expo-web-browser のポップアップを開き使いづらい。
           //   また useSignIn() の新 signals 版 signIn には authenticateWithRedirect が無い＝
           //   従来の clerk.client.signIn を使う必要がある）
-          const clerk = getClerkInstance();
-          const clientSignIn = clerk.client?.signIn;
-          if (!clientSignIn) {
-            throw new Error("認証の準備中です。少し待ってからもう一度お試しください。");
+          const clerkInstance = typeof window !== "undefined" && (window as any).Clerk ? (window as any).Clerk : clerk;
+          const clientSignIn = clerkInstance?.client?.signIn;
+          if (clientSignIn) {
+            await clientSignIn.authenticateWithRedirect({
+              strategy: "oauth_x",
+              redirectUrl: `${window.location.origin}/sso-callback`,
+              redirectUrlComplete: redirectComplete,
+            });
+            return;
           }
-          await clientSignIn.authenticateWithRedirect({
-            strategy: "oauth_x",
-            // X 認証後に Clerk が一旦受ける先
-            redirectUrl: `${origin}/sso-callback`,
-            // 認証完了後に最終的に戻すアプリURL
-            redirectUrlComplete: redirectComplete,
-          });
-          return;
+          
+          throw new Error("認証の準備中です。少し待ってからもう一度お試しください。");
         }
 
         const redirectUrl = `${getApiBaseUrl()}/oauth/twitter-callback`;
@@ -216,10 +240,16 @@ export function useAuth() {
             }
           }
         }
-      } catch (err) {
-        console.error("[Auth] OAuth login error:", err);
-      }
-    },
+        } catch (err: any) {
+          console.error("[Auth] OAuth login error:", err);
+          if (Platform.OS === "web") {
+            window.alert(err.message || "ログイン処理に失敗しました");
+          } else {
+            const { Alert } = require("react-native");
+            Alert.alert("エラー", err.message || "ログイン処理に失敗しました");
+          }
+        }
+      },
     [startOAuthFlow, getToken, signOut],
   );
 

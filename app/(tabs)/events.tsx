@@ -14,7 +14,6 @@
 import {
   View,
   Text,
-  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -658,7 +657,7 @@ export default function EventsScreen() {
         showMenu={true}
         showLoginButton={!isAuthenticated}
         leftElement={
-          <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+          <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
             <MaterialIcons name="home" size={24} color={color.textWhite} />
           </Pressable>
         }

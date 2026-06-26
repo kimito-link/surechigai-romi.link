@@ -13,27 +13,27 @@ import { palette } from "./palette";
 
 export const color = {
   // Surfaces - Black Base
-  bg: palette.gray900,           // #0a0a0a
-  surface: palette.gray800,      // #171717
-  surfaceAlt: palette.gray750,   // #1f1f1f
-  surfaceDark: palette.gray850,  // #121212
+  bg: palette.kimitoBg,           // #0a0a0a
+  surface: palette.white,      // #171717
+  surfaceAlt: palette.white,   // #1f1f1f
+  surfaceDark: palette.gray200,  // #121212
 
   // Borders / dividers
-  border: palette.gray700,       // #262626
-  borderAlt: palette.gray600,    // #404040
+  border: palette.gray400,       // #262626
+  borderAlt: palette.gray500,    // #404040
 
   // Text - 視認性改善（WCAG AA準拠・黒背景での読みやすさ優先）
-  textPrimary: palette.gray100,   // #f5f5f5
-  textMuted: palette.gray300,     // #a3a3a3
-  textSubtle: palette.gray200,    // #d4d4d4
-  textSecondary: palette.gray200, // #d4d4d4（旧gray400→視認性のため明るく）
-  textHint: palette.gray300,      // #a3a3a3（旧gray500→プレースホルダも読めるように）
+  textPrimary: palette.gray900,   // #f5f5f5
+  textMuted: palette.gray700,     // #a3a3a3
+  textSubtle: palette.gray600,    // #d4d4d4
+  textSecondary: palette.gray800, // #d4d4d4（旧gray400→視認性のため明るく）
+  textHint: palette.gray500,      // #a3a3a3（旧gray500→プレースホルダも読めるように）
   textWhite: palette.white,
 
   // Accents - Pink & Purple
-  accentPrimary: palette.primary500,      // #EC4899（ピンク）
+  accentPrimary: palette.kimitoBlue,      // #EC4899（ピンク）
   accentPrimaryAA: palette.primary400,    // #F472B6（ピンク・WCAG AA 小テキスト用）
-  accentAlt: palette.accent500,       // #A855F7（パープル）
+  accentAlt: palette.kimitoPurple,       // #A855F7（パープル）
   accentIndigo: palette.teal500,      // #14B8A6（ティール）
   hostAccent: palette.accent500,      // #A855F7（パープル）
   hostAccentLegacy: palette.primary500, // #EC4899（ピンク）

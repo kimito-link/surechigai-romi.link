@@ -581,7 +581,7 @@ export default function PostScreen() {
           <AppHeader 
             leftElement={
               !isDesktop ? (
-                <Pressable onPress={() => navigate.toTabs()} style={{ padding: 4 }}>
+                <Pressable onPress={() => navigate.toHome()} style={{ padding: 4 }}>
                   <Text style={{ color: color.accentIndigo, fontWeight: "bold" }}>HOME</Text>
                 </Pressable>
               ) : undefined

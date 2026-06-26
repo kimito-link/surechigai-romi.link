@@ -75,7 +75,7 @@ export default function ZukanScreen() {
           isDesktop={isDesktop} 
           showMenu={true} 
           leftElement={
-            <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+            <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
               <MaterialIcons name="home" size={24} color={color.textWhite} />
             </Pressable>
           }
@@ -103,7 +103,7 @@ export default function ZukanScreen() {
         isDesktop={isDesktop}
         showMenu={true}
         leftElement={
-          <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+          <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
             <MaterialIcons name="home" size={24} color={color.textWhite} />
           </Pressable>
         }
