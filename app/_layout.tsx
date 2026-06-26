@@ -70,7 +70,6 @@ type AuthDebugPayload = {
   tokenLength: number;
   protectedStatus: number | null;
   protectedOk: boolean | null;
-  tokenDebug?: unknown;
 };
 
 async function resolveWithTimeout<T>(
@@ -198,7 +197,6 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
       const token = await readClerkToken(getTokenRef.current);
       let protectedStatus: number | null = null;
       let protectedOk: boolean | null = null;
-      let tokenDebug: unknown = null;
 
       if (token) {
         try {
@@ -215,27 +213,6 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
           protectedStatus = 0;
           protectedOk = false;
         }
-
-        try {
-          const response = await fetch("/api/trpc/auth.debugToken?batch=1&input=%7B%7D", {
-            credentials: "include",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          });
-          tokenDebug = {
-            status: response.status,
-            ok: response.ok,
-            body: await response.json(),
-          };
-        } catch (error) {
-          tokenDebug = {
-            status: 0,
-            ok: false,
-            message: error instanceof Error ? error.message : "debug request failed",
-          };
-        }
       }
 
       if (!canceled) {
@@ -245,7 +222,6 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
           tokenLength: token?.length ?? 0,
           protectedStatus,
           protectedOk,
-          tokenDebug,
         });
       }
     }
