@@ -83,7 +83,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
               {/* ヘッダー */}
               <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: color.borderAlt }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                  <Text style={{ color: color.textWhite, fontSize: 18, fontWeight: "bold" }}>メニュー</Text>
+                  <Text style={{ color: color.textWhite, fontSize: 13, fontWeight: "bold" }}>メニュー (君斗りんくのすれ違ひ通信 v1.0.0)</Text>
                   <Pressable
                     onPress={onClose}
                     style={({ pressed }) => [{

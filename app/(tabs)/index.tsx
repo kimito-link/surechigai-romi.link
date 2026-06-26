@@ -583,7 +583,6 @@ export default function PostScreen() {
         <RadarHud isAuthenticated={isAuthenticated} />
       )}
 
-      {!isAuthReadyForUI ? null : (
         <View style={styles.mapContainer}>
           {/* 夜空（星・天の川・富士・流れ星）を地図の背面に敷く */}
           <NightSkyBackdrop />
@@ -621,7 +620,7 @@ export default function PostScreen() {
             />
           )}
           
-          {unopened.length === 0 && (
+          {isAuthenticated && unopened.length === 0 && (
             <View style={styles.emptyOverlay}>
               <Text style={styles.emptyOverlayEmoji}>📭</Text>
               <Text style={styles.emptyOverlayTitle}>
@@ -649,7 +648,6 @@ export default function PostScreen() {
             </Pressable>
           ))}
         </View>
-      )}
 
       {/* 開封モーダル */}
       <OpenModal
