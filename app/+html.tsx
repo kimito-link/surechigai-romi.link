@@ -25,8 +25,8 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="dns-prefetch" href="https://clerk.accounts.dev" />
         {/* PWA manifest */}
         <link rel="manifest" href="/manifest.json" />
-        {/* Theme color for browser chrome */}
-        <meta name="theme-color" content="#0D1117" />
+        {/* Theme color for browser chrome（kimito ヘッダーの薄青に合わせる） */}
+        <meta name="theme-color" content="#E2EDF7" />
         {/* Apple touch icon */}
         <link rel="apple-touch-icon" href="/icon-192.png" />
         {/*
@@ -36,15 +36,15 @@ export default function Root({ children }: PropsWithChildren) {
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: `
           :root {
-            --color-background: #0D1117;
-            --color-surface: #161B22;
-            --color-foreground: #E6EDF3;
-            --color-primary: #4A90D9;
-            --color-muted: #6A6B6D;
-            --color-border: #30363D;
-            color-scheme: dark;
+            --color-background: #F0F4F8;
+            --color-surface: #FFFFFF;
+            --color-foreground: #0F172A;
+            --color-primary: #00427B;
+            --color-muted: #64748B;
+            --color-border: #E2E8F0;
+            color-scheme: light;
           }
-          html { background-color: var(--color-background); color-scheme: dark; }
+          html { background-color: var(--color-background); color-scheme: light; }
           body { background-color: var(--color-background); }
           #root { background-color: var(--color-background); }
         `}} />

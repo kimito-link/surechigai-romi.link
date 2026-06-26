@@ -81,10 +81,14 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: color.accentIndigo,
-        tabBarInactiveTintColor: colors.muted,
+        // kimito.link ブランド統一: アクティブ=ネイビー / 非アクティブ=slate-500 / 白基調のバー
+        tabBarActiveTintColor: color.accentPrimary,
+        tabBarInactiveTintColor: color.textMuted,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarLabelStyle: {
+          fontWeight: "700",
+        },
         sceneStyle: {
           backgroundColor: colors.background,
         },
@@ -92,9 +96,9 @@ export default function TabLayout() {
           paddingTop: 8,
           paddingBottom: bottomPadding,
           height: tabBarHeight,
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          borderTopWidth: 0.5,
+          backgroundColor: color.surface,
+          borderTopColor: color.border,
+          borderTopWidth: 1,
         },
       }}
     >

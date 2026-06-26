@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { View, Text, StyleSheet, Image, Pressable, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { color } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 import { useLoginGuide } from "@/hooks/use-login-guide";
+
+// このヒーローの「ミッドナイト・シグナル」演出はティール固定（ブランドのトークン変更に影響されない）。
+const SIGNAL_TEAL = palette.teal500;
 
 interface RadarHudProps {
   onDismissIntro?: () => void;
@@ -194,15 +197,15 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: color.accentIndigo,
+    borderColor: SIGNAL_TEAL,
     backgroundColor: color.bg + "99",
-    shadowColor: color.accentIndigo,
+    shadowColor: SIGNAL_TEAL,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.62,
     shadowRadius: 24,
   },
   catchKicker: {
-    color: color.accentIndigo,
+    color: SIGNAL_TEAL,
     fontSize: 11,
     fontWeight: "800",
     letterSpacing: 0,
@@ -216,12 +219,12 @@ const styles = StyleSheet.create({
     lineHeight: 52,
     letterSpacing: 0,
     textAlign: "center",
-    textShadowColor: color.accentIndigo,
+    textShadowColor: SIGNAL_TEAL,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 28,
   },
   catchMainAccent: {
-    color: color.accentIndigo,
+    color: SIGNAL_TEAL,
   },
   catchSub: {
     color: "#bcd4f0",
@@ -237,12 +240,12 @@ const styles = StyleSheet.create({
     minWidth: 280,
     maxWidth: 360,
     width: "86%",
-    backgroundColor: color.accentIndigo,
+    backgroundColor: SIGNAL_TEAL,
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 30,
     alignItems: "center",
-    shadowColor: color.accentIndigo,
+    shadowColor: SIGNAL_TEAL,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.6,
     shadowRadius: 16,
@@ -350,7 +353,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 128, 51, 0.4)",
   },
   loginButton: {
-    backgroundColor: color.accentIndigo,
+    backgroundColor: SIGNAL_TEAL,
     borderColor: "transparent",
   },
   buttonText: {

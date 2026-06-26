@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Image, Pressable } from "react-native";
-import { color } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
@@ -13,6 +13,8 @@ interface GlobalLoginGateProps {
   headerTitle: string;
   isDesktop?: boolean;
 }
+
+const BLUE_BORDER = "#00427B33"; // kimitoBlue 20%
 
 function normalizeReturnTo(pathname: string | null): string {
   if (!pathname || pathname === "/auth/kimito-link") return "/";
@@ -44,13 +46,13 @@ export function GlobalLoginGate({
   return (
     <ScreenContainer containerClassName="bg-background">
       <AppHeader
-        title={(headerTitle || "君斗りんくのすれ違ひ通信") + " v1.0.0"}
+        title={(headerTitle || "君斗りんくのすれ違ひ通信")}
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu={true}
         showLoginButton={true}
       />
-      
+
       <View style={styles.container}>
         {/* Characters */}
         <View style={styles.charactersContainer}>
@@ -71,41 +73,34 @@ export function GlobalLoginGate({
           />
         </View>
 
-        {/* Hacker Auth Card */}
+        {/* ログイン案内カード（kimito.link と同じ白基調ブランド） */}
         <View style={styles.authCard}>
-          <View style={styles.cardHeader}>
-            <View style={styles.dotRed} />
-            <View style={styles.dotYellow} />
-            <View style={styles.dotGreen} />
-            <Text style={styles.cardTitle}>SYSTEM / ACCESS_DENIED.exe</Text>
-          </View>
-          
           <View style={styles.cardBody}>
-            <MaterialIcons name="security" size={48} color={color.danger} style={{ alignSelf: "center", marginBottom: 16 }} />
+            <View style={styles.lockBadge}>
+              <MaterialIcons name="lock-outline" size={28} color={palette.kimitoBlue} />
+            </View>
             <Text style={styles.titleText}>{title}</Text>
             {subtitle && <Text style={styles.subtitleText}>{subtitle}</Text>}
-            
+
             <View style={styles.divider} />
-            
+
             <Text style={styles.introText}>
-              アクセス権限がありません。{"\n"}
-              すれちがいロミは kimito.link と同じXログイン基盤を使います。{"\n"}
+              すれちがいロミは、姉妹サービス kimito.link と同じXログイン基盤を使います。{"\n"}
               認証後、このアプリへ戻ります。
             </Text>
-            
+
             <Pressable
               disabled={isStartingLogin}
               style={({ pressed }) => [
                 styles.button,
-                styles.loginButton,
                 pressed && styles.buttonPressed,
                 isStartingLogin && styles.buttonDisabled,
               ]}
               onPress={handleLogin}
             >
-              <MaterialIcons name="login" size={20} color={color.textWhite} style={{ marginRight: 8 }} />
+              <MaterialIcons name="login" size={20} color={palette.white} style={{ marginRight: 8 }} />
               <Text style={styles.buttonText}>
-                {isStartingLogin ? "[ SYSTEM: 接続中... ]" : "[ SYSTEM: Xログインへ進む ]"}
+                {isStartingLogin ? "接続中..." : "Xログインへ進む"}
               </Text>
             </Pressable>
           </View>
@@ -121,16 +116,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
-    backgroundColor: color.bg, // Dark background to pop the card
+    backgroundColor: color.bg,
   },
   charactersContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "center",
     height: 120,
-    marginBottom: -20, // Overlap with auth card
+    marginBottom: -20,
     zIndex: 10,
-    width: '100%',
+    width: "100%",
   },
   characterImage: {
     width: 100,
@@ -144,59 +139,51 @@ const styles = StyleSheet.create({
   tanune: {
     zIndex: 1,
     marginRight: -30,
-    transform: [{ rotate: '-10deg' }],
+    transform: [{ rotate: "-10deg" }],
   },
   konta: {
     zIndex: 2,
     marginLeft: -30,
-    transform: [{ rotate: '10deg' }],
+    transform: [{ rotate: "10deg" }],
   },
   authCard: {
     width: "100%",
     maxWidth: 400,
-    backgroundColor: "rgba(13, 17, 23, 0.95)", // dark transparent
-    borderColor: color.danger,
+    backgroundColor: palette.white,
+    borderColor: BLUE_BORDER,
     borderWidth: 1,
-    borderRadius: 8,
-    shadowColor: color.danger,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
+    borderRadius: 16,
+    shadowColor: palette.kimitoBlue,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 4,
     zIndex: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 40,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 95, 86, 0.15)", // faint red
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: color.danger,
-  },
-  dotRed: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#FF5F56", marginRight: 6 },
-  dotYellow: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#FFBD2E", marginRight: 6 },
-  dotGreen: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#27C93F", marginRight: 12 },
-  cardTitle: {
-    color: color.danger,
-    fontSize: 12,
-    fontWeight: "bold",
-    fontFamily: "monospace",
-    letterSpacing: 0,
   },
   cardBody: {
     padding: 24,
   },
+  lockBadge: {
+    alignSelf: "center",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: palette.kimitoBlueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
   titleText: {
-    color: "#FFFFFF",
+    color: color.textPrimary,
     fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 8,
   },
   subtitleText: {
-    color: "rgba(255, 255, 255, 0.7)",
+    color: palette.kimitoInkMuted,
     fontSize: 14,
     textAlign: "center",
     marginBottom: 16,
@@ -204,15 +191,14 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: palette.kimitoBorderSoft,
     marginVertical: 16,
   },
   introText: {
-    color: "#FFFFFF",
+    color: palette.kimitoInkMuted,
     fontSize: 13,
     lineHeight: 22,
     marginBottom: 24,
-    fontFamily: "monospace",
     textAlign: "center",
   },
   button: {
@@ -220,21 +206,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 14,
-    borderRadius: 4,
+    borderRadius: 999,
+    backgroundColor: palette.kimitoBlue,
   },
   buttonPressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
   buttonDisabled: {
     opacity: 0.65,
   },
-  loginButton: {
-    backgroundColor: color.accentIndigo,
-  },
   buttonText: {
-    color: color.textWhite,
-    fontSize: 14,
+    color: palette.white,
+    fontSize: 15,
     fontWeight: "bold",
-    fontFamily: "monospace",
   },
 });

@@ -40,7 +40,6 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
-import { navigate } from "@/lib/navigation";
 import { JapanRadarMap } from "@/components/organisms/japan-radar-map";
 import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
 import { NightSkyBackdrop } from "@/components/organisms/night-sky-backdrop";
@@ -576,20 +575,8 @@ export default function PostScreen() {
 
   return (
       <ScreenContainer style={{ backgroundColor: "#020817" }} edges={[]}>
-        {/* ログイン後は共通ヘッダー(ログイン中表示＋メニュー＝ログアウト)。未ログインはヒーロー演出。 */}
-        {isAuthenticated ? (
-          <AppHeader 
-            leftElement={
-              !isDesktop ? (
-                <Pressable onPress={() => navigate.toHome()} style={{ padding: 4 }}>
-                  <Text style={{ color: color.accentIndigo, fontWeight: "bold" }}>HOME</Text>
-                </Pressable>
-              ) : undefined
-            }
-          />
-        ) : (
-          <RadarHud isAuthenticated={isAuthenticated} />
-        )}
+        {/* 常時固定ヘッダー。ログイン中はアカウント情報、未ログインはログインボタンを表示。 */}
+        <AppHeader />
 
         <View style={styles.mapContainer}>
           {/* 夜空（星・天の川・富士・流れ星）を地図の背面に敷く */}
@@ -655,6 +642,9 @@ export default function PostScreen() {
               <MaterialIcons name="open-in-new" size={14} color="rgba(255,255,255,0.5)" />
             </Pressable>
           ))}
+
+          {/* 未ログイン時のヒーロー。ヘッダーは常時表示したまま、マップ領域にだけ重ねる。 */}
+          {!isAuthenticated && <RadarHud isAuthenticated={false} />}
         </View>
 
       {/* 開封モーダル */}

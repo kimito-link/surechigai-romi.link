@@ -43,10 +43,16 @@ export const palette = {
   gray200: "#F1F5F9",         // subtle / secondary（本文・ラベル）
   gray100: "#F8FAFC",         // primary text（最も明るい）
   white: "#FFFFFF",
-  kimitoBg: "#F0F4F8",
-  kimitoBlue: "#0B3A67",
-  kimitoPurple: "#5A4FEA",
-  kimitoBlueSoft: "#D9E8F5",
+  // kimito.link 親ブランド統一トークン（surechigai はそのサテライトUI）
+  // 出典: kimitolink-linktree/tailwind.config.ts, app/globals.css
+  kimitoBg: "#F0F4F8",        // 淡いクール白（ページ地）
+  kimitoBlue: "#00427B",      // 親ブランドのネイビー（kimito-blue / --kimito-main）
+  kimitoPurple: "#5A4FEA",    // 紫アクセント（「みんなで一緒に作る」等）
+  kimitoBlueSoft: "#E2EDF7",  // 薄青サーフェス（kimito-blue-50 / ヘッダー地）
+  kimitoOrange: "#DD6500",    // オレンジアクセント（kimito-orange / --kimito-accent）
+  kimitoInkMuted: "#334155",  // 淡色背景上の補助テキスト（slate-700 相当）
+  kimitoNavInactive: "#64748B", // 非アクティブなナビ（slate-500）
+  kimitoBorderSoft: "#E2E8F0",  // やわらかい境界（slate-200）
 
   // Semantic statuses
   green500: "#22C55E",        // success

@@ -234,39 +234,33 @@ export default function MypageScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* プロフィールカード */}
         <View style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            {user.profileImage ? (
-              <Image
-                source={{ uri: user.profileImage }}
-                style={styles.avatar}
-                contentFit="cover"
-              />
-            ) : (
-              <View style={[styles.avatarPlaceholder]}>
-                <MaterialIcons name="account-circle" size={64} color={color.textMuted} />
-              </View>
+          {user.profileImage ? (
+            <Image
+              source={{ uri: user.profileImage }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+          ) : (
+            <View style={[styles.avatarPlaceholder]}>
+              <MaterialIcons name="account-circle" size={64} color={color.textMuted} />
+            </View>
+          )}
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName} numberOfLines={1}>
+              {user.name || user.username || "ロミユーザー"}
+            </Text>
+            {user.username && (
+              <Text style={styles.profileUsername}>@{user.username}</Text>
             )}
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName} numberOfLines={1}>
-                {user.name || user.username || "ゲストユーザー"}
-              </Text>
-              {user.username && (
-                <Text style={styles.profileUsername}>@{user.username}</Text>
+            <View style={styles.profileMetaRow}>
+              {user.twitterId && (
+                <Text style={styles.profileMetaText}>ID {user.twitterId}</Text>
               )}
-              <View style={styles.profileMetaRow}>
-                {user.twitterId && (
-                  <Text style={styles.profileMetaText}>ID {user.twitterId}</Text>
-                )}
-                <Text style={styles.profileMetaText}>
-                  フォロワー {typeof user.followersCount === "number" ? user.followersCount.toLocaleString("ja-JP") : "取得中"}
-                </Text>
-              </View>
+              <Text style={styles.profileMetaText}>
+                フォロワー {typeof user.followersCount === "number" ? user.followersCount.toLocaleString("ja-JP") : "取得中"}
+              </Text>
             </View>
           </View>
-          
-          <Pressable style={styles.primaryActionButton}>
-            <Text style={styles.primaryActionText}>Xでみんなに知らせる</Text>
-          </Pressable>
         </View>
 
         {/* ひとこと */}
@@ -398,33 +392,17 @@ const styles = StyleSheet.create({
   },
   // Profile card
   profileCard: {
-    backgroundColor: "#F0F4F8", // matched to kimito.link card base
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  profileHeader: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: color.surface,
+    borderRadius: 20,
+    padding: 20,
     gap: 16,
-    marginBottom: 16,
-  },
-  primaryActionButton: {
-    backgroundColor: "#0B3A67",
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  primaryActionText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "bold",
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
   },
   avatarPlaceholder: {
     width: 72,
@@ -438,12 +416,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    color: "#0F172A",
-    fontSize: 18,
+    color: color.textPrimary,
+    fontSize: 20,
     fontWeight: "bold",
   },
   profileUsername: {
-    color: "#475569",
+    color: color.textMuted,
     fontSize: 14,
     marginTop: 2,
   },
@@ -454,18 +432,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   profileMetaText: {
-    color: "#2563EB",
+    color: color.successDark,
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   // Section
   section: {
-    backgroundColor: palette.white,
+    backgroundColor: color.surface,
     borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    gap: 12,
+    padding: 16,
+    gap: 10,
   },
   sectionHeader: {
     flexDirection: "row",

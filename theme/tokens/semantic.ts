@@ -30,13 +30,18 @@ export const color = {
   textHint: palette.gray500,      // #a3a3a3（旧gray500→プレースホルダも読めるように）
   textWhite: palette.white,
 
-  // Accents - Pink & Purple
-  accentPrimary: palette.kimitoBlue,      // #EC4899（ピンク）
-  accentPrimaryAA: palette.primary400,    // #F472B6（ピンク・WCAG AA 小テキスト用）
-  accentAlt: palette.kimitoPurple,       // #A855F7（パープル）
-  accentIndigo: palette.teal500,      // #14B8A6（ティール）
-  hostAccent: palette.accent500,      // #A855F7（パープル）
-  hostAccentLegacy: palette.primary500, // #EC4899（ピンク）
+  // Accents - kimito.link 親ブランド（ネイビー基調 + 紫/オレンジ）
+  accentPrimary: palette.kimitoBlue,      // #00427B（ネイビー・メインアクション）
+  accentPrimaryAA: palette.kimitoBlue,    // #00427B（淡色背景で十分なコントラスト）
+  accentAlt: palette.kimitoPurple,        // #5A4FEA（紫アクセント）
+  accentOrange: palette.kimitoOrange,     // #DD6500（オレンジアクセント）
+  accentIndigo: palette.kimitoBlue,       // ネイビーへ統一（旧ティール廃止）
+  hostAccent: palette.kimitoPurple,       // #5A4FEA（紫）
+  hostAccentLegacy: palette.kimitoBlue,   // #00427B（ネイビー）
+
+  // App shell（外枠UI）
+  headerBg: palette.kimitoBlueSoft,       // #E2EDF7（ヘッダー地・薄青）
+  headerBorder: palette.kimitoBlue,       // #00427B（ヘッダー下線・低不透明度で使用）
 
   // Status - 統一感のあるカラー
   success: palette.green500,     // #22C55E

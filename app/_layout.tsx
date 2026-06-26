@@ -5,7 +5,7 @@ import * as SecureStore from "expo-secure-store";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Stack } from "expo-router";
-import { ThemeProvider as ExpoThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
+import { ThemeProvider as ExpoThemeProvider, DefaultTheme as NavLightTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -357,8 +357,8 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1, overflow: "hidden", backgroundColor: "#F0F4F8" }}>
         {isMissingClerkKey ? (
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F0F4F8", padding: 20 }}>
-            <Text style={{ color: "#F87171", fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>セットアップエラー</Text>
-            <Text style={{ color: "#E6EDF3", fontSize: 16, textAlign: "center", marginBottom: 20 }}>
+            <Text style={{ color: "#DC2626", fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>セットアップエラー</Text>
+            <Text style={{ color: "#334155", fontSize: 16, textAlign: "center", marginBottom: 20 }}>
               Clerkの公開鍵 (EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY) が設定されていません。
               VercelのEnvironment Variables、またはローカルの.envを確認してください。
             </Text>
@@ -368,7 +368,7 @@ export default function RootLayout() {
             <AutoLoginProvider>
               <LoginSuccessProvider>
                 <ToastProvider>
-                  <ExpoThemeProvider value={DefaultTheme}>
+                  <ExpoThemeProvider value={NavLightTheme}>
                     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#F0F4F8" } }}>
                       <Stack.Screen name="(tabs)" />
                     </Stack>
@@ -387,7 +387,7 @@ export default function RootLayout() {
                       zIndex: 9999,
                     }}
                   >
-                    <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "bold", textShadowColor: "rgba(0, 0, 0, 0.75)", textShadowOffset: { width: -1, height: 1 }, textShadowRadius: 3 }}>
+                    <Text style={{ color: "#64748B", fontSize: 10, fontWeight: "bold", textShadowColor: "rgba(255, 255, 255, 0.75)", textShadowOffset: { width: -1, height: 1 }, textShadowRadius: 3 }}>
                       君斗りんくのすれ違ひ通信 バージョン
                     </Text>
                   </View>
