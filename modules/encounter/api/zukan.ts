@@ -12,6 +12,7 @@ import {
   getEncounterPrefectures,
   getMyTrailLocations,
   getMyVisitedAreas,
+  getEncounterUsersByPrefecture,
 } from "../db/queries.js";
 
 export const zukanRouter = router({
@@ -44,5 +45,22 @@ export const zukanRouter = router({
 
       const locations = await getMyTrailLocations(db, ctx.user.id, input?.limit ?? 120);
       return { locations };
+    }),
+
+  /**
+   * 指定した都道府県のすれ違いユーザー一覧
+   */
+  encounterUsersByPrefecture: protectedProcedure
+    .input(z.object({ prefecture: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { users: [] };
+
+      const users = await getEncounterUsersByPrefecture(
+        db,
+        ctx.user.id,
+        input.prefecture
+      );
+      return { users };
     }),
 });

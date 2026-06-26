@@ -557,6 +557,106 @@ export async function getEncounterPrefectures(
   }));
 }
 
+export type EncounterUserRow = {
+  partnerId: number;
+  partnerName: string | null;
+  partnerDisplayName: string | null;
+  partnerUsername: string | null;
+  partnerProfileImage: string | null;
+  lastEncounteredAt: Date;
+  encounterCount: number;
+};
+
+export async function getEncounterUsersByPrefecture(
+  db: DB,
+  selfUserId: number,
+  prefecture: string
+): Promise<EncounterUserRow[]> {
+  // ブロックセット取得
+  const blockRows = await db
+    .select({ blockerId: blocks.blockerId, blockedId: blocks.blockedId })
+    .from(blocks)
+    .where(
+      or(eq(blocks.blockerId, selfUserId), eq(blocks.blockedId, selfUserId))
+    );
+  const blockedIds = new Set<number>();
+  for (const r of blockRows) {
+    blockedIds.add(r.blockerId === selfUserId ? r.blockedId : r.blockerId);
+  }
+
+  // 指定県でのすれ違いを取得
+  const rows = await db
+    .select({
+      userAId: encounters.userAId,
+      userBId: encounters.userBId,
+      occurredAt: encounters.occurredAt,
+    })
+    .from(encounters)
+    .where(
+      and(
+        eq(encounters.prefecture, prefecture),
+        or(eq(encounters.userAId, selfUserId), eq(encounters.userBId, selfUserId))
+      )
+    )
+    .orderBy(desc(encounters.occurredAt));
+
+  // パートナーIDごとに集計
+  const partnerMap = new Map<number, { lastAt: Date; count: number }>();
+  for (const row of rows) {
+    const partnerId = row.userAId === selfUserId ? row.userBId : row.userAId;
+    if (blockedIds.has(partnerId)) continue;
+    
+    if (!partnerMap.has(partnerId)) {
+      partnerMap.set(partnerId, { lastAt: row.occurredAt, count: 1 });
+    } else {
+      partnerMap.get(partnerId)!.count++;
+    }
+  }
+
+  const items: EncounterUserRow[] = [];
+  for (const [partnerId, stats] of partnerMap.entries()) {
+    const partnerRows = await db
+      .select({
+        name: users.name,
+        isSuspended: users.isSuspended,
+      })
+      .from(users)
+      .where(eq(users.id, partnerId))
+      .limit(1);
+
+    if (partnerRows.length === 0) continue;
+    const partner = partnerRows[0];
+    if (partner.isSuspended) continue;
+
+    const usernameCandidate = (partner.name ?? "").replace(/^@/, "").trim();
+    const cacheRows = usernameCandidate
+      ? await db
+          .select({
+            twitterUsername: twitterUserCache.twitterUsername,
+            displayName: twitterUserCache.displayName,
+            profileImage: twitterUserCache.profileImage,
+          })
+          .from(twitterUserCache)
+          .where(eq(twitterUserCache.twitterUsername, usernameCandidate))
+          .limit(1)
+      : [];
+    const cachedTwitter = cacheRows[0];
+
+    items.push({
+      partnerId,
+      partnerName: partner.name,
+      partnerDisplayName: cachedTwitter?.displayName ?? partner.name,
+      partnerUsername: (cachedTwitter?.twitterUsername ?? usernameCandidate) || null,
+      partnerProfileImage: cachedTwitter?.profileImage ?? null,
+      lastEncounteredAt: stats.lastAt,
+      encounterCount: stats.count,
+    });
+  }
+
+  // 最後にすれ違った順にソート
+  return items.sort((a, b) => b.lastEncounteredAt.getTime() - a.lastEncounteredAt.getTime());
+}
+
 // ---------------------------------------------------------------------------
 // blocks
 // ---------------------------------------------------------------------------

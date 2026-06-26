@@ -1,5 +1,5 @@
-import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Image, useWindowDimensions, StyleProp, ViewStyle } from "react-native";
+import React, { useMemo, useState } from "react";
+import { View, Text, StyleSheet, Image, useWindowDimensions, StyleProp, ViewStyle, Pressable } from "react-native";
 import Svg, { Polyline } from "react-native-svg";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color } from "@/theme/tokens";
@@ -135,6 +135,7 @@ export function PrecisionTileMap({
   const { width: windowWidth } = useWindowDimensions();
   const mapWidth = propWidth ?? Math.max(320, Math.min(windowWidth - 32, 980));
   const mapHeight = propHeight ?? (windowWidth < 640 ? 430 : 560);
+  const [showDetails, setShowDetails] = useState(false);
   
   const latest = locations[0];
   const center = customCenter ?? latest ?? { lat: 35.681236, lng: 139.767125 };
@@ -241,17 +242,36 @@ export function PrecisionTileMap({
         ))}
 
       {latest && (
-        <View
-          style={[
-            styles.latestMarker,
-            {
-              left: latestPosition.x - 22,
-              top: latestPosition.y - 22,
-            },
-          ]}
-        >
-          <MaterialIcons name="my-location" size={24} color={color.textWhite} />
-        </View>
+        <>
+          {showDetails && (
+            <View
+              style={[
+                styles.detailPopup,
+                {
+                  left: latestPosition.x - 100,
+                  top: latestPosition.y - 120, // ピンの上に出す
+                },
+              ]}
+            >
+              <Text style={styles.detailTitle}>詳細座標</Text>
+              <Text style={styles.detailText}>{formatPlace(latest)}</Text>
+              <Text style={styles.detailText}>{formatCoordinate(latest)}</Text>
+              <View style={styles.detailTriangle} />
+            </View>
+          )}
+          <Pressable
+            onPress={() => setShowDetails(!showDetails)}
+            style={[
+              styles.latestMarker,
+              {
+                left: latestPosition.x - 22,
+                top: latestPosition.y - 22,
+              },
+            ]}
+          >
+            <MaterialIcons name="my-location" size={24} color={color.textWhite} />
+          </Pressable>
+        </>
       )}
 
       {showInfoPanel && latest && (
@@ -382,5 +402,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 4,
+  },
+  detailPopup: {
+    position: "absolute",
+    width: 200,
+    backgroundColor: color.surface,
+    borderRadius: 8,
+    padding: 12,
+    shadowColor: color.shadowBlack,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    borderWidth: 1,
+    borderColor: color.borderAlt,
+    alignItems: "center",
+    zIndex: 10,
+  },
+  detailTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: color.accentIndigo,
+    marginBottom: 4,
+  },
+  detailText: {
+    fontSize: 11,
+    color: color.textPrimary,
+    textAlign: "center",
+    marginBottom: 2,
+  },
+  detailTriangle: {
+    position: "absolute",
+    bottom: -8,
+    left: "50%",
+    marginLeft: -8,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 8,
+    borderStyle: "solid",
+    backgroundColor: "transparent",
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: color.surface,
   },
 });

@@ -24,51 +24,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { prefectures } from "@/constants/prefectures";
+import { JapanBlockMap } from "@/components/organisms/japan-block-map";
+import { useRouter } from "expo-router";
 
-/** 都道府県1マス */
-function PrefectureCell({
-  name,
-  visited,
-  encountered,
-}: {
-  name: string;
-  visited: boolean;
-  encountered: boolean;
-}) {
-  const bg = visited
-    ? color.accentIndigo + "44"
-    : encountered
-      ? color.accentAlt + "33"
-      : color.surfaceAlt;
-  const borderColor = visited
-    ? color.accentIndigo
-    : encountered
-      ? color.accentAlt
-      : color.border;
-  const textColor = visited || encountered ? color.textPrimary : color.textMuted;
 
-  return (
-    <View style={[styles.cell, { backgroundColor: bg, borderColor }]}>
-      <Text style={[styles.cellText, { color: textColor }]} numberOfLines={2} adjustsFontSizeToFit>
-        {name.replace(/(都|道|府|県)$/, "")}
-      </Text>
-      {visited && (
-        <View style={styles.cellBadgeVisited}>
-          <MaterialIcons name="place" size={8} color={color.accentIndigo} />
-        </View>
-      )}
-      {!visited && encountered && (
-        <View style={styles.cellBadgeEncountered}>
-          <MaterialIcons name="person" size={8} color={color.accentAlt} />
-        </View>
-      )}
-    </View>
-  );
-}
 
 export default function ZukanScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
+  const router = useRouter();
 
   const { data, refetch, isFetching } = trpc.zukan.myAreas.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -92,6 +56,14 @@ export default function ZukanScreen() {
 
   const visitedCount = visitedPrefSet.size;
   const encounteredCount = new Set([...visitedPrefSet, ...encounteredPrefSet]).size;
+
+  const encounterCountMap = (data?.encounterPrefectures ?? []).reduce(
+    (acc, e) => {
+      if (e.prefecture) acc[e.prefecture] = e.encounterCount;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   if (!isAuthReadyForUI) {
     return (
@@ -166,17 +138,15 @@ export default function ZukanScreen() {
         </View>
 
         {/* 都道府県グリッド */}
-        <Text style={styles.sectionTitle}>都道府県</Text>
-        <View style={styles.grid}>
-          {prefectures.map((pref) => (
-            <PrefectureCell
-              key={pref}
-              name={pref}
-              visited={visitedPrefSet.has(pref)}
-              encountered={encounteredPrefSet.has(pref)}
-            />
-          ))}
-        </View>
+        <Text style={styles.sectionTitle}>みんながいる現在地（都道府県別）</Text>
+        <JapanBlockMap
+          visitedPrefSet={visitedPrefSet}
+          encounteredPrefSet={encounteredPrefSet}
+          encounterCountMap={encounterCountMap}
+          onPressPrefecture={(pref) => {
+            router.push({ pathname: "/zukan/[prefecture]", params: { prefecture: pref } } as any);
+          }}
+        />
 
         {/* 市区町村リスト */}
         {data?.visited && data.visited.length > 0 && (
@@ -310,39 +280,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
-  // Grid
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginBottom: 20,
-  },
-  cell: {
-    width: "13.5%",
-    aspectRatio: 1,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 2,
-    position: "relative",
-  },
-  cellText: {
-    fontSize: 8,
-    textAlign: "center",
-    fontWeight: "600",
-    lineHeight: 11,
-  },
-  cellBadgeVisited: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-  },
-  cellBadgeEncountered: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-  },
+
   // Municipality list
   municipalityList: {
     gap: 2,
