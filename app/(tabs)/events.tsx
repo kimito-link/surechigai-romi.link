@@ -20,6 +20,7 @@ import {
   TextInput,
   Platform,
   Linking,
+  Pressable,
 } from "react-native";
 import { useState, useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -640,10 +641,13 @@ function EmptyOrLoading({ loading, message }: { loading?: boolean; message?: str
   );
 }
 
+import { useRouter } from "expo-router";
+
 export default function EventsScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated } = useAuth();
   const [segment, setSegment] = useState<Segment>("calendar");
+  const router = useRouter();
 
   return (
     <ScreenContainer containerClassName="bg-background">
@@ -653,6 +657,11 @@ export default function EventsScreen() {
         isDesktop={isDesktop}
         showMenu={true}
         showLoginButton={!isAuthenticated}
+        leftElement={
+          <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+            <MaterialIcons name="home" size={24} color={color.textWhite} />
+          </Pressable>
+        }
       />
 
       {/* セグメント切替 */}

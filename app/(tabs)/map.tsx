@@ -15,6 +15,7 @@ import {
   RefreshControl,
   Image,
   useWindowDimensions,
+  Pressable,
 } from "react-native";
 import { useCallback, useMemo } from "react";
 import Svg, { Polyline } from "react-native-svg";
@@ -33,6 +34,7 @@ import {
   formatCoordinate,
   TrailPoint,
 } from "@/components/organisms/precision-tile-map";
+import { useRouter } from "expo-router";
 
 /** Native プレースホルダ */
 function NativePlaceholder() {
@@ -141,6 +143,7 @@ function WebTrailMap({
 export default function MapScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReadyForUI, user } = useAuth();
+  const router = useRouter();
 
   const {
     data: areasData,
@@ -167,7 +170,17 @@ export default function MapScreen() {
   if (!isAuthReadyForUI) {
     return (
       <ScreenContainer containerClassName="bg-background">
-        <AppHeader title="軌跡" showCharacters={false} isDesktop={isDesktop} showMenu />
+        <AppHeader 
+          title="軌跡" 
+          showCharacters={false} 
+          isDesktop={isDesktop} 
+          showMenu 
+          leftElement={
+            <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+              <MaterialIcons name="home" size={24} color={color.textWhite} />
+            </Pressable>
+          }
+        />
       </ScreenContainer>
     );
   }
@@ -185,12 +198,17 @@ export default function MapScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-background">
-      <AppHeader
-        title="軌跡"
-        showCharacters={false}
-        isDesktop={isDesktop}
-        showMenu
-      />
+        <AppHeader
+          title="軌跡"
+          showCharacters={false}
+          isDesktop={isDesktop}
+          showMenu
+          leftElement={
+            <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+              <MaterialIcons name="home" size={24} color={color.textWhite} />
+            </Pressable>
+          }
+        />
 
       {Platform.OS !== "web" ? (
         <NativePlaceholder />

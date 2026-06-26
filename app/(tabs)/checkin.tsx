@@ -38,6 +38,7 @@ import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { PrecisionTileMap } from "@/components/organisms/precision-tile-map";
+import { useRouter } from "expo-router";
 
 /** Web用 Geolocation ラッパー */
 function getWebLocation(): Promise<{ lat: number; lng: number; accuracy?: number }> {
@@ -99,6 +100,7 @@ export default function CheckinScreen() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isPausing, setIsPausing] = useState(false);
   const utils = trpc.useUtils();
+  const router = useRouter();
 
   // アニメーション
   const scale = useSharedValue(1);
@@ -325,6 +327,11 @@ export default function CheckinScreen() {
           isDesktop={isDesktop}
           showMenu={true}
           showLoginButton={!isAuthenticated}
+          leftElement={
+            <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+              <MaterialIcons name="home" size={24} color={color.textWhite} />
+            </Pressable>
+          }
         />
       </ScreenContainer>
     );
@@ -343,13 +350,18 @@ export default function CheckinScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-background">
-      <AppHeader
-        title="チェックイン"
-        showCharacters={false}
-        isDesktop={isDesktop}
-        showMenu={true}
-        showLoginButton={!isAuthenticated}
-      />
+        <AppHeader
+          title="チェックイン"
+          showCharacters={false}
+          isDesktop={isDesktop}
+          showMenu={true}
+          showLoginButton={!isAuthenticated}
+          leftElement={
+            <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+              <MaterialIcons name="home" size={24} color={color.textWhite} />
+            </Pressable>
+          }
+        />
 
         <View style={styles.content}>
           {/* 説明文 */}

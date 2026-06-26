@@ -24,6 +24,14 @@ export default function PrefectureEncounterScreen() {
     refetch();
   }, [refetch]);
 
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.push("/(tabs)/zukan");
+    }
+  }, [router]);
+
   return (
     <ScreenContainer containerClassName="bg-background">
       <AppHeader
@@ -31,6 +39,11 @@ export default function PrefectureEncounterScreen() {
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu={false}
+        leftElement={
+          <Pressable onPress={handleBack} style={{ padding: 4 }}>
+            <MaterialIcons name="arrow-back" size={24} color={color.textWhite} />
+          </Pressable>
+        }
       />
 
       <ScrollView

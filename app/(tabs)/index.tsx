@@ -575,13 +575,21 @@ export default function PostScreen() {
   );
 
   return (
-    <ScreenContainer style={{ backgroundColor: "#020817" }} edges={[]}>
-      {/* ログイン後は共通ヘッダー(ログイン中表示＋メニュー＝ログアウト)。未ログインはヒーロー演出。 */}
-      {isAuthenticated ? (
-        <AppHeader />
-      ) : (
-        <RadarHud isAuthenticated={isAuthenticated} />
-      )}
+      <ScreenContainer style={{ backgroundColor: "#020817" }} edges={[]}>
+        {/* ログイン後は共通ヘッダー(ログイン中表示＋メニュー＝ログアウト)。未ログインはヒーロー演出。 */}
+        {isAuthenticated ? (
+          <AppHeader 
+            leftElement={
+              !isDesktop ? (
+                <Pressable onPress={() => navigate.toTabs()} style={{ padding: 4 }}>
+                  <Text style={{ color: color.accentIndigo, fontWeight: "bold" }}>HOME</Text>
+                </Pressable>
+              ) : undefined
+            }
+          />
+        ) : (
+          <RadarHud isAuthenticated={isAuthenticated} />
+        )}
 
         <View style={styles.mapContainer}>
           {/* 夜空（星・天の川・富士・流れ星）を地図の背面に敷く */}

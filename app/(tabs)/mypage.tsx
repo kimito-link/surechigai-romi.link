@@ -20,6 +20,7 @@ import {
   Linking,
   Platform,
   Alert,
+  Pressable,
 } from "react-native";
 import { useState, useCallback } from "react";
 import { Image } from "expo-image";
@@ -137,9 +138,12 @@ function BlockedUserRow({
   );
 }
 
+import { useRouter } from "expo-router";
+
 export default function MypageScreen() {
   const { isDesktop } = useResponsive();
   const { user, isAuthenticated, isAuthReadyForUI, logout } = useAuth();
+  const router = useRouter();
 
   const [hitokotoModalVisible, setHitokotoModalVisible] = useState(false);
   const [showBlockList, setShowBlockList] = useState(false);
@@ -186,7 +190,17 @@ export default function MypageScreen() {
   if (!isAuthReadyForUI) {
     return (
       <ScreenContainer containerClassName="bg-background">
-        <AppHeader title="マイページ" showCharacters={false} isDesktop={isDesktop} showMenu />
+        <AppHeader 
+          title="マイページ" 
+          showCharacters={false} 
+          isDesktop={isDesktop} 
+          showMenu 
+          leftElement={
+            <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+              <MaterialIcons name="home" size={24} color={color.textWhite} />
+            </Pressable>
+          }
+        />
       </ScreenContainer>
     );
   }
@@ -211,6 +225,11 @@ export default function MypageScreen() {
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu
+        leftElement={
+          <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+            <MaterialIcons name="home" size={24} color={color.textWhite} />
+          </Pressable>
+        }
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>

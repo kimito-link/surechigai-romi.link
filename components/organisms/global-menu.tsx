@@ -53,7 +53,12 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
   };
 
   const menuItems = [
-    { icon: "home", label: "ホーム", path: "/" },
+    { icon: "home", label: "ホーム", path: "/(tabs)/" },
+    { icon: "location-on", label: "チェックイン", path: "/(tabs)/checkin" },
+    { icon: "book", label: "図鑑", path: "/(tabs)/zukan" },
+    { icon: "map", label: "軌跡", path: "/(tabs)/map" },
+    { icon: "event", label: "集まり", path: "/(tabs)/events" },
+    { icon: "person", label: "マイページ", path: "/(tabs)/mypage" },
   ];
 
   return (

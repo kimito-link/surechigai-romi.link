@@ -18,6 +18,7 @@ interface AppHeaderProps {
   showCharacters?: boolean;
   showLogo?: boolean;
   isDesktop?: boolean;
+  leftElement?: React.ReactNode;
   rightElement?: React.ReactNode;
   showLoginStatus?: boolean;
   showMenu?: boolean;
@@ -34,6 +35,7 @@ export function AppHeader({
   title,
   subtitle,
   isDesktop = false,
+  leftElement,
   rightElement,
   showLoginStatus = true,
   showMenu = true,
@@ -55,6 +57,11 @@ export function AppHeader({
     <>
       <View style={styles.shell}>
         <View style={styles.topRow}>
+          {leftElement && (
+            <View style={{ marginRight: 8 }}>
+              {leftElement}
+            </View>
+          )}
           <View style={styles.titleBlock}>
             <Text
               style={[

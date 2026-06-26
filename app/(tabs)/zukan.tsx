@@ -13,6 +13,7 @@ import {
   ScrollView,
   StyleSheet,
   RefreshControl,
+  Pressable,
 } from "react-native";
 import { useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -68,7 +69,17 @@ export default function ZukanScreen() {
   if (!isAuthReadyForUI) {
     return (
       <ScreenContainer containerClassName="bg-background">
-        <AppHeader title="図鑑" showCharacters={false} isDesktop={isDesktop} showMenu={true} />
+        <AppHeader 
+          title="図鑑" 
+          showCharacters={false} 
+          isDesktop={isDesktop} 
+          showMenu={true} 
+          leftElement={
+            <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+              <MaterialIcons name="home" size={24} color={color.textWhite} />
+            </Pressable>
+          }
+        />
       </ScreenContainer>
     );
   }
@@ -91,6 +102,11 @@ export default function ZukanScreen() {
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu={true}
+        leftElement={
+          <Pressable onPress={() => router.push("/(tabs)/")} style={{ padding: 4 }}>
+            <MaterialIcons name="home" size={24} color={color.textWhite} />
+          </Pressable>
+        }
       />
 
       <ScrollView
