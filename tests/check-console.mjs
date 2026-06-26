@@ -13,8 +13,9 @@ import { chromium } from 'playwright';
   });
 
   try {
-    console.log('Navigating to http://localhost:8081...');
-    await page.goto('http://localhost:8081', { waitUntil: 'networkidle' });
+    const targetUrl = process.argv[2] || 'http://localhost:8081';
+    console.log(`Navigating to ${targetUrl}...`);
+    await page.goto(targetUrl, { waitUntil: 'networkidle' });
     console.log('Page loaded successfully.');
   } catch (err) {
     console.error(`Navigation failed: ${err.message}`);

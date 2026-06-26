@@ -185,8 +185,8 @@ export function useAuth() {
           }
           await clientSignIn.authenticateWithRedirect({
             strategy: "oauth_x",
-            // X 認証後に Clerk が一旦受ける先（origin に戻す）
-            redirectUrl: origin,
+            // X 認証後に Clerk が一旦受ける先
+            redirectUrl: `${origin}/sso-callback`,
             // 認証完了後に最終的に戻すアプリURL
             redirectUrlComplete: redirectComplete,
           });
@@ -242,6 +242,25 @@ export function useAuth() {
   const isAuthenticated = useMemo(() => {
     return clerkIsLoaded && !!clerkUser;
   }, [clerkUser, clerkIsLoaded]);
+
+  // Web 環境で Clerk の認証が完了（isAuthenticated = true）した場合、
+  // バックエンドにユーザーを同期するための自動処理
+  useEffect(() => {
+    if (Platform.OS === "web" && isAuthenticated) {
+      getToken().then((token) => {
+        if (!token) return;
+        fetch(`${getApiBaseUrl()}/api/auth/sync`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }).catch((err) => {
+          console.warn("[Auth] Web backend sync failed:", err);
+        });
+      });
+    }
+  }, [isAuthenticated, getToken]);
 
   // Clerkの読み込みが遅い場合、1秒後にログインUIを表示するフォールバック
   const [authReadyTimeout, setAuthReadyTimeout] = useState(false);
