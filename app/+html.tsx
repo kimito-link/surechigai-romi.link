@@ -35,8 +35,8 @@ export default function Root({ children }: PropsWithChildren) {
         */}
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: `
-          body { background-color: ${color.background}; }
-          #root { background-color: ${color.background}; }
+          body { background-color: ${color.bg}; }
+          #root { background-color: ${color.bg}; }
         `}} />
       </head>
       <body>
