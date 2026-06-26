@@ -37,6 +37,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
+import { PrecisionTileMap } from "@/components/organisms/precision-tile-map";
 
 /** Web用 Geolocation ラッパー */
 function getWebLocation(): Promise<{ lat: number; lng: number; accuracy?: number }> {
@@ -103,6 +104,12 @@ export default function CheckinScreen() {
   const checkmarkScale = useSharedValue(0);
   const checkmarkOpacity = useSharedValue(0);
 
+  // マップ用アニメーション
+  const mapScale = useSharedValue(0.9);
+  const mapOpacity = useSharedValue(0.8);
+  const tooltipOpacity = useSharedValue(0);
+  const tooltipTranslateY = useSharedValue(10);
+
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
@@ -117,12 +124,27 @@ export default function CheckinScreen() {
     opacity: checkmarkOpacity.value,
   }));
 
+  const mapStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: mapScale.value }],
+    opacity: mapOpacity.value,
+  }));
+
+  const tooltipStyle = useAnimatedStyle(() => ({
+    opacity: tooltipOpacity.value,
+    transform: [{ translateY: tooltipTranslateY.value }],
+  }));
+
   const checkIn = trpc.encounter.checkIn.useMutation();
   const pauseLocation = trpc.settings.pauseLocation.useMutation();
   const resumeLocation = trpc.settings.resume.useMutation();
   const settingsQuery = trpc.settings.get.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  const { data: trailData } = trpc.zukan.myTrail.useQuery({ limit: 1 }, {
+    enabled: isAuthenticated,
+  });
+  const latestLocation = trailData?.locations?.[0];
 
   // 設定が変わったら isPausing を同期
   useEffect(() => {
@@ -195,6 +217,12 @@ export default function CheckinScreen() {
       ]);
 
       pulse.value = withTiming(1);
+      
+      // マップのアニメーション
+      mapScale.value = withSpring(1, { damping: 12 });
+      mapOpacity.value = withTiming(1, { duration: 300 });
+      tooltipOpacity.value = withTiming(1, { duration: 400 });
+      tooltipTranslateY.value = withSpring(0, { damping: 8 });
 
       if (result.newEncounters > 0) {
         setState("success");
@@ -215,6 +243,10 @@ export default function CheckinScreen() {
         setState("idle");
         checkmarkScale.value = withTiming(0);
         checkmarkOpacity.value = withTiming(0);
+        mapScale.value = withTiming(0.9);
+        mapOpacity.value = withTiming(0.8);
+        tooltipOpacity.value = withTiming(0);
+        tooltipTranslateY.value = withTiming(10);
       }, 5000);
     } catch (err: unknown) {
       pulse.value = withTiming(1);
@@ -399,6 +431,23 @@ export default function CheckinScreen() {
               </Text>
               <Text style={styles.resultSubtitle}>{errorMsg}</Text>
             </View>
+          )}
+
+          {/* 地図表示エリア */}
+          {latestLocation && (
+            <Animated.View style={[styles.mapContainer, mapStyle]}>
+              <PrecisionTileMap
+                locations={state === "loading" ? [] : [latestLocation]}
+                zoom={17}
+                showInfoPanel={false}
+                height={200}
+                containerStyle={styles.mapInner}
+              />
+              <Animated.View style={[styles.hereTooltip, tooltipStyle]}>
+                <Text style={styles.hereTooltipText}>今ここにいるよ！</Text>
+                <View style={styles.hereTooltipTail} />
+              </Animated.View>
+            </Animated.View>
           )}
 
           {/* 位置一時停止トグル */}
@@ -637,5 +686,48 @@ const styles = StyleSheet.create({
     color: color.textWhite,
     fontSize: 16,
     fontWeight: "700",
+  },
+  // Map container
+  mapContainer: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    position: "relative",
+  },
+  mapInner: {
+    borderRadius: 16,
+    width: "100%",
+  },
+  hereTooltip: {
+    position: "absolute",
+    top: 50, // マップの中心より少し上（ピンのあたり）
+    backgroundColor: color.accentIndigo,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: palette.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    alignItems: "center",
+  },
+  hereTooltipText: {
+    color: color.textWhite,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  hereTooltipTail: {
+    position: "absolute",
+    bottom: -6,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 8,
+    borderRightWidth: 8,
+    borderTopWidth: 8,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: color.accentIndigo,
   },
 });
