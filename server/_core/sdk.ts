@@ -74,10 +74,15 @@ class SDKServer {
     });
   }
 
-  private hasClerkAuthSignal(req: ExpressRequest): boolean {
+  private getBearerToken(req: ExpressRequest): string | null {
     const authHeader = req.headers.authorization || req.headers.Authorization;
-    if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) return true;
+    if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
+      return authHeader.slice("Bearer ".length).trim();
+    }
+    return null;
+  }
 
+  private hasClerkCookieSignal(req: ExpressRequest): boolean {
     const cookies = this.parseCookies(req.headers.cookie);
     for (const name of cookies.keys()) {
       if (
@@ -124,10 +129,32 @@ class SDKServer {
     return (await db.getUserByOpenId(openId)) ?? null;
   }
 
+  private async authenticateWithClerkBearerToken(token: string): Promise<User | null> {
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (!secretKey?.trim()) return null;
+
+    try {
+      const payload = await verifyToken(token, { secretKey });
+      const clerkUserId = payload?.sub;
+      if (!clerkUserId) return null;
+      return this.getOrCreateClerkUser(clerkUserId);
+    } catch (error) {
+      const err = error as { code?: string; message?: string };
+      if (err?.code === "ECONNREFUSED" || err?.message?.includes("fetch")) {
+        throw error;
+      }
+      console.warn("[Auth] Clerk bearer token verification failed", {
+        code: err.code,
+        message: err.message,
+      });
+      return null;
+    }
+  }
+
   private async authenticateWithClerk(req: ExpressRequest): Promise<User | null> {
     const secretKey = process.env.CLERK_SECRET_KEY;
     if (!secretKey?.trim()) return null;
-    if (!this.hasClerkAuthSignal(req)) return null;
+    if (!this.hasClerkCookieSignal(req)) return null;
 
     const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
     const domain = process.env.EXPO_PUBLIC_CLERK_DOMAIN;
@@ -254,36 +281,14 @@ class SDKServer {
   /**
    * 繝ｪ繧ｯ繧ｨ繧ｹ繝医°繧峨Θ繝ｼ繧ｶ繝ｼ繧定ｪ崎ｨｼ縺吶ｋ縲・   * Bearer 繝医・繧ｯ繝ｳ or 繧ｻ繝・す繝ｧ繝ｳ Cookie 縺ｮ JWT 繧呈､懆ｨｼ縺励．B 縺九ｉ繝ｦ繝ｼ繧ｶ繝ｼ繧貞叙蠕励☆繧九・   */
   async authenticateRequest(req: ExpressRequest): Promise<User> {
+    const token = this.getBearerToken(req);
+    if (token) {
+      const clerkUser = await this.authenticateWithClerkBearerToken(token);
+      if (clerkUser) return clerkUser;
+    }
+
     const clerkUser = await this.authenticateWithClerk(req);
     if (clerkUser) return clerkUser;
-
-    // Bearer token from Authorization header
-    const authHeader = req.headers.authorization || req.headers.Authorization;
-    let token: string | undefined;
-    if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
-      token = authHeader.slice("Bearer ".length).trim();
-    }
-
-    // Clerk JWT verification (primary)
-    if (token && process.env.CLERK_SECRET_KEY?.trim()) {
-      try {
-        const payload = await verifyToken(token, {
-          secretKey: process.env.CLERK_SECRET_KEY,
-        });
-        const clerkUserId = payload?.sub;
-        if (!clerkUserId) {
-          throw ForbiddenError("Invalid token: missing sub claim");
-        }
-        const user = await this.getOrCreateClerkUser(clerkUserId);
-        if (user) return user;
-      } catch (e) {
-        const err = e as { code?: string; message?: string };
-        if (err?.code === "ECONNREFUSED" || err?.message?.includes("fetch")) {
-          throw e;
-        }
-        // Clerk JWT でなければカスタム JWT にフォールバック
-      }
-    }
 
     // Cookie fallback
     const cookies = this.parseCookies(req.headers.cookie);
