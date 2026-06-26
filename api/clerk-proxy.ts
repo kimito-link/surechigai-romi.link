@@ -14,7 +14,10 @@
 
 export const config = { runtime: "edge" };
 
-const CLERK_FAPI = "https://frontend-api.clerk.services";
+// 上流はこのインスタンスの Frontend API ホスト(primary の frontend_api_url)。
+// 共有ingress の frontend-api.clerk.services は SNI/Host ルーティングのため
+// Edge から直接叩くと接続不可(internal error)になる。clerk.kimito.link は到達可能。
+const CLERK_FAPI = "https://clerk.kimito.link";
 const PROXY_URL = "https://surechigai-romi.link/__clerk";
 
 // Edge の fetch に受信ヘッダーを丸ごと渡すと不正ヘッダーで落ちるため、
