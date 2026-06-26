@@ -92,6 +92,7 @@ export default function CheckinScreen() {
 
   const [state, setState] = useState<CheckinState>("idle");
   const [newCount, setNewCount] = useState(0);
+  const [checkinLocationName, setCheckinLocationName] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [isPausing, setIsPausing] = useState(false);
   const utils = trpc.useUtils();
@@ -180,6 +181,11 @@ export default function CheckinScreen() {
         lng: pos.lng,
         accuracy: pos.accuracy,
       });
+
+      const locName = result.prefecture 
+        ? `${result.prefecture}${result.municipality || ""}${result.areaName ? ` ${result.areaName}` : ""}`
+        : null;
+      setCheckinLocationName(locName);
 
       await Promise.allSettled([
         utils.encounter.list.invalidate(),
@@ -372,7 +378,7 @@ export default function CheckinScreen() {
                 {newCount}件のすれ違いが届きました！
               </Text>
               <Text style={styles.resultSubtitle}>
-                ポストを見てみよう
+                {checkinLocationName ? `${checkinLocationName}\n` : ""}ポストを見てみよう
               </Text>
             </View>
           )}
@@ -381,7 +387,7 @@ export default function CheckinScreen() {
             <View style={styles.resultBox}>
               <Text style={styles.resultTitle}>チェックイン完了</Text>
               <Text style={styles.resultSubtitle}>
-                まだ誰も…{"\n"}あなたの軌跡が誰かの封筒になります
+                {checkinLocationName ? `${checkinLocationName}\n` : ""}まだ誰も…{"\n"}あなたの軌跡が誰かの封筒になります
               </Text>
             </View>
           )}

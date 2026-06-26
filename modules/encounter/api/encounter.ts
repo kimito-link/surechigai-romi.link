@@ -67,7 +67,7 @@ export const encounterRouter = router({
       }
 
       const db = await getDb();
-      if (!db) return { newEncounters: 0 };
+      if (!db) return { newEncounters: 0, prefecture: null, municipality: null, areaName: null };
 
       // 位置一時停止チェック
       const settings = await getUserSettings(db, userId);
@@ -75,7 +75,7 @@ export const encounterRouter = router({
         settings?.locationPausedUntil &&
         settings.locationPausedUntil > new Date()
       ) {
-        return { newEncounters: 0 };
+        return { newEncounters: 0, prefecture: null, municipality: null, areaName: null };
       }
 
       // 座標を丸める
@@ -233,7 +233,7 @@ export const encounterRouter = router({
         }
       }
 
-      return { newEncounters };
+      return { newEncounters, prefecture, municipality, areaName };
     }),
 
   /**
