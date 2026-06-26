@@ -25,12 +25,10 @@ async function throttle(): Promise<void> {
 }
 
 export type GeocodeResult = {
-  /** 市区町村レベルのエリア名（例: "渋谷区"） */
   municipality: string | null;
-  /** 都道府県（例: "東京都"） */
   prefecture: string | null;
-  /** 表示用エリア名（suburb + district の組み合わせ） */
   areaName: string;
+  address: string | null;
 };
 
 type NominatimAddress = {
@@ -91,7 +89,7 @@ export async function reverseGeocode(
   lat: number,
   lng: number
 ): Promise<GeocodeResult> {
-  const fallback: GeocodeResult = {
+  const fallback: GeocodeResult = { address: null,
     municipality: null,
     prefecture: null,
     areaName: "不明なエリア",
@@ -111,7 +109,7 @@ export async function reverseGeocode(
 
     if (!res.ok) return fallback;
 
-    const data = (await res.json()) as { address?: NominatimAddress };
+    const data = (await res.json()) as { address?: NominatimAddress; display_name?: string };
     const addr = data.address;
     if (!addr) return fallback;
 
@@ -119,7 +117,8 @@ export async function reverseGeocode(
     const municipality = parseMunicipality(addr);
     const areaName = parseAreaName(addr);
 
-    return { municipality, prefecture, areaName };
+    const address = data.display_name ?? null;
+    return { municipality, prefecture, areaName, address };
   } catch (e) {
     console.error("[geocoding] 逆ジオコーディングエラー:", e);
     return fallback;

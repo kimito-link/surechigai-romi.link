@@ -1,10 +1,14 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { G, Path, Polygon, Line } from 'react-native-svg';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from 'react-native-reanimated';
 import { color } from '@/theme/tokens';
 
 export function JapanRadarMap({ children }: { children?: React.ReactNode }) {
+  const { width, height } = useWindowDimensions();
+  const minDim = Math.min(width, height);
+  // Base map size is proportional to the screen's minor dimension so it's always large and visible
+  const mapSize = minDim * 2.2;
   // Radar sweep animation
   const rotation = useSharedValue(0);
   const mapOpacity = useSharedValue(0);
@@ -30,8 +34,8 @@ export function JapanRadarMap({ children }: { children?: React.ReactNode }) {
   return (
     <View style={styles.container}>
       {/* Map SVG */}
-      <Animated.View style={[styles.mapWrapper, { opacity: 0 }, animatedMapStyle]}>
-        <Svg viewBox="0 0 1000 1000" style={styles.map}>
+        <Animated.View style={[styles.mapWrapper, { opacity: 0 }, animatedMapStyle]}>
+          <Svg viewBox="0 0 1000 1000" style={[styles.map, { width: mapSize, height: mapSize }]}>
         
 
   
@@ -286,8 +290,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   map: {
-    width: '150%',
-    height: '150%',
     position: 'absolute',
   },
   radarContainer: {

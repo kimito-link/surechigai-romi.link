@@ -53,6 +53,7 @@ function WebTrailMap({
   locations,
   isFetching,
   onRefresh,
+  userImageUrl,
 }: {
   visited: {
     prefecture: string | null;
@@ -62,6 +63,7 @@ function WebTrailMap({
   locations: TrailPoint[];
   isFetching: boolean;
   onRefresh: () => void;
+  userImageUrl?: string;
 }) {
   const total = visited.reduce((s, v) => s + v.visitCount, 0);
 
@@ -77,7 +79,7 @@ function WebTrailMap({
       contentContainerStyle={styles.scrollContent}
     >
       {locations.length > 0 ? (
-        <PrecisionTileMap locations={locations} />
+        <PrecisionTileMap locations={locations} userImageUrl={userImageUrl} />
       ) : (
         <View style={styles.emptyMap}>
           <MaterialIcons name="near-me-disabled" size={48} color={color.textMuted} />
@@ -138,7 +140,7 @@ function WebTrailMap({
 
 export default function MapScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReadyForUI } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI, user } = useAuth();
 
   const {
     data: areasData,
@@ -198,6 +200,7 @@ export default function MapScreen() {
           locations={locations}
           isFetching={isFetchingAreas || isFetchingTrail}
           onRefresh={onRefresh}
+          userImageUrl={user?.profileImage ?? undefined}
         />
       )}
     </ScreenContainer>

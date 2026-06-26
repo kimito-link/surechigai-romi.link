@@ -67,7 +67,7 @@ export const encounterRouter = router({
       }
 
       const db = await getDb();
-      if (!db) return { newEncounters: 0, prefecture: null, municipality: null, areaName: null };
+      if (!db) return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng };
 
       // 位置一時停止チェック
       const settings = await getUserSettings(db, userId);
@@ -75,7 +75,7 @@ export const encounterRouter = router({
         settings?.locationPausedUntil &&
         settings.locationPausedUntil > new Date()
       ) {
-        return { newEncounters: 0, prefecture: null, municipality: null, areaName: null };
+        return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng };
       }
 
       // 座標を丸める
@@ -89,14 +89,12 @@ export const encounterRouter = router({
       let areaName: string | null = null;
 
       // バックグラウンドで geocode（await しない: チェックインレイテンシを下げる）
-      const geocodePromise = reverseGeocode(latGrid, lngGrid).then((g) => {
-        municipality = municipality ?? g.municipality;
-        prefecture = g.prefecture;
-        areaName = g.areaName;
-      }).catch(() => {/* ignore */});
-
-      // locations INSERT（geocode 完了前でもよい）
-      // 方針転換: 正確な座標も保存（思い出の軌跡・聖地巡礼用）。マッチングは引き続き丸めセル。
+      const g = await reverseGeocode(latGrid, lngGrid);
+      municipality = municipality ?? g.municipality;
+      prefecture = g.prefecture;
+      areaName = g.areaName;
+      const address = g.address;
+      
       await insertLocation(db, {
         userId,
         h3R8,
@@ -107,25 +105,21 @@ export const encounterRouter = router({
         accuracyM: input.accuracy ?? null,
         municipality,
         prefecture,
+        address,
       });
-
-      // visitedAreas UPSERT
+      
       await upsertVisitedArea(db, {
         userId,
         h3R7,
         municipality,
         prefecture,
       });
-
-      // homeMaskCell 自動更新（非同期）
+      
       getMostFrequentH3R8(db, userId).then((cell) => {
         if (cell) {
           upsertUserSettings(db, userId, { homeMaskCell: cell }).catch(() => {});
         }
       }).catch(() => {});
-
-      // geocode 完了を待つ（マッチング前に prefecture を確定させる）
-      await geocodePromise;
 
       // マッチング候補取得
       const [nearbyCandidates, timeshiftCandidates, blockSet, todayPairSet] =
@@ -233,7 +227,7 @@ export const encounterRouter = router({
         }
       }
 
-      return { newEncounters, prefecture, municipality, areaName };
+      return { newEncounters, prefecture, municipality, areaName, address, lat: latLng.lat, lng: latLng.lng };
     }),
 
   /**

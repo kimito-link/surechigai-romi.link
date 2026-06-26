@@ -89,11 +89,13 @@ type CheckinState = "idle" | "loading" | "success" | "error" | "zero";
 
 export default function CheckinScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReadyForUI } = useAuth();
+  const { isAuthenticated, isAuthReadyForUI, user } = useAuth();
 
   const [state, setState] = useState<CheckinState>("idle");
   const [newCount, setNewCount] = useState(0);
   const [checkinLocationName, setCheckinLocationName] = useState<string | null>(null);
+  const [checkinAddress, setCheckinAddress] = useState<string | null>(null);
+  const [checkinLatLng, setCheckinLatLng] = useState<{lat: number, lng: number} | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [isPausing, setIsPausing] = useState(false);
   const utils = trpc.useUtils();
@@ -208,6 +210,8 @@ export default function CheckinScreen() {
         ? `${result.prefecture}${result.municipality || ""}${result.areaName ? ` ${result.areaName}` : ""}`
         : null;
       setCheckinLocationName(locName);
+      setCheckinAddress(result.address ?? null);
+      setCheckinLatLng({ lat: result.lat, lng: result.lng });
 
       await Promise.allSettled([
         utils.encounter.list.invalidate(),
@@ -410,7 +414,9 @@ export default function CheckinScreen() {
                 {newCount}件のすれ違いが届きました！
               </Text>
               <Text style={styles.resultSubtitle}>
-                {checkinLocationName ? `${checkinLocationName}\n` : ""}ポストを見てみよう
+                {checkinAddress ? `${checkinAddress}\n` : (checkinLocationName ? `${checkinLocationName}\n` : "")}
+                {checkinLatLng ? `(${checkinLatLng.lat.toFixed(6)}, ${checkinLatLng.lng.toFixed(6)})\n` : ""}
+                ポストを見てみよう
               </Text>
             </View>
           )}
@@ -419,7 +425,9 @@ export default function CheckinScreen() {
             <View style={styles.resultBox}>
               <Text style={styles.resultTitle}>チェックイン完了</Text>
               <Text style={styles.resultSubtitle}>
-                {checkinLocationName ? `${checkinLocationName}\n` : ""}まだ誰も…{"\n"}あなたの軌跡が誰かの封筒になります
+                {checkinAddress ? `${checkinAddress}\n` : (checkinLocationName ? `${checkinLocationName}\n` : "")}
+                {checkinLatLng ? `(${checkinLatLng.lat.toFixed(6)}, ${checkinLatLng.lng.toFixed(6)})\n` : ""}
+                まだ誰も…{"\n"}あなたの軌跡が誰かの封筒になります
               </Text>
             </View>
           )}
@@ -442,6 +450,7 @@ export default function CheckinScreen() {
                 showInfoPanel={false}
                 height={200}
                 containerStyle={styles.mapInner}
+                userImageUrl={user?.profileImage ?? undefined}
               />
               <Animated.View style={[styles.hereTooltip, tooltipStyle]}>
                 <Text style={styles.hereTooltipText}>今ここにいるよ！</Text>

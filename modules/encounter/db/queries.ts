@@ -45,6 +45,7 @@ export async function insertLocation(
     accuracyM?: number | null;
     municipality: string | null;
     prefecture: string | null;
+    address?: string | null;
   }
 ): Promise<void> {
   await db.insert(locations).values({
@@ -57,6 +58,7 @@ export async function insertLocation(
     accuracyM: params.accuracyM ?? null,
     municipality: params.municipality ?? null,
     prefecture: params.prefecture ?? null,
+    address: params.address ?? null,
     recordedAt: new Date(),
   });
 }
@@ -72,6 +74,7 @@ export type TrailLocation = {
   municipality: string | null;
   prefecture: string | null;
   recordedAt: Date;
+  address: string | null;
 };
 
 /**
@@ -96,6 +99,7 @@ export async function getMyTrailLocations(
       accuracyM: locations.accuracyM,
       municipality: locations.municipality,
       prefecture: locations.prefecture,
+      address: locations.address,
       recordedAt: locations.recordedAt,
     })
     .from(locations)

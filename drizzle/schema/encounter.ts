@@ -46,6 +46,7 @@ export const locations = pgTable(
     accuracyM: real("accuracyM"),
     municipality: text("municipality"),
     prefecture: varchar("prefecture", { length: 32 }),
+    address: text("address"),
     recordedAt: timestamp("recordedAt").defaultNow().notNull(),
   },
   (table) => [

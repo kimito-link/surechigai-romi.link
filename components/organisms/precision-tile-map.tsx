@@ -7,15 +7,16 @@ import { color } from "@/theme/tokens";
 export const TILE_SIZE = 256;
 export const MAX_TILE_LAT = 85.05112878;
 
-export type TrailPoint = {
-  id: number;
-  lat: number;
-  lng: number;
-  accuracyM: number | null;
-  municipality: string | null;
-  prefecture: string | null;
-  recordedAt: Date | string;
-};
+  export type TrailPoint = {
+    id: number;
+    lat: number;
+    lng: number;
+    accuracyM: number | null;
+    municipality: string | null;
+    prefecture: string | null;
+    address: string | null;
+    recordedAt: Date | string;
+  };
 
 export type Pixel = {
   x: number;
@@ -104,34 +105,37 @@ export function formatDateTime(d: Date | string): string {
   });
 }
 
-export function formatPlace(point: Pick<TrailPoint, "prefecture" | "municipality">): string {
-  const place = [point.prefecture, point.municipality].filter(Boolean).join(" ");
-  return place || "記録地点";
-}
+  export function formatPlace(point: Pick<TrailPoint, "prefecture" | "municipality" | "address">): string {
+    if (point.address) return point.address;
+    const place = [point.prefecture, point.municipality].filter(Boolean).join(" ");
+    return place || "記録地点";
+  }
 
 export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string {
   return `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`;
 }
 
-export interface PrecisionTileMapProps {
-  locations: TrailPoint[];
-  width?: number;
-  height?: number;
-  zoom?: number;
-  showInfoPanel?: boolean;
-  containerStyle?: StyleProp<ViewStyle>;
-  customCenter?: { lat: number; lng: number };
-}
+  export interface PrecisionTileMapProps {
+    locations: TrailPoint[];
+    width?: number;
+    height?: number;
+    zoom?: number;
+    showInfoPanel?: boolean;
+    containerStyle?: StyleProp<ViewStyle>;
+    customCenter?: { lat: number; lng: number };
+    userImageUrl?: string;
+  }
 
-export function PrecisionTileMap({
-  locations,
-  width: propWidth,
-  height: propHeight,
-  zoom = 18,
-  showInfoPanel = true,
-  containerStyle,
-  customCenter,
-}: PrecisionTileMapProps) {
+  export function PrecisionTileMap({
+    locations,
+    width: propWidth,
+    height: propHeight,
+    zoom = 18,
+    showInfoPanel = true,
+    containerStyle,
+    customCenter,
+    userImageUrl,
+  }: PrecisionTileMapProps) {
   const { width: windowWidth } = useWindowDimensions();
   const mapWidth = propWidth ?? Math.max(320, Math.min(windowWidth - 32, 980));
   const mapHeight = propHeight ?? (windowWidth < 640 ? 430 : 560);
@@ -269,7 +273,11 @@ export function PrecisionTileMap({
               },
             ]}
           >
-            <MaterialIcons name="my-location" size={24} color={color.textWhite} />
+            {userImageUrl ? (
+              <Image source={{ uri: userImageUrl }} style={{ width: 38, height: 38, borderRadius: 6 }} />
+            ) : (
+              <MaterialIcons name="my-location" size={24} color={color.textWhite} />
+            )}
           </Pressable>
         </>
       )}
