@@ -315,9 +315,13 @@ export default function RootLayout() {
   // Clerk Dashboard 側は proxy_url=https://<origin>/__clerk で登録済み。CNAME(DNS)は不要。
   // proxyUrl を使う場合は domain を併用しない(Clerk 仕様)。
   // satellite/プロキシは Web 専用の概念。Native は publishable key の FAPI を直接使うため satellite 化しない。
+  // この Web アプリは常に kimito の Clerk(clerk.kimito.link)のサテライト(方式A)。
+  // ビルド時の EXPO_PUBLIC 変数 inline に依存すると環境差で壊れるため、Web では既定で satellite ON。
+  // 明示的に EXPO_PUBLIC_CLERK_IS_SATELLITE="false" のときだけ無効化(単独インスタンス検証用)。
   const isWeb = Platform.OS === "web";
-  const isSatellite = isWeb && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE === "true";
-  const primarySignInUrl = process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL; // 例: https://kimito.link/sign-in
+  const isSatellite = isWeb && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false";
+  const primarySignInUrl =
+    process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL || "https://kimito.link/sign-in/";
   // 実行時の配信ホストから導出(Vercel env 変更不要)。env 上書きも許可。
   const proxyUrl =
     isWeb && typeof window !== "undefined"

@@ -160,7 +160,8 @@ export function useAuth() {
           // ★手動で primary の URL へ飛ばすのはNG。Clerk.buildSignInUrl() を使うと
           //   __clerk_synced パラメータが自動付与され、primary でログイン後にサテライトへ
           //   戻った時に SDK がセッションを同期する(これが無いとログイン状態が渡らない)。
-          const isSatellite = process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE === "true";
+          // Web は既定でサテライト(方式A)。明示的に "false" のときだけ単独インスタンス扱い。
+          const isSatellite = process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false";
           if (isSatellite) {
             const clerk = getClerkInstance();
             if (typeof clerk.buildSignInUrl !== "function") {
