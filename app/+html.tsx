@@ -1,5 +1,5 @@
 import { ScrollViewStyleReset } from "expo-router/html";
-import { palette } from "@/theme/tokens";
+import { palette, color } from "@/theme/tokens";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -34,7 +34,10 @@ export default function Root({ children }: PropsWithChildren) {
           However, body scrolling is often nice to have for mobile web. If you want to enable it, remove this line.
         */}
         <ScrollViewStyleReset />
-        {/* Add any additional <head> elements that you want globally available on web... */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          body { background-color: ${color.background}; }
+          #root { background-color: ${color.background}; }
+        `}} />
       </head>
       <body>
         {children}
