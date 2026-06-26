@@ -63,7 +63,7 @@ export function AppHeader({
               ]}
               numberOfLines={1}
             >
-              {title || "君斗りんくのすれ違ひ通信"}
+              {title || "君斗りんくのすれ違ひ通信 v1.0.0"}
             </Text>
           </View>
 

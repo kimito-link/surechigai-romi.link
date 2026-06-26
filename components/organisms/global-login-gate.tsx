@@ -42,8 +42,14 @@ export function GlobalLoginGate({
   };
 
   return (
-    <ScreenContainer style={{ backgroundColor: "#FFFFFF" }} edges={["top", "left", "right"]}>
-      <AppHeader title={headerTitle} showCharacters={false} isDesktop={isDesktop} showMenu showLoginButton={false} />
+    <ScreenContainer containerClassName="bg-background">
+      <AppHeader
+        title={(headerTitle || "君斗りんくのすれ違ひ通信") + " v1.0.0"}
+        showCharacters={false}
+        isDesktop={isDesktop}
+        showMenu={true}
+        showLoginButton={true}
+      />
       
       <View style={styles.container}>
         {/* Characters */}

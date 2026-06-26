@@ -343,7 +343,7 @@ export default function MypageScreen() {
           </Pressable>
         </View>
 
-        <Text style={styles.version}>君斗りんくのすれ違ひ通信 MVP</Text>
+        <Text style={styles.version}>君斗りんくのすれ違ひ通信 v1.0.0</Text>
       </ScrollView>
 
       {/* ひとこと編集モーダル */}

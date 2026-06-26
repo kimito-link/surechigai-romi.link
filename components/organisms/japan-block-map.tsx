@@ -36,7 +36,8 @@ export function JapanBlockMap({
   // 画面幅に応じてセルサイズを決定（最大40px）
   const cols = 14;
   const margin = 16;
-  const cellSize = Math.min(40, Math.floor((width - margin * 2) / cols) - 2);
+  const safeWidth = Math.max(width || 320, 320);
+  const cellSize = Math.max(10, Math.min(40, Math.floor((safeWidth - margin * 2) / cols) - 2));
 
   return (
     <View style={styles.container}>

@@ -16,7 +16,7 @@ export default function SpecialThanksScreen() {
 
         {/* ===== 和テイストのクレジットバナー ===== */}
         <View style={styles.creditBanner}>
-          <Text style={styles.creditTitle}>君斗りんくの{"\n"}すれ違ひ通信</Text>
+          <Text style={styles.creditTitle}>君斗りんくの{"\n"}すれ違ひ通信 v1.0.0</Text>
           <Text style={styles.creditReading}>SURECHIGAI TSUSHIN</Text>
 
           {/* 3キャラ */}

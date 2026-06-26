@@ -53,7 +53,7 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
             resizeMode="contain"
           />
           <Text selectable style={[styles.heroTitle, stylesBySize[heroSize].heroTitle]}>
-            君斗りんくの{"\n"}すれ違ひ通信
+            君斗りんくの{"\n"}すれ違ひ通信 v1.0.0
           </Text>
           <Text selectable style={[styles.heroReading, stylesBySize[heroSize].heroReading]}>
             SURECHIGAI TSUSHIN
