@@ -1,33 +1,30 @@
-// Clerk Frontend API プロキシ（方式A サテライト用）
+// Clerk Frontend API プロキシ（方式A サテライト用・フラット関数）
 //
 // surechigai-romi.link は kimito の Clerk 本番インスタンス(clerk.kimito.link)を
 // サテライトとして共有する。本番キー(pk_live_)はドメインロックされているため、
-// surechigai-romi.link から直接 Clerk FAPI を叩くと 400 になる。
+// satellite ドメインから直接 Clerk FAPI を叩くと /v1/environment が 400 になる。
 // そこで /__clerk/* を Clerk FAPI(https://frontend-api.clerk.services/*) へ転送し、
 // 必須3ヘッダー(Clerk-Proxy-Url / Clerk-Secret-Key / X-Forwarded-For)を付与する。
 //
-// Clerk Dashboard 側の satellite ドメインは proxy_url=https://surechigai-romi.link/__clerk
-// で登録済み。CNAME(DNS)設定は不要。
+// ルーティング: Vercel の catch-all [...path] はこの構成では複数セグメントに
+// マッチしないため、公式の「クエリでパスを渡す」rewrite パターンを使う。
+//   vercel.json: /__clerk/:path* -> /api/clerk-proxy?__clerkPath=:path*
 //
-// ルーティング: vercel.json の rewrite で /__clerk/:path* -> /api/clerk-proxy/:path*
+// Clerk Dashboard 側は proxy_url=https://surechigai-romi.link/__clerk で登録済み(DNS不要)。
 
 export const config = { runtime: "edge" };
 
 const CLERK_FAPI = "https://frontend-api.clerk.services";
 const PROXY_URL = "https://surechigai-romi.link/__clerk";
 
-function resolveClerkPath(pathname: string): string {
-  // rewrite 後は /api/clerk-proxy/<clerk path>、直アクセス時は /__clerk/<clerk path>。
-  // どちらの prefix も剥がして Clerk FAPI 側のパスへ正規化する。
-  return pathname
-    .replace(/^\/api\/clerk-proxy/, "")
-    .replace(/^\/__clerk/, "");
-}
-
 export default async function handler(req: Request): Promise<Response> {
   const url = new URL(req.url);
-  const clerkPath = resolveClerkPath(url.pathname) || "/";
-  const target = `${CLERK_FAPI}${clerkPath}${url.search}`;
+
+  const clerkPath = (url.searchParams.get("__clerkPath") ?? "").replace(/^\/+/, "");
+  const params = new URLSearchParams(url.search);
+  params.delete("__clerkPath");
+  const qs = params.toString();
+  const target = `${CLERK_FAPI}/${clerkPath}${qs ? `?${qs}` : ""}`;
 
   const headers = new Headers(req.headers);
   // 必須3ヘッダー（Clerk のプロキシ要件）
