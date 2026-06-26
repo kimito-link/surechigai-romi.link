@@ -26,7 +26,7 @@ export default function Root({ children }: PropsWithChildren) {
         {/* PWA manifest */}
         <link rel="manifest" href="/manifest.json" />
         {/* Theme color for browser chrome */}
-        <meta name="theme-color" content={palette.gray900} />
+        <meta name="theme-color" content="#0D1117" />
         {/* Apple touch icon */}
         <link rel="apple-touch-icon" href="/icon-192.png" />
         {/*
@@ -35,8 +35,16 @@ export default function Root({ children }: PropsWithChildren) {
         */}
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{ __html: `
-          body { background-color: ${color.bg}; }
-          #root { background-color: ${color.bg}; }
+          :root {
+            --color-background: #0D1117;
+            --color-surface: #161B22;
+            --color-foreground: #E6EDF3;
+            --color-primary: #4A90D9;
+            --color-muted: #6A6B6D;
+            --color-border: #30363D;
+          }
+          body { background-color: var(--color-background); }
+          #root { background-color: var(--color-background); }
         `}} />
       </head>
       <body>

@@ -7,6 +7,7 @@ import { color } from '@/theme/tokens';
 export function JapanRadarMap({ children }: { children?: React.ReactNode }) {
   // Radar sweep animation
   const rotation = useSharedValue(0);
+  const mapOpacity = useSharedValue(0);
   
   React.useEffect(() => {
     rotation.value = withRepeat(
@@ -14,16 +15,23 @@ export function JapanRadarMap({ children }: { children?: React.ReactNode }) {
       -1,
       false
     );
+    // 初期描画の「白く光る」のを防ぐためフェードイン
+    mapOpacity.value = withTiming(0.5, { duration: 800 });
   }, []);
 
   const animatedRadarStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
+  const animatedMapStyle = useAnimatedStyle(() => ({
+    opacity: mapOpacity.value,
+  }));
+
   return (
     <View style={styles.container}>
       {/* Map SVG */}
-      <Svg viewBox="0 0 1000 1000" style={styles.map}>
+      <Animated.View style={[styles.mapWrapper, animatedMapStyle]}>
+        <Svg viewBox="0 0 1000 1000" style={styles.map}>
         
 
   
@@ -249,6 +257,7 @@ export function JapanRadarMap({ children }: { children?: React.ReactNode }) {
 
 
       </Svg>
+      </Animated.View>
       
       {/* Radar sweeping effect */}
       <View style={styles.radarContainer}>
@@ -271,11 +280,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  mapWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   map: {
     width: '150%',
     height: '150%',
     position: 'absolute',
-    opacity: 0.5, // 夜空に薄く浮かぶ日本列島（暗背景に明色SVGが映える）
   },
   radarContainer: {
     ...StyleSheet.absoluteFillObject,

@@ -38,10 +38,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
+  // サーバーサイド・または初回レンダリング時にできるだけ早くテーマを適用する
+  // useLayoutEffect を使うと useEffect より早くDOMに反映される
+  if (typeof window !== "undefined" && !isInitialized) {
     applyScheme();
+  }
+
+  useEffect(() => {
     setIsInitialized(true);
-  }, [applyScheme]);
+  }, []);
 
   const themeVariables = useMemo(
     () =>

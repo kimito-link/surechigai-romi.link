@@ -69,6 +69,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip Clerk requests and proxy requests completely to avoid offline page interference on redirects
+  if (url.pathname.startsWith('/__clerk/') || url.pathname.startsWith('/api/clerk-proxy/')) {
+    return;
+  }
+
   // API requests - Network first, fallback to cache
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/trpc/')) {
     event.respondWith(networkFirstStrategy(request, API_CACHE_NAME));
@@ -171,7 +176,7 @@ async function navigationStrategy(request) {
     
     // Last resort - return basic offline message
     return new Response(
-      '<!DOCTYPE html><html><head><meta charset="utf-8"><title>オフライン</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;"><h1>オフラインです</h1><p>インターネット接続を確認してください</p></body></html>',
+      '<!DOCTYPE html><html><head><meta charset="utf-8"><title>オフライン</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;background-color:#0D1117;color:#E6EDF3;"><h1>オフラインです</h1><p>インターネット接続を確認してください</p></body></html>',
       { headers: { 'Content-Type': 'text/html' } }
     );
   }

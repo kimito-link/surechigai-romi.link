@@ -35,10 +35,10 @@ export function registerServiceWorker(): void {
               if (newWorker.state === "installed") {
                 if (navigator.serviceWorker.controller) {
                   // 新しいバージョンが利用可能 - 即座に更新を適用
-                  console.log("[SW] New version available, forcing update...");
+                  // リロードの点滅を防ぐため、自動リロードは無効化する
+                  console.log("[SW] New version available, applying update without reload...");
                   newWorker.postMessage({ type: "SKIP_WAITING" });
-                  // ページをリロードして新しいService Workerを有効化
-                  window.location.reload();
+                  // window.location.reload(); // ← 二重点滅の原因になるため削除
                 } else {
                   // 初回インストール
                   console.log("[SW] Service Worker installed for the first time");
