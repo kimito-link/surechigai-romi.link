@@ -17,5 +17,6 @@ export function useColorScheme() {
     return colorScheme;
   }
 
-  return "light";
+  // アプリがダークモード専用になったため、ハイドレーション前も一貫してdarkを返す
+  return "dark";
 }

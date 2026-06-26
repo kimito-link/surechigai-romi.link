@@ -4,6 +4,7 @@ import * as SecureStore from "expo-secure-store";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Stack } from "expo-router";
+import { ThemeProvider as ExpoThemeProvider, DarkTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -338,7 +339,7 @@ export default function RootLayout() {
 
   const content = (
     <ErrorBoundary screenName="App">
-      <GestureHandlerRootView style={{ flex: 1, overflow: "hidden" }}>
+      <GestureHandlerRootView style={{ flex: 1, overflow: "hidden", backgroundColor: "#0D1117" }}>
         {isMissingClerkKey ? (
           <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0D1117", padding: 20 }}>
             <Text style={{ color: "#F87171", fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>セットアップエラー</Text>
@@ -352,9 +353,11 @@ export default function RootLayout() {
             <AutoLoginProvider>
               <LoginSuccessProvider>
                 <ToastProvider>
-                  <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="(tabs)" />
-                  </Stack>
+                  <ExpoThemeProvider value={DarkTheme}>
+                    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0D1117" } }}>
+                      <Stack.Screen name="(tabs)" />
+                    </Stack>
+                  </ExpoThemeProvider>
                   <StatusBar style="auto" />
                   <LoginSuccessModalWrapper />
                   <OfflineBanner />

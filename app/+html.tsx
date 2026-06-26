@@ -42,7 +42,9 @@ export default function Root({ children }: PropsWithChildren) {
             --color-primary: #4A90D9;
             --color-muted: #6A6B6D;
             --color-border: #30363D;
+            color-scheme: dark;
           }
+          html { background-color: var(--color-background); color-scheme: dark; }
           body { background-color: var(--color-background); }
           #root { background-color: var(--color-background); }
         `}} />
