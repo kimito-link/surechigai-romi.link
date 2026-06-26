@@ -310,16 +310,24 @@ export default function RootLayout() {
   const isMissingClerkKey = !clerkKey;
 
   // 方式A(Clerk インスタンス共有): surechigai-romi.link は kimito の Clerk(clerk.kimito.link)を
-  // サテライトドメインとして共有する。EXPO_PUBLIC_CLERK_IS_SATELLITE=true のときだけ satellite 化。
-  // (env が無い=従来どおりの単独インスタンス動作。安全側のフォールバック)
-  const isSatellite = process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE === "true";
-  const satelliteDomain = process.env.EXPO_PUBLIC_CLERK_DOMAIN; // 例: surechigai-romi.link
+  // サテライトとして共有する。本番キー(pk_live_)はドメインロックされており、satellite ドメインから
+  // 直接 FAPI を叩くと 400 になるため、Web は /__clerk プロキシ経由で FAPI を中継する(api/clerk-proxy)。
+  // Clerk Dashboard 側は proxy_url=https://<origin>/__clerk で登録済み。CNAME(DNS)は不要。
+  // proxyUrl を使う場合は domain を併用しない(Clerk 仕様)。
+  // satellite/プロキシは Web 専用の概念。Native は publishable key の FAPI を直接使うため satellite 化しない。
+  const isWeb = Platform.OS === "web";
+  const isSatellite = isWeb && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE === "true";
   const primarySignInUrl = process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL; // 例: https://kimito.link/sign-in
+  // 実行時の配信ホストから導出(Vercel env 変更不要)。env 上書きも許可。
+  const proxyUrl =
+    isWeb && typeof window !== "undefined"
+      ? `${window.location.origin}/__clerk`
+      : process.env.EXPO_PUBLIC_CLERK_PROXY_URL;
   const clerkSatelliteProps = isSatellite
     ? {
         isSatellite: true as const,
-        domain: satelliteDomain,
         satelliteAutoSync: true,
+        ...(proxyUrl ? { proxyUrl } : {}),
         ...(primarySignInUrl ? { signInUrl: primarySignInUrl } : {}),
       }
     : {};
