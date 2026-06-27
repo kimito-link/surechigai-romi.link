@@ -174,15 +174,6 @@ export function useAuth() {
           const origin = window.location.origin;
           const redirectComplete = resolveReturnUrl(safeReturnUrl) ?? origin;
 
-          const host = window.location.hostname;
-          const isLocalhostDev = host === "localhost" || host === "127.0.0.1";
-          const isKimitoSameSite = host === "kimito.link" || host.endsWith(".kimito.link");
-          // 別ドメイン(surechigai-romi.link 等)のときだけ satellite。
-          const isAppSatellite =
-            process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" &&
-            !isLocalhostDev &&
-            !isKimitoSameSite;
-
           // ★根本対策: window.Clerk グローバルの直接参照を廃止し、useClerk() の
           //   インスタンスのロード完了を待ってから使う(断続的なログイン失敗の元凶を除去)。
           const ready = await waitForClerkReady(clerk);
@@ -198,19 +189,7 @@ export function useAuth() {
             return;
           }
 
-          if (isAppSatellite) {
-            // 別ドメイン(satellite)のみ: 自ドメインでサインイン開始不可(Clerk 403)。
-            // buildSignInUrl が __clerk_synced を付与し、primary(kimito.link)で
-            // ログイン後にサテライトへ戻った際 SDK がセッションを同期する。
-            const signInUrl = clerk.buildSignInUrl({ redirectUrl: redirectComplete });
-            if (!signInUrl) {
-              throw new Error("認証システムが応答しません。リロードしてお試しください。");
-            }
-            window.location.href = signInUrl;
-            return;
-          }
-
-          // 忠実コピー: 同一サイト(*.kimito.link)/localhost は kimito.link と同じく
+          // 忠実コピー: 同一サイト(surechigai.kimito.link)に統一済み。kimito.link と同じく
           //   自前 /sign-in（Clerk <SignIn/>）へ遷移する。プログラム的 OAuth を直接呼ばず、
           //   X/Apple/Google ボタンは <SignIn/> 自身が描画・処理する（体験を完全一致させる）。
           //   ログイン後は redirect_url（=目的地）へ <SignIn/> が戻す。

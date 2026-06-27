@@ -25,7 +25,7 @@ export default function Root({ children }: PropsWithChildren) {
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
         />
         <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://surechigai-romi.link/" />
+        <link rel="canonical" href="https://surechigai.kimito.link/" />
         {/* OGP / Twitter Card */}
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="君斗りんくのすれ違ひ通信" />
@@ -34,8 +34,8 @@ export default function Root({ children }: PropsWithChildren) {
           property="og:description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
         />
-        <meta property="og:url" content="https://surechigai-romi.link/" />
-        <meta property="og:image" content="https://surechigai-romi.link/api/og" />
+        <meta property="og:url" content="https://surechigai.kimito.link/" />
+        <meta property="og:image" content="https://surechigai.kimito.link/api/og" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -44,10 +44,12 @@ export default function Root({ children }: PropsWithChildren) {
           name="twitter:description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。"
         />
-        <meta name="twitter:image" content="https://surechigai-romi.link/api/og" />
+        <meta name="twitter:image" content="https://surechigai.kimito.link/api/og" />
         {/* Preconnect: API・Clerkの接続を事前開始 */}
-        <link rel="preconnect" href="https://surechigai-romi.link" />
-        <link rel="dns-prefetch" href="https://surechigai-romi.link" />
+        <link rel="preconnect" href="https://surechigai.kimito.link" />
+        <link rel="dns-prefetch" href="https://surechigai.kimito.link" />
+        <link rel="preconnect" href="https://clerk.kimito.link" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://clerk.kimito.link" />
         <link rel="preconnect" href="https://clerk.accounts.dev" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://clerk.accounts.dev" />
         {/* PWA manifest */}

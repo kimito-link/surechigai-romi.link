@@ -12,7 +12,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getDb } from "../../server/db/connection.js";
 import { getShareInfoBySlug } from "../../modules/encounter/db/queries.js";
 
-const ORIGIN = "https://surechigai-romi.link";
+const ORIGIN = "https://surechigai.kimito.link";
 
 function esc(s: string): string {
   return s

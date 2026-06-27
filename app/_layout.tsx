@@ -316,52 +316,12 @@ export default function RootLayout() {
   const isMissingClerkKey = !clerkKey;
 
   // Clerk アカウントは kimito.link の本番インスタンスを共有する。
-  // 到達方法は「配信ホスト名」で自動分岐する（env のビルド時 inline 依存をやめ、実行時に確定）:
-  //  (a) *.kimito.link（例: surechigai.kimito.link）= 同一サイト。
-  //      Cookie が .kimito.link で共有されるため satellite も proxy も不要。
-  //      → ログインがシームレス＝リロードの白画面(同期リダイレクト)も発生しない。【本命】
-  //  (b) surechigai-romi.link 等の別ドメイン = satellite + /__clerk プロキシ（移行期の後方互換）。
-  //      白画面回避のため satelliteAutoSync は false（リロード毎の primary 同期リダイレクトを止める）。
-  //  (c) localhost = 単独インスタンス検証（satellite なし）。
+  // 配信は surechigai.kimito.link（同一サイト）に統一済み。
+  //   Cookie が .kimito.link で共有されるため satellite も /__clerk プロキシも不要。
+  //   → ログインがシームレス＝リロードの白画面(同期リダイレクト)も発生しない。
+  // ログインは常に自前 /sign-in（Clerk <SignIn/>）で kimito.link と同一体験にする。
   // Native は publishable key の FAPI を直接使うため satellite 化しない。
-  const isWebMode = Platform.OS === "web";
-  const host =
-    isWebMode && typeof window !== "undefined" ? window.location.hostname : "";
-  const isLocalhostDev =
-    isWebMode && (host === "localhost" || host === "127.0.0.1");
-  const isKimitoSameSite =
-    host === "kimito.link" || host.endsWith(".kimito.link");
-  // 別ドメインのときだけ satellite（明示的に "false" で無効化も可能）。
-  const isAppSatellite =
-    isWebMode &&
-    process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" &&
-    !isLocalhostDev &&
-    !isKimitoSameSite;
-
-  const appPrimarySignInUrl =
-    process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL || "https://kimito.link/sign-in/";
-
-  // satellite のときだけ /__clerk プロキシ経由で FAPI を中継する。
-  const appProxyUrl =
-    isAppSatellite && typeof window !== "undefined"
-      ? `${window.location.origin}/__clerk`
-      : undefined;
-
-  // 忠実コピー: 同一サイト(*.kimito.link)/localhost は自前 /sign-in（Clerk <SignIn/>）で
-  //   ログイン体験を kimito.link と同一にする。Clerk の内部リダイレクトも /sign-in に向く。
-  //   別ドメイン(satellite)はこの origin でサインイン開始不可のため primary(kimito.link) に委譲。
-  const appClerkSatelliteProps = isLocalhostDev
-    ? { signInUrl: "/sign-in" }
-    : isKimitoSameSite
-      ? { signInUrl: "/sign-in" }
-      : isAppSatellite
-        ? {
-            isSatellite: true as const,
-            satelliteAutoSync: false,
-            ...(appProxyUrl ? { proxyUrl: appProxyUrl } : {}),
-            signInUrl: appPrimarySignInUrl,
-          }
-        : {};
+  const appClerkSatelliteProps = { signInUrl: "/sign-in" };
 
   // kimito.link 由来の見た目・日本語をすべての ClerkProvider に適用（忠実コピー）。
   const clerkBrandProps = {
