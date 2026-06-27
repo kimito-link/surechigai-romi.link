@@ -88,7 +88,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
               {/* ヘッダー */}
               <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: color.borderAlt }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                  <Text style={{ color: color.textWhite, fontSize: 13, fontWeight: "bold" }}>メニュー (君斗りんくのすれ違ひ通信 v1.0.0)</Text>
+                  <Text style={{ color: color.textPrimary, fontSize: 13, fontWeight: "bold" }}>メニュー (君斗りんくのすれ違ひ通信 v1.0.0)</Text>
                   <Pressable
                     onPress={onClose}
                     style={({ pressed }) => [{
@@ -97,7 +97,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
                       alignItems: "center", justifyContent: "center",
                     }, pressed && { opacity: 0.7 }]}
                   >
-                    <MaterialIcons name="close" size={20} color={color.textMuted} />
+                    <MaterialIcons name="close" size={20} color={color.textSecondary} />
                   </Pressable>
                 </View>
               </View>
@@ -113,12 +113,12 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
                     onPress={handleLogin}
                     style={({ pressed }) => [{
                       flexDirection: "row", alignItems: "center", justifyContent: "center",
-                      backgroundColor: color.twitter,
+                      backgroundColor: palette.kimitoBlue,
                       paddingHorizontal: 20, paddingVertical: 12, borderRadius: 24,
-                    }, pressed && { opacity: 0.7 }]}
+                    }, pressed && { opacity: 0.85 }]}
                   >
-                    <MaterialIcons name="login" size={20} color={color.textWhite} style={{ marginRight: 8 }} />
-                    <Text style={{ color: color.textWhite, fontSize: 16, fontWeight: "600" }}>
+                    <MaterialIcons name="login" size={20} color={palette.white} style={{ marginRight: 8 }} />
+                    <Text style={{ color: palette.white, fontSize: 16, fontWeight: "700" }}>
                       Xでログイン
                     </Text>
                   </Pressable>
@@ -139,8 +139,8 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
                     }}
                   >
                     <View style={{ flexDirection: "row", alignItems: "center" }}>
-                      <MaterialIcons name={item.icon as any} size={24} color={color.textMuted} style={{ marginRight: 16 }} />
-                      <Text style={{ color: color.textWhite, fontSize: 16 }}>{item.label}</Text>
+                      <MaterialIcons name={item.icon as any} size={24} color={palette.kimitoBlue} style={{ marginRight: 16 }} />
+                      <Text style={{ color: color.textPrimary, fontSize: 16 }}>{item.label}</Text>
                     </View>
                   </Link>
                 ))}
@@ -177,7 +177,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
   );
 }
 
-export function HamburgerButton({ onPress, size = 24, buttonColor = color.textWhite }: { onPress: () => void; size?: number; buttonColor?: string }) {
+export function HamburgerButton({ onPress, size = 24, buttonColor = palette.kimitoBlue }: { onPress: () => void; size?: number; buttonColor?: string }) {
   const handlePress = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

@@ -149,7 +149,7 @@ export default function KimitoLinkAuthGuideScreen() {
                 disabled={isStarting}
                 icon="login"
                 fullWidth
-                style={{ backgroundColor: color.twitter }}
+                style={{ backgroundColor: palette.kimitoBlue }}
               >
                 kimito.link のXログインへ進む
               </Button>

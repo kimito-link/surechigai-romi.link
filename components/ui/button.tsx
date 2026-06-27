@@ -50,15 +50,15 @@ const variantStyles = {
     bg: color.accentPrimary,
     text: color.textWhite,
     border: "transparent",
-    activeBg: palette.pink600,
-    hoverBg: palette.pink500,
+    activeBg: "#00335F", // kimitoBlue を暗くした押下色
+    hoverBg: "#0A5290", // kimitoBlue を明るくしたホバー色
   },
   secondary: {
     bg: color.surface,
-    text: color.textWhite,
-    border: color.borderAlt,
-    activeBg: color.border,
-    hoverBg: color.surfaceAlt,
+    text: color.accentPrimary, // 白背景に白文字バグ修正（ネイビー文字へ）
+    border: color.accentPrimary,
+    activeBg: color.accentPrimary + "14", // 8% opacity
+    hoverBg: color.accentPrimary + "0D", // 5% opacity
   },
   outline: {
     bg: "transparent",
@@ -69,10 +69,10 @@ const variantStyles = {
   },
   ghost: {
     bg: "transparent",
-    text: color.textMuted,
+    text: color.textSecondary,
     border: "transparent",
-    activeBg: color.textWhite + "1A", // 10% opacity
-    hoverBg: color.textWhite + "0D", // 5% opacity
+    activeBg: color.accentPrimary + "1A", // 10% opacity
+    hoverBg: color.accentPrimary + "0D", // 5% opacity
   },
   destructive: {
     bg: color.danger,

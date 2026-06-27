@@ -45,6 +45,24 @@ function firstNumber(...values: any[]): number | undefined {
   return undefined;
 }
 
+/**
+ * Clerk SDK のロード完了を待つ。
+ * window.Clerk グローバルの直接参照はロード順に依存して buildSignInUrl が
+ * undefined になり「認証システムが応答しません」を断続的に引き起こす元凶だった。
+ * useClerk() で受け取ったインスタンスの loaded を待つことで競合を解消する。
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function waitForClerkReady(clerk: any, timeoutMs = 5000): Promise<boolean> {
+  if (!clerk) return false;
+  if (clerk.loaded) return true;
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    await new Promise((r) => setTimeout(r, 100));
+    if (clerk.loaded) return true;
+  }
+  return !!clerk.loaded;
+}
+
 function getStoredUserSnapshot(): Partial<Auth.User> | null {
   if (Platform.OS !== "web" || typeof window === "undefined") return null;
   try {
@@ -156,43 +174,26 @@ export function useAuth() {
           const origin = window.location.origin;
           const redirectComplete = resolveReturnUrl(safeReturnUrl) ?? origin;
 
-          // 方式A(Clerk Satellite): このアプリがサテライトのとき、サインインは
-          // サテライト側で開始できない(Clerk が 403 "not allowed on a satellite domain")。
-          // ★手動で primary の URL へ飛ばすのはNG。Clerk.buildSignInUrl() を使うと
-          //   __clerk_synced パラメータが自動付与され、primary でログイン後にサテライトへ
-          //   戻った時に SDK がセッションを同期する(これが無いとログイン状態が渡らない)。
+          const isLocalhostDev =
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1";
           // Web は既定でサテライト(方式A)。明示的に "false" のときだけ単独インスタンス扱い。
-          const isWebMode = Platform.OS === "web";
-          const isLocalhostDev = isWebMode && typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-          // EXPO_PUBLIC_CLERK_IS_SATELLITE="true" の場合でも localhost ではサテライトモードを無効化する
-          // これにより Production Keys are only allowed for domain "kimito.link" エラーを回避する
-          const isAppSatellite = isWebMode && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" && !isLocalhostDev;
-          
+          // localhost では Production Keys のドメインロックを避けるためサテライトを無効化。
+          const isAppSatellite =
+            process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" && !isLocalhostDev;
+
+          // ★根本対策: window.Clerk グローバルの直接参照を廃止し、useClerk() の
+          //   インスタンスのロード完了を待ってから使う(断続的なログイン失敗の元凶を除去)。
+          const ready = await waitForClerkReady(clerk);
+          if (!ready) {
+            throw new Error("認証システムの準備中です。数秒おいてもう一度お試しください。");
+          }
+
           if (isAppSatellite) {
-            // Webのサテライトでは window.Clerk を直接参照するのが確実
-            const clerkInstance = typeof window !== "undefined" && (window as any).Clerk ? (window as any).Clerk : clerk;
-            const buildUrl = clerkInstance?.buildSignInUrl;
-            
-            if (typeof buildUrl !== "function") {
-              // localhostで Clerk のロードに失敗している場合のフォールバック
-              const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-              if (isLocalhost) {
-                 const clientSignIn = clerkInstance?.client?.signIn;
-                 if (clientSignIn) {
-                   await clientSignIn.authenticateWithRedirect({
-                     strategy: "oauth_x",
-                     redirectUrl: `${window.location.origin}/sso-callback`,
-                     redirectUrlComplete: redirectComplete,
-                   });
-                   return;
-                 }
-              }
-              throw new Error("認証システムが応答しません。リロードしてお試しください。");
-            }
-            // 認証基盤へのサテライト最終遷移先を戻す
-            const syncedSignInUrl = buildUrl.call(clerkInstance, {
-              redirectUrl: redirectComplete,
-            });
+            // サテライトはサインインを自ドメインで開始できない(Clerk 403)。
+            // buildSignInUrl() が __clerk_synced を付与し、primary(kimito.link)で
+            // ログイン後にサテライトへ戻った際 SDK がセッションを同期する。
+            const syncedSignInUrl = clerk.buildSignInUrl({ redirectUrl: redirectComplete });
             if (!syncedSignInUrl) {
               throw new Error("認証システムが応答しません。リロードしてお試しください。");
             }
@@ -200,21 +201,17 @@ export function useAuth() {
             return;
           }
 
-          // 非サテライト(単独インスタンス)は従来どおり、同じタブのまま X へ遷移する。
-          // （useOAuth().startOAuthFlow は Web だと expo-web-browser のポップアップを開き使いづらい。
-          //   また useSignIn() の新 signals 版 signIn には authenticateWithRedirect が無い＝
-          //   従来の clerk.client.signIn を使う必要がある）
-          const clerkInstance = typeof window !== "undefined" && (window as any).Clerk ? (window as any).Clerk : clerk;
-          const clientSignIn = clerkInstance?.client?.signIn;
+          // 非サテライト(単独インスタンス/localhost検証)は同一タブのまま X へ遷移。
+          const clientSignIn = clerk.client?.signIn;
           if (clientSignIn) {
             await clientSignIn.authenticateWithRedirect({
               strategy: "oauth_x",
-              redirectUrl: `${window.location.origin}/sso-callback`,
+              redirectUrl: `${origin}/sso-callback`,
               redirectUrlComplete: redirectComplete,
             });
             return;
           }
-          
+
           throw new Error("認証の準備中です。少し待ってからもう一度お試しください。");
         }
 

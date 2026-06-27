@@ -313,46 +313,59 @@ export default function RootLayout() {
   const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const isMissingClerkKey = !clerkKey;
 
-  // 方式A(Clerk インスタンス共有): surechigai-romi.link は kimito の Clerk(clerk.kimito.link)を
-  // サテライトとして共有する。本番キー(pk_live_)はドメインロックされており、satellite ドメインから
-  // 直接 FAPI を叩くと 400 になるため、Web は /__clerk プロキシ経由で FAPI を中継する(api/clerk-proxy)。
-  // Clerk Dashboard 側は proxy_url=https://<origin>/__clerk で登録済み。CNAME(DNS)は不要。
-  // proxyUrl を使う場合は domain を併用しない(Clerk 仕様)。
-  // satellite/プロキシは Web 専用の概念。Native は publishable key の FAPI を直接使うため satellite 化しない。
-  // この Web アプリは常に kimito の Clerk(clerk.kimito.link)のサテライト(方式A)。
-  // ビルド時の EXPO_PUBLIC 変数 inline に依存すると環境差で壊れるため、Web では既定で satellite ON。
-  // 明示的に EXPO_PUBLIC_CLERK_IS_SATELLITE="false" のときだけ無効化(単独インスタンス検証用)。
-  const isWeb = Platform.OS === "web";
-  // ローカル開発環境(localhost等)では domain を使い、本番では proxyUrl を使う
-  // ※ Clerk は localhost での satellite mode + domain をサポートしているが、
-  // FAPI が localhost にルーティングされるわけではない。
-    // ローカル開発環境のテストのため、いったん isSatellite を false にして動作させるオプションを提供する。
-    // ローカル開発環境のテストのため、いったん isSatellite を false にして動作させるオプションを提供する。
-    const isWebMode = Platform.OS === "web";
-    const isLocalhostDev = isWebMode && typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-    // EXPO_PUBLIC_CLERK_IS_SATELLITE="true" の場合でも localhost ではサテライトモードを無効化する
-    // これにより Production Keys are only allowed for domain "kimito.link" エラーを回避する
-    const isAppSatellite = isWebMode && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" && !isLocalhostDev;
-    
-    const appPrimarySignInUrl =
-      process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL || "https://kimito.link/sign-in/";
-    // 実行時の配信ホストから導出(Vercel env 変更不要)。env 上書きも許可。
-    // localhost のときは proxyUrl を空にして domain 指定へ。
-    const appProxyUrl =
-      isWebMode && typeof window !== "undefined" && !isLocalhostDev
-        ? `${window.location.origin}/__clerk`
-        : isLocalhostDev ? undefined : process.env.EXPO_PUBLIC_CLERK_PROXY_URL;
-    const appClerkDomain = isLocalhostDev ? "localhost:8081" : undefined;
-    
-    const appClerkSatelliteProps = isAppSatellite
-      ? {
-          isSatellite: true as const,
-          satelliteAutoSync: true,
-          ...(appProxyUrl ? { proxyUrl: appProxyUrl } : {}),
-          ...(appClerkDomain ? { domain: appClerkDomain } : {}),
-          ...(appPrimarySignInUrl ? { signInUrl: appPrimarySignInUrl } : {}),
-        }
-      : {};
+  // 方式A(Clerk インスタンス共有): surechigai-romi.link は kimito の Clerk を
+  // サテライトとして共有し、kimito.link のアカウントでログインする。
+  // satellite/プロキシは Web 専用。Native は publishable key の FAPI を直接使う。
+  //
+  // FAPI への到達方法は 2 通り（どちらか一方。両方は不可）:
+  //  (1) proxyメソッド[既定/現行]: /__clerk(api/clerk-proxy) 経由で FAPI を中継。
+  //      Clerk Dashboard に proxy_url を登録済み。DNS 設定不要で確実に動く。
+  //  (2) domainメソッド[移行先]: EXPO_PUBLIC_CLERK_DOMAIN を設定すると proxyUrl を使わず
+  //      CNAME(clerk.<domain> → frontend-api.clerk.services)経由で直接 FAPI を叩く。
+  //      Dashboard 側で satellite を CNAME 方式(proxy_url 解除)に切替済みのときだけ有効化する。
+  //
+  // ※ ビルド時 EXPO_PUBLIC 変数 inline 依存は環境差で壊れるため、Web では既定 satellite ON。
+  //   明示的に EXPO_PUBLIC_CLERK_IS_SATELLITE="false" のときだけ無効化(単独インスタンス検証用)。
+  const isWebMode = Platform.OS === "web";
+  const isLocalhostDev =
+    isWebMode &&
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+  const isAppSatellite =
+    isWebMode && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" && !isLocalhostDev;
+
+  const appPrimarySignInUrl =
+    process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL || "https://kimito.link/sign-in/";
+
+  // domain メソッド(CNAME)への安全な切替口。未設定なら従来の proxy メソッドを使う。
+  const domainMethodHost =
+    isWebMode && !isLocalhostDev ? process.env.EXPO_PUBLIC_CLERK_DOMAIN : undefined;
+  const useDomainMethod = !!domainMethodHost;
+
+  const appProxyUrl = useDomainMethod
+    ? undefined
+    : isWebMode && typeof window !== "undefined" && !isLocalhostDev
+      ? `${window.location.origin}/__clerk`
+      : isLocalhostDev
+        ? undefined
+        : process.env.EXPO_PUBLIC_CLERK_PROXY_URL;
+  // localhost は domain=localhost:8081、本番 domain メソッド時は登録ドメイン、それ以外は未指定。
+  const appClerkDomain = isLocalhostDev
+    ? "localhost:8081"
+    : useDomainMethod
+      ? domainMethodHost
+      : undefined;
+
+  const appClerkSatelliteProps = isAppSatellite
+    ? {
+        isSatellite: true as const,
+        satelliteAutoSync: true,
+        // proxyUrl と domain は併用不可。どちらか一方のみ spread される。
+        ...(appProxyUrl ? { proxyUrl: appProxyUrl } : {}),
+        ...(appClerkDomain ? { domain: appClerkDomain } : {}),
+        ...(appPrimarySignInUrl ? { signInUrl: appPrimarySignInUrl } : {}),
+      }
+    : {};
 
   const content = (
     <ErrorBoundary screenName="App">
