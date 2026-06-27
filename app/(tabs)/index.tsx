@@ -30,9 +30,11 @@ import Animated, {
   withSequence,
   withTiming,
   runOnJS,
+  Easing,
 } from "react-native-reanimated";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
+import { useToast } from "@/components/atoms/toast";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { RadarHud } from "@/components/organisms/radar-hud";
 import { AppHeader } from "@/components/organisms/app-header";
@@ -85,6 +87,32 @@ type EncounterItem = {
 };
 
 /** 封筒カード（未開封） */
+/** スタンプ送信時に上へふわっと舞い上がって消える絵文字（演出） */
+function FloatingEmoji({ emoji, offsetX }: { emoji: string; offsetX: number }) {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.ease) });
+  }, [progress]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: -110 * progress.value },
+      { scale: 1 + 0.5 * progress.value },
+    ],
+    opacity: 1 - progress.value,
+  }));
+
+  return (
+    <Animated.Text
+      pointerEvents="none"
+      style={[styles.floatingEmoji, { marginLeft: offsetX }, animStyle]}
+    >
+      {emoji}
+    </Animated.Text>
+  );
+}
+
 function EnvelopeCard({
   item,
   onOpen,
@@ -271,6 +299,9 @@ function OpenModal({
   const opacity = useSharedValue(0);
   const rotation = useSharedValue(0);
 
+  const [floats, setFloats] = useState<{ id: number; emoji: string; offsetX: number }[]>([]);
+  const [sentEmoji, setSentEmoji] = useState<string | null>(null);
+
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { rotate: `${rotation.value}deg` }],
     opacity: opacity.value,
@@ -297,8 +328,24 @@ function OpenModal({
     } else {
       scale.value = 0.1;
       opacity.value = 0;
+      setFloats([]);
+      setSentEmoji(null);
     }
   }, [visible, item]);
+
+  const handleStampPress = (emoji: string, idx: number) => {
+    if (!item) return;
+    onSendStamp(item.id, emoji);
+    setSentEmoji(emoji);
+    const id = Date.now() + idx;
+    // 各ボタンの中心に合わせて舞い上げる（中央基準のオフセット）
+    const offsetX = (idx - (STAMPS.length - 1) / 2) * 64 - 15;
+    setFloats((f) => [...f, { id, emoji, offsetX }]);
+    setTimeout(() => setFloats((f) => f.filter((e) => e.id !== id)), 950);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
 
   if (!item) return null;
 
@@ -344,26 +391,32 @@ function OpenModal({
               {item.partnerName || "この人"}は累計 {item.partnerTotalEncounters} 件のすれ違い
             </Text>
 
-            {/* スタンプ */}
-            <View style={styles.modalStamps}>
-              {STAMPS.map((emoji) => (
-                <Pressable
-                  key={emoji}
-                  onPress={() => {
-                    onSendStamp(item.id, emoji);
-                    if (Platform.OS !== "web") {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                  }}
-                  style={({ pressed }) => [
-                    styles.modalStampButton,
-                    pressed && { opacity: 0.6, transform: [{ scale: 0.85 }] },
-                  ]}
-                >
-                  <Text style={styles.modalStampEmoji}>{emoji}</Text>
-                </Pressable>
-              ))}
+            {/* スタンプ（送信時にふわっと舞い上がる演出 + 送信確認） */}
+            <View style={styles.modalStampsWrap}>
+              <View style={styles.modalStamps}>
+                {STAMPS.map((emoji, idx) => (
+                  <Pressable
+                    key={emoji}
+                    onPress={() => handleStampPress(emoji, idx)}
+                    style={({ pressed }) => [
+                      styles.modalStampButton,
+                      sentEmoji === emoji && styles.modalStampButtonActive,
+                      pressed && { opacity: 0.6, transform: [{ scale: 0.85 }] },
+                    ]}
+                  >
+                    <Text style={styles.modalStampEmoji}>{emoji}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <View pointerEvents="none" style={styles.floatLayer}>
+                {floats.map((f) => (
+                  <FloatingEmoji key={f.id} emoji={f.emoji} offsetX={f.offsetX} />
+                ))}
+              </View>
             </View>
+            {sentEmoji && (
+              <Text style={styles.stampConfirm}>{sentEmoji} を送りました ✨</Text>
+            )}
 
             {/* Xプロフィールへ */}
             {item.partnerName && (
@@ -484,6 +537,7 @@ function formatDate(d: Date | string): string {
 export default function PostScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
+  const toast = useToast();
 
   const [openItem, setOpenItem] = useState<EncounterItem | null>(null);
   const [openModalVisible, setOpenModalVisible] = useState(false);
@@ -515,12 +569,18 @@ export default function PostScreen() {
 
   const handleSendStamp = useCallback(
     (encounterId: number, emoji: string) => {
-      reactMutation.mutate({ encounterId, emoji });
+      reactMutation.mutate(
+        { encounterId, emoji },
+        {
+          onSuccess: () => toast.showSuccess(`${emoji} を送りました`),
+          onError: () => toast.showError("スタンプの送信に失敗しました"),
+        },
+      );
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     },
-    [reactMutation],
+    [reactMutation, toast],
   );
 
   const handleBlock = useCallback(
@@ -1002,6 +1062,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
+  modalStampsWrap: {
+    position: "relative",
+  },
   modalStamps: {
     flexDirection: "row",
     justifyContent: "center",
@@ -1015,9 +1078,33 @@ const styles = StyleSheet.create({
     backgroundColor: color.surfaceAlt,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  modalStampButtonActive: {
+    borderColor: color.teal500,
+    backgroundColor: color.teal500 + "22",
   },
   modalStampEmoji: {
     fontSize: 26,
+  },
+  floatLayer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+  floatingEmoji: {
+    position: "absolute",
+    bottom: 8,
+    left: "50%",
+    fontSize: 30,
+  },
+  stampConfirm: {
+    color: color.teal500,
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+    marginBottom: 14,
   },
   modalXButton: {
     backgroundColor: color.twitter + "22",
