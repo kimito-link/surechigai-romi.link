@@ -27,21 +27,25 @@ const COLORS = {
 
 const h = React.createElement;
 
-/** Google Fonts から指定テキスト分の Noto Sans JP(ttf) を取得 */
-async function loadJpFont(text: string): Promise<ArrayBuffer | null> {
+/**
+ * Google Fonts から ttf 形式のフォントを取得。
+ * 注意: 古いUA(IE等)を送ると woff2 が返り satori が解釈できず描画が落ちる。
+ * デフォルト/モダンUAだと truetype が返るので UA は指定しない。
+ */
+async function fetchGoogleFontTtf(
+  family: string,
+  text: string
+): Promise<ArrayBuffer | null> {
   try {
-    const api = `https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&text=${encodeURIComponent(
-      text
-    )}`;
-    // 古いUAにすると Google が woff2 ではなく ttf を返す（satori は ttf/otf/woff のみ対応）
-    const cssRes = await fetch(api, {
-      headers: { "User-Agent": "Mozilla/4.0 (compatible; MSIE 8.0)" },
-    });
+    const api = `https://fonts.googleapis.com/css2?family=${family}:wght@700${
+      text ? `&text=${encodeURIComponent(text)}` : ""
+    }`;
+    const cssRes = await fetch(api);
     if (!cssRes.ok) return null;
     const css = await cssRes.text();
-    const m =
-      css.match(/src:\s*url\(([^)]+)\)\s*format\(['"]?(?:truetype|opentype)['"]?\)/) ||
-      css.match(/url\((https:[^)]+)\)/);
+    const m = css.match(
+      /src:\s*url\(([^)]+)\)\s*format\(['"]?(?:truetype|opentype)['"]?\)/
+    );
     if (!m) return null;
     const url = m[1].replace(/['"]/g, "");
     const fontRes = await fetch(url);
@@ -50,6 +54,20 @@ async function loadJpFont(text: string): Promise<ArrayBuffer | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * 描画用フォントを取得。Noto Sans JP(必要文字サブセット) を優先し、
+ * 失敗時は satori が空フォントで落ちないよう Inter にフォールバック。
+ */
+async function loadFonts(
+  text: string
+): Promise<{ name: string; data: ArrayBuffer; weight: 700; style: "normal" }[]> {
+  const jp = await fetchGoogleFontTtf("Noto+Sans+JP", text);
+  if (jp) return [{ name: "NotoSansJP", data: jp, weight: 700, style: "normal" }];
+  const latin = await fetchGoogleFontTtf("Inter", text);
+  if (latin) return [{ name: "Inter", data: latin, weight: 700, style: "normal" }];
+  return [];
 }
 
 /** ArrayBuffer → base64（大きい画像でもスタックを溢れさせないようチャンク変換） */
@@ -98,11 +116,13 @@ export default async function handler(req: Request): Promise<Response> {
   const handleLine = name ? `@${name}` : "";
 
   // 必要文字をまとめてサブセット取得
-  const fontText = `${brand}${tagline}${placeLabel}${handleLine}にいるよのどこか日本SURECHIGAINOW`;
-  const [fontData, mapDataUrl] = await Promise.all([
-    loadJpFont(fontText),
+  const fontText = `${brand}${tagline}${placeLabel}${handleLine}にいるよのどこか日本SURECHIGAINOW@`;
+  const [fonts, mapDataUrl] = await Promise.all([
+    loadFonts(fontText),
     hasCoord ? loadStaticMap(latRaw, lngRaw, zoom) : Promise.resolve(null),
   ]);
+  const hasFont = fonts.length > 0;
+  const fontFamily = fonts[0]?.name ?? "sans-serif";
 
   // 背景: 地図 or ブランドグラデーション
   const background = mapDataUrl
@@ -296,7 +316,7 @@ export default async function handler(req: Request): Promise<Response> {
         height: HEIGHT,
         display: "flex",
         backgroundColor: COLORS.navy,
-        fontFamily: fontData ? "NotoSansJP" : "sans-serif",
+        fontFamily: fontFamily,
       },
     },
     background,
@@ -309,9 +329,9 @@ export default async function handler(req: Request): Promise<Response> {
   return new ImageResponse(root, {
     width: WIDTH,
     height: HEIGHT,
-    fonts: fontData
-      ? [{ name: "NotoSansJP", data: fontData, style: "normal", weight: 700 }]
-      : [],
+    fonts: hasFont
+      ? fonts.map((f) => ({ name: f.name, data: f.data, style: f.style, weight: f.weight }))
+      : undefined,
     headers: {
       "Cache-Control": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
     },
