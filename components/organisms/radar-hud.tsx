@@ -268,17 +268,16 @@ const styles = StyleSheet.create({
     fontFamily: "monospace",
   },
   catchMain: {
-    // 「会いたい君がいる」は温かみのあるアイボリー。赤い「現在地」と調和し上品に見せる。
-    color: "#FFF1DC",
+    // 白のまま夜空に「映える」よう、冷たい光のグロー（signal glow）をまとわせる。
+    color: "#FFFFFF",
     fontSize: 42,
     fontWeight: "900",
     lineHeight: 52,
-    letterSpacing: 0,
+    letterSpacing: 0.5,
     textAlign: "center",
-    // 透明背景でも白文字がはっきり読めるよう、濃い影で縁取りする。
-    textShadowColor: "rgba(2,8,23,0.95)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 14,
+    textShadowColor: "rgba(120,180,255,0.7)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 18,
   },
   catchMainAccent: {
     // 「現在地」は赤（ピンと同色）。やわらかな赤グローで美しく際立たせる。
