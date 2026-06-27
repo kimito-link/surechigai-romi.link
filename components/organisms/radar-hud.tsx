@@ -1,11 +1,20 @@
 import { useState } from "react";
 import { View, Text, StyleSheet, Image, Pressable, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color, palette } from "@/theme/tokens";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 
 // このヒーローの「ミッドナイト・シグナル」演出はティール固定（ブランドのトークン変更に影響されない）。
 const SIGNAL_TEAL = palette.teal500;
+
+// 「現在地」に添えるピンのサイズ（ヒーローサイズに比例）。
+const PIN_SIZE_BY_HERO = {
+  desktop: 36,
+  tablet: 31,
+  phone: 24,
+  compactPhone: 20,
+} as const;
 
 interface RadarHudProps {
   onDismissIntro?: () => void;
@@ -66,9 +75,23 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
               CORE SIGNAL
             </Text>
             <Text selectable style={[styles.catchMain, stylesBySize[heroSize].catchMain]}>
-              会いたい君がいる{"\n"}
-              <Text style={styles.catchMainAccent}>現在地</Text>
+              会いたい君がいる
             </Text>
+            {/* 「現在地」にピンを添えて“正確な場所を残す”価値を示す */}
+            <View style={styles.catchAccentRow}>
+              <MaterialIcons
+                name="place"
+                size={PIN_SIZE_BY_HERO[heroSize]}
+                color={SIGNAL_TEAL}
+                style={styles.catchPin}
+              />
+              <Text
+                selectable
+                style={[styles.catchMain, styles.catchMainAccent, stylesBySize[heroSize].catchMain]}
+              >
+                現在地
+              </Text>
+            </View>
           </View>
           <Text selectable style={[styles.catchSub, stylesBySize[heroSize].catchSub]}>
             キミは今、どこにいる？
@@ -194,15 +217,28 @@ const styles = StyleSheet.create({
     marginTop: 30,
     alignItems: "center",
     paddingHorizontal: 22,
-    paddingVertical: 14,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: SIGNAL_TEAL,
-    backgroundColor: color.bg + "99",
+    // 夜空背景でも本文が確実に読めるよう、パネルを濃いめ（85%）に。
+    backgroundColor: color.bg + "D9",
     shadowColor: SIGNAL_TEAL,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.62,
     shadowRadius: 24,
+  },
+  catchAccentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  catchPin: {
+    marginRight: 4,
+    textShadowColor: SIGNAL_TEAL,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 16,
   },
   catchKicker: {
     color: SIGNAL_TEAL,
