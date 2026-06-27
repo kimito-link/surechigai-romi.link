@@ -313,59 +313,52 @@ export default function RootLayout() {
   const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const isMissingClerkKey = !clerkKey;
 
-  // 方式A(Clerk インスタンス共有): surechigai-romi.link は kimito の Clerk を
-  // サテライトとして共有し、kimito.link のアカウントでログインする。
-  // satellite/プロキシは Web 専用。Native は publishable key の FAPI を直接使う。
-  //
-  // FAPI への到達方法は 2 通り（どちらか一方。両方は不可）:
-  //  (1) proxyメソッド[既定/現行]: /__clerk(api/clerk-proxy) 経由で FAPI を中継。
-  //      Clerk Dashboard に proxy_url を登録済み。DNS 設定不要で確実に動く。
-  //  (2) domainメソッド[移行先]: EXPO_PUBLIC_CLERK_DOMAIN を設定すると proxyUrl を使わず
-  //      CNAME(clerk.<domain> → frontend-api.clerk.services)経由で直接 FAPI を叩く。
-  //      Dashboard 側で satellite を CNAME 方式(proxy_url 解除)に切替済みのときだけ有効化する。
-  //
-  // ※ ビルド時 EXPO_PUBLIC 変数 inline 依存は環境差で壊れるため、Web では既定 satellite ON。
-  //   明示的に EXPO_PUBLIC_CLERK_IS_SATELLITE="false" のときだけ無効化(単独インスタンス検証用)。
+  // Clerk アカウントは kimito.link の本番インスタンスを共有する。
+  // 到達方法は「配信ホスト名」で自動分岐する（env のビルド時 inline 依存をやめ、実行時に確定）:
+  //  (a) *.kimito.link（例: surechigai.kimito.link）= 同一サイト。
+  //      Cookie が .kimito.link で共有されるため satellite も proxy も不要。
+  //      → ログインがシームレス＝リロードの白画面(同期リダイレクト)も発生しない。【本命】
+  //  (b) surechigai-romi.link 等の別ドメイン = satellite + /__clerk プロキシ（移行期の後方互換）。
+  //      白画面回避のため satelliteAutoSync は false（リロード毎の primary 同期リダイレクトを止める）。
+  //  (c) localhost = 単独インスタンス検証（satellite なし）。
+  // Native は publishable key の FAPI を直接使うため satellite 化しない。
   const isWebMode = Platform.OS === "web";
+  const host =
+    isWebMode && typeof window !== "undefined" ? window.location.hostname : "";
   const isLocalhostDev =
-    isWebMode &&
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    isWebMode && (host === "localhost" || host === "127.0.0.1");
+  const isKimitoSameSite =
+    host === "kimito.link" || host.endsWith(".kimito.link");
+  // 別ドメインのときだけ satellite（明示的に "false" で無効化も可能）。
   const isAppSatellite =
-    isWebMode && process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" && !isLocalhostDev;
+    isWebMode &&
+    process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" &&
+    !isLocalhostDev &&
+    !isKimitoSameSite;
 
   const appPrimarySignInUrl =
     process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL || "https://kimito.link/sign-in/";
 
-  // domain メソッド(CNAME)への安全な切替口。未設定なら従来の proxy メソッドを使う。
-  const domainMethodHost =
-    isWebMode && !isLocalhostDev ? process.env.EXPO_PUBLIC_CLERK_DOMAIN : undefined;
-  const useDomainMethod = !!domainMethodHost;
-
-  const appProxyUrl = useDomainMethod
-    ? undefined
-    : isWebMode && typeof window !== "undefined" && !isLocalhostDev
+  // satellite のときだけ /__clerk プロキシ経由で FAPI を中継する。
+  const appProxyUrl =
+    isAppSatellite && typeof window !== "undefined"
       ? `${window.location.origin}/__clerk`
-      : isLocalhostDev
-        ? undefined
-        : process.env.EXPO_PUBLIC_CLERK_PROXY_URL;
-  // localhost は domain=localhost:8081、本番 domain メソッド時は登録ドメイン、それ以外は未指定。
-  const appClerkDomain = isLocalhostDev
-    ? "localhost:8081"
-    : useDomainMethod
-      ? domainMethodHost
       : undefined;
 
-  const appClerkSatelliteProps = isAppSatellite
-    ? {
-        isSatellite: true as const,
-        satelliteAutoSync: true,
-        // proxyUrl と domain は併用不可。どちらか一方のみ spread される。
-        ...(appProxyUrl ? { proxyUrl: appProxyUrl } : {}),
-        ...(appClerkDomain ? { domain: appClerkDomain } : {}),
-        ...(appPrimarySignInUrl ? { signInUrl: appPrimarySignInUrl } : {}),
-      }
-    : {};
+  // 同一サイト(*.kimito.link)はサインインURLだけ primary に向ける（satellite props なし）。
+  // 別ドメインは satellite + proxy。localhost/単独は素の構成。
+  const appClerkSatelliteProps = isLocalhostDev
+    ? {}
+    : isKimitoSameSite
+      ? { signInUrl: appPrimarySignInUrl }
+      : isAppSatellite
+        ? {
+            isSatellite: true as const,
+            satelliteAutoSync: false,
+            ...(appProxyUrl ? { proxyUrl: appProxyUrl } : {}),
+            signInUrl: appPrimarySignInUrl,
+          }
+        : {};
 
   const content = (
     <ErrorBoundary screenName="App">

@@ -174,13 +174,14 @@ export function useAuth() {
           const origin = window.location.origin;
           const redirectComplete = resolveReturnUrl(safeReturnUrl) ?? origin;
 
-          const isLocalhostDev =
-            window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1";
-          // Web は既定でサテライト(方式A)。明示的に "false" のときだけ単独インスタンス扱い。
-          // localhost では Production Keys のドメインロックを避けるためサテライトを無効化。
+          const host = window.location.hostname;
+          const isLocalhostDev = host === "localhost" || host === "127.0.0.1";
+          const isKimitoSameSite = host === "kimito.link" || host.endsWith(".kimito.link");
+          // 別ドメイン(surechigai-romi.link 等)のときだけ satellite。
           const isAppSatellite =
-            process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" && !isLocalhostDev;
+            process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE !== "false" &&
+            !isLocalhostDev &&
+            !isKimitoSameSite;
 
           // ★根本対策: window.Clerk グローバルの直接参照を廃止し、useClerk() の
           //   インスタンスのロード完了を待ってから使う(断続的なログイン失敗の元凶を除去)。
@@ -189,19 +190,19 @@ export function useAuth() {
             throw new Error("認証システムの準備中です。数秒おいてもう一度お試しください。");
           }
 
-          if (isAppSatellite) {
-            // サテライトはサインインを自ドメインで開始できない(Clerk 403)。
-            // buildSignInUrl() が __clerk_synced を付与し、primary(kimito.link)で
-            // ログイン後にサテライトへ戻った際 SDK がセッションを同期する。
-            const syncedSignInUrl = clerk.buildSignInUrl({ redirectUrl: redirectComplete });
-            if (!syncedSignInUrl) {
+          if (isKimitoSameSite || isAppSatellite) {
+            // primary(kimito.link)のサインインへ遷移する単一経路。
+            //  - *.kimito.link(同一サイト): Cookie が .kimito.link で共有され、戻ると即ログイン済み。
+            //  - 別ドメイン(satellite): buildSignInUrl が __clerk_synced を付与し SDK がセッション同期。
+            const signInUrl = clerk.buildSignInUrl({ redirectUrl: redirectComplete });
+            if (!signInUrl) {
               throw new Error("認証システムが応答しません。リロードしてお試しください。");
             }
-            window.location.href = syncedSignInUrl;
+            window.location.href = signInUrl;
             return;
           }
 
-          // 非サテライト(単独インスタンス/localhost検証)は同一タブのまま X へ遷移。
+          // localhost/単独インスタンス検証は同一タブのまま X へ遷移。
           const clientSignIn = clerk.client?.signIn;
           if (clientSignIn) {
             await clientSignIn.authenticateWithRedirect({
