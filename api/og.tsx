@@ -81,19 +81,62 @@ function toBase64(buf: ArrayBuffer): string {
   return btoa(binary);
 }
 
-/** OSM 静的地図を data URL で取得（キー不要・失敗時 null） */
-async function loadStaticMap(lat: number, lng: number, zoom: number): Promise<string | null> {
-  try {
-    const url = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=${zoom}&size=1000x525&maptype=mapnik`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "surechigai-romi-og/1.0 (+https://surechigai-romi.link)" },
-    });
-    if (!res.ok) return null;
-    const buf = await res.arrayBuffer();
-    return `data:image/png;base64,${toBase64(buf)}`;
-  } catch {
-    return null;
+const TILE = 256;
+const TILE_UA =
+  "surechigai-romi-og/1.0 (+https://surechigai-romi.link; contact@surechigai-romi.link)";
+
+function lngToTileX(lng: number, z: number): number {
+  return ((lng + 180) / 360) * Math.pow(2, z);
+}
+function latToTileY(lat: number, z: number): number {
+  const r = (lat * Math.PI) / 180;
+  return (
+    ((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2) * Math.pow(2, z)
+  );
+}
+
+type Tile = { src: string; left: number; top: number };
+
+/**
+ * OSM ラスタタイルを中心座標から WIDTHxHEIGHT 分だけ取得して合成用に並べる（キー不要）。
+ * 各タイルは UA 付きで取得し data URL 化（satori 側の fetch で OSM にブロックされるのを回避）。
+ */
+async function loadMapTiles(lat: number, lng: number, zoom: number): Promise<Tile[]> {
+  const z = zoom;
+  const n = Math.pow(2, z);
+  const centerX = lngToTileX(lng, z) * TILE;
+  const centerY = latToTileY(lat, z) * TILE;
+  const topLeftX = centerX - WIDTH / 2;
+  const topLeftY = centerY - HEIGHT / 2;
+  const firstX = Math.floor(topLeftX / TILE);
+  const lastX = Math.floor((topLeftX + WIDTH) / TILE);
+  const firstY = Math.floor(topLeftY / TILE);
+  const lastY = Math.floor((topLeftY + HEIGHT) / TILE);
+
+  const jobs: Promise<Tile | null>[] = [];
+  for (let tx = firstX; tx <= lastX; tx++) {
+    for (let ty = firstY; ty <= lastY; ty++) {
+      if (ty < 0 || ty >= n) continue;
+      const wrappedX = ((tx % n) + n) % n;
+      const left = Math.round(tx * TILE - topLeftX);
+      const top = Math.round(ty * TILE - topLeftY);
+      const url = `https://tile.openstreetmap.org/${z}/${wrappedX}/${ty}.png`;
+      jobs.push(
+        (async () => {
+          try {
+            const r = await fetch(url, { headers: { "User-Agent": TILE_UA } });
+            if (!r.ok) return null;
+            const buf = await r.arrayBuffer();
+            return { src: `data:image/png;base64,${toBase64(buf)}`, left, top };
+          } catch {
+            return null;
+          }
+        })()
+      );
+    }
   }
+  const settled = await Promise.all(jobs);
+  return settled.filter((t): t is Tile => t !== null);
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -117,39 +160,57 @@ export default async function handler(req: Request): Promise<Response> {
 
   // 必要文字をまとめてサブセット取得
   const fontText = `${brand}${tagline}${placeLabel}${handleLine}にいるよのどこか日本SURECHIGAINOW@`;
-  const [fonts, mapDataUrl] = await Promise.all([
+  const [fonts, mapTiles] = await Promise.all([
     loadFonts(fontText),
-    hasCoord ? loadStaticMap(latRaw, lngRaw, zoom) : Promise.resolve(null),
+    hasCoord ? loadMapTiles(latRaw, lngRaw, zoom) : Promise.resolve([] as Tile[]),
   ]);
   const hasFont = fonts.length > 0;
   const fontFamily = fonts[0]?.name ?? "sans-serif";
 
-  // 背景: 地図 or ブランドグラデーション
-  const background = mapDataUrl
-    ? h("img", {
-        src: mapDataUrl,
-        width: WIDTH,
-        height: HEIGHT,
-        style: {
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: WIDTH,
-          height: HEIGHT,
-          objectFit: "cover",
-        },
-      })
-    : h("div", {
-        style: {
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: WIDTH,
-          height: HEIGHT,
-          display: "flex",
-          backgroundImage: `linear-gradient(135deg, ${COLORS.navy} 0%, #0A6E8F 55%, ${COLORS.teal} 100%)`,
-        },
-      });
+  // 背景: OSM タイル合成 or ブランドグラデーション（タイル取得失敗時）
+  const background =
+    mapTiles.length > 0
+      ? h(
+          "div",
+          {
+            style: {
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: WIDTH,
+              height: HEIGHT,
+              display: "flex",
+              overflow: "hidden",
+              backgroundColor: "#AAD3DF",
+            },
+          },
+          ...mapTiles.map((t, i) =>
+            h("img", {
+              key: i,
+              src: t.src,
+              width: TILE,
+              height: TILE,
+              style: {
+                position: "absolute",
+                left: t.left,
+                top: t.top,
+                width: TILE,
+                height: TILE,
+              },
+            })
+          )
+        )
+      : h("div", {
+          style: {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: WIDTH,
+            height: HEIGHT,
+            display: "flex",
+            backgroundImage: `linear-gradient(135deg, ${COLORS.navy} 0%, #0A6E8F 55%, ${COLORS.teal} 100%)`,
+          },
+        });
 
   // 上下のグラデーションオーバーレイ（文字可読性）
   const scrim = h("div", {
