@@ -244,16 +244,8 @@ export default function CheckinScreen() {
         setState("zero");
       }
 
-      // 5秒後にリセット
-      setTimeout(() => {
-        setState("idle");
-        checkmarkScale.value = withTiming(0);
-        checkmarkOpacity.value = withTiming(0);
-        mapScale.value = withTiming(0.9);
-        mapOpacity.value = withTiming(0.8);
-        tooltipOpacity.value = withTiming(0);
-        tooltipTranslateY.value = withTiming(10);
-      }, 5000);
+      // 結果（住所・座標・地図）は自動で消さず、次のチェックインまで表示し続ける。
+      //   ユーザーが「後でその場所をたどれる」よう現在地を残す方針のため。
     } catch (err: unknown) {
       pulse.value = withTiming(1);
       setState("error");
