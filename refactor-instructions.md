@@ -6,7 +6,7 @@
 
 現時点で、実装担当モデルが勝手に決めてはいけない事項は以下です。
 
-1. `modules/event/` と `app/(tabs)/events.tsx` は、すれちがいロミ本体で残す予定の「予定×ライブ表明」機能か、旧テンプレート由来の削除候補か。
+1. `modules/event/` と `app/(tabs)/events.tsx` は、君斗りんくのすれ違ひ通信本体で残す予定の「予定×ライブ表明」機能か、旧テンプレート由来の削除候補か。
 2. `README.md` に残る Supabase / `sweeper.yml` 記述は、すぐに Railway / `sweep.yml` へ更新してよいか。
 3. 認証フローを分割する場合、Clerk Satellite と kimito.link 連携の手動E2E確認を誰がどの環境で行うか。
 4. `getMyEncounters` のN+1クエリ最適化で返却順・件数・ブロック除外・停止ユーザー除外の厳密な期待値をどこまでテスト化するか。
@@ -27,7 +27,7 @@
 
 ## Project Understanding
 
-このプロジェクトは「すれちがいロミ (surechigai-romi.link)」。DSのすれ違い通信を現代的に再現する位置情報マッチングアプリである。
+このプロジェクトは「君斗りんくのすれ違ひ通信 (surechigai-romi.link)」。DSのすれ違い通信を現代的に再現する位置情報マッチングアプリである。
 
 主要体験:
 

@@ -1,6 +1,6 @@
 /**
  * AI サマリー（プレースホルダー）
- * すれちがいロミ: Groq モデレーション実装後に置き換える
+ * 君斗りんくのすれ違ひ通信: Groq モデレーション実装後に置き換える
  */
 
 export async function refreshSummary(_id: number): Promise<void> {

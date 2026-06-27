@@ -1,6 +1,6 @@
 /**
  * 同期ハンドラー
- * すれちがいロミ: オフライン中のキュー処理
+ * 君斗りんくのすれ違ひ通信: オフライン中のキュー処理
  * TODO: locations/encounters API が実装されたら追加
  */
 export function initSyncHandlers(): void {

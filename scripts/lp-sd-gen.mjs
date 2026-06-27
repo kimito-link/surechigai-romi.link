@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * すれちがいロミ LP 用 実写背景の一括生成（ローカル AUTOMATIC1111 API）
+ * 君斗りんくのすれ違ひ通信 LP 用 実写背景の一括生成（ローカル AUTOMATIC1111 API）
  * 使い方:
  *   node scripts/lp-sd-gen.mjs            … 全部生成（既存はスキップ）
  *   node scripts/lp-sd-gen.mjs yukiguni   … 指定idだけ生成

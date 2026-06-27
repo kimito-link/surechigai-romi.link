@@ -294,7 +294,7 @@ export const FAN_EXPERIENCE_SLIDES: ExperienceSlide[] = [
     character: "kimitolink",
     message: "ファンの追体験は以上です！",
     subMessage: "さあ、推しのチャレンジに参加して、ファン同士で繋がろう！",
-    thought: "すれちがいロミで、\n推し活をもっと楽しもう！",
+    thought: "君斗りんくのすれ違ひ通信で、\n推し活をもっと楽しもう！",
     previewType: "none",
     backgroundColor: "#1a1a2e",
     stepNumber: 9,

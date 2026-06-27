@@ -1,7 +1,7 @@
 /**
  * Database Module Index
  *
- * すれちがいロミ: 認証・監査ログ関連のDBのみ
+ * 君斗りんくのすれ違ひ通信: 認証・監査ログ関連のDBのみ
  */
 
 // Connection & utilities

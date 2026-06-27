@@ -1,6 +1,6 @@
 /**
  * グローバルメニュー
- * すれちがいロミ: シンプルなナビゲーションメニュー
+ * 君斗りんくのすれ違ひ通信: シンプルなナビゲーションメニュー
  */
 import { useState } from "react";
 import { color, palette } from "@/theme/tokens";

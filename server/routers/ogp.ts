@@ -2,7 +2,7 @@
  * server/routers/ogp.ts
  *
  * OGP画像生成関連のルーター
- * すれちがいロミ: すれ違いエリアの市区町村OGP画像を生成、集まりのOGPメタ
+ * 君斗りんくのすれ違ひ通信: すれ違いエリアの市区町村OGP画像を生成、集まりのOGPメタ
  */
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc.js";
@@ -17,7 +17,7 @@ export const ogpRouter = router({
     .query(({ input }) => {
       return {
         title: `${input.areaName}でのすれ違い`,
-        description: "すれちがいロミで出会いを記録しよう",
+        description: "君斗りんくのすれ違ひ通信で出会いを記録しよう",
         areaName: input.areaName,
       };
     }),

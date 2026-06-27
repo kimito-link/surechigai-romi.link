@@ -1,6 +1,6 @@
 /**
  * Twitter OAuth コールバック画面
- * すれちがいロミ: 認証後にホームへリダイレクト
+ * 君斗りんくのすれ違ひ通信: 認証後にホームへリダイレクト
  */
 
 import * as Auth from "@/lib/_core/auth";

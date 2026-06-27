@@ -1,6 +1,6 @@
 /**
  * チェックイン画面
- * すれちがいロミ MVP
+ * 君斗りんくのすれ違ひ通信 MVP
  *
  * - 大きなチェックインボタン
  * - Web: navigator.geolocation / Native: expo-location

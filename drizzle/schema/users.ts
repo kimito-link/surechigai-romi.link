@@ -2,7 +2,7 @@
  * User-related Schema Tables
  *
  * ユーザー認証・プロフィール関連のテーブル定義
- * すれちがいロミ: pg-core (Supabase Postgres) 版
+ * 君斗りんくのすれ違ひ通信: pg-core (Supabase Postgres) 版
  */
 
 import {
@@ -23,7 +23,7 @@ import { sql } from "drizzle-orm";
 
 /**
  * Core user table backing auth flow.
- * すれちがいロミ追加カラム: hitokoto, hitokotoUpdatedAt, isSuspended
+ * 君斗りんくのすれ違ひ通信追加カラム: hitokoto, hitokotoUpdatedAt, isSuspended
  */
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -38,10 +38,10 @@ export const users = pgTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
-  // すれちがいロミ: ひとこと（24h経過で非表示はクエリ側で判定）
+  // 君斗りんくのすれ違ひ通信: ひとこと（24h経過で非表示はクエリ側で判定）
   hitokoto: text("hitokoto"),
   hitokotoUpdatedAt: timestamp("hitokotoUpdatedAt"),
-  // すれちがいロミ: 通報3件自動停止フラグ
+  // 君斗りんくのすれ違ひ通信: 通報3件自動停止フラグ
   isSuspended: boolean("isSuspended").default(false).notNull(),
 });
 

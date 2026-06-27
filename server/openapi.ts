@@ -10,11 +10,11 @@ import { OpenAPIV3 } from "openapi-types";
 export const openApiDocument: OpenAPIV3.Document = {
   openapi: "3.0.3",
   info: {
-    title: "すれちがいロミ API",
+    title: "君斗りんくのすれ違ひ通信 API",
     description: `
 ## 概要
 
-「すれちがいロミ」は、移動の副産物としてすれ違い体験を積み重ねるアプリケーションです。
+「君斗りんくのすれ違ひ通信」は、移動の副産物としてすれ違い体験を積み重ねるアプリケーションです。
 
 このAPIを使用することで、以下の機能を外部から利用できます：
 
@@ -44,7 +44,7 @@ APIには以下のレート制限があります：
     `,
     version: "1.0.0",
     contact: {
-      name: "すれちがいロミ サポート",
+      name: "君斗りんくのすれ違ひ通信 サポート",
       url: "https://surechigai-romi.link",
     },
     license: {

@@ -1,5 +1,5 @@
 /**
- * すれちがいロミ: Encounter-related Schema Tables
+ * 君斗りんくのすれ違ひ通信: Encounter-related Schema Tables
  *
  * 設計書 V2-SURECHIGAI-DESIGN.md のデータ設計骨子に準拠。
  * 生緯度経度は保存しない（H3 res8 + 500mグリッドに丸めて永続化）。

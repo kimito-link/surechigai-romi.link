@@ -1,6 +1,6 @@
 /**
  * 軌跡マップ画面
- * すれちがいロミ MVP
+ * 君斗りんくのすれ違ひ通信 MVP
  *
  * Web: 保存済みの正確な lat/lng/accuracyM を OpenStreetMap タイル上に表示する。
  * Native: 地図SDK導入まではプレースホルダ表示。

@@ -1,11 +1,11 @@
 /**
  * シェア機能（Web Intent）
- * すれちがいロミ: OGP画像付きX(Twitter)シェア
+ * 君斗りんくのすれ違ひ通信: OGP画像付きX(Twitter)シェア
  */
 import { Platform, Share, Linking } from "react-native";
 import * as Haptics from "expo-haptics";
 
-const APP_HASHTAG = "#すれちがいロミ";
+const APP_HASHTAG = "#君斗りんくのすれ違ひ通信";
 
 // 本番URLを取得（環境変数から、またはデフォルト値）
 function getAppUrl(): string {
@@ -111,13 +111,13 @@ export async function shareEncounter(
 ): Promise<boolean> {
   const text = `${areaName}ですれ違いました！ ${APP_HASHTAG}`;
   const url = `${getAppUrl()}/encounters/${encounterId}`;
-  return shareToTwitter(text, url, ["すれちがいロミ"]);
+  return shareToTwitter(text, url, ["君斗りんくのすれ違ひ通信"]);
 }
 
 /**
  * アプリをシェア
  */
 export async function shareApp(): Promise<boolean> {
-  const text = `すれ違い通信アプリ「すれちがいロミ」で、あなたのすれ違い体験を記録しよう！ ${APP_HASHTAG}`;
-  return shareToTwitter(text, getAppUrl(), ["すれちがいロミ"]);
+  const text = `すれ違い通信アプリ「君斗りんくのすれ違ひ通信」で、あなたのすれ違い体験を記録しよう！ ${APP_HASHTAG}`;
+  return shareToTwitter(text, getAppUrl(), ["君斗りんくのすれ違ひ通信"]);
 }

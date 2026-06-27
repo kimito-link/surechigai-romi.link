@@ -1,6 +1,6 @@
 /**
  * AI DB（プレースホルダー）
- * すれちがいロミ: Groq/Gemini モデレーション実装後に置き換える
+ * 君斗りんくのすれ違ひ通信: Groq/Gemini モデレーション実装後に置き換える
  */
 
 export async function refreshAISummary(_id: number): Promise<void> {

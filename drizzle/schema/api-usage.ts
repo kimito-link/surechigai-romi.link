@@ -2,7 +2,7 @@
  * API Usage Tracking Schema
  *
  * X API（旧Twitter API）の使用量とコストを追跡するテーブル
- * すれちがいロミ: pg-core (Supabase Postgres) 版
+ * 君斗りんくのすれ違ひ通信: pg-core (Supabase Postgres) 版
  */
 
 import {

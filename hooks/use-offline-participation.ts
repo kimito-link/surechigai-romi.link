@@ -1,6 +1,6 @@
 /**
  * オフライン参加フック（プレースホルダー）
- * すれちがいロミ: encounters/locations API 実装後に置き換える
+ * 君斗りんくのすれ違ひ通信: encounters/locations API 実装後に置き換える
  */
 export function useOfflineParticipation() {
   return {

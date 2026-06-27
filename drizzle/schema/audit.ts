@@ -2,7 +2,7 @@
  * Audit Log Schema
  *
  * 監査ログテーブル定義
- * すれちがいロミ: pg-core (Supabase Postgres) 版
+ * 君斗りんくのすれ違ひ通信: pg-core (Supabase Postgres) 版
  */
 
 import {

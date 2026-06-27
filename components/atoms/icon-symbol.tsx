@@ -26,7 +26,7 @@ const MAPPING: Record<string, MaterialIconName> = {
   "person.crop.circle": "account-circle",
   "gearshape.fill": "settings",
   "chart.bar.fill": "bar-chart",
-  // すれちがいロミ用
+  // 君斗りんくのすれ違ひ通信用
   "envelope.fill": "mail",
   "location.fill": "location-on",
   "book.fill": "menu-book",
