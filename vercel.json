@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "rm -rf node_modules/.cache dist .expo && mkdir -p node_modules/react-native-css-interop/.cache && npx tailwindcss -i ./global.css -o ./node_modules/react-native-css-interop/.cache/web.css && pnpm build && npx expo export -p web",
+  "buildCommand": "rm -rf node_modules/.cache dist .expo $TMPDIR/metro-* /tmp/metro-* && mkdir -p node_modules/react-native-css-interop/.cache && npx tailwindcss -i ./global.css -o ./node_modules/react-native-css-interop/.cache/web.css && pnpm build && npx expo export -p web --clear",
   "installCommand": "pnpm install",
   "outputDirectory": "dist",
   "headers": [
