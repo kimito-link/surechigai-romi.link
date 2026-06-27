@@ -7,7 +7,10 @@
  * Native では同名の clerk-sign-in.tsx（フォールバック）が解決される。
  */
 
-import { SignIn } from "@clerk/react";
+// ★ context 共有のため必ず @clerk/expo/web から取得する。
+//   @clerk/react から直接 import すると ClerkProvider(@clerk/expo) と別インスタンスになり
+//   「SignIn can only be used within <ClerkProvider/>」で落ちる。
+import { SignIn } from "@clerk/expo/web";
 import { ActivityIndicator, Text, View } from "react-native";
 import { color } from "@/theme/tokens";
 
