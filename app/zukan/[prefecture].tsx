@@ -66,6 +66,13 @@ export default function PrefectureEncounterScreen() {
     [trailData, prefName]
   );
 
+  // この県で歩いた市区町村（重複除去）
+  const prefMunicipalities = useMemo(() => {
+    const set = new Set<string>();
+    for (const l of prefLocations) if (l.municipality) set.add(l.municipality);
+    return Array.from(set);
+  }, [prefLocations]);
+
   const mapW = Math.max(320, Math.min(windowWidth - 32, 980));
   const mapH = windowWidth < 640 ? 360 : 460;
   const { center, zoom } = useMemo(
@@ -119,6 +126,17 @@ export default function PrefectureEncounterScreen() {
             <Text style={styles.mapCaption}>
               {prefLocations.length} 件の正確な足あと（タップで最新地点の座標）
             </Text>
+
+            {prefMunicipalities.length > 0 && (
+              <View style={styles.chipsRow}>
+                {prefMunicipalities.map((m) => (
+                  <View key={m} style={styles.chip}>
+                    <MaterialIcons name="place" size={13} color={palette.kimitoBlue} />
+                    <Text style={styles.chipText}>{m}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
@@ -192,6 +210,29 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 8,
     textAlign: "center",
+  },
+  chipsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 12,
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: color.surface,
+    borderWidth: 1,
+    borderColor: color.border,
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  chipText: {
+    color: color.textSecondary,
+    fontSize: 12,
+    fontWeight: "600",
   },
   list: {
     gap: 12,
