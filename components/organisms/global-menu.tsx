@@ -114,7 +114,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
                     onPress={handleLogin}
                     style={({ pressed }) => [{
                       flexDirection: "row", alignItems: "center", justifyContent: "center",
-                      backgroundColor: palette.kimitoBlue,
+                      backgroundColor: palette.black,
                       paddingHorizontal: 20, paddingVertical: 12, borderRadius: 24,
                     }, pressed && { opacity: 0.85 }]}
                   >

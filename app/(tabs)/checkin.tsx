@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     alignSelf: "center",
-    backgroundColor: palette.kimitoBlue,
+    backgroundColor: palette.black,
     paddingVertical: 12,
     paddingHorizontal: 22,
     borderRadius: 999,
@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
   loginButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: color.twitter,
+    backgroundColor: palette.black,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 28,

@@ -7,6 +7,10 @@ import { useLoginGuide } from "@/hooks/use-login-guide";
 
 // このヒーローの「ミッドナイト・シグナル」演出はティール固定（ブランドのトークン変更に影響されない）。
 const SIGNAL_TEAL = palette.teal500;
+// 「現在地」に添える地図ピンは赤（実際の地図ピンに合わせて視認性を上げる）。
+const PIN_RED = palette.red500;
+// X（Twitter）公式カラー: ブラック。X導線はこれに統一する。
+const X_BLACK = palette.black;
 
 // 「現在地」に添えるピンのサイズ（ヒーローサイズに比例）。
 const PIN_SIZE_BY_HERO = {
@@ -82,7 +86,7 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
               <MaterialIcons
                 name="place"
                 size={PIN_SIZE_BY_HERO[heroSize]}
-                color={SIGNAL_TEAL}
+                color={PIN_RED}
                 style={styles.catchPin}
               />
               <Text
@@ -108,7 +112,7 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
               onPress={handleLoginPress}
             >
               <Text style={[styles.heroLoginText, stylesBySize[heroSize].heroLoginText]}>
-                X（Twitter）ではじめる
+                <Text style={styles.xGlyph}>𝕏</Text>　ではじめる
               </Text>
               <Text style={[styles.heroLoginSub, stylesBySize[heroSize].heroLoginSub]}>
                 無料・1タップ / 新規登録もこちら
@@ -221,12 +225,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: SIGNAL_TEAL,
-    // 夜空背景でも本文が確実に読めるよう、パネルを濃いめ（85%）に。
-    backgroundColor: color.bg + "D9",
+    // 夜空背景でも本文が確実に読めるよう、パネルをほぼ不透明（96%）に。
+    backgroundColor: color.bg + "F5",
     shadowColor: SIGNAL_TEAL,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.62,
-    shadowRadius: 24,
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
   },
   catchAccentRow: {
     flexDirection: "row",
@@ -236,9 +240,9 @@ const styles = StyleSheet.create({
   },
   catchPin: {
     marginRight: 4,
-    textShadowColor: SIGNAL_TEAL,
+    textShadowColor: PIN_RED,
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 16,
+    textShadowRadius: 12,
   },
   catchKicker: {
     color: SIGNAL_TEAL,
@@ -255,9 +259,10 @@ const styles = StyleSheet.create({
     lineHeight: 52,
     letterSpacing: 0,
     textAlign: "center",
-    textShadowColor: SIGNAL_TEAL,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 28,
+    // グローを抑えて文字をくっきりさせる（旧28はにじんで読みにくかった）。
+    textShadowColor: "rgba(8,16,30,0.9)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 10,
   },
   catchMainAccent: {
     color: SIGNAL_TEAL,
@@ -276,14 +281,17 @@ const styles = StyleSheet.create({
     minWidth: 280,
     maxWidth: 360,
     width: "86%",
-    backgroundColor: SIGNAL_TEAL,
+    // X（Twitter）公式ブラック。淡い縁取りで夜空背景から浮かせる。
+    backgroundColor: X_BLACK,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 30,
     alignItems: "center",
-    shadowColor: SIGNAL_TEAL,
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.55,
     shadowRadius: 16,
     elevation: 8,
   },
@@ -292,6 +300,10 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: "800",
     letterSpacing: 0,
+  },
+  xGlyph: {
+    color: "#FFFFFF",
+    fontWeight: "900",
   },
   heroLoginSub: {
     color: "rgba(255,255,255,0.85)",

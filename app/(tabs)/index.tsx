@@ -1203,7 +1203,7 @@ const styles = StyleSheet.create({
   loginButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: color.twitter,
+    backgroundColor: palette.black,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 28,

@@ -232,7 +232,7 @@ export function LoginModal({
             <Button
               onPress={handleConfirm}
               icon="login"
-              style={{ backgroundColor: color.twitter }}
+              style={{ backgroundColor: palette.black }}
             >
               説明を確認してXへ進む
             </Button>
