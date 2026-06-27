@@ -655,6 +655,7 @@ export async function openEncounter(
 
 export type ZukanRow = {
   prefecture: string | null;
+  municipality: string | null;
   visitCount: number;
   lastVisitedAt: Date;
 };
@@ -666,6 +667,7 @@ export async function getMyVisitedAreas(
   const rows = await db
     .select({
       prefecture: visitedAreas.prefecture,
+      municipality: visitedAreas.municipality,
       visitCount: visitedAreas.visitCount,
       lastVisitedAt: visitedAreas.lastVisitedAt,
     })

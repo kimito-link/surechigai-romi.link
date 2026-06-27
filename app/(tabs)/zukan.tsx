@@ -15,7 +15,7 @@ import {
   RefreshControl,
   Pressable,
 } from "react-native";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
@@ -65,6 +65,34 @@ export default function ZukanScreen() {
     },
     {} as Record<string, number>
   );
+
+  // visitedAreas は h3R7 セル単位なので、市区町村ごとに集計し直して一覧にする
+  const municipalitySummary = useMemo(() => {
+    const map = new Map<
+      string,
+      { municipality: string; prefecture: string | null; visitCount: number; lastVisitedAt: Date | string }
+    >();
+    for (const v of data?.visited ?? []) {
+      const name = v.municipality || v.prefecture;
+      if (!name) continue;
+      const key = `${v.prefecture ?? ""}/${name}`;
+      const prev = map.get(key);
+      if (prev) {
+        prev.visitCount += v.visitCount;
+        if (new Date(v.lastVisitedAt) > new Date(prev.lastVisitedAt)) {
+          prev.lastVisitedAt = v.lastVisitedAt;
+        }
+      } else {
+        map.set(key, {
+          municipality: name,
+          prefecture: v.prefecture,
+          visitCount: v.visitCount,
+          lastVisitedAt: v.lastVisitedAt,
+        });
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.visitCount - a.visitCount);
+  }, [data]);
 
   if (!isAuthReady) {
     return (
@@ -164,27 +192,26 @@ export default function ZukanScreen() {
           }}
         />
 
-        {/* 市区町村リスト */}
-        {data?.visited && data.visited.length > 0 && (
+        {/* 市区町村リスト（市区町村ごとに集計） */}
+        {municipalitySummary.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>訪問した市区町村</Text>
             <View style={styles.municipalityList}>
-              {data.visited
-                .filter((v) => v.prefecture)
-                .sort((a, b) => b.visitCount - a.visitCount)
-                .map((v, i) => (
-                  <View key={i} style={styles.municipalityRow}>
-                    <View style={styles.municipalityInfo}>
-                      <Text style={styles.municipalityPrefecture}>{v.prefecture}</Text>
-                      <Text style={styles.municipalityVisitCount}>
-                        {v.visitCount} 回訪問
-                      </Text>
-                    </View>
-                    <Text style={styles.municipalityDate}>
-                      {formatDate(v.lastVisitedAt)}
+              {municipalitySummary.map((m, i) => (
+                <View key={i} style={styles.municipalityRow}>
+                  <View style={styles.municipalityInfo}>
+                    <Text style={styles.municipalityPrefecture}>{m.municipality}</Text>
+                    <Text style={styles.municipalityVisitCount}>
+                      {m.prefecture && m.prefecture !== m.municipality
+                        ? `${m.prefecture}・${m.visitCount} 回訪問`
+                        : `${m.visitCount} 回訪問`}
                     </Text>
                   </View>
-                ))}
+                  <Text style={styles.municipalityDate}>
+                    {formatDate(m.lastVisitedAt)}
+                  </Text>
+                </View>
+              ))}
             </View>
           </>
         )}

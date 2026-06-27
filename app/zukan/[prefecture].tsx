@@ -89,7 +89,7 @@ export default function PrefectureEncounterScreen() {
   return (
     <ScreenContainer containerClassName="bg-background">
       <AppHeader
-        title={`${prefName} で参加しているクリエイター`}
+        title={`${prefName} の記録`}
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu={false}
