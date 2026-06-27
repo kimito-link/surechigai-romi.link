@@ -121,3 +121,16 @@ export async function shareApp(): Promise<boolean> {
   const text = `すれ違い通信アプリ「君斗りんくのすれ違ひ通信」で、あなたのすれ違い体験を記録しよう！ ${APP_HASHTAG}`;
   return shareToTwitter(text, getAppUrl(), ["君斗りんくのすれ違ひ通信"]);
 }
+
+/**
+ * 自分の現在地（最後の記録地点）を X でシェア。
+ * shareUrl は /u/<shareSlug>。共有先のカードに地図サムネ（OGP）が表示される。
+ */
+export async function shareMyLocation(
+  shareUrl: string,
+  areaLabel?: string,
+): Promise<boolean> {
+  const where = areaLabel ? `${areaLabel}にいるよ。` : "";
+  const text = `${where}会いたい君がいる現在地。`;
+  return shareToTwitter(text, shareUrl, ["君斗りんくのすれ違ひ通信"]);
+}

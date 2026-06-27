@@ -34,6 +34,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
+import { shareMyLocation } from "@/lib/share";
 
 const MAX_HITOKOTO = 140;
 
@@ -163,6 +164,9 @@ export default function MypageScreen() {
   // MVP では blocks テーブルを直接取得する API なし → 簡易プレースホルダ）
   const unblockMutation = trpc.safety.unblock.useMutation();
 
+  // 現在地シェア（/u/<slug> をXで共有 → 地図サムネ付きOGP）
+  const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
+
   const handleHitokotoSave = useCallback(
     (text: string) => {
       setLocalHitokoto(text);
@@ -177,6 +181,18 @@ export default function MypageScreen() {
     },
     [unblockMutation],
   );
+
+  const handleShareLocation = useCallback(async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    try {
+      const res = await shareSlugMutation.mutateAsync();
+      await shareMyLocation(res.url);
+    } catch {
+      Alert.alert("エラー", "共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
+    }
+  }, [shareSlugMutation]);
 
   const handleLogout = useCallback(async () => {
     if (Platform.OS !== "web") {
@@ -262,6 +278,26 @@ export default function MypageScreen() {
             </View>
           </View>
         </View>
+
+        {/* 現在地をXでシェア（地図サムネ付きOGP） */}
+        <Pressable
+          onPress={handleShareLocation}
+          disabled={shareSlugMutation.isPending}
+          style={({ pressed }) => [
+            styles.shareLocationButton,
+            pressed && { opacity: 0.85 },
+            shareSlugMutation.isPending && { opacity: 0.6 },
+          ]}
+        >
+          <MaterialIcons name="share-location" size={22} color={color.textWhite} style={{ marginRight: 10 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.shareLocationTitle}>
+              {shareSlugMutation.isPending ? "リンクを準備中…" : "現在地をXでシェア"}
+            </Text>
+            <Text style={styles.shareLocationSub}>地図サムネ付きで「いまいる場所」を共有</Text>
+          </View>
+          <MaterialIcons name="open-in-new" size={16} color="rgba(255,255,255,0.85)" />
+        </Pressable>
 
         {/* ひとこと */}
         <View style={styles.section}>
@@ -398,6 +434,25 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     gap: 16,
+  },
+  // 現在地シェアボタン
+  shareLocationButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: palette.kimitoBlue,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+  },
+  shareLocationTitle: {
+    color: color.textWhite,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  shareLocationSub: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 12,
+    marginTop: 2,
   },
   avatar: {
     width: 72,

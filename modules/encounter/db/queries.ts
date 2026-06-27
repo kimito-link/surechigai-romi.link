@@ -6,7 +6,7 @@
  * 純粋関数 (modules/encounter/core/*) とアプリコードとの橋渡しをする。
  */
 
-import { and, desc, eq, gte, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../../../drizzle/schema/index.js";
 import {
@@ -752,6 +752,177 @@ export async function upsertUserSettings(
       target: userSettings.userId,
       set: patch,
     });
+}
+
+// ---------------------------------------------------------------------------
+// 共有リンク（OGP）: shareSlug 生成 & slug→最新地点の解決
+// ---------------------------------------------------------------------------
+
+function usernameFromName(name: string | null): string | null {
+  if (!name) return null;
+  const u = name.replace(/^@/, "").trim();
+  return u || null;
+}
+
+/** 12文字の base62 風ランダムスラッグ（連番ID非公開のため）。 */
+function randomShareSlug(): string {
+  const chars =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const bytes = new Uint8Array(12);
+  globalThis.crypto.getRandomValues(bytes);
+  let out = "";
+  for (let i = 0; i < bytes.length; i++) out += chars[bytes[i] % chars.length];
+  return out;
+}
+
+/**
+ * ユーザーの公開共有スラッグを取得（無ければ生成して保存）。
+ * 既に設定済みならそれを返す。生成は UNIQUE 衝突時に数回リトライ。
+ */
+export async function getOrCreateUserShareSlug(
+  db: DB,
+  userId: number
+): Promise<string | null> {
+  const rows = await db
+    .select({ shareSlug: users.shareSlug })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (rows.length === 0) return null;
+  if (rows[0].shareSlug) return rows[0].shareSlug;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const slug = randomShareSlug();
+    try {
+      await db
+        .update(users)
+        .set({ shareSlug: slug })
+        .where(and(eq(users.id, userId), isNull(users.shareSlug)));
+      const check = await db
+        .select({ shareSlug: users.shareSlug })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      if (check[0]?.shareSlug) return check[0].shareSlug;
+    } catch {
+      // UNIQUE 衝突 → 別スラッグで再試行
+    }
+  }
+  return null;
+}
+
+export type ShareInfo = {
+  name: string | null;
+  username: string | null;
+  /** 市区町村（粗い粒度。公開サムネ用） */
+  area: string | null;
+  prefecture: string | null;
+  /** 表示用の500m丸め座標（正確な自宅座標は出さない）。地点非公開時は null。 */
+  lat: number | null;
+  lng: number | null;
+  /** 地図ピンを出せるか（座標あり） */
+  hasLocation: boolean;
+  recordedAt: Date | null;
+};
+
+/**
+ * 共有スラッグから、その人の「最後の記録地点」を市区町村粒度で解決する。
+ * isSuspended / locationPausedUntil / homeMaskCell を尊重し、
+ * 公開してよい場合のみ地点を返す。座標は500m丸め（latGrid/lngGrid）。
+ */
+export async function getShareInfoBySlug(
+  db: DB,
+  slug: string
+): Promise<ShareInfo | null> {
+  const userRows = await db
+    .select({ id: users.id, name: users.name, isSuspended: users.isSuspended })
+    .from(users)
+    .where(eq(users.shareSlug, slug))
+    .limit(1);
+  if (userRows.length === 0) return null;
+
+  const u = userRows[0];
+  const username = usernameFromName(u.name);
+  const noLocation: ShareInfo = {
+    name: u.name,
+    username,
+    area: null,
+    prefecture: null,
+    lat: null,
+    lng: null,
+    hasLocation: false,
+    recordedAt: null,
+  };
+
+  if (u.isSuspended) return noLocation;
+
+  const settingsRows = await db
+    .select()
+    .from(userSettings)
+    .where(eq(userSettings.userId, u.id))
+    .limit(1);
+  const settings = settingsRows[0];
+  const paused = settings?.locationPausedUntil
+    ? settings.locationPausedUntil.getTime() > Date.now()
+    : false;
+  const homeMaskCell = settings?.homeMaskCell ?? null;
+  if (paused) return noLocation;
+
+  const locRows = await db
+    .select({
+      latGrid: locations.latGrid,
+      lngGrid: locations.lngGrid,
+      municipality: locations.municipality,
+      prefecture: locations.prefecture,
+      h3R8: locations.h3R8,
+      recordedAt: locations.recordedAt,
+    })
+    .from(locations)
+    .where(
+      homeMaskCell
+        ? and(eq(locations.userId, u.id), ne(locations.h3R8, homeMaskCell))
+        : eq(locations.userId, u.id)
+    )
+    .orderBy(desc(locations.recordedAt))
+    .limit(1);
+
+  if (locRows.length > 0) {
+    const loc = locRows[0];
+    return {
+      name: u.name,
+      username,
+      area: loc.municipality,
+      prefecture: loc.prefecture,
+      lat: loc.latGrid,
+      lng: loc.lngGrid,
+      hasLocation: true,
+      recordedAt: loc.recordedAt,
+    };
+  }
+
+  // locations が無ければ visitedAreas（市区町村のみ・座標なし）にフォールバック
+  const vaRows = await db
+    .select({
+      municipality: visitedAreas.municipality,
+      prefecture: visitedAreas.prefecture,
+      lastVisitedAt: visitedAreas.lastVisitedAt,
+    })
+    .from(visitedAreas)
+    .where(eq(visitedAreas.userId, u.id))
+    .orderBy(desc(visitedAreas.lastVisitedAt))
+    .limit(1);
+  if (vaRows.length === 0) return noLocation;
+  const va = vaRows[0];
+  return {
+    name: u.name,
+    username,
+    area: va.municipality,
+    prefecture: va.prefecture,
+    lat: null,
+    lng: null,
+    hasLocation: false,
+    recordedAt: va.lastVisitedAt,
+  };
 }
 
 // ---------------------------------------------------------------------------

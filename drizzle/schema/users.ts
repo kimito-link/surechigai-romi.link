@@ -43,6 +43,8 @@ export const users = pgTable("users", {
   hitokotoUpdatedAt: timestamp("hitokotoUpdatedAt"),
   // 君斗りんくのすれ違ひ通信: 通報3件自動停止フラグ
   isSuspended: boolean("isSuspended").default(false).notNull(),
+  // 君斗りんくのすれ違ひ通信: 公開共有リンク用の非連番スラッグ（/u/<shareSlug> のOGP用）
+  shareSlug: varchar("shareSlug", { length: 16 }).unique(),
 });
 
 export type User = typeof users.$inferSelect;

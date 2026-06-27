@@ -138,7 +138,11 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/((?!api/|__clerk/).*)",
+      "source": "/u/:slug",
+      "destination": "/api/u/:slug"
+    },
+    {
+      "source": "/((?!api/|__clerk/|u/).*)",
       "destination": "/index.html"
     }
   ]

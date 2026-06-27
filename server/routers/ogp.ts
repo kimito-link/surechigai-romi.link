@@ -5,10 +5,13 @@
  * 君斗りんくのすれ違ひ通信: すれ違いエリアの市区町村OGP画像を生成、集まりのOGPメタ
  */
 import { z } from "zod";
-import { publicProcedure, router } from "../_core/trpc.js";
+import { publicProcedure, protectedProcedure, router } from "../_core/trpc.js";
 import { getDb } from "../db/connection.js";
 import { getEventById } from "../../modules/event/db/queries.js";
+import { getOrCreateUserShareSlug } from "../../modules/encounter/db/queries.js";
 import { TRPCError } from "@trpc/server";
+
+const APP_ORIGIN = "https://surechigai-romi.link";
 
 export const ogpRouter = router({
   // エリアのOGPメタデータを取得
@@ -48,4 +51,19 @@ export const ogpRouter = router({
         creatorXId: ev.creatorXId,
       };
     }),
+
+  /**
+   * 自分の公開共有リンク用スラッグを取得（無ければ生成）。
+   * このスラッグ付き URL (/u/<slug>) を X で共有すると、
+   * 最後の記録地点入りの地図サムネ（OGP）が表示される。
+   */
+  getOrCreateShareSlug: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
+    const slug = await getOrCreateUserShareSlug(db, ctx.user.id);
+    if (!slug) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "共有リンクの生成に失敗しました" });
+    }
+    return { slug, url: `${APP_ORIGIN}/u/${slug}` };
+  }),
 });

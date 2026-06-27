@@ -35,12 +35,16 @@ export default function Root({ children }: PropsWithChildren) {
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
         />
         <meta property="og:url" content="https://surechigai-romi.link/" />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:image" content="https://surechigai-romi.link/api/og" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="君斗りんくのすれ違ひ通信｜会いたい君がいる現在地" />
         <meta
           name="twitter:description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。"
         />
+        <meta name="twitter:image" content="https://surechigai-romi.link/api/og" />
         {/* Preconnect: API・Clerkの接続を事前開始 */}
         <link rel="preconnect" href="https://surechigai-romi.link" />
         <link rel="dns-prefetch" href="https://surechigai-romi.link" />
