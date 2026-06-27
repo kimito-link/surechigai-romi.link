@@ -60,6 +60,45 @@ export type Location = typeof locations.$inferSelect;
 export type InsertLocation = typeof locations.$inferInsert;
 
 // =============================================================================
+// groupVisitReports — グループ内だけで使う訪問申告。
+// =============================================================================
+
+export const groupVisitReports = pgTable(
+  "group_visit_reports",
+  {
+    id: serial("id").primaryKey(),
+    /** 共有グループコードを SHA-256 でハッシュ化したキー。 */
+    groupKey: varchar("groupKey", { length: 64 }).notNull(),
+    /** ブラウザ/端末内で生成する匿名トークン。重複カウント緩和用。 */
+    visitorToken: varchar("visitorToken", { length: 64 }),
+    displayName: varchar("displayName", { length: 40 }).notNull(),
+    placeName: varchar("placeName", { length: 120 }),
+    note: text("note"),
+    /** グループ内地図で使う正確な申告位置。 */
+    lat: real("lat").notNull(),
+    lng: real("lng").notNull(),
+    accuracyM: real("accuracyM"),
+    /** 公開集計・近傍表示用の500m丸め座標。 */
+    latGrid: real("latGrid").notNull(),
+    lngGrid: real("lngGrid").notNull(),
+    /** 500m級の近傍集計セル。 */
+    h3R8: text("h3R8").notNull(),
+    municipality: text("municipality"),
+    prefecture: varchar("prefecture", { length: 32 }),
+    address: text("address"),
+    reportedAt: timestamp("reportedAt").defaultNow().notNull(),
+  },
+  (table) => [
+    index("group_visit_reports_group_idx").on(table.groupKey),
+    index("group_visit_reports_group_reported_idx").on(table.groupKey, table.reportedAt),
+    index("group_visit_reports_group_h3_idx").on(table.groupKey, table.h3R8),
+  ]
+);
+
+export type GroupVisitReport = typeof groupVisitReports.$inferSelect;
+export type InsertGroupVisitReport = typeof groupVisitReports.$inferInsert;
+
+// =============================================================================
 // encounters — UNIQUE(userAId, userBId, dayKey)
 // userAId < userBId に正規化（アプリ側で保証）
 // dayKey = occurredAt の日付文字列 "YYYY-MM-DD"（生成列の代わりに text カラムで実現）

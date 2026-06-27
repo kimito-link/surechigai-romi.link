@@ -13,10 +13,11 @@ const fs = require("fs");
 const path = require("path");
 
 const DIST = path.join(process.cwd(), "dist");
-const version =
+const versionBase =
   process.env.VERCEL_GIT_COMMIT_SHA ||
   process.env.COMMIT_SHA ||
-  String(Date.now());
+  "local";
+const version = `${versionBase}-${Date.now()}`.replace(/[^0-9a-zA-Z._-]/g, "-");
 
 function listHtml(dir, acc) {
   let entries;

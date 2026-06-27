@@ -11,6 +11,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../../../drizzle/schema/index.js";
 import {
   locations,
+  groupVisitReports,
   encounters,
   visitedAreas,
   blocks,
@@ -23,6 +24,148 @@ import { kRing } from "../core/geo.js";
 import type { NearbyCandidate, TimeshiftCandidate } from "../core/matching.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
+
+// ---------------------------------------------------------------------------
+// group_visit_reports
+// ---------------------------------------------------------------------------
+
+export type GroupVisitReportItem = {
+  id: number;
+  displayName: string;
+  visitorToken: string | null;
+  placeName: string | null;
+  note: string | null;
+  lat: number;
+  lng: number;
+  accuracyM: number | null;
+  latGrid: number;
+  lngGrid: number;
+  h3R8: string;
+  municipality: string | null;
+  prefecture: string | null;
+  address: string | null;
+  reportedAt: Date;
+};
+
+export type GroupVisitStats = {
+  totalReports: number;
+  uniqueVisitors: number;
+  areaCount: number;
+  latestReportedAt: Date | null;
+};
+
+export async function insertGroupVisitReport(
+  db: DB,
+  params: {
+    groupKey: string;
+    visitorToken: string | null;
+    displayName: string;
+    placeName: string | null;
+    note: string | null;
+    lat: number;
+    lng: number;
+    accuracyM: number | null;
+    latGrid: number;
+    lngGrid: number;
+    h3R8: string;
+    municipality: string | null;
+    prefecture: string | null;
+    address: string | null;
+  }
+): Promise<GroupVisitReportItem> {
+  const rows = await db
+    .insert(groupVisitReports)
+    .values({
+      groupKey: params.groupKey,
+      visitorToken: params.visitorToken,
+      displayName: params.displayName,
+      placeName: params.placeName,
+      note: params.note,
+      lat: params.lat,
+      lng: params.lng,
+      accuracyM: params.accuracyM,
+      latGrid: params.latGrid,
+      lngGrid: params.lngGrid,
+      h3R8: params.h3R8,
+      municipality: params.municipality,
+      prefecture: params.prefecture,
+      address: params.address,
+      reportedAt: new Date(),
+    })
+    .returning({
+      id: groupVisitReports.id,
+      displayName: groupVisitReports.displayName,
+      visitorToken: groupVisitReports.visitorToken,
+      placeName: groupVisitReports.placeName,
+      note: groupVisitReports.note,
+      lat: groupVisitReports.lat,
+      lng: groupVisitReports.lng,
+      accuracyM: groupVisitReports.accuracyM,
+      latGrid: groupVisitReports.latGrid,
+      lngGrid: groupVisitReports.lngGrid,
+      h3R8: groupVisitReports.h3R8,
+      municipality: groupVisitReports.municipality,
+      prefecture: groupVisitReports.prefecture,
+      address: groupVisitReports.address,
+      reportedAt: groupVisitReports.reportedAt,
+    });
+
+  return rows[0];
+}
+
+export async function listGroupVisitReports(
+  db: DB,
+  groupKey: string,
+  limit = 120
+): Promise<GroupVisitReportItem[]> {
+  const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 300);
+
+  return db
+    .select({
+      id: groupVisitReports.id,
+      displayName: groupVisitReports.displayName,
+      visitorToken: groupVisitReports.visitorToken,
+      placeName: groupVisitReports.placeName,
+      note: groupVisitReports.note,
+      lat: groupVisitReports.lat,
+      lng: groupVisitReports.lng,
+      accuracyM: groupVisitReports.accuracyM,
+      latGrid: groupVisitReports.latGrid,
+      lngGrid: groupVisitReports.lngGrid,
+      h3R8: groupVisitReports.h3R8,
+      municipality: groupVisitReports.municipality,
+      prefecture: groupVisitReports.prefecture,
+      address: groupVisitReports.address,
+      reportedAt: groupVisitReports.reportedAt,
+    })
+    .from(groupVisitReports)
+    .where(eq(groupVisitReports.groupKey, groupKey))
+    .orderBy(desc(groupVisitReports.reportedAt))
+    .limit(safeLimit);
+}
+
+export async function getGroupVisitStats(
+  db: DB,
+  groupKey: string
+): Promise<GroupVisitStats> {
+  const rows = await db
+    .select({
+      totalReports: sql<number>`count(*)`,
+      uniqueVisitors: sql<number>`count(distinct coalesce(${groupVisitReports.visitorToken}, ${groupVisitReports.displayName}))`,
+      areaCount: sql<number>`count(distinct ${groupVisitReports.h3R8})`,
+      latestReportedAt: sql<Date | null>`max(${groupVisitReports.reportedAt})`,
+    })
+    .from(groupVisitReports)
+    .where(eq(groupVisitReports.groupKey, groupKey));
+
+  const row = rows[0];
+  return {
+    totalReports: Number(row?.totalReports ?? 0),
+    uniqueVisitors: Number(row?.uniqueVisitors ?? 0),
+    areaCount: Number(row?.areaCount ?? 0),
+    latestReportedAt: row?.latestReportedAt ?? null,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // locations

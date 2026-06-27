@@ -124,6 +124,7 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
     containerStyle?: StyleProp<ViewStyle>;
     customCenter?: { lat: number; lng: number };
     userImageUrl?: string;
+    markerIcon?: React.ComponentProps<typeof MaterialIcons>["name"];
   }
 
   export function PrecisionTileMap({
@@ -135,6 +136,7 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
     containerStyle,
     customCenter,
     userImageUrl,
+    markerIcon = "my-location",
   }: PrecisionTileMapProps) {
   const { width: windowWidth } = useWindowDimensions();
   const mapWidth = propWidth ?? Math.max(320, Math.min(windowWidth - 32, 980));
@@ -276,7 +278,7 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
             {userImageUrl ? (
               <Image source={{ uri: userImageUrl }} style={{ width: 38, height: 38, borderRadius: 6 }} />
             ) : (
-              <MaterialIcons name="my-location" size={24} color={color.textWhite} />
+              <MaterialIcons name={markerIcon} size={24} color={color.textWhite} />
             )}
           </Pressable>
         </>

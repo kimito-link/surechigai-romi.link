@@ -54,6 +54,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
 
   const menuItems = [
     { icon: "home", label: "ホーム", path: "/(tabs)/" },
+    { icon: "groups", label: "訪問申告", path: "/visit" },
     { icon: "location-on", label: "チェックイン", path: "/(tabs)/checkin" },
     { icon: "book", label: "図鑑", path: "/(tabs)/zukan" },
     { icon: "map", label: "軌跡", path: "/(tabs)/map" },

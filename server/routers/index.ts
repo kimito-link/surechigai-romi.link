@@ -15,6 +15,7 @@ import { encounterRouter } from "../../modules/encounter/api/encounter.js";
 import { zukanRouter } from "../../modules/encounter/api/zukan.js";
 import { safetyRouter } from "../../modules/encounter/api/safety.js";
 import { settingsRouter } from "../../modules/encounter/api/settings.js";
+import { visitRouter } from "../../modules/encounter/api/visit.js";
 
 // event モジュールルーター（予定×ライブ表明。doin-challenge にも移植する共通機能）
 import { eventRouter } from "../../modules/event/api/event.js";
@@ -28,6 +29,7 @@ export const appRouter = router({
   zukan: zukanRouter,
   safety: safetyRouter,
   settings: settingsRouter,
+  visit: visitRouter,
   event: eventRouter,
 });
 
@@ -42,5 +44,6 @@ export {
   zukanRouter,
   safetyRouter,
   settingsRouter,
+  visitRouter,
   eventRouter,
 };
