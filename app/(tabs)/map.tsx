@@ -17,12 +17,12 @@ import {
   useWindowDimensions,
   Pressable,
 } from "react-native";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
 import Svg, { Polyline } from "react-native-svg";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
-import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
+import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -56,6 +56,7 @@ function WebTrailMap({
   isFetching,
   onRefresh,
   userImageUrl,
+  topContent,
 }: {
   visited: {
     prefecture: string | null;
@@ -66,6 +67,7 @@ function WebTrailMap({
   isFetching: boolean;
   onRefresh: () => void;
   userImageUrl?: string;
+  topContent?: ReactNode;
 }) {
   const total = visited.reduce((s, v) => s + v.visitCount, 0);
 
@@ -80,6 +82,7 @@ function WebTrailMap({
       }
       contentContainerStyle={styles.scrollContent}
     >
+      {topContent}
       {locations.length > 0 ? (
         <PrecisionTileMap locations={locations} userImageUrl={userImageUrl} />
       ) : (
@@ -185,17 +188,6 @@ export default function MapScreen() {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <GlobalLoginGate
-        title="軌跡"
-        subtitle={`チェックインした場所が\n地図に刻まれます`}
-        headerTitle="軌跡"
-        isDesktop={isDesktop}
-      />
-    );
-  }
-
   return (
     <ScreenContainer containerClassName="bg-background">
         <AppHeader
@@ -219,6 +211,20 @@ export default function MapScreen() {
           isFetching={isFetchingAreas || isFetchingTrail}
           onRefresh={onRefresh}
           userImageUrl={user?.profileImage ?? undefined}
+          topContent={
+            !isAuthenticated ? (
+              <View style={styles.bannerWrap}>
+                <LoginPreviewBanner
+                  headline="ログインすると、あなたの足あとが地図に刻まれます"
+                  benefits={[
+                    { icon: "near-me", label: "道路や建物まで辿れる精度で記録" },
+                    { icon: "timeline", label: "移動の軌跡をあとから振り返れる" },
+                    { icon: "place", label: "思い出の場所にもう一度行ける" },
+                  ]}
+                />
+              </View>
+            ) : undefined
+          }
         />
       )}
     </ScreenContainer>
@@ -248,6 +254,10 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
     alignItems: "center",
+  },
+  bannerWrap: {
+    width: "100%",
+    maxWidth: 980,
   },
   mapAttribution: {
     position: "absolute",

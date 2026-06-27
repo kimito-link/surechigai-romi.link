@@ -243,16 +243,9 @@ const styles = StyleSheet.create({
     marginTop: 30,
     alignItems: "center",
     paddingHorizontal: 22,
-    paddingVertical: 16,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: SIGNAL_ACCENT,
-    // 夜空背景でも本文が確実に読めるよう、パネルをほぼ不透明（96%）に。
-    backgroundColor: color.bg + "F5",
-    shadowColor: SIGNAL_ACCENT,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 18,
+    paddingVertical: 12,
+    // 背景は透明。白い箱で読みにくくなるのを避け、夜空の上に直接文字を置く。
+    backgroundColor: "transparent",
   },
   catchAccentRow: {
     flexDirection: "row",
@@ -281,13 +274,18 @@ const styles = StyleSheet.create({
     lineHeight: 52,
     letterSpacing: 0,
     textAlign: "center",
-    // グローを抑えて文字をくっきりさせる（旧28はにじんで読みにくかった）。
-    textShadowColor: "rgba(8,16,30,0.9)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 10,
+    // 透明背景でも白文字がはっきり読めるよう、濃い影で縁取りする。
+    textShadowColor: "rgba(2,8,23,0.95)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 14,
   },
   catchMainAccent: {
-    color: SIGNAL_ACCENT,
+    // 「現在地」は赤（ピンと同色）。やわらかな赤グローで美しく際立たせる。
+    color: PIN_RED,
+    letterSpacing: 1,
+    textShadowColor: "rgba(239,68,68,0.55)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 16,
   },
   catchSub: {
     color: "#bcd4f0",

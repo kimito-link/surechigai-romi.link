@@ -20,7 +20,7 @@ import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
-import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
+import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -134,17 +134,6 @@ export default function ZukanScreen() {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <GlobalLoginGate
-        title="図鑑"
-        subtitle={`訪問した都道府県や\nすれ違い相手の出身地が記録されます`}
-        headerTitle="図鑑"
-        isDesktop={isDesktop}
-      />
-    );
-  }
-
   return (
     <ScreenContainer containerClassName="bg-background">
       <AppHeader
@@ -169,6 +158,18 @@ export default function ZukanScreen() {
         }
         contentContainerStyle={styles.scrollContent}
       >
+        {/* 未ログインでも図鑑（日本地図）の中身は見せて、ログインで解放する */}
+        {!isAuthenticated && (
+          <LoginPreviewBanner
+            headline="ログインすると、あなただけの図鑑が育ちます"
+            benefits={[
+              { icon: "map", label: "訪れた都道府県・市区町村が色づく" },
+              { icon: "groups", label: "すれ違った人の出身地が集まる" },
+              { icon: "place", label: "足あとの正確な場所をあとからたどれる" },
+            ]}
+          />
+        )}
+
         {/* 統計サマリ */}
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
