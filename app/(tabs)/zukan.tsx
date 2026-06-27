@@ -14,6 +14,7 @@ import {
   StyleSheet,
   RefreshControl,
   Pressable,
+  useWindowDimensions,
 } from "react-native";
 import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -26,6 +27,11 @@ import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { prefectures } from "@/constants/prefectures";
 import { JapanBlockMap } from "@/components/organisms/japan-block-map";
+import {
+  PrecisionTileMap,
+  fitCenterZoom,
+  type TrailPoint,
+} from "@/components/organisms/precision-tile-map";
 import { useRouter } from "expo-router";
 
 
@@ -34,14 +40,30 @@ export default function ZukanScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReady } = useAuth();
   const router = useRouter();
+  const { width: windowWidth } = useWindowDimensions();
 
   const { data, refetch, isFetching } = trpc.zukan.myAreas.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
+  // 全国の足あと（地図用）
+  const { data: trailData, refetch: refetchTrail } = trpc.zukan.myTrail.useQuery(
+    { limit: 500 },
+    { enabled: isAuthenticated }
+  );
+  const trailLocations: TrailPoint[] = trailData?.locations ?? [];
+
+  const mapW = Math.max(320, Math.min(windowWidth - 32, 980));
+  const mapH = windowWidth < 640 ? 340 : 460;
+  const { center: trailCenter, zoom: trailZoom } = useMemo(
+    () => fitCenterZoom(trailLocations, mapW, mapH),
+    [trailLocations, mapW, mapH]
+  );
+
   const onRefresh = useCallback(() => {
     refetch();
-  }, [refetch]);
+    refetchTrail();
+  }, [refetch, refetchTrail]);
 
   // 訪問・すれ違いのセットを構築
   const visitedPrefSet = new Set<string>(
@@ -180,6 +202,24 @@ export default function ZukanScreen() {
             <Text style={styles.legendText}>未訪問</Text>
           </View>
         </View>
+
+        {/* 全国の足あと地図（正確な座標。タップで県別へ） */}
+        {trailLocations.length > 0 && (
+          <View style={styles.trailMapSection}>
+            <Text style={styles.sectionTitle}>あなたの足あと（全国）</Text>
+            <PrecisionTileMap
+              locations={trailLocations}
+              width={mapW}
+              height={mapH}
+              customCenter={trailCenter}
+              zoom={trailZoom}
+              showInfoPanel={false}
+            />
+            <Text style={styles.trailMapCaption}>
+              {trailLocations.length} 件の正確な足あと・思い出の場所をあとからたどれます
+            </Text>
+          </View>
+        )}
 
         {/* 都道府県グリッド */}
         <Text style={styles.sectionTitle}>みんながいる現在地（都道府県別）</Text>
@@ -322,6 +362,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textTransform: "uppercase",
     letterSpacing: 0.5,
+  },
+  trailMapSection: {
+    marginBottom: 20,
+  },
+  trailMapCaption: {
+    color: color.textMuted,
+    fontSize: 11,
+    marginTop: 8,
+    textAlign: "center",
   },
 
   // Municipality list
