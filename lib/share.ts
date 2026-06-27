@@ -16,13 +16,17 @@ function getAppUrl(): string {
     if (hostname.includes("manus.computer") || hostname.includes("localhost")) {
       return `${protocol}//${hostname}${port ? ":" + port : ""}`;
     }
-    // 本番環境
-    if (hostname.includes("surechigai-romi.link")) {
-      return "https://surechigai-romi.link";
+    // 本番環境（正規ドメインは surechigai.kimito.link に統一。
+    //   旧 surechigai-romi.link でも現オリジンを尊重して共有URLを生成する）
+    if (
+      hostname.endsWith(".kimito.link") ||
+      hostname.includes("surechigai-romi.link")
+    ) {
+      return `${protocol}//${hostname}${port ? ":" + port : ""}`;
     }
   }
-  // デフォルトは本番URL
-  return "https://surechigai-romi.link";
+  // デフォルトは本番URL（正規ドメイン）
+  return "https://surechigai.kimito.link";
 }
 
 export interface ShareContent {

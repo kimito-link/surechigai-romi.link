@@ -64,7 +64,7 @@ const config: ExpoConfig = {
     [
       "expo-router",
       {
-        origin: "https://surechigai-romi.link",
+        origin: "https://surechigai.kimito.link",
         asyncRoutes: {
           web: true,
           default: "development",

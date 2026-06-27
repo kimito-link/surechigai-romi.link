@@ -24,6 +24,7 @@ const env = {
  * 本番環境のフロントエンドドメイン
  */
 export const PRODUCTION_DOMAINS = [
+  "surechigai.kimito.link",
   "surechigai-romi.link",
   "surechigai-romi.vercel.app",
 ];
@@ -65,7 +66,7 @@ export function getApiBaseUrl(): string {
 
   // Native: expo config または本番URL
   if (Platform.OS !== "web") {
-    return Constants.expoConfig?.extra?.apiUrl ?? "https://surechigai-romi.link";
+    return Constants.expoConfig?.extra?.apiUrl ?? "https://surechigai.kimito.link";
   }
 
   return "";

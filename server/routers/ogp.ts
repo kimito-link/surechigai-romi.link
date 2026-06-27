@@ -11,7 +11,7 @@ import { getEventById } from "../../modules/event/db/queries.js";
 import { getOrCreateUserShareSlug } from "../../modules/encounter/db/queries.js";
 import { TRPCError } from "@trpc/server";
 
-const APP_ORIGIN = "https://surechigai-romi.link";
+const APP_ORIGIN = "https://surechigai.kimito.link";
 
 export const ogpRouter = router({
   // エリアのOGPメタデータを取得

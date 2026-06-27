@@ -59,10 +59,10 @@
     "thirdPartyProvidersOnIos": ["twitter"],
     "thirdPartyProvidersOnAndroid": ["twitter"],
     "siwaEnabled": false,
-    "clerkCustomDomain": "clerk.surechigai-romi.link",
+    "clerkCustomDomain": "clerk.kimito.link",
     "xOAuthSharedApp": true,
-    "_xOAuthAppNote": "X Developer App は kimito.link と共有。Callback URL: https://clerk.surechigai-romi.link/v1/oauth_callback を X Developer Portal に追加登録すること。",
-    "xCallbackUrl": "https://clerk.surechigai-romi.link/v1/oauth_callback",
+    "_xOAuthAppNote": "X Developer App は kimito.link と共有。配信は surechigai.kimito.link に統一済み（同一サイト＝satellite/proxy 不要）。Callback URL は共有インスタンスの https://clerk.kimito.link/v1/oauth_callback を使用する。",
+    "xCallbackUrl": "https://clerk.kimito.link/v1/oauth_callback",
     "requiredXScopes": ["users.read", "tweet.read", "offline.access"],
     "_scopeNote": "tweet.write は絶対に追加しない。X App permissions が Read only のままで動く。"
   },
