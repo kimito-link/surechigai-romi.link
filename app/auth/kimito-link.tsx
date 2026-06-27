@@ -88,7 +88,7 @@ export default function KimitoLinkAuthGuideScreen() {
           </Text>
 
           <Text style={styles.lead}>
-            すれちがいロミは、姉妹サービス kimito.link と同じXログイン基盤を使っています。
+            君斗りんくのすれ違ひ通信は、姉妹サービス kimito.link と同じXログイン基盤を使っています。
             だから認証中だけ kimito.link が表示されますが、完了後はこのアプリに戻ります。
           </Text>
 

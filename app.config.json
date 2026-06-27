@@ -1,7 +1,7 @@
 {
   "_README": "★ここがスタート地点★ このファイルに『あなたのアプリの情報』を書くだけ。あとはAIと自動化が、Chrome拡張・Web・iOS・Androidの4つに展開してくれます。",
   "identity": {
-    "displayName": "すれちがいロミ",
+    "displayName": "君斗りんくのすれ違ひ通信",
     "displayNameEn": "Surechigai Romi",
     "shortName": "surechigai",
     "bundleId": "com.surechigairomi.app",

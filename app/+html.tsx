@@ -19,7 +19,7 @@ export default function Root({ children }: PropsWithChildren) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
         />
         {/* 既定のタイトル・説明（改ざん検知対策: 正規の内容を明示。各画面で上書き可） */}
-        <title>すれちがいロミ｜会いたい君がいる現在地</title>
+        <title>君斗りんくのすれ違ひ通信｜会いたい君がいる現在地</title>
         <meta
           name="description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
@@ -28,15 +28,15 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="canonical" href="https://surechigai-romi.link/" />
         {/* OGP / Twitter Card */}
         <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="すれちがいロミ" />
-        <meta property="og:title" content="すれちがいロミ｜会いたい君がいる現在地" />
+        <meta property="og:site_name" content="君斗りんくのすれ違ひ通信" />
+        <meta property="og:title" content="君斗りんくのすれ違ひ通信｜会いたい君がいる現在地" />
         <meta
           property="og:description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
         />
         <meta property="og:url" content="https://surechigai-romi.link/" />
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="すれちがいロミ｜会いたい君がいる現在地" />
+        <meta name="twitter:title" content="君斗りんくのすれ違ひ通信｜会いたい君がいる現在地" />
         <meta
           name="twitter:description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。"

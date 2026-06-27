@@ -85,7 +85,7 @@ export function GlobalLoginGate({
             <View style={styles.divider} />
 
             <Text style={styles.introText}>
-              すれちがいロミは、姉妹サービス kimito.link と同じXログイン基盤を使います。{"\n"}
+              君斗りんくのすれ違ひ通信は、姉妹サービス kimito.link と同じXログイン基盤を使います。{"\n"}
               認証後、このアプリへ戻ります。
             </Text>
 
