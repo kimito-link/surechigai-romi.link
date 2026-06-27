@@ -117,14 +117,14 @@
   ],
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/",
       "has": [
         {
           "type": "host",
-          "value": "www.surechigai-romi.link"
+          "value": "surechigai-romi.link"
         }
       ],
-      "destination": "https://surechigai.kimito.link/:path*",
+      "destination": "https://surechigai.kimito.link/",
       "permanent": true
     },
     {
@@ -133,6 +133,28 @@
         {
           "type": "host",
           "value": "surechigai-romi.link"
+        }
+      ],
+      "destination": "https://surechigai.kimito.link/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.surechigai-romi.link"
+        }
+      ],
+      "destination": "https://surechigai.kimito.link/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.surechigai-romi.link"
         }
       ],
       "destination": "https://surechigai.kimito.link/:path*",
