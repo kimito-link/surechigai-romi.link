@@ -268,7 +268,8 @@ const styles = StyleSheet.create({
     fontFamily: "monospace",
   },
   catchMain: {
-    color: "#FFFFFF",
+    // 「会いたい君がいる」は温かみのあるアイボリー。赤い「現在地」と調和し上品に見せる。
+    color: "#FFF1DC",
     fontSize: 42,
     fontWeight: "900",
     lineHeight: 52,
