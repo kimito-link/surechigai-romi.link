@@ -13,3 +13,6 @@ npx tailwindcss -i ./global.css -o ./node_modules/react-native-css-interop/.cach
 
 pnpm build
 npx expo export -p web --clear
+
+# entry スクリプトに版数クエリを付け、古い immutable キャッシュを確実に破棄する。
+node scripts/bust-entry-cache.cjs || true
