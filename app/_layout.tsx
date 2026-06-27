@@ -39,6 +39,8 @@ import { AutoLoginProvider } from "@/lib/auto-login-provider";
 import { NetworkToast } from "@/components/organisms/network-toast";
 import { initSentry } from "@/lib/sentry";
 import { ErrorBoundary } from "@/components/ui";
+import { kimitoClerkAppearance } from "@/lib/clerk-appearance";
+import { kimitoJaJP } from "@/lib/clerk-localization";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -345,12 +347,13 @@ export default function RootLayout() {
       ? `${window.location.origin}/__clerk`
       : undefined;
 
-  // 同一サイト(*.kimito.link)はサインインURLだけ primary に向ける（satellite props なし）。
-  // 別ドメインは satellite + proxy。localhost/単独は素の構成。
+  // 忠実コピー: 同一サイト(*.kimito.link)/localhost は自前 /sign-in（Clerk <SignIn/>）で
+  //   ログイン体験を kimito.link と同一にする。Clerk の内部リダイレクトも /sign-in に向く。
+  //   別ドメイン(satellite)はこの origin でサインイン開始不可のため primary(kimito.link) に委譲。
   const appClerkSatelliteProps = isLocalhostDev
-    ? {}
+    ? { signInUrl: "/sign-in" }
     : isKimitoSameSite
-      ? { signInUrl: appPrimarySignInUrl }
+      ? { signInUrl: "/sign-in" }
       : isAppSatellite
         ? {
             isSatellite: true as const,
@@ -359,6 +362,12 @@ export default function RootLayout() {
             signInUrl: appPrimarySignInUrl,
           }
         : {};
+
+  // kimito.link 由来の見た目・日本語をすべての ClerkProvider に適用（忠実コピー）。
+  const clerkBrandProps = {
+    appearance: kimitoClerkAppearance,
+    localization: kimitoJaJP,
+  };
 
   const content = (
     <ErrorBoundary screenName="App">
@@ -426,6 +435,7 @@ export default function RootLayout() {
       <ClerkProvider
         publishableKey={clerkKey!}
         tokenCache={tokenCache}
+        {...clerkBrandProps}
         {...appClerkSatelliteProps}
       >
         <ThemeProvider>
@@ -445,6 +455,7 @@ export default function RootLayout() {
     <ClerkProvider
       publishableKey={clerkKey!}
       tokenCache={tokenCache}
+      {...clerkBrandProps}
       {...appClerkSatelliteProps}
     >
       <ThemeProvider>

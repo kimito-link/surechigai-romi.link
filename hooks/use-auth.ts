@@ -210,21 +210,13 @@ export function useAuth() {
             return;
           }
 
-          // 同一サイト(*.kimito.link)/localhost/単独はファーストパーティ。
-          // kimito.link へ飛ばさず、この origin で X OAuth を完結させる。
-          // → ログイン後もサブドメインに戻り、__client がこの origin に確立されるため
-          //   リロード時のハンドシェイク不整合(白画面)を避けられる。
-          const clientSignIn = clerk.client?.signIn;
-          if (clientSignIn) {
-            await clientSignIn.authenticateWithRedirect({
-              strategy: "oauth_x",
-              redirectUrl: `${origin}/sso-callback`,
-              redirectUrlComplete: redirectComplete,
-            });
-            return;
-          }
-
-          throw new Error("認証の準備中です。少し待ってからもう一度お試しください。");
+          // 忠実コピー: 同一サイト(*.kimito.link)/localhost は kimito.link と同じく
+          //   自前 /sign-in（Clerk <SignIn/>）へ遷移する。プログラム的 OAuth を直接呼ばず、
+          //   X/Apple/Google ボタンは <SignIn/> 自身が描画・処理する（体験を完全一致させる）。
+          //   ログイン後は redirect_url（=目的地）へ <SignIn/> が戻す。
+          const signInPath = `/sign-in?redirect_url=${encodeURIComponent(redirectComplete)}`;
+          window.location.href = signInPath;
+          return;
         }
 
         const redirectUrl = `${getApiBaseUrl()}/oauth/twitter-callback`;
