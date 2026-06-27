@@ -143,7 +143,7 @@ import { useRouter } from "expo-router";
 
 export default function MypageScreen() {
   const { isDesktop } = useResponsive();
-  const { user, isAuthenticated, isAuthReadyForUI, logout } = useAuth();
+  const { user, isAuthenticated, isAuthReady, logout } = useAuth();
   const router = useRouter();
 
   const [hitokotoModalVisible, setHitokotoModalVisible] = useState(false);
@@ -229,7 +229,7 @@ export default function MypageScreen() {
     navigate.toHome();
   }, [logout]);
 
-  if (!isAuthReadyForUI) {
+  if (!isAuthReady) {
     return (
       <ScreenContainer containerClassName="bg-background">
         <AppHeader 

@@ -26,10 +26,10 @@ export function UserAccountChip({ user, compact = false, onPress, style }: UserA
     alignSelf: "flex-start",
     maxWidth: "100%",
     minHeight: compact ? 60 : 66,
-    backgroundColor: color.successDark + "18",
+    backgroundColor: palette.white,
     borderWidth: 1,
-    borderColor: color.success + "42",
-    borderRadius: 8,
+    borderColor: palette.kimitoBlue + "33",
+    borderRadius: 12,
     paddingHorizontal: compact ? 10 : 12,
     paddingVertical: compact ? 8 : 10,
     gap: compact ? 9 : 11,
@@ -84,7 +84,7 @@ export function UserAccountChip({ user, compact = false, onPress, style }: UserA
 
         <View style={styles.metaRow}>
           <View style={styles.metaPill}>
-            <MaterialIcons name="alternate-email" size={compact ? 12 : 13} color={color.textSubtle} />
+            <MaterialIcons name="alternate-email" size={compact ? 12 : 13} color={palette.kimitoInkMuted} />
             <Text style={[styles.metaLabel, { fontSize: compact ? 10 : 11 }]} numberOfLines={1}>
               アカウントID
             </Text>
@@ -94,7 +94,7 @@ export function UserAccountChip({ user, compact = false, onPress, style }: UserA
           </View>
 
           <View style={styles.metaPill}>
-            <MaterialIcons name="groups" size={compact ? 12 : 13} color={color.successLight} />
+            <MaterialIcons name="groups" size={compact ? 12 : 13} color={palette.kimitoBlue} />
             <Text style={[styles.metaValue, styles.followersValue, { fontSize: compact ? 11 : 12 }]} numberOfLines={1}>
               フォロワー {followers}
             </Text>
@@ -126,9 +126,9 @@ const styles = StyleSheet.create({
   avatarRing: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: palette.black + "55",
+    backgroundColor: palette.kimitoBlueSoft,
     borderWidth: 1,
-    borderColor: color.success + "55",
+    borderColor: palette.kimitoBlue + "33",
   },
   onlineDot: {
     position: "absolute",
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: color.success,
     borderWidth: 2,
-    borderColor: color.bg,
+    borderColor: palette.white,
   },
   accountMain: {
     minWidth: 0,
@@ -159,23 +159,23 @@ const styles = StyleSheet.create({
     minHeight: 20,
     paddingHorizontal: 7,
     borderRadius: 8,
-    backgroundColor: color.successDark + "30",
+    backgroundColor: palette.kimitoBlueSoft,
   },
   statusDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: color.successLight,
+    backgroundColor: color.success,
   },
   statusText: {
-    color: color.successLight,
+    color: palette.kimitoBlue,
     fontWeight: "800",
     letterSpacing: 0,
   },
   accountName: {
     minWidth: 0,
     flex: 1,
-    color: color.textWhite,
+    color: color.textPrimary,
     fontWeight: "800",
     letterSpacing: 0,
   },
@@ -196,22 +196,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 8,
-    backgroundColor: palette.black + "30",
+    backgroundColor: "#F1F5F9",
     borderWidth: 1,
-    borderColor: palette.white + "14",
+    borderColor: palette.kimitoBorderSoft,
   },
   metaLabel: {
-    color: color.textMuted,
+    color: palette.kimitoInkMuted,
     fontWeight: "700",
     letterSpacing: 0,
   },
   metaValue: {
     minWidth: 0,
-    color: color.textSubtle,
+    color: color.textPrimary,
     fontWeight: "800",
     letterSpacing: 0,
   },
   followersValue: {
-    color: color.successLight,
+    color: palette.kimitoBlue,
   },
 });

@@ -190,6 +190,14 @@ export function useAuth() {
             throw new Error("認証システムの準備中です。数秒おいてもう一度お試しください。");
           }
 
+          // ★既ログインガード: すでにサインイン済みなら再サインインを呼ばない。
+          //   (ロード遅延でゲートが誤表示された場合に「You're already signed in」例外＝
+          //    白いアラートを出さず、目的地へ1発で遷移させる)
+          if (clerk.user) {
+            window.location.href = redirectComplete;
+            return;
+          }
+
           if (isAppSatellite) {
             // 別ドメイン(satellite)のみ: 自ドメインでサインイン開始不可(Clerk 403)。
             // buildSignInUrl が __clerk_synced を付与し、primary(kimito.link)で

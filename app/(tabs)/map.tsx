@@ -142,7 +142,7 @@ function WebTrailMap({
 
 export default function MapScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReadyForUI, user } = useAuth();
+  const { isAuthenticated, isAuthReady, user } = useAuth();
   const router = useRouter();
 
   const {
@@ -167,7 +167,7 @@ export default function MapScreen() {
   const visited = areasData?.visited ?? [];
   const locations = trailData?.locations ?? [];
 
-  if (!isAuthReadyForUI) {
+  if (!isAuthReady) {
     return (
       <ScreenContainer containerClassName="bg-background">
         <AppHeader 

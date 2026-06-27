@@ -90,7 +90,7 @@ type CheckinState = "idle" | "loading" | "success" | "error" | "zero";
 
 export default function CheckinScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReadyForUI, user } = useAuth();
+  const { isAuthenticated, isAuthReady, user } = useAuth();
 
   const [state, setState] = useState<CheckinState>("idle");
   const [newCount, setNewCount] = useState(0);
@@ -318,7 +318,10 @@ export default function CheckinScreen() {
     }
   };
 
-  if (!isAuthReadyForUI) {
+  // ゲート判定は「実ロード完了(isAuthReady)」基準。1秒タイムアウトの isAuthReadyForUI で
+  // 判定するとリロード時のハンドシェイク中(>1s)にセッションがあるのにゲートを誤表示し、
+  // 「You're already signed in」を誘発する。実ロードを待ってから判定する。
+  if (!isAuthReady) {
     return (
       <ScreenContainer containerClassName="bg-background">
         <AppHeader

@@ -32,7 +32,7 @@ import { useRouter } from "expo-router";
 
 export default function ZukanScreen() {
   const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReadyForUI } = useAuth();
+  const { isAuthenticated, isAuthReady } = useAuth();
   const router = useRouter();
 
   const { data, refetch, isFetching } = trpc.zukan.myAreas.useQuery(undefined, {
@@ -66,7 +66,7 @@ export default function ZukanScreen() {
     {} as Record<string, number>
   );
 
-  if (!isAuthReadyForUI) {
+  if (!isAuthReady) {
     return (
       <ScreenContainer containerClassName="bg-background">
         <AppHeader 
