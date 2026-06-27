@@ -190,10 +190,10 @@ export function useAuth() {
             throw new Error("認証システムの準備中です。数秒おいてもう一度お試しください。");
           }
 
-          if (isKimitoSameSite || isAppSatellite) {
-            // primary(kimito.link)のサインインへ遷移する単一経路。
-            //  - *.kimito.link(同一サイト): Cookie が .kimito.link で共有され、戻ると即ログイン済み。
-            //  - 別ドメイン(satellite): buildSignInUrl が __clerk_synced を付与し SDK がセッション同期。
+          if (isAppSatellite) {
+            // 別ドメイン(satellite)のみ: 自ドメインでサインイン開始不可(Clerk 403)。
+            // buildSignInUrl が __clerk_synced を付与し、primary(kimito.link)で
+            // ログイン後にサテライトへ戻った際 SDK がセッションを同期する。
             const signInUrl = clerk.buildSignInUrl({ redirectUrl: redirectComplete });
             if (!signInUrl) {
               throw new Error("認証システムが応答しません。リロードしてお試しください。");
@@ -202,7 +202,10 @@ export function useAuth() {
             return;
           }
 
-          // localhost/単独インスタンス検証は同一タブのまま X へ遷移。
+          // 同一サイト(*.kimito.link)/localhost/単独はファーストパーティ。
+          // kimito.link へ飛ばさず、この origin で X OAuth を完結させる。
+          // → ログイン後もサブドメインに戻り、__client がこの origin に確立されるため
+          //   リロード時のハンドシェイク不整合(白画面)を避けられる。
           const clientSignIn = clerk.client?.signIn;
           if (clientSignIn) {
             await clientSignIn.authenticateWithRedirect({
