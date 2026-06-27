@@ -5,12 +5,20 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color, palette } from "@/theme/tokens";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 
-// このヒーローの「ミッドナイト・シグナル」演出はティール固定（ブランドのトークン変更に影響されない）。
-const SIGNAL_TEAL = palette.teal500;
+// ヒーローの信号色は kimito.link 親ブランドのアクセント（オレンジ）に統一。
+//   ティール/グリーンは使わず、ヘッダーの「現在地」オレンジと揃える。
+const SIGNAL_ACCENT = palette.kimitoOrange;
 // 「現在地」に添える地図ピンは赤（実際の地図ピンに合わせて視認性を上げる）。
 const PIN_RED = palette.red500;
 // X（Twitter）公式カラー: ブラック。X導線はこれに統一する。
 const X_BLACK = palette.black;
+
+// 未ログインの人に「ログインしたくなる」価値を3点で提示（DESIGN.md のコピー方針に沿う）。
+const HERO_BENEFITS = [
+  { icon: "place" as const, label: "足あとを正確に残せる" },
+  { icon: "groups" as const, label: "通りすがりの人とすれ違える" },
+  { icon: "ios-share" as const, label: "現在地をXでシェアできる" },
+];
 
 // 「現在地」に添えるピンのサイズ（ヒーローサイズに比例）。
 const PIN_SIZE_BY_HERO = {
@@ -100,6 +108,20 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
           <Text selectable style={[styles.catchSub, stylesBySize[heroSize].catchSub]}>
             キミは今、どこにいる？
           </Text>
+
+          {/* 未ログインの人へ「ログインしたくなる」ベネフィットを3点提示 */}
+          {!isAuthenticated && (
+            <View style={styles.benefits}>
+              {HERO_BENEFITS.map((b) => (
+                <View key={b.label} style={styles.benefitRow}>
+                  <MaterialIcons name={b.icon} size={16} color={SIGNAL_ACCENT} />
+                  <Text style={styles.benefitText} numberOfLines={1}>
+                    {b.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* ログインボタン（最優先・キャッチ直下に大きく）。未ログイン時のみ。 */}
           {!isAuthenticated && (
@@ -224,10 +246,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: SIGNAL_TEAL,
+    borderColor: SIGNAL_ACCENT,
     // 夜空背景でも本文が確実に読めるよう、パネルをほぼ不透明（96%）に。
     backgroundColor: color.bg + "F5",
-    shadowColor: SIGNAL_TEAL,
+    shadowColor: SIGNAL_ACCENT,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 18,
@@ -245,7 +267,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 12,
   },
   catchKicker: {
-    color: SIGNAL_TEAL,
+    color: SIGNAL_ACCENT,
     fontSize: 11,
     fontWeight: "800",
     letterSpacing: 0,
@@ -265,7 +287,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   catchMainAccent: {
-    color: SIGNAL_TEAL,
+    color: SIGNAL_ACCENT,
   },
   catchSub: {
     color: "#bcd4f0",
@@ -276,8 +298,24 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "monospace",
   },
+  benefits: {
+    marginTop: 14,
+    alignSelf: "center",
+    gap: 6,
+  },
+  benefitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  benefitText: {
+    color: "#dbe8f7",
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 17,
+  },
   heroLoginButton: {
-    marginTop: 34,
+    marginTop: 18,
     minWidth: 280,
     maxWidth: 360,
     width: "86%",
@@ -401,7 +439,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 128, 51, 0.4)",
   },
   loginButton: {
-    backgroundColor: SIGNAL_TEAL,
+    backgroundColor: X_BLACK,
     borderColor: "transparent",
   },
   buttonText: {

@@ -16,6 +16,13 @@ interface GlobalLoginGateProps {
 
 const BLUE_BORDER = "#00427B33"; // kimitoBlue 20%
 
+// ログインで得られる価値（ロック画面でも「入りたくなる」よう提示）。
+const GATE_BENEFITS = [
+  { icon: "place" as const, label: "足あとを正確に残して、あとでその場所に行ける" },
+  { icon: "groups" as const, label: "同じ場所を通った人とすれ違える" },
+  { icon: "ios-share" as const, label: "現在地をXでシェアして思い出を残せる" },
+];
+
 function normalizeReturnTo(pathname: string | null): string {
   if (!pathname || pathname === "/auth/kimito-link") return "/";
   if (pathname.startsWith("/(tabs)/")) return pathname.replace("/(tabs)", "");
@@ -84,9 +91,21 @@ export function GlobalLoginGate({
 
             <View style={styles.divider} />
 
+            {/* ログインで何ができるか（ベネフィット） */}
+            <View style={styles.benefits}>
+              {GATE_BENEFITS.map((b) => (
+                <View key={b.label} style={styles.benefitRow}>
+                  <View style={styles.benefitIcon}>
+                    <MaterialIcons name={b.icon} size={16} color={palette.kimitoOrange} />
+                  </View>
+                  <Text style={styles.benefitText}>{b.label}</Text>
+                </View>
+              ))}
+            </View>
+
             <Text style={styles.introText}>
-              君斗りんくのすれ違ひ通信は、姉妹サービス kimito.link と同じXログイン基盤を使います。{"\n"}
-              認証後、このアプリへ戻ります。
+              姉妹サービス kimito.link と同じXログインで、すぐにはじめられます。{"\n"}
+              認証後はこのアプリへ戻ります。
             </Text>
 
             <Pressable
@@ -194,6 +213,30 @@ const styles = StyleSheet.create({
     backgroundColor: palette.kimitoBorderSoft,
     marginVertical: 16,
   },
+  benefits: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  benefitRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  benefitIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: palette.kimitoBlueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  benefitText: {
+    flex: 1,
+    color: color.textPrimary,
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 18,
+  },
   introText: {
     color: palette.kimitoInkMuted,
     fontSize: 13,
@@ -207,7 +250,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 14,
     borderRadius: 999,
-    backgroundColor: palette.kimitoBlue,
+    backgroundColor: palette.black,
   },
   buttonPressed: {
     opacity: 0.85,
