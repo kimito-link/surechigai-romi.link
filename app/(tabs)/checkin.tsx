@@ -39,6 +39,8 @@ import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { PrecisionTileMap } from "@/components/organisms/precision-tile-map";
 import { useRouter } from "expo-router";
+import { shareMyLocation } from "@/lib/share";
+import { useToast } from "@/components/atoms/toast";
 
 /** Web用 Geolocation ラッパー */
 function getWebLocation(): Promise<{ lat: number; lng: number; accuracy?: number }> {
@@ -101,6 +103,21 @@ export default function CheckinScreen() {
   const [isPausing, setIsPausing] = useState(false);
   const utils = trpc.useUtils();
   const router = useRouter();
+  const { showError } = useToast();
+
+  // チェックイン直後にその場で「現在地をXでシェア」できる導線
+  const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
+  const handleShareLocation = useCallback(async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    try {
+      const res = await shareSlugMutation.mutateAsync();
+      await shareMyLocation(res.url, res.areaLabel ?? undefined);
+    } catch {
+      showError("共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
+    }
+  }, [shareSlugMutation, showError]);
 
   // アニメーション
   const scale = useSharedValue(1);
@@ -466,6 +483,24 @@ export default function CheckinScreen() {
             </Animated.View>
           )}
 
+          {/* チェックイン成功直後にその場でシェア（最も共有意欲が高い瞬間） */}
+          {(state === "success" || state === "zero") && latestLocation && (
+            <Pressable
+              onPress={handleShareLocation}
+              disabled={shareSlugMutation.isPending}
+              style={({ pressed }) => [
+                styles.shareButton,
+                pressed && { opacity: 0.85 },
+                shareSlugMutation.isPending && { opacity: 0.6 },
+              ]}
+            >
+              <MaterialIcons name="ios-share" size={18} color={color.textWhite} />
+              <Text style={styles.shareButtonText}>
+                {shareSlugMutation.isPending ? "リンクを準備中…" : "この現在地をXでシェア"}
+              </Text>
+            </Pressable>
+          )}
+
           {/* 位置一時停止トグル */}
           <View style={styles.pauseSection}>
             <View style={styles.pauseRow}>
@@ -613,6 +648,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     lineHeight: 22,
+  },
+  shareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    alignSelf: "center",
+    backgroundColor: palette.kimitoBlue,
+    paddingVertical: 12,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+  },
+  shareButtonText: {
+    color: color.textWhite,
+    fontSize: 15,
+    fontWeight: "700",
   },
   // Pause toggle
   pauseSection: {
