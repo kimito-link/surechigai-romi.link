@@ -33,16 +33,23 @@ export function JapanBlockMap({
   onPressPrefecture,
 }: JapanBlockMapProps) {
   const { width } = useWindowDimensions();
-  // 画面幅に応じてセルサイズを決定（最大40px）
+  // 画面幅いっぱい（最大760px）まで使い、14列で割ってセルサイズを決める。
+  //   どの画面でも大きく読みやすくするため、上限を画面幅に追従させる（旧: 40px固定上限で小さすぎた）。
   const cols = 14;
-  const margin = 16;
+  const gap = 3;
+  const outerPadding = 24;
+  const maxMapWidth = 760;
   const safeWidth = Math.max(width || 320, 320);
-  const cellSize = Math.max(10, Math.min(40, Math.floor((safeWidth - margin * 2) / cols) - 2));
+  const avail = Math.min(safeWidth - outerPadding, maxMapWidth);
+  const cellSize = Math.max(16, Math.floor((avail - gap * (cols - 1)) / cols));
+  // フォントはセルに比例（小画面でも下限8px、大画面では大きく）。
+  const fontSize = Math.max(8, Math.round(cellSize * 0.34));
+  const radius = Math.max(4, Math.round(cellSize * 0.16));
 
   return (
     <View style={styles.container}>
       {JAPAN_GRID.map((row, rIdx) => (
-        <View key={rIdx} style={styles.row}>
+        <View key={rIdx} style={[styles.row, { gap }]}>
           {row.map((pref, cIdx) => {
             if (!pref) {
               return (
@@ -78,13 +85,19 @@ export function JapanBlockMap({
                   {
                     width: cellSize,
                     height: cellSize,
+                    borderRadius: radius,
                     backgroundColor: bg,
                     borderColor: borderColor,
                     opacity: pressed ? 0.7 : 1,
                   },
                 ]}
               >
-                <Text style={[styles.cellText, { color: textColor }]} adjustsFontSizeToFit numberOfLines={1}>
+                <Text
+                  style={[styles.cellText, { color: textColor, fontSize }]}
+                  adjustsFontSizeToFit
+                  numberOfLines={1}
+                  minimumFontScale={0.7}
+                >
                   {pref.replace(/(都|道|府|県)$/, "")}
                 </Text>
                 {encounterCount > 0 && (

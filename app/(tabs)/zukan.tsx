@@ -76,7 +76,7 @@ export default function ZukanScreen() {
           showMenu={true} 
           leftElement={
             <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-              <MaterialIcons name="home" size={24} color={color.textWhite} />
+              <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
             </Pressable>
           }
         />
@@ -104,7 +104,7 @@ export default function ZukanScreen() {
         showMenu={true}
         leftElement={
           <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-            <MaterialIcons name="home" size={24} color={color.textWhite} />
+            <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
           </Pressable>
         }
       />

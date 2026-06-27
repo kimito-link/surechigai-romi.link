@@ -69,7 +69,7 @@ export default function Root({ children }: PropsWithChildren) {
             --color-surface: #FFFFFF;
             --color-foreground: #0F172A;
             --color-primary: #00427B;
-            --color-muted: #64748B;
+            --color-muted: #475569;
             --color-border: #E2E8F0;
             color-scheme: light;
           }

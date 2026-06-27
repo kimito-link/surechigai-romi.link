@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import { Image } from "expo-image";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
+import { BrandTagline } from "@/components/molecules/brand-tagline";
 
 // キャラクター画像（半目で寂しそうな表情）
 const characterImage = require("@/assets/images/characters/link/link-yukkuri-half-eyes-mouth-closed.png");
@@ -132,6 +133,11 @@ export function LogoutConfirmModal({
               またいつでも遊びに来てね！
             </Text>
 
+            {/* ブランドの核（ログアウト時もそっと残す） */}
+            <View style={styles.taglineWrap}>
+              <BrandTagline compact align="center" />
+            </View>
+
             {/* ボタン */}
             <View style={styles.buttonContainer}>
               <Pressable
@@ -195,16 +201,16 @@ const styles = StyleSheet.create({
     height: 100,
   },
   speechBubble: {
-    backgroundColor: color.border,
+    backgroundColor: palette.kimitoBlueSoft,
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 10,
     position: "relative",
   },
   speechText: {
-    color: color.textWhite,
+    color: palette.kimitoBlue,
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "700",
   },
   speechTail: {
     position: "absolute",
@@ -218,10 +224,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 8,
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
-    borderBottomColor: color.border,
+    borderBottomColor: palette.kimitoBlueSoft,
   },
   title: {
-    color: color.textWhite,
+    color: color.textPrimary,
     fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
@@ -231,8 +237,11 @@ const styles = StyleSheet.create({
     color: color.textMuted,
     fontSize: 14,
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 14,
     lineHeight: 22,
+  },
+  taglineWrap: {
+    marginBottom: 18,
   },
   buttonContainer: {
     flexDirection: "row",

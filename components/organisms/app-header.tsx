@@ -14,6 +14,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { GlobalMenu } from "@/components/organisms/global-menu";
+import { BrandTagline } from "@/components/molecules/brand-tagline";
 import * as Haptics from "expo-haptics";
 
 const KIMITO_LOGO = require("@/assets/images/logos/kimitolink-logo.webp");
@@ -33,6 +34,8 @@ interface AppHeaderProps {
   showLoginStatus?: boolean;
   showMenu?: boolean;
   showLoginButton?: boolean;
+  /** ブランドコピー「会いたい君がいる現在地」を表示（既定 true）。ヒーローで強調済みの画面は false */
+  showTagline?: boolean;
 }
 
 const triggerHaptic = () => {
@@ -57,6 +60,7 @@ export function AppHeader({
   showLoginStatus = true,
   showMenu = true,
   showLoginButton = false,
+  showTagline = true,
 }: AppHeaderProps) {
   const { user, isAuthReady, isAuthReadyForUI } = useAuth();
   const openLoginGuide = useLoginGuide();
@@ -147,6 +151,13 @@ export function AppHeader({
             )}
           </View>
         </View>
+
+        {/* ブランドの核「会いたい君がいる現在地」を全ページ共通でさりげなく出す */}
+        {showTagline && (
+          <View style={styles.taglineRow}>
+            <BrandTagline compact align="left" />
+          </View>
+        )}
 
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
@@ -280,6 +291,9 @@ const styles = StyleSheet.create({
     backgroundColor: palette.white,
     borderWidth: 1,
     borderColor: BLUE_PILL_BORDER,
+  },
+  taglineRow: {
+    marginTop: 6,
   },
   subtitle: {
     color: palette.kimitoInkMuted,

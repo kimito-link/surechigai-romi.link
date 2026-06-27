@@ -1,17 +1,52 @@
-import { View, Text, ScrollView, StyleSheet, RefreshControl, Image, Pressable } from "react-native";
+import { View, Text, ScrollView, StyleSheet, RefreshControl, Image, Pressable, useWindowDimensions } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
 import { useResponsive } from "@/hooks/use-responsive";
 import { trpc } from "@/lib/trpc";
-import { color } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
+import {
+  PrecisionTileMap,
+  TILE_SIZE,
+  clamp,
+  type TrailPoint,
+} from "@/components/organisms/precision-tile-map";
+
+/** 複数の足あとが収まる中心座標とズームを算出（バウンディングボックスにフィット） */
+function fitCenterZoom(
+  points: { lat: number; lng: number }[],
+  mapW: number,
+  mapH: number
+): { center: { lat: number; lng: number }; zoom: number } {
+  if (points.length === 0) {
+    return { center: { lat: 36.2048, lng: 138.2529 }, zoom: 5 }; // 日本全体
+  }
+  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+  for (const p of points) {
+    minLat = Math.min(minLat, p.lat);
+    maxLat = Math.max(maxLat, p.lat);
+    minLng = Math.min(minLng, p.lng);
+    maxLng = Math.max(maxLng, p.lng);
+  }
+  const center = { lat: (minLat + maxLat) / 2, lng: (minLng + maxLng) / 2 };
+  if (points.length === 1) return { center, zoom: 14 };
+
+  const mercY = (l: number) => Math.log(Math.tan(Math.PI / 4 + (l * Math.PI / 180) / 2));
+  const worldLng = Math.max((maxLng - minLng) / 360, 1e-6);
+  const worldLat = Math.max((mercY(maxLat) - mercY(minLat)) / (2 * Math.PI), 1e-6);
+  const zoomLng = Math.log2(mapW / (TILE_SIZE * worldLng));
+  const zoomLat = Math.log2(mapH / (TILE_SIZE * worldLat));
+  const zoom = Math.floor(Math.min(zoomLng, zoomLat)) - 1; // 余白
+  return { center, zoom: clamp(zoom, 5, 16) };
+}
 
 export default function PrefectureEncounterScreen() {
   const { prefecture } = useLocalSearchParams<{ prefecture: string }>();
   const { isDesktop } = useResponsive();
   const router = useRouter();
+  const { width: windowWidth } = useWindowDimensions();
 
   const prefName = typeof prefecture === "string" ? prefecture : prefecture?.[0] ?? "";
 
@@ -20,9 +55,28 @@ export default function PrefectureEncounterScreen() {
     { enabled: !!prefName }
   );
 
+  // 自分の足あと（この県の分だけ地図に出す）
+  const { data: trailData, refetch: refetchTrail } = trpc.zukan.myTrail.useQuery(
+    { limit: 500 },
+    { enabled: !!prefName }
+  );
+
+  const prefLocations: TrailPoint[] = useMemo(
+    () => (trailData?.locations ?? []).filter((l) => l.prefecture === prefName),
+    [trailData, prefName]
+  );
+
+  const mapW = Math.max(320, Math.min(windowWidth - 32, 980));
+  const mapH = windowWidth < 640 ? 360 : 460;
+  const { center, zoom } = useMemo(
+    () => fitCenterZoom(prefLocations, mapW, mapH),
+    [prefLocations, mapW, mapH]
+  );
+
   const onRefresh = useCallback(() => {
     refetch();
-  }, [refetch]);
+    refetchTrail();
+  }, [refetch, refetchTrail]);
 
   const handleBack = useCallback(() => {
     if (router.canGoBack()) {
@@ -41,7 +95,7 @@ export default function PrefectureEncounterScreen() {
         showMenu={false}
         leftElement={
           <Pressable onPress={handleBack} style={{ padding: 4 }}>
-            <MaterialIcons name="arrow-back" size={24} color={color.textWhite} />
+            <MaterialIcons name="arrow-back" size={24} color={palette.kimitoBlue} />
           </Pressable>
         }
       />
@@ -50,6 +104,26 @@ export default function PrefectureEncounterScreen() {
         refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={color.accentAlt} />}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* この県を歩いた足あと（地図） */}
+        {prefLocations.length > 0 && (
+          <View style={styles.mapSection}>
+            <Text style={styles.sectionTitle}>{prefName} を歩いた足あと</Text>
+            <PrecisionTileMap
+              locations={prefLocations}
+              width={mapW}
+              height={mapH}
+              customCenter={center}
+              zoom={zoom}
+              showInfoPanel={false}
+            />
+            <Text style={styles.mapCaption}>
+              {prefLocations.length} 件の正確な足あと（タップで最新地点の座標）
+            </Text>
+          </View>
+        )}
+
+        <Text style={styles.sectionTitle}>{prefName} ですれ違った人</Text>
+
         {data?.users && data.users.length > 0 ? (
           <View style={styles.list}>
             {data.users.map((u) => (
@@ -100,6 +174,24 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 40,
+  },
+  mapSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    color: color.textSecondary,
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 10,
+    marginTop: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  mapCaption: {
+    color: color.textMuted,
+    fontSize: 11,
+    marginTop: 8,
+    textAlign: "center",
   },
   list: {
     gap: 12,

@@ -22,12 +22,13 @@ export const color = {
   border: palette.gray400,       // #262626
   borderAlt: palette.gray500,    // #404040
 
-  // Text - 視認性改善（WCAG AA準拠・黒背景での読みやすさ優先）
-  textPrimary: palette.gray900,   // #f5f5f5
-  textMuted: palette.gray700,     // #a3a3a3
-  textSubtle: palette.gray600,    // #d4d4d4
-  textSecondary: palette.gray800, // #d4d4d4（旧gray400→視認性のため明るく）
-  textHint: palette.gray500,      // #a3a3a3（旧gray500→プレースホルダも読めるように）
+  // Text - ライト地(#F0F4F8 / 白)での視認性を WCAG AA 以上に統一。
+  //   旧値は薄すぎてコントラスト不足だった（#94A3B8/#CBD5E1）。濃いスレートへ引き上げる。
+  textPrimary: palette.gray900,   // #0F172A（本文・見出し。最濃）
+  textMuted: palette.gray750,     // #475569（補助テキスト。約6.9:1。旧#64748B→濃く）
+  textSubtle: palette.gray750,    // #475569（旧#94A3B8→大幅に濃く）
+  textSecondary: palette.gray800, // #334155（ラベル・小見出し）
+  textHint: palette.gray700,      // #64748B（プレースホルダ。旧#CBD5E1→読める濃さに）
   textWhite: palette.white,
 
   // Accents - kimito.link 親ブランド（ネイビー基調 + 紫/オレンジ）

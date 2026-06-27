@@ -26,7 +26,7 @@ import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { color } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 import {
   PrecisionTileMap,
   formatPlace,
@@ -177,7 +177,7 @@ export default function MapScreen() {
           showMenu 
           leftElement={
             <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-              <MaterialIcons name="home" size={24} color={color.textWhite} />
+              <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
             </Pressable>
           }
         />
@@ -205,7 +205,7 @@ export default function MapScreen() {
           showMenu
           leftElement={
             <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-              <MaterialIcons name="home" size={24} color={color.textWhite} />
+              <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
             </Pressable>
           }
         />

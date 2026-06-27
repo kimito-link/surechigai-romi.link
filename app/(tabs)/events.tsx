@@ -29,7 +29,7 @@ import { EventCalendar, toDateKey } from "@/components/molecules/event-calendar"
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { color } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 
 type Segment = "calendar" | "live" | "host";
 
@@ -658,7 +658,7 @@ export default function EventsScreen() {
         showLoginButton={!isAuthenticated}
         leftElement={
           <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-            <MaterialIcons name="home" size={24} color={color.textWhite} />
+            <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
           </Pressable>
         }
       />
