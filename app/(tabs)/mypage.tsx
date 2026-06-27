@@ -199,7 +199,7 @@ export default function MypageScreen() {
     }
     try {
       const res = await shareSlugMutation.mutateAsync();
-      await shareMyLocation(res.url);
+      await shareMyLocation(res.url, res.areaLabel ?? undefined);
     } catch {
       Alert.alert("エラー", "共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
     }

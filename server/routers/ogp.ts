@@ -8,7 +8,7 @@ import { z } from "zod";
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc.js";
 import { getDb } from "../db/connection.js";
 import { getEventById } from "../../modules/event/db/queries.js";
-import { getOrCreateUserShareSlug } from "../../modules/encounter/db/queries.js";
+import { getOrCreateUserShareSlug, getShareInfoBySlug } from "../../modules/encounter/db/queries.js";
 import { TRPCError } from "@trpc/server";
 
 const APP_ORIGIN = "https://surechigai.kimito.link";
@@ -64,6 +64,14 @@ export const ogpRouter = router({
     if (!slug) {
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "共有リンクの生成に失敗しました" });
     }
-    return { slug, url: `${APP_ORIGIN}/u/${slug}` };
+    // 共有テキストを市区町村粒度にするため、最新の記録地点の地名も返す。
+    let areaLabel: string | null = null;
+    try {
+      const info = await getShareInfoBySlug(db, slug);
+      areaLabel = info?.area ?? info?.prefecture ?? null;
+    } catch {
+      // 地名の解決に失敗してもリンク共有自体は続行
+    }
+    return { slug, url: `${APP_ORIGIN}/u/${slug}`, areaLabel };
   }),
 });
