@@ -1,5 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image, Pressable, useWindowDimensions } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing,
+  useReducedMotion,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color, palette } from "@/theme/tokens";
@@ -39,6 +47,22 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
   const { width, height } = useWindowDimensions();
   const openLoginGuide = useLoginGuide();
   const [isDismissed, setIsDismissed] = useState(!showIntro);
+
+  // 「会いたい君がいる」のグローをレーダーの鼓動のように明滅させる（signal glow）。
+  const glow = useSharedValue(0.4);
+  const reduceMotion = useReducedMotion();
+  useEffect(() => {
+    if (reduceMotion) {
+      glow.value = 0.85;
+      return;
+    }
+    glow.value = withRepeat(
+      withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true,
+    );
+  }, [glow, reduceMotion]);
+  const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value }));
 
   if (isDismissed) return null;
 
@@ -86,9 +110,20 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
             <Text selectable style={[styles.catchKicker, stylesBySize[heroSize].catchKicker]}>
               CORE SIGNAL
             </Text>
-            <Text selectable style={[styles.catchMain, stylesBySize[heroSize].catchMain]}>
-              会いたい君がいる
-            </Text>
+            <View style={styles.catchMainWrap}>
+              {/* 背面：明滅するグロー層（文字は透明、影だけが脈打つ） */}
+              <Animated.Text
+                accessible={false}
+                pointerEvents="none"
+                style={[styles.catchMain, styles.catchMainGlow, stylesBySize[heroSize].catchMain, glowStyle]}
+              >
+                会いたい君がいる
+              </Animated.Text>
+              {/* 前面：くっきりした白文字 */}
+              <Text selectable style={[styles.catchMain, stylesBySize[heroSize].catchMain]}>
+                会いたい君がいる
+              </Text>
+            </View>
             {/* 「現在地」にピンを添えて“正確な場所を残す”価値を示す */}
             <View style={styles.catchAccentRow}>
               <MaterialIcons
@@ -267,17 +302,29 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontFamily: "monospace",
   },
+  catchMainWrap: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   catchMain: {
-    // 白のまま夜空に「映える」よう、冷たい光のグロー（signal glow）をまとわせる。
+    // 白のまま夜空に「映える」よう、ひかえめなグローを基礎に持たせる。
     color: "#FFFFFF",
     fontSize: 42,
     fontWeight: "900",
     lineHeight: 52,
     letterSpacing: 0.5,
     textAlign: "center",
-    textShadowColor: "rgba(120,180,255,0.7)",
+    textShadowColor: "rgba(120,180,255,0.45)",
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 18,
+    textShadowRadius: 10,
+  },
+  catchMainGlow: {
+    // 背面の脈打つ光。文字本体は透明にして“影だけ”を強く広げる。
+    ...StyleSheet.absoluteFillObject,
+    color: "transparent",
+    textShadowColor: "rgba(130,190,255,0.95)",
+    textShadowRadius: 30,
   },
   catchMainAccent: {
     // 「現在地」は赤（ピンと同色）。やわらかな赤グローで美しく際立たせる。
