@@ -216,6 +216,12 @@ export const userSettings = pgTable("user_settings", {
    * NULL = マスクなし。このセルを含む locations は照合対象から除外。
    */
   homeMaskCell: text("homeMaskCell"),
+  /**
+   * 公開共有サムネ(/u/<slug> の OGP)で正確な現在地を出すか。
+   * false（既定）= 市区町村粒度（500m丸め座標・町ズーム）で安全側。
+   * true = 正確な座標（高ズーム）で「後でその場所に行ける」精度。
+   */
+  shareLocationPrecise: boolean("shareLocationPrecise").default(false).notNull(),
 });
 
 export type UserSettings = typeof userSettings.$inferSelect;

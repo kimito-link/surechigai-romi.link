@@ -20,8 +20,9 @@ import {
   Platform,
   Alert,
   Pressable,
+  Switch,
 } from "react-native";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Image } from "expo-image";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import appConfig from "@/app.config.json";
@@ -167,6 +168,16 @@ export default function MypageScreen() {
   // 現在地シェア（/u/<slug> をXで共有 → 地図サムネ付きOGP）
   const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
 
+  // 共有サムネの粒度設定（false=市区町村 / true=正確座標）
+  const settingsQuery = trpc.settings.get.useQuery();
+  const setSharePrecision = trpc.settings.setSharePrecision.useMutation();
+  const [sharePrecise, setSharePrecise] = useState(false);
+  useEffect(() => {
+    if (settingsQuery.data) {
+      setSharePrecise(settingsQuery.data.shareLocationPrecise ?? false);
+    }
+  }, [settingsQuery.data]);
+
   const handleHitokotoSave = useCallback(
     (text: string) => {
       setLocalHitokoto(text);
@@ -193,6 +204,22 @@ export default function MypageScreen() {
       Alert.alert("エラー", "共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
     }
   }, [shareSlugMutation]);
+
+  const handleTogglePrecision = useCallback(
+    (next: boolean) => {
+      setSharePrecise(next);
+      setSharePrecision.mutate(
+        { precise: next },
+        {
+          onError: () => {
+            setSharePrecise(!next);
+            Alert.alert("エラー", "設定の保存に失敗しました。時間をおいて再度お試しください。");
+          },
+        },
+      );
+    },
+    [setSharePrecision],
+  );
 
   const handleLogout = useCallback(async () => {
     if (Platform.OS !== "web") {
@@ -298,6 +325,25 @@ export default function MypageScreen() {
           </View>
           <MaterialIcons name="open-in-new" size={16} color="rgba(255,255,255,0.85)" />
         </Pressable>
+
+        {/* 共有サムネの粒度設定 */}
+        <View style={styles.precisionRow}>
+          <View style={{ flex: 1, paddingRight: 12 }}>
+            <Text style={styles.precisionTitle}>正確な現在地で共有する</Text>
+            <Text style={styles.precisionSub}>
+              {sharePrecise
+                ? "サムネに正確な座標を表示します（後でその場所に行ける精度）"
+                : "OFFの間は市区町村レベル（約500m）で安全側に表示します"}
+            </Text>
+          </View>
+          <Switch
+            value={sharePrecise}
+            onValueChange={handleTogglePrecision}
+            disabled={settingsQuery.isLoading || setSharePrecision.isPending}
+            trackColor={{ false: palette.gray400, true: palette.kimitoBlue }}
+            thumbColor={palette.white}
+          />
+        </View>
 
         {/* ひとこと */}
         <View style={styles.section}>
@@ -453,6 +499,25 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.85)",
     fontSize: 12,
     marginTop: 2,
+  },
+  precisionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: color.surface,
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  precisionTitle: {
+    color: color.textPrimary,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  precisionSub: {
+    color: color.textMuted,
+    fontSize: 12,
+    marginTop: 3,
+    lineHeight: 17,
   },
   avatar: {
     width: 72,

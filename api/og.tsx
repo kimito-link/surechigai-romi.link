@@ -5,8 +5,9 @@
  * 共有された /u/<slug> のメタが og:image としてこのエンドポイントを指す。
  *
  * クエリ: lat, lng, zoom, area, pref, name
- * - lat/lng があれば OSM ベースの静的地図（キー不要 staticmap.openstreetmap.de）を背景に、
- *   中心へ現在地ピンと「<area> にいるよ」ラベルを重ねる。
+ * - lat/lng があれば地図ラスタタイルを合成して背景にし、中心へ現在地ピンと
+ *   「<area> にいるよ」ラベルを重ねる。
+ * - タイル提供元: MAPTILER_KEY があれば MapTiler 実写寄りタイル、無ければ OSM 標準（キー不要）。
  * - 取得失敗 / 座標なしの場合はブランドのグラデーション背景にフォールバック。
  * 日本語は Google Fonts から Noto Sans JP のサブセット(ttf)を取得して描画。
  */
@@ -98,10 +99,36 @@ function latToTileY(lat: number, z: number): number {
 type Tile = { src: string; left: number; top: number };
 
 /**
- * OSM ラスタタイルを中心座標から WIDTHxHEIGHT 分だけ取得して合成用に並べる（キー不要）。
- * 各タイルは UA 付きで取得し data URL 化（satori 側の fetch で OSM にブロックされるのを回避）。
+ * タイル提供元を選択する。
+ * - MAPTILER_KEY が設定されていれば MapTiler の実写寄りラスタタイル(256px)を使用。
+ *   スタイルは MAPTILER_STYLE（既定 streets-v2）。
+ * - 未設定なら従来どおり OSM 標準タイル（キー不要）にフォールバック。
+ */
+function pickTileProvider(): {
+  url: (z: number, x: number, y: number) => string;
+  headers: Record<string, string>;
+} {
+  const key = process.env.MAPTILER_KEY;
+  if (key) {
+    const style = process.env.MAPTILER_STYLE || "streets-v2";
+    return {
+      url: (z, x, y) =>
+        `https://api.maptiler.com/maps/${style}/256/${z}/${x}/${y}.png?key=${key}`,
+      headers: {},
+    };
+  }
+  return {
+    url: (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`,
+    headers: { "User-Agent": TILE_UA },
+  };
+}
+
+/**
+ * ラスタタイルを中心座標から WIDTHxHEIGHT 分だけ取得して合成用に並べる。
+ * 各タイルを取得し data URL 化（satori 側の fetch で配信元にブロックされるのを回避）。
  */
 async function loadMapTiles(lat: number, lng: number, zoom: number): Promise<Tile[]> {
+  const provider = pickTileProvider();
   const z = zoom;
   const n = Math.pow(2, z);
   const centerX = lngToTileX(lng, z) * TILE;
@@ -120,11 +147,11 @@ async function loadMapTiles(lat: number, lng: number, zoom: number): Promise<Til
       const wrappedX = ((tx % n) + n) % n;
       const left = Math.round(tx * TILE - topLeftX);
       const top = Math.round(ty * TILE - topLeftY);
-      const url = `https://tile.openstreetmap.org/${z}/${wrappedX}/${ty}.png`;
+      const url = provider.url(z, wrappedX, ty);
       jobs.push(
         (async () => {
           try {
-            const r = await fetch(url, { headers: { "User-Agent": TILE_UA } });
+            const r = await fetch(url, { headers: provider.headers });
             if (!r.ok) return null;
             const buf = await r.arrayBuffer();
             return { src: `data:image/png;base64,${toBase64(buf)}`, left, top };

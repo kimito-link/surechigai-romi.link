@@ -743,7 +743,12 @@ export async function getUserSettings(
 export async function upsertUserSettings(
   db: DB,
   userId: number,
-  patch: Partial<Pick<schema.UserSettings, "locationPausedUntil" | "homeMaskCell">>
+  patch: Partial<
+    Pick<
+      schema.UserSettings,
+      "locationPausedUntil" | "homeMaskCell" | "shareLocationPrecise"
+    >
+  >
 ): Promise<void> {
   await db
     .insert(userSettings)
@@ -817,11 +822,15 @@ export type ShareInfo = {
   /** 市区町村（粗い粒度。公開サムネ用） */
   area: string | null;
   prefecture: string | null;
-  /** 表示用の500m丸め座標（正確な自宅座標は出さない）。地点非公開時は null。 */
+  /** 地図ピン座標。precise=false は500m丸め、true は正確座標。地点非公開時は null。 */
   lat: number | null;
   lng: number | null;
   /** 地図ピンを出せるか（座標あり） */
   hasLocation: boolean;
+  /** OGP地図のズーム。粒度設定に応じて町(13) or 詳細(16)。 */
+  zoom: number;
+  /** ユーザーが正確座標での公開を有効にしているか */
+  precise: boolean;
   recordedAt: Date | null;
 };
 
@@ -843,6 +852,19 @@ export async function getShareInfoBySlug(
 
   const u = userRows[0];
   const username = usernameFromName(u.name);
+
+  const settingsRows = await db
+    .select()
+    .from(userSettings)
+    .where(eq(userSettings.userId, u.id))
+    .limit(1);
+  const settings = settingsRows[0];
+  const precise = settings?.shareLocationPrecise ?? false;
+  const paused = settings?.locationPausedUntil
+    ? settings.locationPausedUntil.getTime() > Date.now()
+    : false;
+  const homeMaskCell = settings?.homeMaskCell ?? null;
+
   const noLocation: ShareInfo = {
     name: u.name,
     username,
@@ -851,25 +873,18 @@ export async function getShareInfoBySlug(
     lat: null,
     lng: null,
     hasLocation: false,
+    zoom: 13,
+    precise,
     recordedAt: null,
   };
 
   if (u.isSuspended) return noLocation;
-
-  const settingsRows = await db
-    .select()
-    .from(userSettings)
-    .where(eq(userSettings.userId, u.id))
-    .limit(1);
-  const settings = settingsRows[0];
-  const paused = settings?.locationPausedUntil
-    ? settings.locationPausedUntil.getTime() > Date.now()
-    : false;
-  const homeMaskCell = settings?.homeMaskCell ?? null;
   if (paused) return noLocation;
 
   const locRows = await db
     .select({
+      lat: locations.lat,
+      lng: locations.lng,
       latGrid: locations.latGrid,
       lngGrid: locations.lngGrid,
       municipality: locations.municipality,
@@ -888,14 +903,18 @@ export async function getShareInfoBySlug(
 
   if (locRows.length > 0) {
     const loc = locRows[0];
+    // precise かつ正確座標があれば詳細ズーム、なければ500m丸め＋町ズーム
+    const useExact = precise && loc.lat !== null && loc.lng !== null;
     return {
       name: u.name,
       username,
       area: loc.municipality,
       prefecture: loc.prefecture,
-      lat: loc.latGrid,
-      lng: loc.lngGrid,
+      lat: useExact ? loc.lat : loc.latGrid,
+      lng: useExact ? loc.lng : loc.lngGrid,
       hasLocation: true,
+      zoom: useExact ? 16 : 13,
+      precise,
       recordedAt: loc.recordedAt,
     };
   }
@@ -921,6 +940,8 @@ export async function getShareInfoBySlug(
     lat: null,
     lng: null,
     hasLocation: false,
+    zoom: 13,
+    precise,
     recordedAt: va.lastVisitedAt,
   };
 }

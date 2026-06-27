@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (info.hasLocation && info.lat != null && info.lng != null) {
             ogParams.set("lat", String(info.lat));
             ogParams.set("lng", String(info.lng));
-            ogParams.set("zoom", "13");
+            ogParams.set("zoom", String(info.zoom));
           }
         }
       }

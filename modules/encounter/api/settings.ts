@@ -45,6 +45,23 @@ export const settingsRouter = router({
   }),
 
   /**
+   * 公開共有サムネ(/u/<slug>)で正確な現在地を出すかの切替。
+   * false（既定）= 市区町村粒度（500m丸め）/ true = 正確座標。
+   */
+  setSharePrecision: protectedProcedure
+    .input(z.object({ precise: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { ok: true, precise: input.precise };
+
+      await upsertUserSettings(db, ctx.user.id, {
+        shareLocationPrecise: input.precise,
+      });
+
+      return { ok: true, precise: input.precise };
+    }),
+
+  /**
    * 現在の設定を取得。
    */
   get: protectedProcedure.query(async ({ ctx }) => {
