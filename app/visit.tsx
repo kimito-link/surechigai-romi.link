@@ -180,6 +180,8 @@ export default function GroupVisitScreen() {
   const [note, setNote] = useState("");
   const [draftPin, setDraftPin] = useState<BrowserLocation | null>(null);
   const [coordinateText, setCoordinateText] = useState("");
+  // 座標/URL入力は補助。デフォルトは「現在地をピンにする」を主導線にする。
+  const [showCoordInput, setShowCoordInput] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -458,43 +460,59 @@ export default function GroupVisitScreen() {
             </View>
 
             <View style={styles.pinActions}>
+              {/* 主導線: ワンタップで現在地をピンにする */}
               <Pressable
                 onPress={handleSetCurrentPin}
                 disabled={reportMutation.isPending}
                 style={({ pressed }) => [
-                  styles.secondaryButton,
+                  styles.primaryPinButton,
                   reportMutation.isPending && styles.secondaryButtonDisabled,
                   pressed && !reportMutation.isPending && { opacity: 0.86 },
                 ]}
               >
-                <MaterialIcons name="my-location" size={18} color={color.textWhite} />
-                <Text style={styles.secondaryButtonText}>現在地をピンにする</Text>
+                <MaterialIcons name="my-location" size={20} color={color.textWhite} />
+                <Text style={styles.primaryPinButtonText}>現在地をピンにする</Text>
               </Pressable>
 
-              <View style={styles.coordinateGroup}>
-                <TextInput
-                  value={coordinateText}
-                  onChangeText={setCoordinateText}
-                  placeholder="緯度経度 or Google Maps URL"
-                  placeholderTextColor={color.textHint}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="numbers-and-punctuation"
-                  style={[styles.input, styles.coordinateInput]}
+              {/* 補助: 座標/URLで指定（折りたたみ） */}
+              <Pressable
+                onPress={() => setShowCoordInput((v) => !v)}
+                style={({ pressed }) => [styles.coordToggle, pressed && { opacity: 0.7 }]}
+              >
+                <MaterialIcons
+                  name={showCoordInput ? "expand-less" : "expand-more"}
+                  size={18}
+                  color={color.textMuted}
                 />
-                <Pressable
-                  onPress={handleApplyCoordinatePin}
-                  disabled={reportMutation.isPending}
-                  style={({ pressed }) => [
-                    styles.coordinateButton,
-                    reportMutation.isPending && styles.secondaryButtonDisabled,
-                    pressed && !reportMutation.isPending && { opacity: 0.86 },
-                  ]}
-                >
-                  <MaterialIcons name="add-location-alt" size={18} color={color.textWhite} />
-                  <Text style={styles.coordinateButtonText}>座標からピン</Text>
-                </Pressable>
-              </View>
+                <Text style={styles.coordToggleText}>座標・Google Maps URLで指定</Text>
+              </Pressable>
+
+              {showCoordInput && (
+                <View style={styles.coordinateGroup}>
+                  <TextInput
+                    value={coordinateText}
+                    onChangeText={setCoordinateText}
+                    placeholder="緯度経度 or Google Maps URL"
+                    placeholderTextColor={color.textHint}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="numbers-and-punctuation"
+                    style={[styles.input, styles.coordinateInput]}
+                  />
+                  <Pressable
+                    onPress={handleApplyCoordinatePin}
+                    disabled={reportMutation.isPending}
+                    style={({ pressed }) => [
+                      styles.coordinateButton,
+                      reportMutation.isPending && styles.secondaryButtonDisabled,
+                      pressed && !reportMutation.isPending && { opacity: 0.86 },
+                    ]}
+                  >
+                    <MaterialIcons name="add-location-alt" size={18} color={color.textWhite} />
+                    <Text style={styles.coordinateButtonText}>座標からピン</Text>
+                  </Pressable>
+                </View>
+              )}
             </View>
 
             {draftPin ? (
@@ -780,10 +798,34 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   pinActions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: 10,
-    alignItems: "stretch",
+  },
+  primaryPinButton: {
+    minHeight: 52,
+    borderRadius: 10,
+    backgroundColor: color.accentPrimary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  primaryPinButtonText: {
+    color: color.textWhite,
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  coordToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    minHeight: 44,
+    paddingHorizontal: 4,
+  },
+  coordToggleText: {
+    color: color.textMuted,
+    fontSize: 13,
+    fontWeight: "700",
   },
   secondaryButton: {
     minHeight: 46,

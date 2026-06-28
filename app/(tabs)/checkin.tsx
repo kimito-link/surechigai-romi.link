@@ -15,7 +15,7 @@ import {
   Pressable,
   StyleSheet,
   Platform,
-  Alert,
+  ScrollView,
 } from "react-native";
 import { useState, useCallback, useEffect } from "react";
 import Animated, {
@@ -101,6 +101,8 @@ export default function CheckinScreen() {
   const [checkinLatLng, setCheckinLatLng] = useState<{lat: number, lng: number} | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [isPausing, setIsPausing] = useState(false);
+  // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
+  const [showSettings, setShowSettings] = useState(false);
   const utils = trpc.useUtils();
   const router = useRouter();
   const { showError } = useToast();
@@ -128,8 +130,6 @@ export default function CheckinScreen() {
   // マップ用アニメーション
   const mapScale = useSharedValue(0.9);
   const mapOpacity = useSharedValue(0.8);
-  const tooltipOpacity = useSharedValue(0);
-  const tooltipTranslateY = useSharedValue(10);
 
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -148,11 +148,6 @@ export default function CheckinScreen() {
   const mapStyle = useAnimatedStyle(() => ({
     transform: [{ scale: mapScale.value }],
     opacity: mapOpacity.value,
-  }));
-
-  const tooltipStyle = useAnimatedStyle(() => ({
-    opacity: tooltipOpacity.value,
-    transform: [{ translateY: tooltipTranslateY.value }],
   }));
 
   const checkIn = trpc.encounter.checkIn.useMutation();
@@ -244,8 +239,6 @@ export default function CheckinScreen() {
       // マップのアニメーション
       mapScale.value = withSpring(1, { damping: 12 });
       mapOpacity.value = withTiming(1, { duration: 300 });
-      tooltipOpacity.value = withTiming(1, { duration: 400 });
-      tooltipTranslateY.value = withSpring(0, { damping: 8 });
 
       if (result.newEncounters > 0) {
         setState("success");
@@ -375,10 +368,13 @@ export default function CheckinScreen() {
           }
         />
 
-        <View style={styles.content}>
-          {/* 説明文 */}
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* 説明文（1行に圧縮） */}
           <Text style={styles.description}>
-            現在地を記録し、{"\n"}すれ違いを探します
+            現在地を記録して、すれ違いを探します
           </Text>
 
           {/* 一時停止バナー */}
@@ -465,21 +461,18 @@ export default function CheckinScreen() {
             </View>
           )}
 
-          {/* 地図表示エリア */}
+          {/* 地図表示エリア（チェックイン後の主役。重なるマークは外して地図を見やすく） */}
           {latestLocation && (
             <Animated.View style={[styles.mapContainer, mapStyle]}>
               <PrecisionTileMap
                 locations={state === "loading" ? [] : [latestLocation]}
                 zoom={17}
                 showInfoPanel={false}
-                height={200}
+                height={240}
+                markerSize={28}
                 containerStyle={styles.mapInner}
                 userImageUrl={user?.profileImage ?? undefined}
               />
-              <Animated.View style={[styles.hereTooltip, tooltipStyle]}>
-                <Text style={styles.hereTooltipText}>今ここにいるよ！</Text>
-                <View style={styles.hereTooltipTail} />
-              </Animated.View>
             </Animated.View>
           )}
 
@@ -501,54 +494,76 @@ export default function CheckinScreen() {
             </Pressable>
           )}
 
-          {/* 位置一時停止トグル */}
-          <View style={styles.pauseSection}>
-            <View style={styles.pauseRow}>
-              <View>
-                <Text style={styles.pauseTitle}>位置情報を一時停止</Text>
-                <Text style={styles.pauseSubtitle}>
-                  停止中はチェックインできません
-                </Text>
-              </View>
-              <Pressable
-                onPress={handlePauseToggle}
-                style={({ pressed }) => [
-                  styles.pauseToggle,
-                  { backgroundColor: isPausing ? color.accentPrimary : color.border },
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.pauseKnob,
-                    { transform: [{ translateX: isPausing ? 20 : 0 }] },
-                  ]}
-                />
-              </Pressable>
-            </View>
-            {isPausing && (
-              <Text style={styles.pauseHint}>
-                1時間後に自動再開されます（最大72時間）
-              </Text>
-            )}
-          </View>
+          {/* 二次的な設定・説明は折りたたみ（主役の邪魔をしない） */}
+          <Pressable
+            onPress={() => setShowSettings((v) => !v)}
+            style={({ pressed }) => [styles.settingsToggle, pressed && { opacity: 0.7 }]}
+          >
+            <MaterialIcons
+              name={isPausing ? "pause-circle-filled" : "tune"}
+              size={18}
+              color={isPausing ? color.warning : color.textMuted}
+            />
+            <Text style={styles.settingsToggleText}>設定・くわしく</Text>
+            <MaterialIcons
+              name={showSettings ? "expand-less" : "expand-more"}
+              size={22}
+              color={color.textMuted}
+            />
+          </Pressable>
 
-          {/* 説明 */}
-          <View style={styles.infoSection}>
-            <View style={styles.infoRow}>
-              <MaterialIcons name="security" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
-              <Text style={styles.infoText}>
-                正確な位置情報を保存し、後から足あとをたどれるようにします
-              </Text>
-            </View>
-            <View style={styles.infoRow}>
-              <MaterialIcons name="schedule" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
-              <Text style={styles.infoText}>
-                すれ違い判定にはH3セルと丸めたグリッドも併用します
-              </Text>
-            </View>
-          </View>
-        </View>
+          {showSettings && (
+            <>
+              {/* 位置一時停止トグル */}
+              <View style={styles.pauseSection}>
+                <View style={styles.pauseRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.pauseTitle}>位置情報を一時停止</Text>
+                    <Text style={styles.pauseSubtitle}>
+                      停止中はチェックインできません
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={handlePauseToggle}
+                    style={({ pressed }) => [
+                      styles.pauseToggle,
+                      { backgroundColor: isPausing ? color.accentPrimary : color.border },
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.pauseKnob,
+                        { transform: [{ translateX: isPausing ? 20 : 0 }] },
+                      ]}
+                    />
+                  </Pressable>
+                </View>
+                {isPausing && (
+                  <Text style={styles.pauseHint}>
+                    1時間後に自動再開されます（最大72時間）
+                  </Text>
+                )}
+              </View>
+
+              {/* 説明 */}
+              <View style={styles.infoSection}>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="security" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
+                  <Text style={styles.infoText}>
+                    正確な位置情報を保存し、後から足あとをたどれるようにします
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="schedule" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
+                  <Text style={styles.infoText}>
+                    すれ違い判定にはH3セルと丸めたグリッドも併用します
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
+        </ScrollView>
     </ScreenContainer>
   );
 }
@@ -564,17 +579,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   content: {
-    flex: 1,
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingTop: 32,
-    gap: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+    gap: 16,
   },
   description: {
     color: color.textSecondary,
-    fontSize: 16,
+    fontSize: 15,
     textAlign: "center",
-    lineHeight: 24,
+    lineHeight: 22,
   },
   pausedBanner: {
     flexDirection: "row",
@@ -595,20 +610,20 @@ const styles = StyleSheet.create({
   buttonWrap: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
-    marginVertical: 8,
+    gap: 10,
+    marginVertical: 4,
   },
   pulseRing: {
     position: "absolute",
-    width: 148,
-    height: 148,
-    borderRadius: 74,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     borderWidth: 3,
   },
   checkinButton: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 112,
+    height: 112,
+    borderRadius: 56,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: palette.black,
@@ -766,35 +781,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: "100%",
   },
-  hereTooltip: {
-    position: "absolute",
-    top: 50, // マップの中心より少し上（ピンのあたり）
-    backgroundColor: color.accentIndigo,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    shadowColor: palette.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+  settingsToggle: {
+    width: "100%",
+    flexDirection: "row",
     alignItems: "center",
+    gap: 8,
+    minHeight: 48,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: color.surface,
   },
-  hereTooltipText: {
-    color: color.textWhite,
+  settingsToggleText: {
+    flex: 1,
+    color: color.textSecondary,
     fontSize: 14,
-    fontWeight: "bold",
-  },
-  hereTooltipTail: {
-    position: "absolute",
-    bottom: -6,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderTopWidth: 8,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderTopColor: color.accentIndigo,
+    fontWeight: "700",
   },
 });

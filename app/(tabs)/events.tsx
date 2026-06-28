@@ -26,6 +26,12 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
 import { EventCalendar, toDateKey } from "@/components/molecules/event-calendar";
+import {
+  EventDateTimePicker,
+  toStartDate,
+  type EventDateTimeValue,
+} from "@/components/molecules/event-datetime-picker";
+import { PrefectureSelector } from "@/components/ui/prefecture-selector";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -367,13 +373,20 @@ function HostPanel() {
   const [isOnline, setIsOnline] = useState(true);
   const [onlineUrl, setOnlineUrl] = useState("");
   const [prefecture, setPrefecture] = useState("");
+  const [isPrefOpen, setIsPrefOpen] = useState(false);
   const [venueName, setVenueName] = useState("");
-  const [startAt, setStartAt] = useState("");
+  // 開始日時はカレンダー＋時刻プルダウンで決める（手入力なし）。初期は今夜20時相当。
+  const [startDateTime, setStartDateTime] = useState<EventDateTimeValue>({
+    dateKey: "",
+    hour: 20,
+    minute: 0,
+  });
+  const [typeTags, setTypeTags] = useState<string[]>([]);
   const [isUnlisted, setIsUnlisted] = useState(false);
   const [accessCode, setAccessCode] = useState("");
   const [formError, setFormError] = useState("");
 
-  // 開始時刻のクイック選択（手入力が面倒なので）
+  // 開始時刻のクイック選択（カレンダーを開かずに一発で決める）
   const quickStart = useCallback((preset: "now" | "1h" | "tonight" | "tomorrow") => {
     const d = new Date();
     if (preset === "now") {
@@ -387,9 +400,12 @@ function HostPanel() {
       d.setDate(d.getDate() + 1);
       d.setHours(20, 0, 0, 0);
     }
-    const pad = (n: number) => String(n).padStart(2, "0");
-    setStartAt(
-      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    setStartDateTime({ dateKey: toDateKey(d), hour: d.getHours(), minute: d.getMinutes() });
+  }, []);
+
+  const toggleTypeTag = useCallback((key: string) => {
+    setTypeTags((prev) =>
+      prev.includes(key) ? prev.filter((t) => t !== key) : prev.length >= 8 ? prev : [...prev, key],
     );
   }, []);
 
@@ -399,13 +415,14 @@ function HostPanel() {
       setFormError("タイトルを入れてください");
       return;
     }
-    // 開始時刻: 未入力なら1時間後を既定にする
-    const start =
-      startAt.trim() !== ""
-        ? new Date(startAt)
-        : new Date(Date.now() + 60 * 60 * 1000);
+    if (!isOnline && !prefecture) {
+      setFormError("リアル開催は都道府県を選んでください");
+      return;
+    }
+    // 開始日時: 日付未選択なら1時間後を既定にする
+    const start = toStartDate(startDateTime) ?? new Date(Date.now() + 60 * 60 * 1000);
     if (Number.isNaN(start.getTime())) {
-      setFormError("開始時刻の形式が正しくありません (例: 2026-07-01 18:00)");
+      setFormError("開始日時を選び直してください");
       return;
     }
     if (isUnlisted && !accessCode.trim()) {
@@ -415,9 +432,10 @@ function HostPanel() {
     createMut.mutate(
       {
         title: title.trim(),
+        typeTags: typeTags.length > 0 ? typeTags : undefined,
         locationType: isOnline ? "online" : "offline",
         onlineUrl: isOnline ? onlineUrl.trim() || undefined : undefined,
-        prefecture: !isOnline ? prefecture.trim() || undefined : undefined,
+        prefecture: !isOnline ? prefecture || undefined : undefined,
         venueName: !isOnline ? venueName.trim() || undefined : undefined,
         startAt: start.toISOString(),
         visibility: isUnlisted ? "unlisted" : "public",
@@ -429,14 +447,15 @@ function HostPanel() {
           setOnlineUrl("");
           setPrefecture("");
           setVenueName("");
-          setStartAt("");
+          setStartDateTime({ dateKey: "", hour: 20, minute: 0 });
+          setTypeTags([]);
           setIsUnlisted(false);
           setAccessCode("");
         },
         onError: (err) => setFormError(err.message),
       },
     );
-  }, [title, isOnline, onlineUrl, prefecture, venueName, startAt, isUnlisted, accessCode, createMut]);
+  }, [title, isOnline, onlineUrl, prefecture, venueName, startDateTime, typeTags, isUnlisted, accessCode, createMut]);
 
   const items = myQuery.data ?? [];
 
@@ -454,6 +473,32 @@ function HostPanel() {
           onChangeText={setTitle}
           maxLength={80}
         />
+
+        {/* 種別（複数選択可・タップで選ぶ） */}
+        <Text style={styles.fieldLabel}>種別（複数選べます）</Text>
+        <View style={styles.tagSelectRow}>
+          {Object.entries(TYPE_TAG_LABELS).map(([key, label]) => {
+            const selected = typeTags.includes(key);
+            return (
+              <Pressable
+                key={key}
+                onPress={() => toggleTypeTag(key)}
+                style={({ pressed }) => [
+                  styles.tagSelectChip,
+                  selected && styles.tagSelectChipActive,
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                {selected && (
+                  <MaterialIcons name="check" size={14} color={color.textWhite} style={{ marginRight: 4 }} />
+                )}
+                <Text style={[styles.tagSelectText, selected && styles.tagSelectTextActive]}>
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
         {/* オンライン / リアル 切替 */}
         <View style={styles.toggleRow}>
@@ -496,12 +541,14 @@ function HostPanel() {
           />
         ) : (
           <>
-            <TextInput
-              style={styles.input}
-              placeholder="都道府県（例: 東京都）"
-              placeholderTextColor={color.textHint}
+            <PrefectureSelector
               value={prefecture}
-              onChangeText={setPrefecture}
+              onChange={setPrefecture}
+              isOpen={isPrefOpen}
+              onOpenChange={setIsPrefOpen}
+              label="都道府県"
+              required
+              placeholder="都道府県を選ぶ"
             />
             <TextInput
               style={styles.input}
@@ -513,14 +560,9 @@ function HostPanel() {
           </>
         )}
 
-        <TextInput
-          style={styles.input}
-          placeholder="開始時刻（例: 2026-07-01 18:00／空欄なら1時間後）"
-          placeholderTextColor={color.textHint}
-          value={startAt}
-          onChangeText={setStartAt}
-          autoCapitalize="none"
-        />
+        {/* 開始日時（カレンダー＋時刻プルダウン。手入力なし） */}
+        <Text style={styles.fieldLabel}>開始日時</Text>
+        <EventDateTimePicker value={startDateTime} onChange={setStartDateTime} />
 
         {/* 開始時刻クイック選択 */}
         <View style={styles.quickRow}>
@@ -838,6 +880,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: color.textPrimary,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: color.textSecondary,
+    marginTop: 2,
+  },
+  tagSelectRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  tagSelectChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 40,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.bg,
+  },
+  tagSelectChipActive: {
+    backgroundColor: color.accentIndigo,
+    borderColor: color.accentIndigo,
+  },
+  tagSelectText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: color.textSecondary,
+  },
+  tagSelectTextActive: {
+    color: color.textWhite,
   },
   input: {
     backgroundColor: color.bg,

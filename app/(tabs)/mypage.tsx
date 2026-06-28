@@ -39,6 +39,16 @@ import { shareMyLocation } from "@/lib/share";
 
 const MAX_HITOKOTO = 140;
 
+/** ひとことのワンタップ定型文（手入力を減らす）。タップで入力欄に入る。 */
+const HITOKOTO_PRESETS = [
+  "すれ違えてうれしい！",
+  "声かけてOKです",
+  "Xフォローしてね",
+  "また会いましょう",
+  "応援してます！",
+  "今日はこのへんにいます",
+] as const;
+
 /** ひとこと編集モーダル */
 function HitokotoModal({
   visible,
@@ -84,6 +94,20 @@ function HitokotoModal({
               style={styles.hitokotoInput}
               autoFocus
             />
+
+            {/* ワンタップ定型文（手入力を減らす） */}
+            <Text style={styles.presetLabel}>よく使う言葉（タップで入ります）</Text>
+            <View style={styles.presetRow}>
+              {HITOKOTO_PRESETS.map((p) => (
+                <Pressable
+                  key={p}
+                  onPress={() => { setText(p); setError(""); }}
+                  style={({ pressed }) => [styles.presetChip, pressed && { opacity: 0.7 }]}
+                >
+                  <Text style={styles.presetChipText}>{p}</Text>
+                </Pressable>
+              ))}
+            </View>
 
             <View style={styles.hitokotoFooter}>
               <Text style={[styles.hitokotoCount, text.length > MAX_HITOKOTO * 0.9 && { color: color.danger }]}>
@@ -716,6 +740,32 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     borderWidth: 1,
     borderColor: color.border,
+  },
+  presetLabel: {
+    color: color.textSecondary,
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  presetRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  presetChip: {
+    minHeight: 40,
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.surfaceAlt,
+  },
+  presetChipText: {
+    color: color.textPrimary,
+    fontSize: 13,
+    fontWeight: "600",
   },
   hitokotoFooter: {
     flexDirection: "row",

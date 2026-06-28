@@ -156,6 +156,8 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
     customCenter?: { lat: number; lng: number };
     userImageUrl?: string;
     markerIcon?: React.ComponentProps<typeof MaterialIcons>["name"];
+    /** 最新地点マーカーの一辺サイズ(px)。小さい地図で地図中心を隠さないために縮小できる。 */
+    markerSize?: number;
   }
 
   export function PrecisionTileMap({
@@ -168,6 +170,7 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
     customCenter,
     userImageUrl,
     markerIcon = "my-location",
+    markerSize = 44,
   }: PrecisionTileMapProps) {
   const { width: windowWidth } = useWindowDimensions();
   const mapWidth = propWidth ?? Math.max(320, Math.min(windowWidth - 32, 980));
@@ -301,15 +304,25 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
             style={[
               styles.latestMarker,
               {
-                left: latestPosition.x - 22,
-                top: latestPosition.y - 22,
+                width: markerSize,
+                height: markerSize,
+                borderRadius: markerSize * 0.2,
+                left: latestPosition.x - markerSize / 2,
+                top: latestPosition.y - markerSize / 2,
               },
             ]}
           >
             {userImageUrl ? (
-              <Image source={{ uri: userImageUrl }} style={{ width: 38, height: 38, borderRadius: 6 }} />
+              <Image
+                source={{ uri: userImageUrl }}
+                style={{
+                  width: markerSize - 6,
+                  height: markerSize - 6,
+                  borderRadius: (markerSize - 6) * 0.16,
+                }}
+              />
             ) : (
-              <MaterialIcons name={markerIcon} size={24} color={color.textWhite} />
+              <MaterialIcons name={markerIcon} size={Math.round(markerSize * 0.55)} color={color.textWhite} />
             )}
           </Pressable>
         </>
