@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { UserAccountChip } from "@/components/molecules/user-account-chip";
 import { LogoutConfirmModal } from "@/components/molecules/logout-confirm-modal";
+import { useTextScale } from "@/lib/text-scale";
 import * as Haptics from "expo-haptics";
 
 interface GlobalMenuProps {
@@ -23,6 +24,12 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
   const { user, isAuthenticated, isAuthReadyForUI } = useAuth();
   const openLoginGuide = useLoginGuide();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const { isLarge, toggle: toggleTextSize } = useTextScale();
+
+  const handleToggleTextSize = () => {
+    handleHaptic();
+    toggleTextSize();
+  };
 
   const handleHaptic = () => {
     if (Platform.OS !== "web") {
@@ -124,6 +131,46 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
                     </Text>
                   </Pressable>
                 )}
+              </View>
+
+              {/* かんたん表示（文字を大きくする）。PCやスマホに不慣れな人向け。 */}
+              <View style={{ paddingHorizontal: 12, paddingTop: 12 }}>
+                <Pressable
+                  onPress={handleToggleTextSize}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: isLarge }}
+                  style={({ pressed }) => [{
+                    flexDirection: "row", alignItems: "center",
+                    minHeight: 52, paddingHorizontal: 14, borderRadius: 12,
+                    borderWidth: 2,
+                    borderColor: isLarge ? palette.kimitoOrange : color.borderAlt,
+                    backgroundColor: isLarge ? palette.kimitoOrange + "1A" : color.surfaceAlt,
+                  }, pressed && { opacity: 0.7 }]}
+                >
+                  <MaterialIcons
+                    name="format-size"
+                    size={24}
+                    color={isLarge ? palette.kimitoOrange : palette.kimitoBlue}
+                    style={{ marginRight: 14 }}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: color.textPrimary, fontSize: 16, fontWeight: "700" }}>
+                      {isLarge ? "文字を元に戻す" : "文字を大きくする"}
+                    </Text>
+                    <Text style={{ color: color.textMuted, fontSize: 12, marginTop: 2 }}>
+                      読みやすい大きさに切り替えます
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 44, height: 26, borderRadius: 13, padding: 3,
+                      backgroundColor: isLarge ? palette.kimitoOrange : color.border,
+                      alignItems: isLarge ? "flex-end" : "flex-start",
+                    }}
+                  >
+                    <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: palette.white }} />
+                  </View>
+                </Pressable>
               </View>
 
               {/* メニュー項目 */}

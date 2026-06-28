@@ -19,6 +19,7 @@ import { AuthHandoffProvider } from "@/lib/auth-handoff-context";
 import { AuthHandoffOverlay } from "@/components/organisms/auth-handoff-overlay";
 import { OfflineBanner } from "@/components/organisms/offline-banner";
 import { ToastProvider } from "@/components/atoms/toast";
+import { TextScaleProvider } from "@/lib/text-scale";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -346,6 +347,7 @@ export default function RootLayout() {
               <AuthHandoffProvider>
               <LoginSuccessProvider>
                 <ToastProvider>
+                  <TextScaleProvider>
                   <ExpoThemeProvider value={NavLightTheme}>
                     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#F0F4F8" } }}>
                       <Stack.Screen name="(tabs)" />
@@ -356,6 +358,7 @@ export default function RootLayout() {
                   <LoginSuccessModalWrapper />
                   <OfflineBanner />
                   <NetworkToast />
+                  </TextScaleProvider>
                   <View
                     pointerEvents="none"
                     style={{
