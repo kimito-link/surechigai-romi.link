@@ -16,6 +16,7 @@ import {
   StyleSheet,
   Platform,
   ScrollView,
+  useWindowDimensions,
 } from "react-native";
 import { useState, useCallback, useEffect } from "react";
 import Animated, {
@@ -37,7 +38,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
-import { PrecisionTileMap } from "@/components/organisms/precision-tile-map";
+import { PrecisionTileMap, type TrailPoint } from "@/components/organisms/precision-tile-map";
 import { useRouter } from "expo-router";
 import { shareMyLocation } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
@@ -124,8 +125,6 @@ export default function CheckinScreen() {
   // アニメーション
   const scale = useSharedValue(1);
   const pulse = useSharedValue(1);
-  const checkmarkScale = useSharedValue(0);
-  const checkmarkOpacity = useSharedValue(0);
 
   // マップ用アニメーション
   const mapScale = useSharedValue(0.9);
@@ -138,11 +137,6 @@ export default function CheckinScreen() {
   const pulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulse.value }],
     opacity: 1 - (pulse.value - 1) * 3,
-  }));
-
-  const checkmarkStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: checkmarkScale.value }],
-    opacity: checkmarkOpacity.value,
   }));
 
   const mapStyle = useAnimatedStyle(() => ({
@@ -244,9 +238,6 @@ export default function CheckinScreen() {
         setState("success");
         setNewCount(result.newEncounters);
 
-        checkmarkScale.value = withSpring(1, { damping: 10 });
-        checkmarkOpacity.value = withTiming(1, { duration: 200 });
-
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
@@ -269,7 +260,7 @@ export default function CheckinScreen() {
 
       setTimeout(() => setState("idle"), 4000);
     }
-  }, [state, checkIn, utils, scale, pulse, checkmarkScale, checkmarkOpacity]);
+  }, [state, checkIn, utils, scale, pulse]);
 
   const handlePauseToggle = useCallback(() => {
     if (isPausing) {
@@ -320,6 +311,110 @@ export default function CheckinScreen() {
     }
   };
 
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const mapHeroHeight = Math.min(Math.round(windowHeight * 0.45), 520);
+
+  /** チェックイン後（または再チェックイン中）は地図ファースト。前はボタンファースト。 */
+  const isMapFirst =
+    (state === "success" || state === "zero" || (state === "loading" && checkinLatLng != null));
+
+  const mapPoint: TrailPoint | null = latestLocation
+    ?? (checkinLatLng
+      ? {
+          id: 0,
+          lat: checkinLatLng.lat,
+          lng: checkinLatLng.lng,
+          accuracyM: null,
+          municipality: null,
+          prefecture: null,
+          address: checkinAddress ?? checkinLocationName,
+          recordedAt: new Date().toISOString(),
+        }
+      : null);
+
+  const placeLine = checkinAddress ?? checkinLocationName;
+  const coordLine = checkinLatLng
+    ? `(${checkinLatLng.lat.toFixed(6)}, ${checkinLatLng.lng.toFixed(6)})`
+    : null;
+
+  const headerLeft = (
+    <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
+      <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
+    </Pressable>
+  );
+
+  const pausedBanner = isPausing ? (
+    <View style={styles.pausedBanner}>
+      <MaterialIcons name="pause-circle-filled" size={18} color={color.warning} />
+      <Text style={styles.pausedText}>位置情報は一時停止中です</Text>
+    </View>
+  ) : null;
+
+  const settingsBlock = (
+    <>
+      <Pressable
+        onPress={() => setShowSettings((v) => !v)}
+        style={({ pressed }) => [styles.settingsToggle, pressed && { opacity: 0.7 }]}
+      >
+        <MaterialIcons
+          name={isPausing ? "pause-circle-filled" : "tune"}
+          size={18}
+          color={isPausing ? color.warning : color.textMuted}
+        />
+        <Text style={styles.settingsToggleText}>設定・くわしく</Text>
+        <MaterialIcons
+          name={showSettings ? "expand-less" : "expand-more"}
+          size={22}
+          color={color.textMuted}
+        />
+      </Pressable>
+      {showSettings && (
+        <>
+          <View style={styles.pauseSection}>
+            <View style={styles.pauseRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.pauseTitle}>位置情報を一時停止</Text>
+                <Text style={styles.pauseSubtitle}>停止中はチェックインできません</Text>
+              </View>
+              <Pressable
+                onPress={handlePauseToggle}
+                style={({ pressed }) => [
+                  styles.pauseToggle,
+                  { backgroundColor: isPausing ? color.accentPrimary : color.border },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.pauseKnob,
+                    { transform: [{ translateX: isPausing ? 20 : 0 }] },
+                  ]}
+                />
+              </Pressable>
+            </View>
+            {isPausing && (
+              <Text style={styles.pauseHint}>1時間後に自動再開されます（最大72時間）</Text>
+            )}
+          </View>
+          <View style={styles.infoSection}>
+            <View style={styles.infoRow}>
+              <MaterialIcons name="security" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
+              <Text style={styles.infoText}>
+                正確な位置情報を保存し、後から足あとをたどれるようにします
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <MaterialIcons name="schedule" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
+              <Text style={styles.infoText}>
+                すれ違い判定にはH3セルと丸めたグリッドも併用します
+              </Text>
+            </View>
+          </View>
+        </>
+      )}
+    </>
+  );
+
   // ゲート判定は「実ロード完了(isAuthReady)」基準。1秒タイムアウトの isAuthReadyForUI で
   // 判定するとリロード時のハンドシェイク中(>1s)にセッションがあるのにゲートを誤表示し、
   // 「You're already signed in」を誘発する。実ロードを待ってから判定する。
@@ -354,221 +449,298 @@ export default function CheckinScreen() {
   }
 
   return (
-    <ScreenContainer containerClassName="bg-background">
+    <ScreenContainer containerClassName="bg-background" style={isMapFirst ? styles.screenFlex : undefined}>
         <AppHeader
           title="チェックイン"
           showCharacters={false}
           isDesktop={isDesktop}
           showMenu={true}
           showLoginButton={!isAuthenticated}
-          leftElement={
-            <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-              <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-            </Pressable>
-          }
+          leftElement={headerLeft}
         />
 
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* 説明文（1行に圧縮） */}
-          <Text style={styles.description}>
-            現在地を記録して、すれ違いを探します
-          </Text>
+        {isMapFirst && mapPoint ? (
+          /* チェックイン後: 地図ファースト（主役=記録された現在地） */
+          <View style={styles.mapFirstRoot}>
+            {pausedBanner}
 
-          {/* 一時停止バナー */}
-          {isPausing && (
-            <View style={styles.pausedBanner}>
-              <MaterialIcons name="pause-circle-filled" size={18} color={color.warning} />
-              <Text style={styles.pausedText}>位置情報は一時停止中です</Text>
+            {/* すれ違い件数など情緒の山場（地図の直上・埋没させない） */}
+            <View
+              style={[
+                styles.encounterBanner,
+                state === "success" && styles.encounterBannerSuccess,
+                state === "zero" && styles.encounterBannerZero,
+              ]}
+            >
+              {state === "loading" ? (
+                <Text style={styles.encounterBannerText}>位置情報を取得中…</Text>
+              ) : state === "success" ? (
+                <Text style={styles.encounterBannerText}>
+                  {newCount}件のすれ違いが届きました！
+                </Text>
+              ) : (
+                <Text style={styles.encounterBannerText}>チェックイン完了</Text>
+              )}
             </View>
-          )}
 
-          {/* メインボタン */}
-          <View style={styles.buttonWrap}>
-            {/* パルスリング */}
-            {state === "loading" && (
-              <Animated.View
-                style={[
-                  styles.pulseRing,
-                  { borderColor: getButtonColor() + "66" },
-                  pulseStyle,
-                ]}
-              />
-            )}
-
-            <Animated.View style={buttonStyle}>
-              <Pressable
-                onPress={handleCheckin}
-                disabled={state === "loading" || isPausing}
-                style={({ pressed }) => [
-                  styles.checkinButton,
-                  { backgroundColor: isPausing ? color.border : getButtonColor() },
-                  pressed && { opacity: 0.85 },
-                  (state === "loading" || isPausing) && { opacity: 0.8 },
-                ]}
-              >
-                {/* チェックマークアニメーション（成功時） */}
-                {state === "success" && (
-                  <Animated.View style={[styles.checkmarkOverlay, checkmarkStyle]}>
-                    <MaterialIcons name="check" size={56} color={color.textWhite} />
-                  </Animated.View>
-                )}
-
-                <MaterialIcons
-                  name={getButtonIcon() as "check" | "close" | "refresh" | "location-on"}
-                  size={48}
-                  color={color.textWhite}
-                />
-              </Pressable>
-            </Animated.View>
-
-            <Text style={styles.buttonLabel}>{getButtonLabel()}</Text>
-          </View>
-
-          {/* 結果メッセージ */}
-          {state === "success" && (
-            <View style={styles.resultBox}>
-              <Text style={styles.resultTitle}>
-                {newCount}件のすれ違いが届きました！
-              </Text>
-              <Text style={styles.resultSubtitle}>
-                {checkinAddress ? `${checkinAddress}\n` : (checkinLocationName ? `${checkinLocationName}\n` : "")}
-                {checkinLatLng ? `(${checkinLatLng.lat.toFixed(6)}, ${checkinLatLng.lng.toFixed(6)})\n` : ""}
-                ポストを見てみよう
-              </Text>
-            </View>
-          )}
-
-          {state === "zero" && (
-            <View style={styles.resultBox}>
-              <Text style={styles.resultTitle}>チェックイン完了</Text>
-              <Text style={styles.resultSubtitle}>
-                {checkinAddress ? `${checkinAddress}\n` : (checkinLocationName ? `${checkinLocationName}\n` : "")}
-                {checkinLatLng ? `(${checkinLatLng.lat.toFixed(6)}, ${checkinLatLng.lng.toFixed(6)})\n` : ""}
-                まだ誰も…{"\n"}あなたの軌跡が誰かの封筒になります
-              </Text>
-            </View>
-          )}
-
-          {state === "error" && (
-            <View style={[styles.resultBox, { backgroundColor: color.danger + "22" }]}>
-              <Text style={[styles.resultTitle, { color: color.danger }]}>
-                エラーが発生しました
-              </Text>
-              <Text style={styles.resultSubtitle}>{errorMsg}</Text>
-            </View>
-          )}
-
-          {/* 地図表示エリア（チェックイン後の主役。重なるマークは外して地図を見やすく） */}
-          {latestLocation && (
-            <Animated.View style={[styles.mapContainer, mapStyle]}>
+            <Animated.View style={[styles.mapHero, mapStyle]}>
               <PrecisionTileMap
-                locations={state === "loading" ? [] : [latestLocation]}
+                locations={[mapPoint]}
                 zoom={17}
                 showInfoPanel={false}
-                height={240}
+                height={mapHeroHeight}
+                width={Math.min(windowWidth, 980)}
                 markerSize={28}
                 containerStyle={styles.mapInner}
                 userImageUrl={user?.profileImage ?? undefined}
               />
             </Animated.View>
-          )}
 
-          {/* チェックイン成功直後にその場でシェア（最も共有意欲が高い瞬間） */}
-          {(state === "success" || state === "zero") && latestLocation && (
-            <Pressable
-              onPress={handleShareLocation}
-              disabled={shareSlugMutation.isPending}
-              style={({ pressed }) => [
-                styles.shareButton,
-                pressed && { opacity: 0.85 },
-                shareSlugMutation.isPending && { opacity: 0.6 },
-              ]}
+            {/* ボトムシート風カード: 住所・座標・シェア・設定 */}
+            <ScrollView
+              style={styles.bottomSheetScroll}
+              contentContainerStyle={styles.bottomSheetContent}
+              showsVerticalScrollIndicator={false}
             >
-              <MaterialIcons name="ios-share" size={18} color={color.textWhite} />
-              <Text style={styles.shareButtonText}>
-                {shareSlugMutation.isPending ? "リンクを準備中…" : "この現在地をXでシェア"}
-              </Text>
-            </Pressable>
-          )}
-
-          {/* 二次的な設定・説明は折りたたみ（主役の邪魔をしない） */}
-          <Pressable
-            onPress={() => setShowSettings((v) => !v)}
-            style={({ pressed }) => [styles.settingsToggle, pressed && { opacity: 0.7 }]}
-          >
-            <MaterialIcons
-              name={isPausing ? "pause-circle-filled" : "tune"}
-              size={18}
-              color={isPausing ? color.warning : color.textMuted}
-            />
-            <Text style={styles.settingsToggleText}>設定・くわしく</Text>
-            <MaterialIcons
-              name={showSettings ? "expand-less" : "expand-more"}
-              size={22}
-              color={color.textMuted}
-            />
-          </Pressable>
-
-          {showSettings && (
-            <>
-              {/* 位置一時停止トグル */}
-              <View style={styles.pauseSection}>
-                <View style={styles.pauseRow}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.pauseTitle}>位置情報を一時停止</Text>
-                    <Text style={styles.pauseSubtitle}>
-                      停止中はチェックインできません
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={handlePauseToggle}
-                    style={({ pressed }) => [
-                      styles.pauseToggle,
-                      { backgroundColor: isPausing ? color.accentPrimary : color.border },
-                      pressed && { opacity: 0.7 },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.pauseKnob,
-                        { transform: [{ translateX: isPausing ? 20 : 0 }] },
-                      ]}
-                    />
-                  </Pressable>
-                </View>
-                {isPausing && (
-                  <Text style={styles.pauseHint}>
-                    1時間後に自動再開されます（最大72時間）
+              <View style={styles.bottomSheet}>
+                {state === "success" && (
+                  <Text style={styles.bottomSheetHint}>ポストを見てみよう</Text>
+                )}
+                {state === "zero" && (
+                  <Text style={styles.bottomSheetHint}>
+                    まだ誰も… あなたの軌跡が誰かの封筒になります
                   </Text>
                 )}
-              </View>
 
-              {/* 説明 */}
-              <View style={styles.infoSection}>
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="security" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
-                  <Text style={styles.infoText}>
-                    正確な位置情報を保存し、後から足あとをたどれるようにします
+                {placeLine ? (
+                  <Text style={styles.placeLine} numberOfLines={2}>{placeLine}</Text>
+                ) : null}
+                {coordLine ? (
+                  <Text style={styles.coordLine}>{coordLine}</Text>
+                ) : null}
+
+                <Text style={styles.privacyNote}>
+                  正確な場所を保存します。プライバシーが気になる方は移動専用アカウントの利用をおすすめします。
+                </Text>
+
+                <Pressable
+                  onPress={handleShareLocation}
+                  disabled={shareSlugMutation.isPending}
+                  style={({ pressed }) => [
+                    styles.shareButton,
+                    styles.shareButtonFull,
+                    pressed && { opacity: 0.85 },
+                    shareSlugMutation.isPending && { opacity: 0.6 },
+                  ]}
+                >
+                  <MaterialIcons name="ios-share" size={18} color={color.textWhite} />
+                  <Text style={styles.shareButtonText}>
+                    {shareSlugMutation.isPending ? "リンクを準備中…" : "この現在地をXでシェア"}
                   </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="schedule" size={16} color={color.textMuted} style={{ marginRight: 8 }} />
-                  <Text style={styles.infoText}>
-                    すれ違い判定にはH3セルと丸めたグリッドも併用します
+                </Pressable>
+
+                <Pressable
+                  onPress={handleCheckin}
+                  disabled={state === "loading" || isPausing}
+                  style={({ pressed }) => [
+                    styles.recheckButton,
+                    (state === "loading" || isPausing) && { opacity: 0.55 },
+                    pressed && !isPausing && state !== "loading" && { opacity: 0.85 },
+                  ]}
+                >
+                  <MaterialIcons name="refresh" size={18} color={color.accentIndigo} />
+                  <Text style={styles.recheckButtonText}>
+                    {state === "loading" ? "取得中…" : "もう一度チェックイン"}
                   </Text>
-                </View>
+                </Pressable>
+
+                {settingsBlock}
               </View>
-            </>
-          )}
-        </ScrollView>
+            </ScrollView>
+          </View>
+        ) : (
+          /* チェックイン前: ボタンファースト */
+          <ScrollView
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.description}>
+              現在地を記録して、すれ違いを探します
+            </Text>
+
+            {pausedBanner}
+
+            <View style={styles.buttonWrap}>
+              {state === "loading" && (
+                <Animated.View
+                  style={[
+                    styles.pulseRing,
+                    { borderColor: getButtonColor() + "66" },
+                    pulseStyle,
+                  ]}
+                />
+              )}
+
+              <Animated.View style={buttonStyle}>
+                <Pressable
+                  onPress={handleCheckin}
+                  disabled={state === "loading" || isPausing}
+                  style={({ pressed }) => [
+                    styles.checkinButton,
+                    { backgroundColor: isPausing ? color.border : getButtonColor() },
+                    pressed && { opacity: 0.85 },
+                    (state === "loading" || isPausing) && { opacity: 0.8 },
+                  ]}
+                >
+                  <MaterialIcons
+                    name={getButtonIcon() as "check" | "close" | "refresh" | "location-on"}
+                    size={48}
+                    color={color.textWhite}
+                  />
+                </Pressable>
+              </Animated.View>
+
+              <Text style={styles.buttonLabel}>{getButtonLabel()}</Text>
+            </View>
+
+            {state === "error" && (
+              <View style={[styles.resultBox, { backgroundColor: color.danger + "22" }]}>
+                <Text style={[styles.resultTitle, { color: color.danger }]}>
+                  エラーが発生しました
+                </Text>
+                <Text style={styles.resultSubtitle}>{errorMsg}</Text>
+              </View>
+            )}
+
+            {mapPoint && state === "idle" && (
+              <Animated.View style={[styles.mapContainer, mapStyle]}>
+                <PrecisionTileMap
+                  locations={[mapPoint]}
+                  zoom={17}
+                  showInfoPanel={false}
+                  height={200}
+                  markerSize={28}
+                  containerStyle={styles.mapInner}
+                  userImageUrl={user?.profileImage ?? undefined}
+                />
+              </Animated.View>
+            )}
+
+            {settingsBlock}
+          </ScrollView>
+        )}
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  screenFlex: {
+    flex: 1,
+  },
+  mapFirstRoot: {
+    flex: 1,
+    width: "100%",
+  },
+  encounterBanner: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: color.accentIndigo + "18",
+    borderWidth: 1,
+    borderColor: color.accentIndigo + "44",
+    alignItems: "center",
+  },
+  encounterBannerSuccess: {
+    backgroundColor: color.success + "18",
+    borderColor: color.success + "55",
+  },
+  encounterBannerZero: {
+    backgroundColor: color.accentAlt + "18",
+    borderColor: color.accentAlt + "55",
+  },
+  encounterBannerText: {
+    color: color.textPrimary,
+    fontSize: 17,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  mapHero: {
+    width: "100%",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  bottomSheetScroll: {
+    flex: 1,
+  },
+  bottomSheetContent: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 32,
+  },
+  bottomSheet: {
+    backgroundColor: color.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    padding: 18,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: color.border,
+    shadowColor: palette.black,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  bottomSheetHint: {
+    color: color.textSecondary,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: "center",
+  },
+  placeLine: {
+    color: color.textPrimary,
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  coordLine: {
+    color: color.textMuted,
+    fontSize: 12,
+    textAlign: "center",
+    fontVariant: ["tabular-nums"],
+  },
+  privacyNote: {
+    color: color.textMuted,
+    fontSize: 11,
+    lineHeight: 17,
+    textAlign: "center",
+  },
+  shareButtonFull: {
+    alignSelf: "stretch",
+    width: "100%",
+  },
+  recheckButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: color.accentIndigo,
+    backgroundColor: color.surface,
+  },
+  recheckButtonText: {
+    color: color.accentIndigo,
+    fontSize: 15,
+    fontWeight: "700",
+  },
   center: {
     flex: 1,
     alignItems: "center",
