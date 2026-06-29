@@ -26,6 +26,7 @@ export function PrefectureCreatorCard({ creator, onPress }: PrefectureCreatorCar
         src={creator.profileImage}
         alt={creator.displayName}
         fallbackInitial={fallbackInitial}
+        recyclingKey={`creator-${creator.userId}`}
         style={styles.avatar}
       />
 

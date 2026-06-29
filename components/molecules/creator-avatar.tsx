@@ -14,6 +14,7 @@ type CreatorAvatarProps = {
   alt: string;
   fallbackInitial: string;
   size?: number;
+  recyclingKey?: string;
   style?: StyleProp<ViewStyle | ImageStyle>;
 };
 
@@ -26,6 +27,7 @@ export function CreatorAvatar({
   alt,
   fallbackInitial,
   size = 56,
+  recyclingKey,
   style,
 }: CreatorAvatarProps) {
   const [errored, setErrored] = useState(false);
@@ -51,6 +53,7 @@ export function CreatorAvatar({
   return (
     <Image
       source={{ uri: src }}
+      recyclingKey={recyclingKey ?? src}
       style={[
         { width: size, height: size, borderRadius: radius },
         style as StyleProp<ImageStyle>,

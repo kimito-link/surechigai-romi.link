@@ -8,6 +8,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../drizzle/schema/index.js";
 import { twitterUserCache } from "../drizzle/schema/index.js";
 import { parseKimitoPublicProfileHtml } from "../lib/kimito-public-profile.js";
+import { pickBestProfileImage } from "../lib/profile-image.js";
 import { normalizeTwitterUsername } from "../lib/twitter-username.js";
 import type { TwitterCacheInfo } from "../modules/encounter/core/prefecture-creator-types.js";
 
@@ -24,13 +25,25 @@ export async function upsertTwitterCacheRow(
   row: TwitterCacheInfo,
 ): Promise<void> {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  const existing = await db
+    .select({ profileImage: twitterUserCache.profileImage })
+    .from(twitterUserCache)
+    .where(eq(twitterUserCache.twitterUsername, row.twitterUsername))
+    .limit(1);
+
+  const profileImage = pickBestProfileImage(
+    row.profileImage,
+    existing[0]?.profileImage,
+  );
+
   await db
     .insert(twitterUserCache)
     .values({
       twitterUsername: row.twitterUsername,
       twitterId: row.twitterId,
       displayName: row.displayName,
-      profileImage: row.profileImage,
+      profileImage,
       followersCount: row.followersCount ?? 0,
       expiresAt,
     })
@@ -39,7 +52,7 @@ export async function upsertTwitterCacheRow(
       set: {
         twitterId: row.twitterId,
         displayName: row.displayName,
-        profileImage: row.profileImage,
+        profileImage,
         followersCount: row.followersCount ?? 0,
         expiresAt,
         updatedAt: new Date(),
@@ -85,12 +98,13 @@ export async function fetchTwitterApiProfile(
     twitterUsername: profile.username,
     twitterId: profile.id,
     displayName: profile.name,
-    profileImage: profile.profile_image_url || null,
+    profileImage:
+      profile.profile_image_url?.replace("_normal", "_400x400") || null,
     followersCount: profile.public_metrics?.followers_count ?? null,
   };
 }
 
-/** kimito.link HTML → X API の順で取得し、DB キャッシュにも保存する。 */
+/** kimito.link（フォロワー等）+ X API（アバター）を統合してキャッシュ保存。 */
 export async function enrichTwitterProfile(
   db: DB,
   username: string,
@@ -98,9 +112,19 @@ export async function enrichTwitterProfile(
   const clean = normalizeTwitterUsername(username);
   if (!clean) return null;
 
-  let row =
-    (await fetchKimitoPublicProfile(clean)) ?? (await fetchTwitterApiProfile(clean));
-  if (!row) return null;
+  const [kimito, twitter] = await Promise.all([
+    fetchKimitoPublicProfile(clean),
+    fetchTwitterApiProfile(clean),
+  ]);
+  if (!kimito && !twitter) return null;
+
+  const row: TwitterCacheInfo = {
+    twitterUsername: clean,
+    twitterId: twitter?.twitterId ?? kimito?.twitterId ?? null,
+    displayName: kimito?.displayName ?? twitter?.displayName ?? null,
+    profileImage: pickBestProfileImage(twitter?.profileImage, kimito?.profileImage),
+    followersCount: kimito?.followersCount ?? twitter?.followersCount ?? null,
+  };
 
   await upsertTwitterCacheRow(db, row);
   return row;

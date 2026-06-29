@@ -97,8 +97,32 @@ export async function backfillClerkTwitterProfiles(
       await syncClerkTwitterProfileToDb(db, user.id, profile);
       user.twitterUsername = profile.twitterUsername;
       user.twitterId = profile.twitterId;
-      const { enrichTwitterProfile } = await import("./creator-profile-enricher.js");
-      await enrichTwitterProfile(db, profile.twitterUsername);
     }),
   );
+}
+
+/** 一覧表示向け: 全 Clerk ユーザーの X プロフィールを取得（毎回 Clerk 画像を優先） */
+export async function loadClerkTwitterProfilesForUsers(
+  db: DB,
+  userRows: Array<{
+    id: number;
+    openId: string;
+    twitterUsername?: string | null;
+    twitterId?: string | null;
+  }>,
+): Promise<Map<string, ClerkTwitterProfile>> {
+  const clerkUsers = userRows.filter((u) => u.openId.startsWith("clerk:"));
+  if (clerkUsers.length === 0) return new Map();
+
+  const profiles = await fetchClerkTwitterProfiles(clerkUsers.map((u) => u.openId));
+  await Promise.all(
+    clerkUsers.map(async (user) => {
+      const profile = profiles.get(user.openId);
+      if (!profile) return;
+      user.twitterUsername = profile.twitterUsername;
+      user.twitterId = profile.twitterId;
+      await syncClerkTwitterProfileToDb(db, user.id, profile);
+    }),
+  );
+  return profiles;
 }
