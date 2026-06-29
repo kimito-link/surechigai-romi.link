@@ -3,7 +3,7 @@
  * kimito.link OGP は一覧サムネに使わない。
  */
 
-import { normalizeTwitterUsername } from "./twitter-username";
+import { normalizeTwitterUsername } from "./twitter-username.js";
 
 /** kimito.link が生成する OGP サムネ（X アイコンではないため一覧では除外） */
 export function isKimitoGeneratedProfileImage(
