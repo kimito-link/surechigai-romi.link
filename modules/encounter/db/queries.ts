@@ -29,7 +29,7 @@ import {
   resolveTwitterCacheForUser,
   type PrefectureCreatorRow,
   type TwitterCacheInfo,
-} from "../core/prefecture-creator.js";
+} from "../core/prefecture-creator-row.js";
 import { backfillClerkTwitterProfiles } from "../../../server/clerk-profile-sync.js";
 import {
   enrichTwitterProfile,
@@ -821,7 +821,7 @@ export async function getEncounterUsersByPrefecture(
   return items.sort((a, b) => b.lastEncounteredAt.getTime() - a.lastEncounteredAt.getTime());
 }
 
-export type { PrefectureCreatorRow } from "../core/prefecture-creator.js";
+export type { PrefectureCreatorRow } from "../core/prefecture-creator-row.js";
 
 /** 指定都道府県に足あと（locations）があるユーザーを、最終滞在日時順で返す。 */
 export async function getCreatorsByPrefecture(

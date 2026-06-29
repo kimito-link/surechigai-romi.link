@@ -10,7 +10,7 @@ import { twitterUserCache } from "../drizzle/schema/index.js";
 import { parseKimitoPublicProfileHtml } from "../lib/kimito-public-profile.js";
 import { normalizeTwitterUsername } from "../lib/twitter-username.js";
 import { getUserProfileByUsername } from "./twitter-oauth2.js";
-import type { TwitterCacheInfo } from "../modules/encounter/core/prefecture-creator.js";
+import type { TwitterCacheInfo } from "../modules/encounter/core/prefecture-creator-types.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
 

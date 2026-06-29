@@ -8,6 +8,8 @@ import {
   extractTwitterIdFromOpenId,
   resolveTwitterCacheForUser,
   buildPrefectureCreatorRow,
+} from "../modules/encounter/core/prefecture-creator-row.js";
+import {
   formatCreatorAccountId,
   formatCreatorDisplayName,
   formatFollowersCount,
