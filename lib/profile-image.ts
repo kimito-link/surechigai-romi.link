@@ -1,8 +1,11 @@
 /**
- * プロフィール画像 URL の優先順位（X / Clerk 実画像 > kimito.link OGP）。
+ * プロフィール画像 URL の優先順位（X / Clerk 実画像 > unavatar > なし）。
+ * kimito.link OGP は一覧サムネに使わない。
  */
 
-/** kimito.link が生成する OGP サムネ（ユーザー固有だが X アイコンではない） */
+import { normalizeTwitterUsername } from "./twitter-username.js";
+
+/** kimito.link が生成する OGP サムネ（X アイコンではないため一覧では除外） */
 export function isKimitoGeneratedProfileImage(
   url: string | null | undefined,
 ): boolean {
@@ -26,16 +29,35 @@ export function normalizeTwitterAvatarUrl(
   return url.replace("_normal", "_400x400").replace("_bigger", "_400x400");
 }
 
-/** 実アバター（pbs.twimg.com / Clerk CDN 等）を kimito OGP より優先 */
+/** 一覧に使える実アバター URL のみ返す（kimito OGP は常に除外） */
 export function pickBestProfileImage(
   ...candidates: (string | null | undefined)[]
 ): string | null {
-  const normalized = candidates
-    .map(normalizeTwitterAvatarUrl)
-    .filter((u): u is string => Boolean(u));
+  for (const candidate of candidates) {
+    const normalized = normalizeTwitterAvatarUrl(candidate);
+    if (normalized && !isKimitoGeneratedProfileImage(normalized)) {
+      return normalized;
+    }
+  }
+  return null;
+}
 
-  const preferred = normalized.filter((u) => !isKimitoGeneratedProfileImage(u));
-  if (preferred.length > 0) return preferred[0]!;
+/** X API が使えないときのフォールバック（pbs.twimg.com へリダイレクト） */
+export function buildTwitterAvatarFallbackUrl(
+  username: string | null | undefined,
+): string | null {
+  const clean = normalizeTwitterUsername(username);
+  if (!clean) return null;
+  return `https://unavatar.io/x/${encodeURIComponent(clean)}`;
+}
 
-  return normalized[0] ?? null;
+/** 一覧カード用: 実アバター → unavatar → null（kimito OGP は返さない） */
+export function resolveListProfileImage(
+  username: string | null | undefined,
+  ...candidates: (string | null | undefined)[]
+): string | null {
+  return (
+    pickBestProfileImage(...candidates) ??
+    buildTwitterAvatarFallbackUrl(username)
+  );
 }

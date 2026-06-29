@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildTwitterAvatarFallbackUrl,
   isKimitoGeneratedProfileImage,
   pickBestProfileImage,
+  resolveListProfileImage,
 } from "../lib/profile-image.js";
 
 describe("profile-image", () => {
@@ -24,5 +26,28 @@ describe("profile-image", () => {
       "https://pbs.twimg.com/profile_images/1/abc_normal.jpg",
     );
     expect(picked).toBe("https://pbs.twimg.com/profile_images/1/abc_400x400.jpg");
+  });
+
+  it("kimito OGP のみのとき null を返す", () => {
+    expect(
+      pickBestProfileImage(
+        "https://kimito.link/streamerfunch/opengraph-image-blhyuj/profile",
+      ),
+    ).toBeNull();
+  });
+
+  it("resolveListProfileImage は unavatar にフォールバックする", () => {
+    expect(
+      resolveListProfileImage(
+        "streamerfunch",
+        "https://kimito.link/streamerfunch/opengraph-image/profile",
+      ),
+    ).toBe("https://unavatar.io/x/streamerfunch");
+  });
+
+  it("buildTwitterAvatarFallbackUrl を生成する", () => {
+    expect(buildTwitterAvatarFallbackUrl("@streamerfunch")).toBe(
+      "https://unavatar.io/x/streamerfunch",
+    );
   });
 });

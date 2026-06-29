@@ -79,7 +79,8 @@ export async function fetchKimitoPublicProfile(
       twitterUsername: parsed.username,
       twitterId: null,
       displayName: parsed.displayName,
-      profileImage: parsed.profileImage,
+      // kimito OGP はフォロワー/表示名用。サムネは X API / Clerk のみ。
+      profileImage: null,
       followersCount: parsed.followersCount,
     };
   } catch (err) {

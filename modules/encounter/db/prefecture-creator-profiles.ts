@@ -13,7 +13,11 @@ import {
   type TwitterCacheInfo,
 } from "../core/prefecture-creator-row.js";
 import type { ClerkTwitterProfile } from "../../../lib/clerk-twitter-profile.js";
-import { pickBestProfileImage } from "../../../lib/profile-image.js";
+import {
+  isKimitoGeneratedProfileImage,
+  pickBestProfileImage,
+  resolveListProfileImage,
+} from "../../../lib/profile-image.js";
 import { normalizeTwitterUsername } from "../../../lib/twitter-username.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -89,6 +93,7 @@ export async function resolvePrefectureCreatorProfiles(
     const {
       enrichTwitterProfile,
       fetchTwitterApiProfile,
+      upsertTwitterCacheRow,
       lookupCacheByDisplayNames,
       lookupCacheByDisplayNameFuzzy,
     } = await import("../../../server/creator-profile-enricher.js");
@@ -191,7 +196,14 @@ export async function resolvePrefectureCreatorProfiles(
       if (handle && (!merged?.followersCount || !merged?.displayName)) {
         needsEnrich.add(handle);
       }
-      if (handle && !pickBestProfileImage(clerk?.profileImage, merged?.profileImage)) {
+      const avatarCandidate = pickBestProfileImage(
+        clerk?.profileImage,
+        merged?.profileImage,
+      );
+      if (
+        handle &&
+        (!avatarCandidate || isKimitoGeneratedProfileImage(merged?.profileImage))
+      ) {
         needsAvatar.add(handle);
       }
     }
@@ -203,7 +215,10 @@ export async function resolvePrefectureCreatorProfiles(
       }),
       ...[...needsAvatar].map(async (username) => {
         const twitter = await fetchTwitterApiProfile(username);
-        if (twitter) addCacheRow(cacheRowMap, twitter);
+        if (twitter) {
+          await upsertTwitterCacheRow(db, twitter);
+          addCacheRow(cacheRowMap, twitter);
+        }
       }),
     ]);
 
@@ -224,8 +239,24 @@ export async function resolvePrefectureCreatorProfiles(
           undefined;
       }
 
-      const merged = mergeWithClerkProfile(cached, clerkProfiles.get(user.openId));
-      result.set(user.id, merged);
+      const clerk = clerkProfiles.get(user.openId);
+      const merged = mergeWithClerkProfile(cached, clerk);
+      if (!merged) {
+        result.set(user.id, null);
+        continue;
+      }
+
+      const handle = normalizeTwitterUsername(merged.twitterUsername);
+      const profileImage = resolveListProfileImage(
+        handle,
+        clerk?.profileImage,
+        merged.profileImage,
+      );
+
+      result.set(user.id, {
+        ...merged,
+        profileImage,
+      });
     }
   } catch (err) {
     console.error("[resolvePrefectureCreatorProfiles] failed:", err);
@@ -261,6 +292,6 @@ export function toPrefectureCreatorListProfile(
   return {
     displayName,
     twitterHandle,
-    profileImage: pickBestProfileImage(cached?.profileImage),
+    profileImage: resolveListProfileImage(twitterHandle, cached?.profileImage),
   };
 }
