@@ -90,7 +90,7 @@ export async function fetchTwitterApiProfile(
   };
 }
 
-/** X API → kimito.link HTML の順で取得し、DB キャッシュにも保存する。 */
+/** kimito.link HTML → X API の順で取得し、DB キャッシュにも保存する。 */
 export async function enrichTwitterProfile(
   db: DB,
   username: string,
@@ -99,7 +99,7 @@ export async function enrichTwitterProfile(
   if (!clean) return null;
 
   let row =
-    (await fetchTwitterApiProfile(clean)) ?? (await fetchKimitoPublicProfile(clean));
+    (await fetchKimitoPublicProfile(clean)) ?? (await fetchTwitterApiProfile(clean));
   if (!row) return null;
 
   await upsertTwitterCacheRow(db, row);

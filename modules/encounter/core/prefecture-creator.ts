@@ -7,8 +7,12 @@ import {
   buildKimitoPublicProfileUrl,
   buildSurechigaiShareUrl,
   formatKimitoLinkLabel,
-} from "@/lib/kimito-link-urls";
-import { isValidShareSlug, isValidTwitterUsername, normalizeTwitterUsername } from "@/lib/twitter-username";
+} from "../../../lib/kimito-link-urls.js";
+import {
+  isValidShareSlug,
+  isValidTwitterUsername,
+  normalizeTwitterUsername,
+} from "../../../lib/twitter-username.js";
 
 export type PrefectureCreatorRow = {
   userId: number;
