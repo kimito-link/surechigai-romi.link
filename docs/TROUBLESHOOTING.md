@@ -169,11 +169,19 @@ GitHub Actionsの「Deploy to Vercel」ワークフローが失敗する。
    - `VERCEL_ORG_ID`
    - `VERCEL_PROJECT_ID`
 
-#### ステップ2: Vercel APIトークンを再生成
+#### ステップ2: Vercel APIトークンを更新
 
-1. Vercelダッシュボードで「Settings」→「Tokens」を開く
-2. 新しいトークンを生成
-3. GitHubの`VERCEL_TOKEN`シークレットを更新
+**推奨**（classic トークン共有）:
+
+1. [doin-challenge の Sync VERCEL_TOKEN workflow](https://github.com/kimito-link/doin-challenge.com/actions/workflows/sync-vercel-token-to-surechigai.yml) を手動実行
+2. `gh secret list -R kimito-link/surechigai-romi.link` で `VERCEL_TOKEN` の更新日時を確認
+
+**手動**（同期が使えない場合）:
+
+1. https://vercel.com/account/settings/tokens で **classic** トークンを生成（OAuth トークンは GHA 向けに不可）
+2. `gh secret set VERCEL_TOKEN --repo kimito-link/surechigai-romi.link`
+
+詳細: `docs/deploy/vercel-github-actions.md`
 
 #### ステップ3: ワークフローログを確認
 
