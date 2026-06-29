@@ -19,9 +19,17 @@ import {
   userSettings,
   users,
   twitterUserCache,
+  twitterFollowStatus,
 } from "../../../drizzle/schema/index.js";
 import { kRing } from "../core/geo.js";
 import type { NearbyCandidate, TimeshiftCandidate } from "../core/matching.js";
+import {
+  buildPrefectureCreatorRow,
+  extractTwitterIdFromOpenId,
+  resolveTwitterCacheForUser,
+  type PrefectureCreatorRow,
+  type TwitterCacheInfo,
+} from "../core/prefecture-creator.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -806,14 +814,7 @@ export async function getEncounterUsersByPrefecture(
   return items.sort((a, b) => b.lastEncounteredAt.getTime() - a.lastEncounteredAt.getTime());
 }
 
-export type PrefectureCreatorRow = {
-  userId: number;
-  displayName: string | null;
-  username: string | null;
-  profileImage: string | null;
-  shareSlug: string | null;
-  lastStayedAt: Date;
-};
+export type { PrefectureCreatorRow } from "../core/prefecture-creator.js";
 
 /** 指定都道府県に足あと（locations）があるユーザーを、最終滞在日時順で返す。 */
 export async function getCreatorsByPrefecture(
@@ -850,6 +851,7 @@ export async function getCreatorsByPrefecture(
     .select({
       id: users.id,
       name: users.name,
+      openId: users.openId,
       isSuspended: users.isSuspended,
       shareSlug: users.shareSlug,
     })
@@ -859,44 +861,106 @@ export async function getCreatorsByPrefecture(
   const activeUsers = userRows.filter((u) => !u.isSuspended);
   if (activeUsers.length === 0) return [];
 
-  const usernames = activeUsers
-    .map((u) => (u.name ?? "").replace(/^@/, "").trim())
-    .filter(Boolean);
-
-  const cacheRows =
-    usernames.length > 0
+  const activeUserIds = activeUsers.map((u) => u.id);
+  const followRows =
+    activeUserIds.length > 0
       ? await db
           .select({
-            twitterUsername: twitterUserCache.twitterUsername,
-            displayName: twitterUserCache.displayName,
-            profileImage: twitterUserCache.profileImage,
+            userId: twitterFollowStatus.userId,
+            twitterUsername: twitterFollowStatus.twitterUsername,
+            twitterId: twitterFollowStatus.twitterId,
           })
-          .from(twitterUserCache)
-          .where(inArray(twitterUserCache.twitterUsername, usernames))
+          .from(twitterFollowStatus)
+          .where(inArray(twitterFollowStatus.userId, activeUserIds))
       : [];
 
-  const cacheMap = new Map(
-    cacheRows.map((c) => [c.twitterUsername.toLowerCase(), c]),
+  const followByUserId = new Map(
+    followRows.map((r) => [
+      r.userId,
+      { twitterUsername: r.twitterUsername, twitterId: r.twitterId },
+    ]),
   );
+
+  const twitterIds = [
+    ...new Set(
+      activeUsers
+        .map((u) => extractTwitterIdFromOpenId(u.openId))
+        .filter((id): id is string => !!id),
+    ),
+  ];
+  for (const f of followRows) {
+    if (f.twitterId) twitterIds.push(f.twitterId);
+  }
+  const uniqueTwitterIds = [...new Set(twitterIds)];
+
+  const usernameCandidates = new Set<string>();
+  for (const u of activeUsers) {
+    const follow = followByUserId.get(u.id);
+    if (follow?.twitterUsername) usernameCandidates.add(follow.twitterUsername);
+  }
+
+  const cacheFieldSelect = {
+    twitterUsername: twitterUserCache.twitterUsername,
+    twitterId: twitterUserCache.twitterId,
+    displayName: twitterUserCache.displayName,
+    profileImage: twitterUserCache.profileImage,
+    followersCount: twitterUserCache.followersCount,
+  };
+
+  const cacheRowMap = new Map<string, TwitterCacheInfo>();
+  const addCacheRow = (row: TwitterCacheInfo) => {
+    cacheRowMap.set(`u:${row.twitterUsername.toLowerCase()}`, row);
+    if (row.twitterId) cacheRowMap.set(`id:${row.twitterId}`, row);
+  };
+
+  if (uniqueTwitterIds.length > 0) {
+    const byIdRows = await db
+      .select(cacheFieldSelect)
+      .from(twitterUserCache)
+      .where(inArray(twitterUserCache.twitterId, uniqueTwitterIds));
+    for (const row of byIdRows) addCacheRow(row);
+  }
+  if (usernameCandidates.size > 0) {
+    const byNameRows = await db
+      .select(cacheFieldSelect)
+      .from(twitterUserCache)
+      .where(inArray(twitterUserCache.twitterUsername, [...usernameCandidates]));
+    for (const row of byNameRows) addCacheRow(row);
+  }
+
+  const cacheByTwitterId = new Map<string, TwitterCacheInfo>();
+  const cacheByUsername = new Map<string, TwitterCacheInfo>();
+  for (const row of cacheRowMap.values()) {
+    cacheByUsername.set(row.twitterUsername.toLowerCase(), row);
+    if (row.twitterId) cacheByTwitterId.set(row.twitterId, row);
+  }
+
   const lastStayMap = new Map(filteredAgg.map((r) => [r.userId, r.lastStayedAt]));
 
   const items: PrefectureCreatorRow[] = [];
   for (const user of activeUsers) {
-    const usernameCandidate = (user.name ?? "").replace(/^@/, "").trim();
-    const cached = usernameCandidate
-      ? cacheMap.get(usernameCandidate.toLowerCase())
-      : undefined;
+    const cached = resolveTwitterCacheForUser(
+      user,
+      followByUserId,
+      cacheByTwitterId,
+      cacheByUsername,
+    );
     const lastStayedAt = lastStayMap.get(user.id);
     if (!lastStayedAt) continue;
 
-    items.push({
-      userId: user.id,
-      displayName: cached?.displayName ?? user.name,
-      username: (cached?.twitterUsername ?? usernameCandidate) || null,
-      profileImage: cached?.profileImage ?? null,
-      shareSlug: user.shareSlug,
-      lastStayedAt,
-    });
+    const follow = followByUserId.get(user.id);
+    const row = buildPrefectureCreatorRow(
+      {
+        userId: user.id,
+        name: user.name,
+        openId: user.openId,
+        shareSlug: user.shareSlug,
+        lastStayedAt,
+      },
+      follow,
+      cached,
+    );
+    if (row) items.push(row);
   }
 
   return items.sort((a, b) => b.lastStayedAt.getTime() - a.lastStayedAt.getTime());

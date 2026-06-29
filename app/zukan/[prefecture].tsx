@@ -8,9 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   RefreshControl,
-  Image,
   Pressable,
-  Linking,
   ActivityIndicator,
 } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
@@ -18,13 +16,10 @@ import { useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { PrefectureCreatorCard } from "@/components/molecules/prefecture-creator-card";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { formatRelativeJa } from "@/lib/date-utils";
 import { palette } from "@/theme/tokens";
-
-const DEFAULT_AVATAR =
-  "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png";
 
 function Breadcrumb({
   prefName,
@@ -77,15 +72,9 @@ export default function PrefectureCreatorsScreen() {
     router.push("/(tabs)/zukan");
   }, [router]);
 
-  const openCreator = useCallback(
-    (username: string | null, shareSlug: string | null) => {
-      if (shareSlug) {
-        router.push(`/u/${shareSlug}` as Href);
-        return;
-      }
-      if (username) {
-        void Linking.openURL(`https://x.com/${username.replace(/^@/, "")}`);
-      }
+  const openShareMap = useCallback(
+    (shareSlug: string) => {
+      router.push(`/u/${shareSlug}` as Href);
     },
     [router],
   );
@@ -139,25 +128,11 @@ export default function PrefectureCreatorsScreen() {
           ) : count > 0 ? (
             <View style={styles.list}>
               {creators.map((c) => (
-                <Pressable
+                <PrefectureCreatorCard
                   key={c.userId}
-                  style={({ pressed }) => [styles.creatorCard, pressed && styles.creatorCardPressed]}
-                  onPress={() => openCreator(c.username, c.shareSlug)}
-                  accessibilityRole="button"
-                >
-                  <Image
-                    source={{ uri: c.profileImage || DEFAULT_AVATAR }}
-                    style={styles.avatar}
-                  />
-                  <View style={styles.creatorInfo}>
-                    <Text style={styles.creatorName} numberOfLines={2}>
-                      {c.displayName || c.username || "名無し"}
-                    </Text>
-                    <Text style={styles.creatorMeta}>
-                      この県に最後に滞在: {formatRelativeJa(c.lastStayedAt)}
-                    </Text>
-                  </View>
-                </Pressable>
+                  creator={c}
+                  onOpenShareMap={openShareMap}
+                />
               ))}
             </View>
           ) : (
@@ -259,42 +234,6 @@ const styles = StyleSheet.create({
   list: {
     gap: 12,
     marginBottom: 32,
-  },
-  creatorCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    padding: 14,
-  },
-  creatorCardPressed: {
-    opacity: 0.92,
-    backgroundColor: "#F9FAFB",
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "#E5E7EB",
-  },
-  creatorInfo: {
-    flex: 1,
-    minWidth: 0,
-  },
-  creatorName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111827",
-    lineHeight: 22,
-  },
-  creatorMeta: {
-    marginTop: 4,
-    fontSize: 13,
-    color: "#6B7280",
-    lineHeight: 18,
   },
   footerActions: {
     flexDirection: "row",
