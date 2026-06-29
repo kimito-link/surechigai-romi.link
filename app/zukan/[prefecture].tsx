@@ -59,6 +59,7 @@ export default function PrefectureCreatorsScreen() {
 
   const creators = data?.creators ?? [];
   const count = creators.length;
+  const liveCount = creators.filter((c) => c.isLive).length;
 
   const onRefresh = useCallback(() => {
     void refetch();
@@ -72,7 +73,7 @@ export default function PrefectureCreatorsScreen() {
     router.push("/(tabs)/zukan");
   }, [router]);
 
-  const openShareMap = useCallback(
+  const openTrail = useCallback(
     (shareSlug: string) => {
       router.push(`/u/${shareSlug}` as Href);
     },
@@ -112,12 +113,20 @@ export default function PrefectureCreatorsScreen() {
           </Text>
 
           <Text style={styles.pageDescription}>
-            君斗りんくのすれ違ひ通信の一覧です。
-            {prefName}で最後に記録した人も含みます。滞在が短い人も表示されます。
+            これまでに「君斗りんくのすれ違ひ通信」で{prefName}
+            を訪れたことのある方の一覧です。転勤や旅行で一時的にいらした方も含まれます。
           </Text>
 
-          <View style={styles.countBadge}>
-            <Text style={styles.countBadgeText}>登録 {count} 人</Text>
+          <View style={styles.countRow}>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>登録 {count} 人</Text>
+            </View>
+            {liveCount > 0 ? (
+              <View style={[styles.countBadge, styles.liveCountBadge]}>
+                <View style={styles.liveDot} />
+                <Text style={styles.liveCountText}>いま {liveCount} 人オンライン</Text>
+              </View>
+            ) : null}
           </View>
 
           {isLoading ? (
@@ -131,7 +140,7 @@ export default function PrefectureCreatorsScreen() {
                 <PrefectureCreatorCard
                   key={c.userId}
                   creator={c}
-                  onOpenShareMap={openShareMap}
+                  onPress={openTrail}
                 />
               ))}
             </View>
@@ -219,12 +228,37 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   countBadge: {
-    alignSelf: "center",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#FFFFFF",
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+  },
+  countRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 10,
     marginBottom: 24,
+  },
+  liveCountBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderColor: "#FCA5A5",
+    backgroundColor: "#FFFBFB",
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#DC2626",
+  },
+  liveCountText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#DC2626",
   },
   countBadgeText: {
     fontSize: 13,
@@ -232,7 +266,7 @@ const styles = StyleSheet.create({
     color: "#374151",
   },
   list: {
-    gap: 12,
+    gap: 10,
     marginBottom: 32,
   },
   footerActions: {

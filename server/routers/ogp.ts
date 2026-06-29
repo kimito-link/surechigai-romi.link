@@ -8,7 +8,7 @@ import { z } from "zod";
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc.js";
 import { getDb } from "../db/connection.js";
 import { getEventById } from "../../modules/event/db/queries.js";
-import { getOrCreateUserShareSlug, getShareInfoBySlug } from "../../modules/encounter/db/queries.js";
+import { getOrCreateUserShareSlug, getShareInfoBySlug, getPublicTrailByShareSlug } from "../../modules/encounter/db/queries.js";
 import { TRPCError } from "@trpc/server";
 
 const APP_ORIGIN = "https://surechigai.kimito.link";
@@ -74,6 +74,35 @@ export const ogpRouter = router({
         zoom: info.zoom,
         precise: info.precise,
         recordedAt: info.recordedAt?.toISOString() ?? null,
+      };
+    }),
+
+  /**
+   * 公開共有スラッグから軌跡一覧（地図 + 最近の記録）を返す。
+   * 都道府県クリエイター一覧のカードタップ先 /u/<slug> 用。
+   */
+  getTrailBySlug: publicProcedure
+    .input(
+      z.object({
+        slug: z.string().regex(/^[A-Za-z0-9]{1,16}$/),
+        limit: z.number().int().min(1).max(500).optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
+      const trail = await getPublicTrailByShareSlug(db, input.slug, input.limit ?? 120);
+      if (!trail) throw new TRPCError({ code: "NOT_FOUND", message: "共有リンクが見つかりません" });
+      return {
+        ...trail,
+        locations: trail.locations.map((loc) => ({
+          ...loc,
+          recordedAt: loc.recordedAt.toISOString(),
+        })),
+        visited: trail.visited.map((v) => ({
+          ...v,
+          lastVisitedAt: v.lastVisitedAt.toISOString(),
+        })),
       };
     }),
 

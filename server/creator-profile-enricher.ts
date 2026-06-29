@@ -9,7 +9,6 @@ import * as schema from "../drizzle/schema/index.js";
 import { twitterUserCache } from "../drizzle/schema/index.js";
 import { parseKimitoPublicProfileHtml } from "../lib/kimito-public-profile.js";
 import { normalizeTwitterUsername } from "../lib/twitter-username.js";
-import { getUserProfileByUsername } from "./twitter-oauth2.js";
 import type { TwitterCacheInfo } from "../modules/encounter/core/prefecture-creator-types.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -79,6 +78,7 @@ export async function fetchKimitoPublicProfile(
 export async function fetchTwitterApiProfile(
   username: string,
 ): Promise<TwitterCacheInfo | null> {
+  const { getUserProfileByUsername } = await import("./twitter-oauth2.js");
   const profile = await getUserProfileByUsername(username);
   if (!profile) return null;
   return {

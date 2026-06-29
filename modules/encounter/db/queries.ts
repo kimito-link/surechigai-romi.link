@@ -19,17 +19,11 @@ import {
   userSettings,
   users,
   twitterUserCache,
-  twitterFollowStatus,
 } from "../../../drizzle/schema/index.js";
 import { kRing } from "../core/geo.js";
 import type { NearbyCandidate, TimeshiftCandidate } from "../core/matching.js";
-import {
-  buildPrefectureCreatorRow,
-  extractTwitterIdFromOpenId,
-  resolveTwitterCacheForUser,
-  type PrefectureCreatorRow,
-  type TwitterCacheInfo,
-} from "../core/prefecture-creator-row.js";
+import type { PrefectureCreatorListRow } from "../core/prefecture-creator-types.js";
+import { LIVE_WINDOW_MS } from "../core/prefecture-creator-types.js";
 import { isValidShareSlug, normalizeTwitterUsername } from "../../../lib/twitter-username.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -815,14 +809,14 @@ export async function getEncounterUsersByPrefecture(
   return items.sort((a, b) => b.lastEncounteredAt.getTime() - a.lastEncounteredAt.getTime());
 }
 
-export type { PrefectureCreatorRow } from "../core/prefecture-creator-row.js";
+export type { PrefectureCreatorListRow } from "../core/prefecture-creator-types.js";
 
 /** 指定都道府県に足あと（locations）があるユーザーを、最終滞在日時順で返す。 */
 export async function getCreatorsByPrefecture(
   db: DB,
   prefecture: string,
   viewerUserId?: number,
-): Promise<PrefectureCreatorRow[]> {
+): Promise<PrefectureCreatorListRow[]> {
   const blockedIds = new Set<number>();
   if (viewerUserId != null) {
     const blockRows = await db
@@ -852,173 +846,50 @@ export async function getCreatorsByPrefecture(
     .select({
       id: users.id,
       name: users.name,
-      openId: users.openId,
       isSuspended: users.isSuspended,
       shareSlug: users.shareSlug,
     })
     .from(users)
     .where(inArray(users.id, userIds));
 
-  type ActiveUser = (typeof userRows)[number] & {
-    twitterUsername?: string | null;
-    twitterId?: string | null;
-  };
-  const activeUsers: ActiveUser[] = userRows.filter((u) => !u.isSuspended);
+  const activeUsers = userRows.filter((u) => !u.isSuspended);
   if (activeUsers.length === 0) return [];
 
-  const { backfillClerkTwitterProfiles } = await import(
-    "../../../server/clerk-profile-sync.js"
-  );
-  const {
-    enrichTwitterProfile,
-    lookupCacheByDisplayNames,
-    lookupCacheByDisplayNameFuzzy,
-  } = await import("../../../server/creator-profile-enricher.js");
-
-  await backfillClerkTwitterProfiles(db, activeUsers);
-
-  const cacheByDisplayName = await lookupCacheByDisplayNames(
-    db,
-    activeUsers.map((u) => u.name).filter((n): n is string => !!n),
-  );
-  for (const user of activeUsers) {
-    if (!normalizeTwitterUsername(user.twitterUsername) && user.name) {
-      const hit =
-        cacheByDisplayName.get(user.name) ??
-        (await lookupCacheByDisplayNameFuzzy(db, user.name));
-      if (hit) {
-        user.twitterUsername = hit.twitterUsername;
-        user.twitterId = hit.twitterId;
-      }
-    }
-  }
-
-  // バックフィル後に shareSlug 不足・無効ユーザーを補完
   for (const user of activeUsers) {
     if (!isValidShareSlug(user.shareSlug)) {
       user.shareSlug = await getOrCreateUserShareSlug(db, user.id);
     }
   }
 
-  const activeUserIds = activeUsers.map((u) => u.id);
-  const followRows =
-    activeUserIds.length > 0
-      ? await db
-          .select({
-            userId: twitterFollowStatus.userId,
-            twitterUsername: twitterFollowStatus.twitterUsername,
-            twitterId: twitterFollowStatus.twitterId,
-          })
-          .from(twitterFollowStatus)
-          .where(inArray(twitterFollowStatus.userId, activeUserIds))
-      : [];
-
-  const followByUserId = new Map(
-    followRows.map((r) => [
-      r.userId,
-      { twitterUsername: r.twitterUsername, twitterId: r.twitterId },
-    ]),
+  const { lookupCacheByDisplayNames, lookupCacheByDisplayNameFuzzy } = await import(
+    "../../../server/creator-profile-enricher.js"
   );
-
-  const twitterIds = [
-    ...new Set(
-      activeUsers
-        .map((u) => extractTwitterIdFromOpenId(u.openId))
-        .filter((id): id is string => !!id),
-    ),
-  ];
-  for (const f of followRows) {
-    if (f.twitterId) twitterIds.push(f.twitterId);
-  }
-  const uniqueTwitterIds = [...new Set(twitterIds)];
-
-  const usernameCandidates = new Set<string>();
-  for (const u of activeUsers) {
-    const follow = followByUserId.get(u.id);
-    if (follow?.twitterUsername) usernameCandidates.add(follow.twitterUsername);
-    if (u.twitterUsername) usernameCandidates.add(u.twitterUsername);
-  }
-
-  const cacheFieldSelect = {
-    twitterUsername: twitterUserCache.twitterUsername,
-    twitterId: twitterUserCache.twitterId,
-    displayName: twitterUserCache.displayName,
-    profileImage: twitterUserCache.profileImage,
-    followersCount: twitterUserCache.followersCount,
-  };
-
-  const cacheRowMap = new Map<string, TwitterCacheInfo>();
-  const addCacheRow = (row: TwitterCacheInfo) => {
-    cacheRowMap.set(`u:${row.twitterUsername.toLowerCase()}`, row);
-    if (row.twitterId) cacheRowMap.set(`id:${row.twitterId}`, row);
-  };
-
-  if (uniqueTwitterIds.length > 0) {
-    const byIdRows = await db
-      .select(cacheFieldSelect)
-      .from(twitterUserCache)
-      .where(inArray(twitterUserCache.twitterId, uniqueTwitterIds));
-    for (const row of byIdRows) addCacheRow(row);
-  }
-  if (usernameCandidates.size > 0) {
-    const byNameRows = await db
-      .select(cacheFieldSelect)
-      .from(twitterUserCache)
-      .where(inArray(twitterUserCache.twitterUsername, [...usernameCandidates]));
-    for (const row of byNameRows) addCacheRow(row);
-  }
-
-  const enrichTargets = new Set<string>();
-  for (const u of activeUsers) {
-    const name = normalizeTwitterUsername(u.twitterUsername);
-    if (name) enrichTargets.add(name);
-  }
-  for (const name of usernameCandidates) {
-    const n = normalizeTwitterUsername(name);
-    if (n) enrichTargets.add(n);
-  }
-  await Promise.all(
-    [...enrichTargets].map(async (username) => {
-      const enriched = await enrichTwitterProfile(db, username);
-      if (enriched) addCacheRow(enriched);
-    }),
+  const cacheByDisplayName = await lookupCacheByDisplayNames(
+    db,
+    activeUsers.map((u) => u.name).filter((n): n is string => !!n),
   );
-
-  const cacheByTwitterId = new Map<string, TwitterCacheInfo>();
-  const cacheByUsername = new Map<string, TwitterCacheInfo>();
-  for (const row of cacheRowMap.values()) {
-    cacheByUsername.set(row.twitterUsername.toLowerCase(), row);
-    if (row.twitterId) cacheByTwitterId.set(row.twitterId, row);
-  }
 
   const lastStayMap = new Map(filteredAgg.map((r) => [r.userId, r.lastStayedAt]));
+  const now = Date.now();
+  const items: PrefectureCreatorListRow[] = [];
 
-  const items: PrefectureCreatorRow[] = [];
   for (const user of activeUsers) {
-    const cached = resolveTwitterCacheForUser(
-      user,
-      followByUserId,
-      cacheByTwitterId,
-      cacheByUsername,
-    );
     const lastStayedAt = lastStayMap.get(user.id);
     if (!lastStayedAt) continue;
 
-    const follow = followByUserId.get(user.id);
-    const row = buildPrefectureCreatorRow(
-      {
-        userId: user.id,
-        name: user.name,
-        openId: user.openId,
-        shareSlug: user.shareSlug,
-        lastStayedAt,
-        storedTwitterUsername: user.twitterUsername ?? null,
-        storedTwitterId: user.twitterId ?? null,
-      },
-      follow,
-      cached,
-    );
-    if (row) items.push(row);
+    const cache =
+      (user.name ? cacheByDisplayName.get(user.name) : undefined) ??
+      (user.name ? await lookupCacheByDisplayNameFuzzy(db, user.name) : null);
+
+    items.push({
+      userId: user.id,
+      displayName: user.name?.trim() || "名無し",
+      twitterHandle: normalizeTwitterUsername(cache?.twitterUsername) ?? null,
+      profileImage: cache?.profileImage ?? null,
+      shareSlug: isValidShareSlug(user.shareSlug) ? user.shareSlug : null,
+      lastStayedAt,
+      isLive: now - lastStayedAt.getTime() < LIVE_WINDOW_MS,
+    });
   }
 
   return items.sort((a, b) => b.lastStayedAt.getTime() - a.lastStayedAt.getTime());
@@ -1208,6 +1079,155 @@ export type ShareInfo = {
   precise: boolean;
   recordedAt: Date | null;
 };
+
+export type PublicTrailResult = {
+  name: string | null;
+  username: string | null;
+  profileImage: string | null;
+  shareSlug: string;
+  paused: boolean;
+  precise: boolean;
+  locations: TrailLocation[];
+  visited: ZukanRow[];
+};
+
+/**
+ * 共有スラッグから公開軌跡を返す（/u/<slug> クリエイター詳細用）。
+ * 停止・一時停止・homeMaskCell・precise 設定を尊重する。
+ */
+export async function getPublicTrailByShareSlug(
+  db: DB,
+  slug: string,
+  limit = 120,
+): Promise<PublicTrailResult | null> {
+  const userRows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      openId: users.openId,
+      isSuspended: users.isSuspended,
+      shareSlug: users.shareSlug,
+    })
+    .from(users)
+    .where(eq(users.shareSlug, slug))
+    .limit(1);
+  if (userRows.length === 0) return null;
+
+  const u = userRows[0];
+  if (u.isSuspended) return null;
+
+  let username = usernameFromName(u.name);
+  if (!username && u.openId.startsWith("clerk:")) {
+    const { fetchClerkTwitterProfiles } = await import(
+      "../../../server/clerk-profile-sync.js"
+    );
+    const profiles = await fetchClerkTwitterProfiles([u.openId]);
+    username = normalizeTwitterUsername(profiles.get(u.openId)?.twitterUsername);
+  }
+  if (!username && u.name) {
+    const { lookupCacheByDisplayNameFuzzy } = await import(
+      "../../../server/creator-profile-enricher.js"
+    );
+    const hit = await lookupCacheByDisplayNameFuzzy(db, u.name);
+    username = normalizeTwitterUsername(hit?.twitterUsername);
+  }
+
+  let profileImage: string | null = null;
+  if (u.name) {
+    const { lookupCacheByDisplayNameFuzzy } = await import(
+      "../../../server/creator-profile-enricher.js"
+    );
+    profileImage = (await lookupCacheByDisplayNameFuzzy(db, u.name))?.profileImage ?? null;
+  }
+
+  const settingsRows = await db
+    .select()
+    .from(userSettings)
+    .where(eq(userSettings.userId, u.id))
+    .limit(1);
+  const settings = settingsRows[0];
+  const precise = settings?.shareLocationPrecise ?? false;
+  const paused = settings?.locationPausedUntil
+    ? settings.locationPausedUntil.getTime() > Date.now()
+    : false;
+  const homeMaskCell = settings?.homeMaskCell ?? null;
+
+  const visited = await db
+    .select({
+      prefecture: visitedAreas.prefecture,
+      municipality: visitedAreas.municipality,
+      visitCount: visitedAreas.visitCount,
+      lastVisitedAt: visitedAreas.lastVisitedAt,
+    })
+    .from(visitedAreas)
+    .where(eq(visitedAreas.userId, u.id))
+    .orderBy(desc(visitedAreas.lastVisitedAt));
+
+  if (paused) {
+    return {
+      name: u.name,
+      username,
+      profileImage,
+      shareSlug: slug,
+      paused: true,
+      precise,
+      locations: [],
+      visited,
+    };
+  }
+
+  const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 500);
+  const locRows = await db
+    .select({
+      id: locations.id,
+      h3R8: locations.h3R8,
+      latGrid: locations.latGrid,
+      lngGrid: locations.lngGrid,
+      lat: locations.lat,
+      lng: locations.lng,
+      accuracyM: locations.accuracyM,
+      municipality: locations.municipality,
+      prefecture: locations.prefecture,
+      address: locations.address,
+      recordedAt: locations.recordedAt,
+    })
+    .from(locations)
+    .where(
+      homeMaskCell
+        ? and(
+            eq(locations.userId, u.id),
+            ne(locations.h3R8, homeMaskCell),
+            sql`${locations.lat} IS NOT NULL`,
+            sql`${locations.lng} IS NOT NULL`,
+          )
+        : and(
+            eq(locations.userId, u.id),
+            sql`${locations.lat} IS NOT NULL`,
+            sql`${locations.lng} IS NOT NULL`,
+          ),
+    )
+    .orderBy(desc(locations.recordedAt))
+    .limit(safeLimit);
+
+  const trailLocations: TrailLocation[] = locRows.flatMap((row) => {
+    const useExact = precise && row.lat != null && row.lng != null;
+    const lat = useExact ? row.lat : row.latGrid;
+    const lng = useExact ? row.lng : row.lngGrid;
+    if (lat == null || lng == null) return [];
+    return [{ ...row, lat, lng }];
+  });
+
+  return {
+    name: u.name,
+    username,
+    profileImage,
+    shareSlug: slug,
+    paused: false,
+    precise,
+    locations: trailLocations,
+    visited,
+  };
+}
 
 /**
  * 共有スラッグから、その人の「最後の記録地点」を市区町村粒度で解決する。

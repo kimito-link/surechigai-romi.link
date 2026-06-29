@@ -1,5 +1,18 @@
 /** 都道府県クリエイター一覧で共有する型（クライアント・サーバー共通）。 */
 
+/** surechigai-nico の CreatorEntry 相当（一覧カード用・軽量） */
+export type PrefectureCreatorListRow = {
+  userId: number;
+  displayName: string;
+  twitterHandle: string | null;
+  profileImage: string | null;
+  shareSlug: string | null;
+  lastStayedAt: Date;
+  isLive: boolean;
+};
+
+export const LIVE_WINDOW_MS = 30 * 60 * 1000;
+
 export type PrefectureCreatorRow = {
   userId: number;
   displayName: string | null;

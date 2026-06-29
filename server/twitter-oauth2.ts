@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import { getDb } from "./db";
-import { oauthPkceData } from "../drizzle/schema";
+import { getDb } from "./db/index.js";
+import { oauthPkceData } from "../drizzle/schema/index.js";
 import { eq, lt } from "drizzle-orm";
 import { twitterApiFetch, waitIfRateLimited } from "./rate-limit-handler";
 
