@@ -29,6 +29,11 @@ import {
   isValidPrefectureName,
 } from "../core/prefecture-classify.js";
 import {
+  canViewTrail,
+  isListedInPrefectureDirectory,
+  parseTrailVisibility,
+} from "../core/trail-visibility.js";
+import {
   resolvePrefectureCreatorProfiles,
   toPrefectureCreatorListProfile,
 } from "./prefecture-creator-profiles.js";
@@ -270,6 +275,7 @@ export async function getMyTrailLocations(
     .where(
       and(
         eq(locations.userId, selfUserId),
+        isNull(locations.deletedAt),
         sql`${locations.lat} IS NOT NULL`,
         sql`${locations.lng} IS NOT NULL`
       )
@@ -313,6 +319,7 @@ export async function getNearbyCandidates(
       and(
         inArray(locations.h3R8, ringCells),
         gte(locations.recordedAt, since),
+        isNull(locations.deletedAt),
         sql`${locations.userId} != ${selfUserId}`,
         eq(users.isSuspended, false)
       )
@@ -862,7 +869,7 @@ export async function getCreatorsByPrefecture(
     })
     .from(locations)
     .innerJoin(users, eq(locations.userId, users.id))
-    .where(eq(users.isSuspended, false));
+    .where(and(eq(users.isSuspended, false), isNull(locations.deletedAt)));
 
   const lastStayMap = new Map<number, Date>();
   for (const row of locationRows) {
@@ -902,18 +909,37 @@ export async function getCreatorsByPrefecture(
   const activeUsers = userRows.filter((u) => !u.isSuspended);
   if (activeUsers.length === 0) return [];
 
-  for (const user of activeUsers) {
+  const settingsRows = await db
+    .select({
+      userId: userSettings.userId,
+      trailVisibility: userSettings.trailVisibility,
+    })
+    .from(userSettings)
+    .where(inArray(userSettings.userId, activeUsers.map((u) => u.id)));
+
+  const visibilityByUserId = new Map(
+    settingsRows.map((row) => [row.userId, parseTrailVisibility(row.trailVisibility)]),
+  );
+
+  const publicUsers = activeUsers.filter((user) =>
+    isListedInPrefectureDirectory(
+      visibilityByUserId.get(user.id) ?? "public",
+    ),
+  );
+  if (publicUsers.length === 0) return [];
+
+  for (const user of publicUsers) {
     if (!isValidShareSlug(user.shareSlug)) {
       user.shareSlug = await getOrCreateUserShareSlug(db, user.id);
     }
   }
 
-  const profileByUserId = await resolvePrefectureCreatorProfiles(db, activeUsers);
+  const profileByUserId = await resolvePrefectureCreatorProfiles(db, publicUsers);
 
   const now = Date.now();
   const items: PrefectureCreatorListRow[] = [];
 
-  for (const user of activeUsers) {
+  for (const user of publicUsers) {
     const lastStayedAt = lastStayMap.get(user.id);
     if (!lastStayedAt) continue;
 
@@ -1019,7 +1045,10 @@ export async function upsertUserSettings(
   patch: Partial<
     Pick<
       schema.UserSettings,
-      "locationPausedUntil" | "homeMaskCell" | "shareLocationPrecise"
+      | "locationPausedUntil"
+      | "homeMaskCell"
+      | "shareLocationPrecise"
+      | "trailVisibility"
     >
   >
 ): Promise<void> {
@@ -1030,6 +1059,64 @@ export async function upsertUserSettings(
       target: userSettings.userId,
       set: patch,
     });
+}
+
+/** 2ユーザー間にすれ違い（encounters）が1件以上あるか。 */
+export async function hasEncounterBetween(
+  db: DB,
+  userA: number,
+  userB: number,
+): Promise<boolean> {
+  const [aId, bId] = userA < userB ? [userA, userB] : [userB, userA];
+  const rows = await db
+    .select({ id: encounters.id })
+    .from(encounters)
+    .where(and(eq(encounters.userAId, aId), eq(encounters.userBId, bId)))
+    .limit(1);
+  return rows.length > 0;
+}
+
+/** 本人の足あとをソフト削除（地図・公開・マッチングから除外）。 */
+export async function softDeleteLocation(
+  db: DB,
+  userId: number,
+  locationId: number,
+): Promise<{ ok: boolean }> {
+  const updated = await db
+    .update(locations)
+    .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(locations.id, locationId),
+        eq(locations.userId, userId),
+        isNull(locations.deletedAt),
+      ),
+    )
+    .returning({ id: locations.id });
+  return { ok: updated.length > 0 };
+}
+
+async function canViewerAccessOwnerTrail(
+  db: DB,
+  ownerUserId: number,
+  viewerUserId: number | null | undefined,
+  visibilityRaw: string | null | undefined,
+): Promise<boolean> {
+  const visibility = parseTrailVisibility(visibilityRaw);
+  const viewer = viewerUserId ?? null;
+  if (viewer === ownerUserId) return true;
+
+  const hasEncounter =
+    visibility === "acquaintance" && viewer != null
+      ? await hasEncounterBetween(db, ownerUserId, viewer)
+      : false;
+
+  return canViewTrail({
+    visibility,
+    ownerUserId,
+    viewerUserId: viewer,
+    hasEncounter,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1138,6 +1225,7 @@ export async function getPublicTrailByShareSlug(
   db: DB,
   slug: string,
   limit = 120,
+  viewerUserId?: number | null,
 ): Promise<PublicTrailResult | null> {
   const userRows = await db
     .select({
@@ -1191,6 +1279,14 @@ export async function getPublicTrailByShareSlug(
     : false;
   const homeMaskCell = settings?.homeMaskCell ?? null;
 
+  const allowed = await canViewerAccessOwnerTrail(
+    db,
+    u.id,
+    viewerUserId,
+    settings?.trailVisibility,
+  );
+  if (!allowed) return null;
+
   const visited = await db
     .select({
       prefecture: visitedAreas.prefecture,
@@ -1235,12 +1331,14 @@ export async function getPublicTrailByShareSlug(
       homeMaskCell
         ? and(
             eq(locations.userId, u.id),
+            isNull(locations.deletedAt),
             ne(locations.h3R8, homeMaskCell),
             sql`${locations.lat} IS NOT NULL`,
             sql`${locations.lng} IS NOT NULL`,
           )
         : and(
             eq(locations.userId, u.id),
+            isNull(locations.deletedAt),
             sql`${locations.lat} IS NOT NULL`,
             sql`${locations.lng} IS NOT NULL`,
           ),
@@ -1275,7 +1373,8 @@ export async function getPublicTrailByShareSlug(
  */
 export async function getShareInfoBySlug(
   db: DB,
-  slug: string
+  slug: string,
+  viewerUserId?: number | null,
 ): Promise<ShareInfo | null> {
   const userRows = await db
     .select({
@@ -1339,6 +1438,14 @@ export async function getShareInfoBySlug(
   if (u.isSuspended) return noLocation;
   if (paused) return noLocation;
 
+  const allowed = await canViewerAccessOwnerTrail(
+    db,
+    u.id,
+    viewerUserId,
+    settings?.trailVisibility,
+  );
+  if (!allowed) return null;
+
   const locRows = await db
     .select({
       lat: locations.lat,
@@ -1353,8 +1460,12 @@ export async function getShareInfoBySlug(
     .from(locations)
     .where(
       homeMaskCell
-        ? and(eq(locations.userId, u.id), ne(locations.h3R8, homeMaskCell))
-        : eq(locations.userId, u.id)
+        ? and(
+            eq(locations.userId, u.id),
+            isNull(locations.deletedAt),
+            ne(locations.h3R8, homeMaskCell),
+          )
+        : and(eq(locations.userId, u.id), isNull(locations.deletedAt))
     )
     .orderBy(desc(locations.recordedAt))
     .limit(1);
@@ -1428,7 +1539,7 @@ export async function getRecentLocationUserIds(db: DB): Promise<number[]> {
   const rows = await db
     .selectDistinct({ userId: locations.userId })
     .from(locations)
-    .where(gte(locations.recordedAt, since));
+    .where(and(gte(locations.recordedAt, since), isNull(locations.deletedAt)));
   return rows.map((r) => r.userId);
 }
 
@@ -1449,7 +1560,11 @@ export async function getMostFrequentH3R8(
     })
     .from(locations)
     .where(
-      and(eq(locations.userId, userId), gte(locations.recordedAt, since))
+      and(
+        eq(locations.userId, userId),
+        isNull(locations.deletedAt),
+        gte(locations.recordedAt, since),
+      ),
     )
     .groupBy(locations.h3R8)
     .orderBy(sql`count(*) DESC`)

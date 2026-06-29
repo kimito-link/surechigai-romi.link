@@ -58,10 +58,11 @@ export const ogpRouter = router({
    */
   getShareBySlug: publicProcedure
     .input(z.object({ slug: z.string().regex(/^[A-Za-z0-9]{1,16}$/) }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
-      const info = await getShareInfoBySlug(db, input.slug);
+      const viewerId = ctx.user && ctx.user.id > 0 ? ctx.user.id : null;
+      const info = await getShareInfoBySlug(db, input.slug, viewerId);
       if (!info) throw new TRPCError({ code: "NOT_FOUND", message: "共有リンクが見つかりません" });
       return {
         name: info.name,
@@ -88,10 +89,11 @@ export const ogpRouter = router({
         limit: z.number().int().min(1).max(500).optional(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
-      const trail = await getPublicTrailByShareSlug(db, input.slug, input.limit ?? 120);
+      const viewerId = ctx.user && ctx.user.id > 0 ? ctx.user.id : null;
+      const trail = await getPublicTrailByShareSlug(db, input.slug, input.limit ?? 120, viewerId);
       if (!trail) throw new TRPCError({ code: "NOT_FOUND", message: "共有リンクが見つかりません" });
       return {
         ...trail,
@@ -120,7 +122,7 @@ export const ogpRouter = router({
     // 共有テキストを市区町村粒度にするため、最新の記録地点の地名も返す。
     let areaLabel: string | null = null;
     try {
-      const info = await getShareInfoBySlug(db, slug);
+      const info = await getShareInfoBySlug(db, slug, ctx.user.id);
       areaLabel = info?.area ?? info?.prefecture ?? null;
     } catch {
       // 地名の解決に失敗してもリンク共有自体は続行

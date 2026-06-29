@@ -6,8 +6,8 @@
  * Native: 地図SDK導入まではプレースホルダ表示。
  */
 
-import { View, Text, StyleSheet, Platform, Pressable } from "react-native";
-import { useCallback } from "react";
+import { View, Text, StyleSheet, Platform, Pressable, Alert } from "react-native";
+import { useCallback, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
@@ -52,6 +52,40 @@ export default function MapScreen() {
   } = trpc.zukan.myTrail.useQuery({ limit: 120 }, {
     enabled: isAuthenticated,
   });
+
+  const deleteLocationMutation = trpc.zukan.deleteLocation.useMutation({
+    onSuccess: () => {
+      void refetchTrail();
+    },
+    onError: (err) => {
+      Alert.alert("エラー", err.message || "足あとの削除に失敗しました");
+    },
+  });
+  const [deletingLocationId, setDeletingLocationId] = useState<number | null>(null);
+
+  const handleDeleteLocation = useCallback(
+    (locationId: number) => {
+      Alert.alert(
+        "足あとを削除",
+        "この記録を地図から消します。すれ違いマッチングにも使われなくなります。",
+        [
+          { text: "キャンセル", style: "cancel" },
+          {
+            text: "削除",
+            style: "destructive",
+            onPress: () => {
+              setDeletingLocationId(locationId);
+              deleteLocationMutation.mutate(
+                { locationId },
+                { onSettled: () => setDeletingLocationId(null) },
+              );
+            },
+          },
+        ],
+      );
+    },
+    [deleteLocationMutation],
+  );
 
   const onRefresh = useCallback(() => {
     void Promise.all([refetchAreas(), refetchTrail()]);
@@ -102,6 +136,9 @@ export default function MapScreen() {
           onRefresh={onRefresh}
           userImageUrl={user?.profileImage ?? undefined}
           contentPaddingBottom={tabInset}
+          canDeleteLocations={isAuthenticated}
+          onDeleteLocation={isAuthenticated ? handleDeleteLocation : undefined}
+          deletingLocationId={deletingLocationId}
           topContent={
             !isAuthenticated ? (
               <View style={styles.bannerWrap}>

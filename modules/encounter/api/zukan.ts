@@ -8,12 +8,14 @@
 import { router, protectedProcedure, publicProcedure } from "../../../server/_core/trpc.js";
 import { getDb } from "../../../server/db/connection.js";
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import {
   getEncounterPrefectures,
   getMyTrailLocations,
   getMyVisitedAreas,
   getEncounterUsersByPrefecture,
   getCreatorsByPrefecture,
+  softDeleteLocation,
 } from "../db/queries.js";
 
 export const zukanRouter = router({
@@ -46,6 +48,22 @@ export const zukanRouter = router({
 
       const locations = await getMyTrailLocations(db, ctx.user.id, input?.limit ?? 120);
       return { locations };
+    }),
+
+  /**
+   * 自分の足あと1件を削除（ソフト削除）。
+   */
+  deleteLocation: protectedProcedure
+    .input(z.object({ locationId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { ok: false };
+
+      const result = await softDeleteLocation(db, ctx.user.id, input.locationId);
+      if (!result.ok) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "記録が見つかりません" });
+      }
+      return { ok: true };
     }),
 
   /**

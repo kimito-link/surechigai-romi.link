@@ -452,3 +452,85 @@ describe("privacy: sanitizeAreaName", () => {
     expect(sanitizeAreaName("渋谷区")).toBe("渋谷区");
   });
 });
+
+// ---------------------------------------------------------------------------
+// trail-visibility.ts
+// ---------------------------------------------------------------------------
+import {
+  parseTrailVisibility,
+  canViewTrail,
+  isListedInPrefectureDirectory,
+} from "../modules/encounter/core/trail-visibility.js";
+
+describe("trail-visibility: parseTrailVisibility", () => {
+  it("未知値は public にフォールバック", () => {
+    expect(parseTrailVisibility(null)).toBe("public");
+    expect(parseTrailVisibility("unknown")).toBe("public");
+  });
+});
+
+describe("trail-visibility: canViewTrail", () => {
+  const owner = 1;
+  const viewer = 2;
+
+  it("本人は private でも閲覧可", () => {
+    expect(
+      canViewTrail({
+        visibility: "private",
+        ownerUserId: owner,
+        viewerUserId: owner,
+        hasEncounter: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("private は他人不可", () => {
+    expect(
+      canViewTrail({
+        visibility: "private",
+        ownerUserId: owner,
+        viewerUserId: viewer,
+        hasEncounter: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("link は未ログインでも閲覧可", () => {
+    expect(
+      canViewTrail({
+        visibility: "link",
+        ownerUserId: owner,
+        viewerUserId: null,
+        hasEncounter: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("acquaintance はすれ違いがある場合のみ", () => {
+    expect(
+      canViewTrail({
+        visibility: "acquaintance",
+        ownerUserId: owner,
+        viewerUserId: viewer,
+        hasEncounter: true,
+      }),
+    ).toBe(true);
+    expect(
+      canViewTrail({
+        visibility: "acquaintance",
+        ownerUserId: owner,
+        viewerUserId: viewer,
+        hasEncounter: false,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("trail-visibility: isListedInPrefectureDirectory", () => {
+  it("public のみ県別一覧に載る", () => {
+    expect(isListedInPrefectureDirectory("public")).toBe(true);
+    expect(isListedInPrefectureDirectory("link")).toBe(false);
+    expect(isListedInPrefectureDirectory("private")).toBe(false);
+    expect(isListedInPrefectureDirectory("acquaintance")).toBe(false);
+  });
+});

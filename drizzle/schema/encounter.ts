@@ -48,6 +48,8 @@ export const locations = pgTable(
     prefecture: varchar("prefecture", { length: 32 }),
     address: text("address"),
     recordedAt: timestamp("recordedAt").defaultNow().notNull(),
+    /** NULL = 有効。ソフト削除（本人のみ地図から消す）。マッチング・公開からも除外。 */
+    deletedAt: timestamp("deletedAt"),
   },
   (table) => [
     index("locations_h3R8_idx").on(table.h3R8),
@@ -261,6 +263,14 @@ export const userSettings = pgTable("user_settings", {
    * true = 正確な座標（高ズーム）で「後でその場所に行ける」精度。
    */
   shareLocationPrecise: boolean("shareLocationPrecise").default(false).notNull(),
+  /**
+   * 軌跡の公開範囲:
+   * private=本人のみ / link=共有URLを知っている人 /
+   * acquaintance=すれ違った人 / public=県別一覧にも載る
+   */
+  trailVisibility: varchar("trailVisibility", { length: 16 })
+    .default("public")
+    .notNull(),
 });
 
 export type UserSettings = typeof userSettings.$inferSelect;

@@ -37,6 +37,12 @@ import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
 import { shareMyLocation } from "@/lib/share";
+import {
+  TRAIL_VISIBILITY_VALUES,
+  trailVisibilityDescription,
+  trailVisibilityLabel,
+  type TrailVisibility,
+} from "@/modules/encounter/core/trail-visibility";
 
 const MAX_HITOKOTO = 140;
 
@@ -197,10 +203,21 @@ export default function MypageScreen() {
   // 共有サムネの粒度設定（false=市区町村 / true=正確座標）
   const settingsQuery = trpc.settings.get.useQuery();
   const setSharePrecision = trpc.settings.setSharePrecision.useMutation();
+  const setTrailVisibility = trpc.settings.setTrailVisibility.useMutation();
   const [sharePrecise, setSharePrecise] = useState(false);
+  const [trailVisibility, setTrailVisibilityState] = useState<TrailVisibility>("public");
   useEffect(() => {
     if (settingsQuery.data) {
       setSharePrecise(settingsQuery.data.shareLocationPrecise ?? false);
+      const vis = settingsQuery.data.trailVisibility;
+      if (
+        vis === "private" ||
+        vis === "link" ||
+        vis === "acquaintance" ||
+        vis === "public"
+      ) {
+        setTrailVisibilityState(vis);
+      }
     }
   }, [settingsQuery.data]);
 
@@ -245,6 +262,23 @@ export default function MypageScreen() {
       );
     },
     [setSharePrecision],
+  );
+
+  const handleSelectTrailVisibility = useCallback(
+    (next: TrailVisibility) => {
+      const prev = trailVisibility;
+      setTrailVisibilityState(next);
+      setTrailVisibility.mutate(
+        { visibility: next },
+        {
+          onError: () => {
+            setTrailVisibilityState(prev);
+            Alert.alert("エラー", "公開範囲の保存に失敗しました。時間をおいて再度お試しください。");
+          },
+        },
+      );
+    },
+    [setTrailVisibility, trailVisibility],
   );
 
   const handleLogout = useCallback(async () => {
@@ -396,6 +430,44 @@ export default function MypageScreen() {
             trackColor={{ false: palette.gray400, true: palette.kimitoBlue }}
             thumbColor={palette.white}
           />
+        </View>
+
+        {/* 軌跡の公開範囲 */}
+        <View style={styles.visibilitySection}>
+          <Text style={styles.visibilityHeading}>軌跡の公開範囲</Text>
+          <Text style={styles.visibilityNote}>
+            記録自体は残ります。交流はXで行い、アプリ内DMはありません。
+          </Text>
+          {TRAIL_VISIBILITY_VALUES.map((value) => {
+            const selected = trailVisibility === value;
+            return (
+              <Pressable
+                key={value}
+                onPress={() => handleSelectTrailVisibility(value)}
+                disabled={settingsQuery.isLoading || setTrailVisibility.isPending}
+                style={({ pressed }) => [
+                  styles.visibilityOption,
+                  selected && styles.visibilityOptionSelected,
+                  pressed && { opacity: 0.85 },
+                ]}
+              >
+                <MaterialIcons
+                  name={selected ? "radio-button-checked" : "radio-button-unchecked"}
+                  size={20}
+                  color={selected ? palette.kimitoBlue : color.textMuted}
+                  style={{ marginRight: 10 }}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.visibilityTitle, selected && styles.visibilityTitleSelected]}>
+                    {trailVisibilityLabel(value)}
+                  </Text>
+                  <Text style={styles.visibilitySub}>
+                    {trailVisibilityDescription(value)}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* ひとこと */}
@@ -571,6 +643,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 3,
     lineHeight: 17,
+  },
+  visibilitySection: {
+    backgroundColor: color.surface,
+    borderRadius: 16,
+    padding: 16,
+    gap: 8,
+  },
+  visibilityHeading: {
+    color: color.textPrimary,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  visibilityNote: {
+    color: color.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  visibilityOption: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.surfaceAlt,
+  },
+  visibilityOptionSelected: {
+    borderColor: palette.kimitoBlue,
+    backgroundColor: palette.kimitoBlue + "12",
+  },
+  visibilityTitle: {
+    color: color.textPrimary,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  visibilityTitleSelected: {
+    color: palette.kimitoBlue,
+  },
+  visibilitySub: {
+    color: color.textMuted,
+    fontSize: 11,
+    marginTop: 3,
+    lineHeight: 16,
   },
   avatar: {
     width: 72,

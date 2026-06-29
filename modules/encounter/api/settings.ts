@@ -11,6 +11,7 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../../../server/_core/trpc.js";
 import { getDb } from "../../../server/db/connection.js";
 import { getUserSettings, upsertUserSettings } from "../db/queries.js";
+import { TRAIL_VISIBILITY_VALUES } from "../core/trail-visibility.js";
 
 export const settingsRouter = router({
   /**
@@ -62,12 +63,41 @@ export const settingsRouter = router({
     }),
 
   /**
+   * 軌跡の公開範囲を設定。
+   */
+  setTrailVisibility: protectedProcedure
+    .input(
+      z.object({
+        visibility: z.enum(TRAIL_VISIBILITY_VALUES),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { ok: true, visibility: input.visibility };
+
+      await upsertUserSettings(db, ctx.user.id, {
+        trailVisibility: input.visibility,
+      });
+
+      return { ok: true, visibility: input.visibility };
+    }),
+
+  /**
    * 現在の設定を取得。
    */
   get: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return null;
 
-    return getUserSettings(db, ctx.user.id);
+    const settings = await getUserSettings(db, ctx.user.id);
+    if (!settings) {
+      return {
+        locationPausedUntil: null,
+        homeMaskCell: null,
+        shareLocationPrecise: false,
+        trailVisibility: "public" as const,
+      };
+    }
+    return settings;
   }),
 });

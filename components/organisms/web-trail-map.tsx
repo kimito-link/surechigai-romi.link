@@ -9,6 +9,8 @@ import {
   ScrollView,
   StyleSheet,
   RefreshControl,
+  Pressable,
+  ActivityIndicator,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import {
@@ -36,6 +38,9 @@ type WebTrailMapProps = {
   contentPaddingBottom?: number;
   emptyTitle?: string;
   emptyText?: string;
+  canDeleteLocations?: boolean;
+  onDeleteLocation?: (locationId: number) => void;
+  deletingLocationId?: number | null;
 };
 
 export function WebTrailMap({
@@ -48,6 +53,9 @@ export function WebTrailMap({
   contentPaddingBottom,
   emptyTitle = "まだ正確な足あとがありません",
   emptyText = "チェックインすると、道路や建物の位置まで辿れる精度で記録されます",
+  canDeleteLocations = false,
+  onDeleteLocation,
+  deletingLocationId = null,
 }: WebTrailMapProps) {
   const total = visited.reduce((s, v) => s + v.visitCount, 0);
 
@@ -116,6 +124,24 @@ export function WebTrailMap({
                   {point.accuracyM ? `±${Math.round(point.accuracyM)}m` : "精度不明"}
                 </Text>
               </View>
+              {canDeleteLocations && onDeleteLocation ? (
+                <Pressable
+                  onPress={() => onDeleteLocation(point.id)}
+                  disabled={deletingLocationId === point.id}
+                  style={({ pressed }) => [
+                    styles.deleteButton,
+                    pressed && { opacity: 0.7 },
+                    deletingLocationId === point.id && { opacity: 0.5 },
+                  ]}
+                  accessibilityLabel="この足あとを削除"
+                >
+                  {deletingLocationId === point.id ? (
+                    <ActivityIndicator size="small" color={color.danger} />
+                  ) : (
+                    <MaterialIcons name="delete-outline" size={20} color={color.danger} />
+                  )}
+                </Pressable>
+              ) : null}
             </View>
           ))}
         </>
@@ -242,5 +268,13 @@ const styles = StyleSheet.create({
     color: color.accentIndigo,
     fontSize: 11,
     fontWeight: "800",
+  },
+  deleteButton: {
+    marginLeft: 8,
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: color.danger + "12",
+    borderWidth: 1,
+    borderColor: color.danger + "33",
   },
 });
