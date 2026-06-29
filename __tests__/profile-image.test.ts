@@ -45,6 +45,25 @@ describe("profile-image", () => {
     ).toBe("https://unavatar.io/x/streamerfunch");
   });
 
+  it("Clerk プロキシ（中身が kimito OGP）も unavatar にフォールバックする", () => {
+    expect(
+      resolveListProfileImage(
+        "streamerfunch",
+        "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2tpbWl0by5saW5rIn0",
+      ),
+    ).toBe("https://unavatar.io/x/streamerfunch");
+  });
+
+  it("X CDN 実画像はそのまま使う", () => {
+    expect(
+      resolveListProfileImage(
+        "streamerfunch",
+        "https://img.clerk.com/proxy",
+        "https://pbs.twimg.com/profile_images/1/abc_normal.jpg",
+      ),
+    ).toBe("https://pbs.twimg.com/profile_images/1/abc_400x400.jpg");
+  });
+
   it("buildTwitterAvatarFallbackUrl を生成する", () => {
     expect(buildTwitterAvatarFallbackUrl("@streamerfunch")).toBe(
       "https://unavatar.io/x/streamerfunch",

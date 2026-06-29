@@ -29,6 +29,19 @@ export function normalizeTwitterAvatarUrl(
   return url.replace("_normal", "_400x400").replace("_bigger", "_400x400");
 }
 
+/** 一覧で直接使ってよい X CDN アバター（Clerk プロキシ内の kimito OGP は除外） */
+export function isTrustedTwitterAvatarUrl(
+  url: string | null | undefined,
+): boolean {
+  if (!url?.trim()) return false;
+  try {
+    const host = new URL(url).hostname;
+    return host === "pbs.twimg.com" || host === "abs.twimg.com";
+  } catch {
+    return false;
+  }
+}
+
 /** 一覧に使える実アバター URL のみ返す（kimito OGP は常に除外） */
 export function pickBestProfileImage(
   ...candidates: (string | null | undefined)[]
@@ -36,6 +49,19 @@ export function pickBestProfileImage(
   for (const candidate of candidates) {
     const normalized = normalizeTwitterAvatarUrl(candidate);
     if (normalized && !isKimitoGeneratedProfileImage(normalized)) {
+      return normalized;
+    }
+  }
+  return null;
+}
+
+/** 一覧カード用: X CDN 実画像のみ採用（Clerk / kimito プロキシは使わない） */
+export function pickListAvatarImage(
+  ...candidates: (string | null | undefined)[]
+): string | null {
+  for (const candidate of candidates) {
+    const normalized = normalizeTwitterAvatarUrl(candidate);
+    if (normalized && isTrustedTwitterAvatarUrl(normalized)) {
       return normalized;
     }
   }
@@ -51,13 +77,13 @@ export function buildTwitterAvatarFallbackUrl(
   return `https://unavatar.io/x/${encodeURIComponent(clean)}`;
 }
 
-/** 一覧カード用: 実アバター → unavatar → null（kimito OGP は返さない） */
+/** 一覧カード用: X CDN 実アバター → unavatar → null（kimito / Clerk プロキシは返さない） */
 export function resolveListProfileImage(
   username: string | null | undefined,
   ...candidates: (string | null | undefined)[]
 ): string | null {
   return (
-    pickBestProfileImage(...candidates) ??
+    pickListAvatarImage(...candidates) ??
     buildTwitterAvatarFallbackUrl(username)
   );
 }

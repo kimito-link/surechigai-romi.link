@@ -1,7 +1,6 @@
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { formatRelativeJa } from "@/lib/date-utils";
-import { resolveListProfileImage } from "@/lib/profile-image";
 import type { PrefectureCreatorListRow } from "@/modules/encounter/core/prefecture-creator-types";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { palette } from "@/theme/tokens";
@@ -18,14 +17,13 @@ type PrefectureCreatorCardProps = {
  * アバター + 表示名 + （任意）@handle + 最終滞在。タップで /u/<shareSlug> へ。
  */
 export function PrefectureCreatorCard({ creator, onPress }: PrefectureCreatorCardProps) {
-  const avatarSrc = resolveListProfileImage(creator.twitterHandle, creator.profileImage);
   const fallbackInitial = (creator.displayName || creator.twitterHandle || "?").slice(0, 1);
   const canOpen = Boolean(creator.shareSlug && onPress);
 
   const content = (
     <>
       <CreatorAvatar
-        src={avatarSrc}
+        src={creator.profileImage}
         alt={creator.displayName}
         fallbackInitial={fallbackInitial}
         recyclingKey={`creator-${creator.userId}-${creator.twitterHandle ?? "x"}`}
