@@ -25,7 +25,7 @@ const DISPLAY_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 const BLUE_BORDER = "#00427B40"; // kimitoBlue 25%
 const BLUE_PILL_BORDER = "#00427B33"; // kimitoBlue 20%
 
-interface AppHeaderProps {
+export type AppHeaderProps = {
   title?: string;
   subtitle?: string;
   showCharacters?: boolean;
@@ -38,7 +38,10 @@ interface AppHeaderProps {
   showLoginButton?: boolean;
   /** ブランドコピー「会いたい君がいる現在地」を表示（既定 true）。ヒーローで強調済みの画面は false */
   showTagline?: boolean;
-}
+};
+
+/** 固定ヘッダー分の paddingTop（tagline 込みの目安） */
+export const APP_HEADER_CHROME_HEIGHT = 124;
 
 const triggerHaptic = () => {
   if (Platform.OS !== "web") {
@@ -46,11 +49,16 @@ const triggerHaptic = () => {
   }
 };
 
-// Web では sticky 固定ヘッダー（スクロールしても常に上部に残す）。
-// kimito.link と同じ「常時見えるヘッダー＋ログイン状態」体験にする。
-const webStickyStyle =
+// Web では fixed 固定ヘッダー（全ページ共通・ハンバーガーメニュー常時表示）
+const webChromeStyle =
   Platform.OS === "web"
-    ? ({ position: "sticky", top: 0, zIndex: 50 } as unknown as object)
+    ? ({
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 100,
+      } as unknown as object)
     : null;
 
 export function AppHeader({
@@ -83,7 +91,7 @@ export function AppHeader({
 
   return (
     <>
-      <View style={[styles.shell, webStickyStyle]}>
+      <View style={[styles.shell, webChromeStyle]}>
         <View style={[styles.topRow, isNarrow && styles.topRowNarrow]}>
           {/* 左: ロゴ + アプリ名（または任意の leftElement） */}
           <View style={[styles.brandBlock, isNarrow && styles.brandBlockNarrow]}>

@@ -94,7 +94,10 @@ export default function PrefectureCreatorsScreen() {
   }
 
   return (
-    <ScreenContainer containerClassName="bg-background">
+    <ScreenContainer
+      containerClassName="bg-background"
+      headerProps={{ showLoginButton: !isAuthenticated }}
+    >
       {!isAuthenticated ? (
         <LoginPreviewBanner headline="ログインすると、あなたの記録もこの一覧に載ります" />
       ) : null}

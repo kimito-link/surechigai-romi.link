@@ -111,6 +111,15 @@ export default function TabLayout() {
           backgroundColor: color.surface,
           borderTopColor: color.border,
           borderTopWidth: 1,
+          ...(Platform.OS === "web"
+            ? ({
+                position: "fixed",
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 100,
+              } as object)
+            : {}),
         },
       }}
     >

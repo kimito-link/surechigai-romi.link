@@ -8,6 +8,11 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
+import {
+  isKimitoGeneratedProfileImage,
+  resolveListProfileImage,
+} from "@/lib/profile-image";
+import { normalizeTwitterUsername } from "@/lib/twitter-username";
 
 type CreatorAvatarProps = {
   src: string | null | undefined;
@@ -15,6 +20,8 @@ type CreatorAvatarProps = {
   fallbackInitial: string;
   size?: number;
   recyclingKey?: string;
+  /** @handle が分かるとき kimito OGP 除外 + unavatar フォールバック */
+  twitterHandle?: string | null;
   style?: StyleProp<ViewStyle | ImageStyle>;
 };
 
@@ -28,12 +35,15 @@ export function CreatorAvatar({
   fallbackInitial,
   size = 56,
   recyclingKey,
+  twitterHandle,
   style,
 }: CreatorAvatarProps) {
   const [errored, setErrored] = useState(false);
   const radius = size / 2;
+  const handle = normalizeTwitterUsername(twitterHandle);
+  const resolvedSrc = resolveListProfileImage(handle, isKimitoGeneratedProfileImage(src) ? null : src);
 
-  if (!src || errored) {
+  if (!resolvedSrc || errored) {
     return (
       <View
         style={[
@@ -52,8 +62,8 @@ export function CreatorAvatar({
 
   return (
     <Image
-      source={{ uri: src }}
-      recyclingKey={recyclingKey ?? src}
+      source={{ uri: resolvedSrc }}
+      recyclingKey={recyclingKey ?? resolvedSrc}
       style={[
         { width: size, height: size, borderRadius: radius },
         style as StyleProp<ImageStyle>,

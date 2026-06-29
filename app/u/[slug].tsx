@@ -12,7 +12,6 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
 import { WebTrailMap } from "@/components/organisms/web-trail-map";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
@@ -45,19 +44,20 @@ export default function ShareLocationScreen() {
   const fallbackInitial = (trailQuery.data?.name || trailQuery.data?.username || "?").slice(0, 1);
 
   return (
-    <ScreenContainer containerClassName="bg-background">
-      <AppHeader
-        title="軌跡"
-        showCharacters={false}
-        isDesktop={isDesktop}
-        showLoginButton={!isAuthenticated}
-        leftElement={
+    <ScreenContainer
+      containerClassName="bg-background"
+      headerProps={{
+        title: "軌跡",
+        showCharacters: false,
+        isDesktop,
+        showLoginButton: !isAuthenticated,
+        leftElement: (
           <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
             <MaterialIcons name="arrow-back" size={24} color={palette.kimitoBlue} />
           </Pressable>
-        }
-      />
-
+        ),
+      }}
+    >
       {trailQuery.isLoading && (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={color.accentPrimary} />
