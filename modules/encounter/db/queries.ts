@@ -30,12 +30,6 @@ import {
   type PrefectureCreatorRow,
   type TwitterCacheInfo,
 } from "../core/prefecture-creator-row.js";
-import { backfillClerkTwitterProfiles } from "../../../server/clerk-profile-sync.js";
-import {
-  enrichTwitterProfile,
-  lookupCacheByDisplayNames,
-  lookupCacheByDisplayNameFuzzy,
-} from "../../../server/creator-profile-enricher.js";
 import { isValidShareSlug, normalizeTwitterUsername } from "../../../lib/twitter-username.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -871,6 +865,15 @@ export async function getCreatorsByPrefecture(
   };
   const activeUsers: ActiveUser[] = userRows.filter((u) => !u.isSuspended);
   if (activeUsers.length === 0) return [];
+
+  const { backfillClerkTwitterProfiles } = await import(
+    "../../../server/clerk-profile-sync.js"
+  );
+  const {
+    enrichTwitterProfile,
+    lookupCacheByDisplayNames,
+    lookupCacheByDisplayNameFuzzy,
+  } = await import("../../../server/creator-profile-enricher.js");
 
   await backfillClerkTwitterProfiles(db, activeUsers);
 

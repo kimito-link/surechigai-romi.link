@@ -3,12 +3,6 @@
  * X username / twitterUserCache / shareSlug を DB に反映する。
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClerkClient, verifyToken } from "@clerk/backend";
-import { getDb } from "../../server/db/connection.js";
-import { syncClerkTwitterProfileToDb } from "../../server/clerk-profile-sync.js";
-import { extractTwitterProfileFromClerkUser } from "../../lib/clerk-twitter-profile.js";
-import { getOrCreateUserShareSlug } from "../../modules/encounter/db/queries.js";
-import { enrichTwitterProfile } from "../../server/creator-profile-enricher.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -29,6 +23,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(500).json({ error: "Clerk not configured" });
       return;
     }
+
+    const { createClerkClient, verifyToken } = await import("@clerk/backend");
+    const { getDb } = await import("../../server/db/connection.js");
+    const { syncClerkTwitterProfileToDb } = await import(
+      "../../server/clerk-profile-sync.js"
+    );
+    const { extractTwitterProfileFromClerkUser } = await import(
+      "../../lib/clerk-twitter-profile.js"
+    );
+    const { getOrCreateUserShareSlug } = await import(
+      "../../modules/encounter/db/queries.js"
+    );
+    const { enrichTwitterProfile } = await import(
+      "../../server/creator-profile-enricher.js"
+    );
 
     const payload = await verifyToken(token, { secretKey: clerkSecretKey });
     const clerkUserId = payload?.sub;
