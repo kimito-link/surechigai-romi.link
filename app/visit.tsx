@@ -23,60 +23,15 @@ import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
+import { getCurrentLocation, type CurrentLocation } from "@/lib/get-current-location";
+import { formatCoordinate, parseCoordinateInput } from "@/lib/parse-coordinate-input";
 import { color, palette } from "@/theme/tokens";
 
-type BrowserLocation = {
-  lat: number;
-  lng: number;
-  accuracy?: number;
-};
+type BrowserLocation = CurrentLocation;
 
 const GROUP_CODE_STORAGE_KEY = "surechigai.groupVisit.groupCode";
 const DISPLAY_NAME_STORAGE_KEY = "surechigai.groupVisit.displayName";
 const VISITOR_TOKEN_STORAGE_KEY = "surechigai.groupVisit.visitorToken";
-
-function getWebLocation(): Promise<BrowserLocation> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === "undefined" || !navigator.geolocation) {
-      reject(new Error("この端末では位置情報を取得できません"));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        resolve({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
-      },
-      () => reject(new Error("位置情報の許可が必要です")),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
-    );
-  });
-}
-
-async function getNativeLocation(): Promise<BrowserLocation> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Location = (await import("expo-location")) as any;
-  const { status } = await Location.requestForegroundPermissionsAsync();
-  if (status !== "granted") {
-    throw new Error("位置情報の許可が必要です");
-  }
-  const pos = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy?.Balanced ?? 4,
-  });
-  return {
-    lat: pos.coords.latitude,
-    lng: pos.coords.longitude,
-    accuracy: pos.coords.accuracy,
-  };
-}
-
-async function getCurrentLocation(): Promise<BrowserLocation> {
-  if (Platform.OS === "web") return getWebLocation();
-  return getNativeLocation();
-}
 
 function randomToken(): string {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -121,53 +76,6 @@ function formatReportPlace(report: {
   if (report.address) return report.address;
   const area = [report.prefecture, report.municipality].filter(Boolean).join(" ");
   return area || "申告地点";
-}
-
-const COORDINATE_NUMBER_RE = "([+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+))";
-
-function formatPinCoordinate(pin: Pick<BrowserLocation, "lat" | "lng">): string {
-  return `${pin.lat.toFixed(6)}, ${pin.lng.toFixed(6)}`;
-}
-
-function parseCoordinateMatch(match: RegExpMatchArray | null): BrowserLocation | null {
-  if (!match) return null;
-
-  const lat = Number(match[1]);
-  const lng = Number(match[2]);
-  if (
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lng) ||
-    lat < -90 ||
-    lat > 90 ||
-    lng < -180 ||
-    lng > 180
-  ) {
-    return null;
-  }
-
-  return { lat, lng };
-}
-
-function safeDecodeInput(input: string): string {
-  try {
-    return decodeURIComponent(input);
-  } catch {
-    return input;
-  }
-}
-
-function parseCoordinateInput(input: string): BrowserLocation | null {
-  const source = safeDecodeInput(input.trim()).replace(/\+/g, " ");
-  if (!source) return null;
-
-  const coordinatePair = `${COORDINATE_NUMBER_RE}\\s*,\\s*${COORDINATE_NUMBER_RE}`;
-  const fromAtMarker = parseCoordinateMatch(source.match(new RegExp(`@${coordinatePair}`)));
-  if (fromAtMarker) return fromAtMarker;
-
-  const fromQuery = parseCoordinateMatch(source.match(new RegExp(`[?&](?:q|query|ll)=${coordinatePair}`)));
-  if (fromQuery) return fromQuery;
-
-  return parseCoordinateMatch(source.match(new RegExp(coordinatePair)));
 }
 
 export default function GroupVisitScreen() {
@@ -276,7 +184,7 @@ export default function GroupVisitScreen() {
     try {
       const pos = await getCurrentLocation();
       setDraftPin(pos);
-      setCoordinateText(formatPinCoordinate(pos));
+      setCoordinateText(formatCoordinate(pos.lat, pos.lng));
       setStatusMessage("現在地にピンを置きました");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "現在地を取得できませんでした");
@@ -294,7 +202,7 @@ export default function GroupVisitScreen() {
     }
 
     setDraftPin(parsed);
-    setCoordinateText(formatPinCoordinate(parsed));
+    setCoordinateText(formatCoordinate(parsed.lat, parsed.lng));
     setStatusMessage("座標からピンを置きました");
   }, [coordinateText]);
 
@@ -521,7 +429,7 @@ export default function GroupVisitScreen() {
                 <View style={styles.pinMetaRow}>
                   <MaterialIcons name="check-circle" size={17} color={color.success} />
                   <Text style={styles.pinMetaText} numberOfLines={1}>
-                    ピン: {formatPinCoordinate(draftPin)}
+                    ピン: {formatCoordinate(draftPin.lat, draftPin.lng)}
                     {draftPin.accuracy ? ` / 精度 ±${Math.round(draftPin.accuracy)}m` : ""}
                   </Text>
                 </View>

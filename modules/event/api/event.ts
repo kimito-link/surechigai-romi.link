@@ -25,6 +25,9 @@ import { getDb } from "../../../server/db/connection.js";
 import { isValidPrefecture } from "../core/prefectures.js";
 import { serializeTypeTags, parseTypeTags } from "../core/status.js";
 import { hashAccessCode, verifyAccessCode } from "../core/access.js";
+import { venueLabelFromGeocode } from "../core/venue-label.js";
+import { reverseGeocode } from "../../encounter/core/geocoding.js";
+import { parseCoordinateInput } from "../../../lib/parse-coordinate-input.js";
 import type { Event } from "../../../drizzle/schema/event.js";
 import {
   insertEvent,
@@ -150,6 +153,62 @@ export const eventRouter = router({
       });
 
       return { id: created.id };
+    }),
+
+  /**
+   * リアル開催の場所を Maps URL / 座標 / 現在地から都道府県＋会場ラベルに変換する。
+   */
+  resolveOfflineLocation: protectedProcedure
+    .input(
+      z
+        .object({
+          locationInput: z.string().max(2000).optional(),
+          lat: z.number().min(-90).max(90).optional(),
+          lng: z.number().min(-180).max(180).optional(),
+        })
+        .refine(
+          (v) =>
+            (v.locationInput != null && v.locationInput.trim() !== "") ||
+            (v.lat != null && v.lng != null),
+          { message: "Maps URL または座標が必要です" },
+        ),
+    )
+    .mutation(async ({ input }) => {
+      let lat = input.lat;
+      let lng = input.lng;
+
+      if (input.locationInput?.trim()) {
+        const parsed = parseCoordinateInput(input.locationInput);
+        if (!parsed) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Google Maps URL または緯度,経度の形式で入力してください",
+          });
+        }
+        lat = parsed.lat;
+        lng = parsed.lng;
+      }
+
+      if (lat == null || lng == null) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "座標を取得できませんでした" });
+      }
+
+      const geo = await reverseGeocode(lat, lng);
+      if (!geo.prefecture || !isValidPrefecture(geo.prefecture)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "この場所の都道府県を特定できませんでした。別の地点を試してください",
+        });
+      }
+
+      return {
+        prefecture: geo.prefecture,
+        venueName: venueLabelFromGeocode(geo),
+        lat,
+        lng,
+        municipality: geo.municipality,
+        areaName: geo.areaName,
+      };
     }),
 
   /** 公開イベントの予定一覧（カレンダー）。未ログインでも閲覧可。 */
