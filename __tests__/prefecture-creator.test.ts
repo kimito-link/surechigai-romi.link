@@ -113,7 +113,7 @@ describe("buildPrefectureCreatorRow", () => {
         userId: 1,
         name: "君斗りんく@クリエイター応援",
         openId: "twitter:111",
-        shareSlug: "share-abc",
+        shareSlug: "shareAbc123",
         lastStayedAt: BASE_DATE,
       },
       { twitterUsername: "streamerfunch", twitterId: "111" },
@@ -128,12 +128,31 @@ describe("buildPrefectureCreatorRow", () => {
 
     expect(row).not.toBeNull();
     expect(row!.kimitoLinkUrl).toBe("https://kimito.link/streamerfunch/");
-    expect(row!.shareUrl).toBe("https://surechigai.kimito.link/u/share-abc");
+    expect(row!.shareUrl).toBe("https://surechigai.kimito.link/u/shareAbc123");
     expect(row!.username).toBe("streamerfunch");
     expect(row!.displayName).toBe("ストリーマーファンチ");
     expect(row!.followersCount).toBe(12345);
     expect(JSON.stringify(row)).not.toContain("x.com");
     expect(JSON.stringify(row)).not.toContain("twitter.com");
+  });
+
+  it("Clerk 同期済み twitterUsername を優先して kimito.link を出す", () => {
+    const row = buildPrefectureCreatorRow(
+      {
+        userId: 6,
+        name: "君斗りんく@クリエイター応援",
+        openId: "clerk:user_abc",
+        shareSlug: "validSlug12",
+        lastStayedAt: BASE_DATE,
+        storedTwitterUsername: "streamerfunch",
+        storedTwitterId: "12345",
+      },
+      undefined,
+      undefined,
+    );
+    expect(row!.username).toBe("streamerfunch");
+    expect(row!.kimitoLinkUrl).toBe("https://kimito.link/streamerfunch/");
+    expect(row!.displayName).toBe("君斗りんく@クリエイター応援");
   });
 
   it("username がなく shareSlug のみのとき kimitoLinkUrl は null、shareUrl はある", () => {
@@ -142,7 +161,7 @@ describe("buildPrefectureCreatorRow", () => {
         userId: 2,
         name: "匿名ユーザー",
         openId: "clerk:anon",
-        shareSlug: "only-map",
+        shareSlug: "onlymap1234",
         lastStayedAt: BASE_DATE,
       },
       undefined,
@@ -150,8 +169,26 @@ describe("buildPrefectureCreatorRow", () => {
     );
 
     expect(row!.kimitoLinkUrl).toBeNull();
-    expect(row!.shareUrl).toBe("https://surechigai.kimito.link/u/only-map");
+    expect(row!.shareUrl).toBe("https://surechigai.kimito.link/u/onlymap1234");
     expect(row!.username).toBeNull();
+  });
+
+  it("無効な shareSlug は shareUrl に含めない", () => {
+    const row = buildPrefectureCreatorRow(
+      {
+        userId: 7,
+        name: "test",
+        openId: "clerk:x",
+        shareSlug: "君斗りんく@クリエイター応援",
+        lastStayedAt: BASE_DATE,
+        storedTwitterUsername: "streamerfunch",
+      },
+      undefined,
+      undefined,
+    );
+    expect(row!.shareSlug).toBeNull();
+    expect(row!.shareUrl).toBeNull();
+    expect(row!.kimitoLinkUrl).toBe("https://kimito.link/streamerfunch/");
   });
 
   it("username も shareSlug もないとき両リンク null", () => {
@@ -251,5 +288,16 @@ describe("resolveCreatorLinkVisibility", () => {
     });
     expect(v.showKimitoLink).toBe(false);
     expect(v.showShareMap).toBe(true);
+  });
+
+  it("無効 shareSlug では現在地ボタンを出さない", () => {
+    const v = resolveCreatorLinkVisibility({
+      username: "streamerfunch",
+      kimitoLinkUrl: "https://kimito.link/streamerfunch/",
+      shareSlug: "invalid slug!",
+      shareUrl: null,
+    });
+    expect(v.showKimitoLink).toBe(true);
+    expect(v.showShareMap).toBe(false);
   });
 });

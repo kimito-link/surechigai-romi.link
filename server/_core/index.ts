@@ -526,24 +526,41 @@ async function startServer() {
       const openId = `clerk:${clerkUserId}`;
 
       const clerk = createClerkClient({ secretKey: clerkSecretKey });
-      let user = await import("../db").then((db) => db.getUserByOpenId(openId));
+      const dbModule = await import("../db");
+      const { getDb } = await import("../db/connection.js");
+      const {
+        syncClerkTwitterProfileToDb,
+      } = await import("../clerk-profile-sync.js");
+      const { extractTwitterProfileFromClerkUser } = await import(
+        "../../lib/clerk-twitter-profile.js"
+      );
+      const { getOrCreateUserShareSlug } = await import(
+        "../../modules/encounter/db/queries.js"
+      );
+
+      const clerkUser = await clerk.users.getUser(clerkUserId);
+      const twitterProfile = extractTwitterProfileFromClerkUser(clerkUser);
+
+      let user = await dbModule.getUserByOpenId(openId);
       if (!user) {
-        const clerkUser = await clerk.users.getUser(clerkUserId);
-        const twitterAccount = clerkUser.externalAccounts?.find(
-          (a: { provider: string }) => a.provider === "x" || a.provider === "oauth_x",
-        );
-        const db = await import("../db");
-        await db.upsertUser({
+        await dbModule.upsertUser({
           openId,
           name:
+            twitterProfile?.displayName ||
             clerkUser.fullName ||
-            (twitterAccount as { username?: string } | undefined)?.username ||
             "Unknown",
           email: clerkUser.primaryEmailAddress?.emailAddress || null,
           loginMethod: "twitter",
           lastSignedIn: new Date(),
         });
-        user = await db.getUserByOpenId(openId);
+        user = await dbModule.getUserByOpenId(openId);
+      }
+
+      const db = await getDb();
+      if (db && user && twitterProfile) {
+        await syncClerkTwitterProfileToDb(db, user.id, twitterProfile);
+        await getOrCreateUserShareSlug(db, user.id);
+        user = await dbModule.getUserByOpenId(openId);
       }
 
       return res.json({ ok: true, user });

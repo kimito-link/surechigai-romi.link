@@ -30,6 +30,8 @@ import {
   type PrefectureCreatorRow,
   type TwitterCacheInfo,
 } from "../core/prefecture-creator.js";
+import { backfillClerkTwitterProfiles } from "../../../server/clerk-profile-sync.js";
+import { normalizeTwitterUsername, isValidShareSlug } from "../../../lib/twitter-username.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -858,8 +860,21 @@ export async function getCreatorsByPrefecture(
     .from(users)
     .where(inArray(users.id, userIds));
 
-  const activeUsers = userRows.filter((u) => !u.isSuspended);
+  type ActiveUser = (typeof userRows)[number] & {
+    twitterUsername?: string | null;
+    twitterId?: string | null;
+  };
+  const activeUsers: ActiveUser[] = userRows.filter((u) => !u.isSuspended);
   if (activeUsers.length === 0) return [];
+
+  await backfillClerkTwitterProfiles(db, activeUsers);
+
+  // バックフィル後に shareSlug 不足・無効ユーザーを補完
+  for (const user of activeUsers) {
+    if (!isValidShareSlug(user.shareSlug)) {
+      user.shareSlug = await getOrCreateUserShareSlug(db, user.id);
+    }
+  }
 
   const activeUserIds = activeUsers.map((u) => u.id);
   const followRows =
@@ -897,6 +912,7 @@ export async function getCreatorsByPrefecture(
   for (const u of activeUsers) {
     const follow = followByUserId.get(u.id);
     if (follow?.twitterUsername) usernameCandidates.add(follow.twitterUsername);
+    if (u.twitterUsername) usernameCandidates.add(u.twitterUsername);
   }
 
   const cacheFieldSelect = {
@@ -956,6 +972,8 @@ export async function getCreatorsByPrefecture(
         openId: user.openId,
         shareSlug: user.shareSlug,
         lastStayedAt,
+        storedTwitterUsername: user.twitterUsername ?? null,
+        storedTwitterId: user.twitterId ?? null,
       },
       follow,
       cached,
@@ -1069,9 +1087,7 @@ export async function upsertUserSettings(
 // ---------------------------------------------------------------------------
 
 function usernameFromName(name: string | null): string | null {
-  if (!name) return null;
-  const u = name.replace(/^@/, "").trim();
-  return u || null;
+  return normalizeTwitterUsername(name);
 }
 
 /** 12文字の base62 風ランダムスラッグ（連番ID非公開のため）。 */
@@ -1099,7 +1115,21 @@ export async function getOrCreateUserShareSlug(
     .where(eq(users.id, userId))
     .limit(1);
   if (rows.length === 0) return null;
-  if (rows[0].shareSlug) return rows[0].shareSlug;
+  if (rows[0].shareSlug && isValidShareSlug(rows[0].shareSlug)) return rows[0].shareSlug;
+
+  // 無効な shareSlug（表示名など）が入っている場合は上書き生成する
+  if (rows[0].shareSlug && !isValidShareSlug(rows[0].shareSlug)) {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const slug = randomShareSlug();
+      try {
+        await db.update(users).set({ shareSlug: slug }).where(eq(users.id, userId));
+        return slug;
+      } catch {
+        // UNIQUE 衝突 → 再試行
+      }
+    }
+    return null;
+  }
 
   for (let attempt = 0; attempt < 5; attempt++) {
     const slug = randomShareSlug();
@@ -1149,14 +1179,38 @@ export async function getShareInfoBySlug(
   slug: string
 ): Promise<ShareInfo | null> {
   const userRows = await db
-    .select({ id: users.id, name: users.name, isSuspended: users.isSuspended })
+    .select({
+      id: users.id,
+      name: users.name,
+      openId: users.openId,
+      isSuspended: users.isSuspended,
+    })
     .from(users)
     .where(eq(users.shareSlug, slug))
     .limit(1);
   if (userRows.length === 0) return null;
 
   const u = userRows[0];
-  const username = usernameFromName(u.name);
+  let username = usernameFromName(u.name);
+
+  if (!username && u.openId.startsWith("clerk:")) {
+    const { fetchClerkTwitterProfiles, syncClerkTwitterProfileToDb } = await import(
+      "../../../server/clerk-profile-sync.js"
+    );
+    const profiles = await fetchClerkTwitterProfiles([u.openId]);
+    const profile = profiles.get(u.openId);
+    if (profile) {
+      await syncClerkTwitterProfileToDb(db, u.id, profile);
+      username = profile.twitterUsername;
+    }
+  } else if (!username) {
+    const cacheRows = await db
+      .select({ twitterUsername: twitterUserCache.twitterUsername })
+      .from(twitterUserCache)
+      .where(eq(twitterUserCache.displayName, u.name ?? ""))
+      .limit(1);
+    username = normalizeTwitterUsername(cacheRows[0]?.twitterUsername);
+  }
 
   const settingsRows = await db
     .select()

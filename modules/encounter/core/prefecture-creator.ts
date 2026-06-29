@@ -8,6 +8,7 @@ import {
   buildSurechigaiShareUrl,
   formatKimitoLinkLabel,
 } from "@/lib/kimito-link-urls";
+import { isValidShareSlug, normalizeTwitterUsername } from "@/lib/twitter-username";
 
 export type PrefectureCreatorRow = {
   userId: number;
@@ -43,6 +44,9 @@ export type PrefectureCreatorUserInput = {
   openId: string;
   shareSlug: string | null;
   lastStayedAt: Date | null;
+  /** users.twitterUsername（Clerk 同期済み） */
+  storedTwitterUsername?: string | null;
+  storedTwitterId?: string | null;
 };
 
 export function extractTwitterIdFromOpenId(openId: string): string | null {
@@ -89,10 +93,18 @@ export function buildPrefectureCreatorRow(
   if (!user.lastStayedAt) return null;
 
   const twitterId =
-    extractTwitterIdFromOpenId(user.openId) ?? cached?.twitterId ?? follow?.twitterId ?? null;
-  const username = cached?.twitterUsername ?? follow?.twitterUsername ?? null;
+    extractTwitterIdFromOpenId(user.openId) ??
+    cached?.twitterId ??
+    follow?.twitterId ??
+    user.storedTwitterId ??
+    null;
+  const username =
+    normalizeTwitterUsername(cached?.twitterUsername) ??
+    normalizeTwitterUsername(follow?.twitterUsername) ??
+    normalizeTwitterUsername(user.storedTwitterUsername);
   const kimitoLinkUrl = username ? buildKimitoPublicProfileUrl(username) : null;
-  const shareUrl = user.shareSlug ? buildSurechigaiShareUrl(user.shareSlug) : null;
+  const validShareSlug = isValidShareSlug(user.shareSlug) ? user.shareSlug : null;
+  const shareUrl = validShareSlug ? buildSurechigaiShareUrl(validShareSlug) : null;
 
   return {
     userId: user.userId,
@@ -102,7 +114,7 @@ export function buildPrefectureCreatorRow(
     profileImage: cached?.profileImage ?? null,
     followersCount: cached?.followersCount ?? null,
     kimitoLinkUrl,
-    shareSlug: user.shareSlug,
+    shareSlug: validShareSlug,
     shareUrl,
     lastStayedAt: user.lastStayedAt,
   };
@@ -138,9 +150,10 @@ export function resolveCreatorLinkVisibility(input: CreatorLinkInput): {
   kimitoLabel: string | null;
 } {
   const kimitoLabel = input.username ? formatKimitoLinkLabel(input.username) : null;
+  const validSlug = isValidShareSlug(input.shareSlug) ? input.shareSlug : null;
   return {
     showKimitoLink: Boolean(input.kimitoLinkUrl && kimitoLabel),
-    showShareMap: Boolean(input.shareSlug || input.shareUrl),
+    showShareMap: Boolean(validSlug && input.shareUrl),
     kimitoLabel,
   };
 }
