@@ -3,7 +3,7 @@
  * 例: https://kimito.link/streamerfunch/
  */
 
-import { normalizeTwitterUsername } from "./twitter-username.js";
+import { normalizeTwitterUsername } from "@/lib/twitter-username";
 
 export type KimitoPublicProfile = {
   username: string;

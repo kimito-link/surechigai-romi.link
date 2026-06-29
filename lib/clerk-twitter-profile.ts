@@ -2,7 +2,7 @@
  * Clerk ユーザーオブジェクトから X プロフィールを抽出する（純関数・DB 非依存）。
  */
 
-import { normalizeTwitterUsername } from "./twitter-username.js";
+import { normalizeTwitterUsername } from "@/lib/twitter-username";
 
 export type ClerkTwitterProfile = {
   twitterUsername: string;
