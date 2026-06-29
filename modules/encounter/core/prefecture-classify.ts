@@ -1,0 +1,124 @@
+/**
+ * 位置レコードを都道府県に分類する（surechigai-nico 移植）。
+ * prefecture 列が NULL の古い行も municipality / 座標から県を推定する。
+ */
+
+import { prefectures } from "../../../constants/prefectures.js";
+
+export type PrefectureName = (typeof prefectures)[number];
+
+type PrefectureCoord = {
+  name: PrefectureName;
+  lat: number;
+  lng: number;
+};
+
+const PREFECTURE_COORDS: PrefectureCoord[] = [
+  { name: "北海道", lat: 43.06417, lng: 141.34694 },
+  { name: "青森県", lat: 40.82444, lng: 140.74 },
+  { name: "岩手県", lat: 39.70361, lng: 141.1525 },
+  { name: "宮城県", lat: 38.26889, lng: 140.87194 },
+  { name: "秋田県", lat: 39.71861, lng: 140.1025 },
+  { name: "山形県", lat: 38.24056, lng: 140.36333 },
+  { name: "福島県", lat: 37.75, lng: 140.46778 },
+  { name: "茨城県", lat: 36.34139, lng: 140.44667 },
+  { name: "栃木県", lat: 36.56583, lng: 139.88361 },
+  { name: "群馬県", lat: 36.39111, lng: 139.06083 },
+  { name: "埼玉県", lat: 35.85694, lng: 139.64889 },
+  { name: "千葉県", lat: 35.60472, lng: 140.12333 },
+  { name: "東京都", lat: 35.68944, lng: 139.69167 },
+  { name: "神奈川県", lat: 35.44778, lng: 139.6425 },
+  { name: "新潟県", lat: 37.90222, lng: 139.02361 },
+  { name: "富山県", lat: 36.69528, lng: 137.21139 },
+  { name: "石川県", lat: 36.59444, lng: 136.62556 },
+  { name: "福井県", lat: 36.06528, lng: 136.22194 },
+  { name: "山梨県", lat: 35.66389, lng: 138.56833 },
+  { name: "長野県", lat: 36.65139, lng: 138.18111 },
+  { name: "岐阜県", lat: 35.39111, lng: 136.72222 },
+  { name: "静岡県", lat: 34.97694, lng: 138.38306 },
+  { name: "愛知県", lat: 35.18028, lng: 136.90667 },
+  { name: "三重県", lat: 34.73028, lng: 136.50861 },
+  { name: "滋賀県", lat: 35.00444, lng: 135.86833 },
+  { name: "京都府", lat: 35.02139, lng: 135.75556 },
+  { name: "大阪府", lat: 34.68639, lng: 135.52 },
+  { name: "兵庫県", lat: 34.69139, lng: 135.18306 },
+  { name: "奈良県", lat: 34.68528, lng: 135.83278 },
+  { name: "和歌山県", lat: 34.22611, lng: 135.1675 },
+  { name: "鳥取県", lat: 35.50361, lng: 134.23833 },
+  { name: "島根県", lat: 35.47222, lng: 133.05056 },
+  { name: "岡山県", lat: 34.66167, lng: 133.935 },
+  { name: "広島県", lat: 34.39639, lng: 132.45944 },
+  { name: "山口県", lat: 34.18583, lng: 131.47139 },
+  { name: "徳島県", lat: 34.06583, lng: 134.55944 },
+  { name: "香川県", lat: 34.34028, lng: 134.04333 },
+  { name: "愛媛県", lat: 33.84167, lng: 132.76611 },
+  { name: "高知県", lat: 33.55972, lng: 133.53111 },
+  { name: "福岡県", lat: 33.60639, lng: 130.41806 },
+  { name: "佐賀県", lat: 33.24944, lng: 130.29889 },
+  { name: "長崎県", lat: 32.74472, lng: 129.87361 },
+  { name: "熊本県", lat: 32.78972, lng: 130.74167 },
+  { name: "大分県", lat: 33.23806, lng: 131.6125 },
+  { name: "宮崎県", lat: 31.91111, lng: 131.42389 },
+  { name: "鹿児島県", lat: 31.56028, lng: 130.55806 },
+  { name: "沖縄県", lat: 26.2125, lng: 127.68111 },
+];
+
+const SORTED_BY_NAME = [...PREFECTURE_COORDS].sort(
+  (a, b) => b.name.length - a.name.length,
+);
+
+const VALID_PREFECTURE_NAMES = new Set<string>(prefectures);
+
+export function isValidPrefectureName(name: string): name is PrefectureName {
+  return VALID_PREFECTURE_NAMES.has(name);
+}
+
+/** "長野県松本市" の municipality から都道府県名を抽出 */
+export function extractPrefectureName(
+  municipality: string | null | undefined,
+): PrefectureName | null {
+  if (!municipality) return null;
+  for (const pref of SORTED_BY_NAME) {
+    if (municipality.startsWith(pref.name)) return pref.name;
+  }
+  return null;
+}
+
+/** lat/lng から最寄り県（県庁所在地との距離比較） */
+export function nearestPrefectureName(
+  lat: number | null | undefined,
+  lng: number | null | undefined,
+): PrefectureName | null {
+  if (lat == null || lng == null) return null;
+  const la = Number(lat);
+  const lo = Number(lng);
+  if (!Number.isFinite(la) || !Number.isFinite(lo)) return null;
+
+  let best: { name: PrefectureName; dist: number } | null = null;
+  for (const p of PREFECTURE_COORDS) {
+    const dLat = p.lat - la;
+    const dLng = p.lng - lo;
+    const dist = dLat * dLat + dLng * dLng;
+    if (!best || dist < best.dist) {
+      best = { name: p.name, dist };
+    }
+  }
+  return best?.name ?? null;
+}
+
+/**
+ * prefecture 列 → municipality プレフィックス → 座標フォールバックの順で県名を解決。
+ */
+export function classifyLocationToPrefectureName(
+  storedPrefecture: string | null | undefined,
+  municipality: string | null | undefined,
+  lat: number | null | undefined,
+  lng: number | null | undefined,
+): PrefectureName | null {
+  if (storedPrefecture && isValidPrefectureName(storedPrefecture)) {
+    return storedPrefecture;
+  }
+  const fromMuni = extractPrefectureName(municipality);
+  if (fromMuni) return fromMuni;
+  return nearestPrefectureName(lat, lng);
+}

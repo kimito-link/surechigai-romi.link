@@ -24,9 +24,23 @@ import { kRing } from "../core/geo.js";
 import type { NearbyCandidate, TimeshiftCandidate } from "../core/matching.js";
 import type { PrefectureCreatorListRow } from "../core/prefecture-creator-types.js";
 import { LIVE_WINDOW_MS } from "../core/prefecture-creator-types.js";
+import {
+  classifyLocationToPrefectureName,
+  isValidPrefectureName,
+} from "../core/prefecture-classify.js";
 import { isValidShareSlug, normalizeTwitterUsername } from "../../../lib/twitter-username.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
+
+/** Drizzle の sql\`max(...)\` 等が string で返る環境向け */
+function coerceToDate(value: unknown): Date | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  const d = new Date(value as string | number);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 // ---------------------------------------------------------------------------
 // group_visit_reports
@@ -817,6 +831,8 @@ export async function getCreatorsByPrefecture(
   prefecture: string,
   viewerUserId?: number,
 ): Promise<PrefectureCreatorListRow[]> {
+  if (!isValidPrefectureName(prefecture)) return [];
+
   const blockedIds = new Set<number>();
   if (viewerUserId != null) {
     const blockRows = await db
@@ -828,20 +844,46 @@ export async function getCreatorsByPrefecture(
     }
   }
 
-  const aggRows = await db
+  // surechigai-nico 同様: prefecture 列 NULL の行も municipality / 座標で県分類する
+  const locationRows = await db
     .select({
       userId: locations.userId,
-      lastStayedAt: sql<Date>`max(${locations.recordedAt})`,
+      prefecture: locations.prefecture,
+      municipality: locations.municipality,
+      lat: locations.lat,
+      lng: locations.lng,
+      latGrid: locations.latGrid,
+      lngGrid: locations.lngGrid,
+      recordedAt: locations.recordedAt,
     })
     .from(locations)
-    .where(eq(locations.prefecture, prefecture))
-    .groupBy(locations.userId)
-    .orderBy(desc(sql`max(${locations.recordedAt})`));
+    .innerJoin(users, eq(locations.userId, users.id))
+    .where(eq(users.isSuspended, false));
 
-  const filteredAgg = aggRows.filter((r) => !blockedIds.has(r.userId));
-  if (filteredAgg.length === 0) return [];
+  const lastStayMap = new Map<number, Date>();
+  for (const row of locationRows) {
+    if (blockedIds.has(row.userId)) continue;
 
-  const userIds = filteredAgg.map((r) => r.userId);
+    const classified = classifyLocationToPrefectureName(
+      row.prefecture,
+      row.municipality,
+      row.lat ?? row.latGrid,
+      row.lng ?? row.lngGrid,
+    );
+    if (classified !== prefecture) continue;
+
+    const recordedAt = coerceToDate(row.recordedAt);
+    if (!recordedAt) continue;
+
+    const prev = lastStayMap.get(row.userId);
+    if (!prev || recordedAt.getTime() > prev.getTime()) {
+      lastStayMap.set(row.userId, recordedAt);
+    }
+  }
+
+  if (lastStayMap.size === 0) return [];
+
+  const userIds = [...lastStayMap.keys()];
   const userRows = await db
     .select({
       id: users.id,
@@ -861,38 +903,57 @@ export async function getCreatorsByPrefecture(
     }
   }
 
-  const { lookupCacheByDisplayNames, lookupCacheByDisplayNameFuzzy } = await import(
-    "../../../server/creator-profile-enricher.js"
-  );
-  const cacheByDisplayName = await lookupCacheByDisplayNames(
-    db,
-    activeUsers.map((u) => u.name).filter((n): n is string => !!n),
-  );
-
-  const lastStayMap = new Map(filteredAgg.map((r) => [r.userId, r.lastStayedAt]));
   const now = Date.now();
-  const items: PrefectureCreatorListRow[] = [];
+  const buildRows = (
+    resolveCache: (user: (typeof activeUsers)[number]) => {
+      twitterUsername?: string | null;
+      profileImage?: string | null;
+    } | null,
+  ): PrefectureCreatorListRow[] => {
+    const items: PrefectureCreatorListRow[] = [];
+    for (const user of activeUsers) {
+      const lastStayedAt = lastStayMap.get(user.id);
+      if (!lastStayedAt) continue;
+      const cache = resolveCache(user);
+      items.push({
+        userId: user.id,
+        displayName: user.name?.trim() || "名無し",
+        twitterHandle: normalizeTwitterUsername(cache?.twitterUsername) ?? null,
+        profileImage: cache?.profileImage ?? null,
+        shareSlug: isValidShareSlug(user.shareSlug) ? user.shareSlug : null,
+        lastStayedAt,
+        isLive: now - lastStayedAt.getTime() < LIVE_WINDOW_MS,
+      });
+    }
+    return items.sort((a, b) => b.lastStayedAt.getTime() - a.lastStayedAt.getTime());
+  };
 
-  for (const user of activeUsers) {
-    const lastStayedAt = lastStayMap.get(user.id);
-    if (!lastStayedAt) continue;
+  const cacheByUserId = new Map<
+    number,
+    { twitterUsername?: string | null; profileImage?: string | null } | null
+  >();
 
-    const cache =
-      (user.name ? cacheByDisplayName.get(user.name) : undefined) ??
-      (user.name ? await lookupCacheByDisplayNameFuzzy(db, user.name) : null);
+  try {
+    const { lookupCacheByDisplayNames, lookupCacheByDisplayNameFuzzy } = await import(
+      "../../../server/creator-profile-enricher.js"
+    );
+    const cacheByDisplayName = await lookupCacheByDisplayNames(
+      db,
+      activeUsers.map((u) => u.name).filter((n): n is string => !!n),
+    );
 
-    items.push({
-      userId: user.id,
-      displayName: user.name?.trim() || "名無し",
-      twitterHandle: normalizeTwitterUsername(cache?.twitterUsername) ?? null,
-      profileImage: cache?.profileImage ?? null,
-      shareSlug: isValidShareSlug(user.shareSlug) ? user.shareSlug : null,
-      lastStayedAt,
-      isLive: now - lastStayedAt.getTime() < LIVE_WINDOW_MS,
-    });
+    for (const user of activeUsers) {
+      const cache = user.name
+        ? (cacheByDisplayName.get(user.name) ??
+          (await lookupCacheByDisplayNameFuzzy(db, user.name)))
+        : null;
+      cacheByUserId.set(user.id, cache);
+    }
+  } catch (err) {
+    console.error("[getCreatorsByPrefecture] profile cache lookup failed:", err);
   }
 
-  return items.sort((a, b) => b.lastStayedAt.getTime() - a.lastStayedAt.getTime());
+  return buildRows((user) => cacheByUserId.get(user.id) ?? null);
 }
 
 // ---------------------------------------------------------------------------
