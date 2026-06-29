@@ -7,7 +7,7 @@ import {
   buildKimitoPublicProfileUrl,
   buildSurechigaiShareUrl,
   formatKimitoLinkLabel,
-} from "../../../lib/kimito-link-urls.js";
+} from "@/lib/kimito-link-urls";
 
 export type PrefectureCreatorRow = {
   userId: number;
