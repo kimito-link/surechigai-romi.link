@@ -31,7 +31,12 @@ import {
   type TwitterCacheInfo,
 } from "../core/prefecture-creator.js";
 import { backfillClerkTwitterProfiles } from "../../../server/clerk-profile-sync.js";
-import { normalizeTwitterUsername, isValidShareSlug } from "../../../lib/twitter-username.js";
+import {
+  enrichTwitterProfile,
+  lookupCacheByDisplayNames,
+  lookupCacheByDisplayNameFuzzy,
+} from "../../../server/creator-profile-enricher.js";
+import { isValidShareSlug, normalizeTwitterUsername } from "../../../lib/twitter-username.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -869,6 +874,22 @@ export async function getCreatorsByPrefecture(
 
   await backfillClerkTwitterProfiles(db, activeUsers);
 
+  const cacheByDisplayName = await lookupCacheByDisplayNames(
+    db,
+    activeUsers.map((u) => u.name).filter((n): n is string => !!n),
+  );
+  for (const user of activeUsers) {
+    if (!normalizeTwitterUsername(user.twitterUsername) && user.name) {
+      const hit =
+        cacheByDisplayName.get(user.name) ??
+        (await lookupCacheByDisplayNameFuzzy(db, user.name));
+      if (hit) {
+        user.twitterUsername = hit.twitterUsername;
+        user.twitterId = hit.twitterId;
+      }
+    }
+  }
+
   // バックフィル後に shareSlug 不足・無効ユーザーを補完
   for (const user of activeUsers) {
     if (!isValidShareSlug(user.shareSlug)) {
@@ -943,6 +964,22 @@ export async function getCreatorsByPrefecture(
       .where(inArray(twitterUserCache.twitterUsername, [...usernameCandidates]));
     for (const row of byNameRows) addCacheRow(row);
   }
+
+  const enrichTargets = new Set<string>();
+  for (const u of activeUsers) {
+    const name = normalizeTwitterUsername(u.twitterUsername);
+    if (name) enrichTargets.add(name);
+  }
+  for (const name of usernameCandidates) {
+    const n = normalizeTwitterUsername(name);
+    if (n) enrichTargets.add(n);
+  }
+  await Promise.all(
+    [...enrichTargets].map(async (username) => {
+      const enriched = await enrichTwitterProfile(db, username);
+      if (enriched) addCacheRow(enriched);
+    }),
+  );
 
   const cacheByTwitterId = new Map<string, TwitterCacheInfo>();
   const cacheByUsername = new Map<string, TwitterCacheInfo>();

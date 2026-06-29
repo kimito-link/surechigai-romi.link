@@ -8,7 +8,7 @@ import {
   buildSurechigaiShareUrl,
   formatKimitoLinkLabel,
 } from "@/lib/kimito-link-urls";
-import { isValidShareSlug, normalizeTwitterUsername } from "@/lib/twitter-username";
+import { isValidShareSlug, isValidTwitterUsername, normalizeTwitterUsername } from "@/lib/twitter-username";
 
 export type PrefectureCreatorRow = {
   userId: number;
@@ -55,11 +55,17 @@ export function extractTwitterIdFromOpenId(openId: string): string | null {
 }
 
 export function resolveTwitterCacheForUser(
-  user: { id: number; openId: string; name: string | null },
+  user: { id: number; openId: string; name: string | null; twitterUsername?: string | null },
   followByUserId: Map<number, TwitterFollowInfo>,
   cacheByTwitterId: Map<string, TwitterCacheInfo>,
   cacheByUsername: Map<string, TwitterCacheInfo>,
 ): TwitterCacheInfo | undefined {
+  const hint = normalizeTwitterUsername(user.twitterUsername);
+  if (hint) {
+    const byHint = cacheByUsername.get(hint.toLowerCase());
+    if (byHint) return byHint;
+  }
+
   const twitterId = extractTwitterIdFromOpenId(user.openId);
   if (twitterId) {
     const byId = cacheByTwitterId.get(twitterId);
@@ -72,12 +78,15 @@ export function resolveTwitterCacheForUser(
     if (byFollowId) return byFollowId;
   }
   if (follow?.twitterUsername) {
-    const byFollowName = cacheByUsername.get(follow.twitterUsername.toLowerCase());
-    if (byFollowName) return byFollowName;
+    const followName = normalizeTwitterUsername(follow.twitterUsername);
+    if (followName) {
+      const byFollowName = cacheByUsername.get(followName.toLowerCase());
+      if (byFollowName) return byFollowName;
+    }
   }
 
   const nameCandidate = (user.name ?? "").replace(/^@/, "").trim();
-  if (nameCandidate && !nameCandidate.includes(" ") && nameCandidate.length <= 50) {
+  if (isValidTwitterUsername(nameCandidate)) {
     return cacheByUsername.get(nameCandidate.toLowerCase());
   }
 

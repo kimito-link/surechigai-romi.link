@@ -97,6 +97,8 @@ export async function backfillClerkTwitterProfiles(
       await syncClerkTwitterProfileToDb(db, user.id, profile);
       user.twitterUsername = profile.twitterUsername;
       user.twitterId = profile.twitterId;
+      const { enrichTwitterProfile } = await import("./creator-profile-enricher.js");
+      await enrichTwitterProfile(db, profile.twitterUsername);
     }),
   );
 }

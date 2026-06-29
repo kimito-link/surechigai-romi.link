@@ -104,6 +104,21 @@ describe("resolveTwitterCacheForUser", () => {
     );
     expect(result).toBeUndefined();
   });
+
+  it("hint twitterUsername でキャッシュを引く", () => {
+    const result = resolveTwitterCacheForUser(
+      {
+        id: 5,
+        openId: "clerk:xyz",
+        name: "君斗りんく@クリエイター応援",
+        twitterUsername: "from_follow",
+      },
+      new Map(),
+      cacheByTwitterId,
+      cacheByUsername,
+    );
+    expect(result?.twitterUsername).toBe("from_follow");
+  });
 });
 
 describe("buildPrefectureCreatorRow", () => {
