@@ -8,10 +8,17 @@ const config = withNativeWind(getDefaultConfig(__dirname), {
   forceWriteFileSystem: true,
 });
 
-/** Node ESM 向け `.js` 拡張子 import を Metro が `.ts` ソースへ解決できるようにする */
+/** Node ESM 向け `.js` 拡張子 import を Metro が `.ts` ソースへ解決（自プロジェクトのみ） */
 const previousResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const origin = context.originModulePath ?? "";
+  const isProjectSource =
+    !origin.includes("node_modules") &&
+    (/[/\\](lib|modules|components|app)[/\\]/.test(origin) ||
+      /[/\\]lib[/\\]/.test(origin));
+
   if (
+    isProjectSource &&
     typeof moduleName === "string" &&
     moduleName.startsWith(".") &&
     moduleName.endsWith(".js")
