@@ -21,6 +21,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -40,6 +41,7 @@ export default function ZukanScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReady } = useAuth();
   const router = useRouter();
+  const tabInset = useTabBarInset();
   const { width: windowWidth } = useWindowDimensions();
 
   const { data, refetch, isFetching } = trpc.zukan.myAreas.useQuery(undefined, {
@@ -156,7 +158,7 @@ export default function ZukanScreen() {
             tintColor={color.accentAlt}
           />
         }
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: tabInset }]}
       >
         {/* 未ログインでも図鑑（日本地図）の中身は見せて、ログインで解放する */}
         {!isAuthenticated && (

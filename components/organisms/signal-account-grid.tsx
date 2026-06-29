@@ -24,6 +24,8 @@ type SignalAccountGridProps = {
   isFetching?: boolean;
   onPressItem: (item: SignalAccountItem) => void;
   style?: StyleProp<ViewStyle>;
+  /** overlay=地図上に重ねる / docked=地図の下に置く（モバイル向け） */
+  layout?: "overlay" | "docked";
 };
 
 const TIER_GRADE: Record<number, { label: string; color: string }> = {
@@ -128,17 +130,22 @@ export function SignalAccountGrid({
   isFetching = false,
   onPressItem,
   style,
+  layout = "overlay",
 }: SignalAccountGridProps) {
   const visibleItems = items.slice(0, isDesktop ? 10 : 5);
+  const unreadCount = items.filter((item) => !item.openedByMe).length;
+  const isDocked = layout === "docked";
 
   return (
-    <View style={[styles.panel, style]}>
+    <View style={[styles.panel, isDocked && styles.panelDocked, style]}>
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <View style={styles.plusBadge}>
             <MaterialIcons name="add" size={18} color="#047857" />
           </View>
-          <Text style={styles.title}>新着アカウント</Text>
+          <Text style={styles.title}>
+            新着アカウント{unreadCount > 0 ? ` (${unreadCount})` : ""}
+          </Text>
         </View>
         <Text style={styles.headerHint}>{isFetching ? "更新中" : "すれちがい順"}</Text>
       </View>
@@ -146,6 +153,7 @@ export function SignalAccountGrid({
       {visibleItems.length > 0 ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
+          style={isDocked ? styles.dockedScroll : undefined}
           contentContainerStyle={styles.listContent}
         >
           <View style={styles.grid}>
@@ -182,6 +190,14 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 8,
     overflow: "hidden",
+  },
+  panelDocked: {
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  dockedScroll: {
+    maxHeight: 320,
   },
   header: {
     flexDirection: "row",

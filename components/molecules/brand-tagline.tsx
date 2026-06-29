@@ -45,6 +45,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     letterSpacing: 0.2,
+    lineHeight: 18,
   },
   compactAccent: {
     color: palette.kimitoOrange,

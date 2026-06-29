@@ -32,6 +32,8 @@ import {
   type EventDateTimeValue,
 } from "@/components/molecules/event-datetime-picker";
 import { PrefectureSelector } from "@/components/ui/prefecture-selector";
+import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -689,6 +691,7 @@ export default function EventsScreen() {
   const { isAuthenticated } = useAuth();
   const [segment, setSegment] = useState<Segment>("calendar");
   const router = useRouter();
+  const tabInset = useTabBarInset();
 
   return (
     <ScreenContainer containerClassName="bg-background">
@@ -732,9 +735,19 @@ export default function EventsScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, { paddingBottom: tabInset }]}
         showsVerticalScrollIndicator={false}
       >
+        {!isAuthenticated && (
+          <LoginPreviewBanner
+            headline="ログインすると集まりを主催・ライブ表明できます"
+            benefits={[
+              { icon: "calendar-today", label: "予定は未ログインでも閲覧できます" },
+              { icon: "sensors", label: "ライブ中の集まりをリアルタイムで見られる" },
+              { icon: "add-circle-outline", label: "ログイン後に自分の集まりを作成できる" },
+            ]}
+          />
+        )}
         {segment === "calendar" && <CalendarList />}
         {segment === "live" && <LiveList />}
         {segment === "host" &&

@@ -32,7 +32,8 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
-import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
+import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
@@ -94,6 +95,7 @@ type CheckinState = "idle" | "loading" | "success" | "error" | "zero";
 export default function CheckinScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReady, user } = useAuth();
+  const tabInset = useTabBarInset();
 
   const [state, setState] = useState<CheckinState>("idle");
   const [newCount, setNewCount] = useState(0);
@@ -439,12 +441,38 @@ export default function CheckinScreen() {
 
   if (!isAuthenticated) {
     return (
-      <GlobalLoginGate
-        title="チェックイン"
-        subtitle={`チェックインすると近くにいた人と\nすれ違いが成立します`}
-        headerTitle="チェックイン"
-        isDesktop={isDesktop}
-      />
+      <ScreenContainer containerClassName="bg-background">
+        <AppHeader
+          title="チェックイン"
+          showCharacters={false}
+          isDesktop={isDesktop}
+          showMenu
+          showLoginButton
+          leftElement={headerLeft}
+        />
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <LoginPreviewBanner
+            headline="ログインすると、今いる場所を記録してすれ違いが成立します"
+            benefits={[
+              { icon: "place", label: "正確な現在地を足あととして残せる" },
+              { icon: "groups", label: "同じ場所を通った人とすれ違える" },
+              { icon: "ios-share", label: "チェックインした場所をXでシェアできる" },
+            ]}
+          />
+          <Text style={styles.description}>
+            現在地を記録して、すれ違いを探します
+          </Text>
+          <View style={styles.buttonWrap}>
+            <View style={[styles.checkinButton, { backgroundColor: color.border, opacity: 0.85 }]}>
+              <MaterialIcons name="location-on" size={48} color={color.textWhite} />
+            </View>
+            <Text style={styles.buttonLabel}>ログイン後にチェックインできます</Text>
+          </View>
+        </ScrollView>
+      </ScreenContainer>
     );
   }
 
@@ -499,7 +527,7 @@ export default function CheckinScreen() {
             {/* ボトムシート風カード: 住所・座標・シェア・設定 */}
             <ScrollView
               style={styles.bottomSheetScroll}
-              contentContainerStyle={styles.bottomSheetContent}
+              contentContainerStyle={[styles.bottomSheetContent, { paddingBottom: tabInset }]}
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.bottomSheet}>
@@ -561,7 +589,7 @@ export default function CheckinScreen() {
         ) : (
           /* チェックイン前: ボタンファースト */
           <ScrollView
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.description}>

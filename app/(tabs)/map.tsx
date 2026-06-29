@@ -23,6 +23,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -57,6 +58,7 @@ function WebTrailMap({
   onRefresh,
   userImageUrl,
   topContent,
+  contentPaddingBottom,
 }: {
   visited: {
     prefecture: string | null;
@@ -68,6 +70,7 @@ function WebTrailMap({
   onRefresh: () => void;
   userImageUrl?: string;
   topContent?: ReactNode;
+  contentPaddingBottom?: number;
 }) {
   const total = visited.reduce((s, v) => s + v.visitCount, 0);
 
@@ -80,7 +83,7 @@ function WebTrailMap({
           tintColor={color.accentIndigo}
         />
       }
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, contentPaddingBottom ? { paddingBottom: contentPaddingBottom } : null]}
     >
       {topContent}
       {locations.length > 0 ? (
@@ -147,6 +150,7 @@ export default function MapScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReady, user } = useAuth();
   const router = useRouter();
+  const tabInset = useTabBarInset();
 
   const {
     data: areasData,
@@ -211,6 +215,7 @@ export default function MapScreen() {
           isFetching={isFetchingAreas || isFetchingTrail}
           onRefresh={onRefresh}
           userImageUrl={user?.profileImage ?? undefined}
+          contentPaddingBottom={tabInset}
           topContent={
             !isAuthenticated ? (
               <View style={styles.bannerWrap}>

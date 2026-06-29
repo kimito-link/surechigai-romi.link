@@ -806,6 +806,102 @@ export async function getEncounterUsersByPrefecture(
   return items.sort((a, b) => b.lastEncounteredAt.getTime() - a.lastEncounteredAt.getTime());
 }
 
+export type PrefectureCreatorRow = {
+  userId: number;
+  displayName: string | null;
+  username: string | null;
+  profileImage: string | null;
+  shareSlug: string | null;
+  lastStayedAt: Date;
+};
+
+/** 指定都道府県に足あと（locations）があるユーザーを、最終滞在日時順で返す。 */
+export async function getCreatorsByPrefecture(
+  db: DB,
+  prefecture: string,
+  viewerUserId?: number,
+): Promise<PrefectureCreatorRow[]> {
+  const blockedIds = new Set<number>();
+  if (viewerUserId != null) {
+    const blockRows = await db
+      .select({ blockerId: blocks.blockerId, blockedId: blocks.blockedId })
+      .from(blocks)
+      .where(or(eq(blocks.blockerId, viewerUserId), eq(blocks.blockedId, viewerUserId)));
+    for (const r of blockRows) {
+      blockedIds.add(r.blockerId === viewerUserId ? r.blockedId : r.blockerId);
+    }
+  }
+
+  const aggRows = await db
+    .select({
+      userId: locations.userId,
+      lastStayedAt: sql<Date>`max(${locations.recordedAt})`,
+    })
+    .from(locations)
+    .where(eq(locations.prefecture, prefecture))
+    .groupBy(locations.userId)
+    .orderBy(desc(sql`max(${locations.recordedAt})`));
+
+  const filteredAgg = aggRows.filter((r) => !blockedIds.has(r.userId));
+  if (filteredAgg.length === 0) return [];
+
+  const userIds = filteredAgg.map((r) => r.userId);
+  const userRows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      isSuspended: users.isSuspended,
+      shareSlug: users.shareSlug,
+    })
+    .from(users)
+    .where(inArray(users.id, userIds));
+
+  const activeUsers = userRows.filter((u) => !u.isSuspended);
+  if (activeUsers.length === 0) return [];
+
+  const usernames = activeUsers
+    .map((u) => (u.name ?? "").replace(/^@/, "").trim())
+    .filter(Boolean);
+
+  const cacheRows =
+    usernames.length > 0
+      ? await db
+          .select({
+            twitterUsername: twitterUserCache.twitterUsername,
+            displayName: twitterUserCache.displayName,
+            profileImage: twitterUserCache.profileImage,
+          })
+          .from(twitterUserCache)
+          .where(inArray(twitterUserCache.twitterUsername, usernames))
+      : [];
+
+  const cacheMap = new Map(
+    cacheRows.map((c) => [c.twitterUsername.toLowerCase(), c]),
+  );
+  const lastStayMap = new Map(filteredAgg.map((r) => [r.userId, r.lastStayedAt]));
+
+  const items: PrefectureCreatorRow[] = [];
+  for (const user of activeUsers) {
+    const usernameCandidate = (user.name ?? "").replace(/^@/, "").trim();
+    const cached = usernameCandidate
+      ? cacheMap.get(usernameCandidate.toLowerCase())
+      : undefined;
+    const lastStayedAt = lastStayMap.get(user.id);
+    if (!lastStayedAt) continue;
+
+    items.push({
+      userId: user.id,
+      displayName: cached?.displayName ?? user.name,
+      username: (cached?.twitterUsername ?? usernameCandidate) || null,
+      profileImage: cached?.profileImage ?? null,
+      shareSlug: user.shareSlug,
+      lastStayedAt,
+    });
+  }
+
+  return items.sort((a, b) => b.lastStayedAt.getTime() - a.lastStayedAt.getTime());
+}
+
 // ---------------------------------------------------------------------------
 // blocks
 // ---------------------------------------------------------------------------

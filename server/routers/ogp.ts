@@ -53,7 +53,31 @@ export const ogpRouter = router({
     }),
 
   /**
-   * 自分の公開共有リンク用スラッグを取得（無ければ生成）。
+   * 公開共有スラッグから、最後の記録地点を解決（未ログイン閲覧可）。
+   * /u/<slug> 画面と OGP 生成の両方で使う。
+   */
+  getShareBySlug: publicProcedure
+    .input(z.object({ slug: z.string().regex(/^[A-Za-z0-9]{1,16}$/) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
+      const info = await getShareInfoBySlug(db, input.slug);
+      if (!info) throw new TRPCError({ code: "NOT_FOUND", message: "共有リンクが見つかりません" });
+      return {
+        name: info.name,
+        username: info.username,
+        area: info.area,
+        prefecture: info.prefecture,
+        lat: info.lat,
+        lng: info.lng,
+        hasLocation: info.hasLocation,
+        zoom: info.zoom,
+        precise: info.precise,
+        recordedAt: info.recordedAt?.toISOString() ?? null,
+      };
+    }),
+
+  /**
    * このスラッグ付き URL (/u/<slug>) を X で共有すると、
    * 最後の記録地点入りの地図サムネ（OGP）が表示される。
    */

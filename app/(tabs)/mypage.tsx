@@ -29,7 +29,8 @@ import appConfig from "@/app.config.json";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
-import { GlobalLoginGate } from "@/components/organisms/global-login-gate";
+import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -169,6 +170,7 @@ export default function MypageScreen() {
   const { isDesktop } = useResponsive();
   const { user, isAuthenticated, isAuthReady, logout } = useAuth();
   const router = useRouter();
+  const tabInset = useTabBarInset();
 
   const [hitokotoModalVisible, setHitokotoModalVisible] = useState(false);
   const [showBlockList, setShowBlockList] = useState(false);
@@ -273,12 +275,39 @@ export default function MypageScreen() {
 
   if (!isAuthenticated || !user) {
     return (
-      <GlobalLoginGate
-        title="プロフィール設定"
-        subtitle="ログインしてプロフィールを設定してください"
-        headerTitle="マイページ"
-        isDesktop={isDesktop}
-      />
+      <ScreenContainer containerClassName="bg-background">
+        <AppHeader
+          title="マイページ"
+          showCharacters={false}
+          isDesktop={isDesktop}
+          showMenu
+          showLoginButton
+          leftElement={
+            <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
+              <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
+            </Pressable>
+          }
+        />
+        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: tabInset }]}>
+          <LoginPreviewBanner
+            headline="ログインすると、あなた専用のマイページが使えます"
+            benefits={[
+              { icon: "edit", label: "ひとこと・プロフィールを設定できる" },
+              { icon: "ios-share", label: "現在地をXでシェアできる" },
+              { icon: "security", label: "位置情報の一時停止やブロック設定ができる" },
+            ]}
+          />
+          <View style={styles.profileCard}>
+            <View style={styles.avatarPlaceholder}>
+              <MaterialIcons name="account-circle" size={64} color={color.textMuted} />
+            </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>ログイン後に表示されます</Text>
+              <Text style={styles.profileUsername}>@yourname</Text>
+            </View>
+          </View>
+        </ScrollView>
+      </ScreenContainer>
     );
   }
 
@@ -298,7 +327,7 @@ export default function MypageScreen() {
         }
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: tabInset }]}>
         {/* プロフィールカード */}
         <View style={styles.profileCard}>
           {user.profileImage ? (

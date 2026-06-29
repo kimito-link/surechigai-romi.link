@@ -167,11 +167,7 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/u/:slug",
-      "destination": "/api/u/:slug"
-    },
-    {
-      "source": "/((?!api/|u/).*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

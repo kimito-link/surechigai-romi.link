@@ -359,20 +359,6 @@ export default function RootLayout() {
                   <OfflineBanner />
                   <NetworkToast />
                   </TextScaleProvider>
-                  <View
-                    pointerEvents="none"
-                    style={{
-                      position: "absolute",
-                      bottom: 90,
-                      right: 16,
-                      opacity: 0.4,
-                      zIndex: 9999,
-                    }}
-                  >
-                    <Text style={{ color: "#64748B", fontSize: 10, fontWeight: "bold", textShadowColor: "rgba(255, 255, 255, 0.75)", textShadowOffset: { width: -1, height: 1 }, textShadowRadius: 3 }}>
-                      君斗りんくのすれ違ひ通信 バージョン
-                    </Text>
-                  </View>
                 </ToastProvider>
               </LoginSuccessProvider>
               </AuthHandoffProvider>

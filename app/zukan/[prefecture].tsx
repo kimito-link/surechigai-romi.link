@@ -1,159 +1,193 @@
-import { View, Text, ScrollView, StyleSheet, RefreshControl, Image, Pressable, useWindowDimensions } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useMemo } from "react";
+/**
+ * 都道府県別クリエイター一覧
+ * /zukan/[prefecture] — 県をタップすると「参加しているクリエイター」一覧へ。
+ */
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  RefreshControl,
+  Image,
+  Pressable,
+  Linking,
+  ActivityIndicator,
+} from "react-native";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
-import { useResponsive } from "@/hooks/use-responsive";
+import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { color, palette } from "@/theme/tokens";
-import {
-  PrecisionTileMap,
-  fitCenterZoom,
-  type TrailPoint,
-} from "@/components/organisms/precision-tile-map";
+import { formatRelativeJa } from "@/lib/date-utils";
+import { palette } from "@/theme/tokens";
 
-export default function PrefectureEncounterScreen() {
+const DEFAULT_AVATAR =
+  "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png";
+
+function Breadcrumb({
+  prefName,
+  onHome,
+  onZukan,
+}: {
+  prefName: string;
+  onHome: () => void;
+  onZukan: () => void;
+}) {
+  return (
+    <View style={styles.breadcrumb}>
+      <Pressable onPress={onHome} accessibilityRole="link">
+        <Text style={styles.breadcrumbLink}>ホーム</Text>
+      </Pressable>
+      <Text style={styles.breadcrumbSep}> › </Text>
+      <Pressable onPress={onZukan} accessibilityRole="link">
+        <Text style={styles.breadcrumbLink}>都道府県別</Text>
+      </Pressable>
+      <Text style={styles.breadcrumbSep}> › </Text>
+      <Text style={styles.breadcrumbCurrent}>{prefName}</Text>
+    </View>
+  );
+}
+
+export default function PrefectureCreatorsScreen() {
   const { prefecture } = useLocalSearchParams<{ prefecture: string }>();
-  const { isDesktop } = useResponsive();
   const router = useRouter();
-  const { width: windowWidth } = useWindowDimensions();
+  const { isAuthenticated } = useAuth();
 
   const prefName = typeof prefecture === "string" ? prefecture : prefecture?.[0] ?? "";
 
-  const { data, isFetching, refetch } = trpc.zukan.encounterUsersByPrefecture.useQuery(
+  const { data, isFetching, refetch, isLoading } = trpc.zukan.creatorsByPrefecture.useQuery(
     { prefecture: prefName },
-    { enabled: !!prefName }
+    { enabled: !!prefName },
   );
 
-  // 自分の足あと（この県の分だけ地図に出す）
-  const { data: trailData, refetch: refetchTrail } = trpc.zukan.myTrail.useQuery(
-    { limit: 500 },
-    { enabled: !!prefName }
-  );
-
-  const prefLocations: TrailPoint[] = useMemo(
-    () => (trailData?.locations ?? []).filter((l) => l.prefecture === prefName),
-    [trailData, prefName]
-  );
-
-  // この県で歩いた市区町村（重複除去）
-  const prefMunicipalities = useMemo(() => {
-    const set = new Set<string>();
-    for (const l of prefLocations) if (l.municipality) set.add(l.municipality);
-    return Array.from(set);
-  }, [prefLocations]);
-
-  const mapW = Math.max(320, Math.min(windowWidth - 32, 980));
-  const mapH = windowWidth < 640 ? 360 : 460;
-  const { center, zoom } = useMemo(
-    () => fitCenterZoom(prefLocations, mapW, mapH),
-    [prefLocations, mapW, mapH]
-  );
+  const creators = data?.creators ?? [];
+  const count = creators.length;
 
   const onRefresh = useCallback(() => {
-    refetch();
-    refetchTrail();
-  }, [refetch, refetchTrail]);
+    void refetch();
+  }, [refetch]);
 
-  const handleBack = useCallback(() => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.push("/(tabs)/zukan");
-    }
+  const goHome = useCallback(() => {
+    router.push("/(tabs)");
   }, [router]);
+
+  const goZukan = useCallback(() => {
+    router.push("/(tabs)/zukan");
+  }, [router]);
+
+  const openCreator = useCallback(
+    (username: string | null, shareSlug: string | null) => {
+      if (shareSlug) {
+        router.push(`/u/${shareSlug}` as Href);
+        return;
+      }
+      if (username) {
+        void Linking.openURL(`https://x.com/${username.replace(/^@/, "")}`);
+      }
+    },
+    [router],
+  );
+
+  if (!prefName) {
+    return (
+      <ScreenContainer containerClassName="bg-background">
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>都道府県が指定されていません</Text>
+          <Pressable onPress={goZukan} style={styles.outlineBtn}>
+            <Text style={styles.outlineBtnText}>都道府県別一覧に戻る</Text>
+          </Pressable>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer containerClassName="bg-background">
-      <AppHeader
-        title={`${prefName} の記録`}
-        showCharacters={false}
-        isDesktop={isDesktop}
-        showMenu={false}
-        leftElement={
-          <Pressable onPress={handleBack} style={{ padding: 4 }}>
-            <MaterialIcons name="arrow-back" size={24} color={palette.kimitoBlue} />
-          </Pressable>
-        }
-      />
+      {!isAuthenticated ? (
+        <LoginPreviewBanner headline="ログインすると、あなたの記録もこの一覧に載ります" />
+      ) : null}
 
       <ScrollView
-        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={color.accentAlt} />}
+        refreshControl={
+          <RefreshControl refreshing={isFetching} onRefresh={onRefresh} tintColor={palette.kimitoBlue} />
+        }
         contentContainerStyle={styles.scrollContent}
       >
-        {/* この県を歩いた足あと（地図） */}
-        {prefLocations.length > 0 && (
-          <View style={styles.mapSection}>
-            <Text style={styles.sectionTitle}>{prefName} を歩いた足あと</Text>
-            <PrecisionTileMap
-              locations={prefLocations}
-              width={mapW}
-              height={mapH}
-              customCenter={center}
-              zoom={zoom}
-              showInfoPanel={false}
-            />
-            <Text style={styles.mapCaption}>
-              {prefLocations.length} 件の正確な足あと（タップで最新地点の座標）
-            </Text>
+        <View style={styles.page}>
+          <Breadcrumb prefName={prefName} onHome={goHome} onZukan={goZukan} />
 
-            {prefMunicipalities.length > 0 && (
-              <View style={styles.chipsRow}>
-                {prefMunicipalities.map((m) => (
-                  <View key={m} style={styles.chip}>
-                    <MaterialIcons name="place" size={13} color={palette.kimitoBlue} />
-                    <Text style={styles.chipText}>{m}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
+          <Text style={styles.pageTitle} accessibilityRole="header">
+            {prefName} で参加しているクリエイター
+          </Text>
+
+          <Text style={styles.pageDescription}>
+            君斗りんくのすれ違ひ通信の一覧です。
+            {prefName}で最後に記録した人も含みます。滞在が短い人も表示されます。
+          </Text>
+
+          <View style={styles.countBadge}>
+            <Text style={styles.countBadgeText}>登録 {count} 人</Text>
           </View>
-        )}
 
-        <Text style={styles.sectionTitle}>{prefName} ですれ違った人</Text>
-
-        {data?.users && data.users.length > 0 ? (
-          <View style={styles.list}>
-            {data.users.map((u) => (
-              <View key={u.partnerId} style={styles.userCard}>
-                <Image
-                  source={{
-                    uri: u.partnerProfileImage || "https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png",
-                  }}
-                  style={styles.avatar}
-                />
-                <View style={styles.userInfo}>
-                  <Text style={styles.displayName} numberOfLines={1}>
-                    {u.partnerDisplayName || "名無し"}
-                  </Text>
-                  {u.partnerUsername && (
-                    <Text style={styles.username} numberOfLines={1}>
-                      @{u.partnerUsername}
+          {isLoading ? (
+            <View style={styles.loadingWrap}>
+              <ActivityIndicator size="large" color={palette.kimitoBlue} />
+              <Text style={styles.loadingText}>読み込み中…</Text>
+            </View>
+          ) : count > 0 ? (
+            <View style={styles.list}>
+              {creators.map((c) => (
+                <Pressable
+                  key={c.userId}
+                  style={({ pressed }) => [styles.creatorCard, pressed && styles.creatorCardPressed]}
+                  onPress={() => openCreator(c.username, c.shareSlug)}
+                  accessibilityRole="button"
+                >
+                  <Image
+                    source={{ uri: c.profileImage || DEFAULT_AVATAR }}
+                    style={styles.avatar}
+                  />
+                  <View style={styles.creatorInfo}>
+                    <Text style={styles.creatorName} numberOfLines={2}>
+                      {c.displayName || c.username || "名無し"}
                     </Text>
-                  )}
-                  <View style={styles.statsRow}>
-                    <Text style={styles.statText}>すれ違い: {u.encounterCount}回</Text>
-                    <Text style={styles.statText}>
-                      最終: {new Date(u.lastEncounteredAt).toLocaleDateString("ja-JP")}
+                    <Text style={styles.creatorMeta}>
+                      この県に最後に滞在: {formatRelativeJa(c.lastStayedAt)}
                     </Text>
                   </View>
-                </View>
-              </View>
-            ))}
+                </Pressable>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyWrap}>
+              <MaterialIcons name="person-off" size={40} color="#9CA3AF" />
+              <Text style={styles.emptyText}>
+                まだ{prefName}に記録があるクリエイターはいません
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.footerActions}>
+            <Pressable
+              onPress={goZukan}
+              style={({ pressed }) => [styles.outlineBtn, pressed && styles.btnPressed]}
+              accessibilityRole="button"
+            >
+              <MaterialIcons name="arrow-back" size={18} color="#374151" />
+              <Text style={styles.outlineBtnText}>都道府県別一覧に戻る</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={goHome}
+              style={({ pressed }) => [styles.primaryBtn, pressed && styles.btnPressed]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.primaryBtnText}>ダッシュボードへ</Text>
+            </Pressable>
           </View>
-        ) : (
-          <View style={styles.emptyWrap}>
-            {isFetching ? (
-              <Text style={styles.emptyText}>読み込み中...</Text>
-            ) : (
-              <>
-                <MaterialIcons name="person-off" size={48} color={color.textMuted} />
-                <Text style={styles.emptyText}>まだこの県ですれ違った人はいません</Text>
-              </>
-            )}
-          </View>
-        )}
+        </View>
       </ScrollView>
     </ScreenContainer>
   );
@@ -161,102 +195,177 @@ export default function PrefectureEncounterScreen() {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
+    flexGrow: 1,
+    backgroundColor: "#FAFAFA",
+    paddingBottom: 48,
   },
-  mapSection: {
-    marginBottom: 20,
+  page: {
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 32,
   },
-  sectionTitle: {
-    color: color.textSecondary,
-    fontSize: 13,
-    fontWeight: "700",
-    marginBottom: 10,
-    marginTop: 4,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  mapCaption: {
-    color: color.textMuted,
-    fontSize: 11,
-    marginTop: 8,
-    textAlign: "center",
-  },
-  chipsRow: {
+  breadcrumb: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    gap: 8,
-    marginTop: 12,
-  },
-  chip: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-    backgroundColor: color.surface,
-    borderWidth: 1,
-    borderColor: color.border,
-    borderRadius: 999,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    marginBottom: 28,
   },
-  chipText: {
-    color: color.textSecondary,
-    fontSize: 12,
+  breadcrumbLink: {
+    fontSize: 13,
+    color: palette.kimitoBlue,
     fontWeight: "600",
+  },
+  breadcrumbSep: {
+    fontSize: 13,
+    color: "#9CA3AF",
+  },
+  breadcrumbCurrent: {
+    fontSize: 13,
+    color: "#374151",
+    fontWeight: "600",
+  },
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#111827",
+    textAlign: "center",
+    lineHeight: 38,
+    marginBottom: 16,
+  },
+  pageDescription: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  countBadge: {
+    alignSelf: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginBottom: 24,
+  },
+  countBadgeText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#374151",
   },
   list: {
     gap: 12,
+    marginBottom: 32,
   },
-  userCard: {
+  creatorCard: {
     flexDirection: "row",
-    backgroundColor: color.surface,
-    borderRadius: 12,
-    padding: 12,
     alignItems: "center",
-    gap: 12,
+    gap: 14,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: color.border,
+    borderColor: "#E5E7EB",
+    padding: 14,
+  },
+  creatorCardPressed: {
+    opacity: 0.92,
+    backgroundColor: "#F9FAFB",
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: color.surfaceAlt,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#E5E7EB",
   },
-  userInfo: {
+  creatorInfo: {
     flex: 1,
-    justifyContent: "center",
+    minWidth: 0,
   },
-  displayName: {
+  creatorName: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: color.textPrimary,
+    fontWeight: "700",
+    color: "#111827",
+    lineHeight: 22,
   },
-  username: {
+  creatorMeta: {
+    marginTop: 4,
     fontSize: 13,
-    color: color.textMuted,
-    marginTop: 2,
+    color: "#6B7280",
+    lineHeight: 18,
   },
-  statsRow: {
+  footerActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 12,
+    marginTop: 8,
+  },
+  outlineBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginTop: 6,
+    justifyContent: "center",
+    gap: 6,
+    minHeight: 48,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    backgroundColor: "#FFFFFF",
   },
-  statText: {
-    fontSize: 12,
-    color: color.textSecondary,
+  outlineBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#374151",
+  },
+  primaryBtn: {
+    minHeight: 48,
+    paddingHorizontal: 22,
+    borderRadius: 10,
+    backgroundColor: palette.kimitoOrange,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryBtnText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  btnPressed: {
+    opacity: 0.9,
+  },
+  loadingWrap: {
+    alignItems: "center",
+    paddingVertical: 48,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#6B7280",
   },
   emptyWrap: {
     alignItems: "center",
-    paddingTop: 80,
+    paddingVertical: 48,
     gap: 12,
+    marginBottom: 24,
   },
   emptyText: {
-    color: color.textMuted,
     fontSize: 14,
+    color: "#6B7280",
     textAlign: "center",
     lineHeight: 22,
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    gap: 16,
+  },
+  errorText: {
+    fontSize: 15,
+    color: "#6B7280",
   },
 });

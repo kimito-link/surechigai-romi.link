@@ -5,7 +5,7 @@
  * - zukan.myAreas: visitedAreas + すれ違い相手の prefecture 集計
  */
 
-import { router, protectedProcedure } from "../../../server/_core/trpc.js";
+import { router, protectedProcedure, publicProcedure } from "../../../server/_core/trpc.js";
 import { getDb } from "../../../server/db/connection.js";
 import { z } from "zod";
 import {
@@ -13,6 +13,7 @@ import {
   getMyTrailLocations,
   getMyVisitedAreas,
   getEncounterUsersByPrefecture,
+  getCreatorsByPrefecture,
 } from "../db/queries.js";
 
 export const zukanRouter = router({
@@ -62,5 +63,19 @@ export const zukanRouter = router({
         input.prefecture
       );
       return { users };
+    }),
+
+  /**
+   * 指定都道府県に記録があるクリエイター一覧（公開・未ログインでも閲覧可）。
+   */
+  creatorsByPrefecture: publicProcedure
+    .input(z.object({ prefecture: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { creators: [] };
+
+      const viewerId = ctx.user && ctx.user.id > 0 ? ctx.user.id : undefined;
+      const creators = await getCreatorsByPrefecture(db, input.prefecture, viewerId);
+      return { creators };
     }),
 });

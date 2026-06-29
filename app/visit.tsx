@@ -21,6 +21,7 @@ import { AppHeader } from "@/components/organisms/app-header";
 import { PrecisionTileMap, type TrailPoint } from "@/components/organisms/precision-tile-map";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useResponsive } from "@/hooks/use-responsive";
+import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 
@@ -172,6 +173,7 @@ function parseCoordinateInput(input: string): BrowserLocation | null {
 export default function GroupVisitScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
+  const { isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
 
   const [groupCode, setGroupCode] = useState("");
@@ -359,8 +361,7 @@ export default function GroupVisitScreen() {
         title="訪問申告"
         showCharacters={false}
         isDesktop={isDesktop}
-        showLoginStatus={false}
-        showLoginButton={false}
+        showLoginButton={!isAuthenticated}
         showMenu
         leftElement={
           <Pressable onPress={() => router.push("/(tabs)")} style={styles.headerHomeButton}>

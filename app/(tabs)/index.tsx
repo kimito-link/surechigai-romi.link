@@ -20,6 +20,7 @@ import {
   Modal,
   ScrollView,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { useState, useCallback, useEffect } from "react";
 import { Image } from "expo-image";
@@ -47,6 +48,7 @@ import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
 import { NightSkyBackdrop } from "@/components/organisms/night-sky-backdrop";
 import { CharacterHere } from "@/components/molecules/character-here";
 import { SignalAccountGrid, type SignalAccountItem } from "@/components/organisms/signal-account-grid";
+import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import appConfig from "@/app.config.json";
 
 // ティアラベル
@@ -538,6 +540,9 @@ export default function PostScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
   const toast = useToast();
+  const tabInset = useTabBarInset();
+  const { height: windowHeight } = useWindowDimensions();
+  const mapMobileHeight = Math.min(Math.max(windowHeight * 0.36, 240), 320);
 
   const [openItem, setOpenItem] = useState<EncounterItem | null>(null);
   const [openModalVisible, setOpenModalVisible] = useState(false);
@@ -633,79 +638,100 @@ export default function PostScreen() {
     [handleOpen, handleSendStamp, handleBlock, handleReport],
   );
 
+  const renderRadarStage = () => (
+    <>
+      <NightSkyBackdrop />
+      <JapanRadarMap>
+        {unopened.map((item) => {
+          const randomX = 10 + (Math.sin(item.id * 123) * 0.5 + 0.5) * 80;
+          const randomY = 10 + (Math.cos(item.id * 321) * 0.5 + 0.5) * 80;
+          return (
+            <EnvelopePulse
+              key={item.id}
+              x={randomX}
+              y={randomY}
+              onPress={() => handleOpen(item)}
+            />
+          );
+        })}
+        <CharacterHere source={require("@/assets/images/characters/rinku.png")} name="りんく" place="小樽" x={74} y={12} delay={0} />
+        <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={6} y={91} delay={400} />
+        <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={33} y={86} delay={800} />
+      </JapanRadarMap>
+    </>
+  );
+
+  const renderSisterBanners = (inFlow = false) =>
+    (appConfig.siblingServices ?? []).map((svc) => (
+      <Pressable
+        key={svc.url}
+        onPress={() => Linking.openURL(svc.url)}
+        style={({ pressed }) => [
+          inFlow ? styles.sisterBannerFlow : styles.sisterBanner,
+          pressed && { opacity: 0.75 },
+        ]}
+      >
+        <MaterialIcons name="hub" size={16} color={color.accentPrimary} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.sisterBannerLabel}>SISTER_SERVICE</Text>
+          <Text style={styles.sisterBannerName} numberOfLines={1}>{svc.name}</Text>
+        </View>
+        <MaterialIcons name="open-in-new" size={14} color="rgba(255,255,255,0.5)" />
+      </Pressable>
+    ));
+
+  const signalGrid = isAuthenticated ? (
+    <SignalAccountGrid
+      items={(encounters ?? []) as SignalAccountItem[]}
+      isDesktop={isDesktop}
+      isFetching={isFetching}
+      onPressItem={(item) => handleOpen(item as EncounterItem)}
+      layout={isDesktop ? "overlay" : "docked"}
+      style={
+        isDesktop
+          ? [styles.signalPanel, styles.signalPanelDesktop]
+          : styles.signalPanelDocked
+      }
+    />
+  ) : null;
+
+  const emptyOverlay = isAuthenticated && unopened.length === 0 && (
+    <View style={[styles.emptyOverlay, !isDesktop && styles.emptyOverlayMobile]}>
+      <Text style={styles.emptyOverlayEmoji}>📭</Text>
+      <Text style={styles.emptyOverlayTitle}>まだ封筒は届いていません</Text>
+      <Text style={styles.emptyOverlayText}>
+        チェックインすると{"\n"}近くにいたファンの封筒が届くかも
+      </Text>
+    </View>
+  );
+
   return (
       <ScreenContainer style={{ backgroundColor: "#020817" }} edges={[]}>
-        {/* 常時固定ヘッダー。ログイン中はアカウント情報、未ログインはログインボタンを表示。 */}
         <AppHeader />
 
+        {isDesktop ? (
         <View style={styles.mapContainer}>
-          {/* 夜空（星・天の川・富士・流れ星）を地図の背面に敷く */}
-          <NightSkyBackdrop />
-          <JapanRadarMap>
-            {unopened.map((item, index) => {
-              // Pseudo-random position based on item id for MVP
-              const randomX = 10 + (Math.sin(item.id * 123) * 0.5 + 0.5) * 80;
-              const randomY = 10 + (Math.cos(item.id * 321) * 0.5 + 0.5) * 80;
-              return (
-                <EnvelopePulse
-                  key={item.id}
-                  x={randomX}
-                  y={randomY}
-                  onPress={() => handleOpen(item)}
-                />
-              );
-            })}
-
-            {/* キャラの現在地（吹き出し「○○にいるよ」）。中央の文字を避け、日本各地の縁に配置。 */}
-            <CharacterHere source={require("@/assets/images/characters/rinku.png")} name="りんく" place="小樽" x={74} y={12} delay={0} />
-            <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={6} y={91} delay={400} />
-            <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={33} y={86} delay={800} />
-          </JapanRadarMap>
-
-          {isAuthenticated && (
-            <SignalAccountGrid
-              items={(encounters ?? []) as SignalAccountItem[]}
-              isDesktop={isDesktop}
-              isFetching={isFetching}
-              onPressItem={(item) => handleOpen(item as EncounterItem)}
-              style={[
-                styles.signalPanel,
-                isDesktop ? styles.signalPanelDesktop : styles.signalPanelMobile,
-              ]}
-            />
-          )}
-          
-          {isAuthenticated && unopened.length === 0 && (
-            <View style={styles.emptyOverlay}>
-              <Text style={styles.emptyOverlayEmoji}>📭</Text>
-              <Text style={styles.emptyOverlayTitle}>
-                まだ封筒は届いていません
-              </Text>
-              <Text style={styles.emptyOverlayText}>
-                チェックインすると{"\n"}近くにいたファンの封筒が届くかも
-              </Text>
-            </View>
-          )}
-
-          {/* 姉妹サービス導線：同じシグナルID(アカウント)で接続できる別サービスへ。地図下部に固定。 */}
-          {(appConfig.siblingServices ?? []).map((svc) => (
-            <Pressable
-              key={svc.url}
-              onPress={() => Linking.openURL(svc.url)}
-              style={({ pressed }) => [styles.sisterBanner, pressed && { opacity: 0.75 }]}
-            >
-              <MaterialIcons name="hub" size={16} color={color.accentPrimary} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.sisterBannerLabel}>SISTER_SERVICE</Text>
-                <Text style={styles.sisterBannerName} numberOfLines={1}>{svc.name}</Text>
-              </View>
-              <MaterialIcons name="open-in-new" size={14} color="rgba(255,255,255,0.5)" />
-            </Pressable>
-          ))}
-
-          {/* 未ログイン時のヒーロー。ヘッダーは常時表示したまま、マップ領域にだけ重ねる。 */}
+          {renderRadarStage()}
+          {signalGrid}
+          {emptyOverlay}
+          {renderSisterBanners()}
           {!isAuthenticated && <RadarHud isAuthenticated={false} />}
         </View>
+        ) : (
+        <ScrollView
+          style={styles.mobileScroll}
+          contentContainerStyle={[styles.mobileScrollContent, { paddingBottom: tabInset }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[styles.mapHeroMobile, { height: mapMobileHeight }]}>
+            {renderRadarStage()}
+            {emptyOverlay}
+            {!isAuthenticated && <RadarHud isAuthenticated={false} />}
+          </View>
+          {signalGrid}
+          <View style={styles.mobileFooter}>{renderSisterBanners(true)}</View>
+        </ScrollView>
+        )}
 
       {/* 開封モーダル */}
       <OpenModal
@@ -748,11 +774,40 @@ const styles = StyleSheet.create({
     right: 24,
     maxHeight: 360,
   },
-  signalPanelMobile: {
-    top: 10,
-    left: 10,
-    right: 10,
-    maxHeight: 292,
+  signalPanelDocked: {
+    marginTop: 12,
+    marginHorizontal: 10,
+  },
+  mobileScroll: {
+    flex: 1,
+    backgroundColor: "#020817",
+  },
+  mobileScrollContent: {
+    flexGrow: 1,
+  },
+  mapHeroMobile: {
+    position: "relative",
+    overflow: "hidden",
+    backgroundColor: "#020817",
+  },
+  mobileFooter: {
+    gap: 10,
+    paddingHorizontal: 10,
+    paddingTop: 12,
+  },
+  sisterBannerFlow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "rgba(2,8,23,0.85)",
+    borderWidth: 1,
+    borderColor: color.accentPrimary + "55",
+  },
+  emptyOverlayMobile: {
+    top: "38%",
   },
   emptyOverlay: {
     position: "absolute",

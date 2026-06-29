@@ -13,10 +13,11 @@ import { color } from "@/theme/tokens";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HapticTab } from "@/components/atoms/haptic-tab";
 import { IconSymbol } from "@/components/atoms/icon-symbol";
-import { Platform, View, Text } from "react-native";
+import { Platform, View, Text, useWindowDimensions } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
+import { TAB_BAR_BODY_HEIGHT } from "@/hooks/use-tab-bar-inset";
 
 /** 未開封バッジ */
 function UnreadBadge({ count }: { count: number }) {
@@ -75,8 +76,11 @@ function PostTabIcon({ color: iconColor }: { color: string }) {
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
+  const { width: windowWidth } = useWindowDimensions();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
-  const tabBarHeight = 56 + bottomPadding;
+  const tabBarHeight = TAB_BAR_BODY_HEIGHT + bottomPadding;
+  // 6タブは狭い画面でラベル付きだと右端が切れる。アイコンのみに切り替える。
+  const compactTabs = windowWidth < 480;
 
   return (
     <Tabs
@@ -86,15 +90,23 @@ export default function TabLayout() {
         tabBarInactiveTintColor: color.textMuted,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarShowLabel: !compactTabs,
+        tabBarAllowFontScaling: false,
         tabBarLabelStyle: {
           fontWeight: "700",
+          fontSize: compactTabs ? 0 : 11,
         },
+        tabBarIconStyle: compactTabs ? { marginBottom: 0 } : undefined,
+        tabBarItemStyle: compactTabs
+          ? { flex: 1, minWidth: 0, maxWidth: 72, paddingHorizontal: 2 }
+          : { flex: 1, minWidth: 0, paddingHorizontal: 2 },
         sceneStyle: {
           backgroundColor: colors.background,
         },
         tabBarStyle: {
-          paddingTop: 8,
+          paddingTop: compactTabs ? 6 : 8,
           paddingBottom: bottomPadding,
+          paddingHorizontal: compactTabs ? 2 : 4,
           height: tabBarHeight,
           backgroundColor: color.surface,
           borderTopColor: color.border,
