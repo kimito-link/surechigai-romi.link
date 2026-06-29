@@ -28,6 +28,10 @@ import {
   classifyLocationToPrefectureName,
   isValidPrefectureName,
 } from "../core/prefecture-classify.js";
+import {
+  resolvePrefectureCreatorProfiles,
+  toPrefectureCreatorListProfile,
+} from "./prefecture-creator-profiles.js";
 import { isValidShareSlug, normalizeTwitterUsername } from "../../../lib/twitter-username.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -888,6 +892,7 @@ export async function getCreatorsByPrefecture(
     .select({
       id: users.id,
       name: users.name,
+      openId: users.openId,
       isSuspended: users.isSuspended,
       shareSlug: users.shareSlug,
     })
@@ -903,57 +908,30 @@ export async function getCreatorsByPrefecture(
     }
   }
 
+  const profileByUserId = await resolvePrefectureCreatorProfiles(db, activeUsers);
+
   const now = Date.now();
-  const buildRows = (
-    resolveCache: (user: (typeof activeUsers)[number]) => {
-      twitterUsername?: string | null;
-      profileImage?: string | null;
-    } | null,
-  ): PrefectureCreatorListRow[] => {
-    const items: PrefectureCreatorListRow[] = [];
-    for (const user of activeUsers) {
-      const lastStayedAt = lastStayMap.get(user.id);
-      if (!lastStayedAt) continue;
-      const cache = resolveCache(user);
-      items.push({
-        userId: user.id,
-        displayName: user.name?.trim() || "名無し",
-        twitterHandle: normalizeTwitterUsername(cache?.twitterUsername) ?? null,
-        profileImage: cache?.profileImage ?? null,
-        shareSlug: isValidShareSlug(user.shareSlug) ? user.shareSlug : null,
-        lastStayedAt,
-        isLive: now - lastStayedAt.getTime() < LIVE_WINDOW_MS,
-      });
-    }
-    return items.sort((a, b) => b.lastStayedAt.getTime() - a.lastStayedAt.getTime());
-  };
+  const items: PrefectureCreatorListRow[] = [];
 
-  const cacheByUserId = new Map<
-    number,
-    { twitterUsername?: string | null; profileImage?: string | null } | null
-  >();
+  for (const user of activeUsers) {
+    const lastStayedAt = lastStayMap.get(user.id);
+    if (!lastStayedAt) continue;
 
-  try {
-    const { lookupCacheByDisplayNames, lookupCacheByDisplayNameFuzzy } = await import(
-      "../../../server/creator-profile-enricher.js"
-    );
-    const cacheByDisplayName = await lookupCacheByDisplayNames(
-      db,
-      activeUsers.map((u) => u.name).filter((n): n is string => !!n),
-    );
+    const cached = profileByUserId.get(user.id) ?? null;
+    const profile = toPrefectureCreatorListProfile(user, cached);
 
-    for (const user of activeUsers) {
-      const cache = user.name
-        ? (cacheByDisplayName.get(user.name) ??
-          (await lookupCacheByDisplayNameFuzzy(db, user.name)))
-        : null;
-      cacheByUserId.set(user.id, cache);
-    }
-  } catch (err) {
-    console.error("[getCreatorsByPrefecture] profile cache lookup failed:", err);
+    items.push({
+      userId: user.id,
+      displayName: profile.displayName,
+      twitterHandle: profile.twitterHandle,
+      profileImage: profile.profileImage,
+      shareSlug: isValidShareSlug(user.shareSlug) ? user.shareSlug : null,
+      lastStayedAt,
+      isLive: now - lastStayedAt.getTime() < LIVE_WINDOW_MS,
+    });
   }
 
-  return buildRows((user) => cacheByUserId.get(user.id) ?? null);
+  return items.sort((a, b) => b.lastStayedAt.getTime() - a.lastStayedAt.getTime());
 }
 
 // ---------------------------------------------------------------------------
