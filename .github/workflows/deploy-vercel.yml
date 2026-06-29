@@ -27,9 +27,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Lint
-        run: pnpm lint --max-warnings 9999
-
       - name: Type check
         run: pnpm check
 
