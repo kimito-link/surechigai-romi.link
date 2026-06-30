@@ -5,8 +5,9 @@
   "icons": [
     {
       "src": "favicon.png",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/png"
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icon-192.png",
@@ -21,7 +22,7 @@
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-512-maskable.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
@@ -30,7 +31,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#0D1117",
-  "background_color": "#0D1117",
+  "theme_color": "#00427B",
+  "background_color": "#E2EDF7",
   "orientation": "portrait"
 }

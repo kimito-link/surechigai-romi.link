@@ -48,12 +48,14 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Preconnect: 自サイトのみ（Clerk は /sign-in 画面だけで preconnect — kimito 準拠） */}
         <link rel="preconnect" href="https://surechigai.kimito.link" />
         <link rel="dns-prefetch" href="https://surechigai.kimito.link" />
-        {/* PWA manifest */}
+        {/* PWA / favicon — App Store と同じ「りんく」キャラ（pnpm brand:icons） */}
         <link rel="manifest" href="/manifest.json" />
-        {/* Theme color for browser chrome（kimito ヘッダーの薄青に合わせる） */}
-        <meta name="theme-color" content="#E2EDF7" />
-        {/* Apple touch icon */}
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="icon" href="/favicon.ico" sizes="48x48" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="theme-color" content="#00427B" />
+        <meta name="apple-mobile-web-app-title" content="すれ違ひ通信" />
         {/*
           Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.
           However, body scrolling is often nice to have for mobile web. If you want to enable it, remove this line.

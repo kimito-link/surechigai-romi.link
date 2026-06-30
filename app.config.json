@@ -28,9 +28,11 @@
     "manifestPath": "manifest.json"
   },
   "brand": {
-    "primaryColor": "#4F86C6",
-    "accentColor": "#22C55E",
+    "primaryColor": "#00427B",
+    "accentColor": "#F97316",
     "iconSource": "assets/images/icon.png",
+    "faviconSource": "assets/images/icon.png",
+    "wordmarkSource": "assets/images/logos/kimitolink-logo.webp",
     "featureGraphicSource": "assets/images/feature-graphic-source.png"
   },
   "contact": {

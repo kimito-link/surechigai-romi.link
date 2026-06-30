@@ -21,6 +21,7 @@ node scripts/bust-entry-cache.cjs || true
 node scripts/inject-sw-version.cjs || true
 
 # LP（public/lp）を dist に同期 — surechigai-romi.link/lp/ で静的配信
+python scripts/sync-brand-icons.py || true
 if [ -d public/lp ]; then
   mkdir -p dist/lp
   cp -a public/lp/. dist/lp/
