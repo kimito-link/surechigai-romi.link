@@ -16,8 +16,8 @@ import {
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
 import { AppHeader } from "@/components/organisms/app-header";
+import { HeaderHomeButton } from "@/components/molecules/header-back-button";
 import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
 import type { TrailPoint } from "@/lib/map/tile-geo";
 import { ScreenContainer } from "@/components/organisms/screen-container";
@@ -80,7 +80,6 @@ function formatReportPlace(report: {
 }
 
 export default function GroupVisitScreen() {
-  const router = useRouter();
   const { isDesktop } = useResponsive();
   const { isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
@@ -272,11 +271,7 @@ export default function GroupVisitScreen() {
         isDesktop={isDesktop}
         showLoginButton={!isAuthenticated}
         showMenu
-        leftElement={
-          <Pressable onPress={() => router.push("/(tabs)")} style={styles.headerHomeButton}>
-            <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-          </Pressable>
-        }
+        leftElement={<HeaderHomeButton />}
       />
 
       <ScrollView
@@ -565,16 +560,6 @@ export default function GroupVisitScreen() {
 const styles = StyleSheet.create({
   screen: {
     backgroundColor: "#07111F",
-  },
-  headerHomeButton: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 22,
-    backgroundColor: palette.white,
-    borderWidth: 1,
-    borderColor: "#00427B33",
   },
   content: {
     width: "100%",

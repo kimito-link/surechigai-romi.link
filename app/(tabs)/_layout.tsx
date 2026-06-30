@@ -77,7 +77,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "ポスト",
-          tabBarAccessibilityLabel: "ポスト",
+          tabBarAccessibilityLabel: "ポスト — 封筒とレーダー",
           tabBarIcon: ({ color: iconColor }) => <PostTabIcon color={iconColor} />,
         }}
       />
@@ -88,7 +88,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "チェックイン",
-          tabBarAccessibilityLabel: "チェックイン",
+          tabBarAccessibilityLabel: "チェックイン — 現在地を記録",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="location.fill" color={iconColor} />
           ),
@@ -101,7 +101,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "集まり",
-          tabBarAccessibilityLabel: "集まり",
+          tabBarAccessibilityLabel: "集まり — 予定と今ここ",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="calendar" color={iconColor} />
           ),
@@ -114,7 +114,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "図鑑",
-          tabBarAccessibilityLabel: "図鑑",
+          tabBarAccessibilityLabel: "図鑑 — 訪れた場所",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="book.fill" color={iconColor} />
           ),
@@ -127,7 +127,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "軌跡",
-          tabBarAccessibilityLabel: "軌跡",
+          tabBarAccessibilityLabel: "軌跡 — 足あとの地図",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="map.fill" color={iconColor} />
           ),
@@ -140,7 +140,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "マイページ",
-          tabBarAccessibilityLabel: "マイページ",
+          tabBarAccessibilityLabel: "マイページ — 設定とアカウント",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="person.crop.circle.fill" color={iconColor} />
           ),

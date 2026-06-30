@@ -9,17 +9,16 @@
 import { useState } from "react";
 import { color, palette } from "@/theme/tokens";
 import { View, Text, Pressable, Platform, StyleSheet, useWindowDimensions } from "react-native";
-import Constants from "expo-constants";
 import { Image } from "expo-image";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { LazyGlobalMenu } from "@/lib/lazy-heavy-components";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
-import { BrandMark } from "@/components/brand/brand-mark";
+import { BrandHomeLink, BrandHomeTaglineLink } from "@/components/brand/brand-home-link";
+import { navigate } from "@/lib/navigation";
+import { trpc } from "@/lib/trpc";
 import * as Haptics from "expo-haptics";
-
-const DISPLAY_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 
 // kimito ブランドの不透明度付きライン色
 const BLUE_BORDER = "#00427B40"; // kimitoBlue 25%
@@ -81,6 +80,17 @@ export function AppHeader({
   const isNarrow = windowWidth < 480;
   const isCompactAccount = windowWidth < 520;
 
+  const { data: settings } = trpc.settings.get.useQuery(undefined, {
+    enabled: Boolean(showLoginStatus && isAuthReadyForUI && user),
+    staleTime: 30_000,
+  });
+  const livePresenceOn = settings?.livePresenceEnabled ?? false;
+
+  const goMypage = () => {
+    triggerHaptic();
+    navigate.toMypageTab();
+  };
+
   const showLoginButtonStable = showLoginButton && isAuthReadyForUI && !user;
   // ログイン済みアカウントは全画面で常に同じピルを出す（Clerk ロード待ちで空白にしない）
   const showLoginStatusStable = Boolean(showLoginStatus && isAuthReadyForUI && user);
@@ -98,21 +108,11 @@ export function AppHeader({
           {/* 左: ゆっくりりんく + 画面タイトル（leading は戻る等の追加ボタン用） */}
           <View style={[styles.brandBlock, isNarrow && styles.brandBlockNarrow]}>
             {leftElement ?? null}
-            <BrandMark />
-            <View style={isNarrow ? styles.brandTitleCol : styles.brandTitleRow}>
-              <Text
-                style={[styles.brandTitle, { fontSize: isDesktop ? 18 : isNarrow ? 14 : 15 }]}
-                numberOfLines={isNarrow ? 2 : 1}
-              >
-                {title || "君斗りんくのすれ違ひ通信"}
-              </Text>
-              <Text
-                style={[styles.versionBadge, { fontSize: isDesktop ? 12 : 11 }]}
-                accessibilityLabel={`バージョン ${DISPLAY_VERSION}`}
-              >
-                v{DISPLAY_VERSION}
-              </Text>
-            </View>
+            <BrandHomeLink
+              title={title || "君斗りんくのすれ違ひ通信"}
+              isDesktop={isDesktop}
+              isNarrow={isNarrow}
+            />
           </View>
 
           {/* 右: ログインボタン + メニュー（狭い画面ではアカウントは下段） */}
@@ -120,7 +120,17 @@ export function AppHeader({
             {rightElement ?? null}
 
             {!isNarrow && showLoginStatusStable && user ? (
-              <View style={[styles.accountPill, { maxWidth: accountMaxWidth }]}>
+              <Pressable
+                onPress={goMypage}
+                accessibilityRole="button"
+                accessibilityLabel="マイページを開く"
+                style={({ pressed, hovered }) => [
+                  styles.accountPill,
+                  { maxWidth: accountMaxWidth },
+                  Platform.OS === "web" && (hovered as boolean) && styles.accountPillHover,
+                  pressed && styles.accountPillPressed,
+                ]}
+              >
                 {user.profileImage ? (
                   <Image source={{ uri: user.profileImage }} style={styles.avatar} contentFit="cover" />
                 ) : (
@@ -146,7 +156,7 @@ export function AppHeader({
                     )}
                   </View>
                 </View>
-              </View>
+              </Pressable>
             ) : !isNarrow && showLoginButtonStable ? (
               <Pressable
                 onPress={() => openLoginGuide()}
@@ -179,7 +189,18 @@ export function AppHeader({
         </View>
 
         {isNarrow && showLoginStatusStable && user ? (
-          <View style={[styles.accountPill, styles.accountPillNarrow, isCompactAccount && styles.accountPillCompact]}>
+          <Pressable
+            onPress={goMypage}
+            accessibilityRole="button"
+            accessibilityLabel="マイページを開く"
+            style={({ pressed, hovered }) => [
+              styles.accountPill,
+              styles.accountPillNarrow,
+              isCompactAccount && styles.accountPillCompact,
+              Platform.OS === "web" && (hovered as boolean) && styles.accountPillHover,
+              pressed && styles.accountPillPressed,
+            ]}
+          >
             {user.profileImage ? (
               <Image
                 source={{ uri: user.profileImage }}
@@ -199,7 +220,7 @@ export function AppHeader({
                 {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId}
               </Text>
             </View>
-          </View>
+          </Pressable>
         ) : isNarrow && showLoginButtonStable ? (
           <Pressable
             onPress={() => openLoginGuide()}
@@ -218,8 +239,18 @@ export function AppHeader({
 
         {/* ブランドの核「会いたい君がいる現在地」を全ページ共通でさりげなく出す */}
         {showTagline && (
-          <View style={styles.taglineRow}>
-            <BrandTagline compact align="left" />
+          <View style={styles.taglineRowWrap}>
+            <BrandHomeTaglineLink>
+              <View style={styles.taglineRow}>
+                <BrandTagline compact align="left" />
+              </View>
+            </BrandHomeTaglineLink>
+            {livePresenceOn ? (
+              <View style={styles.liveBadge} accessibilityLabel="居場所をリアルタイム公開中">
+                <View style={styles.liveDot} />
+                <Text style={styles.liveBadgeText}>居場所ON</Text>
+              </View>
+            ) : null}
           </View>
         )}
 
@@ -264,33 +295,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "flex-start",
   },
-  brandTitleRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 6,
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  brandTitleCol: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 2,
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  brandTitle: {
-    color: palette.kimitoBlue,
-    fontWeight: "800",
-    letterSpacing: 0,
-    flexShrink: 1,
-  },
-  versionBadge: {
-    color: palette.kimitoBlue,
-    opacity: 0.72,
-    fontWeight: "700",
-    letterSpacing: 0.2,
-    flexShrink: 0,
-  },
   actionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -309,6 +313,14 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     paddingVertical: 5,
     maxWidth: 260,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as object) : null),
+  },
+  accountPillHover: {
+    borderColor: palette.kimitoBlue,
+    backgroundColor: "#F8FBFF",
+  },
+  accountPillPressed: {
+    opacity: 0.9,
   },
   accountPillNarrow: {
     alignSelf: "stretch",
@@ -408,8 +420,38 @@ const styles = StyleSheet.create({
     borderColor: BLUE_PILL_BORDER,
   },
   taglineRow: {
-    marginTop: 6,
+    marginTop: 0,
     lineHeight: 18,
+  },
+  taglineRowWrap: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  liveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,128,51,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(255,128,51,0.35)",
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: palette.kimitoOrange,
+  },
+  liveBadgeText: {
+    color: palette.kimitoOrange,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.3,
   },
   subtitle: {
     color: palette.kimitoInkMuted,

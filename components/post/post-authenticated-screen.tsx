@@ -23,7 +23,8 @@ import {
   useWindowDimensions,
   ActivityIndicator,
 } from "react-native";
-import { useState, useCallback, lazy, Suspense } from "react";
+import { useState, useCallback, lazy, Suspense, useMemo } from "react";
+import { useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/atoms/toast";
@@ -53,6 +54,8 @@ import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import appConfig from "@/app.config.json";
 import { latLngToRadarPercent } from "@/lib/japan-radar-position";
 import { LIVE_PRESENCE_PULSE_INTERVAL_MS } from "@/modules/encounter/core/live-presence";
+import { CheckinCtaButton } from "@/components/molecules/checkin-cta-button";
+import { useTabScrollToTop } from "@/hooks/use-tab-scroll-to-top";
 
 const JapanRadarMap = lazy(() =>
   import("@/components/organisms/japan-radar-map").then((m) => ({ default: m.JapanRadarMap })),
@@ -231,6 +234,8 @@ export function PostAuthenticatedScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
   const toast = useToast();
   const tabInset = useTabBarInset();
+  const scrollRef = useTabScrollToTop();
+  const router = useRouter();
   const { height: windowHeight } = useWindowDimensions();
   const mapMobileHeight = Math.min(Math.max(windowHeight * 0.36, 240), 320);
 
@@ -248,6 +253,11 @@ export function PostAuthenticatedScreen() {
     enabled: isAuthenticated,
     refetchInterval: Math.max(LIVE_PRESENCE_PULSE_INTERVAL_MS, 30_000),
   });
+
+  const { data: trailPeek } = trpc.zukan.myTrail.useQuery(
+    { limit: 1 },
+    { enabled: isAuthenticated, staleTime: 60_000 },
+  );
 
   const openMutation = trpc.encounter.open.useMutation();
   const reactMutation = trpc.encounter.react.useMutation();
@@ -313,6 +323,14 @@ export function PostAuthenticatedScreen() {
   // 未開封 / 開封済みに分類
   const unopened = (encounters ?? []).filter((e) => !e.openedByMe);
   const opened = (encounters ?? []).filter((e) => !!e.openedByMe);
+
+  const checkedInRecently = useMemo(() => {
+    const latest = trailPeek?.locations[0]?.recordedAt;
+    if (!latest) return false;
+    return Date.now() - new Date(latest).getTime() < 24 * 60 * 60 * 1000;
+  }, [trailPeek?.locations]);
+
+  const showCheckinCta = isAuthenticated && unopened.length === 0 && !checkedInRecently;
 
   const renderItem = useCallback(
     ({ item }: { item: EncounterItem }) => {
@@ -408,8 +426,20 @@ export function PostAuthenticatedScreen() {
       <Text style={styles.emptyOverlayEmoji}>📭</Text>
       <Text style={styles.emptyOverlayTitle}>まだ封筒は届いていません</Text>
       <Text style={styles.emptyOverlayText}>
-        チェックインすると{"\n"}近くにいたファンの封筒が届くかも
+        {checkedInRecently
+          ? "今日は記録済みです。\nまた移動したらチェックインを"
+          : "まず現在地を記録すると\n足あとが残り、すれ違いの判定が始まります"}
       </Text>
+      {showCheckinCta ? (
+        <CheckinCtaButton compact style={{ marginTop: 14 }} />
+      ) : (
+        <Pressable
+          onPress={() => router.push("/(tabs)/checkin")}
+          style={({ pressed }) => [styles.checkinLink, pressed && { opacity: 0.8 }]}
+        >
+          <Text style={styles.checkinLinkText}>チェックイン画面へ</Text>
+        </Pressable>
+      )}
     </View>
   );
 
@@ -431,6 +461,7 @@ export function PostAuthenticatedScreen() {
         </View>
         ) : (
         <ScrollView
+          ref={scrollRef}
           style={styles.mobileScroll}
           contentContainerStyle={[styles.mobileScrollContent, { paddingBottom: tabInset }]}
           showsVerticalScrollIndicator={false}
@@ -445,6 +476,11 @@ export function PostAuthenticatedScreen() {
           )}
           </View>
           {signalGrid}
+          {showCheckinCta && !isDesktop ? (
+            <View style={styles.checkinCtaDock}>
+              <CheckinCtaButton label="足あとを残す — チェックイン" />
+            </View>
+          ) : null}
           <View style={styles.mobileFooter}>{renderSisterBanners(true)}</View>
         </ScrollView>
         )}
@@ -554,6 +590,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
     lineHeight: 20,
+  },
+  checkinLink: {
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  checkinLinkText: {
+    color: color.accentPrimary,
+    fontSize: 13,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
+  checkinCtaDock: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   center: {
     flex: 1,
