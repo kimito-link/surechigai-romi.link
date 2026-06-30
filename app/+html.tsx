@@ -54,7 +54,7 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="shortcut icon" href="/favicon-48.png" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#00427B" />
-        <meta name="apple-mobile-web-app-title" content="すれ違ひ通信" />
+        <meta name="apple-mobile-web-app-title" content="君斗りんく" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){var t="君斗りんくのすれ違ひ通信";function fix(){if(!document.title||document.title.length<4)document.title=t}fix();document.addEventListener("DOMContentLoaded",fix);setTimeout(fix,0);setTimeout(fix,500);var mo=new MutationObserver(fix);var el=document.querySelector("title");if(el)mo.observe(el,{childList:true,characterData:true,subtree:true})})();`,
