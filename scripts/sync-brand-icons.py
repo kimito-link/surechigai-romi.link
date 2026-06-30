@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """
 ブランドアイコン一括生成。
-- タブ favicon（16–48px）: kimito-link 公式ゆっくりりんく + すれ違い電波
-- PWA / ホーム画面（192px+）: りんくキャラ（icon.png）— App Store と同じ
-
-ゆっくり素材元: kimito-link/src/images/yukkuri-charactore-english/link/
+- タブ favicon / PWA / ホーム画面: kimito-link 公式ゆっくりりんく + すれ違い電波
+- ネイティブ App Store / スプラッシュ: 全身りんく（icon.png）
 """
 from __future__ import annotations
 
@@ -67,6 +65,18 @@ def save_resize(source: Path, size: int, out: Path, bg=(0, 0, 0, 0)) -> None:
     print(f"wrote {out.relative_to(ROOT)}")
 
 
+def save_maskable_tab(size: int, out: Path) -> None:
+    """maskable 安全域内にゆっくり favicon を配置。"""
+    out.parent.mkdir(parents=True, exist_ok=True)
+    inner = int(size * 0.72)
+    pad = (size - inner) // 2
+    canvas = Image.new("RGBA", (size, size), KIMITO_BLUE)
+    icon = compose_tab_favicon(inner)
+    canvas.paste(icon, (pad, pad), icon)
+    canvas.save(out, optimize=True)
+    print(f"wrote {out.relative_to(ROOT)}")
+
+
 def save_maskable(size: int, out: Path) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     inner = int(size * 0.72)
@@ -107,13 +117,15 @@ def main() -> None:
         save_tab_favicon(size, ROOT / f"public/favicon-{size}.png")
     save_tab_favicon(48, ROOT / "assets/images/favicon.png")
 
-    # PWA / スプラッシュ — 全身りんくキャラ
+    # PWA / ホーム画面 — ヘッダーと同じゆっくりりんく + すれ違い電波（タブ favicon 素材）
+    save_tab_favicon(180, ROOT / "public/apple-touch-icon.png")
+    save_tab_favicon(192, ROOT / "public/icon-192.png")
+    save_tab_favicon(512, ROOT / "public/icon-512.png")
+    save_maskable_tab(512, ROOT / "public/icon-512-maskable.png")
+
+    # ネイティブ — 全身りんくキャラ
     save_resize(APP_ICON_SOURCE, 200, ROOT / "assets/images/splash-icon.png")
     save_android_foreground(ROOT / "assets/images/android-icon-foreground.png")
-    save_resize(APP_ICON_SOURCE, 192, ROOT / "public/icon-192.png")
-    save_resize(APP_ICON_SOURCE, 512, ROOT / "public/icon-512.png")
-    save_maskable(512, ROOT / "public/icon-512-maskable.png")
-    save_resize(APP_ICON_SOURCE, 180, ROOT / "public/apple-touch-icon.png")
 
     shutil.copy2(ROOT / "public/favicon-48.png", ROOT / "public/favicon.ico")
 

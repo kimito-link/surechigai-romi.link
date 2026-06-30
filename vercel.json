@@ -79,6 +79,24 @@
       ]
     },
     {
+      "source": "/apple-touch-icon.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/icon-:size.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/manifest.json",
       "headers": [
         {
@@ -221,7 +239,7 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/((?!api/|lp(?:/|$)|_expo/|assets/|favicon|icon-\\d|apple-touch|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt).*)",
+      "source": "/((?!api/|lp(?:/|$)|_expo/|assets/|favicon|icon-|apple-touch-icon|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]

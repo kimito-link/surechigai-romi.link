@@ -1,5 +1,6 @@
 import { ScrollViewStyleReset } from "expo-router/html";
 import { palette, color } from "@/theme/tokens";
+import { PWA_APP_NAME } from "@/components/brand/web-document-head";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -54,7 +55,8 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="shortcut icon" href="/favicon-48.png" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#00427B" />
-        <meta name="apple-mobile-web-app-title" content="君斗りんく" />
+        <meta name="application-name" content={PWA_APP_NAME} />
+        <meta name="apple-mobile-web-app-title" content={PWA_APP_NAME} />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){var t="君斗りんくのすれ違ひ通信";function fix(){if(!document.title||document.title.length<4)document.title=t}fix();document.addEventListener("DOMContentLoaded",fix);setTimeout(fix,0);setTimeout(fix,500);var mo=new MutationObserver(fix);var el=document.querySelector("title");if(el)mo.observe(el,{childList:true,characterData:true,subtree:true})})();`,
