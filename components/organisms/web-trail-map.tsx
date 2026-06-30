@@ -47,6 +47,8 @@ type WebTrailMapProps = {
   onToggleVisibility?: (locationId: number, next: LocationVisibility) => void;
   updatingLocationId?: number | null;
   historyLimit?: number;
+  /** 公開閲覧向け: 履歴ヘッダーに保存地点の注記 */
+  showSavedLocationHint?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -68,6 +70,7 @@ export function WebTrailMap({
   onToggleVisibility,
   updatingLocationId = null,
   historyLimit = 30,
+  showSavedLocationHint = false,
   style,
 }: WebTrailMapProps) {
   const total = visited.reduce((s, v) => s + v.visitCount, 0);
@@ -131,6 +134,7 @@ export function WebTrailMap({
           locations={locations}
           limit={historyLimit}
           canManage={canDeleteLocations}
+          showSavedLocationHint={showSavedLocationHint}
           onDeleteLocation={onDeleteLocation}
           onToggleVisibility={onToggleVisibility}
           deletingLocationId={deletingLocationId}

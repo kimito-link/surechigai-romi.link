@@ -17,6 +17,7 @@ import {
   formatCoordinate,
   type TrailPoint,
 } from "@/components/organisms/precision-tile-map";
+import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import { color } from "@/theme/tokens";
 import {
   locationVisibilityLabel,
@@ -29,6 +30,8 @@ type TrailHistoryListProps = {
   locations: TrailPoint[];
   limit?: number;
   canManage?: boolean;
+  /** 公開閲覧時: 保存地点である旨のヒント */
+  showSavedLocationHint?: boolean;
   onDeleteLocation?: (locationId: number) => void;
   onToggleVisibility?: (locationId: number, next: LocationVisibility) => void;
   deletingLocationId?: number | null;
@@ -39,6 +42,7 @@ export function TrailHistoryList({
   locations,
   limit = 30,
   canManage = false,
+  showSavedLocationHint = false,
   onDeleteLocation,
   onToggleVisibility,
   deletingLocationId = null,
@@ -54,6 +58,8 @@ export function TrailHistoryList({
         <Text style={styles.sectionTitle}>最近の移動履歴</Text>
         {canManage ? (
           <Text style={styles.hint}>公開ボタンで切り替え</Text>
+        ) : showSavedLocationHint ? (
+          <Text style={styles.hint}>保存された足あとの地点</Text>
         ) : null}
       </View>
 
@@ -86,6 +92,14 @@ export function TrailHistoryList({
                 {point.accuracyM ? `±${Math.round(point.accuracyM)}m` : "精度不明"}
               </Text>
             </View>
+
+            <NavigateToPlaceButton
+              lat={point.lat}
+              lng={point.lng}
+              placeLabel={formatPlace(point)}
+              compact
+              testID={`trail-navigate-${point.id}`}
+            />
 
             {canManage && onToggleVisibility ? (
               <Pressable

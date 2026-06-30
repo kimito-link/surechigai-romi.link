@@ -98,6 +98,7 @@ export default function ShareLocationScreen() {
               ? "この人は現在、軌跡の公開を止めています。"
               : "チェックイン記録があると、ここに地図と足あとが表示されます。"
           }
+          showSavedLocationHint
           topContent={
             <>
               <View style={styles.profileHeader}>

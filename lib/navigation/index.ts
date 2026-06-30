@@ -19,6 +19,14 @@ export {
   getAllowedDomains,
 } from "./external-links";
 
+export {
+  buildGoogleMapsDirectionsUrl,
+  buildAppleMapsDirectionsUrl,
+  openMapsDirections,
+  type MapsTravelMode,
+  type MapsDirectionsParams,
+} from "./open-maps-directions";
+
 // 内部ナビゲーション用
 export {
   // 型安全なナビゲーション関数

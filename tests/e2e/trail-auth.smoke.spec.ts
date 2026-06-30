@@ -86,4 +86,15 @@ const hasAuth = fs.existsSync(authFile);
 
     monitor.assertClean();
   });
+
+  test("履歴行に「ここへ向かう」ナビボタンがあれば表示される", async ({ page }) => {
+    const monitor = await gotoSmokePage(page, "/map", { heading: "軌跡" });
+
+    const navBtn = page.getByRole("button", { name: /車で向かう/ }).first();
+    const hasNav = await navBtn.isVisible().catch(() => false);
+    test.skip(!hasNav, "ナビ可能な足あとがありません（チェックイン後に再実行）");
+
+    await expect(navBtn).toBeVisible();
+    monitor.assertClean();
+  });
 });

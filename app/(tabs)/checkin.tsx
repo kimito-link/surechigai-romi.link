@@ -40,6 +40,7 @@ import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { PrecisionTileMap, type TrailPoint } from "@/components/organisms/precision-tile-map";
+import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import { useRouter } from "expo-router";
 import { shareMyLocation } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
@@ -573,6 +574,17 @@ export default function CheckinScreen() {
                 ) : null}
                 {coordLine ? (
                   <Text style={styles.coordLine}>{coordLine}</Text>
+                ) : null}
+
+                {mapPoint && state !== "loading" ? (
+                  <NavigateToPlaceButton
+                    lat={mapPoint.lat}
+                    lng={mapPoint.lng}
+                    placeLabel={placeLine ?? undefined}
+                    label="この場所へ向かう"
+                    fullWidth
+                    testID="checkin-navigate-button"
+                  />
                 ) : null}
 
                 <Text style={styles.privacyNote}>
