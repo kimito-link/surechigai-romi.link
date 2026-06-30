@@ -24,6 +24,7 @@ import { GuestWebProviders } from "@/components/providers/guest-web-providers";
 import { GuestAuthProvider } from "@/lib/auth-context";
 import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallback";
 import { GestureRoot } from "@/components/providers/gesture-root";
+import { WebDocumentHead } from "@/components/brand/web-document-head";
 
 const ClerkRootProvider = lazy(() =>
   import("@/components/providers/clerk-root-provider").then((m) => ({
@@ -165,6 +166,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider deferNativeWind={deferNativeWind}>
+      <WebDocumentHead />
       <SafeAreaProvider initialMetrics={providerInitialMetrics}>
         {shouldOverrideSafeArea ? (
           <SafeAreaFrameContext.Provider value={frame}>
