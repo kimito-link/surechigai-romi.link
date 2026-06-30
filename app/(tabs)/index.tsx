@@ -21,8 +21,9 @@ import {
   ScrollView,
   Platform,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { Image } from "expo-image";
 import Animated, {
   useSharedValue,
@@ -37,19 +38,34 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/atoms/toast";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { RadarHud } from "@/components/organisms/radar-hud";
 import { AppHeader } from "@/components/organisms/app-header";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
-import { JapanRadarMap } from "@/components/organisms/japan-radar-map";
 import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
-import { NightSkyBackdrop } from "@/components/organisms/night-sky-backdrop";
 import { CharacterHere } from "@/components/molecules/character-here";
 import { SignalAccountGrid, type SignalAccountItem } from "@/components/organisms/signal-account-grid";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import appConfig from "@/app.config.json";
+
+const JapanRadarMap = lazy(() =>
+  import("@/components/organisms/japan-radar-map").then((m) => ({ default: m.JapanRadarMap })),
+);
+const NightSkyBackdrop = lazy(() =>
+  import("@/components/organisms/night-sky-backdrop").then((m) => ({ default: m.NightSkyBackdrop })),
+);
+const RadarHud = lazy(() =>
+  import("@/components/organisms/radar-hud").then((m) => ({ default: m.RadarHud })),
+);
+
+function DeferredRadarFallback() {
+  return (
+    <View style={{ minHeight: 120, alignItems: "center", justifyContent: "center" }}>
+      <ActivityIndicator color={color.accentPrimary} />
+    </View>
+  );
+}
 
 // ティアラベル
 const TIER_LABELS: Record<number, string> = {
@@ -639,7 +655,7 @@ export default function PostScreen() {
   );
 
   const renderRadarStage = () => (
-    <>
+    <Suspense fallback={<DeferredRadarFallback />}>
       <NightSkyBackdrop />
       <JapanRadarMap>
         {unopened.map((item) => {
@@ -658,7 +674,7 @@ export default function PostScreen() {
         <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={6} y={91} delay={400} />
         <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={33} y={86} delay={800} />
       </JapanRadarMap>
-    </>
+    </Suspense>
   );
 
   const renderSisterBanners = (inFlow = false) =>
@@ -715,7 +731,11 @@ export default function PostScreen() {
           {signalGrid}
           {emptyOverlay}
           {renderSisterBanners()}
-          {!isAuthenticated && <RadarHud isAuthenticated={false} />}
+          {!isAuthenticated && (
+            <Suspense fallback={null}>
+              <RadarHud isAuthenticated={false} />
+            </Suspense>
+          )}
         </View>
         ) : (
         <ScrollView
@@ -726,7 +746,11 @@ export default function PostScreen() {
           <View style={[styles.mapHeroMobile, { height: mapMobileHeight }]}>
             {renderRadarStage()}
             {emptyOverlay}
-            {!isAuthenticated && <RadarHud isAuthenticated={false} />}
+            {!isAuthenticated && (
+            <Suspense fallback={null}>
+              <RadarHud isAuthenticated={false} />
+            </Suspense>
+          )}
           </View>
           {signalGrid}
           <View style={styles.mobileFooter}>{renderSisterBanners(true)}</View>

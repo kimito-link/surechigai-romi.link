@@ -4,7 +4,7 @@ import { ClerkProvider, getClerkInstance, useAuth as useClerkAuth } from "@clerk
 import * as SecureStore from "expo-secure-store";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import { ThemeProvider as ExpoThemeProvider, DefaultTheme as NavLightTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
@@ -16,7 +16,6 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { LoginSuccessProvider } from "@/lib/login-success-context";
 import { LoginSuccessModalWrapper } from "@/components/molecules/login-success-modal-wrapper";
 import { AuthHandoffProvider } from "@/lib/auth-handoff-context";
-import { AuthHandoffOverlay } from "@/components/organisms/auth-handoff-overlay";
 import { OfflineBanner } from "@/components/organisms/offline-banner";
 import { ToastProvider } from "@/components/atoms/toast";
 import { TextScaleProvider } from "@/lib/text-scale";
@@ -33,18 +32,16 @@ import { createPerformanceQueryCache, createPerformanceMutationCache } from "@/l
 import { asyncStoragePersister } from "@/lib/query-persister";
 import { shouldPersistQuery } from "@/lib/query-persist-policy";
 import { AuthQuerySync } from "@/lib/query-auth-sync";
-import { preloadCriticalImages } from "@/lib/image-preload";
 import { registerServiceWorker } from "@/lib/service-worker";
 import { setupChunkRecover } from "@/lib/pwa/chunk-recover";
-import { initAutoSync } from "@/lib/offline-sync";
 import { startNetworkMonitoring, stopNetworkMonitoring } from "@/lib/api";
-import { initSyncHandlers } from "@/lib/sync-handlers";
-import { AutoLoginProvider } from "@/lib/auto-login-provider";
-import { NetworkToast } from "@/components/organisms/network-toast";
 import { initSentry } from "@/lib/sentry";
 import { ErrorBoundary } from "@/components/ui";
-import { kimitoClerkAppearance } from "@/lib/clerk-appearance";
-import { kimitoJaJP } from "@/lib/clerk-localization";
+import { getClerkProviderProps } from "@/lib/clerk-provider-props";
+import { isPublicWebRoute } from "@/lib/clerk-public-routes";
+import { startDeferredWebBootstrap } from "@/lib/bootstrap/web-bootstrap";
+import { PublicWebProviders } from "@/components/providers/public-web-providers";
+import { NetworkToast } from "@/components/organisms/network-toast";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -285,31 +282,68 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
   );
 }
 
+function AppStack() {
+  return (
+    <ExpoThemeProvider value={NavLightTheme}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#F0F4F8" } }}>
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+      <StatusBar style="auto" />
+    </ExpoThemeProvider>
+  );
+}
+
+function ClerkAppShell({ children }: { children: ReactNode }) {
+  return (
+    <ClerkAwareTRPCProvider>
+      <AuthHandoffProvider>
+        <LoginSuccessProvider>
+          <ToastProvider>
+            <TextScaleProvider>
+              {children}
+              <LoginSuccessModalWrapper />
+              <OfflineBanner />
+              <NetworkToast />
+            </TextScaleProvider>
+          </ToastProvider>
+        </LoginSuccessProvider>
+      </AuthHandoffProvider>
+    </ClerkAwareTRPCProvider>
+  );
+}
+
 export const unstable_settings = {
   anchor: "(tabs)",
 };
 
 export default function RootLayout() {
+  const pathname = usePathname();
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
   const initialFrame = initialWindowMetrics?.frame ?? DEFAULT_WEB_FRAME;
 
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
 
+  const isPublicWeb = Platform.OS === "web" && isPublicWebRoute(pathname);
+
   useEffect(() => {
-    const sentryTimer = setTimeout(() => { initSentry(); }, 2000);
-    preloadCriticalImages();
+    if (Platform.OS === "web") {
+      return startDeferredWebBootstrap();
+    }
+
     registerServiceWorker();
     setupChunkRecover();
-    initSyncHandlers();
-    const unsubscribeSync = initAutoSync();
-    startNetworkMonitoring();
-    return () => {
-      clearTimeout(sentryTimer);
-      unsubscribeSync();
-      stopNetworkMonitoring();
-    };
+    const sentryTimer = setTimeout(() => {
+      void initSentry();
+    }, 2000);
+    return () => clearTimeout(sentryTimer);
   }, []);
+
+  useEffect(() => {
+    if (isPublicWeb) return;
+    startNetworkMonitoring();
+    return () => stopNetworkMonitoring();
+  }, [isPublicWeb]);
 
   const providerInitialMetrics = useMemo(() => {
     const metrics = initialWindowMetrics ?? { insets: initialInsets, frame: initialFrame };
@@ -325,20 +359,9 @@ export default function RootLayout() {
 
   const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const isMissingClerkKey = !clerkKey;
+  const clerkBrandProps = getClerkProviderProps();
 
-  // Clerk アカウントは kimito.link の本番インスタンスを共有する。
-  // 配信は surechigai.kimito.link（同一サイト）に統一済み。
-  //   Cookie が .kimito.link で共有されるため satellite も /__clerk プロキシも不要。
-  //   → ログインがシームレス＝リロードの白画面(同期リダイレクト)も発生しない。
-  // ログインは常に自前 /sign-in（Clerk <SignIn/>）で kimito.link と同一体験にする。
-  // Native は publishable key の FAPI を直接使うため satellite 化しない。
-  const appClerkSatelliteProps = { signInUrl: "/sign-in" };
-
-  // kimito.link 由来の見た目・日本語をすべての ClerkProvider に適用（忠実コピー）。
-  const clerkBrandProps = {
-    appearance: kimitoClerkAppearance,
-    localization: kimitoJaJP,
-  };
+  const stack = <AppStack />;
 
   const content = (
     <ErrorBoundary screenName="App">
@@ -351,29 +374,10 @@ export default function RootLayout() {
               VercelのEnvironment Variables、またはローカルの.envを確認してください。
             </Text>
           </View>
+        ) : isPublicWeb ? (
+          <PublicWebProviders>{stack}</PublicWebProviders>
         ) : (
-          <ClerkAwareTRPCProvider>
-            <AutoLoginProvider>
-              <AuthHandoffProvider>
-              <LoginSuccessProvider>
-                <ToastProvider>
-                  <TextScaleProvider>
-                  <ExpoThemeProvider value={NavLightTheme}>
-                    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#F0F4F8" } }}>
-                      <Stack.Screen name="(tabs)" />
-                    </Stack>
-                  </ExpoThemeProvider>
-                  <StatusBar style="auto" />
-                  <AuthHandoffOverlay />
-                  <LoginSuccessModalWrapper />
-                  <OfflineBanner />
-                  <NetworkToast />
-                  </TextScaleProvider>
-                </ToastProvider>
-              </LoginSuccessProvider>
-              </AuthHandoffProvider>
-            </AutoLoginProvider>
-          </ClerkAwareTRPCProvider>
+          <ClerkAppShell>{stack}</ClerkAppShell>
         )}
       </GestureHandlerRootView>
     </ErrorBoundary>
@@ -381,28 +385,29 @@ export default function RootLayout() {
 
   const shouldOverrideSafeArea = Platform.OS === "web";
 
-  if (isMissingClerkKey) {
+  if (isMissingClerkKey || isPublicWeb) {
     return (
-      <SafeAreaProvider initialMetrics={providerInitialMetrics}>
-        {content}
-      </SafeAreaProvider>
+      <ThemeProvider>
+        <SafeAreaProvider initialMetrics={providerInitialMetrics}>
+          {shouldOverrideSafeArea ? (
+            <SafeAreaFrameContext.Provider value={frame}>
+              <SafeAreaInsetsContext.Provider value={insets}>{content}</SafeAreaInsetsContext.Provider>
+            </SafeAreaFrameContext.Provider>
+          ) : (
+            content
+          )}
+        </SafeAreaProvider>
+      </ThemeProvider>
     );
   }
 
   if (shouldOverrideSafeArea) {
     return (
-      <ClerkProvider
-        publishableKey={clerkKey!}
-        tokenCache={tokenCache}
-        {...clerkBrandProps}
-        {...appClerkSatelliteProps}
-      >
+      <ClerkProvider publishableKey={clerkKey!} tokenCache={tokenCache} {...clerkBrandProps}>
         <ThemeProvider>
           <SafeAreaProvider initialMetrics={providerInitialMetrics}>
             <SafeAreaFrameContext.Provider value={frame}>
-              <SafeAreaInsetsContext.Provider value={insets}>
-                {content}
-              </SafeAreaInsetsContext.Provider>
+              <SafeAreaInsetsContext.Provider value={insets}>{content}</SafeAreaInsetsContext.Provider>
             </SafeAreaFrameContext.Provider>
           </SafeAreaProvider>
         </ThemeProvider>
@@ -411,12 +416,7 @@ export default function RootLayout() {
   }
 
   return (
-    <ClerkProvider
-      publishableKey={clerkKey!}
-      tokenCache={tokenCache}
-      {...clerkBrandProps}
-      {...appClerkSatelliteProps}
-    >
+    <ClerkProvider publishableKey={clerkKey!} tokenCache={tokenCache} {...clerkBrandProps}>
       <ThemeProvider>
         <SafeAreaProvider initialMetrics={providerInitialMetrics}>{content}</SafeAreaProvider>
       </ThemeProvider>

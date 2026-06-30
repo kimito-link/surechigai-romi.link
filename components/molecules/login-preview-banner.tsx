@@ -1,16 +1,15 @@
 /**
  * ログイン誘導バナー（プレビュー画面の先頭に置く）
  *
- * 未ログインでも画面の中身（地図・図鑑など）は見せたうえで、
- * 「ログインすると何が解放されるか」をベネフィットで提示して入りたくさせる。
- * - X 公式ブラックの CTA に統一
- * - kimito.link 親ブランド（淡色＋ネイビー＋オレンジ）に寄せる
+ * Web: Clerk SDK を待たず href で /sign-in へ直行（kimito LpCtaButton 準拠）。
+ * Native: useAuth().login() で OAuth フロー。
  */
-import { View, Text, StyleSheet, Pressable } from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Link, usePathname, type Href } from "expo-router";
 import { useState } from "react";
-import { usePathname } from "expo-router";
 import { color, palette } from "@/theme/tokens";
+import { buildSignInHref } from "@/lib/clerk-route";
 import { useAuth } from "@/hooks/use-auth";
 
 interface Benefit {
@@ -32,29 +31,71 @@ function normalizeReturnTo(pathname: string | null): string {
 }
 
 interface LoginPreviewBannerProps {
-  /** 見出し（この画面で何が解放されるか） */
   headline: string;
   benefits?: Benefit[];
 }
 
-export function LoginPreviewBanner({ headline, benefits = DEFAULT_BENEFITS }: LoginPreviewBannerProps) {
-  const { login } = useAuth();
-  const pathname = usePathname();
-  const [isStarting, setIsStarting] = useState(false);
+function LoginCtaButton({
+  signInHref,
+  isStarting,
+  onPress,
+}: {
+  signInHref: string;
+  isStarting: boolean;
+  onPress?: () => void;
+}) {
+  const label = isStarting ? "接続中…" : "ではじめる";
 
-  const handleLogin = async () => {
-    setIsStarting(true);
-    try {
-      await login(normalizeReturnTo(pathname));
-    } finally {
-      setIsStarting(false);
-    }
-  };
+  if (Platform.OS === "web") {
+    return (
+      <Link href={signInHref as Href} asChild>
+        <Pressable
+          disabled={isStarting}
+          style={({ pressed }) => [
+            styles.button,
+            pressed && { opacity: 0.85 },
+            isStarting && { opacity: 0.65 },
+          ]}
+        >
+          <Text style={styles.xGlyph}>𝕏</Text>
+          <Text style={styles.buttonText}>{label}</Text>
+        </Pressable>
+      </Link>
+    );
+  }
 
+  return (
+    <Pressable
+      disabled={isStarting}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.button,
+        pressed && { opacity: 0.85 },
+        isStarting && { opacity: 0.65 },
+      ]}
+    >
+      <Text style={styles.xGlyph}>𝕏</Text>
+      <Text style={styles.buttonText}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function BannerBody({
+  headline,
+  benefits,
+  signInHref,
+  isStarting,
+  onNativeLogin,
+}: {
+  headline: string;
+  benefits: Benefit[];
+  signInHref: string;
+  isStarting: boolean;
+  onNativeLogin?: () => void;
+}) {
   return (
     <View style={styles.card}>
       <Text style={styles.headline}>{headline}</Text>
-
       <View style={styles.benefits}>
         {benefits.map((b) => (
           <View key={b.label} style={styles.benefitRow}>
@@ -65,24 +106,51 @@ export function LoginPreviewBanner({ headline, benefits = DEFAULT_BENEFITS }: Lo
           </View>
         ))}
       </View>
-
-      <Pressable
-        disabled={isStarting}
-        onPress={handleLogin}
-        style={({ pressed }) => [
-          styles.button,
-          pressed && { opacity: 0.85 },
-          isStarting && { opacity: 0.65 },
-        ]}
-      >
-        <Text style={styles.xGlyph}>𝕏</Text>
-        <Text style={styles.buttonText}>
-          {isStarting ? "接続中…" : "ではじめる"}
-        </Text>
-      </Pressable>
+      <LoginCtaButton signInHref={signInHref} isStarting={isStarting} onPress={onNativeLogin} />
       <Text style={styles.note}>無料・1タップ / 新規登録もこちら</Text>
     </View>
   );
+}
+
+function LoginPreviewBannerWeb({ headline, benefits = DEFAULT_BENEFITS }: LoginPreviewBannerProps) {
+  const pathname = usePathname();
+  const signInHref = buildSignInHref(normalizeReturnTo(pathname));
+  return (
+    <BannerBody headline={headline} benefits={benefits} signInHref={signInHref} isStarting={false} />
+  );
+}
+
+function LoginPreviewBannerNative({ headline, benefits = DEFAULT_BENEFITS }: LoginPreviewBannerProps) {
+  const { login } = useAuth();
+  const pathname = usePathname();
+  const [isStarting, setIsStarting] = useState(false);
+  const signInHref = buildSignInHref(normalizeReturnTo(pathname));
+
+  const handleNativeLogin = async () => {
+    setIsStarting(true);
+    try {
+      await login(normalizeReturnTo(pathname));
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  return (
+    <BannerBody
+      headline={headline}
+      benefits={benefits}
+      signInHref={signInHref}
+      isStarting={isStarting}
+      onNativeLogin={() => void handleNativeLogin()}
+    />
+  );
+}
+
+export function LoginPreviewBanner(props: LoginPreviewBannerProps) {
+  if (Platform.OS === "web") {
+    return <LoginPreviewBannerWeb {...props} />;
+  }
+  return <LoginPreviewBannerNative {...props} />;
 }
 
 const styles = StyleSheet.create({

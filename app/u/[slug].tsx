@@ -9,15 +9,17 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
+import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
+import { PublicShareHeader } from "@/components/organisms/public-share-header";
 import { WebTrailMap } from "@/components/organisms/web-trail-map";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
-import { useResponsive } from "@/hooks/use-responsive";
-import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
+import { hasClerkSessionInStorage } from "@/lib/has-clerk-session";
+import { Platform } from "react-native";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
 
 function displayWho(name: string | null, username: string | null): string {
@@ -29,9 +31,14 @@ function displayWho(name: string | null, username: string | null): string {
 export default function ShareLocationScreen() {
   const { slug: slugParam } = useLocalSearchParams<{ slug: string }>();
   const slug = typeof slugParam === "string" ? slugParam : slugParam?.[0] ?? "";
-  const { isDesktop } = useResponsive();
-  const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      setIsAuthenticated(hasClerkSessionInStorage());
+    }
+  }, []);
 
   const trailQuery = trpc.ogp.getTrailBySlug.useQuery(
     { slug, limit: 120 },
@@ -46,17 +53,19 @@ export default function ShareLocationScreen() {
   return (
     <ScreenContainer
       containerClassName="bg-background"
-      headerProps={{
-        title: "軌跡",
-        showCharacters: false,
-        isDesktop,
-        showLoginButton: !isAuthenticated,
-        leftElement: (
-          <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
-            <MaterialIcons name="arrow-back" size={24} color={palette.kimitoBlue} />
-          </Pressable>
-        ),
-      }}
+      showFooter={false}
+      headerSlot={
+        <PublicShareHeader
+          title="軌跡"
+          showLoginButton={!isAuthenticated}
+          returnTo={`/u/${slug}`}
+          leftElement={
+            <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
+              <MaterialIcons name="arrow-back" size={24} color={palette.kimitoBlue} />
+            </Pressable>
+          }
+        />
+      }
     >
       {trailQuery.isLoading && (
         <View style={styles.center}>

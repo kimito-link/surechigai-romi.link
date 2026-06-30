@@ -45,13 +45,9 @@ export default function Root({ children }: PropsWithChildren) {
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。"
         />
         <meta name="twitter:image" content="https://surechigai.kimito.link/api/og" />
-        {/* Preconnect: API・Clerkの接続を事前開始 */}
+        {/* Preconnect: 自サイトのみ（Clerk は /sign-in 画面だけで preconnect — kimito 準拠） */}
         <link rel="preconnect" href="https://surechigai.kimito.link" />
         <link rel="dns-prefetch" href="https://surechigai.kimito.link" />
-        <link rel="preconnect" href="https://clerk.kimito.link" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://clerk.kimito.link" />
-        <link rel="preconnect" href="https://clerk.accounts.dev" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://clerk.accounts.dev" />
         {/* PWA manifest */}
         <link rel="manifest" href="/manifest.json" />
         {/* Theme color for browser chrome（kimito ヘッダーの薄青に合わせる） */}

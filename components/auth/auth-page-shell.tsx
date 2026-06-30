@@ -3,8 +3,9 @@
  * モバイル: CTA ファースト / lg 以上: 左説明・右 Clerk の2カラム。
  */
 import { LinearGradient } from "expo-linear-gradient";
+import Head from "expo-router/head";
 import { ReactNode } from "react";
-import { ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { Platform, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { AuthPageIntro } from "@/components/auth/auth-page-intro";
 import { AuthRedirectNotice } from "@/components/auth/auth-redirect-notice";
 import { AuthSupportNotice } from "@/components/auth/auth-support-notice";
@@ -89,6 +90,14 @@ export function AuthPageShell({ variant, children }: AuthPageShellProps) {
 
   return (
     <View style={{ flex: 1 }}>
+      {Platform.OS === "web" ? (
+        <Head>
+          <link rel="preconnect" href="https://clerk.kimito.link" crossOrigin="anonymous" />
+          <link rel="preconnect" href="https://x.com" />
+          <link rel="dns-prefetch" href="https://api.x.com" />
+          <link rel="dns-prefetch" href="https://abs.twimg.com" />
+        </Head>
+      ) : null}
       <SignInAuthHandoffOverlay />
       <LinearGradient
         colors={["rgba(226,237,247,0.8)", "#FFFFFF", "rgba(255,243,232,0.6)"]}

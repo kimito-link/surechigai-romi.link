@@ -24,3 +24,9 @@ body {
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* kimito .lp-defer: ファーストビュー外の描画コストを遅延 */
+.lp-defer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 720px;
+}

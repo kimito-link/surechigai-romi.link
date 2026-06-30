@@ -2,6 +2,7 @@ import * as Auth from "@/lib/_core/auth";
 import { USER_INFO_KEY } from "@/constants/oauth";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { clearAllTokenData } from "@/lib/token-manager";
+import { buildSignInHref } from "@/lib/clerk-route";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -193,7 +194,7 @@ export function useAuth() {
           //   自前 /sign-in（Clerk <SignIn/>）へ遷移する。プログラム的 OAuth を直接呼ばず、
           //   X/Apple/Google ボタンは <SignIn/> 自身が描画・処理する（体験を完全一致させる）。
           //   ログイン後は redirect_url（=目的地）へ <SignIn/> が戻す。
-          const signInPath = `/sign-in?redirect_url=${encodeURIComponent(redirectComplete)}`;
+          const signInPath = buildSignInHref(redirectComplete);
           window.location.href = signInPath;
           return;
         }
