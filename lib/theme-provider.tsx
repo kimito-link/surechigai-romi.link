@@ -1,8 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Appearance, View } from "react-native";
-import { colorScheme as nativewindColorScheme, vars } from "nativewind";
-
+import { Appearance, Platform, View, type ViewStyle } from "react-native";
 import { SchemeColors, type ColorScheme } from "@/constants/theme";
+import { scheduleAfterWindowLoad } from "@/lib/schedule-after-idle";
 
 /**
  * Theme Provider
@@ -12,7 +11,6 @@ const FIXED_SCHEME: ColorScheme = "light";
 
 type ThemeContextValue = {
   colorScheme: ColorScheme;
-  // 後方互換性のため残すが、常にlightを返す
   themeMode: "light";
   setColorScheme: (scheme: ColorScheme) => void;
   setThemeMode: (mode: "light") => void;
@@ -21,62 +19,81 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [isInitialized, setIsInitialized] = useState(false);
+function applyDocumentTheme(): void {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  root.dataset.theme = FIXED_SCHEME;
+  root.classList.remove("dark");
+  root.classList.add("light");
+  const palette = SchemeColors[FIXED_SCHEME];
+  Object.entries(palette).forEach(([token, value]) => {
+    root.style.setProperty(`--color-${token}`, value);
+  });
+}
 
-  const applyScheme = useCallback(() => {
-    nativewindColorScheme.set(FIXED_SCHEME);
-    Appearance.setColorScheme?.(FIXED_SCHEME);
-    if (typeof document !== "undefined") {
-      const root = document.documentElement;
-      root.dataset.theme = FIXED_SCHEME;
-      root.classList.remove("dark");
-      root.classList.add("light");
-      const palette = SchemeColors[FIXED_SCHEME];
-      Object.entries(palette).forEach(([token, value]) => {
-        root.style.setProperty(`--color-${token}`, value);
-      });
-    }
-  }, []);
+type ThemeProviderProps = {
+  children: React.ReactNode;
+  /** Guest `/` 初回 paint 用: NativeWind vars を load 後まで defer。 */
+  deferNativeWind?: boolean;
+};
 
-  // サーバーサイド・または初回レンダリング時にできるだけ早くテーマを適用する
-  // useLayoutEffect を使うと useEffect より早くDOMに反映される
-  if (typeof window !== "undefined" && !isInitialized) {
-    applyScheme();
-  }
+export function ThemeProvider({ children, deferNativeWind = false }: ThemeProviderProps) {
+  const [nativeWindStyle, setNativeWindStyle] = useState<ViewStyle | undefined>(undefined);
 
   useEffect(() => {
-    setIsInitialized(true);
-  }, []);
+    if (Platform.OS !== "web") {
+      void import("@/lib/_core/nativewind-pressable");
+      Appearance.setColorScheme?.(FIXED_SCHEME);
+      void import("nativewind").then(({ colorScheme, vars }) => {
+        colorScheme.set(FIXED_SCHEME);
+        setNativeWindStyle(
+          vars({
+            "color-primary": SchemeColors[FIXED_SCHEME].primary,
+            "color-background": SchemeColors[FIXED_SCHEME].background,
+            "color-surface": SchemeColors[FIXED_SCHEME].surface,
+            "color-foreground": SchemeColors[FIXED_SCHEME].foreground,
+            "color-muted": SchemeColors[FIXED_SCHEME].muted,
+            "color-border": SchemeColors[FIXED_SCHEME].border,
+            "color-success": SchemeColors[FIXED_SCHEME].success,
+            "color-warning": SchemeColors[FIXED_SCHEME].warning,
+            "color-error": SchemeColors[FIXED_SCHEME].error,
+          }),
+        );
+      });
+      return;
+    }
 
-  const themeVariables = useMemo(
-    () =>
-      vars({
-        "color-primary": SchemeColors[FIXED_SCHEME].primary,
-        "color-background": SchemeColors[FIXED_SCHEME].background,
-        "color-surface": SchemeColors[FIXED_SCHEME].surface,
-        "color-foreground": SchemeColors[FIXED_SCHEME].foreground,
-        "color-muted": SchemeColors[FIXED_SCHEME].muted,
-        "color-border": SchemeColors[FIXED_SCHEME].border,
-        "color-success": SchemeColors[FIXED_SCHEME].success,
-        "color-warning": SchemeColors[FIXED_SCHEME].warning,
-        "color-error": SchemeColors[FIXED_SCHEME].error,
-      }),
-    [],
-  );
+    applyDocumentTheme();
 
-  // 後方互換性のためのダミー関数
-  const setColorScheme = useCallback(() => {
-    // ダークモード専用なので何もしない
-  }, []);
+    const loadNativeWind = () => {
+      void import("nativewind").then(({ colorScheme, vars }) => {
+        colorScheme.set(FIXED_SCHEME);
+        Appearance.setColorScheme?.(FIXED_SCHEME);
+        setNativeWindStyle(
+          vars({
+            "color-primary": SchemeColors[FIXED_SCHEME].primary,
+            "color-background": SchemeColors[FIXED_SCHEME].background,
+            "color-surface": SchemeColors[FIXED_SCHEME].surface,
+            "color-foreground": SchemeColors[FIXED_SCHEME].foreground,
+            "color-muted": SchemeColors[FIXED_SCHEME].muted,
+            "color-border": SchemeColors[FIXED_SCHEME].border,
+            "color-success": SchemeColors[FIXED_SCHEME].success,
+            "color-warning": SchemeColors[FIXED_SCHEME].warning,
+            "color-error": SchemeColors[FIXED_SCHEME].error,
+          }),
+        );
+      });
+    };
 
-  const setThemeMode = useCallback(() => {
-    // ダークモード専用なので何もしない
-  }, []);
+    if (deferNativeWind) {
+      return scheduleAfterWindowLoad(loadNativeWind);
+    }
+    loadNativeWind();
+  }, [deferNativeWind]);
 
-  const toggleTheme = useCallback(() => {
-    // ダークモード専用なので何もしない
-  }, []);
+  const setColorScheme = useCallback(() => {}, []);
+  const setThemeMode = useCallback(() => {}, []);
+  const toggleTheme = useCallback(() => {}, []);
 
   const value = useMemo(
     () => ({
@@ -89,9 +106,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     [setColorScheme, setThemeMode, toggleTheme],
   );
 
+  const shellStyle = useMemo(
+    () => ({
+      flex: 1,
+      backgroundColor: SchemeColors[FIXED_SCHEME].background,
+      ...(nativeWindStyle ?? {}),
+    }),
+    [nativeWindStyle],
+  );
+
   return (
     <ThemeContext.Provider value={value}>
-      <View style={[{ flex: 1 }, themeVariables]}>{children}</View>
+      <View style={shellStyle}>{children}</View>
     </ThemeContext.Provider>
   );
 }

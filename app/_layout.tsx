@@ -1,12 +1,9 @@
 import "@/global.css";
 import "@/lib/bootstrap/reanimated-init";
 // @ts-nocheck
-import { Stack, usePathname } from "expo-router";
-import { ThemeProvider as ExpoThemeProvider, DefaultTheme as NavLightTheme } from "@react-navigation/native";
-import { StatusBar } from "expo-status-bar";
+import { usePathname } from "expo-router";
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Platform, View, Text } from "react-native";
-import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
   SafeAreaFrameContext,
@@ -16,7 +13,9 @@ import {
 } from "react-native-safe-area-context";
 import type { EdgeInsets, Rect } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ErrorBoundaryLite } from "@/components/ui/error-boundary-lite";
 import {
+  shouldDeferTrpcOnGuestWeb,
   shouldUseGuestWebShell,
 } from "@/lib/clerk-public-routes";
 import { startDeferredWebBootstrap } from "@/lib/bootstrap/web-bootstrap";
@@ -32,19 +31,14 @@ const ClerkRootProvider = lazy(() =>
   })),
 );
 
+const AppNavigationStack = lazy(() =>
+  import("@/components/providers/app-navigation-stack").then((m) => ({
+    default: m.AppNavigationStack,
+  })),
+);
+
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
-
-function AppStack() {
-  return (
-    <ExpoThemeProvider value={NavLightTheme}>
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#F0F4F8" } }}>
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ExpoThemeProvider>
-  );
-}
 
 function MissingClerkKeyScreen() {
   return (
@@ -68,13 +62,14 @@ function MissingClerkKeyScreen() {
   );
 }
 
-function AppShell({ children }: { children: ReactNode }) {
+function AppShell({ children, liteBoundary = false }: { children: ReactNode; liteBoundary?: boolean }) {
+  const Boundary = liteBoundary ? ErrorBoundaryLite : ErrorBoundary;
   return (
-    <ErrorBoundary screenName="App">
+    <Boundary screenName="App">
       <GestureRoot style={{ flex: 1, overflow: "hidden", backgroundColor: "#F0F4F8" }}>
         {children}
       </GestureRoot>
-    </ErrorBoundary>
+    </Boundary>
   );
 }
 
@@ -91,6 +86,7 @@ export default function RootLayout() {
   const [frame] = useState<Rect>(initialFrame);
 
   const useGuestWebShell = Platform.OS === "web" && shouldUseGuestWebShell(pathname);
+  const deferNativeWind = useGuestWebShell && shouldDeferTrpcOnGuestWeb(pathname);
 
   useEffect(() => {
     if (Platform.OS === "web") {
@@ -141,7 +137,12 @@ export default function RootLayout() {
 
   const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const isMissingClerkKey = !clerkKey;
-  const stack = <AppStack />;
+
+  const stack = (
+    <Suspense fallback={useGuestWebShell ? null : <AppBootstrapFallback />}>
+      <AppNavigationStack />
+    </Suspense>
+  );
 
   let shellContent: ReactNode;
   if (isMissingClerkKey) {
@@ -163,16 +164,16 @@ export default function RootLayout() {
   const shouldOverrideSafeArea = Platform.OS === "web";
 
   return (
-    <ThemeProvider>
+    <ThemeProvider deferNativeWind={deferNativeWind}>
       <SafeAreaProvider initialMetrics={providerInitialMetrics}>
         {shouldOverrideSafeArea ? (
           <SafeAreaFrameContext.Provider value={frame}>
             <SafeAreaInsetsContext.Provider value={insets}>
-              <AppShell>{shellContent}</AppShell>
+              <AppShell liteBoundary={useGuestWebShell}>{shellContent}</AppShell>
             </SafeAreaInsetsContext.Provider>
           </SafeAreaFrameContext.Provider>
         ) : (
-          <AppShell>{shellContent}</AppShell>
+          <AppShell liteBoundary={useGuestWebShell}>{shellContent}</AppShell>
         )}
       </SafeAreaProvider>
     </ThemeProvider>

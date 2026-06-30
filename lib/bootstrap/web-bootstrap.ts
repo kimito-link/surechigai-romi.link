@@ -2,6 +2,7 @@ import { registerServiceWorker } from "@/lib/service-worker";
 import { setupChunkRecover } from "@/lib/pwa/chunk-recover";
 import { initSentry } from "@/lib/sentry";
 import { scheduleAfterWindowLoad } from "@/lib/schedule-after-idle";
+import { loadDeferredWebEntrySideEffects } from "@/lib/bootstrap/web-entry-deferred";
 
 let started = false;
 
@@ -15,6 +16,7 @@ export function startDeferredWebBootstrap(): () => void {
   started = true;
 
   return scheduleAfterWindowLoad(() => {
+    loadDeferredWebEntrySideEffects();
     registerServiceWorker();
     setupChunkRecover();
     window.setTimeout(() => {

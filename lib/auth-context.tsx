@@ -1,4 +1,3 @@
-import * as Auth from "@/lib/_core/auth";
 import {
   createContext,
   useCallback,
@@ -8,8 +7,9 @@ import {
 } from "react";
 import { Platform } from "react-native";
 import { buildSignInHref } from "@/lib/clerk-route";
+import type { User as AuthUserType } from "@/lib/_core/auth";
 
-export type AuthUser = Auth.User;
+export type AuthUser = AuthUserType;
 
 export type AuthState = {
   user: AuthUser | null;
@@ -62,6 +62,7 @@ export function GuestAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    const Auth = await import("@/lib/_core/auth");
     await Auth.removeSessionToken();
     await Auth.clearUserInfo();
   }, []);
