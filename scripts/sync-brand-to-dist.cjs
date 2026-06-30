@@ -9,7 +9,6 @@ const PUBLIC = path.join(ROOT, "public");
 const DIST = path.join(ROOT, "dist");
 
 const BRAND_FILES = [
-  "icon-tab.png",
   "favicon.ico",
   "favicon-16.png",
   "favicon-32.png",
@@ -55,8 +54,8 @@ function copyBrandAssets() {
     fs.copyFileSync(src, dest);
     copied++;
   }
-  // 旧 favicon.png は dist に置かない（CDN immutable 回避）
-  for (const stale of ["favicon.png", "brand/icon-tab.png"]) {
+  // 旧パスは dist に置かない
+  for (const stale of ["favicon.png", "icon-tab.png", "brand/icon-tab.png"]) {
     const p = path.join(DIST, stale);
     if (fs.existsSync(p)) {
       fs.unlinkSync(p);

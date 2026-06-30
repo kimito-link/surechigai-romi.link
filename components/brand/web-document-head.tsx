@@ -11,7 +11,7 @@ const FAVICON_VERSION =
     ? process.env.EXPO_PUBLIC_BUILD_SHA.slice(0, 12)
     : "dev";
 
-const TAB_ICON = `/icon-tab.png?v=${FAVICON_VERSION}`;
+const TAB_ICON = `/favicon-48.png?v=${FAVICON_VERSION}`;
 
 export function WebDocumentHead() {
   if (Platform.OS !== "web") return null;

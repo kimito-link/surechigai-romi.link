@@ -34,7 +34,7 @@
       ]
     },
     {
-      "source": "/icon-tab.png",
+      "source": "/favicon-48.png",
       "headers": [
         {
           "key": "Cache-Control",
@@ -171,21 +171,6 @@
   ],
   "redirects": [
     {
-      "source": "/favicon.png",
-      "destination": "/icon-tab.png",
-      "permanent": false
-    },
-    {
-      "source": "/favicon.ico",
-      "destination": "/icon-tab.png",
-      "permanent": false
-    },
-    {
-      "source": "/brand/icon-tab.png",
-      "destination": "/icon-tab.png",
-      "permanent": false
-    },
-    {
       "source": "/logo192.png",
       "destination": "/icon-192.png",
       "permanent": false
@@ -232,23 +217,11 @@
   ],
   "rewrites": [
     {
-      "source": "/favicon.png",
-      "destination": "/icon-tab.png"
-    },
-    {
-      "source": "/favicon.ico",
-      "destination": "/icon-tab.png"
-    },
-    {
-      "source": "/brand/icon-tab.png",
-      "destination": "/icon-tab.png"
-    },
-    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },
     {
-      "source": "/((?!api/|lp(?:/|$)|_expo/|assets/|icon-tab\\.png|favicon|icon-\\d|apple-touch|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt).*)",
+      "source": "/((?!api/|lp(?:/|$)|_expo/|assets/|favicon|icon-\\d|apple-touch|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]

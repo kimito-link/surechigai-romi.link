@@ -50,8 +50,8 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="dns-prefetch" href="https://surechigai.kimito.link" />
         {/* PWA / favicon — kimito-link 公式ゆっくりりんく + すれ違い（pnpm brand:icons） */}
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/icon-tab.png" type="image/png" sizes="48x48" />
-        <link rel="shortcut icon" href="/icon-tab.png" type="image/png" />
+        <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
+        <link rel="shortcut icon" href="/favicon-48.png" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#00427B" />
         <meta name="apple-mobile-web-app-title" content="すれ違ひ通信" />

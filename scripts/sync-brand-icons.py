@@ -105,7 +105,6 @@ def main() -> None:
     # タブ用 — ゆっくりりんく + すれ違い電波
     for size in (16, 32, 48):
         save_tab_favicon(size, ROOT / f"public/favicon-{size}.png")
-    save_tab_favicon(48, ROOT / "public/icon-tab.png")
     save_tab_favicon(48, ROOT / "assets/images/favicon.png")
 
     # PWA / スプラッシュ — 全身りんくキャラ
@@ -116,11 +115,11 @@ def main() -> None:
     save_maskable(512, ROOT / "public/icon-512-maskable.png")
     save_resize(APP_ICON_SOURCE, 180, ROOT / "public/apple-touch-icon.png")
 
-    shutil.copy2(ROOT / "public/icon-tab.png", ROOT / "public/favicon.ico")
+    shutil.copy2(ROOT / "public/favicon-48.png", ROOT / "public/favicon.ico")
 
     lp = ROOT / "public/lp"
     lp.mkdir(parents=True, exist_ok=True)
-    for name in ("favicon.ico", "icon-tab.png", "icon-192.png", "apple-touch-icon.png"):
+    for name in ("favicon.ico", "favicon-48.png", "icon-192.png", "apple-touch-icon.png"):
         shutil.copy2(ROOT / "public" / name, lp / name)
         print(f"copied lp/{name}")
 

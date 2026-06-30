@@ -11,7 +11,7 @@ rm -rf node_modules/.cache dist .expo "${TMPDIR:-/tmp}"/metro-* /tmp/metro-* 2>/
 node scripts/strip-import-meta.cjs || true
 
 # ブランドアイコンを先に生成（expo export が web.favicon を参照）
-python scripts/sync-brand-icons.py || true
+python -m pip install --quiet Pillow && python scripts/sync-brand-icons.py
 
 mkdir -p node_modules/react-native-css-interop/.cache
 npx tailwindcss -i ./global.css -o ./node_modules/react-native-css-interop/.cache/web.css
