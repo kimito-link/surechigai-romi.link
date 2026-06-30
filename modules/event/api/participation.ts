@@ -13,6 +13,8 @@ import { getEventById } from "../db/queries.js";
 import {
   getMyParticipationForEvent,
   listParticipationsByEvent,
+  listMyUpcomingParticipations,
+  setParticipationReminder,
   softDeleteParticipation,
   upsertParticipation,
 } from "../db/participation-queries.js";
@@ -35,6 +37,24 @@ export const eventParticipationRouter = router({
       const db = await getDb();
       if (!db) return null;
       return getMyParticipationForEvent(db, input.eventId, ctx.user.id);
+    }),
+
+  /** 参加表明中のこれから／ライブ中の集まり（マイページ用）。 */
+  myUpcoming: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    return listMyUpcomingParticipations(db, ctx.user.id);
+  }),
+
+  /** リマインド ON/OFF。 */
+  setReminder: protectedProcedure
+    .input(z.object({ eventId: z.number(), enabled: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
+      const ok = await setParticipationReminder(db, ctx.user.id, input.eventId, input.enabled);
+      if (!ok) throw new TRPCError({ code: "NOT_FOUND", message: "参加表明が見つかりません" });
+      return { ok: true, enabled: input.enabled };
     }),
 
   /** 参加表明する（1イベント1ユーザー）。 */
@@ -82,6 +102,7 @@ export const eventParticipationRouter = router({
         message: input.message?.trim() || null,
         prefecture,
         companionCount: input.companionCount,
+        reminderEnabled: true,
       });
 
       return row;

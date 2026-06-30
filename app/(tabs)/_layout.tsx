@@ -18,6 +18,7 @@ import { useColors } from "@/hooks/use-colors";
 import { PostTabIcon } from "@/components/post/post-tab-icon";
 import { TAB_BAR_BODY_HEIGHT } from "@/hooks/use-tab-bar-inset";
 import { LivePresenceRunner } from "@/components/presence/live-presence-runner";
+import { EventReminderRunner } from "@/components/presence/event-reminder-runner";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -31,6 +32,7 @@ export default function TabLayout() {
   return (
     <>
       <LivePresenceRunner />
+      <EventReminderRunner />
       <Tabs
       screenOptions={{
         // kimito.link ブランド統一: アクティブ=ネイビー / 非アクティブ=slate-500 / 白基調のバー

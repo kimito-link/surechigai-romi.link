@@ -2,7 +2,7 @@
  * event_participations テーブルへの Drizzle クエリ層。
  */
 
-import { and, eq, inArray, isNull, desc, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, desc, asc, sql, or, gte } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../../../drizzle/schema/index.js";
 import {
@@ -10,6 +10,7 @@ import {
   type InsertEventParticipation,
   type EventParticipation,
 } from "../../../drizzle/schema/event-participation.js";
+import { events } from "../../../drizzle/schema/event.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -23,7 +24,26 @@ export type ParticipationPublicView = {
   message: string | null;
   prefecture: string | null;
   companionCount: number;
+  reminderEnabled: boolean;
   createdAt: Date;
+};
+
+export type MyUpcomingParticipationView = {
+  participationId: number;
+  eventId: number;
+  reminderEnabled: boolean;
+  message: string | null;
+  participationPrefecture: string | null;
+  participatedAt: Date;
+  title: string;
+  startAt: Date;
+  endAt: Date | null;
+  status: string;
+  locationType: string;
+  eventPrefecture: string | null;
+  venueName: string | null;
+  creatorName: string | null;
+  creatorProfileImage: string | null;
 };
 
 function toPublicView(row: EventParticipation): ParticipationPublicView {
@@ -37,6 +57,7 @@ function toPublicView(row: EventParticipation): ParticipationPublicView {
     message: row.message,
     prefecture: row.prefecture,
     companionCount: row.companionCount,
+    reminderEnabled: row.reminderEnabled,
     createdAt: row.createdAt,
   };
 }
@@ -74,6 +95,68 @@ export async function getMyParticipationForEvent(
     )
     .limit(1);
   return rows[0] ? toPublicView(rows[0]) : null;
+}
+
+/** 自分の参加表明のうち、これから／ライブ中の集まり。 */
+export async function listMyUpcomingParticipations(
+  db: DB,
+  userId: number,
+  now = new Date(),
+  limit = 30,
+): Promise<MyUpcomingParticipationView[]> {
+  const rows = await db
+    .select({
+      participationId: eventParticipations.id,
+      eventId: events.id,
+      reminderEnabled: eventParticipations.reminderEnabled,
+      message: eventParticipations.message,
+      participationPrefecture: eventParticipations.prefecture,
+      participatedAt: eventParticipations.createdAt,
+      title: events.title,
+      startAt: events.startAt,
+      endAt: events.endAt,
+      status: events.status,
+      locationType: events.locationType,
+      eventPrefecture: events.prefecture,
+      venueName: events.venueName,
+      creatorName: events.creatorName,
+      creatorProfileImage: events.creatorProfileImage,
+    })
+    .from(eventParticipations)
+    .innerJoin(events, eq(eventParticipations.eventId, events.id))
+    .where(
+      and(
+        eq(eventParticipations.userId, userId),
+        isNull(eventParticipations.deletedAt),
+        sql`${events.status} NOT IN ('ended','canceled')`,
+        or(gte(events.startAt, now), eq(events.status, "live")),
+      ),
+    )
+    .orderBy(asc(events.startAt))
+    .limit(limit);
+
+  return rows;
+}
+
+/** 参加表明のリマインド ON/OFF。 */
+export async function setParticipationReminder(
+  db: DB,
+  userId: number,
+  eventId: number,
+  enabled: boolean,
+): Promise<boolean> {
+  const rows = await db
+    .update(eventParticipations)
+    .set({ reminderEnabled: enabled })
+    .where(
+      and(
+        eq(eventParticipations.eventId, eventId),
+        eq(eventParticipations.userId, userId),
+        isNull(eventParticipations.deletedAt),
+      ),
+    )
+    .returning({ id: eventParticipations.id });
+  return rows.length > 0;
 }
 
 /** 複数イベントの参加人数＋先頭アバター（一覧カード用）。 */
@@ -159,6 +242,7 @@ export async function upsertParticipation(
         message: values.message ?? null,
         prefecture: values.prefecture ?? null,
         companionCount: values.companionCount ?? 0,
+        reminderEnabled: values.reminderEnabled ?? true,
         deletedAt: null,
       })
       .where(eq(eventParticipations.id, existing[0].id))

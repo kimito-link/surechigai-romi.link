@@ -88,6 +88,7 @@ export function EventParticipationPanel({
       void utils.event.listLive.invalidate();
       void utils.eventParticipation.listByEvent.invalidate({ eventId });
       void utils.eventParticipation.mineForEvent.invalidate({ eventId });
+      void utils.eventParticipation.myUpcoming.invalidate();
       setModalOpen(false);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -103,6 +104,7 @@ export function EventParticipationPanel({
       void utils.event.listLive.invalidate();
       void utils.eventParticipation.listByEvent.invalidate({ eventId });
       void utils.eventParticipation.mineForEvent.invalidate({ eventId });
+      void utils.eventParticipation.myUpcoming.invalidate();
       toast.showInfo("参加表明を取り消しました");
     },
   });

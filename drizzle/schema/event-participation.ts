@@ -11,6 +11,7 @@ import {
   timestamp,
   serial,
   index,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const eventParticipations = pgTable(
@@ -25,6 +26,8 @@ export const eventParticipations = pgTable(
     message: text("message"),
     prefecture: varchar("prefecture", { length: 32 }),
     companionCount: integer("companionCount").default(0).notNull(),
+    /** 開始前リマインド（1日前・1時間前・15分前）を受け取る */
+    reminderEnabled: boolean("reminderEnabled").default(true).notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     deletedAt: timestamp("deletedAt"),
   },

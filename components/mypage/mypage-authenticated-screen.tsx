@@ -45,6 +45,7 @@ import {
   type TrailVisibility,
 } from "@/modules/encounter/core/trail-visibility";
 import { useLivePresenceControls } from "@/hooks/use-live-presence";
+import { MypageUpcomingEventsSection } from "@/components/mypage/mypage-upcoming-events-section";
 
 const MAX_HITOKOTO = 140;
 
@@ -358,6 +359,9 @@ export function MypageAuthenticatedScreen() {
           </View>
           <MaterialIcons name="open-in-new" size={16} color="rgba(255,255,255,0.85)" />
         </Pressable>
+
+        {/* 参加表明中の集まり + リマインド */}
+        <MypageUpcomingEventsSection />
 
         {/* 共有サムネの粒度設定 */}
         <View style={styles.precisionRow}>
