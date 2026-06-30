@@ -92,9 +92,15 @@ UI、画面文言、レイアウト、配色、余白、モーション、地図
 
 ---
 
-## ディレクティブ 4: Git コミット・プッシュ
+## ディレクティブ 4: Git コミット・プッシュ・本番デプロイ（必須）
 
-push は `required_permissions: ['all']` で実行（Windows 認証情報アクセスに必要）。
+機能修正・UI 変更を完了したら、**ユーザーに「デプロイしますか？」と聞かず**、同じターン内で以下まで必ず実行する。
+
+1. `pnpm check`（エラー 0）
+2. 関連ファイルのみ `git add` → `git commit`
+3. `git push origin main`
+4. **デプロイ完了確認**: GHA `Deploy to Vercel` success、または `https://surechigai.kimito.link/version.json` の `commitSha` 一致
+5. 失敗時: `gh workflow run deploy-vercel.yml` で手動再デプロイ
 
 ---
 
