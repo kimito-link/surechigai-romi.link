@@ -68,7 +68,9 @@ export function computeAppChromeInsets(params: AppChromeInsetParams): {
   const extra = params.extra ?? tabBar.chromeExtra;
 
   const paddingTop = params.isWeb
-    ? params.headerChromeHeight + Math.max(params.safeAreaTop, 0)
+    ? params.inTabs
+      ? Math.max(params.safeAreaTop, 0)
+      : params.headerChromeHeight + Math.max(params.safeAreaTop, 0)
     : Math.max(params.safeAreaTop, 0);
 
   const tabBarBottom =

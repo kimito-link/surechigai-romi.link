@@ -10,7 +10,7 @@ import { View, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
+import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
 import { DeleteTrailConfirmModal } from "@/components/molecules/delete-trail-confirm-modal";
@@ -84,8 +84,9 @@ export function MapAuthenticatedScreen() {
   if (!isAuthReady) {
     return (
       <ScreenContainer containerClassName="bg-background">
-        <AppHeader
+        <TabScreenHeader
           title="軌跡"
+          contextKey="map"
           showCharacters={false}
           isDesktop={isDesktop}
           showMenu
@@ -99,8 +100,9 @@ export function MapAuthenticatedScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-background">
-      <AppHeader
+      <TabScreenHeader
         title="軌跡"
+        contextKey="map"
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu

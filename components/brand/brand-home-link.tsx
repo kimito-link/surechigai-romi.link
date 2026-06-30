@@ -19,6 +19,8 @@ export type BrandHomeLinkProps = {
   title?: string;
   isDesktop?: boolean;
   isNarrow?: boolean;
+  /** タブ画面用 — 小さめアイコン、画面名のみ、バージョン非表示 */
+  compact?: boolean;
 };
 
 function goHome() {
@@ -33,8 +35,10 @@ export function BrandHomeLink({
   title = "君斗りんくのすれ違ひ通信",
   isDesktop = false,
   isNarrow = false,
+  compact = false,
 }: BrandHomeLinkProps) {
-  const titleSize = isDesktop ? 18 : isNarrow ? 14 : 15;
+  const iconSize = compact ? 28 : ICON_SIZE;
+  const titleSize = compact ? 16 : isDesktop ? 18 : isNarrow ? 14 : 15;
   const versionSize = isDesktop ? 12 : 11;
 
   return (
@@ -50,19 +54,21 @@ export function BrandHomeLink({
     >
       <Image
         source={APP_BRAND_ICON}
-        style={styles.icon}
+        style={[styles.icon, { width: iconSize, height: iconSize, borderRadius: iconSize / 2 }]}
         contentFit="cover"
       />
-      <View style={isNarrow ? styles.titleCol : styles.titleRow}>
-        <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={isNarrow ? 2 : 1}>
+      <View style={compact || isNarrow ? styles.titleCol : styles.titleRow}>
+        <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={compact ? 1 : isNarrow ? 2 : 1}>
           {title}
         </Text>
-        <Text
-          style={[styles.version, { fontSize: versionSize }]}
-          accessibilityLabel={`バージョン ${DISPLAY_VERSION}`}
-        >
-          v{DISPLAY_VERSION}
-        </Text>
+        {!compact ? (
+          <Text
+            style={[styles.version, { fontSize: versionSize }]}
+            accessibilityLabel={`バージョン ${DISPLAY_VERSION}`}
+          >
+            v{DISPLAY_VERSION}
+          </Text>
+        ) : null}
       </View>
     </Pressable>
   );

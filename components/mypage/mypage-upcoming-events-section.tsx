@@ -2,12 +2,12 @@
  * マイページ — 参加表明中の集まり + リマインド切替
  */
 import { View, Text, Pressable, StyleSheet, Switch, ActivityIndicator, Platform } from "react-native";
-import { Image } from "expo-image";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { formatEventDateTime } from "@/components/events/events-event-card";
+import { EventCreatorLink } from "@/components/events/event-creator-link";
 import {
   getEventReminderPermissionStatus,
   requestEventReminderPermission,
@@ -36,7 +36,7 @@ function placeLabel(item: {
   return [item.eventPrefecture, item.venueName].filter(Boolean).join(" ") || "場所未設定";
 }
 
-export function MypageUpcomingEventsSection() {
+export function MypageUpcomingEventsSection({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const utils = trpc.useUtils();
   const [permHint, setPermHint] = useState<string | null>(null);
@@ -78,18 +78,21 @@ export function MypageUpcomingEventsSection() {
     [setReminderMut],
   );
 
+  const wrapStyle = embedded ? styles.embeddedWrap : styles.section;
+
   if (isLoading) {
     return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>参加表明中の集まり</Text>
+      <View style={wrapStyle}>
+        <Text style={styles.subTitle}>参加表明中の集まり</Text>
         <ActivityIndicator color={color.accentPrimary} style={{ marginTop: 12 }} />
       </View>
     );
   }
 
   if (!items?.length) {
+    if (embedded) return null;
     return (
-      <View style={styles.section}>
+      <View style={wrapStyle}>
         <Text style={styles.sectionTitle}>参加表明中の集まり</Text>
         <Text style={styles.emptyText}>
           まだ参加表明した集まりはありません。{"\n"}
@@ -107,9 +110,9 @@ export function MypageUpcomingEventsSection() {
   }
 
   return (
-    <View style={styles.section}>
+    <View style={wrapStyle}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>参加表明中の集まり</Text>
+        <Text style={embedded ? styles.subTitle : styles.sectionTitle}>参加表明中の集まり</Text>
         <Text style={styles.sectionBadge}>{items.length}件</Text>
       </View>
       <Text style={styles.hint}>
@@ -127,22 +130,14 @@ export function MypageUpcomingEventsSection() {
                   <Text style={styles.cardTitle} numberOfLines={2}>
                     {item.title}
                   </Text>
-                  <View style={styles.creatorRow}>
-                    {item.creatorProfileImage ? (
-                      <Image
-                        source={{ uri: item.creatorProfileImage }}
-                        style={styles.creatorAvatar}
-                        contentFit="cover"
-                      />
-                    ) : (
-                      <View style={[styles.creatorAvatar, styles.creatorFallback]}>
-                        <MaterialIcons name="person" size={12} color={color.textMuted} />
-                      </View>
-                    )}
-                    <Text style={styles.creatorName} numberOfLines={1}>
-                      {item.creatorName ?? "主催者"}
-                    </Text>
-                  </View>
+                  <EventCreatorLink
+                    compact
+                    creatorName={item.creatorName}
+                    creatorUsername={item.creatorUsername}
+                    creatorXId={item.creatorXId}
+                    creatorProfileImage={item.creatorProfileImage}
+                    creatorXUrl={item.creatorXUrl}
+                  />
                 </View>
                 {isLive ? (
                   <View style={styles.liveBadge}>
@@ -207,6 +202,17 @@ const styles = StyleSheet.create({
     backgroundColor: color.surface,
     borderWidth: 1,
     borderColor: color.border,
+  },
+  embeddedWrap: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: color.border,
+  },
+  subTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: color.textPrimary,
   },
   sectionHeader: {
     flexDirection: "row",

@@ -20,10 +20,24 @@ interface GlobalMenuProps {
   onClose: () => void;
 }
 
+const TAB_SHORTCUTS = [
+  { icon: "home", label: "ポスト", path: "/(tabs)" },
+  { icon: "location-on", label: "チェックイン", path: "/(tabs)/checkin" },
+  { icon: "event", label: "集まり", path: "/(tabs)/events" },
+  { icon: "book", label: "図鑑", path: "/(tabs)/zukan" },
+  { icon: "map", label: "軌跡", path: "/(tabs)/map" },
+  { icon: "person", label: "マイページ", path: "/(tabs)/mypage" },
+] as const;
+
+const PRIMARY_ITEMS = [
+  { icon: "groups", label: "訪問申告", path: "/visit" },
+] as const;
+
 export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
   const { user, isAuthenticated, isAuthReadyForUI } = useAuth();
   const openLoginGuide = useLoginGuide();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const { isLarge, toggle: toggleTextSize } = useTextScale();
 
   const handleToggleTextSize = () => {
@@ -59,15 +73,27 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
     onClose();
   };
 
-  const menuItems = [
-    { icon: "home", label: "ホーム", path: "/(tabs)" },
-    { icon: "groups", label: "訪問申告", path: "/visit" },
-    { icon: "location-on", label: "チェックイン", path: "/(tabs)/checkin" },
-    { icon: "book", label: "図鑑", path: "/(tabs)/zukan" },
-    { icon: "map", label: "軌跡", path: "/(tabs)/map" },
-    { icon: "event", label: "集まり", path: "/(tabs)/events" },
-    { icon: "person", label: "マイページ", path: "/(tabs)/mypage" },
-  ];
+  const menuItems = PRIMARY_ITEMS;
+
+  const renderMenuLink = (item: { icon: string; label: string; path: string }, key: string) => (
+    <Link key={key} href={item.path as any} asChild>
+      <Pressable
+        onPress={handleLinkPress}
+        style={({ pressed }) => ({
+          flexDirection: "row",
+          alignItems: "center",
+          paddingVertical: 14,
+          paddingHorizontal: 12,
+          borderRadius: 12,
+          marginBottom: 4,
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
+        <MaterialIcons name={item.icon as any} size={24} color={palette.kimitoBlue} style={{ marginRight: 16 }} />
+        <Text style={{ color: color.textPrimary, fontSize: 16 }}>{item.label}</Text>
+      </Pressable>
+    </Link>
+  );
 
   return (
     <>
@@ -175,29 +201,38 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
 
               {/* メニュー項目 */}
               <View style={{ padding: 12 }}>
-                {menuItems.map((item, index) => (
-                  <Link
-                    key={index}
-                    href={item.path as any}
-                    asChild
-                  >
-                    <Pressable
-                      onPress={handleLinkPress}
-                      style={({ pressed }) => ({
-                        flexDirection: "row",
-                        alignItems: "center",
-                        paddingVertical: 14,
-                        paddingHorizontal: 12,
-                        borderRadius: 12,
-                        marginBottom: 4,
-                        opacity: pressed ? 0.7 : 1,
-                      })}
-                    >
-                      <MaterialIcons name={item.icon as any} size={24} color={palette.kimitoBlue} style={{ marginRight: 16 }} />
-                      <Text style={{ color: color.textPrimary, fontSize: 16 }}>{item.label}</Text>
-                    </Pressable>
-                  </Link>
-                ))}
+                {menuItems.map((item) => renderMenuLink(item, item.path))}
+
+                <Pressable
+                  onPress={() => {
+                    handleHaptic();
+                    setShortcutsOpen(!shortcutsOpen);
+                  }}
+                  style={({ pressed }) => ({
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingVertical: 14,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    marginBottom: 4,
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <MaterialIcons name="apps" size={24} color={palette.kimitoBlue} style={{ marginRight: 16 }} />
+                    <Text style={{ color: color.textPrimary, fontSize: 16 }}>タブショートカット</Text>
+                  </View>
+                  <MaterialIcons
+                    name={shortcutsOpen ? "expand-less" : "expand-more"}
+                    size={20}
+                    color={color.textMuted}
+                  />
+                </Pressable>
+
+                {shortcutsOpen
+                  ? TAB_SHORTCUTS.map((item) => renderMenuLink(item, `tab-${item.path}`))
+                  : null}
               </View>
 
               {/* ログアウトボタン */}

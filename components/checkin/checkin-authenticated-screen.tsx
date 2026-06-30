@@ -32,7 +32,7 @@ import Animated, {
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
+import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
@@ -439,8 +439,9 @@ export default function CheckinAuthenticatedScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-background" style={isMapFirst ? styles.screenFlex : undefined}>
-        <AppHeader
+        <TabScreenHeader
           title="チェックイン"
+          contextKey="checkin"
           showCharacters={false}
           isDesktop={isDesktop}
           showMenu={true}

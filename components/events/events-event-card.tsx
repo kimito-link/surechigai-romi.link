@@ -1,11 +1,11 @@
 import { View, Text, StyleSheet, TextInput, Pressable } from "react-native";
 import { useState, useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { Image } from "expo-image";
 import { trpc } from "@/lib/trpc";
 import { color } from "@/theme/tokens";
 import { openExternalUrl } from "@/lib/navigation/external-links";
 import { EventParticipationPanel } from "@/components/events/event-participation-panel";
+import { EventCreatorLink } from "@/components/events/event-creator-link";
 
 export const TYPE_TAG_LABELS: Record<string, string> = {
   haishin: "配信",
@@ -29,6 +29,8 @@ export function formatEventDateTime(value: string | Date): string {
 export function EventCard({
   id,
   creatorName,
+  creatorUsername,
+  creatorXId,
   creatorXUrl,
   creatorProfileImage,
   title,
@@ -46,6 +48,8 @@ export function EventCard({
 }: {
   id: number;
   creatorName?: string | null;
+  creatorUsername?: string | null;
+  creatorXId?: string | null;
   creatorXUrl?: string | null;
   creatorProfileImage?: string | null;
   title: string;
@@ -81,10 +85,6 @@ export function EventCard({
           ? "オンライン（合言葉で開く）"
           : "オンライン"
       : [prefecture, effectiveVenue].filter(Boolean).join(" ") || "場所未設定";
-
-  const openX = useCallback(() => {
-    if (creatorXUrl) void openExternalUrl(creatorXUrl);
-  }, [creatorXUrl]);
 
   const openLink = useCallback(() => {
     if (effectiveUrl) void openExternalUrl(effectiveUrl);
@@ -137,30 +137,14 @@ export function EventCard({
         )}
       </View>
 
-      {(creatorName || creatorXUrl || creatorProfileImage) && (
-        <Pressable
-          onPress={openX}
-          disabled={!creatorXUrl}
-          accessibilityRole="link"
-          accessibilityLabel={creatorXUrl ? `${creatorName ?? "クリエイター"}のXプロフィールを開く` : undefined}
-          style={({ pressed }) => [styles.creatorRow, pressed && creatorXUrl ? { opacity: 0.7 } : null]}
-        >
-          {creatorProfileImage ? (
-            <Image source={{ uri: creatorProfileImage }} style={styles.creatorAvatar} contentFit="cover" />
-          ) : (
-            <View style={[styles.creatorAvatar, styles.creatorAvatarFallback]}>
-              <MaterialIcons name="person" size={16} color={color.textMuted} />
-            </View>
-          )}
-          <Text style={styles.creatorName} numberOfLines={1}>
-            {creatorName ?? "クリエイター"}
-          </Text>
-          {creatorXUrl && (
-            <View style={styles.xChip}>
-              <Text style={styles.xChipText}>𝕏で見る</Text>
-            </View>
-          )}
-        </Pressable>
+      {(creatorName || creatorUsername || creatorXUrl || creatorProfileImage || creatorXId) && (
+        <EventCreatorLink
+          creatorName={creatorName}
+          creatorUsername={creatorUsername}
+          creatorXId={creatorXId}
+          creatorProfileImage={creatorProfileImage}
+          creatorXUrl={creatorXUrl}
+        />
       )}
 
       <View style={styles.cardMetaRow}>

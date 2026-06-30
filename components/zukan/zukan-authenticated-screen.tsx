@@ -13,7 +13,7 @@ import {
 import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
+import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { trpc } from "@/lib/trpc";
@@ -115,8 +115,9 @@ export function ZukanAuthenticatedScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-background">
-      <AppHeader
+      <TabScreenHeader
         title="図鑑"
+        contextKey="zukan"
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu

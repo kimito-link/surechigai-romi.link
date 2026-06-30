@@ -1,7 +1,7 @@
 /**
  * 集まりカード内の参加表明 UI（doin-challenge 参加表明の簡略版）。
  */
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -24,6 +24,11 @@ import { regionGroups } from "@/constants/prefectures";
 import { eventDetailCopy } from "@/constants/copy/event-detail";
 import { color, palette } from "@/theme/tokens";
 import { openExternalUrl } from "@/lib/navigation/external-links";
+import {
+  getDefaultParticipationPrefecture,
+  resolveParticipationPrefecture,
+  setDefaultParticipationPrefecture,
+} from "@/lib/event-participation-default-pref";
 
 type Props = {
   eventId: number;
@@ -34,10 +39,18 @@ type Props = {
   participantAvatars?: (string | null)[];
 };
 
-function AvatarStack({ avatars, count }: { avatars: (string | null)[]; count: number }) {
+function AvatarStack({
+  avatars,
+  count,
+  onPress,
+}: {
+  avatars: (string | null)[];
+  count: number;
+  onPress?: () => void;
+}) {
   if (count === 0) return null;
   const shown = avatars.slice(0, 5);
-  return (
+  const row = (
     <View style={styles.avatarStackRow}>
       <View style={styles.avatarStack}>
         {shown.map((uri, i) => (
@@ -54,6 +67,12 @@ function AvatarStack({ avatars, count }: { avatars: (string | null)[]; count: nu
       </View>
       <Text style={styles.participantCountText}>{count}人が参加表明</Text>
     </View>
+  );
+  if (!onPress) return row;
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.85 }}>
+      {row}
+    </Pressable>
   );
 }
 
@@ -72,10 +91,19 @@ export function EventParticipationPanel({
 
   const [modalOpen, setModalOpen] = useState(false);
   const [message, setMessage] = useState("");
-  const [selectedPref, setSelectedPref] = useState<string>(
-    user?.prefecture ?? prefecture ?? "",
-  );
+  const [savedDefaultPref, setSavedDefaultPref] = useState<string | null>(null);
+  const [selectedPref, setSelectedPref] = useState("");
   const [showPrefList, setShowPrefList] = useState(false);
+
+  useEffect(() => {
+    void getDefaultParticipationPrefecture().then(setSavedDefaultPref);
+  }, []);
+
+  const pickPrefecture = useCallback((pref: string) => {
+    setSelectedPref(pref);
+    setShowPrefList(false);
+    void setDefaultParticipationPrefecture(pref).then(() => setSavedDefaultPref(pref));
+  }, []);
 
   const { data: mine } = trpc.eventParticipation.mineForEvent.useQuery(
     { eventId },
@@ -83,7 +111,12 @@ export function EventParticipationPanel({
   );
 
   const createMut = trpc.eventParticipation.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
+      if (variables.prefecture) {
+        void setDefaultParticipationPrefecture(variables.prefecture).then(() =>
+          setSavedDefaultPref(variables.prefecture!),
+        );
+      }
       void utils.event.listUpcoming.invalidate();
       void utils.event.listLive.invalidate();
       void utils.eventParticipation.listByEvent.invalidate({ eventId });
@@ -109,15 +142,27 @@ export function EventParticipationPanel({
     },
   });
 
-  const openForm = useCallback(() => {
+  const openForm = useCallback(async () => {
     if (!isAuthenticated) {
       openLoginGuide();
       return;
     }
-    setSelectedPref(mine?.prefecture ?? user?.prefecture ?? prefecture ?? "");
+    let saved = savedDefaultPref;
+    if (saved == null) {
+      saved = await getDefaultParticipationPrefecture();
+      if (saved) setSavedDefaultPref(saved);
+    }
+    setSelectedPref(
+      resolveParticipationPrefecture({
+        minePrefecture: mine?.prefecture,
+        savedDefault: saved,
+        userPrefecture: user?.prefecture,
+        eventPrefecture: prefecture,
+      }),
+    );
     setMessage(mine?.message ?? "");
     setModalOpen(true);
-  }, [isAuthenticated, mine, openLoginGuide, prefecture, user?.prefecture]);
+  }, [isAuthenticated, mine, openLoginGuide, prefecture, savedDefaultPref, user?.prefecture]);
 
   const submit = useCallback(() => {
     if (locationType === "offline" && !selectedPref) {
@@ -221,10 +266,7 @@ export function EventParticipationPanel({
                         {group.prefectures.map((pref) => (
                           <Pressable
                             key={pref}
-                            onPress={() => {
-                              setSelectedPref(pref);
-                              setShowPrefList(false);
-                            }}
+                            onPress={() => pickPrefecture(pref)}
                             style={({ pressed }) => [
                               styles.prefOption,
                               selectedPref === pref && styles.prefOptionActive,

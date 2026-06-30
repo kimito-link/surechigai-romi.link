@@ -30,6 +30,8 @@ import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/atoms/toast";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
+import { TabHeaderSpacer } from "@/components/organisms/tab-header-spacer";
+import { useScreenContextBar } from "@/hooks/use-screen-context-bar";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -238,6 +240,7 @@ export function PostAuthenticatedScreen() {
   const router = useRouter();
   const { height: windowHeight } = useWindowDimensions();
   const mapMobileHeight = Math.min(Math.max(windowHeight * 0.36, 240), 320);
+  const postContext = useScreenContextBar("post");
 
   const [openItem, setOpenItem] = useState<EncounterItem | null>(null);
   const [openModalVisible, setOpenModalVisible] = useState(false);
@@ -445,7 +448,8 @@ export function PostAuthenticatedScreen() {
 
   return (
       <ScreenContainer style={{ backgroundColor: "#020817" }} edges={[]}>
-        <AppHeader />
+        <AppHeader variant="full" contextBar={postContext.element} />
+        <TabHeaderSpacer variant="full" hasContextBar={postContext.hasBar} />
 
         {isDesktop ? (
         <View style={styles.mapContainer}>

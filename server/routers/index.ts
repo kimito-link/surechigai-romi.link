@@ -17,6 +17,7 @@ import { safetyRouter } from "../../modules/encounter/api/safety.js";
 import { settingsRouter } from "../../modules/encounter/api/settings.js";
 import { presenceRouter } from "../../modules/encounter/api/presence.js";
 import { visitRouter } from "../../modules/encounter/api/visit.js";
+import { dashboardRouter } from "../../modules/encounter/api/dashboard.js";
 
 // event モジュールルーター（予定×ライブ表明。doin-challenge にも移植する共通機能）
 import { eventRouter } from "../../modules/event/api/event.js";
@@ -33,6 +34,7 @@ export const appRouter = router({
   settings: settingsRouter,
   presence: presenceRouter,
   visit: visitRouter,
+  dashboard: dashboardRouter,
   event: eventRouter,
   eventParticipation: eventParticipationRouter,
 });
@@ -50,6 +52,7 @@ export {
   settingsRouter,
   presenceRouter,
   visitRouter,
+  dashboardRouter,
   eventRouter,
   eventParticipationRouter,
 };

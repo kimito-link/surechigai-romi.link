@@ -24,7 +24,7 @@ const LazyEventsHostPanel = lazy(() =>
   })),
 );
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
+import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { toDateKey } from "@/lib/events/date-key";
 import { LazyEventCalendar } from "@/lib/lazy-heavy-components";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
@@ -120,8 +120,9 @@ export function EventsAuthenticatedScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-background">
-      <AppHeader
+      <TabScreenHeader
         title="集まり"
+        contextKey="events"
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu={true}

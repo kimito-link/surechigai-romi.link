@@ -30,7 +30,10 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import appConfig from "@/app.config.json";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
+import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
+import { MySignalSummary } from "@/components/dashboard/my-signal-summary";
+import { MypageActionList } from "@/components/dashboard/mypage-action-list";
+import { HostEventsSummary } from "@/components/dashboard/host-events-summary";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
@@ -45,7 +48,6 @@ import {
   type TrailVisibility,
 } from "@/modules/encounter/core/trail-visibility";
 import { useLivePresenceControls } from "@/hooks/use-live-presence";
-import { MypageUpcomingEventsSection } from "@/components/mypage/mypage-upcoming-events-section";
 
 const MAX_HITOKOTO = 140;
 
@@ -181,6 +183,7 @@ export function MypageAuthenticatedScreen() {
 
   const [hitokotoModalVisible, setHitokotoModalVisible] = useState(false);
   const [showBlockList, setShowBlockList] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [localHitokoto, setLocalHitokoto] = useState("");
 
   const updateHitokoto = trpc.encounter.updateHitokoto.useMutation({
@@ -300,8 +303,9 @@ export function MypageAuthenticatedScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-background">
-      <AppHeader
+      <TabScreenHeader
         title="マイページ"
+        contextKey="mypage"
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu
@@ -340,6 +344,28 @@ export function MypageAuthenticatedScreen() {
           </View>
         </View>
 
+        <MySignalSummary />
+        <MypageActionList />
+        <HostEventsSummary />
+
+        {/* 設定（折りたたみ） */}
+        <View style={styles.section}>
+          <Pressable
+            onPress={() => setSettingsOpen(!settingsOpen)}
+            style={({ pressed }) => [styles.sectionHeader, pressed && { opacity: 0.8 }]}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: settingsOpen }}
+          >
+            <Text style={styles.sectionTitle}>設定</Text>
+            <MaterialIcons
+              name={settingsOpen ? "expand-less" : "expand-more"}
+              size={20}
+              color={color.textMuted}
+            />
+          </Pressable>
+
+          {settingsOpen ? (
+            <View style={styles.settingsBody}>
         {/* 現在地をXでシェア（地図サムネ付きOGP） */}
         <Pressable
           onPress={handleShareLocation}
@@ -360,8 +386,7 @@ export function MypageAuthenticatedScreen() {
           <MaterialIcons name="open-in-new" size={16} color="rgba(255,255,255,0.85)" />
         </Pressable>
 
-        {/* 参加表明中の集まり + リマインド */}
-        <MypageUpcomingEventsSection />
+        {/* 参加表明セクションは MypageActionList に統合済み */}
 
         {/* 共有サムネの粒度設定 */}
         <View style={styles.precisionRow}>
@@ -482,8 +507,8 @@ export function MypageAuthenticatedScreen() {
         </View>
 
         {/* 設定・ログアウト */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>設定</Text>
+        <View style={styles.settingsSubSection}>
+          <Text style={styles.settingsSubHeading}>その他</Text>
 
           <Pressable
             onPress={navigate.toSpecialThanks}
@@ -540,6 +565,9 @@ export function MypageAuthenticatedScreen() {
         </View>
 
         <Text style={styles.version}>君斗りんくのすれ違ひ通信 v1.0.0</Text>
+            </View>
+          ) : null}
+        </View>
         </View>
       </ScrollView>
 
@@ -725,6 +753,20 @@ const styles = StyleSheet.create({
     color: color.textPrimary,
     fontSize: 15,
     fontWeight: "700",
+  },
+  settingsBody: {
+    gap: 12,
+    marginTop: 8,
+  },
+  settingsSubSection: {
+    gap: 4,
+    marginTop: 4,
+  },
+  settingsSubHeading: {
+    color: color.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 4,
   },
   editButton: {
     flexDirection: "row",

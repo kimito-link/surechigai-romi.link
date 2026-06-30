@@ -19,6 +19,7 @@ import { BrandHomeLink, BrandHomeTaglineLink } from "@/components/brand/brand-ho
 import { navigate } from "@/lib/navigation";
 import { trpc } from "@/lib/trpc";
 import * as Haptics from "expo-haptics";
+import { useWebSideNavActive, WEB_SIDE_NAV_WIDTH } from "@/components/organisms/web-side-nav";
 
 // kimito ブランドの不透明度付きライン色
 const BLUE_BORDER = "#00427B40"; // kimitoBlue 25%
@@ -37,10 +38,16 @@ export type AppHeaderProps = {
   showLoginButton?: boolean;
   /** ブランドコピー「会いたい君がいる現在地」を表示（既定 true）。ヒーローで強調済みの画面は false */
   showTagline?: boolean;
+  /** full=ポスト等 / compact=タブ画面（タグライン非表示・低ヘッダー） */
+  variant?: "full" | "compact";
+  /** ヘッダー直下のコンテキスト行（固定ヘッダー内） */
+  contextBar?: React.ReactNode;
 };
 
 /** 固定ヘッダー分の paddingTop（tagline 込みの目安） */
 export const APP_HEADER_CHROME_HEIGHT = 124;
+export const APP_HEADER_CHROME_HEIGHT_COMPACT = 68;
+export const APP_HEADER_CHROME_HEIGHT_FULL = 124;
 
 const triggerHaptic = () => {
   if (Platform.OS !== "web") {
@@ -49,16 +56,17 @@ const triggerHaptic = () => {
 };
 
 // Web では fixed 固定ヘッダー（全ページ共通・ハンバーガーメニュー常時表示）
-const webChromeStyle =
-  Platform.OS === "web"
-    ? ({
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-      } as unknown as object)
-    : null;
+function useWebHeaderStyle() {
+  const sideNav = useWebSideNavActive();
+  if (Platform.OS !== "web") return null;
+  return {
+    position: "fixed",
+    top: 0,
+    left: sideNav ? WEB_SIDE_NAV_WIDTH : 0,
+    right: 0,
+    zIndex: 100,
+  } as unknown as object;
+}
 
 export function AppHeader({
   title,
@@ -70,6 +78,8 @@ export function AppHeader({
   showMenu = true,
   showLoginButton = false,
   showTagline = true,
+  variant = "full",
+  contextBar,
 }: AppHeaderProps) {
   const { user, isAuthReadyForUI } = useAuth();
   const openLoginGuide = useLoginGuide();
@@ -79,6 +89,7 @@ export function AppHeader({
   const accountMaxWidth = windowWidth < 400 ? 168 : windowWidth < 520 ? 220 : 260;
   const isNarrow = windowWidth < 480;
   const isCompactAccount = windowWidth < 520;
+  const webChromeStyle = useWebHeaderStyle();
 
   const { data: settings } = trpc.settings.get.useQuery(undefined, {
     enabled: Boolean(showLoginStatus && isAuthReadyForUI && user),
@@ -101,17 +112,23 @@ export function AppHeader({
     setMenuVisible(true);
   };
 
+  const isCompactHeader = variant === "compact";
+  const showTaglineRow = showTagline && !isCompactHeader;
+  const displayTitle = isCompactHeader
+    ? title || "君斗りんくのすれ違ひ通信"
+    : title || "君斗りんくのすれ違ひ通信";
+
   return (
     <>
-      <View style={[styles.shell, webChromeStyle]}>
+      <View style={[styles.shell, webChromeStyle, isCompactHeader && styles.shellCompact]}>
         <View style={[styles.topRow, isNarrow && styles.topRowNarrow]}>
-          {/* 左: ゆっくりりんく + 画面タイトル（leading は戻る等の追加ボタン用） */}
           <View style={[styles.brandBlock, isNarrow && styles.brandBlockNarrow]}>
             {leftElement ?? null}
             <BrandHomeLink
-              title={title || "君斗りんくのすれ違ひ通信"}
+              title={displayTitle}
               isDesktop={isDesktop}
               isNarrow={isNarrow}
+              compact={isCompactHeader}
             />
           </View>
 
@@ -237,8 +254,7 @@ export function AppHeader({
           </Pressable>
         ) : null}
 
-        {/* ブランドの核「会いたい君がいる現在地」を全ページ共通でさりげなく出す */}
-        {showTagline && (
+        {showTaglineRow && (
           <View style={styles.taglineRowWrap}>
             <BrandHomeTaglineLink>
               <View style={styles.taglineRow}>
@@ -253,6 +269,8 @@ export function AppHeader({
             ) : null}
           </View>
         )}
+
+        {contextBar}
 
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
@@ -272,6 +290,10 @@ const styles = StyleSheet.create({
     backgroundColor: color.headerBg,
     borderBottomWidth: 1,
     borderBottomColor: BLUE_BORDER,
+  },
+  shellCompact: {
+    paddingTop: 10,
+    paddingBottom: 8,
   },
   topRow: {
     minHeight: 44,

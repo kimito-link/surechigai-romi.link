@@ -41,6 +41,7 @@ import {
 import { lookupCacheByDisplayNames } from "../../../server/creator-profile-enricher.js";
 import { getParticipationSummaries } from "../db/participation-queries.js";
 import { resolveUserParticipationProfile } from "../core/participation-profile.js";
+import { buildCreatorXUrl } from "../../../lib/event-creator-url.js";
 
 /** openId "twitter:12345" から X 数値ID "12345" を取り出す。それ以外は null。 */
 function extractXId(openId: string | null | undefined): string | null {
@@ -54,19 +55,21 @@ function toPublicView(
   e: Event,
   extras?: {
     creatorProfileImage?: string | null;
+    creatorUsername?: string | null;
     participantCount?: number;
     participantAvatars?: (string | null)[];
   },
 ) {
   const isUnlisted = e.visibility === "unlisted";
+  const creatorUsername = extras?.creatorUsername ?? null;
   return {
     id: e.id,
     creatorId: e.creatorId,
     creatorName: e.creatorName,
     creatorXId: e.creatorXId,
+    creatorUsername,
     creatorProfileImage: extras?.creatorProfileImage ?? e.creatorProfileImage ?? null,
-    // X送客リンク（DM禁止＝交流はXへ委譲、の導線）。creatorXId があれば組み立てる。
-    creatorXUrl: e.creatorXId ? `https://x.com/i/user/${e.creatorXId}` : null,
+    creatorXUrl: buildCreatorXUrl(creatorUsername, e.creatorXId),
     title: e.title,
     description: e.description,
     typeTags: parseTypeTags(e.typeTags),
@@ -102,6 +105,7 @@ async function enrichEventsForPublicView(db: NonNullable<Awaited<ReturnType<type
     const summary = summaries.get(e.id);
     return toPublicView(e, {
       creatorProfileImage: e.creatorProfileImage ?? cached?.profileImage ?? null,
+      creatorUsername: cached?.twitterUsername ?? null,
       participantCount: summary?.count ?? 0,
       participantAvatars: summary?.avatars ?? [],
     });

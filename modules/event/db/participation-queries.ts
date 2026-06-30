@@ -11,6 +11,11 @@ import {
   type EventParticipation,
 } from "../../../drizzle/schema/event-participation.js";
 import { events } from "../../../drizzle/schema/event.js";
+import {
+  lookupCacheByDisplayNames,
+  lookupCacheByDisplayNameFuzzy,
+} from "../../../server/creator-profile-enricher.js";
+import { buildCreatorXUrl } from "../../../lib/event-creator-url.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -44,6 +49,9 @@ export type MyUpcomingParticipationView = {
   venueName: string | null;
   creatorName: string | null;
   creatorProfileImage: string | null;
+  creatorXId: string | null;
+  creatorUsername: string | null;
+  creatorXUrl: string | null;
 };
 
 function toPublicView(row: EventParticipation): ParticipationPublicView {
@@ -121,6 +129,7 @@ export async function listMyUpcomingParticipations(
       venueName: events.venueName,
       creatorName: events.creatorName,
       creatorProfileImage: events.creatorProfileImage,
+      creatorXId: events.creatorXId,
     })
     .from(eventParticipations)
     .innerJoin(events, eq(eventParticipations.eventId, events.id))
@@ -135,7 +144,24 @@ export async function listMyUpcomingParticipations(
     .orderBy(asc(events.startAt))
     .limit(limit);
 
-  return rows;
+  const names = rows.map((r) => r.creatorName).filter(Boolean) as string[];
+  const cache = await lookupCacheByDisplayNames(db, names);
+
+  const enriched: MyUpcomingParticipationView[] = [];
+  for (const row of rows) {
+    let cached = row.creatorName ? cache.get(row.creatorName) : undefined;
+    if (!cached && row.creatorName) {
+      cached = (await lookupCacheByDisplayNameFuzzy(db, row.creatorName)) ?? undefined;
+    }
+    const creatorUsername = cached?.twitterUsername ?? null;
+    enriched.push({
+      ...row,
+      creatorProfileImage: row.creatorProfileImage ?? cached?.profileImage ?? null,
+      creatorUsername,
+      creatorXUrl: buildCreatorXUrl(creatorUsername, row.creatorXId),
+    });
+  }
+  return enriched;
 }
 
 /** 参加表明のリマインド ON/OFF。 */
