@@ -339,9 +339,12 @@ export async function getNearbyCandidates(
   }));
 }
 
+/** タイムシフト候補に含める「最近アクティブ」の定義（休眠テストアカウント除外） */
+export const TIMESHIFT_ACTIVE_WINDOW_MS = 48 * 60 * 60 * 1000;
+
 /**
  * 自分の h3R7 セル内で過去30日に訪問したユーザー（タイムシフト候補）。
- * 自分自身・停止ユーザー除外。
+ * 自分自身・停止ユーザー除外。直近7日以内に位置記録があるユーザーのみ。
  */
 export async function getTimeshiftCandidates(
   db: DB,
@@ -349,6 +352,7 @@ export async function getTimeshiftCandidates(
   selfH3R7: string
 ): Promise<TimeshiftCandidate[]> {
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const activeSince = new Date(Date.now() - TIMESHIFT_ACTIVE_WINDOW_MS);
 
   const rows = await db
     .select({
@@ -364,7 +368,13 @@ export async function getTimeshiftCandidates(
         eq(visitedAreas.h3R7, selfH3R7),
         gte(visitedAreas.lastVisitedAt, since),
         sql`${visitedAreas.userId} != ${selfUserId}`,
-        eq(users.isSuspended, false)
+        eq(users.isSuspended, false),
+        sql`EXISTS (
+          SELECT 1 FROM ${locations}
+          WHERE ${locations.userId} = ${visitedAreas.userId}
+            AND ${locations.recordedAt} >= ${activeSince}
+            AND ${locations.deletedAt} IS NULL
+        )`,
       )
     );
 
@@ -721,22 +731,43 @@ export async function getEncounterPrefectures(
   db: DB,
   selfUserId: number
 ): Promise<EncounterPrefectureRow[]> {
+  const partnerId = sql<number>`CASE WHEN ${encounters.userAId} = ${selfUserId} THEN ${encounters.userBId} ELSE ${encounters.userAId} END`;
+
   const rows = await db
     .select({
       prefecture: encounters.prefecture,
-      encounterCount: sql<number>`count(*)`,
+      encounterCount: sql<number>`count(distinct ${partnerId})`,
     })
     .from(encounters)
     .where(
       or(eq(encounters.userAId, selfUserId), eq(encounters.userBId, selfUserId))
     )
     .groupBy(encounters.prefecture)
-    .orderBy(sql`count(*) DESC`);
+    .orderBy(sql`count(distinct ${partnerId}) DESC`);
 
   return rows.map((r) => ({
     prefecture: r.prefecture,
     encounterCount: Number(r.encounterCount),
   }));
+}
+
+/** すれ違った相手の人数（同日・同県の重複を数えない） */
+export async function getDistinctEncounterPartnerCount(
+  db: DB,
+  selfUserId: number,
+): Promise<number> {
+  const partnerId = sql<number>`CASE WHEN ${encounters.userAId} = ${selfUserId} THEN ${encounters.userBId} ELSE ${encounters.userAId} END`;
+
+  const rows = await db
+    .select({
+      count: sql<number>`count(distinct ${partnerId})`,
+    })
+    .from(encounters)
+    .where(
+      or(eq(encounters.userAId, selfUserId), eq(encounters.userBId, selfUserId)),
+    );
+
+  return Number(rows[0]?.count ?? 0);
 }
 
 export type EncounterUserRow = {

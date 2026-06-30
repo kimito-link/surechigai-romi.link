@@ -11,6 +11,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
   getEncounterPrefectures,
+  getDistinctEncounterPartnerCount,
   getMyTrailLocations,
   getMyVisitedAreas,
   getEncounterUsersByPrefecture,
@@ -27,14 +28,15 @@ export const zukanRouter = router({
    */
   myAreas: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
-    if (!db) return { visited: [], encounterPrefectures: [] };
+    if (!db) return { visited: [], encounterPrefectures: [], encounterPartnerCount: 0 };
 
-    const [visited, encounterPrefectures] = await Promise.all([
+    const [visited, encounterPrefectures, encounterPartnerCount] = await Promise.all([
       getMyVisitedAreas(db, ctx.user.id),
       getEncounterPrefectures(db, ctx.user.id),
+      getDistinctEncounterPartnerCount(db, ctx.user.id),
     ]);
 
-    return { visited, encounterPrefectures };
+    return { visited, encounterPrefectures, encounterPartnerCount };
   }),
 
   /**

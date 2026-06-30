@@ -115,7 +115,7 @@ export function WebTrailMap({
           <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>
             {encounterCount}
           </Text>
-          <Text style={styles.summaryLabel}>すれ違い</Text>
+          <Text style={styles.summaryLabel}>すれ違った人</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={[styles.summaryNum, { color: color.accentAlt }]}>{total}</Text>

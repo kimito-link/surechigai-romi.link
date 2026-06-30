@@ -149,10 +149,10 @@ export function ZukanAuthenticatedScreen() {
             </View>
             <View style={styles.summaryCard}>
               <Text style={[styles.summaryNum, { color: color.accentPrimary }]}>
-                {data?.encounterPrefectures?.reduce((s, e) => s + e.encounterCount, 0) ?? 0}
+                {data?.encounterPartnerCount ?? 0}
               </Text>
               <Text style={styles.summaryLabel} numberOfLines={2}>
-                総すれ違い数
+                すれ違った人
               </Text>
             </View>
           </View>

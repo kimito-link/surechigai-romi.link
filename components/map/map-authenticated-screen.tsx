@@ -79,8 +79,7 @@ export function MapAuthenticatedScreen() {
     return names.size;
   }, [visited]);
 
-  const encounterCount =
-    areasData?.encounterPrefectures?.reduce((s, e) => s + e.encounterCount, 0) ?? 0;
+  const encounterCount = areasData?.encounterPartnerCount ?? 0;
 
   if (!isAuthReady) {
     return (
