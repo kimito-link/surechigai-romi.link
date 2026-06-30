@@ -17,12 +17,11 @@ import {
 import type { EdgeInsets, Rect } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import {
-  isPublicWebRoute,
-  shouldDeferClerkOnWeb,
+  shouldUseGuestWebShell,
 } from "@/lib/clerk-public-routes";
 import { startDeferredWebBootstrap } from "@/lib/bootstrap/web-bootstrap";
 import { prefetchHeavyTabChunks } from "@/lib/bootstrap/prefetch-tab-chunks";
-import { PublicWebProviders } from "@/components/providers/public-web-providers";
+import { GuestWebProviders } from "@/components/providers/guest-web-providers";
 import { GuestAuthProvider } from "@/lib/auth-context";
 import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallback";
 import { GestureRoot } from "@/components/providers/gesture-root";
@@ -91,14 +90,12 @@ export default function RootLayout() {
   const [insets] = useState<EdgeInsets>(initialInsets);
   const [frame] = useState<Rect>(initialFrame);
 
-  const isPublicWeb = Platform.OS === "web" && isPublicWebRoute(pathname);
-  const deferClerkOnWeb = Platform.OS === "web" && shouldDeferClerkOnWeb(pathname);
-  const useLightweightWebShell = isPublicWeb || deferClerkOnWeb;
+  const useGuestWebShell = Platform.OS === "web" && shouldUseGuestWebShell(pathname);
 
   useEffect(() => {
     if (Platform.OS === "web") {
       const cancelBootstrap = startDeferredWebBootstrap();
-      const cancelPrefetch = useLightweightWebShell ? () => {} : prefetchHeavyTabChunks();
+      const cancelPrefetch = useGuestWebShell ? () => {} : prefetchHeavyTabChunks();
       return () => {
         cancelBootstrap();
         cancelPrefetch();
@@ -118,17 +115,17 @@ export default function RootLayout() {
         void initSentry();
       }, 2000);
     })();
-  }, [useLightweightWebShell]);
+  }, [useGuestWebShell]);
 
   useEffect(() => {
-    if (useLightweightWebShell) return;
+    if (useGuestWebShell) return;
     void import("@/lib/api").then(({ startNetworkMonitoring, stopNetworkMonitoring }) => {
       startNetworkMonitoring();
     });
     return () => {
       void import("@/lib/api").then(({ stopNetworkMonitoring }) => stopNetworkMonitoring());
     };
-  }, [useLightweightWebShell]);
+  }, [useGuestWebShell]);
 
   const providerInitialMetrics = useMemo(() => {
     const metrics = initialWindowMetrics ?? { insets: initialInsets, frame: initialFrame };
@@ -149,11 +146,11 @@ export default function RootLayout() {
   let shellContent: ReactNode;
   if (isMissingClerkKey) {
     shellContent = <MissingClerkKeyScreen />;
-  } else if (useLightweightWebShell) {
+  } else if (useGuestWebShell) {
     shellContent = (
-      <PublicWebProviders>
-        <GuestAuthProvider>{stack}</GuestAuthProvider>
-      </PublicWebProviders>
+      <GuestAuthProvider>
+        <GuestWebProviders>{stack}</GuestWebProviders>
+      </GuestAuthProvider>
     );
   } else {
     shellContent = (

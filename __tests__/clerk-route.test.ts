@@ -6,7 +6,7 @@ import {
   isClerkSsoCallback,
   upgradeAuthHref,
 } from "@/lib/clerk-route";
-import { isPublicWebRoute, shouldDeferClerkOnWeb, hasClerkSessionHint } from "@/lib/clerk-public-routes";
+import { isPublicWebRoute, shouldDeferClerkOnWeb, hasClerkSessionHint, shouldUseGuestWebShell, shouldDeferTrpcOnGuestWeb, isGuestAppWebRoute } from "@/lib/clerk-public-routes";
 
 describe("isClerkSsoCallback", () => {
   it("detects the Clerk callback segment", () => {
@@ -77,5 +77,43 @@ describe("shouldDeferClerkOnWeb", () => {
     expect(shouldDeferClerkOnWeb("/sign-in")).toBe(false);
     expect(shouldDeferClerkOnWeb("/checkin")).toBe(false);
     expect(shouldDeferClerkOnWeb("/u/demo")).toBe(false);
+  });
+});
+
+describe("shouldUseGuestWebShell", () => {
+  it("全タブ preview を guest シェルと判定", () => {
+    expect(shouldUseGuestWebShell("/")).toBe(true);
+    expect(shouldUseGuestWebShell("/checkin")).toBe(true);
+    expect(shouldUseGuestWebShell("/events")).toBe(true);
+    expect(shouldUseGuestWebShell("/u/demo")).toBe(true);
+  });
+
+  it("Clerk セッション hint があれば guest シェルにしない", () => {
+    const storage = {
+      length: 1,
+      key: (i: number) => (i === 0 ? "__clerk_db_jwt" : null),
+    };
+    vi.stubGlobal("window", { localStorage: storage });
+    expect(shouldUseGuestWebShell("/checkin")).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  it("sign-in は guest シェルにしない", () => {
+    expect(shouldUseGuestWebShell("/sign-in")).toBe(false);
+  });
+});
+
+describe("shouldDeferTrpcOnGuestWeb", () => {
+  it("トップだけ tRPC を defer", () => {
+    expect(shouldDeferTrpcOnGuestWeb("/")).toBe(true);
+    expect(shouldDeferTrpcOnGuestWeb("/index")).toBe(true);
+    expect(shouldDeferTrpcOnGuestWeb("/events")).toBe(false);
+  });
+});
+
+describe("isGuestAppWebRoute", () => {
+  it("タブルートを guest アプリルートと判定", () => {
+    expect(isGuestAppWebRoute("/map")).toBe(true);
+    expect(isGuestAppWebRoute("/sign-in")).toBe(false);
   });
 });

@@ -70,7 +70,11 @@ export default function Root({ children }: PropsWithChildren) {
             color-scheme: light;
           }
           html { background-color: var(--color-background); color-scheme: light; }
-          body { background-color: var(--color-background); }
+          body {
+            background-color: var(--color-background);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+            text-rendering: optimizeSpeed;
+          }
           #root { background-color: var(--color-background); }
         `}} />
       </head>

@@ -4,10 +4,47 @@
  */
 const PUBLIC_WEB_PREFIXES = ["/u/"] as const;
 
+/** Guest preview 向けアプリタブ（Clerk セッションなしで閲覧可）。 */
+const GUEST_APP_TAB_ROUTES = [
+  "/",
+  "/index",
+  "/checkin",
+  "/events",
+  "/zukan",
+  "/map",
+  "/mypage",
+] as const;
+
 export function isPublicWebRoute(pathname: string | null | undefined): boolean {
   if (!pathname) return false;
   const path = normalizePath(pathname);
   return PUBLIC_WEB_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+
+export function isGuestAppWebRoute(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  const path = normalizePath(pathname);
+  return GUEST_APP_TAB_ROUTES.some((route) => path === route || path.startsWith(`${route}/`));
+}
+
+/**
+ * Clerk 非ロードの guest Web シェル（全タブ preview + 公開 `/u/*`）。
+ * localStorage に Clerk セッション hint があれば false（ログイン後フルシェル）。
+ */
+export function shouldUseGuestWebShell(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  if (hasClerkSessionHint()) return false;
+  const path = normalizePath(pathname);
+  if (path.startsWith("/sign-in")) return false;
+  if (isPublicWebRoute(pathname)) return true;
+  return isGuestAppWebRoute(pathname);
+}
+
+/** Guest トップ `/` だけ tRPC/React Query を初回 paint まで defer。 */
+export function shouldDeferTrpcOnGuestWeb(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  const path = normalizePath(pathname);
+  return path === "/" || path === "/index";
 }
 
 /**
