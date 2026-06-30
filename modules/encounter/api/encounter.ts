@@ -121,14 +121,22 @@ export const encounterRouter = router({
         }
       }).catch(() => {});
 
-      // マッチング候補取得
-      const [nearbyCandidates, timeshiftCandidates, blockSet, todayPairSet] =
-        await Promise.all([
+      // マッチング候補取得（失敗してもチェックイン自体は成功させる）
+      let nearbyCandidates: Awaited<ReturnType<typeof getNearbyCandidates>> = [];
+      let timeshiftCandidates: Awaited<ReturnType<typeof getTimeshiftCandidates>> = [];
+      try {
+        [nearbyCandidates, timeshiftCandidates] = await Promise.all([
           getNearbyCandidates(db, userId, h3R8),
           getTimeshiftCandidates(db, userId, h3R7),
-          getBlockSet(db, userId),
-          getTodayPairSet(db, userId),
         ]);
+      } catch (matchErr) {
+        console.error("[encounter.checkIn] matching candidate query failed:", matchErr);
+      }
+
+      const [blockSet, todayPairSet] = await Promise.all([
+        getBlockSet(db, userId),
+        getTodayPairSet(db, userId),
+      ]);
 
       const selfLocation = {
         userId,

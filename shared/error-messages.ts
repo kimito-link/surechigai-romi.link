@@ -146,7 +146,8 @@ export function toUserFriendlyError(error: unknown): UserFriendlyError {
   // SQLエラー（一般）
   if (errorMessage.includes("SQL") ||
       errorMessage.includes("ER_") ||
-      errorMessage.includes("Failed query")) {
+      errorMessage.includes("Failed query") ||
+      errorMessage.includes("does not exist")) {
     return {
       code: "DATABASE_CONNECTION_ERROR",
       message: ERROR_MESSAGES.DATABASE_CONNECTION_ERROR,

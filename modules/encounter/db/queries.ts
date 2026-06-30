@@ -354,6 +354,23 @@ export async function getTimeshiftCandidates(
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const activeSince = new Date(Date.now() - TIMESHIFT_ACTIVE_WINDOW_MS);
 
+  // 直近アクティブなユーザー ID を先に取得（EXISTS サブクエリより Drizzle 互換性が高い）
+  const activeUserRows = await db
+    .selectDistinct({ userId: locations.userId })
+    .from(locations)
+    .innerJoin(users, eq(users.id, locations.userId))
+    .where(
+      and(
+        gte(locations.recordedAt, activeSince),
+        isNull(locations.deletedAt),
+        ne(locations.userId, selfUserId),
+        eq(users.isSuspended, false),
+      ),
+    );
+
+  const activeUserIds = activeUserRows.map((r) => r.userId);
+  if (activeUserIds.length === 0) return [];
+
   const rows = await db
     .select({
       userId: visitedAreas.userId,
@@ -367,15 +384,10 @@ export async function getTimeshiftCandidates(
       and(
         eq(visitedAreas.h3R7, selfH3R7),
         gte(visitedAreas.lastVisitedAt, since),
-        sql`${visitedAreas.userId} != ${selfUserId}`,
+        ne(visitedAreas.userId, selfUserId),
         eq(users.isSuspended, false),
-        sql`EXISTS (
-          SELECT 1 FROM ${locations}
-          WHERE ${locations.userId} = ${visitedAreas.userId}
-            AND ${locations.recordedAt} >= ${activeSince}
-            AND ${locations.deletedAt} IS NULL
-        )`,
-      )
+        inArray(visitedAreas.userId, activeUserIds),
+      ),
     );
 
   return rows.map((r) => ({

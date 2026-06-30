@@ -46,6 +46,7 @@ import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-
 import { useRouter } from "expo-router";
 import { shareMyLocation } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
+import { toUserFriendlyError } from "@/shared/error-messages";
 
 /** Web用 Geolocation ラッパー */
 function getWebLocation(): Promise<{ lat: number; lng: number; accuracy?: number }> {
@@ -264,7 +265,10 @@ export default function CheckinAuthenticatedScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
 
-      const msg = err instanceof Error ? err.message : "位置情報の取得に失敗しました";
+      const msg =
+        err instanceof Error
+          ? toUserFriendlyError(err).message
+          : "位置情報の取得に失敗しました";
       setErrorMsg(msg);
 
       setTimeout(() => setState("idle"), 4000);
