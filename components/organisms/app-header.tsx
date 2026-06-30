@@ -14,7 +14,7 @@ import { Image } from "expo-image";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
-import { GlobalMenu } from "@/components/organisms/global-menu";
+import { LazyGlobalMenu } from "@/lib/lazy-heavy-components";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import * as Haptics from "expo-haptics";
 
@@ -75,6 +75,7 @@ export function AppHeader({
   const { user, isAuthReadyForUI } = useAuth();
   const openLoginGuide = useLoginGuide();
   const [menuVisible, setMenuVisible] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
   const { width: windowWidth } = useWindowDimensions();
   const accountMaxWidth = windowWidth < 400 ? 168 : windowWidth < 520 ? 220 : 260;
   const isNarrow = windowWidth < 480;
@@ -86,6 +87,7 @@ export function AppHeader({
 
   const handleMenuPress = () => {
     triggerHaptic();
+    setMenuMounted(true);
     setMenuVisible(true);
   };
 
@@ -221,7 +223,9 @@ export function AppHeader({
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
 
-      <GlobalMenu isVisible={menuVisible} onClose={() => setMenuVisible(false)} />
+      {menuMounted && showMenu ? (
+        <LazyGlobalMenu isVisible={menuVisible} onClose={() => setMenuVisible(false)} />
+      ) : null}
     </>
   );
 }
