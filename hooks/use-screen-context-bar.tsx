@@ -28,10 +28,10 @@ export function useScreenContextBar(screen: ScreenContextKey | undefined): {
 } {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const { data } = useMySignal();
+  const { data, isPending } = useMySignal();
 
   const config = useMemo((): ContextConfig | null => {
-    if (!screen || !isAuthenticated || !data) return null;
+    if (!screen || !isAuthenticated || isPending || !data) return null;
 
     switch (screen) {
       case "post":
@@ -102,7 +102,7 @@ export function useScreenContextBar(screen: ScreenContextKey | undefined): {
       default:
         return null;
     }
-  }, [screen, isAuthenticated, data, router]);
+  }, [screen, isAuthenticated, isPending, data, router]);
 
   if (!config) {
     return { element: null, hasBar: false };

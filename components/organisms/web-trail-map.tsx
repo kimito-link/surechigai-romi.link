@@ -20,6 +20,7 @@ import {
 } from "@/components/organisms/precision-tile-map";
 import { color, contentMaxWidth } from "@/theme/tokens";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
+import { TabMapLoadingFallback, TabQueryShell } from "@/components/molecules/tab-query-shell";
 import type { LocationVisibility } from "@/modules/encounter/core/location-visibility";
 
 export type VisitedAreaSummary = {
@@ -34,6 +35,7 @@ type WebTrailMapProps = {
   locations: TrailPoint[];
   municipalityCount?: number;
   encounterCount?: number;
+  isLoading?: boolean;
   isFetching?: boolean;
   onRefresh?: () => void;
   userImageUrl?: string;
@@ -57,6 +59,7 @@ export function WebTrailMap({
   locations,
   municipalityCount,
   encounterCount = 0,
+  isLoading = false,
   isFetching = false,
   onRefresh,
   userImageUrl,
@@ -100,36 +103,43 @@ export function WebTrailMap({
       ]}
     >
       {topContent}
-      {locations.length > 0 ? (
+      <TabQueryShell
+        isLoading={isLoading}
+        isEmpty={locations.length === 0}
+        loadingFallback={<TabMapLoadingFallback minHeight={320} />}
+        emptyFallback={
+          <View style={styles.emptyMap}>
+            <MaterialIcons name="near-me-disabled" size={48} color={color.textMuted} />
+            <Text style={styles.emptyTitle}>{emptyTitle}</Text>
+            <Text style={styles.emptyText}>{emptyText}</Text>
+          </View>
+        }
+      >
         <PrecisionTileMap locations={locations} userImageUrl={userImageUrl} />
-      ) : (
-        <View style={styles.emptyMap}>
-          <MaterialIcons name="near-me-disabled" size={48} color={color.textMuted} />
-          <Text style={styles.emptyTitle}>{emptyTitle}</Text>
-          <Text style={styles.emptyText}>{emptyText}</Text>
-        </View>
-      )}
+      </TabQueryShell>
 
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
           <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>
-            {encounterCount}
+            {isLoading ? "—" : encounterCount}
           </Text>
           <Text style={styles.summaryLabel}>すれ違った人</Text>
         </View>
         <View style={styles.summaryCard}>
-          <Text style={[styles.summaryNum, { color: color.accentAlt }]}>{total}</Text>
+          <Text style={[styles.summaryNum, { color: color.accentAlt }]}>
+            {isLoading ? "—" : total}
+          </Text>
           <Text style={styles.summaryLabel}>図鑑（チェックイン）</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={[styles.summaryNum, { color: color.success }]}>
-            {municipalityTotal}
+            {isLoading ? "—" : municipalityTotal}
           </Text>
           <Text style={styles.summaryLabel}>市区町村</Text>
         </View>
       </View>
 
-      {locations.length > 0 ? (
+      {!isLoading && locations.length > 0 ? (
         <TrailHistoryList
           locations={locations}
           limit={historyLimit}

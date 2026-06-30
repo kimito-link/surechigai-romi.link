@@ -2,6 +2,7 @@ import { scheduleAfterWindowLoad } from "@/lib/schedule-after-idle";
 
 const PREFETCH_MODULES = [
   () => import("@/components/checkin/checkin-authenticated-screen"),
+  () => import("@/components/map/map-authenticated-screen"),
   () => import("@/components/organisms/web-trail-map"),
   () => import("@/components/molecules/event-calendar"),
   () => import("@/components/molecules/envelope-pulse"),

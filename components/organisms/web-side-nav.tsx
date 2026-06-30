@@ -9,6 +9,8 @@ import {
 import { usePathname, useRouter, type Href } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color, palette } from "@/theme/tokens";
+import { hrefToTabPrefetchKey, usePrefetchTab } from "@/hooks/use-tab-prefetch";
+import type { TabPrefetchKey } from "@/lib/bootstrap/prefetch-tab-data";
 
 export const WEB_SIDE_NAV_WIDTH = 200;
 const SIDE_NAV_MIN_WIDTH = 900;
@@ -18,15 +20,52 @@ type NavItem = {
   label: string;
   icon: keyof typeof MaterialIcons.glyphMap;
   activePaths: string[];
+  prefetchKey: TabPrefetchKey;
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/(tabs)", label: "ポスト", icon: "mail", activePaths: ["/", "/index"] },
-  { href: "/(tabs)/checkin", label: "チェックイン", icon: "location-on", activePaths: ["/checkin"] },
-  { href: "/(tabs)/events", label: "集まり", icon: "event", activePaths: ["/events"] },
-  { href: "/(tabs)/zukan", label: "図鑑", icon: "menu-book", activePaths: ["/zukan"] },
-  { href: "/(tabs)/map", label: "軌跡", icon: "map", activePaths: ["/map"] },
-  { href: "/(tabs)/mypage", label: "マイページ", icon: "person", activePaths: ["/mypage"] },
+  {
+    href: "/(tabs)",
+    label: "ポスト",
+    icon: "mail",
+    activePaths: ["/", "/index"],
+    prefetchKey: "post",
+  },
+  {
+    href: "/(tabs)/checkin",
+    label: "チェックイン",
+    icon: "location-on",
+    activePaths: ["/checkin"],
+    prefetchKey: "checkin",
+  },
+  {
+    href: "/(tabs)/events",
+    label: "集まり",
+    icon: "event",
+    activePaths: ["/events"],
+    prefetchKey: "events",
+  },
+  {
+    href: "/(tabs)/zukan",
+    label: "図鑑",
+    icon: "menu-book",
+    activePaths: ["/zukan"],
+    prefetchKey: "zukan",
+  },
+  {
+    href: "/(tabs)/map",
+    label: "軌跡",
+    icon: "map",
+    activePaths: ["/map"],
+    prefetchKey: "map",
+  },
+  {
+    href: "/(tabs)/mypage",
+    label: "マイページ",
+    icon: "person",
+    activePaths: ["/mypage"],
+    prefetchKey: "mypage",
+  },
 ];
 
 function isActive(pathname: string, item: NavItem): boolean {
@@ -43,6 +82,7 @@ export function WebSideNav() {
   const router = useRouter();
   const pathname = usePathname();
   const { width } = useWindowDimensions();
+  const prefetchTab = usePrefetchTab();
   const show = Platform.OS === "web" && width >= SIDE_NAV_MIN_WIDTH;
 
   if (!show) return null;
@@ -56,6 +96,7 @@ export function WebSideNav() {
           <Pressable
             key={item.label}
             onPress={() => router.push(item.href)}
+            onPressIn={() => prefetchTab(item.prefetchKey)}
             style={({ pressed, hovered }) => [
               styles.item,
               active && styles.itemActive,
@@ -121,6 +162,5 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     color: palette.kimitoBlue,
-    fontWeight: "800",
   },
 });

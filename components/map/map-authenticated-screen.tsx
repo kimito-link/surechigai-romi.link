@@ -33,6 +33,7 @@ export function MapAuthenticatedScreen() {
     data: areasData,
     refetch: refetchAreas,
     isFetching: isFetchingAreas,
+    isLoading: isLoadingAreas,
   } = trpc.zukan.myAreas.useQuery(undefined, {
     enabled: isAuthenticated,
     ...AUTHENTICATED_QUERY_OPTIONS,
@@ -41,6 +42,7 @@ export function MapAuthenticatedScreen() {
     data: trailData,
     refetch: refetchTrail,
     isFetching: isFetchingTrail,
+    isLoading: isLoadingTrail,
   } = trpc.zukan.myTrail.useQuery(
     { limit: 120 },
     {
@@ -80,6 +82,7 @@ export function MapAuthenticatedScreen() {
   }, [visited]);
 
   const encounterCount = areasData?.encounterPartnerCount ?? 0;
+  const isLoading = isLoadingAreas || isLoadingTrail;
 
   if (!isAuthReady) {
     return (
@@ -113,6 +116,7 @@ export function MapAuthenticatedScreen() {
         locations={locations}
         municipalityCount={municipalityCount}
         encounterCount={encounterCount}
+        isLoading={isLoading}
         isFetching={isFetchingAreas || isFetchingTrail}
         onRefresh={onRefresh}
         userImageUrl={user?.profileImage ?? undefined}

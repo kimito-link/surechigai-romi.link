@@ -22,6 +22,7 @@ import { fitCenterZoom, type TrailPoint } from "@/lib/map/tile-geo";
 import { LazyJapanBlockMap, LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
 import { useRouter } from "expo-router";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
+import { TabMapLoadingFallback } from "@/components/molecules/tab-query-shell";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
 import { DeleteTrailConfirmModal } from "@/components/molecules/delete-trail-confirm-modal";
 import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
@@ -32,15 +33,20 @@ export function ZukanAuthenticatedScreen() {
   const tabInset = useTabBarInset();
   const { width: windowWidth } = useWindowDimensions();
 
-  const { data, refetch, isFetching } = trpc.zukan.myAreas.useQuery(undefined, {
+  const { data, refetch, isFetching, isLoading: isLoadingAreas } = trpc.zukan.myAreas.useQuery(undefined, {
     ...AUTHENTICATED_QUERY_OPTIONS,
   });
 
-  const { data: trailData, refetch: refetchTrail } = trpc.zukan.myTrail.useQuery(
+  const {
+    data: trailData,
+    refetch: refetchTrail,
+    isLoading: isLoadingTrail,
+  } = trpc.zukan.myTrail.useQuery(
     { limit: 500 },
     { ...AUTHENTICATED_QUERY_OPTIONS },
   );
   const trailLocations: TrailPoint[] = trailData?.locations ?? [];
+  const isLoading = isLoadingAreas || isLoadingTrail;
 
   const mapW = Math.max(320, Math.min(windowWidth - 32, 980));
   const mapH = windowWidth < 640 ? 340 : 460;
@@ -137,20 +143,24 @@ export function ZukanAuthenticatedScreen() {
         <View style={styles.pageBody}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryCard}>
-              <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>{visitedCount}</Text>
+              <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>
+                {isLoading ? "—" : visitedCount}
+              </Text>
               <Text style={styles.summaryLabel} numberOfLines={2}>
                 訪問した都道府県
               </Text>
             </View>
             <View style={styles.summaryCard}>
-              <Text style={[styles.summaryNum, { color: color.accentAlt }]}>{encounteredCount}</Text>
+              <Text style={[styles.summaryNum, { color: color.accentAlt }]}>
+                {isLoading ? "—" : encounteredCount}
+              </Text>
               <Text style={styles.summaryLabel} numberOfLines={2}>
                 すれ違い都道府県
               </Text>
             </View>
             <View style={styles.summaryCard}>
               <Text style={[styles.summaryNum, { color: color.accentPrimary }]}>
-                {data?.encounterPartnerCount ?? 0}
+                {isLoading ? "—" : (data?.encounterPartnerCount ?? 0)}
               </Text>
               <Text style={styles.summaryLabel} numberOfLines={2}>
                 すれ違った人
@@ -173,7 +183,9 @@ export function ZukanAuthenticatedScreen() {
             </View>
           </View>
 
-          {trailLocations.length > 0 && (
+          {isLoading ? (
+            <TabMapLoadingFallback minHeight={280} />
+          ) : trailLocations.length > 0 ? (
             <View style={styles.trailMapSection}>
               <Text style={styles.sectionTitle}>あなたの足あと（全国）</Text>
               <LazyPrecisionTileMap
@@ -199,7 +211,7 @@ export function ZukanAuthenticatedScreen() {
                 />
               </View>
             </View>
-          )}
+          ) : null}
 
           <Text style={styles.sectionTitle}>みんながいる現在地（都道府県別）</Text>
           <LazyJapanBlockMap
@@ -256,7 +268,7 @@ export function ZukanAuthenticatedScreen() {
             </>
           )}
 
-          {data?.visited?.length === 0 && data?.encounterPrefectures?.length === 0 && (
+          {!isLoading && data?.visited?.length === 0 && data?.encounterPrefectures?.length === 0 && (
             <View style={styles.emptyWrap}>
               <MaterialIcons name="explore-off" size={48} color={color.textMuted} />
               <Text style={styles.emptyText}>

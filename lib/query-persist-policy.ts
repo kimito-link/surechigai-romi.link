@@ -1,7 +1,14 @@
 import type { Query } from "@tanstack/react-query";
 
 /** ユーザー固有データを含む tRPC ルーターは永続化しない */
-const NON_PERSIST_ROUTERS = new Set(["encounter", "zukan", "settings", "ogp", "safety"]);
+const NON_PERSIST_ROUTERS = new Set([
+  "encounter",
+  "zukan",
+  "settings",
+  "ogp",
+  "safety",
+  "dashboard",
+]);
 
 function getTrpcRouterName(queryKey: unknown): string | null {
   if (!Array.isArray(queryKey) || queryKey.length === 0) return null;

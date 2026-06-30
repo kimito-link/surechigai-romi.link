@@ -9,6 +9,5 @@ export function useMySignal() {
     ...AUTHENTICATED_QUERY_OPTIONS,
     enabled: isAuthenticated,
     refetchInterval: 60_000,
-    staleTime: 30_000,
   });
 }

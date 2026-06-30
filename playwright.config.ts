@@ -64,7 +64,7 @@ export default defineConfig({
     },
     {
       name: "trail-auth-smoke",
-      testMatch: /trail-auth\.smoke\.spec\.ts/,
+      testMatch: /trail-auth\.smoke\.spec\.ts|tab-instant-display\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: authStatePath,

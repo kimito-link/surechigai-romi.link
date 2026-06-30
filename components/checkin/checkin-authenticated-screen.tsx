@@ -246,6 +246,48 @@ export default function CheckinAuthenticatedScreen() {
           : old,
       );
 
+      const optimisticRecordedAt = new Date();
+      const optimisticLocation = {
+        id: -optimisticRecordedAt.getTime(),
+        h3R8: "",
+        latGrid: result.lat,
+        lngGrid: result.lng,
+        lat: result.lat,
+        lng: result.lng,
+        accuracyM: pos.accuracy ?? null,
+        municipality: result.municipality,
+        prefecture: result.prefecture,
+        address: result.address ?? null,
+        recordedAt: optimisticRecordedAt,
+        visibility: "public" as const,
+      };
+      for (const limit of [1, 120, 500] as const) {
+        utils.zukan.myTrail.setData({ limit }, (old) => ({
+          locations: [optimisticLocation, ...(old?.locations ?? [])],
+        }));
+      }
+      utils.zukan.myAreas.setData(undefined, (old) => {
+        if (!old || !result.prefecture) return old;
+        const visited = [...old.visited];
+        const idx = visited.findIndex((v) => v.prefecture === result.prefecture);
+        if (idx >= 0) {
+          visited[idx] = {
+            ...visited[idx]!,
+            visitCount: visited[idx]!.visitCount + 1,
+            lastVisitedAt: optimisticRecordedAt,
+            municipality: result.municipality ?? visited[idx]!.municipality,
+          };
+        } else {
+          visited.unshift({
+            prefecture: result.prefecture,
+            municipality: result.municipality,
+            visitCount: 1,
+            lastVisitedAt: optimisticRecordedAt,
+          });
+        }
+        return { ...old, visited };
+      });
+
       await Promise.allSettled([
         utils.encounter.list.invalidate(),
         utils.zukan.myAreas.invalidate(),

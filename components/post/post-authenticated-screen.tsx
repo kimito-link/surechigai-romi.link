@@ -247,7 +247,7 @@ export function PostAuthenticatedScreen() {
   const [reportItem, setReportItem] = useState<EncounterItem | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState(false);
 
-  const { data: encounters, refetch, isFetching } = trpc.encounter.list.useQuery(
+  const { data: encounters, refetch, isFetching, isLoading: isLoadingEncounters } = trpc.encounter.list.useQuery(
     { cursor: undefined },
     { enabled: isAuthenticated, refetchInterval: false },
   );
@@ -424,7 +424,7 @@ export function PostAuthenticatedScreen() {
     />
   ) : null;
 
-  const emptyOverlay = isAuthenticated && unopened.length === 0 && (
+  const emptyOverlay = isAuthenticated && !isLoadingEncounters && unopened.length === 0 && (
     <View style={[styles.emptyOverlay, !isDesktop && styles.emptyOverlayMobile]}>
       <Text style={styles.emptyOverlayEmoji}>📭</Text>
       <Text style={styles.emptyOverlayTitle}>まだ封筒は届いていません</Text>

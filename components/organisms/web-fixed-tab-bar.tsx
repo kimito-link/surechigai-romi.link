@@ -8,21 +8,60 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color } from "@/theme/tokens";
 import { TAB_BAR_BODY_HEIGHT } from "@/hooks/use-tab-bar-inset";
+import { usePrefetchTab } from "@/hooks/use-tab-prefetch";
+import type { TabPrefetchKey } from "@/lib/bootstrap/prefetch-tab-data";
 
 type TabItem = {
   href: Href;
   label: string;
   icon: keyof typeof MaterialIcons.glyphMap;
   activePaths: string[];
+  prefetchKey: TabPrefetchKey;
 };
 
 const TABS: TabItem[] = [
-  { href: "/(tabs)", label: "ポスト", icon: "mail", activePaths: ["/", "/index"] },
-  { href: "/(tabs)/checkin", label: "チェックイン", icon: "location-on", activePaths: ["/checkin"] },
-  { href: "/(tabs)/events", label: "集まり", icon: "event", activePaths: ["/events"] },
-  { href: "/(tabs)/zukan", label: "図鑑", icon: "menu-book", activePaths: ["/zukan"] },
-  { href: "/(tabs)/map", label: "軌跡", icon: "map", activePaths: ["/map"] },
-  { href: "/(tabs)/mypage", label: "マイページ", icon: "person", activePaths: ["/mypage"] },
+  {
+    href: "/(tabs)",
+    label: "ポスト",
+    icon: "mail",
+    activePaths: ["/", "/index"],
+    prefetchKey: "post",
+  },
+  {
+    href: "/(tabs)/checkin",
+    label: "チェックイン",
+    icon: "location-on",
+    activePaths: ["/checkin"],
+    prefetchKey: "checkin",
+  },
+  {
+    href: "/(tabs)/events",
+    label: "集まり",
+    icon: "event",
+    activePaths: ["/events"],
+    prefetchKey: "events",
+  },
+  {
+    href: "/(tabs)/zukan",
+    label: "図鑑",
+    icon: "menu-book",
+    activePaths: ["/zukan"],
+    prefetchKey: "zukan",
+  },
+  {
+    href: "/(tabs)/map",
+    label: "軌跡",
+    icon: "map",
+    activePaths: ["/map"],
+    prefetchKey: "map",
+  },
+  {
+    href: "/(tabs)/mypage",
+    label: "マイページ",
+    icon: "person",
+    activePaths: ["/mypage"],
+    prefetchKey: "mypage",
+  },
 ];
 
 function isTabActive(pathname: string, tab: TabItem): boolean {
@@ -34,6 +73,7 @@ export function WebFixedTabBar() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const prefetchTab = usePrefetchTab();
   const compact = width < 480;
   const bottomPad = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
 
@@ -56,6 +96,7 @@ export function WebFixedTabBar() {
           <Pressable
             key={tab.label}
             onPress={() => router.push(tab.href)}
+            onPressIn={() => prefetchTab(tab.prefetchKey)}
             style={styles.item}
             accessibilityRole="tab"
             accessibilityState={{ selected: active }}
