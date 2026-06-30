@@ -38,6 +38,9 @@ import {
   listMyEvents,
   updateEventStatus,
 } from "../db/queries.js";
+import { lookupCacheByDisplayNames } from "../../../server/creator-profile-enricher.js";
+import { getParticipationSummaries } from "../db/participation-queries.js";
+import { resolveUserParticipationProfile } from "../core/participation-profile.js";
 
 /** openId "twitter:12345" から X 数値ID "12345" を取り出す。それ以外は null。 */
 function extractXId(openId: string | null | undefined): string | null {
@@ -47,13 +50,21 @@ function extractXId(openId: string | null | undefined): string | null {
 }
 
 /** 公開一覧で返す形。unlisted の秘匿フィールドは落とす。 */
-function toPublicView(e: Event) {
+function toPublicView(
+  e: Event,
+  extras?: {
+    creatorProfileImage?: string | null;
+    participantCount?: number;
+    participantAvatars?: (string | null)[];
+  },
+) {
   const isUnlisted = e.visibility === "unlisted";
   return {
     id: e.id,
     creatorId: e.creatorId,
     creatorName: e.creatorName,
     creatorXId: e.creatorXId,
+    creatorProfileImage: extras?.creatorProfileImage ?? e.creatorProfileImage ?? null,
     // X送客リンク（DM禁止＝交流はXへ委譲、の導線）。creatorXId があれば組み立てる。
     creatorXUrl: e.creatorXId ? `https://x.com/i/user/${e.creatorXId}` : null,
     title: e.title,
@@ -70,7 +81,31 @@ function toPublicView(e: Event) {
     liveCheckinAt: e.liveCheckinAt,
     visibility: e.visibility,
     hasAccessCode: e.accessCodeHash != null,
+    participantCount: extras?.participantCount ?? 0,
+    participantAvatars: extras?.participantAvatars ?? [],
   };
+}
+
+/** 主催サムネ（キャッシュ補完）＋参加人数を付与して公開ビューへ。 */
+async function enrichEventsForPublicView(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, rows: Event[]) {
+  if (rows.length === 0) return [];
+
+  const names = rows.map((e) => e.creatorName).filter(Boolean) as string[];
+  const cache = await lookupCacheByDisplayNames(db, names);
+  const summaries = await getParticipationSummaries(
+    db,
+    rows.map((e) => e.id),
+  );
+
+  return rows.map((e) => {
+    const cached = e.creatorName ? cache.get(e.creatorName) : undefined;
+    const summary = summaries.get(e.id);
+    return toPublicView(e, {
+      creatorProfileImage: e.creatorProfileImage ?? cached?.profileImage ?? null,
+      participantCount: summary?.count ?? 0,
+      participantAvatars: summary?.avatars ?? [],
+    });
+  });
 }
 
 export const eventRouter = router({
@@ -133,10 +168,13 @@ export const eventRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
 
+      const profile = await resolveUserParticipationProfile(db, ctx.user);
+
       const created = await insertEvent(db, {
         creatorId: ctx.user.id,
-        creatorName: ctx.user.name ?? null,
+        creatorName: profile.displayName,
         creatorXId: extractXId(ctx.user.openId),
+        creatorProfileImage: profile.profileImage,
         title: input.title,
         description: input.description ?? null,
         typeTags: serializeTypeTags(input.typeTags ?? []),
@@ -218,7 +256,7 @@ export const eventRouter = router({
       const db = await getDb();
       if (!db) return [];
       const rows = await listUpcomingPublic(db, new Date(), input?.limit ?? 50);
-      return rows.map(toPublicView);
+      return enrichEventsForPublicView(db, rows);
     }),
 
   /** 今ライブ中の公開イベント（在席マップ）。県で絞り込み可。未ログインでも閲覧可。 */
@@ -228,7 +266,7 @@ export const eventRouter = router({
       const db = await getDb();
       if (!db) return [];
       const rows = await listLivePublic(db, new Date(), input?.prefecture);
-      return rows.map(toPublicView);
+      return enrichEventsForPublicView(db, rows);
     }),
 
   /** 県ごとの公開イベント件数（在席マップのグリッド）。 */
@@ -243,11 +281,11 @@ export const eventRouter = router({
     const db = await getDb();
     if (!db) return [];
     const rows = await listMyEvents(db, ctx.user.id);
-    // 自分のものは秘匿フィールドも含めて返す
-    return rows.map((e) => ({
-      ...toPublicView(e),
-      venueName: e.venueName,
-      onlineUrl: e.onlineUrl,
+    const enriched = await enrichEventsForPublicView(db, rows);
+    return enriched.map((e, i) => ({
+      ...e,
+      venueName: rows[i].venueName,
+      onlineUrl: rows[i].onlineUrl,
     }));
   }),
 
@@ -308,7 +346,8 @@ export const eventRouter = router({
       if (!db) throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
       const ev = await getEventById(db, input.id);
       if (!ev) throw new TRPCError({ code: "NOT_FOUND", message: "イベントが見つかりません" });
-      return toPublicView(ev);
+      const [view] = await enrichEventsForPublicView(db, [ev]);
+      return view;
     }),
 
   /**

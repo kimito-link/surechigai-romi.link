@@ -45,6 +45,8 @@ export const events = pgTable(
      * X送客リンク https://x.com/i/user/<id> に使う。NULL可（管理者投稿など）。
      */
     creatorXId: varchar("creatorXId", { length: 64 }),
+    /** 主催のプロフィール画像（作成時キャッシュ。一覧でJOINせず出す） */
+    creatorProfileImage: text("creatorProfileImage"),
 
     // --- 内容（配信に密結合しない汎用フィールド） ---
     title: varchar("title", { length: 80 }).notNull(),

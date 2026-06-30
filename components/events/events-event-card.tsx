@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, TextInput, Pressable } from "react-native";
 import { useState, useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Image } from "expo-image";
 import { trpc } from "@/lib/trpc";
 import { color } from "@/theme/tokens";
 import { openExternalUrl } from "@/lib/navigation/external-links";
+import { EventParticipationPanel } from "@/components/events/event-participation-panel";
 
 export const TYPE_TAG_LABELS: Record<string, string> = {
   haishin: "配信",
@@ -28,6 +30,7 @@ export function EventCard({
   id,
   creatorName,
   creatorXUrl,
+  creatorProfileImage,
   title,
   typeTags,
   locationType,
@@ -37,11 +40,14 @@ export function EventCard({
   startAt,
   status,
   visibility,
+  participantCount,
+  participantAvatars,
   footer,
 }: {
   id: number;
   creatorName?: string | null;
   creatorXUrl?: string | null;
+  creatorProfileImage?: string | null;
   title: string;
   typeTags: string[];
   locationType: string;
@@ -51,6 +57,8 @@ export function EventCard({
   startAt: string | Date;
   status: string;
   visibility: string;
+  participantCount?: number;
+  participantAvatars?: (string | null)[];
   footer?: React.ReactNode;
 }) {
   const [revealed, setRevealed] = useState<{ venueName: string | null; onlineUrl: string | null } | null>(
@@ -129,7 +137,7 @@ export function EventCard({
         )}
       </View>
 
-      {(creatorName || creatorXUrl) && (
+      {(creatorName || creatorXUrl || creatorProfileImage) && (
         <Pressable
           onPress={openX}
           disabled={!creatorXUrl}
@@ -137,7 +145,13 @@ export function EventCard({
           accessibilityLabel={creatorXUrl ? `${creatorName ?? "クリエイター"}のXプロフィールを開く` : undefined}
           style={({ pressed }) => [styles.creatorRow, pressed && creatorXUrl ? { opacity: 0.7 } : null]}
         >
-          <MaterialIcons name="person" size={14} color={color.textMuted} />
+          {creatorProfileImage ? (
+            <Image source={{ uri: creatorProfileImage }} style={styles.creatorAvatar} contentFit="cover" />
+          ) : (
+            <View style={[styles.creatorAvatar, styles.creatorAvatarFallback]}>
+              <MaterialIcons name="person" size={16} color={color.textMuted} />
+            </View>
+          )}
           <Text style={styles.creatorName} numberOfLines={1}>
             {creatorName ?? "クリエイター"}
           </Text>
@@ -240,6 +254,15 @@ export function EventCard({
         </Pressable>
       )}
 
+      <EventParticipationPanel
+        eventId={id}
+        eventTitle={title}
+        locationType={locationType}
+        prefecture={prefecture}
+        participantCount={participantCount}
+        participantAvatars={participantAvatars}
+      />
+
       {footer}
     </View>
   );
@@ -330,7 +353,20 @@ const styles = StyleSheet.create({
   creatorRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
+  },
+  creatorAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    flexShrink: 0,
+  },
+  creatorAvatarFallback: {
+    backgroundColor: color.bg,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: color.border,
   },
   creatorName: {
     fontSize: 13,

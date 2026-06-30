@@ -20,6 +20,7 @@ import { visitRouter } from "../../modules/encounter/api/visit.js";
 
 // event モジュールルーター（予定×ライブ表明。doin-challenge にも移植する共通機能）
 import { eventRouter } from "../../modules/event/api/event.js";
+import { eventParticipationRouter } from "../../modules/event/api/participation.js";
 
 // 統合ルーター
 export const appRouter = router({
@@ -33,6 +34,7 @@ export const appRouter = router({
   presence: presenceRouter,
   visit: visitRouter,
   event: eventRouter,
+  eventParticipation: eventParticipationRouter,
 });
 
 export type AppRouter = typeof appRouter;
@@ -49,4 +51,5 @@ export {
   presenceRouter,
   visitRouter,
   eventRouter,
+  eventParticipationRouter,
 };
