@@ -9,6 +9,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getDb } from "../../server/db/connection.js";
 import { getShareInfoBySlug } from "../../modules/encounter/db/queries.js";
+import { buildOgImageSearchParams } from "../../lib/ogp/share-meta.js";
 
 const ORIGIN = "https://surechigai.kimito.link";
 
@@ -39,14 +40,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const place = info.area ?? info.prefecture ?? "どこか";
           title = `${who} は ${place} にいるよ｜君斗りんくのすれ違ひ通信`;
           description = `${place} で記録された足あと。会いたい君がいる現在地をたどろう。`;
-          if (info.area) ogParams.set("area", info.area);
-          if (info.prefecture) ogParams.set("pref", info.prefecture);
           if (info.username) ogParams.set("name", info.username);
-          if (info.hasLocation && info.lat != null && info.lng != null) {
-            ogParams.set("lat", String(info.lat));
-            ogParams.set("lng", String(info.lng));
-            ogParams.set("zoom", String(info.zoom));
-          }
+          const built = buildOgImageSearchParams({
+            area: info.area,
+            prefecture: info.prefecture,
+            lat: info.lat,
+            lng: info.lng,
+            hasLocation: info.hasLocation,
+            zoom: info.zoom,
+            recordedAt: info.recordedAt,
+          });
+          built.forEach((value, key) => ogParams.set(key, value));
         }
       }
     } catch {

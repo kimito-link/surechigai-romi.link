@@ -17,6 +17,7 @@ import {
   Platform,
   ScrollView,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import { useState, useCallback, useEffect } from "react";
 import Animated, {
@@ -458,6 +459,9 @@ export default function CheckinScreen() {
             </Pressable>
           }
         />
+        <View style={styles.authLoading}>
+          <ActivityIndicator size="large" color={palette.kimitoBlue} />
+        </View>
       </ScreenContainer>
     );
   }
@@ -721,6 +725,11 @@ export default function CheckinScreen() {
 }
 
 const styles = StyleSheet.create({
+  authLoading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   screenFlex: {
     flex: 1,
   },

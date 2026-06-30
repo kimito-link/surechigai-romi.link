@@ -35,6 +35,7 @@ import { shouldPersistQuery } from "@/lib/query-persist-policy";
 import { AuthQuerySync } from "@/lib/query-auth-sync";
 import { preloadCriticalImages } from "@/lib/image-preload";
 import { registerServiceWorker } from "@/lib/service-worker";
+import { setupChunkRecover } from "@/lib/pwa/chunk-recover";
 import { initAutoSync } from "@/lib/offline-sync";
 import { startNetworkMonitoring, stopNetworkMonitoring } from "@/lib/api";
 import { initSyncHandlers } from "@/lib/sync-handlers";
@@ -299,6 +300,7 @@ export default function RootLayout() {
     const sentryTimer = setTimeout(() => { initSentry(); }, 2000);
     preloadCriticalImages();
     registerServiceWorker();
+    setupChunkRecover();
     initSyncHandlers();
     const unsubscribeSync = initAutoSync();
     startNetworkMonitoring();

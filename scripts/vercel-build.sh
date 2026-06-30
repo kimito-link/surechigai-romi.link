@@ -16,3 +16,6 @@ npx expo export -p web --clear
 
 # entry スクリプトに版数クエリを付け、古い immutable キャッシュを確実に破棄する。
 node scripts/bust-entry-cache.cjs || true
+
+# Service Worker の CACHE_VERSION を commitSha で埋め込む。
+node scripts/inject-sw-version.cjs || true

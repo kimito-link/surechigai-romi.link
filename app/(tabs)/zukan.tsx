@@ -15,6 +15,7 @@ import {
   RefreshControl,
   Pressable,
   useWindowDimensions,
+  ActivityIndicator,
 } from "react-native";
 import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -147,6 +148,9 @@ export default function ZukanScreen() {
             </Pressable>
           }
         />
+        <View style={styles.authLoading}>
+          <ActivityIndicator size="large" color={palette.kimitoBlue} />
+        </View>
       </ScreenContainer>
     );
   }
@@ -338,6 +342,11 @@ function formatDate(d: Date | string): string {
 }
 
 const styles = StyleSheet.create({
+  authLoading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   scroll: {
     flex: 1,
     width: "100%",

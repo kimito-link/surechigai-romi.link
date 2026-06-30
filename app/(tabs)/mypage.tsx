@@ -21,6 +21,7 @@ import {
   Alert,
   Pressable,
   Switch,
+  ActivityIndicator,
 } from "react-native";
 import { useState, useCallback, useEffect } from "react";
 import { Image } from "expo-image";
@@ -303,6 +304,9 @@ export default function MypageScreen() {
             </Pressable>
           }
         />
+        <View style={styles.authLoading}>
+          <ActivityIndicator size="large" color={palette.kimitoBlue} />
+        </View>
       </ScreenContainer>
     );
   }
@@ -585,6 +589,11 @@ export default function MypageScreen() {
 }
 
 const styles = StyleSheet.create({
+  authLoading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   center: {
     flex: 1,
     alignItems: "center",

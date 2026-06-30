@@ -3,9 +3,8 @@
 // 重要: キャッシュバージョンを更新することで、古いキャッシュを強制的に削除する
 // バージョンはビルド時に更新される（public/version.jsonのcommitShaを使用）
 
-// キャッシュバージョン（ビルド時に更新される）
-// デフォルトはタイムスタンプベース（手動更新時も有効）
-const CACHE_VERSION = 'v2-' + Date.now();
+// キャッシュバージョン（ビルド時 scripts/inject-sw-version.cjs が dist/sw.js へ commitSha を埋め込む）
+const CACHE_VERSION = '__CACHE_VERSION__';
 const CACHE_NAME = 'douin-challenge-' + CACHE_VERSION;
 const STATIC_CACHE_NAME = 'douin-static-' + CACHE_VERSION;
 const API_CACHE_NAME = 'douin-api-' + CACHE_VERSION;
@@ -79,6 +78,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // JS バンドル — network-first（古い stale キャッシュで白画面になるのを防ぐ）
+  if (isJsBundlePath(url.pathname)) {
+    event.respondWith(networkFirstStrategy(request, CACHE_NAME));
+    return;
+  }
+
   // Static assets (images, fonts, etc.) - Cache first
   if (isStaticAsset(url.pathname)) {
     event.respondWith(cacheFirstStrategy(request, STATIC_CACHE_NAME));
@@ -94,6 +99,13 @@ self.addEventListener('fetch', (event) => {
   // Default - Stale while revalidate
   event.respondWith(staleWhileRevalidate(request, CACHE_NAME));
 });
+
+// Check if URL is a JS bundle (Expo entry / async chunks)
+function isJsBundlePath(pathname) {
+  if (pathname.startsWith('/_expo/static/js/')) return true;
+  if (pathname.endsWith('.js') || pathname.endsWith('.mjs')) return true;
+  return false;
+}
 
 // Check if URL is a static asset
 function isStaticAsset(pathname) {

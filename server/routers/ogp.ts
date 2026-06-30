@@ -9,6 +9,7 @@ import { publicProcedure, protectedProcedure, router } from "../_core/trpc.js";
 import { getDb } from "../db/connection.js";
 import { getEventById } from "../../modules/event/db/queries.js";
 import { getOrCreateUserShareSlug, getShareInfoBySlug, getPublicTrailByShareSlug } from "../../modules/encounter/db/queries.js";
+import { resolveShareAreaLabel } from "../../lib/ogp/share-meta.js";
 import { TRPCError } from "@trpc/server";
 
 const APP_ORIGIN = "https://surechigai.kimito.link";
@@ -119,11 +120,23 @@ export const ogpRouter = router({
     if (!slug) {
       throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "共有リンクの生成に失敗しました" });
     }
-    // 共有テキストを市区町村粒度にするため、最新の記録地点の地名も返す。
+    // 共有テキストは OGP と同じ「公開地点のみ」で解決（非公開の最新地点は X に出さない）
     let areaLabel: string | null = null;
     try {
-      const info = await getShareInfoBySlug(db, slug, ctx.user.id);
-      areaLabel = info?.area ?? info?.prefecture ?? null;
+      const info = await getShareInfoBySlug(db, slug);
+      areaLabel = resolveShareAreaLabel(
+        info
+          ? {
+              area: info.area,
+              prefecture: info.prefecture,
+              lat: info.lat,
+              lng: info.lng,
+              hasLocation: info.hasLocation,
+              zoom: info.zoom,
+              recordedAt: info.recordedAt,
+            }
+          : null,
+      );
     } catch {
       // 地名の解決に失敗してもリンク共有自体は続行
     }

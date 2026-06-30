@@ -288,23 +288,51 @@ export default async function handler(req: Request): Promise<Response> {
     )
   );
 
-  // 中央ピン + ラベルバブル
-  const center = h(
+  // 中央ピン（地図タイル中心 = 実座標）+ ラベルバブル（ピン直上）
+  const PIN_SIZE = 54;
+  const PIN_BORDER = 6;
+  const LABEL_GAP = 14;
+  const pin = h(
     "div",
     {
       style: {
         position: "absolute",
-        top: 0,
-        left: 0,
-        width: WIDTH,
-        height: HEIGHT,
+        left: WIDTH / 2 - PIN_SIZE / 2,
+        top: HEIGHT / 2 - PIN_SIZE / 2,
+        width: PIN_SIZE,
+        height: PIN_SIZE,
+        borderRadius: 999,
+        backgroundColor: COLORS.teal,
+        border: `${PIN_BORDER}px solid ${COLORS.white}`,
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
+        boxShadow: "0 6px 16px rgba(0,0,0,0.35)",
       },
     },
-    // ラベルバブル
+    h("div", {
+      style: {
+        width: 16,
+        height: 16,
+        borderRadius: 999,
+        backgroundColor: COLORS.white,
+        display: "flex",
+      },
+    })
+  );
+  const labelBubble = h(
+    "div",
+    {
+      style: {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: HEIGHT / 2 - PIN_SIZE / 2 - LABEL_GAP - 78,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      },
+    },
     h(
       "div",
       {
@@ -320,38 +348,26 @@ export default async function handler(req: Request): Promise<Response> {
           paddingBottom: 16,
           paddingLeft: 30,
           paddingRight: 30,
-          marginBottom: 14,
           boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
         },
       },
       placeLabel
-    ),
-    // ピン（白縁の円＋内側ドット）
-    h(
-      "div",
-      {
-        style: {
-          width: 54,
-          height: 54,
-          borderRadius: 999,
-          backgroundColor: COLORS.teal,
-          border: `6px solid ${COLORS.white}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "0 6px 16px rgba(0,0,0,0.35)",
-        },
-      },
-      h("div", {
-        style: {
-          width: 16,
-          height: 16,
-          borderRadius: 999,
-          backgroundColor: COLORS.white,
-          display: "flex",
-        },
-      })
     )
+  );
+  const center = h(
+    "div",
+    {
+      style: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: WIDTH,
+        height: HEIGHT,
+        display: "flex",
+      },
+    },
+    labelBubble,
+    pin
   );
 
   // 下部タグライン + ハンドル

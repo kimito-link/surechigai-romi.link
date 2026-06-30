@@ -6,7 +6,7 @@
  * Web / Native 共通（PrecisionTileMap は RN コンポーネント）。
  */
 
-import { View, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
@@ -98,6 +98,9 @@ export default function MapScreen() {
           showMenu
           leftElement={headerLeft}
         />
+        <View style={styles.authLoading}>
+          <ActivityIndicator size="large" color={palette.kimitoBlue} />
+        </View>
       </ScreenContainer>
     );
   }
@@ -156,6 +159,11 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
+  authLoading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   trailMap: {
     flex: 1,
     width: "100%",

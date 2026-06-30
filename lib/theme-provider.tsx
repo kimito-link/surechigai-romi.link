@@ -6,16 +6,16 @@ import { SchemeColors, type ColorScheme } from "@/constants/theme";
 
 /**
  * Theme Provider
- * v6.36: ダークモード専用化（テーマ切り替え機能を削除）
+ * SSR（+html / global.css）と一致するライト基調。
  */
-const FIXED_SCHEME: ColorScheme = "dark";
+const FIXED_SCHEME: ColorScheme = "light";
 
 type ThemeContextValue = {
   colorScheme: ColorScheme;
-  // 後方互換性のため残すが、常にdarkを返す
-  themeMode: "dark";
+  // 後方互換性のため残すが、常にlightを返す
+  themeMode: "light";
   setColorScheme: (scheme: ColorScheme) => void;
-  setThemeMode: (mode: "dark") => void;
+  setThemeMode: (mode: "light") => void;
   toggleTheme: () => void;
 };
 
@@ -30,7 +30,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (typeof document !== "undefined") {
       const root = document.documentElement;
       root.dataset.theme = FIXED_SCHEME;
-      root.classList.add("dark");
+      root.classList.remove("dark");
+      root.classList.add("light");
       const palette = SchemeColors[FIXED_SCHEME];
       Object.entries(palette).forEach(([token, value]) => {
         root.style.setProperty(`--color-${token}`, value);
@@ -80,7 +81,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       colorScheme: FIXED_SCHEME,
-      themeMode: "dark" as const,
+      themeMode: "light" as const,
       setColorScheme,
       setThemeMode,
       toggleTheme,
