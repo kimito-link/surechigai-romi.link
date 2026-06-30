@@ -4,6 +4,8 @@ const PREFETCH_MODULES = [
   () => import("@/components/checkin/checkin-authenticated-screen"),
   () => import("@/components/organisms/web-trail-map"),
   () => import("@/components/molecules/event-calendar"),
+  () => import("@/components/molecules/envelope-pulse"),
+  () => import("@/components/molecules/character-here"),
 ] as const;
 
 let started = false;

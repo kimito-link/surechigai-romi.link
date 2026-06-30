@@ -1,7 +1,7 @@
 {
-  "short_name": "動員ちゃれんじ",
-  "name": "君斗りんくの動員ちゃれんじ",
-  "description": "アイドルの動員チャレンジを応援するアプリ",
+  "short_name": "すれ違ひ通信",
+  "name": "君斗りんくのすれ違ひ通信",
+  "description": "位置情報を利用したすれ違い通信アプリ",
   "icons": [
     {
       "src": "favicon.png",
@@ -22,7 +22,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#1a1a2e",
-  "background_color": "#1a1a2e",
+  "theme_color": "#0D1117",
+  "background_color": "#0D1117",
   "orientation": "portrait"
 }

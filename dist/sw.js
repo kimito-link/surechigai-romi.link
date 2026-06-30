@@ -3,9 +3,8 @@
 // 重要: キャッシュバージョンを更新することで、古いキャッシュを強制的に削除する
 // バージョンはビルド時に更新される（public/version.jsonのcommitShaを使用）
 
-// キャッシュバージョン（ビルド時に更新される）
-// デフォルトはタイムスタンプベース（手動更新時も有効）
-const CACHE_VERSION = 'v2-' + Date.now();
+// キャッシュバージョン（ビルド時 scripts/inject-sw-version.cjs が dist/sw.js へ commitSha を埋め込む）
+const CACHE_VERSION = '__CACHE_VERSION__';
 const CACHE_NAME = 'douin-challenge-' + CACHE_VERSION;
 const STATIC_CACHE_NAME = 'douin-static-' + CACHE_VERSION;
 const API_CACHE_NAME = 'douin-api-' + CACHE_VERSION;
@@ -69,9 +68,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API requests - Network first, fallback to cache
+  // Skip Clerk requests and proxy requests completely to avoid offline page interference on redirects
+  if (url.pathname.startsWith('/__clerk/') || url.pathname.startsWith('/api/clerk-proxy/')) {
+    return;
+  }
+
+  // API / tRPC — ユーザー固有データのため Service Worker ではキャッシュしない
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/trpc/')) {
-    event.respondWith(networkFirstStrategy(request, API_CACHE_NAME));
+    return;
+  }
+
+  // JS バンドル — network-first（古い stale キャッシュで白画面になるのを防ぐ）
+  if (isJsBundlePath(url.pathname)) {
+    event.respondWith(networkFirstStrategy(request, CACHE_NAME));
     return;
   }
 
@@ -90,6 +99,13 @@ self.addEventListener('fetch', (event) => {
   // Default - Stale while revalidate
   event.respondWith(staleWhileRevalidate(request, CACHE_NAME));
 });
+
+// Check if URL is a JS bundle (Expo entry / async chunks)
+function isJsBundlePath(pathname) {
+  if (pathname.startsWith('/_expo/static/js/')) return true;
+  if (pathname.endsWith('.js') || pathname.endsWith('.mjs')) return true;
+  return false;
+}
 
 // Check if URL is a static asset
 function isStaticAsset(pathname) {
@@ -171,7 +187,7 @@ async function navigationStrategy(request) {
     
     // Last resort - return basic offline message
     return new Response(
-      '<!DOCTYPE html><html><head><meta charset="utf-8"><title>オフライン</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;"><h1>オフラインです</h1><p>インターネット接続を確認してください</p></body></html>',
+      '<!DOCTYPE html><html><head><meta charset="utf-8"><title>オフライン</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;background-color:#0D1117;color:#E6EDF3;"><h1>オフラインです</h1><p>インターネット接続を確認してください</p></body></html>',
       { headers: { 'Content-Type': 'text/html' } }
     );
   }

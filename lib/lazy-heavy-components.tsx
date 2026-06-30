@@ -8,6 +8,9 @@ import type { EventCalendar } from "@/components/molecules/event-calendar";
 import type { EventDateTimePicker } from "@/components/molecules/event-datetime-picker";
 import type { PrefectureSelector } from "@/components/ui/prefecture-selector";
 import type { SignalAccountGrid } from "@/components/organisms/signal-account-grid";
+import type { EnvelopePulse } from "@/components/molecules/envelope-pulse";
+import type { CharacterHere } from "@/components/molecules/character-here";
+import type { EncounterOpenModal } from "@/components/post/encounter-open-modal";
 
 export function ChunkFallback({ minHeight = 220 }: { minHeight?: number }) {
   return (
@@ -45,6 +48,17 @@ const SignalAccountGridLazy = lazy(() =>
     default: m.SignalAccountGrid,
   })),
 );
+const EnvelopePulseLazy = lazy(() =>
+  import("@/components/molecules/envelope-pulse").then((m) => ({ default: m.EnvelopePulse })),
+);
+const CharacterHereLazy = lazy(() =>
+  import("@/components/molecules/character-here").then((m) => ({ default: m.CharacterHere })),
+);
+const EncounterOpenModalLazy = lazy(() =>
+  import("@/components/post/encounter-open-modal").then((m) => ({
+    default: m.EncounterOpenModal,
+  })),
+);
 
 type WebTrailMapProps = ComponentProps<typeof WebTrailMap>;
 type PrecisionTileMapProps = ComponentProps<typeof PrecisionTileMap>;
@@ -53,6 +67,9 @@ type EventCalendarProps = ComponentProps<typeof EventCalendar>;
 type EventDateTimePickerProps = ComponentProps<typeof EventDateTimePicker>;
 type PrefectureSelectorProps = ComponentProps<typeof PrefectureSelector>;
 type SignalAccountGridProps = ComponentProps<typeof SignalAccountGrid>;
+type EnvelopePulseProps = ComponentProps<typeof EnvelopePulse>;
+type CharacterHereProps = ComponentProps<typeof CharacterHere>;
+type EncounterOpenModalProps = ComponentProps<typeof EncounterOpenModal>;
 
 export function LazyWebTrailMap(props: WebTrailMapProps) {
   return (
@@ -106,6 +123,31 @@ export function LazySignalAccountGrid(props: SignalAccountGridProps) {
   return (
     <Suspense fallback={<ChunkFallback minHeight={200} />}>
       <SignalAccountGridLazy {...props} />
+    </Suspense>
+  );
+}
+
+export function LazyEnvelopePulse(props: EnvelopePulseProps) {
+  return (
+    <Suspense fallback={null}>
+      <EnvelopePulseLazy {...props} />
+    </Suspense>
+  );
+}
+
+export function LazyCharacterHere(props: CharacterHereProps) {
+  return (
+    <Suspense fallback={null}>
+      <CharacterHereLazy {...props} />
+    </Suspense>
+  );
+}
+
+/** 開封時のみマウントすること（reanimated chunk を初回 bundle から外す）。 */
+export function LazyEncounterOpenModal(props: EncounterOpenModalProps) {
+  return (
+    <Suspense fallback={null}>
+      <EncounterOpenModalLazy {...props} />
     </Suspense>
   );
 }

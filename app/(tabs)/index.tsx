@@ -23,17 +23,7 @@ import {
   useWindowDimensions,
   ActivityIndicator,
 } from "react-native";
-import { useState, useCallback, useEffect, lazy, Suspense } from "react";
-import { Image } from "expo-image";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-  withTiming,
-  runOnJS,
-  Easing,
-} from "react-native-reanimated";
+import { useState, useCallback, lazy, Suspense } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/atoms/toast";
@@ -43,10 +33,22 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
-import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
-import { CharacterHere } from "@/components/molecules/character-here";
+import {
+  type EncounterItem,
+  TIER_COLORS,
+  TIER_LABELS,
+  STAMPS,
+  reasonLabel,
+  formatEncounterDate,
+} from "@/lib/post/encounter-shared";
+import { EnvelopeCard } from "@/components/post/envelope-card";
 import type { SignalAccountItem } from "@/components/organisms/signal-account-grid";
-import { LazySignalAccountGrid } from "@/lib/lazy-heavy-components";
+import {
+  LazySignalAccountGrid,
+  LazyEnvelopePulse,
+  LazyCharacterHere,
+  LazyEncounterOpenModal,
+} from "@/lib/lazy-heavy-components";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import appConfig from "@/app.config.json";
 
@@ -65,134 +67,6 @@ function DeferredRadarFallback() {
     <View style={{ minHeight: 120, alignItems: "center", justifyContent: "center" }}>
       <ActivityIndicator color={color.accentPrimary} />
     </View>
-  );
-}
-
-// ティアラベル
-const TIER_LABELS: Record<number, string> = {
-  1: "すれすれ",
-  2: "ちかい",
-  3: "出会い",
-  4: "同担",
-  5: "運命",
-};
-
-const TIER_COLORS: Record<number, string> = {
-  1: palette.gray400,
-  2: color.teal500,
-  3: color.accentPrimary,
-  4: color.accentAlt,
-  5: "#F59E0B",
-};
-
-// スタンプ定義
-const STAMPS = ["👋", "🎉", "💫", "🌟"];
-
-type EncounterItem = {
-  id: number;
-  partnerId: number;
-  partnerName: string | null;
-  partnerHitokoto: string | null;
-  tier: number;
-  areaName: string | null;
-  prefecture: string | null;
-  occurredAt: Date;
-  openedByMe: Date | null;
-  partnerTotalEncounters: number;
-  partnerUsername?: string | null;
-  partnerDisplayName?: string | null;
-  partnerProfileImage?: string | null;
-  partnerFollowersCount?: number | null;
-};
-
-/** 封筒カード（未開封） */
-/** スタンプ送信時に上へふわっと舞い上がって消える絵文字（演出） */
-function FloatingEmoji({ emoji, offsetX }: { emoji: string; offsetX: number }) {
-  const progress = useSharedValue(0);
-
-  useEffect(() => {
-    progress.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.ease) });
-  }, [progress]);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: -110 * progress.value },
-      { scale: 1 + 0.5 * progress.value },
-    ],
-    opacity: 1 - progress.value,
-  }));
-
-  return (
-    <Animated.Text
-      pointerEvents="none"
-      style={[styles.floatingEmoji, { marginLeft: offsetX }, animStyle]}
-    >
-      {emoji}
-    </Animated.Text>
-  );
-}
-
-function EnvelopeCard({
-  item,
-  onOpen,
-}: {
-  item: EncounterItem;
-  onOpen: (item: EncounterItem) => void;
-}) {
-  const scale = useSharedValue(1);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePress = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    scale.value = withSequence(
-      withSpring(0.96, { duration: 100 }),
-      withSpring(1.03, { duration: 120 }),
-      withSpring(1, { duration: 100 }),
-    );
-    // 少し待ってから開封
-    setTimeout(() => runOnJS(onOpen)(item), 200);
-  };
-
-  const tierColor = TIER_COLORS[item.tier] || color.accentPrimary;
-
-  return (
-    <Animated.View style={[styles.envelopeCard, animStyle]}>
-      <Pressable onPress={handlePress} style={styles.envelopePressable}>
-        {/* 封筒アイコン */}
-        <View style={[styles.envelopeIconWrap, { borderColor: tierColor + "66" }]}>
-          <MaterialIcons name="mail" size={36} color={tierColor} />
-          <View style={[styles.envelopeSealDot, { backgroundColor: tierColor }]} />
-        </View>
-
-        {/* テキスト */}
-        <View style={styles.envelopeTextWrap}>
-          <View style={styles.envelopeRow}>
-            <View style={[styles.tierBadge, { backgroundColor: tierColor + "22" }]}>
-              <Text style={[styles.tierText, { color: tierColor }]}>
-                {TIER_LABELS[item.tier] || `Tier ${item.tier}`}
-              </Text>
-            </View>
-            <Text style={styles.envelopeDate} numberOfLines={1}>
-              {formatDate(item.occurredAt)}
-            </Text>
-          </View>
-          <Text style={styles.envelopeArea} numberOfLines={1}>
-            {item.areaName || item.prefecture || "不明なエリア"}
-          </Text>
-          <Text style={styles.envelopeTapHint}>タップして開封</Text>
-        </View>
-
-        {/* 未開封バッジ */}
-        <View style={styles.newBadge}>
-          <Text style={styles.newBadgeText}>NEW</Text>
-        </View>
-      </Pressable>
-    </Animated.View>
   );
 }
 
@@ -238,7 +112,7 @@ function HistoryCard({
 
         {/* エリア + 日時 */}
         <Text style={styles.historyArea} numberOfLines={1}>
-          {item.areaName || item.prefecture || "不明なエリア"} ・ {formatDate(item.occurredAt)}
+          {item.areaName || item.prefecture || "不明なエリア"} ・ {formatEncounterDate(item.occurredAt)}
         </Text>
 
         {/* ひとこと */}
@@ -298,188 +172,6 @@ function HistoryCard({
   );
 }
 
-/** 開封モーダル（相手カード） */
-function OpenModal({
-  item,
-  visible,
-  onClose,
-  onSendStamp,
-  onBlock,
-  onReport,
-}: {
-  item: EncounterItem | null;
-  visible: boolean;
-  onClose: () => void;
-  onSendStamp: (encounterId: number, emoji: string) => void;
-  onBlock: (userId: number) => void;
-  onReport: (item: EncounterItem) => void;
-}) {
-  const scale = useSharedValue(0.1);
-  const opacity = useSharedValue(0);
-  const rotation = useSharedValue(0);
-
-  const [floats, setFloats] = useState<{ id: number; emoji: string; offsetX: number }[]>([]);
-  const [sentEmoji, setSentEmoji] = useState<string | null>(null);
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { rotate: `${rotation.value}deg` }],
-    opacity: opacity.value,
-  }));
-
-  useEffect(() => {
-    if (visible && item) {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      // Gacha flash animation
-      opacity.value = 1;
-      rotation.value = withSequence(
-        withTiming(-10, { duration: 50 }),
-        withTiming(10, { duration: 50 }),
-        withTiming(-5, { duration: 50 }),
-        withTiming(5, { duration: 50 }),
-        withTiming(0, { duration: 50 })
-      );
-      scale.value = withSequence(
-        withTiming(1.2, { duration: 150 }),
-        withSpring(1, { damping: 10, stiffness: 100 })
-      );
-    } else {
-      scale.value = 0.1;
-      opacity.value = 0;
-      setFloats([]);
-      setSentEmoji(null);
-    }
-  }, [visible, item]);
-
-  const handleStampPress = (emoji: string, idx: number) => {
-    if (!item) return;
-    onSendStamp(item.id, emoji);
-    setSentEmoji(emoji);
-    const id = Date.now() + idx;
-    // 各ボタンの中心に合わせて舞い上げる（中央基準のオフセット）
-    const offsetX = (idx - (STAMPS.length - 1) / 2) * 64 - 15;
-    setFloats((f) => [...f, { id, emoji, offsetX }]);
-    setTimeout(() => setFloats((f) => f.filter((e) => e.id !== id)), 950);
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  if (!item) return null;
-
-  const tierColor = TIER_COLORS[item.tier] || color.accentPrimary;
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Animated.View style={[styles.modalCard, animStyle]}>
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            {/* ティアバナー */}
-            <View style={[styles.modalTierBanner, { backgroundColor: tierColor + "33", borderColor: tierColor, borderWidth: 1 }]}>
-              <Text style={[styles.modalTierText, { color: tierColor, textShadowColor: tierColor, textShadowOffset: {width:0, height:0}, textShadowRadius: 8 }]}>
-                {TIER_LABELS[item.tier] || `Tier ${item.tier}`} シグナルデコード成功
-              </Text>
-            </View>
-
-            {/* 相手アバター */}
-            <View style={styles.modalAvatarWrap}>
-              <View style={[styles.modalAvatar, { borderColor: tierColor }]}>
-                <MaterialIcons name="account-circle" size={64} color={color.textMuted} />
-              </View>
-            </View>
-
-            {/* 相手情報 */}
-            <Text style={styles.modalName} numberOfLines={2}>
-              {item.partnerName || "ロミユーザー"}
-            </Text>
-
-            <Text style={styles.modalArea} numberOfLines={2}>
-              {item.areaName || item.prefecture || "不明なエリア"}
-            </Text>
-
-            {/* ひとこと */}
-            {item.partnerHitokoto && (
-              <View style={styles.modalHitokotoWrap}>
-                <Text style={styles.modalHitokoto} numberOfLines={4}>{item.partnerHitokoto}</Text>
-              </View>
-            )}
-
-            {/* 累計 */}
-            <Text style={styles.modalTotal}>
-              {item.partnerName || "この人"}は累計 {item.partnerTotalEncounters} 件のすれ違い
-            </Text>
-
-            {/* スタンプ（送信時にふわっと舞い上がる演出 + 送信確認） */}
-            <View style={styles.modalStampsWrap}>
-              <View style={styles.modalStamps}>
-                {STAMPS.map((emoji, idx) => (
-                  <Pressable
-                    key={emoji}
-                    onPress={() => handleStampPress(emoji, idx)}
-                    style={({ pressed }) => [
-                      styles.modalStampButton,
-                      sentEmoji === emoji && styles.modalStampButtonActive,
-                      pressed && { opacity: 0.6, transform: [{ scale: 0.85 }] },
-                    ]}
-                  >
-                    <Text style={styles.modalStampEmoji}>{emoji}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              <View pointerEvents="none" style={styles.floatLayer}>
-                {floats.map((f) => (
-                  <FloatingEmoji key={f.id} emoji={f.emoji} offsetX={f.offsetX} />
-                ))}
-              </View>
-            </View>
-            {sentEmoji && (
-              <Text style={styles.stampConfirm}>{sentEmoji} を送りました ✨</Text>
-            )}
-
-            {/* Xプロフィールへ */}
-            {item.partnerName && (
-              <Pressable
-                onPress={() => Linking.openURL(`https://x.com/${item.partnerName}`)}
-                style={({ pressed }) => [
-                  styles.modalXButton,
-                  pressed && { opacity: 0.8 },
-                ]}
-              >
-                <Text style={styles.modalXButtonText} numberOfLines={1}>X プロフィールを見る @{item.partnerName}</Text>
-              </Pressable>
-            )}
-
-            {/* 通報/ブロック */}
-            <View style={styles.modalSafetyRow}>
-              <Pressable
-                onPress={() => { onBlock(item.partnerId); onClose(); }}
-                style={({ pressed }) => [styles.safetyButton, pressed && { opacity: 0.7 }]}
-              >
-                <Text style={styles.safetyButtonText}>ブロック</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => { onReport(item); onClose(); }}
-                style={({ pressed }) => [styles.safetyButton, pressed && { opacity: 0.7 }]}
-              >
-                <Text style={styles.safetyButtonText}>通報</Text>
-              </Pressable>
-            </View>
-
-            {/* 閉じる */}
-            <Pressable
-              onPress={onClose}
-              style={({ pressed }) => [styles.modalCloseButton, pressed && { opacity: 0.7 }]}
-            >
-              <Text style={styles.modalCloseText}>閉じる</Text>
-            </Pressable>
-          </Pressable>
-        </Animated.View>
-      </Pressable>
-    </Modal>
-  );
-}
-
 /** 通報モーダル */
 function ReportModal({
   item,
@@ -530,27 +222,6 @@ function ReportModal({
       </Pressable>
     </Modal>
   );
-}
-
-function reasonLabel(reason: string): string {
-  switch (reason) {
-    case "inappropriate_hitokoto": return "不適切なひとことを通報";
-    case "spam": return "スパムとして通報";
-    case "harassment": return "嫌がらせとして通報";
-    default: return "その他の理由で通報";
-  }
-}
-
-function formatDate(d: Date | string): string {
-  const date = d instanceof Date ? d : new Date(d);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const h = Math.floor(diff / 3600000);
-  if (h < 1) return "たった今";
-  if (h < 24) return `${h}時間前`;
-  const days = Math.floor(h / 24);
-  if (days < 7) return `${days}日前`;
-  return date.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
 }
 
 export default function PostScreen() {
@@ -663,7 +334,7 @@ export default function PostScreen() {
           const randomX = 10 + (Math.sin(item.id * 123) * 0.5 + 0.5) * 80;
           const randomY = 10 + (Math.cos(item.id * 321) * 0.5 + 0.5) * 80;
           return (
-            <EnvelopePulse
+            <LazyEnvelopePulse
               key={item.id}
               x={randomX}
               y={randomY}
@@ -671,9 +342,9 @@ export default function PostScreen() {
             />
           );
         })}
-        <CharacterHere source={require("@/assets/images/characters/rinku.png")} name="りんく" place="小樽" x={74} y={12} delay={0} />
-        <CharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={6} y={91} delay={400} />
-        <CharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={33} y={86} delay={800} />
+        <LazyCharacterHere source={require("@/assets/images/characters/rinku.png")} name="りんく" place="小樽" x={74} y={12} delay={0} />
+        <LazyCharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={6} y={91} delay={400} />
+        <LazyCharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={33} y={86} delay={800} />
       </JapanRadarMap>
     </Suspense>
   );
@@ -758,18 +429,20 @@ export default function PostScreen() {
         </ScrollView>
         )}
 
-      {/* 開封モーダル */}
-      <OpenModal
-        item={openItem}
-        visible={openModalVisible}
-        onClose={() => {
-          setOpenModalVisible(false);
-          refetch();
-        }}
-        onSendStamp={handleSendStamp}
-        onBlock={handleBlock}
-        onReport={handleReport}
-      />
+      {/* 開封モーダル（reanimated chunk — 開封時のみ load） */}
+      {openModalVisible && openItem ? (
+        <LazyEncounterOpenModal
+          item={openItem}
+          visible={openModalVisible}
+          onClose={() => {
+            setOpenModalVisible(false);
+            refetch();
+          }}
+          onSendStamp={handleSendStamp}
+          onBlock={handleBlock}
+          onReport={handleReport}
+        />
+      ) : null}
 
       {/* 通報モーダル */}
       <ReportModal
@@ -895,87 +568,6 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: color.border,
   },
-  // Envelope card
-  envelopeCard: {
-    marginBottom: 12,
-    borderRadius: 16,
-    backgroundColor: color.surface,
-    overflow: "hidden",
-    shadowColor: palette.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  envelopePressable: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-  },
-  envelopeIconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    backgroundColor: color.surfaceAlt,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 14,
-  },
-  envelopeSealDot: {
-    position: "absolute",
-    bottom: 4,
-    right: 4,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  envelopeTextWrap: {
-    flex: 1,
-    minWidth: 0,
-  },
-  envelopeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 4,
-  },
-  tierBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  tierText: {
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  envelopeDate: {
-    color: color.textMuted,
-    fontSize: 11,
-  },
-  envelopeArea: {
-    color: color.textPrimary,
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  envelopeTapHint: {
-    color: color.accentIndigo,
-    fontSize: 11,
-    fontWeight: "500",
-  },
-  newBadge: {
-    backgroundColor: color.accentPrimary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginLeft: 8,
-  },
-  newBadgeText: {
-    color: color.textWhite,
-    fontSize: 10,
-    fontWeight: "800",
-  },
   // History card
   historyCard: {
     flexDirection: "row",
@@ -1079,152 +671,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
-  },
-  modalCard: {
-    width: "100%",
-    maxWidth: 360,
-    backgroundColor: color.surface,
-    borderRadius: 24,
-    overflow: "hidden",
-    padding: 24,
-  },
-  modalTierBanner: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  modalTierText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  modalAvatarWrap: {
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  modalAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
-    backgroundColor: color.surfaceAlt,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalName: {
-    color: color.textPrimary,
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  modalArea: {
-    color: color.textMuted,
-    fontSize: 13,
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  modalHitokotoWrap: {
-    backgroundColor: color.surfaceAlt,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-  },
-  modalHitokoto: {
-    color: color.textSecondary,
-    fontSize: 14,
-    textAlign: "center",
-    fontStyle: "italic",
-  },
-  modalTotal: {
-    color: color.textMuted,
-    fontSize: 12,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  modalStampsWrap: {
-    position: "relative",
-  },
-  modalStamps: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-    marginBottom: 16,
-  },
-  modalStampButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: color.surfaceAlt,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  modalStampButtonActive: {
-    borderColor: color.teal500,
-    backgroundColor: color.teal500 + "22",
-  },
-  modalStampEmoji: {
-    fontSize: 26,
-  },
-  floatLayer: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "flex-start",
-  },
-  floatingEmoji: {
-    position: "absolute",
-    bottom: 8,
-    left: "50%",
-    fontSize: 30,
-  },
-  stampConfirm: {
-    color: color.teal500,
-    fontSize: 13,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 14,
-  },
-  modalXButton: {
-    backgroundColor: color.twitter + "22",
-    borderWidth: 1,
-    borderColor: color.twitter + "55",
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  modalXButtonText: {
-    color: color.twitter,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  modalSafetyRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 12,
-    marginBottom: 16,
-  },
-  safetyButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: color.surfaceAlt,
-  },
-  safetyButtonText: {
-    color: color.textMuted,
-    fontSize: 12,
-  },
-  modalCloseButton: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  modalCloseText: {
-    color: color.textMuted,
-    fontSize: 14,
   },
   // Report modal
   reportCard: {
