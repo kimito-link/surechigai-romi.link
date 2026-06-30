@@ -1,63 +1,92 @@
 /**
  * ポスト画面 — 未ログイン guest 向け軽量 UI。
- * レーダー / tRPC / reanimated chunk を読まない（LCP をテキストで早く出す）。
+ * LCP（BrandTagline）を AppHeader / ScreenContainer / tRPC より先に paint する。
  */
 import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from "react-native";
-import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
-import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
-import { useResponsive } from "@/hooks/use-responsive";
-import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
+import { scheduleAfterIdle } from "@/lib/schedule-after-idle";
+import { tabBar } from "@/theme/tokens";
+
+const LazyAppHeader = lazy(() =>
+  import("@/components/organisms/app-header").then((m) => ({ default: m.AppHeader })),
+);
+
+const LazyLoginPreviewBanner = lazy(() =>
+  import("@/components/molecules/login-preview-banner").then((m) => ({
+    default: m.LoginPreviewBanner,
+  })),
+);
+
+/** Web タブバー + safe area 下余白の目安（hooks チェーンを避ける）。 */
+const GUEST_TAB_INSET = tabBar.bodyHeight + 12 + 12;
 
 export function PostGuestScreen() {
-  const { isDesktop } = useResponsive();
-  const tabInset = useTabBarInset();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const isDesktop = windowWidth >= 1024;
+  const [deferChrome, setDeferChrome] = useState(true);
+
+  useEffect(() => {
+    return scheduleAfterIdle(() => setDeferChrome(false), { fallbackDelayMs: 120 });
+  }, []);
+
   const heroHeight = isDesktop
     ? Math.min(Math.max(windowHeight * 0.42, 280), 420)
     : Math.min(Math.max(windowHeight * 0.36, 240), 320);
 
   const hero = (
     <View style={[styles.hero, { minHeight: heroHeight }]}>
-      <View style={styles.heroInner}>
-        <BrandTagline compact={false} align="center" />
-        <Text style={styles.heroSub}>
-          移動の足あとを残して、すれ違いと聖地巡礼を
-        </Text>
-      </View>
+      <BrandTagline compact={false} align="center" variant="heroDark" />
+      <Text style={styles.heroSub}>移動の足あとを残して、すれ違いと聖地巡礼を</Text>
     </View>
   );
 
+  const cta = deferChrome ? null : (
+    <Suspense fallback={null}>
+      <LazyLoginPreviewBanner headline="ログインして、封筒と足あとを受け取ろう" />
+    </Suspense>
+  );
+
+  const header = deferChrome ? (
+    <View style={styles.headerStub} />
+  ) : (
+    <Suspense fallback={<View style={styles.headerStub} />}>
+      <LazyAppHeader showLoginButton />
+    </Suspense>
+  );
+
   return (
-    <ScreenContainer style={styles.screen} edges={[]}>
-      <AppHeader showLoginButton />
+    <View style={styles.root}>
+      {header}
       {isDesktop ? (
         <View style={styles.desktopBody}>
           {hero}
-          <View style={styles.desktopCta}>
-            <LoginPreviewBanner headline="ログインして、封筒と足あとを受け取ろう" />
-          </View>
+          <View style={styles.desktopCta}>{cta}</View>
         </View>
       ) : (
         <ScrollView
           style={styles.scroll}
-          contentContainerStyle={{ paddingBottom: tabInset }}
+          contentContainerStyle={{ paddingBottom: GUEST_TAB_INSET }}
           showsVerticalScrollIndicator={false}
         >
           {hero}
-          <View style={styles.mobileCta}>
-            <LoginPreviewBanner headline="ログインして、封筒と足あとを受け取ろう" />
-          </View>
+          <View style={styles.mobileCta}>{cta}</View>
         </ScrollView>
       )}
-    </ScreenContainer>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  root: {
+    flex: 1,
     backgroundColor: "#020817",
+  },
+  headerStub: {
+    height: 56,
+    backgroundColor: "#E2EDF7",
+    borderBottomWidth: 1,
+    borderBottomColor: "#00427B40",
   },
   scroll: {
     flex: 1,
@@ -68,16 +97,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#020817",
   },
   hero: {
-    position: "relative",
-    backgroundColor: "#020817",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-  },
-  heroInner: {
-    alignItems: "center",
-    gap: 12,
-    zIndex: 2,
+    paddingTop: 8,
+    backgroundColor: "#020817",
   },
   heroSub: {
     color: "rgba(255,255,255,0.65)",
@@ -85,6 +109,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
     maxWidth: 320,
+    marginTop: 12,
   },
   desktopCta: {
     paddingHorizontal: 24,

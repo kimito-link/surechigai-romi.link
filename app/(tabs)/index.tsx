@@ -6,7 +6,7 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { PostGuestScreen } from "@/components/post/post-guest-screen";
-import { ChunkFallback } from "@/lib/lazy-heavy-components";
+import { ChunkFallback } from "@/lib/chunk-fallback";
 import { color } from "@/theme/tokens";
 
 const PostAuthenticatedScreen = lazy(() =>

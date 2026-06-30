@@ -1,6 +1,5 @@
 import { lazy, Suspense, type ComponentProps } from "react";
-import { View, ActivityIndicator } from "react-native";
-import { color } from "@/theme/tokens";
+import { ChunkFallback } from "@/lib/chunk-fallback";
 import type { WebTrailMap } from "@/components/organisms/web-trail-map";
 import type { PrecisionTileMap } from "@/components/organisms/precision-tile-map";
 import type { JapanBlockMap } from "@/components/organisms/japan-block-map";
@@ -13,16 +12,7 @@ import type { CharacterHere } from "@/components/molecules/character-here";
 import type { EncounterOpenModal } from "@/components/post/encounter-open-modal";
 import type { GlobalMenu } from "@/components/organisms/global-menu";
 
-export function ChunkFallback({ minHeight = 220 }: { minHeight?: number }) {
-  return (
-    <View style={{ minHeight, alignItems: "center", justifyContent: "center" }}>
-      <ActivityIndicator color={color.accentPrimary} size="large" />
-    </View>
-  );
-}
-
-/** @deprecated MapChunkFallback の別名 */
-export const MapChunkFallback = ChunkFallback;
+export { ChunkFallback, MapChunkFallback } from "@/lib/chunk-fallback";
 
 const WebTrailMapLazy = lazy(() =>
   import("@/components/organisms/web-trail-map").then((m) => ({ default: m.WebTrailMap })),

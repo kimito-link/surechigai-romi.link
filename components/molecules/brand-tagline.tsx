@@ -13,28 +13,37 @@ interface BrandTaglineProps {
   /** 1 行のスリム表記（ヘッダー・フッター向け）。false で 2 行の大きめ表記 */
   compact?: boolean;
   align?: "left" | "center";
+  /** 濃色ヒーロー向け（guest トップ LCP） */
+  variant?: "default" | "heroDark";
   /** 文字色のトーン: light=濃いネイビー(淡色地向け) */
   style?: TextStyle;
 }
 
-export function BrandTagline({ compact = true, align = "center", style }: BrandTaglineProps) {
+export function BrandTagline({
+  compact = true,
+  align = "center",
+  variant = "default",
+  style,
+}: BrandTaglineProps) {
+  const onDark = variant === "heroDark";
+
   if (compact) {
     return (
       <Text
-        style={[styles.compact, { textAlign: align }, style]}
+        style={[styles.compact, onDark && styles.compactOnDark, { textAlign: align }, style]}
         numberOfLines={1}
         accessibilityLabel="会いたい君がいる現在地"
       >
         会いたい君がいる
-        <Text style={styles.compactAccent}>現在地</Text>
+        <Text style={[styles.compactAccent, onDark && styles.compactAccentOnDark]}>現在地</Text>
       </Text>
     );
   }
 
   return (
     <View style={{ alignItems: align === "center" ? "center" : "flex-start" }}>
-      <Text style={styles.line1}>会いたい君がいる</Text>
-      <Text style={styles.line2}>現在地</Text>
+      <Text style={[styles.line1, onDark && styles.line1OnDark]}>会いたい君がいる</Text>
+      <Text style={[styles.line2, onDark && styles.line2OnDark]}>現在地</Text>
     </View>
   );
 }
@@ -61,5 +70,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "800",
     marginTop: 2,
+  },
+  compactOnDark: {
+    color: "#FFFFFF",
+  },
+  compactAccentOnDark: {
+    color: palette.kimitoOrange,
+  },
+  line1OnDark: {
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 18,
+  },
+  line2OnDark: {
+    color: palette.kimitoOrange,
+    fontSize: 32,
+    fontWeight: "900",
   },
 });

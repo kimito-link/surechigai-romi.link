@@ -75,7 +75,7 @@ export default function Root({ children }: PropsWithChildren) {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
             text-rendering: optimizeSpeed;
           }
-          #root { background-color: var(--color-background); }
+          #root { background-color: var(--color-background); min-height: 100%; }
         `}} />
       </head>
       <body>

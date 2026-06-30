@@ -78,10 +78,11 @@ export default function TabLayout() {
         }}
       />
 
-      {/* チェックイン */}
+      {/* チェックイン — 初回フォーカスまで chunk defer */}
       <Tabs.Screen
         name="checkin"
         options={{
+          lazy: true,
           title: "チェックイン",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="location.fill" color={iconColor} />
@@ -93,6 +94,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="events"
         options={{
+          lazy: true,
           title: "集まり",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="calendar" color={iconColor} />
@@ -104,6 +106,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="zukan"
         options={{
+          lazy: true,
           title: "図鑑",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="book.fill" color={iconColor} />
@@ -115,6 +118,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="map"
         options={{
+          lazy: true,
           title: "軌跡",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="map.fill" color={iconColor} />
@@ -126,6 +130,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="mypage"
         options={{
+          lazy: true,
           title: "マイページ",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="person.crop.circle.fill" color={iconColor} />

@@ -1,4 +1,4 @@
-import "@/global.css";
+import "@/lib/bootstrap/global-css";
 import "@/lib/bootstrap/reanimated-init";
 // @ts-nocheck
 import { usePathname } from "expo-router";

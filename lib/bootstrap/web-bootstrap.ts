@@ -16,6 +16,7 @@ export function startDeferredWebBootstrap(): () => void {
   started = true;
 
   return scheduleAfterWindowLoad(() => {
+    void import("@/global.css");
     loadDeferredWebEntrySideEffects();
     registerServiceWorker();
     setupChunkRecover();
