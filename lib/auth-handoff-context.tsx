@@ -52,7 +52,12 @@ export function AuthHandoffProvider({ children }: { children: ReactNode }) {
 export function useAuthHandoff() {
   const context = useContext(AuthHandoffContext);
   if (!context) {
-    throw new Error("useAuthHandoff must be used within AuthHandoffProvider");
+    return {
+      visible: false,
+      provider: "x" as AuthHandoffProvider,
+      showHandoff: () => {},
+      hideHandoff: () => {},
+    };
   }
   return context;
 }

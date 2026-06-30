@@ -13,11 +13,27 @@ export function isPublicWebRoute(pathname: string | null | undefined): boolean {
 /**
  * Web トップ `/` など、未ログイン preview だけ見せるルート。
  * Clerk SDK（~1.2MB）を初回 paint まで defer する。
+ * ただし localStorage に Clerk セッションがあれば defer しない（ログイン後の `/` 着地）。
  */
 export function shouldDeferClerkOnWeb(pathname: string | null | undefined): boolean {
   if (!pathname) return false;
   const path = normalizePath(pathname);
-  return path === "/" || path === "/index";
+  if (path !== "/" && path !== "/index") return false;
+  return !hasClerkSessionHint();
+}
+
+/** localStorage の Clerk キー有無（Guest シェル誤適用の防止）。 */
+export function hasClerkSessionHint(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (key && (key.startsWith("__clerk") || key.includes("clerk"))) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }
 
 function normalizePath(pathname: string): string {

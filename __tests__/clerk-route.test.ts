@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   SIGN_IN_HREF,
   SIGN_UP_HREF,
@@ -6,7 +6,7 @@ import {
   isClerkSsoCallback,
   upgradeAuthHref,
 } from "@/lib/clerk-route";
-import { isPublicWebRoute, shouldDeferClerkOnWeb } from "@/lib/clerk-public-routes";
+import { isPublicWebRoute, shouldDeferClerkOnWeb, hasClerkSessionHint } from "@/lib/clerk-public-routes";
 
 describe("isClerkSsoCallback", () => {
   it("detects the Clerk callback segment", () => {
@@ -57,9 +57,20 @@ describe("isPublicWebRoute", () => {
 });
 
 describe("shouldDeferClerkOnWeb", () => {
-  it("Web トップだけ Clerk を defer", () => {
+  it("Web トップだけ Clerk を defer（セッション hint なし）", () => {
     expect(shouldDeferClerkOnWeb("/")).toBe(true);
     expect(shouldDeferClerkOnWeb("/index")).toBe(true);
+  });
+
+  it("Clerk セッション hint があれば `/` でも defer しない", () => {
+    const storage = {
+      length: 1,
+      key: (i: number) => (i === 0 ? "__clerk_db_jwt" : null),
+    };
+    vi.stubGlobal("window", { localStorage: storage });
+    expect(hasClerkSessionHint()).toBe(true);
+    expect(shouldDeferClerkOnWeb("/")).toBe(false);
+    vi.unstubAllGlobals();
   });
 
   it("それ以外は defer しない", () => {
