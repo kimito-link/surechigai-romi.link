@@ -78,6 +78,8 @@
         }
       ]
     },
+    {
+      "source": "/_expo/static/js/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
