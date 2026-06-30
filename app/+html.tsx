@@ -48,14 +48,21 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Preconnect: 自サイトのみ（Clerk は /sign-in 画面だけで preconnect — kimito 準拠） */}
         <link rel="preconnect" href="https://surechigai.kimito.link" />
         <link rel="dns-prefetch" href="https://surechigai.kimito.link" />
-        {/* PWA / favicon — App Store と同じ「りんく」キャラ（pnpm brand:icons） */}
+        {/* PWA / favicon — タブ用 KL 丸（pnpm brand:icons）。?v= は sync-brand-to-dist が HTML に付与 */}
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/favicon.ico" sizes="48x48" />
-        <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#00427B" />
         <meta name="apple-mobile-web-app-title" content="すれ違ひ通信" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var t="君斗りんくのすれ違ひ通信";function fix(){if(!document.title||document.title.length<4)document.title=t}fix();document.addEventListener("DOMContentLoaded",fix);setTimeout(fix,0);setTimeout(fix,500);var mo=new MutationObserver(fix);var el=document.querySelector("title");if(el)mo.observe(el,{childList:true,characterData:true,subtree:true})})();`,
+          }}
+        />
         {/*
           Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.
           However, body scrolling is often nice to have for mobile web. If you want to enable it, remove this line.
