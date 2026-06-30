@@ -35,7 +35,10 @@ export function PostGuestScreen() {
     : Math.min(Math.max(windowHeight * 0.36, 240), 320);
 
   const hero = (
-    <View style={[styles.hero, { minHeight: heroHeight }]}>
+    <View
+      style={[styles.hero, { minHeight: heroHeight }]}
+      {...({ dataSet: { guestLcpReady: "true" } } as object)}
+    >
       <BrandTagline compact={false} align="center" variant="heroDark" />
       <Text style={styles.heroSub}>移動の足あとを残して、すれ違いと聖地巡礼を</Text>
     </View>

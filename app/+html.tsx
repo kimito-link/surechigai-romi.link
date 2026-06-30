@@ -85,6 +85,7 @@ export default function Root({ children }: PropsWithChildren) {
           style={{
             position: "fixed",
             inset: 0,
+            minHeight: "100vh",
             backgroundColor: "#020817",
             display: "flex",
             flexDirection: "column",
@@ -118,7 +119,7 @@ export default function Root({ children }: PropsWithChildren) {
         </div>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var p=location.pathname;var l=document.getElementById("static-guest-lcp");if(!l)return;if(p!=="/"&&p!=="/index"){l.remove();return}var r=document.getElementById("root");function h(){if(r&&r.childElementCount>0){l.style.display="none";return true}return false}if(h())return;new MutationObserver(function(){h()}).observe(r,{childList:true,subtree:true});window.addEventListener("load",function(){setTimeout(h,80)},{once:true})})();`,
+            __html: `(function(){var p=location.pathname;var l=document.getElementById("static-guest-lcp");if(!l)return;if(p!=="/"&&p!=="/index"){l.remove();return}function hide(){l.style.transition="opacity 0.12s ease";l.style.opacity="0";setTimeout(function(){l.remove()},150)}function ready(){return!!document.querySelector('[data-guest-lcp-ready="true"]')}function tryHide(){if(ready()){hide();return true}return false}var r=document.getElementById("root");if(r){new MutationObserver(function(){tryHide()}).observe(r,{childList:true,subtree:true,attributes:true,attributeFilter:["data-guest-lcp-ready"]})}window.addEventListener("load",function(){if(tryHide())return;var t=0;var iv=setInterval(function(){t+=100;if(tryHide()||t>=4000){clearInterval(iv)}},100)},{once:true});setTimeout(hide,8000)})();`,
           }}
         />
         {children}

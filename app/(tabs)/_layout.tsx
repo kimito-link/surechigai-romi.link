@@ -85,6 +85,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "チェックイン",
+          tabBarAccessibilityLabel: "チェックイン",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="location.fill" color={iconColor} />
           ),
@@ -97,6 +98,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "集まり",
+          tabBarAccessibilityLabel: "集まり",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="calendar" color={iconColor} />
           ),
@@ -109,6 +111,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "図鑑",
+          tabBarAccessibilityLabel: "図鑑",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="book.fill" color={iconColor} />
           ),
@@ -121,6 +124,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "軌跡",
+          tabBarAccessibilityLabel: "軌跡",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="map.fill" color={iconColor} />
           ),
@@ -133,6 +137,7 @@ export default function TabLayout() {
         options={{
           lazy: true,
           title: "マイページ",
+          tabBarAccessibilityLabel: "マイページ",
           tabBarIcon: ({ color: iconColor }) => (
             <IconSymbol size={26} name="person.crop.circle.fill" color={iconColor} />
           ),

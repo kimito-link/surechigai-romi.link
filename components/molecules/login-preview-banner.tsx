@@ -215,7 +215,8 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   note: {
-    color: palette.kimitoInkMuted,
+    color: palette.kimitoBlue,
+    opacity: 0.85,
     fontSize: 11,
     textAlign: "center",
     marginTop: 8,

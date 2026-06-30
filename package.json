@@ -27,7 +27,8 @@
     "e2e:ui": "playwright test --ui",
     "e2e:report": "playwright show-report",
     "e2e:auth-save": "playwright test --project=save-auth --headed",
-    "diff-check": "node scripts/diff-check.mjs"
+    "diff-check": "node scripts/diff-check.mjs",
+    "pagespeed": "node scripts/pagespeed-check.mjs"
   },
   "dependencies": {
     "@clerk/backend": "^3.8.4",

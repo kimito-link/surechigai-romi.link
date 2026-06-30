@@ -59,3 +59,26 @@ jobs:
           done
           echo "version.json not updated yet (Vercel may still be building)"
           exit 1
+
+      - name: PageSpeed audit (mobile Lighthouse)
+        continue-on-error: true
+        run: |
+          npx lighthouse@12 https://surechigai.kimito.link/ \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --form-factor=mobile \
+            --screenEmulation.mobile=true \
+            --quiet \
+            --chrome-flags="--headless --no-sandbox --disable-gpu" \
+            --output=json \
+            --output-path=pagespeed-report.json
+          node scripts/pagespeed-summarize.mjs pagespeed-report.json | tee pagespeed-summary.md
+
+      - name: Upload PageSpeed report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: pagespeed-report
+          path: |
+            pagespeed-report.json
+            pagespeed-summary.md
