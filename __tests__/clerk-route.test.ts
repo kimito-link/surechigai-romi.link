@@ -6,7 +6,7 @@ import {
   isClerkSsoCallback,
   upgradeAuthHref,
 } from "@/lib/clerk-route";
-import { isPublicWebRoute } from "@/lib/clerk-public-routes";
+import { isPublicWebRoute, shouldDeferClerkOnWeb } from "@/lib/clerk-public-routes";
 
 describe("isClerkSsoCallback", () => {
   it("detects the Clerk callback segment", () => {
@@ -53,5 +53,18 @@ describe("isPublicWebRoute", () => {
   it("アプリ本体は公開ルートではない", () => {
     expect(isPublicWebRoute("/")).toBe(false);
     expect(isPublicWebRoute("/sign-in")).toBe(false);
+  });
+});
+
+describe("shouldDeferClerkOnWeb", () => {
+  it("Web トップだけ Clerk を defer", () => {
+    expect(shouldDeferClerkOnWeb("/")).toBe(true);
+    expect(shouldDeferClerkOnWeb("/index")).toBe(true);
+  });
+
+  it("それ以外は defer しない", () => {
+    expect(shouldDeferClerkOnWeb("/sign-in")).toBe(false);
+    expect(shouldDeferClerkOnWeb("/checkin")).toBe(false);
+    expect(shouldDeferClerkOnWeb("/u/demo")).toBe(false);
   });
 });
