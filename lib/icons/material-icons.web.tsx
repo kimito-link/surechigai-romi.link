@@ -49,11 +49,11 @@ export default function MaterialIcons({ name, size = 24, color = "#000", style }
   const [fontReady, setFontReady] = useState(Boolean(RealIcons));
 
   useEffect(() => {
-    if (fontReady) return;
+    if (fontReady || hasMaterialSvgPath(name)) return;
     return scheduleAfterWindowLoad(() => {
       void loadMaterialIconsFont().then(() => setFontReady(true));
     });
-  }, [fontReady]);
+  }, [fontReady, name]);
 
   if (hasMaterialSvgPath(name)) {
     return (
