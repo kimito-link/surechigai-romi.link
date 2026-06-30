@@ -19,3 +19,9 @@ node scripts/bust-entry-cache.cjs || true
 
 # Service Worker の CACHE_VERSION を commitSha で埋め込む。
 node scripts/inject-sw-version.cjs || true
+
+# LP（public/lp）を dist に同期 — surechigai-romi.link/lp/ で静的配信
+if [ -d public/lp ]; then
+  mkdir -p dist/lp
+  cp -a public/lp/. dist/lp/
+fi

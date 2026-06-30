@@ -79,49 +79,6 @@ export default function Root({ children }: PropsWithChildren) {
         `}} />
       </head>
       <body>
-        {/* Guest `/` LCP — JS 評価前に hero テキストを paint（pathname が / のときのみ） */}
-        <div
-          id="static-guest-lcp"
-          style={{
-            position: "fixed",
-            inset: 0,
-            minHeight: "100vh",
-            backgroundColor: "#020817",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            padding: 24,
-            textAlign: "center",
-          }}
-        >
-          <p
-            style={{
-              color: "rgba(255,255,255,0.92)",
-              fontSize: 18,
-              fontWeight: 700,
-              margin: 0,
-            }}
-          >
-            会いたい君がいる
-          </p>
-          <p
-            style={{
-              color: "#F97316",
-              fontSize: 32,
-              fontWeight: 900,
-              margin: "4px 0 0",
-            }}
-          >
-            現在地
-          </p>
-        </div>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){var p=location.pathname;var l=document.getElementById("static-guest-lcp");if(!l)return;if(p!=="/"&&p!=="/index"){l.remove();return}function hide(){l.style.transition="opacity 0.12s ease";l.style.opacity="0";setTimeout(function(){l.remove()},150)}function ready(){return!!document.querySelector('[data-guest-lcp-ready="true"]')}function tryHide(){if(ready()){hide();return true}return false}var r=document.getElementById("root");if(r){new MutationObserver(function(){tryHide()}).observe(r,{childList:true,subtree:true,attributes:true,attributeFilter:["data-guest-lcp-ready"]})}window.addEventListener("load",function(){if(tryHide())return;var t=0;var iv=setInterval(function(){t+=100;if(tryHide()||t>=4000){clearInterval(iv)}},100)},{once:true});setTimeout(hide,8000)})();`,
-          }}
-        />
         {children}
         {enableSpeedInsights && (
           <script
