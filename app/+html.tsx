@@ -53,7 +53,7 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
         <link rel="shortcut icon" href="/favicon-48.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/pwa-icon-180.png" />
         <meta name="theme-color" content="#00427B" />
         <meta name="application-name" content={PWA_APP_NAME} />
         <meta name="apple-mobile-web-app-title" content={PWA_APP_NAME} />

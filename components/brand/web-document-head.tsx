@@ -14,7 +14,7 @@ const FAVICON_VERSION =
     : "dev";
 
 const TAB_ICON = `/favicon-48.png?v=${FAVICON_VERSION}`;
-const APPLE_TOUCH_ICON = `/apple-touch-icon.png?v=${FAVICON_VERSION}`;
+const APPLE_TOUCH_ICON = `/pwa-icon-180.png?v=${FAVICON_VERSION}`;
 
 export function WebDocumentHead() {
   if (Platform.OS !== "web") return null;

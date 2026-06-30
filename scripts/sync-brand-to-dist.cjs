@@ -13,10 +13,10 @@ const BRAND_FILES = [
   "favicon-16.png",
   "favicon-32.png",
   "favicon-48.png",
-  "icon-192.png",
-  "icon-512.png",
-  "icon-512-maskable.png",
-  "apple-touch-icon.png",
+  "pwa-icon-180.png",
+  "pwa-icon-192.png",
+  "pwa-icon-512.png",
+  "pwa-icon-512-maskable.png",
   "manifest.json",
 ];
 

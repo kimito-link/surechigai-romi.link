@@ -118,10 +118,10 @@ def main() -> None:
     save_tab_favicon(48, ROOT / "assets/images/favicon.png")
 
     # PWA / ホーム画面 — ヘッダーと同じゆっくりりんく + すれ違い電波（タブ favicon 素材）
-    save_tab_favicon(180, ROOT / "public/apple-touch-icon.png")
-    save_tab_favicon(192, ROOT / "public/icon-192.png")
-    save_tab_favicon(512, ROOT / "public/icon-512.png")
-    save_maskable_tab(512, ROOT / "public/icon-512-maskable.png")
+    save_tab_favicon(180, ROOT / "public/pwa-icon-180.png")
+    save_tab_favicon(192, ROOT / "public/pwa-icon-192.png")
+    save_tab_favicon(512, ROOT / "public/pwa-icon-512.png")
+    save_maskable_tab(512, ROOT / "public/pwa-icon-512-maskable.png")
 
     # ネイティブ — 全身りんくキャラ
     save_resize(APP_ICON_SOURCE, 200, ROOT / "assets/images/splash-icon.png")
@@ -131,7 +131,7 @@ def main() -> None:
 
     lp = ROOT / "public/lp"
     lp.mkdir(parents=True, exist_ok=True)
-    for name in ("favicon.ico", "favicon-48.png", "icon-192.png", "apple-touch-icon.png"):
+    for name in ("favicon.ico", "favicon-48.png", "pwa-icon-192.png", "pwa-icon-180.png"):
         shutil.copy2(ROOT / "public" / name, lp / name)
         print(f"copied lp/{name}")
 

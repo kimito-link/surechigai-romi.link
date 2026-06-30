@@ -70,7 +70,7 @@
       ]
     },
     {
-      "source": "/apple-touch-icon.png",
+      "source": "/pwa-icon-:file",
       "headers": [
         {
           "key": "Cache-Control",
@@ -189,13 +189,28 @@
   ],
   "redirects": [
     {
+      "source": "/icon-192.png",
+      "destination": "/pwa-icon-192.png",
+      "permanent": false
+    },
+    {
+      "source": "/icon-512.png",
+      "destination": "/pwa-icon-512.png",
+      "permanent": false
+    },
+    {
+      "source": "/apple-touch-icon.png",
+      "destination": "/pwa-icon-180.png",
+      "permanent": false
+    },
+    {
       "source": "/logo192.png",
-      "destination": "/icon-192.png",
+      "destination": "/pwa-icon-192.png",
       "permanent": false
     },
     {
       "source": "/logo512.png",
-      "destination": "/icon-512.png",
+      "destination": "/pwa-icon-512.png",
       "permanent": false
     },
     {
@@ -239,7 +254,7 @@
       "destination": "/api/:path*"
     },
     {
-      "source": "/((?!api/|lp(?:/|$)|_expo/|assets/|favicon|icon-|apple-touch-icon|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt).*)",
+      "source": "/((?!api/|lp(?:/|$)|_expo/|assets/|favicon|icon-|pwa-icon-|apple-touch-icon|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]
