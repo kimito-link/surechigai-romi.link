@@ -6,9 +6,8 @@ import { Image } from "expo-image";
 import { Link, type Href } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { buildSignInHref } from "@/lib/clerk-route";
+import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
 import { palette } from "@/theme/tokens";
-
-const KIMITO_LOGO = require("@/assets/images/logos/kimitolink-logo.webp");
 
 const webChromeStyle =
   Platform.OS === "web"
@@ -41,7 +40,7 @@ export function PublicShareHeader({
       <View style={styles.row}>
         <View style={styles.left}>
           {leftElement}
-          <Image source={KIMITO_LOGO} style={styles.logo} contentFit="contain" />
+          <Image source={APP_BRAND_ICON} style={styles.logo} contentFit="cover" />
           <Text style={styles.title} numberOfLines={1}>
             {title}
           </Text>
@@ -84,6 +83,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 28,
     height: 28,
+    borderRadius: 14,
   },
   title: {
     flex: 1,

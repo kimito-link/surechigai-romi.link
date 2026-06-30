@@ -10,7 +10,7 @@ export const DOCUMENT_TITLE = "君斗りんくのすれ違ひ通信";
 const FAVICON_VERSION =
   typeof process !== "undefined" && process.env.EXPO_PUBLIC_BUILD_SHA
     ? process.env.EXPO_PUBLIC_BUILD_SHA.slice(0, 12)
-    : "1";
+    : "dev";
 
 export function WebDocumentHead() {
   if (Platform.OS !== "web") return null;

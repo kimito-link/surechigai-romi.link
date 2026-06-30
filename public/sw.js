@@ -13,9 +13,8 @@ const API_CACHE_NAME = 'douin-api-' + CACHE_VERSION;
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/favicon.png',
-  '/logo192.png',
-  '/logo512.png',
+  '/favicon-48.png',
+  '/favicon-32.png',
   '/offline.html'
 ];
 

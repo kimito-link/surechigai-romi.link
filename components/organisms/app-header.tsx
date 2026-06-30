@@ -2,7 +2,7 @@
  * アプリヘッダー
  * 君斗りんくのすれ違ひ通信: 親ブランド kimito.link と同じ見た目のヘッダー。
  * - 薄青(#E2EDF7)地 + ネイビー(#00427B)の下線
- * - 左: kimito ロゴ + アプリ名（ネイビー文字）
+ * - 左: ゆっくりりんくアイコン + アプリ名（ネイビー文字）
  * - 右: ログイン状態ピル（白・丸み・アバター + 名前 + @ID）/ ログインボタン + メニュー
  * 出典: kimitolink-linktree/components/Header.tsx, HeaderCurrentAccount.tsx
  */
@@ -16,9 +16,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { LazyGlobalMenu } from "@/lib/lazy-heavy-components";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
+import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
 import * as Haptics from "expo-haptics";
 
-const KIMITO_LOGO = require("@/assets/images/logos/kimitolink-logo.webp");
 const DISPLAY_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 
 // kimito ブランドの不透明度付きライン色
@@ -99,7 +99,12 @@ export function AppHeader({
           <View style={[styles.brandBlock, isNarrow && styles.brandBlockNarrow]}>
             {leftElement ?? (
               <>
-                <Image source={KIMITO_LOGO} style={styles.logo} contentFit="contain" />
+                <Image
+                  source={APP_BRAND_ICON}
+                  style={styles.logo}
+                  contentFit="cover"
+                  accessibilityLabel="君斗りんくのすれ違ひ通信"
+                />
                 <View style={isNarrow ? styles.brandTitleCol : styles.brandTitleRow}>
                   <Text
                     style={[styles.brandTitle, { fontSize: isDesktop ? 18 : isNarrow ? 14 : 15 }]}
@@ -270,7 +275,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: 18,
     flexShrink: 0,
   },
   brandTitleRow: {

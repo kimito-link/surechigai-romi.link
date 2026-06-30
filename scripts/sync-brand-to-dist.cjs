@@ -22,10 +22,12 @@ const BRAND_FILES = [
   "manifest.json",
 ];
 
-const version =
+const version = (
+  process.env.EXPO_PUBLIC_BUILD_SHA ||
   process.env.VERCEL_GIT_COMMIT_SHA ||
   process.env.COMMIT_SHA ||
-  String(Date.now());
+  String(Date.now())
+).slice(0, 12);
 
 function listHtml(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
@@ -62,7 +64,7 @@ function patchHtmlFavicons() {
 
   for (const file of htmlFiles) {
     let html = fs.readFileSync(file, "utf8");
-    const next = html.replace(faviconRe, `$1?v=${version.slice(0, 12)}`);
+    const next = html.replace(faviconRe, `$1?v=${version}`);
     if (next !== html) {
       fs.writeFileSync(file, next);
       patched++;
