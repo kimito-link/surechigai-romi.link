@@ -48,7 +48,7 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Preconnect: 自サイトのみ（Clerk は /sign-in 画面だけで preconnect — kimito 準拠） */}
         <link rel="preconnect" href="https://surechigai.kimito.link" />
         <link rel="dns-prefetch" href="https://surechigai.kimito.link" />
-        {/* PWA / favicon — タブ用 KL 丸（pnpm brand:icons）。?v= は sync-brand-to-dist が HTML に付与 */}
+        {/* PWA / favicon — kimito-link 公式ゆっくりりんく + すれ違い（pnpm brand:icons） */}
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
