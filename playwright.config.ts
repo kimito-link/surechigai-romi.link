@@ -2,31 +2,35 @@ import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 import path from "path";
 
-// Load environment variables from .env.local
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 /**
- * Playwright E2E Test Configuration
- * 
- * スモークテスト + 管理画面の回帰テスト用設定
- * - console.error / 4xx-5xx / pageerror の自動検出
- * - 失敗時のtrace + screenshot + requestId保存
+ * Playwright E2E — 君斗りんくのすれ違ひ通信
+ *
+ * - public.smoke: 未ログインで主要タブを巡回
+ * - trail-auth.smoke: .auth/auth-state.json がある場合のみ削除/公開/チェックイン
+ * - save-auth-state: pnpm e2e:auth-save で手動実行（通常 e2e では除外）
  */
 
 const baseURL =
   process.env.PLAYWRIGHT_BASE_URL ??
   process.env.E2E_BASE_URL ??
-  "https://doin-challenge.com";
+  "http://localhost:8081";
+
+const isLocalBase =
+  baseURL.includes("localhost") || baseURL.includes("127.0.0.1");
+
 const localWorkers = process.env.PLAYWRIGHT_WORKERS
   ? Number(process.env.PLAYWRIGHT_WORKERS)
   : 1;
 
-// Vercel Deployment Protection bypass header
 const vercelBypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 const extraHTTPHeaders: Record<string, string> = {};
 if (vercelBypassSecret) {
   extraHTTPHeaders["x-vercel-protection-bypass"] = vercelBypassSecret;
 }
+
+const authStatePath = path.resolve(process.cwd(), ".auth/auth-state.json");
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -45,7 +49,6 @@ export default defineConfig({
     video: "retain-on-failure",
     actionTimeout: 10000,
     navigationTimeout: 30000,
-    // Vercel Deployment Protection bypass
     extraHTTPHeaders,
   },
 
@@ -55,18 +58,32 @@ export default defineConfig({
 
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] }
+      name: "public-smoke",
+      testMatch: /public\.smoke\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "trail-auth-smoke",
+      testMatch: /trail-auth\.smoke\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: authStatePath,
+      },
+    },
+    {
+      name: "save-auth",
+      testMatch: /save-auth-state\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
 
-  // 開発サーバーの起動設定（CIでは事前に起動済みを想定）
-  webServer: process.env.CI
-    ? undefined
-    : {
-      command: "pnpm dev:metro",
-      url: "http://localhost:8081",
-      reuseExistingServer: true,
-      timeout: 120000,
-    },
+  webServer:
+    process.env.CI || !isLocalBase
+      ? undefined
+      : {
+          command: "pnpm dev:metro",
+          url: "http://localhost:8081",
+          reuseExistingServer: true,
+          timeout: 120000,
+        },
 });

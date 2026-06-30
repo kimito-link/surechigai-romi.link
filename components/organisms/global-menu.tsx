@@ -60,7 +60,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
   };
 
   const menuItems = [
-    { icon: "home", label: "ホーム", path: "/(tabs)/" },
+    { icon: "home", label: "ホーム", path: "/(tabs)" },
     { icon: "groups", label: "訪問申告", path: "/visit" },
     { icon: "location-on", label: "チェックイン", path: "/(tabs)/checkin" },
     { icon: "book", label: "図鑑", path: "/(tabs)/zukan" },
@@ -179,17 +179,23 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
                   <Link
                     key={index}
                     href={item.path as any}
-                    onPress={handleLinkPress}
-                    style={{
-                      flexDirection: "row", alignItems: "center",
-                      paddingVertical: 14, paddingHorizontal: 12,
-                      borderRadius: 12, marginBottom: 4, textDecorationLine: "none",
-                    }}
+                    asChild
                   >
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Pressable
+                      onPress={handleLinkPress}
+                      style={({ pressed }) => ({
+                        flexDirection: "row",
+                        alignItems: "center",
+                        paddingVertical: 14,
+                        paddingHorizontal: 12,
+                        borderRadius: 12,
+                        marginBottom: 4,
+                        opacity: pressed ? 0.7 : 1,
+                      })}
+                    >
                       <MaterialIcons name={item.icon as any} size={24} color={palette.kimitoBlue} style={{ marginRight: 16 }} />
                       <Text style={{ color: color.textPrimary, fontSize: 16 }}>{item.label}</Text>
-                    </View>
+                    </Pressable>
                   </Link>
                 ))}
               </View>

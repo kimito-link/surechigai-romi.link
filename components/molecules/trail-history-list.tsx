@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import {
@@ -22,6 +23,7 @@ import {
   parseLocationVisibility,
   type LocationVisibility,
 } from "@/modules/encounter/core/location-visibility";
+const HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 
 type TrailHistoryListProps = {
   locations: TrailPoint[];
@@ -51,7 +53,7 @@ export function TrailHistoryList({
       <View style={styles.headerRow}>
         <Text style={styles.sectionTitle}>最近の移動履歴</Text>
         {canManage ? (
-          <Text style={styles.hint}>タップで公開/非公開</Text>
+          <Text style={styles.hint}>公開ボタンで切り替え</Text>
         ) : null}
       </View>
 
@@ -94,11 +96,13 @@ export function TrailHistoryList({
                   )
                 }
                 disabled={busy}
+                hitSlop={HIT_SLOP}
                 style={({ pressed }) => [
                   styles.visibilityButton,
                   isPublic ? styles.visibilityPublic : styles.visibilityPrivate,
                   pressed && { opacity: 0.75 },
                   busy && { opacity: 0.5 },
+                  Platform.OS === "web" && styles.pressableWeb,
                 ]}
                 accessibilityLabel={`${locationVisibilityLabel(visibility)}。タップで切り替え`}
               >
@@ -121,12 +125,15 @@ export function TrailHistoryList({
               <Pressable
                 onPress={() => onDeleteLocation(point.id)}
                 disabled={busy}
+                hitSlop={HIT_SLOP}
                 style={({ pressed }) => [
                   styles.deleteButton,
                   pressed && { opacity: 0.7 },
                   busy && { opacity: 0.5 },
+                  Platform.OS === "web" && styles.pressableWeb,
                 ]}
                 accessibilityLabel="この足あとを削除"
+                testID={`trail-location-delete-${point.id}`}
               >
                 {deletingLocationId === point.id ? (
                   <ActivityIndicator size="small" color={color.danger} />
@@ -144,6 +151,7 @@ export function TrailHistoryList({
           ほか {locations.length - limit} 件（地図上には最新 {limit} 件を表示）
         </Text>
       ) : null}
+
     </View>
   );
 }
@@ -230,6 +238,7 @@ const styles = StyleSheet.create({
   visibilityButton: {
     marginLeft: 8,
     minWidth: 52,
+    minHeight: 44,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -258,13 +267,20 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginLeft: 6,
+    minWidth: 44,
+    minHeight: 44,
     padding: 6,
     borderRadius: 8,
     backgroundColor: color.danger + "12",
     borderWidth: 1,
     borderColor: color.danger + "33",
+    alignItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
   },
+  pressableWeb: {
+    cursor: "pointer",
+  } as const,
   moreHint: {
     color: color.textMuted,
     fontSize: 11,

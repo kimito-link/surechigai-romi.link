@@ -272,6 +272,7 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
         .map(({ point, pixel, index }) => (
           <View
             key={`${point.id}:${index}`}
+            pointerEvents="none"
             style={[
               styles.historyDot,
               {
@@ -342,12 +343,12 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
         </View>
       )}
 
-      <View style={styles.zoomBadge}>
+      <View pointerEvents="none" style={styles.zoomBadge}>
         <MaterialIcons name="layers" size={16} color={color.textWhite} />
         <Text style={styles.zoomBadgeText}>z{zoom}</Text>
       </View>
 
-      <Text style={styles.mapAttribution}>© OpenStreetMap contributors</Text>
+      <Text pointerEvents="none" style={styles.mapAttribution}>© OpenStreetMap contributors</Text>
     </View>
   );
 }

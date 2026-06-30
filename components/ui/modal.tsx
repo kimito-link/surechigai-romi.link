@@ -320,7 +320,7 @@ export function ConfirmModal({
             },
           ]}
         >
-          <Pressable >
+          <Pressable onPress={() => {}} accessibilityRole="none">
             {/* アイコン */}
             {icon && (
               <View style={styles.iconContainer}>
@@ -339,7 +339,9 @@ export function ConfirmModal({
               <Pressable
                 onPress={handleCancel}
                 style={[styles.button, styles.cancelButton]}
-                
+                accessibilityRole="button"
+                accessibilityLabel={cancelText}
+                testID="confirm-modal-cancel"
               >
                 <Text style={styles.cancelButtonText}>{cancelText}</Text>
               </Pressable>
@@ -351,7 +353,9 @@ export function ConfirmModal({
                   styles.confirmButton,
                   confirmStyle === "destructive" && styles.destructiveButton,
                 ]}
-                
+                accessibilityRole="button"
+                accessibilityLabel={confirmText}
+                testID="confirm-modal-confirm"
               >
                 <Text
                   style={[
@@ -514,7 +518,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   confirmTitle: {
-    color: color.textWhite,
+    color: color.textPrimary,
     fontSize: 18,
     fontWeight: "bold",
     textAlign: "center",

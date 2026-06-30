@@ -23,9 +23,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "qr": "node scripts/generate_qr.mjs",
-    "e2e": "playwright test",
+    "e2e": "playwright test --project=public-smoke --project=trail-auth-smoke",
     "e2e:ui": "playwright test --ui",
     "e2e:report": "playwright show-report",
+    "e2e:auth-save": "playwright test --project=save-auth --headed",
     "diff-check": "node scripts/diff-check.mjs"
   },
   "dependencies": {

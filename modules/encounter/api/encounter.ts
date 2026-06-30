@@ -17,8 +17,8 @@ import { toGrid, toH3Cell, toH3R7, assertFiniteLatLng } from "../core/geo.js";
 import { findMatches } from "../core/matching.js";
 import { moderateText } from "../core/moderation.js";
 import { reverseGeocode } from "../core/geocoding.js";
-import { reactions, encounters, users } from "../../../drizzle/schema/index.js";
-import { eq, and, sql } from "drizzle-orm";
+import { reactions, users } from "../../../drizzle/schema/index.js";
+import { eq } from "drizzle-orm";
 import {
   insertLocation,
   getNearbyCandidates,
@@ -149,6 +149,7 @@ export const encounterRouter = router({
       // encounters INSERT（UNIQUE衝突は無視）
       let newEncounters = 0;
       for (const m of matchResults) {
+        if (m.userAId === m.userBId) continue;
         const inserted = await insertEncounterIfNew(db, {
           userAId: m.userAId,
           userBId: m.userBId,
@@ -159,72 +160,6 @@ export const encounterRouter = router({
           occurredAt: m.occurredAt,
         });
         if (inserted) newEncounters++;
-      }
-
-      // 初回ボーナス: 自分の初チェックイン + マッチ0件 → タイムシフト広域再試行
-      if (newEncounters === 0 && matchResults.length === 0) {
-        const totalRows = await db
-          .select({ cnt: sql<number>`count(*)` })
-          .from(encounters)
-          .where(
-            and(
-              eq(encounters.userAId, userId)
-            )
-          );
-        const total = Number(totalRows[0]?.cnt ?? 0);
-        if (total === 0) {
-          // 都道府県一致でタイムシフト再検索（prefecture フィールドで照合）
-          if (prefecture) {
-            const { visitedAreas } = await import("../../../drizzle/schema/index.js");
-            const { gte: _gte } = await import("drizzle-orm");
-            const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-            const wideRows = await db
-              .select({
-                userId: visitedAreas.userId,
-                h3R7: visitedAreas.h3R7,
-                municipality: visitedAreas.municipality,
-                prefecture: visitedAreas.prefecture,
-              })
-              .from(visitedAreas)
-              .innerJoin(users, eq(users.id, visitedAreas.userId))
-              .where(
-                and(
-                  eq(visitedAreas.prefecture, prefecture),
-                  _gte(visitedAreas.lastVisitedAt, since),
-                  sql`${visitedAreas.userId} != ${userId}`,
-                  eq(users.isSuspended, false)
-                )
-              )
-              .limit(5);
-
-            const wideResults = findMatches({
-              self: selfLocation,
-              nearbyCandidates: [],
-              timeshiftCandidates: wideRows.map((r) => ({
-                userId: r.userId,
-                h3R7: r.h3R7,
-                municipality: r.municipality,
-                prefecture: r.prefecture,
-              })),
-              blockSet,
-              todayPairSet,
-            });
-
-            for (const m of wideResults) {
-              const inserted = await insertEncounterIfNew(db, {
-                userAId: m.userAId,
-                userBId: m.userBId,
-                tier: m.tier,
-                h3R7: m.h3R7,
-                areaName,
-                prefecture,
-                occurredAt: m.occurredAt,
-              });
-              if (inserted) newEncounters++;
-              if (newEncounters >= 1) break; // 1件保証で十分
-            }
-          }
-        }
       }
 
       return { newEncounters, prefecture, municipality, areaName, address, lat: latLng.lat, lng: latLng.lng };

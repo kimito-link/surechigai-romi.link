@@ -13,6 +13,7 @@ import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
 import { WebTrailMap } from "@/components/organisms/web-trail-map";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { DeleteTrailConfirmModal } from "@/components/molecules/delete-trail-confirm-modal";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
@@ -55,8 +56,11 @@ export default function MapScreen() {
   const {
     deletingLocationId,
     updatingLocationId,
+    confirmDeleteId,
     handleDeleteLocation,
     handleToggleVisibility,
+    executeDelete,
+    cancelDelete,
   } = useTrailLocationActions(onRefreshData);
 
   const onRefresh = useCallback(() => {
@@ -139,6 +143,14 @@ export default function MapScreen() {
           ) : undefined
         }
       />
+
+      {isAuthenticated ? (
+        <DeleteTrailConfirmModal
+          visible={confirmDeleteId != null}
+          onConfirm={executeDelete}
+          onCancel={cancelDelete}
+        />
+      ) : null}
     </ScreenContainer>
   );
 }

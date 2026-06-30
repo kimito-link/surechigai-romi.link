@@ -41,7 +41,7 @@ export function JapanBlockMap({
   const maxMapWidth = 760;
   const safeWidth = Math.max(width || 320, 320);
   const avail = Math.min(safeWidth - outerPadding, maxMapWidth);
-  const cellSize = Math.max(16, Math.floor((avail - gap * (cols - 1)) / cols));
+  const cellSize = Math.max(20, Math.floor((avail - gap * (cols - 1)) / cols));
   // フォントはセルに比例（小画面でも下限8px、大画面では大きく）。
   const fontSize = Math.max(8, Math.round(cellSize * 0.34));
   const radius = Math.max(4, Math.round(cellSize * 0.16));
@@ -80,6 +80,7 @@ export function JapanBlockMap({
               <Pressable
                 key={pref}
                 onPress={() => onPressPrefecture(pref)}
+                hitSlop={4}
                 style={({ pressed }) => [
                   styles.cell,
                   {
@@ -88,7 +89,7 @@ export function JapanBlockMap({
                     borderRadius: radius,
                     backgroundColor: bg,
                     borderColor: borderColor,
-                    opacity: pressed ? 0.7 : 1,
+                    opacity: pressed ? 0.85 : 1,
                   },
                 ]}
               >

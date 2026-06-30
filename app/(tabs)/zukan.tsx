@@ -35,6 +35,7 @@ import {
 import { useRouter } from "expo-router";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
+import { DeleteTrailConfirmModal } from "@/components/molecules/delete-trail-confirm-modal";
 import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
 
 export default function ZukanScreen() {
@@ -74,8 +75,11 @@ export default function ZukanScreen() {
   const {
     deletingLocationId,
     updatingLocationId,
+    confirmDeleteId,
     handleDeleteLocation,
     handleToggleVisibility,
+    executeDelete,
+    cancelDelete,
   } = useTrailLocationActions(onRefresh);
 
   // 訪問・すれ違いのセットを構築
@@ -314,6 +318,14 @@ export default function ZukanScreen() {
           </View>
         )}
       </ScrollView>
+
+      {isAuthenticated ? (
+        <DeleteTrailConfirmModal
+          visible={confirmDeleteId != null}
+          onConfirm={executeDelete}
+          onCancel={cancelDelete}
+        />
+      ) : null}
     </ScreenContainer>
   );
 }

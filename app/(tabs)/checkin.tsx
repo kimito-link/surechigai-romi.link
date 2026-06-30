@@ -91,13 +91,15 @@ async function getCurrentLocation(): Promise<{ lat: number; lng: number; accurac
 }
 
 type CheckinState = "idle" | "loading" | "success" | "error" | "zero";
+type LoadingPhase = "locating" | "saving";
 
 export default function CheckinScreen() {
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isMobile } = useResponsive();
   const { isAuthenticated, isAuthReady, user } = useAuth();
   const tabInset = useTabBarInset();
 
   const [state, setState] = useState<CheckinState>("idle");
+  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>("locating");
   const [newCount, setNewCount] = useState(0);
   const [checkinLocationName, setCheckinLocationName] = useState<string | null>(null);
   const [checkinAddress, setCheckinAddress] = useState<string | null>(null);
@@ -182,6 +184,7 @@ export default function CheckinScreen() {
     );
 
     setState("loading");
+    setLoadingPhase("locating");
 
     // パルスアニメーション開始
     pulse.value = withRepeat(
@@ -198,17 +201,18 @@ export default function CheckinScreen() {
         throw new Error("ログインセッションを確認できません。もう一度Xログインしてください");
       }
 
-      try {
-        await utils.settings.get.fetch();
-      } catch {
-        throw new Error("ログインセッションをAPIで確認できません。もう一度Xログインしてください");
-      }
-
-      const pos = await getCurrentLocation();
+      const [, pos] = await Promise.all([
+        utils.settings.get.fetch().catch(() => {
+          throw new Error("ログインセッションをAPIで確認できません。もう一度Xログインしてください");
+        }),
+        getCurrentLocation(),
+      ]);
 
       if (pos.accuracy && pos.accuracy > 10000) {
         throw new Error("位置精度が低すぎます。より精度の良い位置情報が必要です");
       }
+
+      setLoadingPhase("saving");
 
       const result = await checkIn.mutateAsync({
         lat: pos.lat,
@@ -265,6 +269,8 @@ export default function CheckinScreen() {
   }, [state, checkIn, utils, scale, pulse]);
 
   const handlePauseToggle = useCallback(() => {
+    if (pauseLocation.isPending || resumeLocation.isPending) return;
+
     if (isPausing) {
       resumeLocation.mutate(undefined, {
         onSuccess: () => {
@@ -283,6 +289,8 @@ export default function CheckinScreen() {
       });
     }
   }, [isPausing, pauseLocation, resumeLocation, settingsQuery, utils]);
+
+  const isPauseBusy = pauseLocation.isPending || resumeLocation.isPending;
 
   const getButtonColor = (): string => {
     switch (state) {
@@ -305,7 +313,8 @@ export default function CheckinScreen() {
 
   const getButtonLabel = (): string => {
     switch (state) {
-      case "loading": return "位置情報を取得中...";
+      case "loading":
+        return loadingPhase === "saving" ? "記録中…" : "位置を取得中…";
       case "success": return `${newCount}件のすれ違い！`;
       case "error": return "エラー";
       case "zero": return "チェックイン完了";
@@ -314,7 +323,13 @@ export default function CheckinScreen() {
   };
 
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
-  const mapHeroHeight = Math.min(Math.round(windowHeight * 0.45), 520);
+  /** スマホは地図を小さくし、シェアCTAが常に見える余白を確保 */
+  const mapHeroHeight = isMobile
+    ? Math.min(Math.round(windowWidth * 0.72), 210)
+    : Math.min(Math.round(windowHeight * 0.36), 400);
+  const stickyDockHeight = 76;
+  const mobileWebChrome = Platform.OS === "web" && isMobile ? 40 : 0;
+  const bottomScrollInset = tabInset + stickyDockHeight + mobileWebChrome;
 
   /** チェックイン後（または再チェックイン中）は地図ファースト。前はボタンファースト。 */
   const isMapFirst =
@@ -380,10 +395,12 @@ export default function CheckinScreen() {
               </View>
               <Pressable
                 onPress={handlePauseToggle}
+                disabled={isPauseBusy}
                 style={({ pressed }) => [
                   styles.pauseToggle,
                   { backgroundColor: isPausing ? color.accentPrimary : color.border },
-                  pressed && { opacity: 0.7 },
+                  pressed && !isPauseBusy && { opacity: 0.7 },
+                  isPauseBusy && { opacity: 0.5 },
                 ]}
               >
                 <View
@@ -488,60 +505,71 @@ export default function CheckinScreen() {
         />
 
         {isMapFirst && mapPoint ? (
-          /* チェックイン後: 地図ファースト（主役=記録された現在地） */
+          /* チェックイン後: 地図 + スクロール詳細 + 下部固定シェア（主役=Xシェア） */
           <View style={styles.mapFirstRoot}>
             {pausedBanner}
 
-            {/* すれ違い件数など情緒の山場（地図の直上・埋没させない） */}
-            <View
-              style={[
-                styles.encounterBanner,
-                state === "success" && styles.encounterBannerSuccess,
-                state === "zero" && styles.encounterBannerZero,
-              ]}
-            >
-              {state === "loading" ? (
-                <Text style={styles.encounterBannerText}>位置情報を取得中…</Text>
-              ) : state === "success" ? (
-                <Text style={styles.encounterBannerText}>
-                  {newCount}件のすれ違いが届きました！
-                </Text>
-              ) : (
-                <Text style={styles.encounterBannerText}>チェックイン完了</Text>
-              )}
-            </View>
-
-            <Animated.View style={[styles.mapHero, mapStyle]}>
-              <PrecisionTileMap
-                locations={[mapPoint]}
-                zoom={17}
-                showInfoPanel={false}
-                height={mapHeroHeight}
-                width={Math.min(windowWidth, 980)}
-                markerSize={28}
-                containerStyle={styles.mapInner}
-                userImageUrl={user?.profileImage ?? undefined}
-              />
-            </Animated.View>
-
-            {/* ボトムシート風カード: 住所・座標・シェア・設定 */}
             <ScrollView
               style={styles.bottomSheetScroll}
-              contentContainerStyle={[styles.bottomSheetContent, { paddingBottom: tabInset }]}
+              contentContainerStyle={[
+                styles.bottomSheetContent,
+                { paddingBottom: bottomScrollInset },
+              ]}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.bottomSheet}>
-                {state === "success" && (
-                  <Text style={styles.bottomSheetHint}>ポストを見てみよう</Text>
+              <View
+                style={[
+                  styles.encounterBanner,
+                  state === "success" && styles.encounterBannerSuccess,
+                  state === "zero" && styles.encounterBannerZero,
+                ]}
+              >
+                {state === "loading" ? (
+                  <Text style={styles.encounterBannerText}>
+                    {loadingPhase === "saving" ? "記録中…" : "位置を取得中…"}
+                  </Text>
+                ) : state === "success" ? (
+                  <Text style={styles.encounterBannerText}>
+                    {newCount}件のすれ違いが届きました！
+                  </Text>
+                ) : (
+                  <Text style={styles.encounterBannerText}>チェックイン完了</Text>
                 )}
-                {state === "zero" && (
+              </View>
+
+              <Animated.View style={[styles.mapHeroCompact, mapStyle]}>
+                <PrecisionTileMap
+                  locations={[mapPoint]}
+                  zoom={17}
+                  showInfoPanel={false}
+                  height={mapHeroHeight}
+                  width={Math.min(windowWidth - 32, 980)}
+                  markerSize={28}
+                  containerStyle={styles.mapInner}
+                  userImageUrl={user?.profileImage ?? undefined}
+                />
+              </Animated.View>
+
+              <View style={styles.bottomSheet}>
+                {state === "success" ? (
+                  <Pressable
+                    onPress={() => router.push("/(tabs)")}
+                    style={({ pressed }) => [pressed && { opacity: 0.75 }]}
+                    accessibilityLabel="ホームですれ違いを見る"
+                  >
+                    <Text style={[styles.bottomSheetHint, styles.bottomSheetHintLink]}>
+                      ポストを見てみよう →
+                    </Text>
+                  </Pressable>
+                ) : null}
+                {state === "zero" ? (
                   <Text style={styles.bottomSheetHint}>
                     まだ誰も… あなたの軌跡が誰かの封筒になります
                   </Text>
-                )}
+                ) : null}
 
                 {placeLine ? (
-                  <Text style={styles.placeLine} numberOfLines={2}>{placeLine}</Text>
+                  <Text style={styles.placeLine} numberOfLines={3}>{placeLine}</Text>
                 ) : null}
                 {coordLine ? (
                   <Text style={styles.coordLine}>{coordLine}</Text>
@@ -550,22 +578,6 @@ export default function CheckinScreen() {
                 <Text style={styles.privacyNote}>
                   正確な場所を保存します。プライバシーが気になる方は移動専用アカウントの利用をおすすめします。
                 </Text>
-
-                <Pressable
-                  onPress={handleShareLocation}
-                  disabled={shareSlugMutation.isPending}
-                  style={({ pressed }) => [
-                    styles.shareButton,
-                    styles.shareButtonFull,
-                    pressed && { opacity: 0.85 },
-                    shareSlugMutation.isPending && { opacity: 0.6 },
-                  ]}
-                >
-                  <MaterialIcons name="ios-share" size={18} color={color.textWhite} />
-                  <Text style={styles.shareButtonText}>
-                    {shareSlugMutation.isPending ? "リンクを準備中…" : "この現在地をXでシェア"}
-                  </Text>
-                </Pressable>
 
                 <Pressable
                   onPress={handleCheckin}
@@ -578,13 +590,43 @@ export default function CheckinScreen() {
                 >
                   <MaterialIcons name="refresh" size={18} color={color.accentIndigo} />
                   <Text style={styles.recheckButtonText}>
-                    {state === "loading" ? "取得中…" : "もう一度チェックイン"}
+                    {state === "loading"
+                      ? loadingPhase === "saving"
+                        ? "記録中…"
+                        : "位置を取得中…"
+                      : "もう一度チェックイン"}
                   </Text>
                 </Pressable>
 
                 {settingsBlock}
               </View>
             </ScrollView>
+
+            {/* シェアはスクロール外・タブバー直上に固定（最重要CTA） */}
+            <View
+              style={[
+                styles.stickyShareDock,
+                { paddingBottom: tabInset + mobileWebChrome },
+              ]}
+            >
+              <Pressable
+                onPress={handleShareLocation}
+                disabled={shareSlugMutation.isPending || state === "loading"}
+                style={({ pressed }) => [
+                  styles.shareButton,
+                  styles.shareButtonSticky,
+                  pressed && { opacity: 0.9 },
+                  (shareSlugMutation.isPending || state === "loading") && { opacity: 0.6 },
+                ]}
+                accessibilityLabel="この現在地をXでシェア"
+                testID="checkin-share-button"
+              >
+                <MaterialIcons name="ios-share" size={20} color={color.textWhite} />
+                <Text style={styles.shareButtonText}>
+                  {shareSlugMutation.isPending ? "リンクを準備中…" : "この現在地をXでシェア"}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         ) : (
           /* チェックイン前: ボタンファースト */
@@ -668,6 +710,29 @@ const styles = StyleSheet.create({
   mapFirstRoot: {
     flex: 1,
     width: "100%",
+    position: "relative",
+  },
+  mapHeroCompact: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  stickyShareDock: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    backgroundColor: color.surface,
+    borderTopWidth: 1,
+    borderTopColor: color.border,
+    shadowColor: palette.black,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 12,
+    zIndex: 20,
   },
   encounterBanner: {
     marginHorizontal: 16,
@@ -705,8 +770,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetContent: {
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 32,
+    paddingTop: 4,
   },
   bottomSheet: {
     backgroundColor: color.surface,
@@ -730,6 +794,12 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     textAlign: "center",
   },
+  bottomSheetHintLink: {
+    color: color.accentIndigo,
+    fontWeight: "700",
+    minHeight: 44,
+    lineHeight: 44,
+  },
   placeLine: {
     color: color.textPrimary,
     fontSize: 16,
@@ -752,6 +822,13 @@ const styles = StyleSheet.create({
   shareButtonFull: {
     alignSelf: "stretch",
     width: "100%",
+  },
+  shareButtonSticky: {
+    alignSelf: "stretch",
+    width: "100%",
+    minHeight: 52,
+    borderRadius: 14,
+    backgroundColor: palette.twitter,
   },
   recheckButton: {
     flexDirection: "row",
