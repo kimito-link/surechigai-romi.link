@@ -25,13 +25,13 @@ import { useState, useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
-import { EventCalendar, toDateKey } from "@/components/molecules/event-calendar";
+import { toDateKey } from "@/lib/events/date-key";
+import { toStartDate, type EventDateTimeValue } from "@/lib/events/datetime-value";
 import {
-  EventDateTimePicker,
-  toStartDate,
-  type EventDateTimeValue,
-} from "@/components/molecules/event-datetime-picker";
-import { PrefectureSelector } from "@/components/ui/prefecture-selector";
+  LazyEventCalendar,
+  LazyEventDateTimePicker,
+  LazyPrefectureSelector,
+} from "@/lib/lazy-heavy-components";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -314,7 +314,7 @@ function CalendarList() {
 
   return (
     <View style={styles.list}>
-      <EventCalendar
+      <LazyEventCalendar
         events={items}
         monthAnchor={monthAnchor}
         selectedKey={selectedKey}
@@ -543,7 +543,7 @@ function HostPanel() {
           />
         ) : (
           <>
-            <PrefectureSelector
+            <LazyPrefectureSelector
               value={prefecture}
               onChange={setPrefecture}
               isOpen={isPrefOpen}
@@ -564,7 +564,7 @@ function HostPanel() {
 
         {/* 開始日時（カレンダー＋時刻プルダウン。手入力なし） */}
         <Text style={styles.fieldLabel}>開始日時</Text>
-        <EventDateTimePicker value={startDateTime} onChange={setStartDateTime} />
+        <LazyEventDateTimePicker value={startDateTime} onChange={setStartDateTime} />
 
         {/* 開始時刻クイック選択 */}
         <View style={styles.quickRow}>

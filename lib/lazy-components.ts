@@ -66,4 +66,9 @@ export const HEAVY_COMPONENTS = {
   WebTrailMap: "lazy-heavy-components/LazyWebTrailMap",
   PrecisionTileMap: "lazy-heavy-components/LazyPrecisionTileMap",
   JapanBlockMap: "lazy-heavy-components/LazyJapanBlockMap",
+  EventCalendar: "lazy-heavy-components/LazyEventCalendar",
+  EventDateTimePicker: "lazy-heavy-components/LazyEventDateTimePicker",
+  PrefectureSelector: "lazy-heavy-components/LazyPrefectureSelector",
+  SignalAccountGrid: "lazy-heavy-components/LazySignalAccountGrid",
+  CheckinAuthenticatedScreen: "checkin/checkin-authenticated-screen",
 } as const;

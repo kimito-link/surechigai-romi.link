@@ -45,7 +45,8 @@ import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { EnvelopePulse } from "@/components/molecules/envelope-pulse";
 import { CharacterHere } from "@/components/molecules/character-here";
-import { SignalAccountGrid, type SignalAccountItem } from "@/components/organisms/signal-account-grid";
+import type { SignalAccountItem } from "@/components/organisms/signal-account-grid";
+import { LazySignalAccountGrid } from "@/lib/lazy-heavy-components";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import appConfig from "@/app.config.json";
 
@@ -697,7 +698,7 @@ export default function PostScreen() {
     ));
 
   const signalGrid = isAuthenticated ? (
-    <SignalAccountGrid
+    <LazySignalAccountGrid
       items={(encounters ?? []) as SignalAccountItem[]}
       isDesktop={isDesktop}
       isFetching={isFetching}

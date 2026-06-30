@@ -40,6 +40,7 @@ import { ErrorBoundary } from "@/components/ui";
 import { getClerkProviderProps } from "@/lib/clerk-provider-props";
 import { isPublicWebRoute } from "@/lib/clerk-public-routes";
 import { startDeferredWebBootstrap } from "@/lib/bootstrap/web-bootstrap";
+import { prefetchHeavyTabChunks } from "@/lib/bootstrap/prefetch-tab-chunks";
 import { PublicWebProviders } from "@/components/providers/public-web-providers";
 import { NetworkToast } from "@/components/organisms/network-toast";
 
@@ -328,7 +329,12 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (Platform.OS === "web") {
-      return startDeferredWebBootstrap();
+      const cancelBootstrap = startDeferredWebBootstrap();
+      const cancelPrefetch = isPublicWeb ? () => {} : prefetchHeavyTabChunks();
+      return () => {
+        cancelBootstrap();
+        cancelPrefetch();
+      };
     }
 
     registerServiceWorker();

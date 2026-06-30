@@ -9,25 +9,14 @@ import { useMemo, useState } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color } from "@/theme/tokens";
 import { EventCalendar } from "./event-calendar";
+import { type EventDateTimeValue } from "@/lib/events/datetime-value";
+
+export type { EventDateTimeValue } from "@/lib/events/datetime-value";
+export { toStartDate } from "@/lib/events/datetime-value";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"] as const;
 const MINUTES = [0, 15, 30, 45] as const;
 const pad = (n: number) => String(n).padStart(2, "0");
-
-export interface EventDateTimeValue {
-  /** "YYYY-MM-DD"。空文字なら未選択（呼び出し側で既定値にフォールバック）。 */
-  dateKey: string;
-  hour: number;
-  minute: number;
-}
-
-/** value から JST ローカルの Date を組み立てる。dateKey 未設定なら null。 */
-export function toStartDate(value: EventDateTimeValue): Date | null {
-  if (!value.dateKey) return null;
-  const [y, m, d] = value.dateKey.split("-").map(Number);
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d, value.hour, value.minute, 0, 0);
-}
 
 export function EventDateTimePicker({
   value,

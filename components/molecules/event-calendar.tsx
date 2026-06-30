@@ -14,6 +14,9 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color } from "@/theme/tokens";
+import { toDateKey } from "@/lib/events/date-key";
+
+export { toDateKey } from "@/lib/events/date-key";
 
 /** カレンダーが必要とする最小のイベント形（events.tsx の listUpcoming 行と互換）。 */
 export type CalendarEvent = {
@@ -27,20 +30,13 @@ const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"] as const;
 
 /** 種別タグごとのドット色。未知のタグはアクセント色。 */
 const TAG_COLOR: Record<string, string> = {
-  haishin: color.accentPrimary, // 配信＝ピンク
-  totsumachi: color.warning, // 凸待ち＝パープル
-  offkai: color.accentIndigo, // オフ会＝ティール
-  sagyo: color.textMuted, // 作業通話＝グレー
-  utawaku: color.success, // 歌枠＝グリーン
+  haishin: color.accentPrimary,
+  totsumachi: color.warning,
+  offkai: color.accentIndigo,
+  sagyo: color.textMuted,
+  utawaku: color.success,
   other: color.textMuted,
 };
-
-/** Date / ISO文字列 → ローカル時間の "YYYY-MM-DD" キー。 */
-export function toDateKey(value: string | Date): string {
-  const d = typeof value === "string" ? new Date(value) : value;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
 
 /** イベント1件の代表ドット色（先頭タグ基準）。タグ無しはアクセント。 */
 function dotColorFor(e: CalendarEvent): string {
