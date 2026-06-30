@@ -51,6 +51,8 @@ function LoginCtaButton({
       <Link href={signInHref as Href} asChild>
         <Pressable
           disabled={isStarting}
+          accessibilityRole="button"
+          accessibilityLabel={`Xで${label}`}
           style={({ pressed }) => [
             styles.button,
             pressed && { opacity: 0.85 },
@@ -68,6 +70,8 @@ function LoginCtaButton({
     <Pressable
       disabled={isStarting}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Xで${label}`}
       style={({ pressed }) => [
         styles.button,
         pressed && { opacity: 0.85 },

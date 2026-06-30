@@ -41,7 +41,10 @@ export function BrandTagline({
   }
 
   return (
-    <View style={{ alignItems: align === "center" ? "center" : "flex-start" }}>
+    <View
+      style={{ alignItems: align === "center" ? "center" : "flex-start" }}
+      accessibilityLabel="会いたい君がいる現在地"
+    >
       <Text style={[styles.line1, onDark && styles.line1OnDark]}>会いたい君がいる</Text>
       <Text style={[styles.line2, onDark && styles.line2OnDark]}>現在地</Text>
     </View>

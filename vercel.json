@@ -117,6 +117,18 @@
   ],
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-forwarded-proto",
+          "value": "http"
+        }
+      ],
+      "destination": "https://surechigai.kimito.link/:path*",
+      "permanent": true
+    },
+    {
       "source": "/",
       "has": [
         {

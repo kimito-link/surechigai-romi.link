@@ -74,6 +74,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "ポスト",
+          tabBarAccessibilityLabel: "ポスト",
           tabBarIcon: ({ color: iconColor }) => <PostTabIcon color={iconColor} />,
         }}
       />

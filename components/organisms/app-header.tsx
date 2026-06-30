@@ -153,6 +153,8 @@ export function AppHeader({
             ) : !isNarrow && showLoginButtonStable ? (
               <Pressable
                 onPress={() => openLoginGuide()}
+                accessibilityRole="button"
+                accessibilityLabel="Xでログイン"
                 style={({ pressed }) => [
                   styles.loginButton,
                   pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
@@ -166,6 +168,8 @@ export function AppHeader({
             {showMenu && (
               <Pressable
                 onPress={handleMenuPress}
+                accessibilityRole="button"
+                accessibilityLabel="メニューを開く"
                 style={({ pressed }) => [
                   styles.menuButton,
                   pressed && { opacity: 0.7, transform: [{ scale: 0.97 }] },
@@ -202,6 +206,8 @@ export function AppHeader({
         ) : isNarrow && showLoginButtonStable ? (
           <Pressable
             onPress={() => openLoginGuide()}
+            accessibilityRole="button"
+            accessibilityLabel="Xでログイン"
             style={({ pressed }) => [
               styles.loginButton,
               styles.loginButtonNarrow,
@@ -288,7 +294,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   versionBadge: {
-    color: palette.kimitoInkMuted,
+    color: palette.kimitoBlue,
+    opacity: 0.72,
     fontWeight: "700",
     letterSpacing: 0.2,
     flexShrink: 0,

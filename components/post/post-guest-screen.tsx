@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#020817",
   },
   heroSub: {
-    color: "rgba(255,255,255,0.65)",
+    color: "rgba(255,255,255,0.82)",
     fontSize: 14,
     textAlign: "center",
     lineHeight: 22,

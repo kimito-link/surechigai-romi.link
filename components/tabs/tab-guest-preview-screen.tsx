@@ -41,7 +41,12 @@ export function TabGuestPreviewScreen({
   const tabInset = useTabBarInset();
 
   const headerLeft = (
-    <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
+    <Pressable
+      onPress={() => router.push("/(tabs)")}
+      accessibilityRole="button"
+      accessibilityLabel="ホームに戻る"
+      style={{ padding: 4 }}
+    >
       <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
     </Pressable>
   );
