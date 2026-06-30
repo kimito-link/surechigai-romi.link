@@ -3,21 +3,21 @@ import { View, Text, StyleSheet, Image, useWindowDimensions, StyleProp, ViewStyl
 import Svg, { Polyline } from "react-native-svg";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color } from "@/theme/tokens";
+import {
+  TILE_SIZE,
+  MAX_TILE_LAT,
+  clamp,
+  fitCenterZoom,
+  type TrailPoint,
+} from "@/lib/map/tile-geo";
 
-export const TILE_SIZE = 256;
-export const MAX_TILE_LAT = 85.05112878;
-
-  export type TrailPoint = {
-    id: number;
-    lat: number;
-    lng: number;
-    accuracyM: number | null;
-    municipality: string | null;
-    prefecture: string | null;
-    address: string | null;
-    recordedAt: Date | string;
-    visibility?: string | null;
-  };
+export {
+  TILE_SIZE,
+  MAX_TILE_LAT,
+  clamp,
+  fitCenterZoom,
+  type TrailPoint,
+} from "@/lib/map/tile-geo";
 
 export type Pixel = {
   x: number;
@@ -30,10 +30,6 @@ type VisibleTile = {
   left: number;
   top: number;
 };
-
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export function latLngToWorldPixel(lat: number, lng: number, zoom: number): Pixel {
   const clampedLat = clamp(lat, -MAX_TILE_LAT, MAX_TILE_LAT);
@@ -94,37 +90,6 @@ export function projectPoint(point: { lat: number; lng: number }, topLeft: Pixel
     x: pixel.x - topLeft.x,
     y: pixel.y - topLeft.y,
   };
-}
-
-/**
- * 複数の点がすべて収まる中心座標とズームを算出（バウンディングボックスにフィット）。
- * 0件なら日本全体、1件なら近接ズーム。
- */
-export function fitCenterZoom(
-  points: { lat: number; lng: number }[],
-  mapW: number,
-  mapH: number
-): { center: { lat: number; lng: number }; zoom: number } {
-  if (points.length === 0) {
-    return { center: { lat: 36.2048, lng: 138.2529 }, zoom: 5 };
-  }
-  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
-  for (const p of points) {
-    minLat = Math.min(minLat, p.lat);
-    maxLat = Math.max(maxLat, p.lat);
-    minLng = Math.min(minLng, p.lng);
-    maxLng = Math.max(maxLng, p.lng);
-  }
-  const center = { lat: (minLat + maxLat) / 2, lng: (minLng + maxLng) / 2 };
-  if (points.length === 1) return { center, zoom: 14 };
-
-  const mercY = (l: number) => Math.log(Math.tan(Math.PI / 4 + (l * Math.PI / 180) / 2));
-  const worldLng = Math.max((maxLng - minLng) / 360, 1e-6);
-  const worldLat = Math.max((mercY(maxLat) - mercY(minLat)) / (2 * Math.PI), 1e-6);
-  const zoomLng = Math.log2(mapW / (TILE_SIZE * worldLng));
-  const zoomLat = Math.log2(mapH / (TILE_SIZE * worldLat));
-  const zoom = Math.floor(Math.min(zoomLng, zoomLat)) - 1; // 余白
-  return { center, zoom: clamp(zoom, 5, 16) };
 }
 
 export function formatDateTime(d: Date | string): string {

@@ -77,15 +77,11 @@ export default function Root({ children }: PropsWithChildren) {
       <body>
         {children}
         {enableSpeedInsights && (
-          <>
-            {/* Vercel Speed Insights: script タグで追加（Metro が @vercel/speed-insights を解決できないため） */}
-            <script
-              dangerouslySetInnerHTML={{
-                __html: "window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };",
-              }}
-            />
-            <script defer src="/_vercel/speed-insights/script.js" />
-          </>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(){window.si=window.si||function(){(window.siq=window.siq||[]).push(arguments)};function load(){var s=document.createElement("script");s.src="/_vercel/speed-insights/script.js";s.defer=true;document.body.appendChild(s)}if(document.readyState==="complete"){load()}else{window.addEventListener("load",load,{once:true})}})();`,
+            }}
+          />
         )}
       </body>
     </html>

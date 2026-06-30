@@ -14,7 +14,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { PublicShareHeader } from "@/components/organisms/public-share-header";
-import { WebTrailMap } from "@/components/organisms/web-trail-map";
+import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
 import { trpc } from "@/lib/trpc";
@@ -91,7 +91,7 @@ export default function ShareLocationScreen() {
       )}
 
       {trailQuery.data && (
-        <WebTrailMap
+        <LazyWebTrailMap
           visited={trailQuery.data.visited}
           locations={trailQuery.data.locations}
           userImageUrl={trailQuery.data.profileImage ?? undefined}

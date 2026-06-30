@@ -1,7 +1,9 @@
 import { usePathname } from "expo-router";
 import { useCallback } from "react";
+import { Platform } from "react-native";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthHandoff } from "@/lib/auth-handoff-context";
+import { buildSignInHref } from "@/lib/clerk-route";
 
 export type LoginGuideMode = "same" | "switch";
 
@@ -31,8 +33,11 @@ export function useLoginGuide() {
     (options: LoginGuideOptions = {}) => {
       const returnTo = options.returnTo ?? normalizeReturnTo(pathname);
       const isSwitch = options.mode === "switch";
-      // kimito と同じ「りんくが鍵を開けています…」演出を遷移直前に被せる。
       showHandoff("x");
+      if (Platform.OS === "web" && typeof window !== "undefined" && !isSwitch) {
+        window.location.href = buildSignInHref(returnTo);
+        return;
+      }
       void login(returnTo, isSwitch);
     },
     [pathname, login, showHandoff],

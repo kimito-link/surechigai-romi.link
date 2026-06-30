@@ -41,7 +41,8 @@ import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
 import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MOBILE_WEB_CHROME } from "@/theme/tokens";
 import { computeCheckinScrollBottomInset } from "@/lib/layout/responsive-layout";
-import { PrecisionTileMap, type TrailPoint } from "@/components/organisms/precision-tile-map";
+import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
+import type { TrailPoint } from "@/lib/map/tile-geo";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import { useRouter } from "expo-router";
 import { shareMyLocation } from "@/lib/share";
@@ -548,7 +549,7 @@ export default function CheckinScreen() {
               </View>
 
               <Animated.View style={[styles.mapHeroCompact, mapStyle]}>
-                <PrecisionTileMap
+                <LazyPrecisionTileMap
                   locations={[mapPoint]}
                   zoom={17}
                   showInfoPanel={false}
@@ -705,7 +706,7 @@ export default function CheckinScreen() {
 
             {mapPoint && state === "idle" && (
               <Animated.View style={[styles.mapContainer, mapStyle]}>
-                <PrecisionTileMap
+                <LazyPrecisionTileMap
                   locations={[mapPoint]}
                   zoom={17}
                   showInfoPanel={false}

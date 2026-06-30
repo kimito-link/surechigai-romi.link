@@ -18,7 +18,8 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { AppHeader } from "@/components/organisms/app-header";
-import { PrecisionTileMap, type TrailPoint } from "@/components/organisms/precision-tile-map";
+import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
+import type { TrailPoint } from "@/lib/map/tile-geo";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
@@ -433,7 +434,7 @@ export default function GroupVisitScreen() {
                     {draftPin.accuracy ? ` / 精度 ±${Math.round(draftPin.accuracy)}m` : ""}
                   </Text>
                 </View>
-                <PrecisionTileMap
+                <LazyPrecisionTileMap
                   locations={draftPinPoints}
                   zoom={17}
                   height={220}
@@ -501,7 +502,7 @@ export default function GroupVisitScreen() {
 
         {canReadGroup && mapPoints.length > 0 ? (
           <View style={styles.mapPanel}>
-            <PrecisionTileMap
+            <LazyPrecisionTileMap
               locations={mapPoints}
               zoom={16}
               height={isDesktop ? 460 : 340}

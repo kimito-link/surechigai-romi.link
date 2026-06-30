@@ -60,6 +60,10 @@ export function lazyWithPreload<T extends ComponentType<any>>(
 }
 
 /**
- * 重いコンポーネントのリスト（将来的にMapLibre等を追加予定）
+ * 重いコンポーネントの lazy ラッパー（lib/lazy-heavy-components.tsx が正本）。
  */
-export const HEAVY_COMPONENTS = {} as const;
+export const HEAVY_COMPONENTS = {
+  WebTrailMap: "lazy-heavy-components/LazyWebTrailMap",
+  PrecisionTileMap: "lazy-heavy-components/LazyPrecisionTileMap",
+  JapanBlockMap: "lazy-heavy-components/LazyJapanBlockMap",
+} as const;

@@ -11,7 +11,7 @@ import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
-import { WebTrailMap } from "@/components/organisms/web-trail-map";
+import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
 import { DeleteTrailConfirmModal } from "@/components/molecules/delete-trail-confirm-modal";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
@@ -115,7 +115,7 @@ export default function MapScreen() {
         leftElement={headerLeft}
       />
 
-      <WebTrailMap
+      <LazyWebTrailMap
         visited={visited}
         locations={locations}
         municipalityCount={municipalityCount}

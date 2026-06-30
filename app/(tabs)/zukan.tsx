@@ -27,12 +27,8 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
-import { JapanBlockMap } from "@/components/organisms/japan-block-map";
-import {
-  PrecisionTileMap,
-  fitCenterZoom,
-  type TrailPoint,
-} from "@/components/organisms/precision-tile-map";
+import { fitCenterZoom, type TrailPoint } from "@/lib/map/tile-geo";
+import { LazyJapanBlockMap, LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
 import { useRouter } from "expo-router";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
@@ -231,7 +227,7 @@ export default function ZukanScreen() {
         {trailLocations.length > 0 && (
           <View style={styles.trailMapSection}>
             <Text style={styles.sectionTitle}>あなたの足あと（全国）</Text>
-            <PrecisionTileMap
+            <LazyPrecisionTileMap
               locations={trailLocations}
               width={mapW}
               height={mapH}
@@ -260,7 +256,7 @@ export default function ZukanScreen() {
 
         {/* 都道府県グリッド */}
         <Text style={styles.sectionTitle}>みんながいる現在地（都道府県別）</Text>
-        <JapanBlockMap
+        <LazyJapanBlockMap
           visitedPrefSet={visitedPrefSet}
           encounteredPrefSet={encounteredPrefSet}
           encounterCountMap={encounterCountMap}
