@@ -79,6 +79,48 @@ export default function Root({ children }: PropsWithChildren) {
         `}} />
       </head>
       <body>
+        {/* Guest `/` LCP — JS 評価前に hero テキストを paint（pathname が / のときのみ） */}
+        <div
+          id="static-guest-lcp"
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "#020817",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: 24,
+            textAlign: "center",
+          }}
+        >
+          <p
+            style={{
+              color: "rgba(255,255,255,0.92)",
+              fontSize: 18,
+              fontWeight: 700,
+              margin: 0,
+            }}
+          >
+            会いたい君がいる
+          </p>
+          <p
+            style={{
+              color: "#F97316",
+              fontSize: 32,
+              fontWeight: 900,
+              margin: "4px 0 0",
+            }}
+          >
+            現在地
+          </p>
+        </div>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var p=location.pathname;var l=document.getElementById("static-guest-lcp");if(!l)return;if(p!=="/"&&p!=="/index"){l.remove();return}var r=document.getElementById("root");function h(){if(r&&r.childElementCount>0){l.style.display="none";return true}return false}if(h())return;new MutationObserver(function(){h()}).observe(r,{childList:true,subtree:true});window.addEventListener("load",function(){setTimeout(h,80)},{once:true})})();`,
+          }}
+        />
         {children}
         {enableSpeedInsights && (
           <script
