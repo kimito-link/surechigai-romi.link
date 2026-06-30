@@ -3,8 +3,8 @@
  * サーバー行組み立ては prefecture-creator-row.ts を参照。
  */
 
-import { formatKimitoLinkLabel } from "@/lib/kimito-link-urls";
-import { isValidShareSlug } from "@/lib/twitter-username";
+import { formatKimitoLinkLabel } from "../../../lib/kimito-link-urls.js";
+import { isValidShareSlug } from "../../../lib/twitter-username.js";
 import type { CreatorLinkInput } from "./prefecture-creator-types";
 
 export type {

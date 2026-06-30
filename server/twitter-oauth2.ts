@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { getDb } from "./db/index.js";
 import { oauthPkceData } from "../drizzle/schema/index.js";
 import { eq, lt } from "drizzle-orm";
-import { twitterApiFetch, waitIfRateLimited } from "./rate-limit-handler";
+import { twitterApiFetch, waitIfRateLimited } from "./rate-limit-handler.js";
 
 // Twitter OAuth 2.0 with PKCE implementation
 const TWITTER_CLIENT_ID = process.env.TWITTER_CLIENT_ID || "";

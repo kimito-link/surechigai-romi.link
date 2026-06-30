@@ -46,6 +46,22 @@ export interface UserFriendlyError {
  * 技術的なエラーメッセージをユーザーフレンドリーなメッセージに変換
  */
 export function toUserFriendlyError(error: unknown): UserFriendlyError {
+  // tRPC クライアントエラー: shape.message / data.message を優先
+  if (error && typeof error === "object") {
+    const trpcErr = error as {
+      message?: string;
+      shape?: { message?: string };
+      data?: { message?: string; code?: string };
+    };
+    const trpcMessage =
+      trpcErr.data?.message?.trim() ||
+      trpcErr.shape?.message?.trim() ||
+      "";
+    if (trpcMessage && trpcMessage !== trpcErr.message) {
+      return toUserFriendlyError(new Error(trpcMessage));
+    }
+  }
+
   const errorMessage = error instanceof Error ? error.message : String(error);
   
   // データベース接続エラー
@@ -122,6 +138,21 @@ export function toUserFriendlyError(error: unknown): UserFriendlyError {
     };
   }
   
+  // tRPC / Vercel Functions 障害
+  if (
+    errorMessage.includes("FUNCTION_INVOCATION") ||
+    errorMessage.includes("server error has occurred") ||
+    errorMessage.includes("Unable to transform response") ||
+    errorMessage.includes("Unexpected token") ||
+    errorMessage.includes("JSON Parse")
+  ) {
+    return {
+      code: "SERVER_ERROR",
+      message: ERROR_MESSAGES.SERVER_ERROR,
+      canRetry: true,
+    };
+  }
+
   // ネットワークエラー
   if (errorMessage.includes("Network") ||
       errorMessage.includes("fetch failed") ||

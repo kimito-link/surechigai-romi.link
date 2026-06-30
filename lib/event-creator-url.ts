@@ -1,4 +1,4 @@
-import { normalizeTwitterUsername } from "@/lib/twitter-username";
+import { normalizeTwitterUsername } from "./twitter-username.js";
 
 /** 主催者の X プロフィール URL */
 export function buildCreatorXUrl(

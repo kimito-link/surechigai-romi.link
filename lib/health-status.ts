@@ -1,4 +1,4 @@
-import { DEFAULT_POST_AUTH_PATH } from "@/lib/clerk-route";
+import { DEFAULT_POST_AUTH_PATH } from "./clerk-route.js";
 
 function hasValue(value: string | undefined): boolean {
   return Boolean(value?.trim());
