@@ -6,8 +6,8 @@
  * Web / Native 共通（PrecisionTileMap は RN コンポーネント）。
  */
 
-import { View, StyleSheet, Pressable, Alert } from "react-native";
-import { useCallback, useMemo, useState } from "react";
+import { View, StyleSheet, Pressable } from "react-native";
+import { useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
@@ -20,6 +20,7 @@ import { trpc } from "@/lib/trpc";
 import { palette } from "@/theme/tokens";
 import { useRouter } from "expo-router";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
+import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
 
 export default function MapScreen() {
   const { isDesktop } = useResponsive();
@@ -47,43 +48,20 @@ export default function MapScreen() {
     },
   );
 
-  const deleteLocationMutation = trpc.zukan.deleteLocation.useMutation({
-    onSuccess: () => {
-      void refetchTrail();
-    },
-    onError: (err) => {
-      Alert.alert("エラー", err.message || "足あとの削除に失敗しました");
-    },
-  });
-  const [deletingLocationId, setDeletingLocationId] = useState<number | null>(null);
-
-  const handleDeleteLocation = useCallback(
-    (locationId: number) => {
-      Alert.alert(
-        "足あとを削除",
-        "この記録を地図から消します。すれ違いマッチングにも使われなくなります。",
-        [
-          { text: "キャンセル", style: "cancel" },
-          {
-            text: "削除",
-            style: "destructive",
-            onPress: () => {
-              setDeletingLocationId(locationId);
-              deleteLocationMutation.mutate(
-                { locationId },
-                { onSettled: () => setDeletingLocationId(null) },
-              );
-            },
-          },
-        ],
-      );
-    },
-    [deleteLocationMutation],
-  );
-
-  const onRefresh = useCallback(() => {
+  const onRefreshData = useCallback(() => {
     void Promise.all([refetchAreas(), refetchTrail()]);
   }, [refetchAreas, refetchTrail]);
+
+  const {
+    deletingLocationId,
+    updatingLocationId,
+    handleDeleteLocation,
+    handleToggleVisibility,
+  } = useTrailLocationActions(onRefreshData);
+
+  const onRefresh = useCallback(() => {
+    void onRefreshData();
+  }, [onRefreshData]);
 
   const visited = areasData?.visited ?? [];
   const locations = trailData?.locations ?? [];
@@ -141,7 +119,10 @@ export default function MapScreen() {
         contentPaddingBottom={tabInset}
         canDeleteLocations={isAuthenticated}
         onDeleteLocation={isAuthenticated ? handleDeleteLocation : undefined}
+        onToggleVisibility={isAuthenticated ? handleToggleVisibility : undefined}
         deletingLocationId={deletingLocationId}
+        updatingLocationId={updatingLocationId}
+        historyLimit={30}
         style={styles.trailMap}
         topContent={
           !isAuthenticated ? (

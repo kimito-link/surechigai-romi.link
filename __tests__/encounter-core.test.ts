@@ -534,3 +534,34 @@ describe("trail-visibility: isListedInPrefectureDirectory", () => {
     expect(isListedInPrefectureDirectory("acquaintance")).toBe(false);
   });
 });
+
+// location-visibility.ts
+import {
+  parseLocationVisibility,
+  locationVisibilityLabel,
+  toggleLocationVisibility,
+  isLocationVisibleToOthers,
+} from "../modules/encounter/core/location-visibility.js";
+
+describe("location-visibility", () => {
+  it("parseLocationVisibility は private 以外を public にする", () => {
+    expect(parseLocationVisibility("private")).toBe("private");
+    expect(parseLocationVisibility("public")).toBe("public");
+    expect(parseLocationVisibility(null)).toBe("public");
+  });
+
+  it("toggleLocationVisibility で公開/非公開を反転", () => {
+    expect(toggleLocationVisibility("public")).toBe("private");
+    expect(toggleLocationVisibility("private")).toBe("public");
+  });
+
+  it("isLocationVisibleToOthers", () => {
+    expect(isLocationVisibleToOthers("public")).toBe(true);
+    expect(isLocationVisibleToOthers("private")).toBe(false);
+  });
+
+  it("locationVisibilityLabel", () => {
+    expect(locationVisibilityLabel("public")).toBe("公開");
+    expect(locationVisibilityLabel("private")).toBe("非公開");
+  });
+});

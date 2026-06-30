@@ -33,6 +33,7 @@ import {
   isListedInPrefectureDirectory,
   parseTrailVisibility,
 } from "../core/trail-visibility.js";
+import { isLocationVisibleToOthers } from "../core/location-visibility.js";
 import {
   resolvePrefectureCreatorProfiles,
   toPrefectureCreatorListProfile,
@@ -244,6 +245,7 @@ export type TrailLocation = {
   prefecture: string | null;
   recordedAt: Date;
   address: string | null;
+  visibility: string;
 };
 
 /**
@@ -270,6 +272,7 @@ export async function getMyTrailLocations(
       prefecture: locations.prefecture,
       address: locations.address,
       recordedAt: locations.recordedAt,
+      visibility: locations.visibility,
     })
     .from(locations)
     .where(
@@ -866,6 +869,7 @@ export async function getCreatorsByPrefecture(
       latGrid: locations.latGrid,
       lngGrid: locations.lngGrid,
       recordedAt: locations.recordedAt,
+      visibility: locations.visibility,
     })
     .from(locations)
     .innerJoin(users, eq(locations.userId, users.id))
@@ -874,6 +878,7 @@ export async function getCreatorsByPrefecture(
   const lastStayMap = new Map<number, Date>();
   for (const row of locationRows) {
     if (blockedIds.has(row.userId)) continue;
+    if (!isLocationVisibleToOthers(row.visibility)) continue;
 
     const classified = classifyLocationToPrefectureName(
       row.prefecture,
@@ -1085,6 +1090,27 @@ export async function softDeleteLocation(
   const updated = await db
     .update(locations)
     .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(locations.id, locationId),
+        eq(locations.userId, userId),
+        isNull(locations.deletedAt),
+      ),
+    )
+    .returning({ id: locations.id });
+  return { ok: updated.length > 0 };
+}
+
+/** 足あと1件の公開/非公開を切り替え（本人のみ）。 */
+export async function setLocationVisibility(
+  db: DB,
+  userId: number,
+  locationId: number,
+  visibility: "public" | "private",
+): Promise<{ ok: boolean }> {
+  const updated = await db
+    .update(locations)
+    .set({ visibility })
     .where(
       and(
         eq(locations.id, locationId),
@@ -1325,6 +1351,7 @@ export async function getPublicTrailByShareSlug(
       prefecture: locations.prefecture,
       address: locations.address,
       recordedAt: locations.recordedAt,
+      visibility: locations.visibility,
     })
     .from(locations)
     .where(
@@ -1346,7 +1373,12 @@ export async function getPublicTrailByShareSlug(
     .orderBy(desc(locations.recordedAt))
     .limit(safeLimit);
 
-  const trailLocations: TrailLocation[] = locRows.flatMap((row) => {
+  const isOwner = viewerUserId === u.id;
+  const visibleRows = isOwner
+    ? locRows
+    : locRows.filter((row) => isLocationVisibleToOthers(row.visibility));
+
+  const trailLocations: TrailLocation[] = visibleRows.flatMap((row) => {
     const useExact = precise && row.lat != null && row.lng != null;
     const lat = useExact ? row.lat : row.latGrid;
     const lng = useExact ? row.lng : row.lngGrid;
@@ -1456,6 +1488,7 @@ export async function getShareInfoBySlug(
       prefecture: locations.prefecture,
       h3R8: locations.h3R8,
       recordedAt: locations.recordedAt,
+      visibility: locations.visibility,
     })
     .from(locations)
     .where(
@@ -1468,10 +1501,15 @@ export async function getShareInfoBySlug(
         : and(eq(locations.userId, u.id), isNull(locations.deletedAt))
     )
     .orderBy(desc(locations.recordedAt))
-    .limit(1);
+    .limit(20);
 
-  if (locRows.length > 0) {
-    const loc = locRows[0];
+  const isOwner = viewerUserId === u.id;
+  const latestPublic = locRows.find(
+    (loc) => isOwner || isLocationVisibleToOthers(loc.visibility),
+  );
+
+  if (latestPublic) {
+    const loc = latestPublic;
     // precise かつ正確座標があれば詳細ズーム、なければ500m丸め＋町ズーム
     const useExact = precise && loc.lat !== null && loc.lng !== null;
     return {

@@ -50,6 +50,8 @@ export const locations = pgTable(
     recordedAt: timestamp("recordedAt").defaultNow().notNull(),
     /** NULL = 有効。ソフト削除（本人のみ地図から消す）。マッチング・公開からも除外。 */
     deletedAt: timestamp("deletedAt"),
+    /** この足あと単体の公開設定。public=共有・県別一覧に反映 / private=自分だけ */
+    visibility: varchar("visibility", { length: 16 }).default("public").notNull(),
   },
   (table) => [
     index("locations_h3R8_idx").on(table.h3R8),

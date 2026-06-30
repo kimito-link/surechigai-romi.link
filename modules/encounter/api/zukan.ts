@@ -16,6 +16,7 @@ import {
   getEncounterUsersByPrefecture,
   getCreatorsByPrefecture,
   softDeleteLocation,
+  setLocationVisibility,
 } from "../db/queries.js";
 
 export const zukanRouter = router({
@@ -64,6 +65,32 @@ export const zukanRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "記録が見つかりません" });
       }
       return { ok: true };
+    }),
+
+  /**
+   * 足あと1件の公開/非公開を切り替え。
+   */
+  setLocationVisibility: protectedProcedure
+    .input(
+      z.object({
+        locationId: z.number().int().positive(),
+        visibility: z.enum(["public", "private"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { ok: false };
+
+      const result = await setLocationVisibility(
+        db,
+        ctx.user.id,
+        input.locationId,
+        input.visibility,
+      );
+      if (!result.ok) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "記録が見つかりません" });
+      }
+      return { ok: true, visibility: input.visibility };
     }),
 
   /**

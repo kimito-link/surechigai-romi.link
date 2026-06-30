@@ -16,6 +16,7 @@ export const MAX_TILE_LAT = 85.05112878;
     prefecture: string | null;
     address: string | null;
     recordedAt: Date | string;
+    visibility?: string | null;
   };
 
 export type Pixel = {

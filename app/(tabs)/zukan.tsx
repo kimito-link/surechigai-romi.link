@@ -34,6 +34,8 @@ import {
 } from "@/components/organisms/precision-tile-map";
 import { useRouter } from "expo-router";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
+import { TrailHistoryList } from "@/components/molecules/trail-history-list";
+import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
 
 export default function ZukanScreen() {
   const { isDesktop } = useResponsive();
@@ -68,6 +70,13 @@ export default function ZukanScreen() {
     refetch();
     refetchTrail();
   }, [refetch, refetchTrail]);
+
+  const {
+    deletingLocationId,
+    updatingLocationId,
+    handleDeleteLocation,
+    handleToggleVisibility,
+  } = useTrailLocationActions(onRefresh);
 
   // 訪問・すれ違いのセットを構築
   const visitedPrefSet = new Set<string>(
@@ -224,6 +233,19 @@ export default function ZukanScreen() {
             <Text style={styles.trailMapCaption}>
               {trailLocations.length} 件の正確な足あと・思い出の場所をあとからたどれます
             </Text>
+            {isAuthenticated ? (
+              <View style={styles.trailHistoryWrap}>
+                <TrailHistoryList
+                  locations={trailLocations}
+                  limit={30}
+                  canManage
+                  onDeleteLocation={handleDeleteLocation}
+                  onToggleVisibility={handleToggleVisibility}
+                  deletingLocationId={deletingLocationId}
+                  updatingLocationId={updatingLocationId}
+                />
+              </View>
+            ) : null}
           </View>
         )}
 
@@ -381,6 +403,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 8,
     textAlign: "center",
+  },
+  trailHistoryWrap: {
+    marginTop: 16,
+    width: "100%",
+    alignItems: "center",
   },
 
   // Municipality list
