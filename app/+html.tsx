@@ -20,7 +20,7 @@ export default function Root({ children }: PropsWithChildren) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
         />
         {/* 既定のタイトル・説明（改ざん検知対策: 正規の内容を明示。各画面で上書き可） */}
-        <title>君斗りんくのすれ違ひ通信｜会いたい君がいる現在地</title>
+        <title>{PWA_APP_NAME}</title>
         <meta
           name="description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
@@ -53,15 +53,10 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
         <link rel="shortcut icon" href="/favicon-48.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/pwa-icon-180.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/pwa-icon-180.png" />
         <meta name="theme-color" content="#00427B" />
         <meta name="application-name" content={PWA_APP_NAME} />
         <meta name="apple-mobile-web-app-title" content={PWA_APP_NAME} />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){var t="君斗りんくのすれ違ひ通信";function fix(){if(!document.title||document.title.length<4)document.title=t}fix();document.addEventListener("DOMContentLoaded",fix);setTimeout(fix,0);setTimeout(fix,500);var mo=new MutationObserver(fix);var el=document.querySelector("title");if(el)mo.observe(el,{childList:true,characterData:true,subtree:true})})();`,
-          }}
-        />
         {/*
           Disable body scrolling on web. This makes ScrollView components work closer to how they do on native.
           However, body scrolling is often nice to have for mobile web. If you want to enable it, remove this line.

@@ -70,11 +70,13 @@ function patchHtmlFavicons() {
   const htmlFiles = listHtml(DIST);
   let patched = 0;
   const faviconRe =
-    /(\/(?:icon-tab|favicon(?:-\d+)?|icon-\d+|apple-touch-icon)\.(?:png|ico))(?:\?v=[^"'\s>]*)?/g;
+    /(\/(?:icon-tab|favicon(?:-\d+)?|pwa-icon(?:-\d+|-\d+-maskable)?|icon-\d+|apple-touch-icon)\.(?:png|ico))(?:\?v=[^"'\s>]*)?/g;
 
   for (const file of htmlFiles) {
     let html = fs.readFileSync(file, "utf8");
-    const next = html.replace(faviconRe, `$1?v=${version}`);
+    const next = html
+      .replace(faviconRe, `$1?v=${version}`)
+      .replace(/(\/manifest\.json)(?:\?v=[^"'\s>]*)?/g, `$1?v=${version}`);
     if (next !== html) {
       fs.writeFileSync(file, next);
       patched++;

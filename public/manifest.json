@@ -1,5 +1,6 @@
 {
-  "short_name": "君斗りんく",
+  "id": "surechigai-kimito-link-pwa",
+  "short_name": "君斗りんくのすれ違ひ通信-会いたい君がいる現在地",
   "name": "君斗りんくのすれ違ひ通信-会いたい君がいる現在地",
   "description": "位置情報を利用したすれ違い通信アプリ。会いたい君がいる現在地。",
   "icons": [
