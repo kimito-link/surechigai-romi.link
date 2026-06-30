@@ -213,6 +213,10 @@
   ],
   "rewrites": [
     {
+      "source": "/favicon.png",
+      "destination": "/favicon-48.png"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },

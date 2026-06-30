@@ -52,6 +52,12 @@ function copyBrandAssets() {
     fs.copyFileSync(src, dest);
     copied++;
   }
+  // 古い expo export の favicon.png（64px 全身キャラ）が CDN immutable で残るため dist から削除し rewrite へ
+  const staleFavicon = path.join(DIST, "favicon.png");
+  if (fs.existsSync(staleFavicon)) {
+    fs.unlinkSync(staleFavicon);
+    console.log("[sync-brand-to-dist] removed stale dist/favicon.png (use /favicon-48.png via rewrite)");
+  }
   console.log(`[sync-brand-to-dist] copied ${copied} brand files to dist/`);
   return copied;
 }
