@@ -6,6 +6,9 @@ const PREFETCH_MODULES = [
   () => import("@/components/molecules/event-calendar"),
   () => import("@/components/molecules/envelope-pulse"),
   () => import("@/components/molecules/character-here"),
+  () => import("@/lib/icons/material-icons.web").then((m) => {
+    m.prefetchMaterialIconsFont?.();
+  }),
 ] as const;
 
 let started = false;

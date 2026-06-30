@@ -1,5 +1,6 @@
 const { getDefaultConfig } = require("expo/metro-config");
 const { withNativeWind } = require("nativewind/metro");
+const path = require("path");
 
 const config = withNativeWind(getDefaultConfig(__dirname), {
   input: "./global.css",
@@ -11,6 +12,17 @@ const config = withNativeWind(getDefaultConfig(__dirname), {
 /** Node ESM 向け `.js` 拡張子 import を Metro が `.ts` ソースへ解決（自プロジェクトのみ） */
 const previousResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (platform === "web" && moduleName === "@expo/vector-icons/MaterialIcons") {
+    const origin = context.originModulePath ?? "";
+    if (!origin.includes(`${path.sep}lib${path.sep}icons${path.sep}material-icons.web`)) {
+      return context.resolveRequest(
+        context,
+        path.join(__dirname, "lib/icons/material-icons.web.tsx"),
+        platform,
+      );
+    }
+  }
+
   const origin = context.originModulePath ?? "";
   const isProjectSource =
     !origin.includes("node_modules") &&

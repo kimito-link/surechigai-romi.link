@@ -5,7 +5,6 @@ import { Stack, usePathname } from "expo-router";
 import { ThemeProvider as ExpoThemeProvider, DefaultTheme as NavLightTheme } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Platform, View, Text } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
@@ -16,11 +15,7 @@ import {
   initialWindowMetrics,
 } from "react-native-safe-area-context";
 import type { EdgeInsets, Rect } from "react-native-safe-area-context";
-import { registerServiceWorker } from "@/lib/service-worker";
-import { setupChunkRecover } from "@/lib/pwa/chunk-recover";
-import { startNetworkMonitoring, stopNetworkMonitoring } from "@/lib/api";
-import { initSentry } from "@/lib/sentry";
-import { ErrorBoundary } from "@/components/ui";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 import {
   isPublicWebRoute,
   shouldDeferClerkOnWeb,
@@ -30,6 +25,7 @@ import { prefetchHeavyTabChunks } from "@/lib/bootstrap/prefetch-tab-chunks";
 import { PublicWebProviders } from "@/components/providers/public-web-providers";
 import { GuestAuthProvider } from "@/lib/auth-context";
 import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallback";
+import { GestureRoot } from "@/components/providers/gesture-root";
 
 const ClerkRootProvider = lazy(() =>
   import("@/components/providers/clerk-root-provider").then((m) => ({
@@ -76,9 +72,9 @@ function MissingClerkKeyScreen() {
 function AppShell({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary screenName="App">
-      <GestureHandlerRootView style={{ flex: 1, overflow: "hidden", backgroundColor: "#F0F4F8" }}>
+      <GestureRoot style={{ flex: 1, overflow: "hidden", backgroundColor: "#F0F4F8" }}>
         {children}
-      </GestureHandlerRootView>
+      </GestureRoot>
     </ErrorBoundary>
   );
 }
@@ -109,18 +105,29 @@ export default function RootLayout() {
       };
     }
 
-    registerServiceWorker();
-    setupChunkRecover();
-    const sentryTimer = setTimeout(() => {
-      void initSentry();
-    }, 2000);
-    return () => clearTimeout(sentryTimer);
+    void (async () => {
+      const [{ registerServiceWorker }, { setupChunkRecover }, { initSentry }] =
+        await Promise.all([
+          import("@/lib/service-worker"),
+          import("@/lib/pwa/chunk-recover"),
+          import("@/lib/sentry"),
+        ]);
+      registerServiceWorker();
+      setupChunkRecover();
+      setTimeout(() => {
+        void initSentry();
+      }, 2000);
+    })();
   }, [useLightweightWebShell]);
 
   useEffect(() => {
     if (useLightweightWebShell) return;
-    startNetworkMonitoring();
-    return () => stopNetworkMonitoring();
+    void import("@/lib/api").then(({ startNetworkMonitoring, stopNetworkMonitoring }) => {
+      startNetworkMonitoring();
+    });
+    return () => {
+      void import("@/lib/api").then(({ stopNetworkMonitoring }) => stopNetworkMonitoring());
+    };
   }, [useLightweightWebShell]);
 
   const providerInitialMetrics = useMemo(() => {
