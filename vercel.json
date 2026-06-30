@@ -34,6 +34,15 @@
       ]
     },
     {
+      "source": "/icon-tab.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/favicon.ico",
       "headers": [
         {
@@ -163,12 +172,17 @@
   "redirects": [
     {
       "source": "/favicon.png",
-      "destination": "/brand/icon-tab.png",
+      "destination": "/icon-tab.png",
       "permanent": false
     },
     {
       "source": "/favicon.ico",
-      "destination": "/brand/icon-tab.png",
+      "destination": "/icon-tab.png",
+      "permanent": false
+    },
+    {
+      "source": "/brand/icon-tab.png",
+      "destination": "/icon-tab.png",
       "permanent": false
     },
     {
@@ -219,18 +233,22 @@
   "rewrites": [
     {
       "source": "/favicon.png",
-      "destination": "/brand/icon-tab.png"
+      "destination": "/icon-tab.png"
     },
     {
       "source": "/favicon.ico",
-      "destination": "/brand/icon-tab.png"
+      "destination": "/icon-tab.png"
+    },
+    {
+      "source": "/brand/icon-tab.png",
+      "destination": "/icon-tab.png"
     },
     {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },
     {
-      "source": "/((?!api/|lp(?:/|$)).*)",
+      "source": "/((?!api/|lp(?:/|$)|_expo/|assets/|icon-tab\\.png|favicon|icon-\\d|apple-touch|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]

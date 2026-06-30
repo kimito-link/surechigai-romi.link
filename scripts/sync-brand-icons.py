@@ -105,9 +105,8 @@ def main() -> None:
     # タブ用 — ゆっくりりんく + すれ違い電波
     for size in (16, 32, 48):
         save_tab_favicon(size, ROOT / f"public/favicon-{size}.png")
+    save_tab_favicon(48, ROOT / "public/icon-tab.png")
     save_tab_favicon(48, ROOT / "assets/images/favicon.png")
-    save_tab_favicon(48, ROOT / "public/favicon.png")
-    save_tab_favicon(48, ROOT / "public/brand/icon-tab.png")
 
     # PWA / スプラッシュ — 全身りんくキャラ
     save_resize(APP_ICON_SOURCE, 200, ROOT / "assets/images/splash-icon.png")
@@ -117,17 +116,13 @@ def main() -> None:
     save_maskable(512, ROOT / "public/icon-512-maskable.png")
     save_resize(APP_ICON_SOURCE, 180, ROOT / "public/apple-touch-icon.png")
 
-    shutil.copy2(ROOT / "public/favicon.png", ROOT / "public/favicon.ico")
+    shutil.copy2(ROOT / "public/icon-tab.png", ROOT / "public/favicon.ico")
 
     lp = ROOT / "public/lp"
     lp.mkdir(parents=True, exist_ok=True)
-    for name in ("favicon.ico", "favicon.png", "icon-192.png", "apple-touch-icon.png"):
+    for name in ("favicon.ico", "icon-tab.png", "icon-192.png", "apple-touch-icon.png"):
         shutil.copy2(ROOT / "public" / name, lp / name)
         print(f"copied lp/{name}")
-    brand_dir = lp / "brand"
-    brand_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(ROOT / "public/brand/icon-tab.png", brand_dir / "icon-tab.png")
-    print("copied lp/brand/icon-tab.png")
 
 
 if __name__ == "__main__":

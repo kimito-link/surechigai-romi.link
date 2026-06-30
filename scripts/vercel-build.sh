@@ -26,7 +26,7 @@ node scripts/bust-entry-cache.cjs || true
 node scripts/inject-sw-version.cjs || true
 
 # expo export 後に public の favicon 等で dist を上書き + HTML に ?v= 付与
-node scripts/sync-brand-to-dist.cjs || true
+node scripts/sync-brand-to-dist.cjs
 
 # LP（public/lp）を dist に同期 — surechigai-romi.link/lp/ で静的配信
 if [ -d public/lp ]; then

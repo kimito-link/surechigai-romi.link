@@ -1,6 +1,5 @@
 /**
  * public/ のブランドアセットを dist/ に強制上書きし、HTML 内 favicon に版数クエリを付与。
- * expo export が古い favicon.png（全身キャラ 64px）を残す問題の対策。
  */
 const fs = require("fs");
 const path = require("path");
@@ -10,9 +9,8 @@ const PUBLIC = path.join(ROOT, "public");
 const DIST = path.join(ROOT, "dist");
 
 const BRAND_FILES = [
-  "brand/icon-tab.png",
+  "icon-tab.png",
   "favicon.ico",
-  "favicon.png",
   "favicon-16.png",
   "favicon-32.png",
   "favicon-48.png",
@@ -42,22 +40,28 @@ function listHtml(dir, acc = []) {
 
 function copyBrandAssets() {
   if (!fs.existsSync(DIST)) {
-    console.log("[sync-brand-to-dist] dist not found, skip copy");
-    return 0;
+    console.error("[sync-brand-to-dist] dist not found");
+    process.exit(1);
   }
   let copied = 0;
   for (const file of BRAND_FILES) {
     const src = path.join(PUBLIC, file);
     const dest = path.join(DIST, file);
-    if (!fs.existsSync(src)) continue;
+    if (!fs.existsSync(src)) {
+      console.error(`[sync-brand-to-dist] missing source: public/${file}`);
+      process.exit(1);
+    }
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
     copied++;
   }
-  // 古い expo export の favicon.png（64px 全身キャラ）が CDN immutable で残るため dist から削除し rewrite へ
-  const staleFavicon = path.join(DIST, "favicon.png");
-  if (fs.existsSync(staleFavicon)) {
-    fs.unlinkSync(staleFavicon);
-    console.log("[sync-brand-to-dist] removed stale dist/favicon.png (use /favicon-48.png via rewrite)");
+  // 旧 favicon.png は dist に置かない（CDN immutable 回避）
+  for (const stale of ["favicon.png", "brand/icon-tab.png"]) {
+    const p = path.join(DIST, stale);
+    if (fs.existsSync(p)) {
+      fs.unlinkSync(p);
+      console.log(`[sync-brand-to-dist] removed stale dist/${stale}`);
+    }
   }
   console.log(`[sync-brand-to-dist] copied ${copied} brand files to dist/`);
   return copied;
@@ -67,7 +71,7 @@ function patchHtmlFavicons() {
   const htmlFiles = listHtml(DIST);
   let patched = 0;
   const faviconRe =
-    /(\/(?:brand\/icon-tab|favicon(?:-\d+)?|icon-\d+|apple-touch-icon)\.(?:png|ico))(?:\?v=[^"'\s>]*)?/g;
+    /(\/(?:icon-tab|favicon(?:-\d+)?|icon-\d+|apple-touch-icon)\.(?:png|ico))(?:\?v=[^"'\s>]*)?/g;
 
   for (const file of htmlFiles) {
     let html = fs.readFileSync(file, "utf8");
