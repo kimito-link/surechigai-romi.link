@@ -18,6 +18,50 @@ export const spacing = {
   "4xl": 64,
 } as const;
 
+// ブレークポイント（hooks/use-responsive.ts と共有する単一の定義）
+export const breakpoints = {
+  /** スマホ→大きめスマホ/小型タブレット */
+  sm: 640,
+  /** タブレット */
+  md: 768,
+  /** 小型デスクトップ */
+  lg: 1024,
+  /** デスクトップ */
+  xl: 1280,
+  /** 大型デスクトップ */
+  "2xl": 1536,
+} as const;
+
+/**
+ * 画面内コンテンツの中央寄せ最大幅。
+ * 地図やリストを含む本文を、PCで間延びさせず読みやすい幅に揃えるための共通値。
+ */
+export const contentMaxWidth = {
+  /** フォーム・narrow な読み物（都道府県別一覧など） */
+  narrow: 720,
+  /** 地図・履歴を含む標準本文（軌跡/図鑑/公開ページの de facto 値） */
+  standard: 980,
+} as const;
+
+/** 1行レイアウトを縦積みへ切り替える狭幅しきい値（履歴行など） */
+export const NARROW_ROW_WIDTH = 420;
+
+/** 固定タブバー・スクロール inset 計算用定数（_layout / hooks と共有） */
+export const tabBar = {
+  bodyHeight: 56,
+  webBottomPadding: 12,
+  /** ScrollView contentContainerStyle 用の追加余白 */
+  scrollExtra: 24,
+  /** ScreenContainer SafeAreaView 用の追加余白 */
+  chromeExtra: 16,
+} as const;
+
+/** チェックイン完了画面の下部固定シェアドック高さ */
+export const CHECKIN_STICKY_DOCK_HEIGHT = 76;
+
+/** チェックイン Web モバイル: ブラウザ UI 分の追加スクロール余白 */
+export const CHECKIN_MOBILE_WEB_CHROME = 40;
+
 // タイポグラフィ（視認性: 黒背景では 12px を下限とする）
 export const typography = {
   // フォントサイズ（meta=xs, body=sm, title=base）

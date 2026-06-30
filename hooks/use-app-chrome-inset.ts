@@ -3,10 +3,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSegments } from "expo-router";
 
 import { APP_HEADER_CHROME_HEIGHT } from "@/components/organisms/app-header";
-import { TAB_BAR_BODY_HEIGHT } from "@/hooks/use-tab-bar-inset";
+import { tabBar } from "@/theme/tokens";
+import { computeAppChromeInsets } from "@/lib/layout/responsive-layout";
 
 /** 固定ヘッダー + （タブ外なら）固定フッターの inset */
-export function useAppChromeInset(extra = 16): {
+export function useAppChromeInset(extra = tabBar.chromeExtra): {
   paddingTop: number;
   paddingBottom: number;
   inTabs: boolean;
@@ -16,12 +17,14 @@ export function useAppChromeInset(extra = 16): {
   const inTabs = segments[0] === "(tabs)";
   const isWeb = Platform.OS === "web";
 
-  const paddingTop = isWeb
-    ? APP_HEADER_CHROME_HEIGHT + Math.max(insets.top, 0)
-    : Math.max(insets.top, 0);
-
-  const tabBarBottom = TAB_BAR_BODY_HEIGHT + (isWeb ? 12 : Math.max(insets.bottom, 8));
-  const paddingBottom = inTabs ? tabBarBottom + extra : tabBarBottom + extra;
+  const { paddingTop, paddingBottom } = computeAppChromeInsets({
+    isWeb,
+    inTabs,
+    safeAreaTop: insets.top,
+    safeAreaBottom: insets.bottom,
+    headerChromeHeight: APP_HEADER_CHROME_HEIGHT,
+    extra,
+  });
 
   return { paddingTop, paddingBottom, inTabs };
 }

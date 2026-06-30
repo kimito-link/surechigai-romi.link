@@ -1,14 +1,10 @@
 import { useState, useEffect } from "react";
 import { Dimensions, Platform } from "react-native";
+import { breakpoints, contentMaxWidth } from "@/theme/tokens";
+import { getBodyMaxWidth } from "@/lib/layout/responsive-layout";
 
-// ブレークポイント定義
-export const BREAKPOINTS = {
-  sm: 640,   // スマートフォン
-  md: 768,   // タブレット
-  lg: 1024,  // 小型デスクトップ
-  xl: 1280,  // デスクトップ
-  "2xl": 1536, // 大型デスクトップ
-} as const;
+// ブレークポイント定義（theme/tokens/layout.ts の単一定義を参照）
+export const BREAKPOINTS = breakpoints;
 
 export type BreakpointKey = keyof typeof BREAKPOINTS;
 
@@ -87,10 +83,21 @@ export function useGridColumns(defaultColumns: number = 1): number {
  */
 export function useContentMaxWidth(): number | undefined {
   const { isDesktop, isLargeDesktop } = useResponsive();
-  
+
   if (isLargeDesktop) return 1200;
   if (isDesktop) return 1024;
   return undefined; // モバイル・タブレットは全幅
+}
+
+/**
+ * 地図・履歴を含む本文の中央寄せ最大幅（標準 980px）。
+ * タブレット以上で適用し、モバイルは全幅。
+ */
+export function useBodyMaxWidth(
+  size: keyof typeof contentMaxWidth = "standard",
+): number | undefined {
+  const { width } = useResponsive();
+  return getBodyMaxWidth(width, size);
 }
 
 /**

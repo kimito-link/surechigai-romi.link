@@ -38,7 +38,8 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
-import { color, palette } from "@/theme/tokens";
+import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MOBILE_WEB_CHROME } from "@/theme/tokens";
+import { computeCheckinScrollBottomInset } from "@/lib/layout/responsive-layout";
 import { PrecisionTileMap, type TrailPoint } from "@/components/organisms/precision-tile-map";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import { useRouter } from "expo-router";
@@ -328,9 +329,13 @@ export default function CheckinScreen() {
   const mapHeroHeight = isMobile
     ? Math.min(Math.round(windowWidth * 0.72), 210)
     : Math.min(Math.round(windowHeight * 0.36), 400);
-  const stickyDockHeight = 76;
-  const mobileWebChrome = Platform.OS === "web" && isMobile ? 40 : 0;
-  const bottomScrollInset = tabInset + stickyDockHeight + mobileWebChrome;
+  const stickyDockHeight = CHECKIN_STICKY_DOCK_HEIGHT;
+  const mobileWebChrome = Platform.OS === "web" && isMobile ? CHECKIN_MOBILE_WEB_CHROME : 0;
+  const bottomScrollInset = computeCheckinScrollBottomInset({
+    tabInset,
+    stickyDockHeight,
+    mobileWebChrome,
+  });
 
   /** チェックイン後（または再チェックイン中）は地図ファースト。前はボタンファースト。 */
   const isMapFirst =
@@ -390,7 +395,7 @@ export default function CheckinScreen() {
         <>
           <View style={styles.pauseSection}>
             <View style={styles.pauseRow}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
                 <Text style={styles.pauseTitle}>位置情報を一時停止</Text>
                 <Text style={styles.pauseSubtitle}>停止中はチェックインできません</Text>
               </View>
@@ -544,7 +549,7 @@ export default function CheckinScreen() {
                   zoom={17}
                   showInfoPanel={false}
                   height={mapHeroHeight}
-                  width={Math.min(windowWidth - 32, 980)}
+                  width={Math.min(windowWidth - 32, contentMaxWidth.standard)}
                   markerSize={28}
                   containerStyle={styles.mapInner}
                   userImageUrl={user?.profileImage ?? undefined}
@@ -736,6 +741,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: 16,
     paddingTop: 10,
+    alignItems: "center",
     backgroundColor: color.surface,
     borderTopWidth: 1,
     borderTopColor: color.border,
@@ -747,7 +753,9 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
   encounterBanner: {
-    marginHorizontal: 16,
+    width: "100%",
+    maxWidth: contentMaxWidth.standard,
+    alignSelf: "center",
     marginTop: 8,
     marginBottom: 4,
     paddingVertical: 12,
@@ -783,8 +791,12 @@ const styles = StyleSheet.create({
   bottomSheetContent: {
     paddingHorizontal: 16,
     paddingTop: 4,
+    alignItems: "center",
   },
   bottomSheet: {
+    width: "100%",
+    maxWidth: contentMaxWidth.standard,
+    alignSelf: "center",
     backgroundColor: color.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -836,8 +848,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   shareButtonSticky: {
-    alignSelf: "stretch",
     width: "100%",
+    maxWidth: contentMaxWidth.standard,
     minHeight: 52,
     borderRadius: 14,
     backgroundColor: palette.twitter,
@@ -935,6 +947,7 @@ const styles = StyleSheet.create({
   },
   resultBox: {
     width: "100%",
+    maxWidth: contentMaxWidth.standard,
     backgroundColor: color.surface,
     borderRadius: 16,
     padding: 20,
@@ -972,6 +985,7 @@ const styles = StyleSheet.create({
   // Pause toggle
   pauseSection: {
     width: "100%",
+    maxWidth: contentMaxWidth.standard,
     backgroundColor: color.surface,
     borderRadius: 16,
     padding: 16,
@@ -1072,6 +1086,7 @@ const styles = StyleSheet.create({
   },
   settingsToggle: {
     width: "100%",
+    maxWidth: contentMaxWidth.standard,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,

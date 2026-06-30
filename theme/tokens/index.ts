@@ -18,6 +18,12 @@ export {
   touchTarget,
   animation,
   zIndex,
+  breakpoints,
+  contentMaxWidth,
+  NARROW_ROW_WIDTH,
+  tabBar,
+  CHECKIN_STICKY_DOCK_HEIGHT,
+  CHECKIN_MOBILE_WEB_CHROME,
 } from "./layout";
 export { typographyScale } from "./typography";
 export type { TypographyScaleKey } from "./typography";

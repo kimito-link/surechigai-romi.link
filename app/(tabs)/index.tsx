@@ -160,7 +160,7 @@ function EnvelopeCard({
                 {TIER_LABELS[item.tier] || `Tier ${item.tier}`}
               </Text>
             </View>
-            <Text style={styles.envelopeDate}>
+            <Text style={styles.envelopeDate} numberOfLines={1}>
               {formatDate(item.occurredAt)}
             </Text>
           </View>
@@ -373,18 +373,18 @@ function OpenModal({
             </View>
 
             {/* 相手情報 */}
-            <Text style={styles.modalName}>
+            <Text style={styles.modalName} numberOfLines={2}>
               {item.partnerName || "ロミユーザー"}
             </Text>
 
-            <Text style={styles.modalArea}>
+            <Text style={styles.modalArea} numberOfLines={2}>
               {item.areaName || item.prefecture || "不明なエリア"}
             </Text>
 
             {/* ひとこと */}
             {item.partnerHitokoto && (
               <View style={styles.modalHitokotoWrap}>
-                <Text style={styles.modalHitokoto}>{item.partnerHitokoto}</Text>
+                <Text style={styles.modalHitokoto} numberOfLines={4}>{item.partnerHitokoto}</Text>
               </View>
             )}
 
@@ -429,7 +429,7 @@ function OpenModal({
                   pressed && { opacity: 0.8 },
                 ]}
               >
-                <Text style={styles.modalXButtonText}>X プロフィールを見る @{item.partnerName}</Text>
+                <Text style={styles.modalXButtonText} numberOfLines={1}>X プロフィールを見る @{item.partnerName}</Text>
               </Pressable>
             )}
 
@@ -907,6 +907,7 @@ const styles = StyleSheet.create({
   },
   envelopeTextWrap: {
     flex: 1,
+    minWidth: 0,
   },
   envelopeRow: {
     flexDirection: "row",

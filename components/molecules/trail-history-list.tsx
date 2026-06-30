@@ -18,7 +18,9 @@ import {
   type TrailPoint,
 } from "@/components/organisms/precision-tile-map";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
-import { color } from "@/theme/tokens";
+import { color, contentMaxWidth } from "@/theme/tokens";
+import { useResponsive } from "@/hooks/use-responsive";
+import { isNarrowTrailRow } from "@/lib/layout/responsive-layout";
 import {
   locationVisibilityLabel,
   parseLocationVisibility,
@@ -48,6 +50,9 @@ export function TrailHistoryList({
   deletingLocationId = null,
   updatingLocationId = null,
 }: TrailHistoryListProps) {
+  const { width } = useResponsive();
+  const isNarrow = isNarrowTrailRow(width);
+
   if (locations.length === 0) return null;
 
   const shown = locations.slice(0, limit);
@@ -70,92 +75,101 @@ export function TrailHistoryList({
           deletingLocationId === point.id || updatingLocationId === point.id;
 
         return (
-          <View key={point.id} style={styles.trailRow}>
+          <View
+            key={point.id}
+            style={[styles.trailRow, isNarrow && styles.trailRowNarrow]}
+          >
+            <View style={styles.trailMain}>
+              <View
+                style={[
+                  styles.trailDot,
+                  index === 0 && styles.trailDotLatest,
+                  !isPublic && styles.trailDotPrivate,
+                ]}
+              />
+              <View style={styles.trailInfo}>
+                <Text style={styles.trailPref} numberOfLines={2}>
+                  {formatPlace(point)}
+                </Text>
+                <Text style={styles.trailDate} numberOfLines={1}>
+                  {formatDateTime(point.recordedAt)} / {formatCoordinate(point)}
+                </Text>
+              </View>
+
+              <View style={styles.trailCountBadge}>
+                <Text style={styles.trailCountText} numberOfLines={1}>
+                  {point.accuracyM ? `±${Math.round(point.accuracyM)}m` : "精度不明"}
+                </Text>
+              </View>
+            </View>
+
             <View
-              style={[
-                styles.trailDot,
-                index === 0 && styles.trailDotLatest,
-                !isPublic && styles.trailDotPrivate,
-              ]}
-            />
-            <View style={styles.trailInfo}>
-              <Text style={styles.trailPref} numberOfLines={2}>
-                {formatPlace(point)}
-              </Text>
-              <Text style={styles.trailDate} numberOfLines={1}>
-                {formatDateTime(point.recordedAt)} / {formatCoordinate(point)}
-              </Text>
+              style={[styles.trailActions, isNarrow && styles.trailActionsNarrow]}
+            >
+              <NavigateToPlaceButton
+                lat={point.lat}
+                lng={point.lng}
+                placeLabel={formatPlace(point)}
+                compact
+                testID={`trail-navigate-${point.id}`}
+              />
+
+              {canManage && onToggleVisibility ? (
+                <Pressable
+                  onPress={() =>
+                    onToggleVisibility(
+                      point.id,
+                      isPublic ? "private" : "public",
+                    )
+                  }
+                  disabled={busy}
+                  hitSlop={HIT_SLOP}
+                  style={({ pressed }) => [
+                    styles.visibilityButton,
+                    isPublic ? styles.visibilityPublic : styles.visibilityPrivate,
+                    pressed && { opacity: 0.75 },
+                    busy && { opacity: 0.5 },
+                    Platform.OS === "web" && styles.pressableWeb,
+                  ]}
+                  accessibilityLabel={`${locationVisibilityLabel(visibility)}。タップで切り替え`}
+                >
+                  {updatingLocationId === point.id ? (
+                    <ActivityIndicator size="small" color={color.accentIndigo} />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.visibilityText,
+                        isPublic ? styles.visibilityTextPublic : styles.visibilityTextPrivate,
+                      ]}
+                    >
+                      {locationVisibilityLabel(visibility)}
+                    </Text>
+                  )}
+                </Pressable>
+              ) : null}
+
+              {canManage && onDeleteLocation ? (
+                <Pressable
+                  onPress={() => onDeleteLocation(point.id)}
+                  disabled={busy}
+                  hitSlop={HIT_SLOP}
+                  style={({ pressed }) => [
+                    styles.deleteButton,
+                    pressed && { opacity: 0.7 },
+                    busy && { opacity: 0.5 },
+                    Platform.OS === "web" && styles.pressableWeb,
+                  ]}
+                  accessibilityLabel="この足あとを削除"
+                  testID={`trail-location-delete-${point.id}`}
+                >
+                  {deletingLocationId === point.id ? (
+                    <ActivityIndicator size="small" color={color.danger} />
+                  ) : (
+                    <MaterialIcons name="delete-outline" size={20} color={color.danger} />
+                  )}
+                </Pressable>
+              ) : null}
             </View>
-
-            <View style={styles.trailCountBadge}>
-              <Text style={styles.trailCountText}>
-                {point.accuracyM ? `±${Math.round(point.accuracyM)}m` : "精度不明"}
-              </Text>
-            </View>
-
-            <NavigateToPlaceButton
-              lat={point.lat}
-              lng={point.lng}
-              placeLabel={formatPlace(point)}
-              compact
-              testID={`trail-navigate-${point.id}`}
-            />
-
-            {canManage && onToggleVisibility ? (
-              <Pressable
-                onPress={() =>
-                  onToggleVisibility(
-                    point.id,
-                    isPublic ? "private" : "public",
-                  )
-                }
-                disabled={busy}
-                hitSlop={HIT_SLOP}
-                style={({ pressed }) => [
-                  styles.visibilityButton,
-                  isPublic ? styles.visibilityPublic : styles.visibilityPrivate,
-                  pressed && { opacity: 0.75 },
-                  busy && { opacity: 0.5 },
-                  Platform.OS === "web" && styles.pressableWeb,
-                ]}
-                accessibilityLabel={`${locationVisibilityLabel(visibility)}。タップで切り替え`}
-              >
-                {updatingLocationId === point.id ? (
-                  <ActivityIndicator size="small" color={color.accentIndigo} />
-                ) : (
-                  <Text
-                    style={[
-                      styles.visibilityText,
-                      isPublic ? styles.visibilityTextPublic : styles.visibilityTextPrivate,
-                    ]}
-                  >
-                    {locationVisibilityLabel(visibility)}
-                  </Text>
-                )}
-              </Pressable>
-            ) : null}
-
-            {canManage && onDeleteLocation ? (
-              <Pressable
-                onPress={() => onDeleteLocation(point.id)}
-                disabled={busy}
-                hitSlop={HIT_SLOP}
-                style={({ pressed }) => [
-                  styles.deleteButton,
-                  pressed && { opacity: 0.7 },
-                  busy && { opacity: 0.5 },
-                  Platform.OS === "web" && styles.pressableWeb,
-                ]}
-                accessibilityLabel="この足あとを削除"
-                testID={`trail-location-delete-${point.id}`}
-              >
-                {deletingLocationId === point.id ? (
-                  <ActivityIndicator size="small" color={color.danger} />
-                ) : (
-                  <MaterialIcons name="delete-outline" size={20} color={color.danger} />
-                )}
-              </Pressable>
-            ) : null}
           </View>
         );
       })}
@@ -173,7 +187,7 @@ export function TrailHistoryList({
 const styles = StyleSheet.create({
   wrap: {
     width: "100%",
-    maxWidth: 980,
+    maxWidth: contentMaxWidth.standard,
   },
   headerRow: {
     flexDirection: "row",
@@ -202,6 +216,29 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     borderWidth: 1,
     borderColor: color.border,
+  },
+  // 狭幅: 情報行とアクション行を縦に積む
+  trailRowNarrow: {
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 8,
+  },
+  // 情報ブロック（ドット + 場所 + 精度バッジ）
+  trailMain: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  // 操作ブロック（ナビ・公開・削除）
+  trailActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  // 狭幅: アクションを右寄せして次行に
+  trailActionsNarrow: {
+    justifyContent: "flex-end",
   },
   trailDot: {
     width: 9,

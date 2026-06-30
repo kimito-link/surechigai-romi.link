@@ -34,7 +34,7 @@ import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { color, palette } from "@/theme/tokens";
+import { color, palette, contentMaxWidth } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
 import { shareMyLocation } from "@/lib/share";
 import {
@@ -362,6 +362,7 @@ export default function MypageScreen() {
       />
 
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: tabInset }]}>
+        <View style={styles.pageBody}>
         {/* プロフィールカード */}
         <View style={styles.profileCard}>
           {user.profileImage ? (
@@ -380,7 +381,7 @@ export default function MypageScreen() {
               {user.name || user.username || "ロミユーザー"}
             </Text>
             {user.username && (
-              <Text style={styles.profileUsername}>@{user.username}</Text>
+              <Text style={styles.profileUsername} numberOfLines={1}>@{user.username}</Text>
             )}
             <View style={styles.profileMetaRow}>
               {user.twitterId && (
@@ -415,7 +416,7 @@ export default function MypageScreen() {
 
         {/* 共有サムネの粒度設定 */}
         <View style={styles.precisionRow}>
-          <View style={{ flex: 1, paddingRight: 12 }}>
+          <View style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
             <Text style={styles.precisionTitle}>正確な現在地で共有する</Text>
             <Text style={styles.precisionSub}>
               {sharePrecise
@@ -569,6 +570,7 @@ export default function MypageScreen() {
         </View>
 
         <Text style={styles.version}>君斗りんくのすれ違ひ通信 v1.0.0</Text>
+        </View>
       </ScrollView>
 
       {/* ひとこと編集モーダル */}
@@ -595,6 +597,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 48,
+    alignItems: "center",
+  },
+  pageBody: {
+    width: "100%",
+    maxWidth: contentMaxWidth.standard,
     gap: 12,
   },
   // Profile card
@@ -704,6 +711,7 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
+    minWidth: 0,
   },
   profileName: {
     color: color.textPrimary,

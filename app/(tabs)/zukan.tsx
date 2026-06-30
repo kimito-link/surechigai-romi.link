@@ -25,7 +25,7 @@ import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { color, palette } from "@/theme/tokens";
+import { color, palette, contentMaxWidth } from "@/theme/tokens";
 import { JapanBlockMap } from "@/components/organisms/japan-block-map";
 import {
   PrecisionTileMap,
@@ -176,6 +176,7 @@ export default function ZukanScreen() {
         }
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabInset }]}
       >
+        <View style={styles.pageBody}>
         {/* 未ログインでも図鑑（日本地図）の中身は見せて、ログインで解放する */}
         {!isAuthenticated && (
           <LoginPreviewBanner
@@ -192,17 +193,17 @@ export default function ZukanScreen() {
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
             <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>{visitedCount}</Text>
-            <Text style={styles.summaryLabel}>訪問した都道府県</Text>
+            <Text style={styles.summaryLabel} numberOfLines={2}>訪問した都道府県</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={[styles.summaryNum, { color: color.accentAlt }]}>{encounteredCount}</Text>
-            <Text style={styles.summaryLabel}>すれ違い都道府県</Text>
+            <Text style={styles.summaryLabel} numberOfLines={2}>すれ違い都道府県</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={[styles.summaryNum, { color: color.accentPrimary }]}>
               {data?.encounterPrefectures?.reduce((s, e) => s + e.encounterCount, 0) ?? 0}
             </Text>
-            <Text style={styles.summaryLabel}>総すれ違い数</Text>
+            <Text style={styles.summaryLabel} numberOfLines={2}>総すれ違い数</Text>
           </View>
         </View>
 
@@ -272,14 +273,14 @@ export default function ZukanScreen() {
               {municipalitySummary.map((m, i) => (
                 <View key={i} style={styles.municipalityRow}>
                   <View style={styles.municipalityInfo}>
-                    <Text style={styles.municipalityPrefecture}>{m.municipality}</Text>
-                    <Text style={styles.municipalityVisitCount}>
+                    <Text style={styles.municipalityPrefecture} numberOfLines={1}>{m.municipality}</Text>
+                    <Text style={styles.municipalityVisitCount} numberOfLines={1}>
                       {m.prefecture && m.prefecture !== m.municipality
                         ? `${m.prefecture}・${m.visitCount} 回訪問`
                         : `${m.visitCount} 回訪問`}
                     </Text>
                   </View>
-                  <Text style={styles.municipalityDate}>
+                  <Text style={styles.municipalityDate} numberOfLines={1}>
                     {formatDate(m.lastVisitedAt)}
                   </Text>
                 </View>
@@ -317,6 +318,7 @@ export default function ZukanScreen() {
             </Text>
           </View>
         )}
+        </View>
       </ScrollView>
 
       {isAuthenticated ? (
@@ -352,6 +354,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 40,
+    alignItems: "center",
+  },
+  pageBody: {
+    width: "100%",
+    maxWidth: contentMaxWidth.standard,
   },
   // Summary
   summaryRow: {
@@ -361,6 +368,7 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
+    minWidth: 0,
     backgroundColor: color.surface,
     borderRadius: 14,
     padding: 14,
@@ -379,6 +387,7 @@ const styles = StyleSheet.create({
   // Legend
   legendRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 16,
     marginBottom: 16,
     paddingHorizontal: 4,
@@ -439,6 +448,8 @@ const styles = StyleSheet.create({
   },
   municipalityInfo: {
     flex: 1,
+    minWidth: 0,
+    paddingRight: 12,
   },
   municipalityPrefecture: {
     color: color.textPrimary,
@@ -453,6 +464,7 @@ const styles = StyleSheet.create({
   municipalityDate: {
     color: color.textMuted,
     fontSize: 11,
+    flexShrink: 0,
   },
   encounterBadge: {
     paddingHorizontal: 10,

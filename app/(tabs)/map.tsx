@@ -18,7 +18,7 @@ import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { palette } from "@/theme/tokens";
+import { palette, contentMaxWidth } from "@/theme/tokens";
 import { useRouter } from "expo-router";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
 import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
@@ -162,6 +162,6 @@ const styles = StyleSheet.create({
   },
   bannerWrap: {
     width: "100%",
-    maxWidth: 980,
+    maxWidth: contentMaxWidth.standard,
   },
 });

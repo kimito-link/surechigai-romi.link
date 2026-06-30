@@ -18,7 +18,7 @@ import {
   fitCenterZoom,
   type TrailPoint,
 } from "@/components/organisms/precision-tile-map";
-import { color } from "@/theme/tokens";
+import { color, contentMaxWidth } from "@/theme/tokens";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
 import type { LocationVisibility } from "@/modules/encounter/core/location-visibility";
 
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   },
   emptyMap: {
     width: "100%",
-    maxWidth: 980,
+    maxWidth: contentMaxWidth.standard,
     minHeight: 320,
     backgroundColor: color.surface,
     borderRadius: 8,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     width: "100%",
-    maxWidth: 980,
+    maxWidth: contentMaxWidth.standard,
     flexDirection: "row",
     gap: 10,
     marginBottom: 16,

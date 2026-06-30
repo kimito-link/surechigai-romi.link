@@ -18,7 +18,7 @@ import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner"
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { color, palette } from "@/theme/tokens";
+import { color, palette, contentMaxWidth } from "@/theme/tokens";
 
 function displayWho(name: string | null, username: string | null): string {
   if (name) return name;
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     width: "100%",
-    maxWidth: 980,
+    maxWidth: contentMaxWidth.standard,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
