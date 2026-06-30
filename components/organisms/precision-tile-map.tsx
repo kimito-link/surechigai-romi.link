@@ -144,7 +144,23 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
   const [showDetails, setShowDetails] = useState(false);
   
   const latest = locations[0];
-  const center = customCenter ?? latest ?? { lat: 35.681236, lng: 139.767125 };
+  const center = customCenter ?? latest;
+
+  if (!center) {
+    return (
+      <View
+        style={[
+          styles.mapFrame,
+          styles.mapPlaceholder,
+          { width: mapWidth, height: mapHeight },
+          containerStyle,
+        ]}
+      >
+        <MaterialIcons name="map" size={32} color={color.textMuted} />
+        <Text style={styles.mapPlaceholderText}>位置を取得中…</Text>
+      </View>
+    );
+  }
 
   const { tiles, topLeft } = useMemo(
     () => getVisibleTiles(center, mapWidth, mapHeight, zoom),
@@ -325,6 +341,16 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: color.borderAlt,
+  },
+  mapPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: color.surface,
+  },
+  mapPlaceholderText: {
+    color: color.textMuted,
+    fontSize: 13,
   },
   mapTile: {
     position: "absolute",

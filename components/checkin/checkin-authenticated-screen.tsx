@@ -216,6 +216,8 @@ export default function CheckinAuthenticatedScreen() {
         throw new Error("位置精度が低すぎます。より精度の良い位置情報が必要です");
       }
 
+      // GPS 取得直後に地図中心を確定（DB の古い足あとより優先）
+      setCheckinLatLng({ lat: pos.lat, lng: pos.lng });
       setLoadingPhase("saving");
 
       const result = await checkIn.mutateAsync({
@@ -231,11 +233,25 @@ export default function CheckinAuthenticatedScreen() {
       setCheckinAddress(result.address ?? null);
       setCheckinLatLng({ lat: result.lat, lng: result.lng });
 
+      const latestLabel = [result.prefecture, result.municipality].filter(Boolean).join(" ") || null;
+      utils.dashboard.mySignal.setData(undefined, (old) =>
+        old
+          ? {
+              ...old,
+              checkedInToday: true,
+              latestPlaceLabel: latestLabel,
+              latestRecordedAt: new Date(),
+              trailCount: old.trailCount + 1,
+            }
+          : old,
+      );
+
       await Promise.allSettled([
         utils.encounter.list.invalidate(),
         utils.zukan.myAreas.invalidate(),
         utils.zukan.myTrail.invalidate(),
         utils.settings.get.invalidate(),
+        utils.dashboard.mySignal.invalidate(),
       ]);
 
       pulse.value = withTiming(1);
@@ -346,8 +362,9 @@ export default function CheckinAuthenticatedScreen() {
   const isMapFirst =
     (state === "success" || state === "zero" || (state === "loading" && checkinLatLng != null));
 
-  const mapPoint: TrailPoint | null = latestLocation
-    ?? (checkinLatLng
+  /** 今回のチェックイン座標を DB の古い足あとより優先（東京など過去地点の一瞬表示を防ぐ） */
+  const mapPoint: TrailPoint | null =
+    checkinLatLng
       ? {
           id: 0,
           lat: checkinLatLng.lat,
@@ -358,7 +375,7 @@ export default function CheckinAuthenticatedScreen() {
           address: checkinAddress ?? checkinLocationName,
           recordedAt: new Date().toISOString(),
         }
-      : null);
+      : latestLocation ?? null;
 
   const placeLine = checkinAddress ?? checkinLocationName;
   const coordLine = checkinLatLng
