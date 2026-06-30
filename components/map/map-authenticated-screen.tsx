@@ -82,12 +82,6 @@ export function MapAuthenticatedScreen() {
   const encounterCount =
     areasData?.encounterPrefectures?.reduce((s, e) => s + e.encounterCount, 0) ?? 0;
 
-  const headerLeft = (
-    <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-      <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-    </Pressable>
-  );
-
   if (!isAuthReady) {
     return (
       <ScreenContainer containerClassName="bg-background">
@@ -96,7 +90,6 @@ export function MapAuthenticatedScreen() {
           showCharacters={false}
           isDesktop={isDesktop}
           showMenu
-          leftElement={headerLeft}
         />
         <View style={styles.authLoading}>
           <ActivityIndicator size="large" color={palette.kimitoBlue} />
@@ -112,7 +105,6 @@ export function MapAuthenticatedScreen() {
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu
-        leftElement={headerLeft}
       />
 
       <LazyWebTrailMap

@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { LazyGlobalMenu } from "@/lib/lazy-heavy-components";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
-import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
+import { BrandMark } from "@/components/brand/brand-mark";
 import * as Haptics from "expo-haptics";
 
 const DISPLAY_VERSION = Constants.expoConfig?.version ?? "1.0.0";
@@ -95,32 +95,24 @@ export function AppHeader({
     <>
       <View style={[styles.shell, webChromeStyle]}>
         <View style={[styles.topRow, isNarrow && styles.topRowNarrow]}>
-          {/* 左: ロゴ + アプリ名（または任意の leftElement） */}
+          {/* 左: ゆっくりりんく + 画面タイトル（leading は戻る等の追加ボタン用） */}
           <View style={[styles.brandBlock, isNarrow && styles.brandBlockNarrow]}>
-            {leftElement ?? (
-              <>
-                <Image
-                  source={APP_BRAND_ICON}
-                  style={styles.logo}
-                  contentFit="cover"
-                  accessibilityLabel="君斗りんくのすれ違ひ通信"
-                />
-                <View style={isNarrow ? styles.brandTitleCol : styles.brandTitleRow}>
-                  <Text
-                    style={[styles.brandTitle, { fontSize: isDesktop ? 18 : isNarrow ? 14 : 15 }]}
-                    numberOfLines={isNarrow ? 2 : 1}
-                  >
-                    {title || "君斗りんくのすれ違ひ通信"}
-                  </Text>
-                  <Text
-                    style={[styles.versionBadge, { fontSize: isDesktop ? 12 : 11 }]}
-                    accessibilityLabel={`バージョン ${DISPLAY_VERSION}`}
-                  >
-                    v{DISPLAY_VERSION}
-                  </Text>
-                </View>
-              </>
-            )}
+            {leftElement ?? null}
+            <BrandMark />
+            <View style={isNarrow ? styles.brandTitleCol : styles.brandTitleRow}>
+              <Text
+                style={[styles.brandTitle, { fontSize: isDesktop ? 18 : isNarrow ? 14 : 15 }]}
+                numberOfLines={isNarrow ? 2 : 1}
+              >
+                {title || "君斗りんくのすれ違ひ通信"}
+              </Text>
+              <Text
+                style={[styles.versionBadge, { fontSize: isDesktop ? 12 : 11 }]}
+                accessibilityLabel={`バージョン ${DISPLAY_VERSION}`}
+              >
+                v{DISPLAY_VERSION}
+              </Text>
+            </View>
           </View>
 
           {/* 右: ログインボタン + メニュー（狭い画面ではアカウントは下段） */}
@@ -271,12 +263,6 @@ const styles = StyleSheet.create({
   brandBlockNarrow: {
     flex: 1,
     alignItems: "flex-start",
-  },
-  logo: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    flexShrink: 0,
   },
   brandTitleRow: {
     flexDirection: "row",

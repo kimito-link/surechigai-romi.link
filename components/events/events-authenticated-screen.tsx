@@ -126,11 +126,6 @@ export function EventsAuthenticatedScreen() {
         isDesktop={isDesktop}
         showMenu={true}
         showLoginButton={!isAuthenticated}
-        leftElement={
-          <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-            <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-          </Pressable>
-        }
       />
 
       {/* セグメント切替 */}

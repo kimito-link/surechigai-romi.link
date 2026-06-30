@@ -113,12 +113,6 @@ export function ZukanAuthenticatedScreen() {
     return Array.from(map.values()).sort((a, b) => b.visitCount - a.visitCount);
   }, [data]);
 
-  const headerLeft = (
-    <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-      <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-    </Pressable>
-  );
-
   return (
     <ScreenContainer containerClassName="bg-background">
       <AppHeader
@@ -126,7 +120,6 @@ export function ZukanAuthenticatedScreen() {
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu
-        leftElement={headerLeft}
       />
 
       <ScrollView

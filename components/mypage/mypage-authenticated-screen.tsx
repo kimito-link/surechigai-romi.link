@@ -301,11 +301,6 @@ export function MypageAuthenticatedScreen() {
         showCharacters={false}
         isDesktop={isDesktop}
         showMenu
-        leftElement={
-          <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-            <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-          </Pressable>
-        }
       />
 
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: tabInset }]}>

@@ -50,8 +50,8 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="dns-prefetch" href="https://surechigai.kimito.link" />
         {/* PWA / favicon — kimito-link 公式ゆっくりりんく + すれ違い（pnpm brand:icons） */}
         <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/brand/icon-tab.png" type="image/png" sizes="48x48" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
         <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />

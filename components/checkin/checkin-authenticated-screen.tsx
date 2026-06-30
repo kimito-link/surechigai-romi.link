@@ -361,12 +361,6 @@ export default function CheckinAuthenticatedScreen() {
     ? `(${checkinLatLng.lat.toFixed(6)}, ${checkinLatLng.lng.toFixed(6)})`
     : null;
 
-  const headerLeft = (
-    <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-      <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-    </Pressable>
-  );
-
   const pausedBanner = isPausing ? (
     <View style={styles.pausedBanner}>
       <MaterialIcons name="pause-circle-filled" size={18} color={color.warning} />
@@ -451,7 +445,6 @@ export default function CheckinAuthenticatedScreen() {
           isDesktop={isDesktop}
           showMenu={true}
           showLoginButton={!isAuthenticated}
-          leftElement={headerLeft}
         />
 
         {isMapFirst && mapPoint ? (

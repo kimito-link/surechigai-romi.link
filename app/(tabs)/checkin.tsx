@@ -6,14 +6,12 @@
 import {
   View,
   Text,
-  Pressable,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { lazy, Suspense } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
@@ -30,14 +28,7 @@ const CheckinAuthenticatedScreen = lazy(() =>
 export default function CheckinScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReady } = useAuth();
-  const router = useRouter();
   const tabInset = useTabBarInset();
-
-  const headerLeft = (
-    <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-      <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-    </Pressable>
-  );
 
   if (!isAuthReady) {
     return (
@@ -48,7 +39,6 @@ export default function CheckinScreen() {
           isDesktop={isDesktop}
           showMenu
           showLoginButton={!isAuthenticated}
-          leftElement={headerLeft}
         />
         <View style={styles.authLoading}>
           <ActivityIndicator size="large" color={palette.kimitoBlue} />
@@ -66,7 +56,6 @@ export default function CheckinScreen() {
           isDesktop={isDesktop}
           showMenu
           showLoginButton
-          leftElement={headerLeft}
         />
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}

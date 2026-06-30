@@ -10,6 +10,7 @@ const PUBLIC = path.join(ROOT, "public");
 const DIST = path.join(ROOT, "dist");
 
 const BRAND_FILES = [
+  "brand/icon-tab.png",
   "favicon.ico",
   "favicon.png",
   "favicon-16.png",
@@ -66,7 +67,7 @@ function patchHtmlFavicons() {
   const htmlFiles = listHtml(DIST);
   let patched = 0;
   const faviconRe =
-    /(\/(?:favicon(?:-\d+)?|icon-\d+|apple-touch-icon)\.(?:png|ico))(?:\?v=[^"'\s>]*)?/g;
+    /(\/(?:brand\/icon-tab|favicon(?:-\d+)?|icon-\d+|apple-touch-icon)\.(?:png|ico))(?:\?v=[^"'\s>]*)?/g;
 
   for (const file of htmlFiles) {
     let html = fs.readFileSync(file, "utf8");

@@ -107,6 +107,7 @@ def main() -> None:
         save_tab_favicon(size, ROOT / f"public/favicon-{size}.png")
     save_tab_favicon(48, ROOT / "assets/images/favicon.png")
     save_tab_favicon(48, ROOT / "public/favicon.png")
+    save_tab_favicon(48, ROOT / "public/brand/icon-tab.png")
 
     # PWA / スプラッシュ — 全身りんくキャラ
     save_resize(APP_ICON_SOURCE, 200, ROOT / "assets/images/splash-icon.png")
@@ -123,6 +124,10 @@ def main() -> None:
     for name in ("favicon.ico", "favicon.png", "icon-192.png", "apple-touch-icon.png"):
         shutil.copy2(ROOT / "public" / name, lp / name)
         print(f"copied lp/{name}")
+    brand_dir = lp / "brand"
+    brand_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / "public/brand/icon-tab.png", brand_dir / "icon-tab.png")
+    print("copied lp/brand/icon-tab.png")
 
 
 if __name__ == "__main__":

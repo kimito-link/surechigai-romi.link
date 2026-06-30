@@ -372,11 +372,6 @@ export function EventsGuestContent() {
         isDesktop={isDesktop}
         showMenu={true}
         showLoginButton
-        leftElement={
-          <Pressable onPress={() => router.push("/(tabs)")} style={{ padding: 4 }}>
-            <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-          </Pressable>
-        }
       />
 
       <View style={styles.segmentBar}>

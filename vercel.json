@@ -163,7 +163,12 @@
   "redirects": [
     {
       "source": "/favicon.png",
-      "destination": "/favicon-48.png",
+      "destination": "/brand/icon-tab.png",
+      "permanent": false
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/brand/icon-tab.png",
       "permanent": false
     },
     {
@@ -214,7 +219,11 @@
   "rewrites": [
     {
       "source": "/favicon.png",
-      "destination": "/favicon-48.png"
+      "destination": "/brand/icon-tab.png"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/brand/icon-tab.png"
     },
     {
       "source": "/api/:path*",

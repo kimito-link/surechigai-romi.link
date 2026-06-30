@@ -40,17 +40,6 @@ export function TabGuestPreviewScreen({
   const router = useRouter();
   const tabInset = useTabBarInset();
 
-  const headerLeft = (
-    <Pressable
-      onPress={() => router.push("/(tabs)")}
-      accessibilityRole="button"
-      accessibilityLabel="ホームに戻る"
-      style={{ padding: 4 }}
-    >
-      <MaterialIcons name="home" size={24} color={palette.kimitoBlue} />
-    </Pressable>
-  );
-
   return (
     <ScreenContainer containerClassName="bg-background">
       <Suspense fallback={<View style={styles.headerStub} />}>
@@ -60,7 +49,6 @@ export function TabGuestPreviewScreen({
           isDesktop={isDesktop}
           showMenu
           showLoginButton
-          leftElement={headerLeft}
         />
       </Suspense>
       <ScrollView
