@@ -31,6 +31,8 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 import { trpc, createTRPCClient, setClerkTokenGetter } from "@/lib/trpc";
 import { createPerformanceQueryCache, createPerformanceMutationCache } from "@/lib/performance-auto-monitor";
 import { asyncStoragePersister } from "@/lib/query-persister";
+import { shouldPersistQuery } from "@/lib/query-persist-policy";
+import { AuthQuerySync } from "@/lib/query-auth-sync";
 import { preloadCriticalImages } from "@/lib/image-preload";
 import { registerServiceWorker } from "@/lib/service-worker";
 import { initAutoSync } from "@/lib/offline-sync";
@@ -267,8 +269,14 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <PersistQueryClientProvider
         client={queryClient}
-        persistOptions={{ persister: asyncStoragePersister }}
+        persistOptions={{
+          persister: asyncStoragePersister,
+          dehydrateOptions: {
+            shouldDehydrateQuery: shouldPersistQuery,
+          },
+        }}
       >
+        <AuthQuerySync />
         {children}
         {authDebugEnabled ? <AuthDebugPanel payload={authDebugPayload} /> : null}
       </PersistQueryClientProvider>

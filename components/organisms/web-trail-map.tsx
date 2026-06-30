@@ -11,6 +11,8 @@ import {
   RefreshControl,
   Pressable,
   ActivityIndicator,
+  type StyleProp,
+  type ViewStyle,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import {
@@ -24,6 +26,7 @@ import { color } from "@/theme/tokens";
 
 export type VisitedAreaSummary = {
   prefecture: string | null;
+  municipality?: string | null;
   visitCount: number;
   lastVisitedAt: Date | string;
 };
@@ -31,6 +34,8 @@ export type VisitedAreaSummary = {
 type WebTrailMapProps = {
   visited: VisitedAreaSummary[];
   locations: TrailPoint[];
+  municipalityCount?: number;
+  encounterCount?: number;
   isFetching?: boolean;
   onRefresh?: () => void;
   userImageUrl?: string;
@@ -41,11 +46,14 @@ type WebTrailMapProps = {
   canDeleteLocations?: boolean;
   onDeleteLocation?: (locationId: number) => void;
   deletingLocationId?: number | null;
+  style?: StyleProp<ViewStyle>;
 };
 
 export function WebTrailMap({
   visited,
   locations,
+  municipalityCount,
+  encounterCount = 0,
   isFetching = false,
   onRefresh,
   userImageUrl,
@@ -56,11 +64,20 @@ export function WebTrailMap({
   canDeleteLocations = false,
   onDeleteLocation,
   deletingLocationId = null,
+  style,
 }: WebTrailMapProps) {
   const total = visited.reduce((s, v) => s + v.visitCount, 0);
+  const municipalityTotal =
+    municipalityCount ??
+    new Set(
+      visited
+        .map((v) => v.municipality || v.prefecture)
+        .filter((name): name is string => !!name),
+    ).size;
 
   return (
     <ScrollView
+      style={style}
       refreshControl={
         onRefresh ? (
           <RefreshControl
@@ -89,25 +106,25 @@ export function WebTrailMap({
       <View style={styles.summaryRow}>
         <View style={styles.summaryCard}>
           <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>
-            {visited.length}
+            {encounterCount}
           </Text>
-          <Text style={styles.summaryLabel}>訪問都道府県</Text>
+          <Text style={styles.summaryLabel}>すれ違い</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={[styles.summaryNum, { color: color.accentAlt }]}>{total}</Text>
-          <Text style={styles.summaryLabel}>総チェックイン</Text>
+          <Text style={styles.summaryLabel}>図鑑（チェックイン）</Text>
         </View>
         <View style={styles.summaryCard}>
           <Text style={[styles.summaryNum, { color: color.success }]}>
-            {locations.length}
+            {municipalityTotal}
           </Text>
-          <Text style={styles.summaryLabel}>表示中の足あと</Text>
+          <Text style={styles.summaryLabel}>市区町村</Text>
         </View>
       </View>
 
       {locations.length > 0 ? (
         <>
-          <Text style={styles.sectionTitle}>最近の正確な記録</Text>
+          <Text style={styles.sectionTitle}>最近の移動履歴</Text>
           {locations.slice(0, 12).map((point, index) => (
             <View key={point.id} style={styles.trailRow}>
               <View style={[styles.trailDot, index === 0 && styles.trailDotLatest]} />

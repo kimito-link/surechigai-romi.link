@@ -26,7 +26,6 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
-import { prefectures } from "@/constants/prefectures";
 import { JapanBlockMap } from "@/components/organisms/japan-block-map";
 import {
   PrecisionTileMap,
@@ -34,8 +33,7 @@ import {
   type TrailPoint,
 } from "@/components/organisms/precision-tile-map";
 import { useRouter } from "expo-router";
-
-
+import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
 
 export default function ZukanScreen() {
   const { isDesktop } = useResponsive();
@@ -46,12 +44,16 @@ export default function ZukanScreen() {
 
   const { data, refetch, isFetching } = trpc.zukan.myAreas.useQuery(undefined, {
     enabled: isAuthenticated,
+    ...AUTHENTICATED_QUERY_OPTIONS,
   });
 
   // 全国の足あと（地図用）
   const { data: trailData, refetch: refetchTrail } = trpc.zukan.myTrail.useQuery(
     { limit: 500 },
-    { enabled: isAuthenticated }
+    {
+      enabled: isAuthenticated,
+      ...AUTHENTICATED_QUERY_OPTIONS,
+    },
   );
   const trailLocations: TrailPoint[] = trailData?.locations ?? [];
 
@@ -151,6 +153,7 @@ export default function ZukanScreen() {
       />
 
       <ScrollView
+        style={styles.scroll}
         refreshControl={
           <RefreshControl
             refreshing={isFetching}
@@ -299,6 +302,10 @@ function formatDate(d: Date | string): string {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    width: "100%",
+  },
   center: {
     flex: 1,
     alignItems: "center",

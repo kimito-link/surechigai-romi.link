@@ -102,6 +102,7 @@ export default function TabLayout() {
           : { flex: 1, minWidth: 0, paddingHorizontal: 2 },
         sceneStyle: {
           backgroundColor: colors.background,
+          flex: 1,
         },
         tabBarStyle: {
           paddingTop: compactTabs ? 6 : 8,

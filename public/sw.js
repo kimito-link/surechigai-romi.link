@@ -74,9 +74,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API requests - Network first, fallback to cache
+  // API / tRPC — ユーザー固有データのため Service Worker ではキャッシュしない
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/trpc/')) {
-    event.respondWith(networkFirstStrategy(request, API_CACHE_NAME));
     return;
   }
 
