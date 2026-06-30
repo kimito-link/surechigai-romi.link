@@ -273,6 +273,13 @@ export const userSettings = pgTable("user_settings", {
   trailVisibility: varchar("trailVisibility", { length: 16 })
     .default("public")
     .notNull(),
+  /** レーダー上にいまの居場所をリアルタイム公開するか */
+  livePresenceEnabled: boolean("livePresenceEnabled").default(false).notNull(),
+  /** 直近のリアルタイム位置（livePresenceEnabled 時のみ更新） */
+  livePresenceLat: real("livePresenceLat"),
+  livePresenceLng: real("livePresenceLng"),
+  livePresenceMunicipality: text("livePresenceMunicipality"),
+  livePresenceUpdatedAt: timestamp("livePresenceUpdatedAt"),
 });
 
 export type UserSettings = typeof userSettings.$inferSelect;

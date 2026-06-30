@@ -20,7 +20,7 @@ import {
   users,
   twitterUserCache,
 } from "../../../drizzle/schema/index.js";
-import { kRing } from "../core/geo.js";
+import { kRing, toGrid, toH3Cell } from "../core/geo.js";
 import type { NearbyCandidate, TimeshiftCandidate } from "../core/matching.js";
 import type { PrefectureCreatorListRow } from "../core/prefecture-creator-types.js";
 import { LIVE_WINDOW_MS } from "../core/prefecture-creator-types.js";
@@ -33,6 +33,8 @@ import {
   isListedInPrefectureDirectory,
   parseTrailVisibility,
 } from "../core/trail-visibility.js";
+import { isLivePresenceFresh, shortPlaceLabel } from "../core/live-presence.js";
+import { isHomeMasked } from "../core/privacy.js";
 import { isLocationVisibleToOthers } from "../core/location-visibility.js";
 import {
   resolvePrefectureCreatorProfiles,
@@ -1054,6 +1056,11 @@ export async function upsertUserSettings(
       | "homeMaskCell"
       | "shareLocationPrecise"
       | "trailVisibility"
+      | "livePresenceEnabled"
+      | "livePresenceLat"
+      | "livePresenceLng"
+      | "livePresenceMunicipality"
+      | "livePresenceUpdatedAt"
     >
   >
 ): Promise<void> {
@@ -1609,4 +1616,133 @@ export async function getMostFrequentH3R8(
     .limit(1);
 
   return rows.length > 0 ? rows[0].h3R8 : null;
+}
+
+// ---------------------------------------------------------------------------
+// リアルタイム居場所（レーダー）
+// ---------------------------------------------------------------------------
+
+export type LivePresenceMarker = {
+  userId: number;
+  name: string | null;
+  profileImage: string | null;
+  lat: number;
+  lng: number;
+  place: string | null;
+  updatedAt: string;
+  isSelf: boolean;
+};
+
+export async function updateLivePresencePosition(
+  db: DB,
+  userId: number,
+  input: {
+    lat: number;
+    lng: number;
+    municipality?: string | null;
+    prefecture?: string | null;
+  },
+): Promise<{ ok: boolean; masked: boolean }> {
+  const settings = await getUserSettings(db, userId);
+  if (!settings?.livePresenceEnabled) return { ok: false, masked: false };
+  if (
+    settings.locationPausedUntil &&
+    settings.locationPausedUntil.getTime() > Date.now()
+  ) {
+    return { ok: false, masked: false };
+  }
+
+  const { latGrid, lngGrid } = toGrid(input.lat, input.lng);
+  const h3R8 = toH3Cell(latGrid, lngGrid, 8);
+  const masked = isHomeMasked(h3R8, settings.homeMaskCell);
+
+  const place = masked
+    ? "ひみつの場所"
+    : shortPlaceLabel(input.municipality ?? null, input.prefecture ?? null);
+
+  await upsertUserSettings(db, userId, {
+    livePresenceLat: input.lat,
+    livePresenceLng: input.lng,
+    livePresenceMunicipality: place,
+    livePresenceUpdatedAt: new Date(),
+  });
+
+  return { ok: true, masked };
+}
+
+export async function listLivePresenceForViewer(
+  db: DB,
+  viewerUserId: number,
+): Promise<LivePresenceMarker[]> {
+  const staleBefore = new Date(Date.now() - 5 * 60 * 1000);
+  const blockSet = await getBlockSet(db, viewerUserId);
+
+  const rows = await db
+    .select({
+      userId: userSettings.userId,
+      livePresenceLat: userSettings.livePresenceLat,
+      livePresenceLng: userSettings.livePresenceLng,
+      livePresenceMunicipality: userSettings.livePresenceMunicipality,
+      livePresenceUpdatedAt: userSettings.livePresenceUpdatedAt,
+      locationPausedUntil: userSettings.locationPausedUntil,
+      homeMaskCell: userSettings.homeMaskCell,
+      name: users.name,
+      isSuspended: users.isSuspended,
+    })
+    .from(userSettings)
+    .innerJoin(users, eq(users.id, userSettings.userId))
+    .where(
+      and(
+        eq(userSettings.livePresenceEnabled, true),
+        gte(userSettings.livePresenceUpdatedAt, staleBefore),
+      ),
+    );
+
+  const out: LivePresenceMarker[] = [];
+
+  for (const row of rows) {
+    if (row.isSuspended) continue;
+    if (
+      row.locationPausedUntil &&
+      row.locationPausedUntil.getTime() > Date.now()
+    ) {
+      continue;
+    }
+    if (row.livePresenceLat == null || row.livePresenceLng == null) continue;
+    if (!isLivePresenceFresh(row.livePresenceUpdatedAt)) continue;
+
+    const isSelf = row.userId === viewerUserId;
+    if (!isSelf) {
+      const a = Math.min(viewerUserId, row.userId);
+      const b = Math.max(viewerUserId, row.userId);
+      if (blockSet.has(`${a}-${b}`)) continue;
+    }
+
+    let profileImage: string | null = null;
+    if (row.name) {
+      const { lookupCacheByDisplayNameFuzzy } = await import(
+        "../../../server/creator-profile-enricher.js"
+      );
+      profileImage =
+        (await lookupCacheByDisplayNameFuzzy(db, row.name))?.profileImage ?? null;
+    }
+
+    const { latGrid, lngGrid } = toGrid(row.livePresenceLat, row.livePresenceLng);
+    const h3R8 = toH3Cell(latGrid, lngGrid, 8);
+    const masked = isHomeMasked(h3R8, row.homeMaskCell);
+    if (masked && !isSelf) continue;
+
+    out.push({
+      userId: row.userId,
+      name: row.name,
+      profileImage,
+      lat: row.livePresenceLat,
+      lng: row.livePresenceLng,
+      place: row.livePresenceMunicipality ?? null,
+      updatedAt: row.livePresenceUpdatedAt!.toISOString(),
+      isSelf,
+    });
+  }
+
+  return out;
 }

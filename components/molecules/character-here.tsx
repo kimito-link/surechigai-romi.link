@@ -16,15 +16,17 @@ import Animated, {
 import { color } from "@/theme/tokens";
 
 type Props = {
-  source: number; // require(...) した画像
+  source?: number; // require(...) した画像
+  imageUrl?: string | null;
   name: string;
   place?: string; // 居場所の地名（例: 小樽）。あれば「○○にいるよ」と表示
   x: number; // 地図上の横位置（%）
   y: number; // 地図上の縦位置（%）
   delay?: number;
+  isSelf?: boolean;
 };
 
-export function CharacterHere({ source, name, place, x, y, delay = 0 }: Props) {
+export function CharacterHere({ source, imageUrl, name, place, x, y, delay = 0, isSelf }: Props) {
   const float = useSharedValue(0);
   const pulse = useSharedValue(0.8);
 
@@ -63,8 +65,16 @@ export function CharacterHere({ source, name, place, x, y, delay = 0 }: Props) {
       <View style={styles.markerArea}>
         <Animated.View style={[styles.pulseRing, pulseStyle]} />
         {/* キャラアイコン */}
-        <View style={styles.iconRing}>
-          <Image source={source} style={styles.icon} contentFit="contain" />
+        <View style={[styles.iconRing, isSelf && styles.iconRingSelf]}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.icon} contentFit="cover" />
+          ) : source ? (
+            <Image source={source} style={styles.icon} contentFit="contain" />
+          ) : (
+            <View style={styles.iconFallback}>
+              <Text style={styles.iconFallbackText}>{name.slice(0, 1)}</Text>
+            </View>
+          )}
         </View>
         <Text style={styles.name}>{name}</Text>
       </View>
@@ -136,9 +146,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     overflow: "hidden",
   },
+  iconRingSelf: {
+    borderColor: color.accentAlt,
+    borderWidth: 3,
+  },
   icon: {
     width: 40,
     height: 40,
+  },
+  iconFallback: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,128,51,0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconFallbackText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
   },
   name: {
     marginTop: 3,

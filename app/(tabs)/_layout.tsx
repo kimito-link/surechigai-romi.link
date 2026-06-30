@@ -17,6 +17,7 @@ import { Platform, useWindowDimensions } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import { PostTabIcon } from "@/components/post/post-tab-icon";
 import { TAB_BAR_BODY_HEIGHT } from "@/hooks/use-tab-bar-inset";
+import { LivePresenceRunner } from "@/components/presence/live-presence-runner";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -28,7 +29,9 @@ export default function TabLayout() {
   const compactTabs = windowWidth < 480;
 
   return (
-    <Tabs
+    <>
+      <LivePresenceRunner />
+      <Tabs
       screenOptions={{
         // kimito.link ブランド統一: アクティブ=ネイビー / 非アクティブ=slate-500 / 白基調のバー
         tabBarActiveTintColor: color.accentPrimary,
@@ -144,5 +147,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </>
   );
 }

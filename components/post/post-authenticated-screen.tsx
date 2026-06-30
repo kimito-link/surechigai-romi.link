@@ -51,6 +51,8 @@ import {
 } from "@/lib/lazy-heavy-components";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import appConfig from "@/app.config.json";
+import { latLngToRadarPercent } from "@/lib/japan-radar-position";
+import { LIVE_PRESENCE_PULSE_INTERVAL_MS } from "@/modules/encounter/core/live-presence";
 
 const JapanRadarMap = lazy(() =>
   import("@/components/organisms/japan-radar-map").then((m) => ({ default: m.JapanRadarMap })),
@@ -242,6 +244,11 @@ export function PostAuthenticatedScreen() {
     { enabled: isAuthenticated, refetchInterval: false },
   );
 
+  const { data: livePresence } = trpc.presence.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchInterval: Math.max(LIVE_PRESENCE_PULSE_INTERVAL_MS, 30_000),
+  });
+
   const openMutation = trpc.encounter.open.useMutation();
   const reactMutation = trpc.encounter.react.useMutation();
   const blockMutation = trpc.safety.block.useMutation({
@@ -342,9 +349,22 @@ export function PostAuthenticatedScreen() {
             />
           );
         })}
-        <LazyCharacterHere source={require("@/assets/images/characters/rinku.png")} name="りんく" place="小樽" x={74} y={12} delay={0} />
-        <LazyCharacterHere source={require("@/assets/images/characters/konta.png")} name="こん太" place="博多" x={6} y={91} delay={400} />
-        <LazyCharacterHere source={require("@/assets/images/characters/tanune.png")} name="たぬ姉" place="松山" x={33} y={86} delay={800} />
+        {(livePresence ?? []).map((marker, index) => {
+          const pos = latLngToRadarPercent(marker.lat, marker.lng);
+          if (!pos) return null;
+          return (
+            <LazyCharacterHere
+              key={`live-${marker.userId}`}
+              imageUrl={marker.profileImage}
+              name={marker.name ?? "ユーザー"}
+              place={marker.place ?? undefined}
+              x={pos.x}
+              y={pos.y}
+              delay={index * 120}
+              isSelf={marker.isSelf}
+            />
+          );
+        })}
       </JapanRadarMap>
     </Suspense>
   );

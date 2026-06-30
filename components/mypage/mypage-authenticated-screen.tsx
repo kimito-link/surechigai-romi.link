@@ -44,6 +44,7 @@ import {
   trailVisibilityLabel,
   type TrailVisibility,
 } from "@/modules/encounter/core/trail-visibility";
+import { useLivePresenceControls } from "@/hooks/use-live-presence";
 
 const MAX_HITOKOTO = 140;
 
@@ -205,6 +206,8 @@ export function MypageAuthenticatedScreen() {
   const setTrailVisibility = trpc.settings.setTrailVisibility.useMutation();
   const [sharePrecise, setSharePrecise] = useState(false);
   const [trailVisibility, setTrailVisibilityState] = useState<TrailVisibility>("public");
+  const { liveEnabled, toggleLivePresence, isPausing, isLoading: livePresenceLoading } =
+    useLivePresenceControls();
   useEffect(() => {
     if (settingsQuery.data) {
       setSharePrecise(settingsQuery.data.shareLocationPrecise ?? false);
@@ -370,6 +373,27 @@ export function MypageAuthenticatedScreen() {
             value={sharePrecise}
             onValueChange={handleTogglePrecision}
             disabled={settingsQuery.isLoading || setSharePrecision.isPending}
+            trackColor={{ false: palette.gray400, true: palette.kimitoBlue }}
+            thumbColor={palette.white}
+          />
+        </View>
+
+        {/* 居場所をリアルタイム公開（レーダー） */}
+        <View style={styles.precisionRow}>
+          <View style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+            <Text style={styles.precisionTitle}>居場所をリアルタイム公開</Text>
+            <Text style={styles.precisionSub}>
+              {isPausing
+                ? "位置情報が一時停止中のため利用できません"
+                : liveEnabled
+                  ? "ONの間、レーダー上で「いまここにいるよ」と表示されます（約45秒ごとに更新）"
+                  : "OFFの間は他の人にリアルタイムの居場所は表示されません"}
+            </Text>
+          </View>
+          <Switch
+            value={liveEnabled}
+            onValueChange={toggleLivePresence}
+            disabled={settingsQuery.isLoading || livePresenceLoading || isPausing}
             trackColor={{ false: palette.gray400, true: palette.kimitoBlue }}
             thumbColor={palette.white}
           />

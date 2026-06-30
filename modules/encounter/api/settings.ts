@@ -96,6 +96,11 @@ export const settingsRouter = router({
         homeMaskCell: null,
         shareLocationPrecise: false,
         trailVisibility: "public" as const,
+        livePresenceEnabled: false,
+        livePresenceLat: null,
+        livePresenceLng: null,
+        livePresenceMunicipality: null,
+        livePresenceUpdatedAt: null,
       };
     }
     return settings;
