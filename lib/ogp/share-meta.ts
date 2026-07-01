@@ -1,7 +1,7 @@
 /**
  * OGP / X シェア用メタデータの純粋関数（vitest 可能）。
  */
-import { APP_ORIGIN } from "@/lib/site-urls";
+import { APP_ORIGIN } from "../site-urls.js";
 
 export type ShareLocationInfo = {
   area: string | null;

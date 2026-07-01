@@ -40,10 +40,17 @@ export function TutorialOverlay({
   const characterSource = CHARACTER_IMAGES[characterKey] || CHARACTER_IMAGES.rinku_smile;
   const canGoBack = stepNumber > 1;
 
+  const canTapAdvance = step.tapToContinue !== false;
+
   return (
     <View style={styles.container}>
-      <View style={styles.overlay}>
-        <View style={styles.lightScrim} />
+      <Pressable
+        style={styles.overlay}
+        onPress={canTapAdvance ? handleNext : undefined}
+        accessibilityRole={canTapAdvance ? "button" : undefined}
+        accessibilityLabel={canTapAdvance ? (stepNumber >= totalSteps ? "完了" : "次へ") : undefined}
+      >
+        <View style={styles.lightScrim} pointerEvents="none" />
 
         {onSkip ? (
           <Pressable
@@ -122,7 +129,7 @@ export function TutorialOverlay({
             </Pressable>
           </View>
         </View>
-      </View>
+      </Pressable>
     </View>
   );
 }
