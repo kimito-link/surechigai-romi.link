@@ -33,6 +33,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Wait for production deploy
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          for i in $(seq 1 36); do
+            ACTUAL=$(curl -sf https://surechigai.kimito.link/version.json | node -pe "JSON.parse(require('fs').readFileSync(0,'utf8')).commitSha" 2>/dev/null || echo "")
+            echo "attempt $i/36: version.json=$ACTUAL want=$EXPECTED_SHA"
+            if [ "$ACTUAL" = "$EXPECTED_SHA" ]; then
+              sleep 15
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Deploy SHA not matched yet; running smoke anyway"
+
       - name: Guest smoke + full-site audit (mobile + desktop)
         timeout-minutes: 18
         env:

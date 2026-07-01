@@ -9,6 +9,9 @@ const ALLOWED_CONSOLE_ERROR = [
   /Require cycles are allowed/i,
   /Failed to load resource.*404/i,
   /clerk.*development/i,
+  /** デプロイ直後: 旧 HTML が新 chunk を参照して一時的に HTML が返る */
+  /MIME type.*is not executable/i,
+  /Refused to execute script.*_expo\/static/i,
 ];
 
 /** 404 を許容するパス */
