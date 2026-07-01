@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { createContext, createElement, useCallback, useContext, type ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import {
@@ -15,6 +15,10 @@ const HREF_TAB_MAP: Record<string, TabPrefetchKey> = {
   "/map": "map",
   "/mypage": "mypage",
 };
+
+const noopPrefetch = (_tab: TabPrefetchKey) => {};
+
+const TabPrefetchContext = createContext<(tab: TabPrefetchKey) => void>(noopPrefetch);
 
 /** expo-router / React Navigation の href から prefetch 対象タブを解決 */
 export function hrefToTabPrefetchKey(href: string | undefined): TabPrefetchKey | null {
@@ -33,15 +37,25 @@ export function hrefToTabPrefetchKey(href: string | undefined): TabPrefetchKey |
   return "post";
 }
 
-export function usePrefetchTab() {
+/**
+ * tRPC Provider 配下でのみ prefetch を有効化。
+ * Guest `/` 初回 paint（tRPC defer）では no-op のまま — trpc.useUtils() を呼ばない。
+ */
+export function TabPrefetchProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
 
-  return useCallback(
+  const prefetch = useCallback(
     (tab: TabPrefetchKey) => {
       if (!isAuthenticated) return;
       prefetchTabData(utils, tab);
     },
     [isAuthenticated, utils],
   );
+
+  return createElement(TabPrefetchContext.Provider, { value: prefetch }, children);
+}
+
+export function usePrefetchTab() {
+  return useContext(TabPrefetchContext);
 }

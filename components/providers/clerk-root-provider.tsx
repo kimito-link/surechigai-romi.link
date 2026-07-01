@@ -23,6 +23,7 @@ import { AuthQuerySync } from "@/lib/query-auth-sync";
 import { getClerkProviderProps } from "@/lib/clerk-provider-props";
 import { NetworkToast } from "@/components/organisms/network-toast";
 import { ClerkAuthBridge } from "@/components/providers/clerk-auth-bridge";
+import { TabPrefetchProvider } from "@/hooks/use-tab-prefetch";
 
 const tokenCache = {
   async getToken(key: string) {
@@ -253,7 +254,7 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
         }}
       >
         <AuthQuerySync />
-        {children}
+        <TabPrefetchProvider>{children}</TabPrefetchProvider>
         {authDebugEnabled ? <AuthDebugPanel payload={authDebugPayload} /> : null}
       </PersistQueryClientProvider>
     </trpc.Provider>

@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { trpc, createTRPCClient } from "@/lib/trpc";
+import { TabPrefetchProvider } from "@/hooks/use-tab-prefetch";
 
 /**
  * 公開 Web ルート用の軽量 Provider（Clerk SDK 非ロード）。
@@ -23,7 +24,9 @@ export function PublicWebProviders({ children }: { children: ReactNode }) {
 
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <TabPrefetchProvider>{children}</TabPrefetchProvider>
+      </QueryClientProvider>
     </trpc.Provider>
   );
 }

@@ -1,3 +1,5 @@
+import { USER_INFO_KEY } from "@/constants/oauth";
+
 /**
  * Clerk SDK を読み込まない公開 Web ルート（kimito の middleware 公開ルート相当）。
  * OGP クローラー・共有リンク `/u/*` の初回 JS を軽くする。
@@ -59,13 +61,17 @@ export function shouldDeferClerkOnWeb(pathname: string | null | undefined): bool
   return !hasClerkSessionHint();
 }
 
-/** localStorage の Clerk キー有無（Guest シェル誤適用の防止）。 */
+/** localStorage / cookie の Clerk セッション hint（Guest シェル誤適用の防止）。 */
 export function hasClerkSessionHint(): boolean {
   if (typeof window === "undefined") return false;
   try {
+    if (window.localStorage.getItem(USER_INFO_KEY)) return true;
     for (let i = 0; i < window.localStorage.length; i++) {
       const key = window.localStorage.key(i);
       if (key && (key.startsWith("__clerk") || key.includes("clerk"))) return true;
+    }
+    if (typeof document !== "undefined" && document.cookie.includes("__session=")) {
+      return true;
     }
   } catch {
     return false;

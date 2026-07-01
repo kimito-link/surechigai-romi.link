@@ -66,8 +66,9 @@ describe("shouldDeferClerkOnWeb", () => {
     const storage = {
       length: 1,
       key: (i: number) => (i === 0 ? "__clerk_db_jwt" : null),
+      getItem: () => null,
     };
-    vi.stubGlobal("window", { localStorage: storage });
+    vi.stubGlobal("window", { localStorage: storage, document: { cookie: "" } });
     expect(hasClerkSessionHint()).toBe(true);
     expect(shouldDeferClerkOnWeb("/")).toBe(false);
     vi.unstubAllGlobals();
@@ -92,9 +93,22 @@ describe("shouldUseGuestWebShell", () => {
     const storage = {
       length: 1,
       key: (i: number) => (i === 0 ? "__clerk_db_jwt" : null),
+      getItem: () => null,
     };
     vi.stubGlobal("window", { localStorage: storage });
     expect(shouldUseGuestWebShell("/checkin")).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  it("USER_INFO_KEY があれば guest シェルにしない", () => {
+    const storage = {
+      length: 0,
+      key: () => null,
+      getItem: (key: string) => (key === "manus-runtime-user-info" ? "{}" : null),
+    };
+    vi.stubGlobal("window", { localStorage: storage, document: { cookie: "" } });
+    expect(hasClerkSessionHint()).toBe(true);
+    expect(shouldUseGuestWebShell("/")).toBe(false);
     vi.unstubAllGlobals();
   });
 
