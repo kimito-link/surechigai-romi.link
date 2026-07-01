@@ -57,9 +57,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
   } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
     console.error("[api/trpc] handler failed:", error);
     if (!res.headersSent) {
-      res.status(500).json({ error: "tRPC unavailable" });
+      res.status(500).json({ error: "tRPC unavailable", detail });
     }
   }
 }
