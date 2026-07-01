@@ -9,24 +9,26 @@
 <meta property="og:title" content="すれ違い通信 ― 月日は百代の過客にして" />
 <meta property="og:description" content="人生は旅である。あなたの移動が、四季をめぐる道中記になる。" />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://surechigai-romi.link/lp/" />
+<meta property="og:url" content="https://kimito.link/surechigai/story/" />
 <meta name="theme-color" content="#00427B" />
 <link rel="icon" href="favicon.ico" sizes="any" />
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <meta name="apple-mobile-web-app-title" content="すれ違ひ通信" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Yuji+Syuku&display=swap" rel="stylesheet" />
 <style>
+  @font-face{
+    font-family:"Shippori Mincho Fallback";
+    src:local("Yu Mincho"),local("YuMincho"),local("Hiragino Mincho ProN"),local("MS Mincho"),serif;
+    size-adjust:100%;ascent-override:88%;descent-override:12%;line-gap-override:0%;
+  }
   :root{
     --washi:#efe7d6; --washi-2:#e6dcc6;
     --sumi:#23201b; --sumi-soft:#3a352c; --muted:#6f6656; --faint:#928975;
     --line:rgba(35,32,27,.14); --line-soft:rgba(35,32,27,.08);
     --ai:#3c5a6e; --taisha:#a8572f; --kin:#b08a3e;
     --maxw:760px; --lh:2.05; --shell:clamp(22px,6vw,40px);
-    --mincho:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
-    --fude:"Yuji Syuku","Shippori Mincho",serif;   /* 筆文字（毛筆） */
+    --mincho:"Shippori Mincho LP","Shippori Mincho","Shippori Mincho Fallback","Yu Mincho","Hiragino Mincho ProN",serif;
+    --fude:"Yu Mincho","Shippori Mincho LP","Shippori Mincho Fallback",serif;
     --sky-top:#c2ccd3; --sky-bottom:#dfe2de;
     --season-tint:rgba(150,170,185,.16);
     --fuji-opacity:.06; --fuji-clear:0; --kasumi:1; --blizzard:1; --night:0;
@@ -45,6 +47,7 @@
   body[data-sub="night"]::before{ background:rgba(20,22,40,.42); }
   body[data-sub="night"]{ transition:none }
   .shell{position:relative; z-index:2; max-width:var(--maxw); margin:0 auto; padding:0 var(--shell);}
+  .lp-defer{content-visibility:auto;contain-intrinsic-size:auto 480px;}
   a{color:inherit}
   .fude{ font-family:var(--fude); }
 
@@ -626,6 +629,8 @@
     .flake,.semi,.furin .bell,.yakiimo .yuge,.onsen .yuge2,.onsen .saru,.yukimichi .ato,.yukimichi .tabibito,.ma.in .shishi .tsutsu,.blizzard .gust,.kagerou,.scroll-hint::after,.kisha .kemuri,.senko .tama,.tanbo .ine,.ayu .hono,.suikawari .bou,.mato .mato-c,.nukegara,.ma .shishi .tobimizu,.ma .shishi .mizumo,.shishi-stage .tsutsu,.shishi-stage .tobimizu,.shishi-stage .mizumo,.shishi-stage .shizuku{ animation:none !important }
   }
 </style>
+<script>(function(){var hrefs=["/fonts/lp/shippori-mincho-lp.css"];function inject(){if(document.documentElement.hasAttribute("data-lp-fonts-loaded"))return;document.documentElement.setAttribute("data-lp-fonts-loaded","1");for(var i=0;i<hrefs.length;i++){var l=document.createElement("link");l.rel="stylesheet";l.href=hrefs[i];document.head.appendChild(l);}}function schedule(){if("requestIdleCallback"in window){requestIdleCallback(inject,{timeout:2000});}else{setTimeout(inject,200);}}if(document.readyState==="complete"){schedule();}else{window.addEventListener("load",schedule,{once:true});}})();</script>
+<noscript><link rel="stylesheet" href="/fonts/lp/shippori-mincho-lp.css" /></noscript>
 </head>
 <body data-sub="day">
 
@@ -769,7 +774,7 @@
 </section>
 
 <!-- ════════════════ 序章・語り（冬の夜のはじまり） ════════════════ -->
-<section class="story photo-bg" data-scene="winter" data-veil="mist" data-bg="yukiguni">
+<section class="story lp-defer photo-bg" data-scene="winter" data-veil="mist" data-bg="yukiguni">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">序 章</span><span class="ep-label">― 旅のはじまり ―</span></div>
   <p class="ph" data-img="yukiguni">ある冬の夜のことを、まだ覚えている。</p>
@@ -781,7 +786,7 @@
 </section>
 
 <!-- ════════════════ 一章・雪国へ（汽車・トンネル・雪国） ════════════════ -->
-<section class="story photo-bg" data-scene="winter" data-trigger="kisha" data-veil="mist" data-bg="kisha">
+<section class="story lp-defer photo-bg" data-scene="winter" data-trigger="kisha" data-veil="mist" data-bg="kisha">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">一 章</span><span class="ep-label">― 雪国へ ―</span></div>
   <p class="ph" data-img="kisha" data-fx="whistle">汽笛が、ポオォと尾を引いた。</p>
@@ -797,7 +802,7 @@
 </section>
 
 <!-- ════════════════ 二章・雪道の足跡（先に通った誰か） ════════════════ -->
-<section class="story photo-bg" data-scene="winter" data-trigger="yukimichi" data-veil="mist" data-bg="yukimichi">
+<section class="story lp-defer photo-bg" data-scene="winter" data-trigger="yukimichi" data-veil="mist" data-bg="yukimichi">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">二 章</span><span class="ep-label">― 雪の一本道 ―</span></div>
   <p class="ph" data-img="yukimichi" data-fx="walk">駅を出て、雪の一本道を歩く。</p>
@@ -812,7 +817,7 @@
 </section>
 
 <!-- ════════════════ 三章・春（雪解け・桜・人力車・地蔵の花） ════════════════ -->
-<section class="story photo-bg" data-scene="spring" data-trigger="rikisha" data-veil="soft" data-bg="sakura">
+<section class="story lp-defer photo-bg" data-scene="spring" data-trigger="rikisha" data-veil="soft" data-bg="sakura">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">三 章</span><span class="ep-label">― 春、すれ違ふ ―</span></div>
   <p class="ph" data-img="sakura" data-fx="bird">峠を下るほどに、雪は、霞へと変わった。</p>
@@ -828,7 +833,7 @@
 </section>
 
 <!-- ════════════════ 四章・一服の間（茶室・鹿威し・間／ま） ════════════════ -->
-<section class="story photo-bg" data-scene="spring" data-veil="soft" data-bg="chashitsu">
+<section class="story lp-defer photo-bg" data-scene="spring" data-veil="soft" data-bg="chashitsu">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">四 章</span><span class="ep-label">― 一服の間（ま） ―</span></div>
   <p class="ph" data-img="chashitsu">街道の茶屋で、ひと息つくことにした。</p>
@@ -860,7 +865,7 @@
 </section>
 
 <!-- ════════════════ 六章・夏夜祭り（屋台・花火・すれ違い・線香花火） ════════════════ -->
-<section class="story night photo-bg" data-scene="summer" data-sub="night" data-trigger="natsu-yoru" data-veil="dusk" data-bg="tekiya">
+<section class="story lp-defer night photo-bg" data-scene="summer" data-sub="night" data-trigger="natsu-yoru" data-veil="dusk" data-bg="tekiya">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">六 章</span><span class="ep-label">― 夏の、夜祭り ―</span></div>
   <p class="ph" data-img="tekiya">日が暮れて、遠くに、祭りの灯が見えた。</p>
@@ -877,7 +882,7 @@
 </section>
 
 <!-- ════════════════ 七章・時を越えて（タイムシフト・推しの軌跡） ════════════════ -->
-<section class="story night photo-bg" data-scene="summer" data-sub="night" data-veil="dusk" data-bg="hanabi">
+<section class="story lp-defer night photo-bg" data-scene="summer" data-sub="night" data-veil="dusk" data-bg="hanabi">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">七 章</span><span class="ep-label">― 時を越えて ―</span></div>
   <p class="ph" data-img="yoake">祭りのあと、私は、ひとつのことに気づいた。</p>
@@ -892,7 +897,7 @@
 </section>
 
 <!-- ════════════════ 八章・秋（紅葉・落ち葉・足あとは消えない） ════════════════ -->
-<section class="story photo-bg" data-scene="autumn" data-trigger="aki" data-veil="soft" data-bg="hosomichi">
+<section class="story lp-defer photo-bg" data-scene="autumn" data-trigger="aki" data-veil="soft" data-bg="hosomichi">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">八 章</span><span class="ep-label">― 秋、残るもの ―</span></div>
   <p class="ph" data-img="momiji">木々が、燃えるように、色づいていた。</p>
@@ -908,7 +913,7 @@
 </section>
 
 <!-- ════════════════ 結章・扉（富士・月・流れ星・Xへの誘い） ════════════════ -->
-<section class="story night photo-bg" data-scene="clear" data-veil="dusk" data-bg="fuji-yoru">
+<section class="story lp-defer night photo-bg" data-scene="clear" data-veil="dusk" data-bg="fuji-yoru">
   <div class="veil"></div>
   <div class="ep-head"><span class="ep-no">結 章</span><span class="ep-label">― 晴れて、富士 ―</span></div>
   <p class="ph" data-img="fuji-yoru">雲が晴れ、はじめて、富士が見えた。</p>
@@ -924,8 +929,8 @@
     <p class="saso-copy">キミの思い出を、<br />ここに刻もう。</p>
     <p class="ph key" style="min-height:auto;margin-bottom:1.6em">――さあ、消えてしまふ前に。</p>
     <div class="cta-row">
-      <a class="btn btn-x" href="https://surechigai-romi.link">𝕏 で旅をはじめる</a>
-      <a class="btn btn-ghost" href="https://surechigai-romi.link">道のことを、もう少し</a>
+      <a class="btn btn-x" href="https://surechigai.kimito.link/sign-in">𝕏 で旅をはじめる</a>
+      <a class="btn btn-ghost" href="https://surechigai.kimito.link/sign-in">道のことを、もう少し</a>
     </div>
   </div>
 </section>
@@ -953,7 +958,7 @@
     <img class="fin-rinku" src="img/chara/link-full.png" alt="りんく" width="492" height="750" />
     <p class="fin-catch">会いたい君がゐる、<br />現在地。</p>
     <p class="fin-q">― キミは今、どこにゐる？ ―</p>
-    <a class="fin-cta" href="https://surechigai-romi.link">𝕏 で、旅をはじめる</a>
+    <a class="fin-cta" href="https://surechigai.kimito.link/sign-in">𝕏 で、旅をはじめる</a>
     <span class="fin-sub">この夜空の、どこかですれ違った誰かへ。</span>
   </div>
 </section>
@@ -988,7 +993,7 @@
     </a>
   </div>
 
-  <p class="endroll-site"><a href="https://surechigai-romi.link">surechigai-romi.link</a></p>
+  <p class="endroll-site"><a href="https://surechigai.kimito.link/sign-in">surechigai-romi.link</a></p>
 
   <p class="footnote">
     ※「すれ違い通信」はニンテンドーDSの体験へのオマージュです。任天堂とは関係ありません。<br />

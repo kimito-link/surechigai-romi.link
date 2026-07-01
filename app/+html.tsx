@@ -1,5 +1,6 @@
 import { ScrollViewStyleReset } from "expo-router/html";
 import { PWA_APP_NAME } from "@/components/brand/web-document-head";
+import { APP_ORIGIN, MARKETING_URL } from "@/lib/site-urls";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -25,7 +26,8 @@ export default function Root({ children }: PropsWithChildren) {
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
         />
         <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://surechigai.kimito.link/" />
+        <link rel="canonical" href={`${APP_ORIGIN}/`} />
+        <link rel="alternate" href={MARKETING_URL} title="kimito.link 公式紹介" />
         {/* OGP / Twitter Card */}
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="君斗りんくのすれ違ひ通信" />
@@ -34,8 +36,8 @@ export default function Root({ children }: PropsWithChildren) {
           property="og:description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
         />
-        <meta property="og:url" content="https://surechigai.kimito.link/" />
-        <meta property="og:image" content="https://surechigai.kimito.link/api/og" />
+        <meta property="og:url" content={`${APP_ORIGIN}/`} />
+        <meta property="og:image" content={`${APP_ORIGIN}/api/og`} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -44,10 +46,10 @@ export default function Root({ children }: PropsWithChildren) {
           name="twitter:description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。"
         />
-        <meta name="twitter:image" content="https://surechigai.kimito.link/api/og" />
+        <meta name="twitter:image" content={`${APP_ORIGIN}/api/og`} />
         {/* Preconnect: 自サイトのみ（Clerk は /sign-in 画面だけで preconnect — kimito 準拠） */}
-        <link rel="preconnect" href="https://surechigai.kimito.link" />
-        <link rel="dns-prefetch" href="https://surechigai.kimito.link" />
+        <link rel="preconnect" href={APP_ORIGIN} />
+        <link rel="dns-prefetch" href={APP_ORIGIN} />
         {/* PWA / favicon — ゆっくりりんく（pnpm brand:icons） */}
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />

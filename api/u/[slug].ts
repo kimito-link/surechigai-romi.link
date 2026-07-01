@@ -17,7 +17,7 @@ import {
   type ShareLocationInfo,
 } from "../../lib/ogp/share-meta.js";
 
-const ORIGIN = "https://surechigai.kimito.link";
+import { APP_ORIGIN } from "../../lib/site-urls.js";
 
 function escHtml(s: string): string {
   return s
@@ -99,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const ogImage =
     slug && /^[A-Za-z0-9]{1,16}$/.test(slug)
       ? buildOgRedirectImageTarget({
-          origin: ORIGIN,
+          origin: APP_ORIGIN,
           location: resolvedLocation,
           username: shareUsername,
           version:
@@ -107,8 +107,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             versionFromQuery?.getTime() ??
             Date.now(),
         })
-      : `${ORIGIN}/api/og`;
-  const pageUrl = slug ? `${ORIGIN}/u/${slug}` : ORIGIN;
+      : `${APP_ORIGIN}/api/og`;
+  const pageUrl = slug ? `${APP_ORIGIN}/u/${slug}` : APP_ORIGIN;
   const imageAlt = title.replace(/｜.*$/, "").trim();
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");

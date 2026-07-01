@@ -3,10 +3,11 @@
  * LCP: BrandTagline + CTA 見出しを初回 paint で同期描画（lazy/defer しない）。
  * 帯域譲渡: AppHeader / BrandStamp / benefits+CTA は idle 後 chunk。
  */
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Platform, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { scheduleAfterIdle } from "@/lib/schedule-after-idle";
+import { MARKETING_URL } from "@/lib/site-urls";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { color, palette } from "@/theme/tokens";
@@ -57,6 +58,21 @@ export function PostGuestScreen() {
           <Text style={styles.ctaHeadline}>{LCP_HEADLINE}</Text>
           {showDeferred ? <GuestHomeDeferredBody benefits={GUEST_HOME_BENEFITS} /> : null}
         </View>
+        {showDeferred ? (
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="kimito.link 公式の紹介ページ"
+            onPress={() => {
+              if (Platform.OS === "web" && typeof window !== "undefined") {
+                window.location.assign(MARKETING_URL);
+                return;
+              }
+            }}
+            style={styles.marketingLink}
+          >
+            <Text style={styles.marketingLinkText}>kimito.link 公式の紹介ページ</Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -106,5 +122,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     marginBottom: 12,
+  },
+  marketingLink: {
+    alignSelf: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  marketingLinkText: {
+    color: color.textSecondary,
+    fontSize: 13,
+    textDecorationLine: "underline",
   },
 });

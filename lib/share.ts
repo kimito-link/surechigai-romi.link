@@ -4,6 +4,7 @@
  */
 import { Platform, Share, Linking } from "react-native";
 import * as Haptics from "expo-haptics";
+import { APP_ORIGIN } from "@/lib/site-urls";
 
 const APP_HASHTAG = "#君斗りんくのすれ違ひ通信";
 
@@ -26,7 +27,7 @@ function getAppUrl(): string {
     }
   }
   // デフォルトは本番URL（正規ドメイン）
-  return "https://surechigai.kimito.link";
+  return APP_ORIGIN;
 }
 
 export interface ShareContent {

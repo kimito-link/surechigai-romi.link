@@ -1,6 +1,7 @@
 /**
  * OGP / X シェア用メタデータの純粋関数（vitest 可能）。
  */
+import { APP_ORIGIN } from "@/lib/site-urls";
 
 export type ShareLocationInfo = {
   area: string | null;
@@ -22,7 +23,7 @@ export function resolveShareAreaLabel(info: ShareLocationInfo | null | undefined
 export function buildPublicSharePageUrl(
   slug: string,
   recordedAt: Date | null | undefined,
-  origin = "https://surechigai.kimito.link",
+  origin = APP_ORIGIN,
   location?: ShareLocationInfo | null,
 ): string {
   const params = new URLSearchParams();
@@ -117,7 +118,7 @@ export function buildOgImageSearchParams(
 export function buildOgRedirectMetaUrl(
   slug: string,
   recordedAt: Date | null | undefined,
-  origin = "https://surechigai.kimito.link",
+  origin = APP_ORIGIN,
 ): string {
   const v = recordedAt?.getTime() ?? Date.now();
   return `${origin}/api/og-redirect/${slug}?v=${v}`;
@@ -130,7 +131,7 @@ export function buildOgRedirectImageTarget(input: {
   username?: string | null;
   version?: string | number;
 }): string {
-  const origin = input.origin ?? "https://surechigai.kimito.link";
+  const origin = input.origin ?? APP_ORIGIN;
   const params =
     input.location?.hasLocation && input.location.lat != null && input.location.lng != null
       ? buildOgImageSearchParams(input.location, { name: input.username ?? null })

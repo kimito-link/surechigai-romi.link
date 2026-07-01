@@ -13,7 +13,7 @@ test.describe("public smoke", () => {
   });
 
   test("図鑑タブが表示される", async ({ page }) => {
-    const monitor = await gotoSmokePage(page, "/zukan", { heading: "図鑑" });
+    const monitor = await gotoSmokePage(page, "/zukan", { heading: "みんなの現在地" });
     monitor.assertClean();
   });
 

@@ -81,6 +81,11 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
+      name: "kimito-hybrid-smoke",
+      testMatch: /kimito-hybrid\.smoke\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "save-auth",
       testMatch: /save-auth-state\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
