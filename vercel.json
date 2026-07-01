@@ -187,6 +187,11 @@
       ]
     }
   ],
+  "functions": {
+    "api/trpc/[trpc].ts": {
+      "maxDuration": 30
+    }
+  },
   "redirects": [
     {
       "source": "/icon-192.png",

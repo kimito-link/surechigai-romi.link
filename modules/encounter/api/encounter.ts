@@ -16,7 +16,7 @@ import { getDb } from "../../../server/db/connection.js";
 import { toGrid, toH3Cell, toH3R7, assertFiniteLatLng } from "../core/geo.js";
 import { findMatches } from "../core/matching.js";
 import { moderateText } from "../core/moderation.js";
-import { reverseGeocode } from "../core/geocoding.js";
+import { reverseGeocodeWithTimeout } from "../core/geocoding.js";
 import { reactions, users } from "../../../drizzle/schema/index.js";
 import { eq } from "drizzle-orm";
 import {
@@ -69,8 +69,14 @@ export const encounterRouter = router({
       const db = await getDb();
       if (!db) return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng };
 
-      // 位置一時停止チェック
-      const settings = await getUserSettings(db, userId);
+      const { latGrid, lngGrid } = toGrid(latLng.lat, latLng.lng);
+      const h3R8 = toH3Cell(latGrid, lngGrid, 8);
+      const h3R7 = toH3R7(latGrid, lngGrid);
+
+      const [settings, g] = await Promise.all([
+        getUserSettings(db, userId),
+        reverseGeocodeWithTimeout(latLng.lat, latLng.lng, 2_500),
+      ]);
       if (
         settings?.locationPausedUntil &&
         settings.locationPausedUntil > new Date()
@@ -78,63 +84,50 @@ export const encounterRouter = router({
         return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng };
       }
 
-      // 座標を丸める
-      const { latGrid, lngGrid } = toGrid(latLng.lat, latLng.lng);
-      const h3R8 = toH3Cell(latGrid, lngGrid, 8);
-      const h3R7 = toH3R7(latGrid, lngGrid);
-
-      // 逆ジオコーディング（municipality 未指定時のみ非同期補完）
-      let municipality = input.municipality ?? null;
-      let prefecture: string | null = null;
-      let areaName: string | null = null;
-
-      // バックグラウンドで geocode（await しない: チェックインレイテンシを下げる）
-      const g = await reverseGeocode(latLng.lat, latLng.lng);
-      municipality = municipality ?? g.municipality;
-      prefecture = g.prefecture;
-      areaName = g.areaName;
+      let municipality = input.municipality ?? g.municipality;
+      const prefecture = g.prefecture;
+      const areaName = g.areaName;
       const address = g.address;
-      
-      await insertLocation(db, {
-        userId,
-        h3R8,
-        latGrid,
-        lngGrid,
-        lat: latLng.lat,
-        lng: latLng.lng,
-        accuracyM: input.accuracy ?? null,
-        municipality,
-        prefecture,
-        address,
-      });
-      
-      await upsertVisitedArea(db, {
-        userId,
-        h3R7,
-        municipality,
-        prefecture,
-      });
-      
+
+      await Promise.all([
+        insertLocation(db, {
+          userId,
+          h3R8,
+          latGrid,
+          lngGrid,
+          lat: latLng.lat,
+          lng: latLng.lng,
+          accuracyM: input.accuracy ?? null,
+          municipality,
+          prefecture,
+          address,
+        }),
+        upsertVisitedArea(db, {
+          userId,
+          h3R7,
+          municipality,
+          prefecture,
+        }),
+      ]);
+
       getMostFrequentNightH3R8(db, userId).then((cell) => {
         upsertUserSettings(db, userId, { homeMaskCell: cell }).catch(() => {});
       }).catch(() => {});
 
-      // マッチング候補取得（失敗してもチェックイン自体は成功させる）
       let nearbyCandidates: Awaited<ReturnType<typeof getNearbyCandidates>> = [];
       let timeshiftCandidates: Awaited<ReturnType<typeof getTimeshiftCandidates>> = [];
+      let blockSet = new Set<string>();
+      let todayPairSet = new Set<string>();
       try {
-        [nearbyCandidates, timeshiftCandidates] = await Promise.all([
+        [nearbyCandidates, timeshiftCandidates, blockSet, todayPairSet] = await Promise.all([
           getNearbyCandidates(db, userId, h3R8),
           getTimeshiftCandidates(db, userId, h3R7),
+          getBlockSet(db, userId),
+          getTodayPairSet(db, userId),
         ]);
       } catch (matchErr) {
-        console.error("[encounter.checkIn] matching candidate query failed:", matchErr);
+        console.error("[encounter.checkIn] matching/block query failed:", matchErr);
       }
-
-      const [blockSet, todayPairSet] = await Promise.all([
-        getBlockSet(db, userId),
-        getTodayPairSet(db, userId),
-      ]);
 
       const selfLocation = {
         userId,
@@ -156,16 +149,20 @@ export const encounterRouter = router({
       let newEncounters = 0;
       for (const m of matchResults) {
         if (m.userAId === m.userBId) continue;
-        const inserted = await insertEncounterIfNew(db, {
-          userAId: m.userAId,
-          userBId: m.userBId,
-          tier: m.tier,
-          h3R7: m.h3R7,
-          areaName,
-          prefecture,
-          occurredAt: m.occurredAt,
-        });
-        if (inserted) newEncounters++;
+        try {
+          const inserted = await insertEncounterIfNew(db, {
+            userAId: m.userAId,
+            userBId: m.userBId,
+            tier: m.tier,
+            h3R7: m.h3R7,
+            areaName,
+            prefecture,
+            occurredAt: m.occurredAt,
+          });
+          if (inserted) newEncounters++;
+        } catch (insertErr) {
+          console.error("[encounter.checkIn] insertEncounter failed:", insertErr);
+        }
       }
 
       return { newEncounters, prefecture, municipality, areaName, address, lat: latLng.lat, lng: latLng.lng };

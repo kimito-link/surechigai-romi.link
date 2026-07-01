@@ -119,6 +119,34 @@ function parseAreaName(addr: NominatimAddress): string {
   return `${cleanTown ?? district}エリア`;
 }
 
+const fallbackGeocode = (): GeocodeResult => ({
+  address: null,
+  municipality: null,
+  prefecture: null,
+  areaName: "不明なエリア",
+});
+
+/**
+ * チェックイン向け: 上限時間付き逆ジオコーディング。超過時は fallback（500 にしない）。
+ */
+export async function reverseGeocodeWithTimeout(
+  lat: number,
+  lng: number,
+  timeoutMs: number,
+): Promise<GeocodeResult> {
+  try {
+    return await Promise.race([
+      reverseGeocode(lat, lng),
+      new Promise<GeocodeResult>((_, reject) => {
+        setTimeout(() => reject(new Error("geocode timeout")), timeoutMs);
+      }),
+    ]);
+  } catch (e) {
+    console.error("[geocoding] reverseGeocodeWithTimeout:", e);
+    return fallbackGeocode();
+  }
+}
+
 /**
  * 緯度経度からエリア名 + 市区町村 + 都道府県を取得（API呼び出し1回）。
  */
@@ -126,11 +154,7 @@ export async function reverseGeocode(
   lat: number,
   lng: number
 ): Promise<GeocodeResult> {
-  const fallback: GeocodeResult = { address: null,
-    municipality: null,
-    prefecture: null,
-    areaName: "不明なエリア",
-  };
+  const fallback: GeocodeResult = fallbackGeocode();
 
   try {
     await throttle();
