@@ -28,11 +28,11 @@ export default function ZukanScreen() {
   if (!isAuthenticated) {
     return (
       <TabGuestPreviewScreen
-        title="図鑑"
-        headline="ログインすると、あなただけの図鑑が育ちます"
+        title="みんなの現在地"
+        headline="会いたい君がいる都道府県が、地図ですぐわかる"
         benefits={[
+          { icon: "public", label: "公開中のクリエイターがどこにいるか一覧" },
           { icon: "map", label: "訪れた都道府県・市区町村が色づく" },
-          { icon: "groups", label: "すれ違った人の出身地が集まる" },
           { icon: "place", label: "足あとの正確な場所をあとからたどれる" },
         ]}
       />

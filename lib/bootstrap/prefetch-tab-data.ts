@@ -22,6 +22,7 @@ const TAB_PREFETCH: Record<TabPrefetchKey, (utils: TrpcUtils) => Promise<unknown
     utils.event.listLive.prefetch(undefined),
   ],
   zukan: (utils) => [
+    utils.zukan.activePrefectures.prefetch(undefined),
     utils.zukan.myAreas.prefetch(undefined),
     utils.zukan.myTrail.prefetch({ limit: 500 }),
   ],
@@ -43,6 +44,7 @@ export function prefetchCoreAuthenticatedData(utils: TrpcUtils): void {
     utils.encounter.list.prefetch({}),
     utils.zukan.myTrail.prefetch({ limit: 1 }),
     utils.zukan.myAreas.prefetch(undefined),
+    utils.zukan.activePrefectures.prefetch(undefined),
     utils.settings.get.prefetch(undefined),
   ]);
 }

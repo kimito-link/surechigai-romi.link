@@ -10,7 +10,11 @@ type Props = Omit<AppHeaderProps, "variant" | "contextBar" | "showTagline"> & {
 };
 
 /** タブ画面用 — compact ヘッダー + コンテキストバー + Web スペーサー */
-export function TabScreenHeader({ contextKey, ...headerProps }: Props) {
+export function TabScreenHeader({
+  contextKey,
+  showLoginButton,
+  ...headerProps
+}: Props) {
   const ctx = useScreenContextBar(contextKey);
 
   return (
@@ -19,9 +23,13 @@ export function TabScreenHeader({ contextKey, ...headerProps }: Props) {
         {...headerProps}
         variant="compact"
         showTagline={false}
+        showLoginButton={showLoginButton}
         contextBar={ctx.element}
       />
-      <TabHeaderSpacer hasContextBar={ctx.hasBar} />
+      <TabHeaderSpacer
+        hasContextBar={ctx.hasBar}
+        showLoginButton={showLoginButton}
+      />
     </>
   );
 }

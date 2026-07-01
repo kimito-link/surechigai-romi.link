@@ -153,7 +153,22 @@ export const ogpRouter = router({
             }
           : null,
       );
-      shareUrl = buildPublicSharePageUrl(slug, info?.recordedAt ?? null, APP_ORIGIN);
+      shareUrl = buildPublicSharePageUrl(
+        slug,
+        info?.recordedAt ?? null,
+        APP_ORIGIN,
+        info
+          ? {
+              area: info.area,
+              prefecture: info.prefecture,
+              lat: info.lat,
+              lng: info.lng,
+              hasLocation: info.hasLocation,
+              zoom: info.zoom,
+              recordedAt: info.recordedAt,
+            }
+          : null,
+      );
     } catch {
       // 地名の解決に失敗してもリンク共有自体は続行
       shareUrl = buildPublicSharePageUrl(slug, null, APP_ORIGIN);

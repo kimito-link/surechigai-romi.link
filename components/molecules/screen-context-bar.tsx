@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { color, palette } from "@/theme/tokens";
+import { color, palette, SCREEN_CONTEXT_BAR_HEIGHT } from "@/theme/tokens";
 
 export type ContextBarTone = "default" | "accent" | "warn";
 
@@ -49,7 +49,7 @@ export function ScreenContextBar({
   );
 }
 
-export const SCREEN_CONTEXT_BAR_HEIGHT = 40;
+export { SCREEN_CONTEXT_BAR_HEIGHT, SCREEN_CONTEXT_BAR_MAX_HEIGHT } from "@/theme/tokens";
 
 const styles = StyleSheet.create({
   bar: {

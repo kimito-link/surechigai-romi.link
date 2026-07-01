@@ -88,10 +88,10 @@ export function TrailHistoryList({
                 ]}
               />
               <View style={styles.trailInfo}>
-                <Text style={styles.trailPref} numberOfLines={2}>
+                <Text style={styles.trailPref} numberOfLines={3}>
                   {formatPlace(point)}
                 </Text>
-                <Text style={styles.trailDate} numberOfLines={1}>
+                <Text style={styles.trailDate} numberOfLines={2}>
                   {formatDateTime(point.recordedAt)} / {formatCoordinate(point)}
                 </Text>
               </View>
@@ -193,6 +193,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "baseline",
     justifyContent: "space-between",
+    flexWrap: "wrap",
     gap: 8,
     marginBottom: 10,
   },
@@ -204,6 +205,8 @@ const styles = StyleSheet.create({
   hint: {
     color: color.textMuted,
     fontSize: 11,
+    flexShrink: 1,
+    textAlign: "right",
   },
   trailRow: {
     width: "100%",

@@ -31,7 +31,7 @@ import {
   openEncounter,
   getUserSettings,
   upsertUserSettings,
-  getMostFrequentH3R8,
+  getMostFrequentNightH3R8,
 } from "../db/queries.js";
 
 export const encounterRouter = router({
@@ -115,10 +115,8 @@ export const encounterRouter = router({
         prefecture,
       });
       
-      getMostFrequentH3R8(db, userId).then((cell) => {
-        if (cell) {
-          upsertUserSettings(db, userId, { homeMaskCell: cell }).catch(() => {});
-        }
+      getMostFrequentNightH3R8(db, userId).then((cell) => {
+        upsertUserSettings(db, userId, { homeMaskCell: cell }).catch(() => {});
       }).catch(() => {});
 
       // マッチング候補取得（失敗してもチェックイン自体は成功させる）

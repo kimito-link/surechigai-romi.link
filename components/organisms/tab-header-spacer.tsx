@@ -1,28 +1,35 @@
-import { Platform, View } from "react-native";
-import {
-  APP_HEADER_CHROME_HEIGHT_COMPACT,
-  APP_HEADER_CHROME_HEIGHT_FULL,
-} from "@/components/organisms/app-header";
-import { SCREEN_CONTEXT_BAR_HEIGHT } from "@/components/molecules/screen-context-bar";
+import { Platform, View, useWindowDimensions } from "react-native";
+import { useAuth } from "@/hooks/use-auth";
+import { computeTabHeaderSpacerHeight } from "@/lib/layout/header-chrome";
+
+export { computeTabHeaderSpacerHeight as getTabHeaderSpacerHeight } from "@/lib/layout/header-chrome";
 
 /** Web 固定ヘッダー分のスペーサー高さ */
-export function getTabHeaderSpacerHeight(options: {
-  variant?: "full" | "compact";
-  hasContextBar?: boolean;
-}): number {
-  const base =
-    options.variant === "compact" ? APP_HEADER_CHROME_HEIGHT_COMPACT : APP_HEADER_CHROME_HEIGHT_FULL;
-  return base + (options.hasContextBar ? SCREEN_CONTEXT_BAR_HEIGHT : 0);
-}
-
 export function TabHeaderSpacer({
   variant = "compact",
   hasContextBar = false,
+  showLoginButton = false,
 }: {
   variant?: "full" | "compact";
   hasContextBar?: boolean;
+  /** 未ログイン時のログインボタン2段目（checkin 等） */
+  showLoginButton?: boolean;
 }) {
+  const { width } = useWindowDimensions();
+  const { user, isAuthReadyForUI } = useAuth();
+
   if (Platform.OS !== "web") return null;
-  const h = getTabHeaderSpacerHeight({ variant, hasContextBar });
-  return <View style={{ height: h }} />;
+
+  const hasLoggedInAccountRow = Boolean(isAuthReadyForUI && user);
+  const hasLoginButtonRow = Boolean(showLoginButton && isAuthReadyForUI && !user);
+
+  const h = computeTabHeaderSpacerHeight({
+    variant,
+    hasContextBar,
+    windowWidth: width,
+    hasLoggedInAccountRow,
+    hasLoginButtonRow,
+  });
+
+  return <View style={{ height: h }} accessibilityElementsHidden importantForAccessibility="no" />;
 }

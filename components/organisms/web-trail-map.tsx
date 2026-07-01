@@ -209,7 +209,8 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     color: color.textMuted,
-    fontSize: 10,
+    fontSize: 11,
+    lineHeight: 14,
     textAlign: "center",
   },
 });

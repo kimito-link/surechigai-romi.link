@@ -36,11 +36,13 @@ import {
 import { isLivePresenceFresh, shortPlaceLabel } from "../core/live-presence.js";
 import { isHomeMasked } from "../core/privacy.js";
 import { isLocationVisibleToOthers, shouldMaskHomeCellFromShare } from "../core/location-visibility.js";
+import { HOME_MASK_MIN_NIGHT_VISITS } from "../core/home-mask.js";
 import {
   resolvePrefectureCreatorProfiles,
   toPrefectureCreatorListProfile,
 } from "./prefecture-creator-profiles.js";
 import { isValidShareSlug, normalizeTwitterUsername } from "../../../lib/twitter-username.js";
+import { hasAmbiguousShareSlugChars, randomShareSlug } from "../../../lib/share-slug.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
 
@@ -1203,20 +1205,10 @@ function usernameFromName(name: string | null): string | null {
   return normalizeTwitterUsername(name);
 }
 
-/** 12文字の base62 風ランダムスラッグ（連番ID非公開のため）。 */
-function randomShareSlug(): string {
-  const chars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const bytes = new Uint8Array(12);
-  globalThis.crypto.getRandomValues(bytes);
-  let out = "";
-  for (let i = 0; i < bytes.length; i++) out += chars[bytes[i] % chars.length];
-  return out;
-}
-
 /**
  * ユーザーの公開共有スラッグを取得（無ければ生成して保存）。
  * 既に設定済みならそれを返す。生成は UNIQUE 衝突時に数回リトライ。
+ * I/l 等の紛らわしい文字を含む旧スラッグは次回アクセス時に再生成する。
  */
 export async function getOrCreateUserShareSlug(
   db: DB,
@@ -1228,37 +1220,22 @@ export async function getOrCreateUserShareSlug(
     .where(eq(users.id, userId))
     .limit(1);
   if (rows.length === 0) return null;
-  if (rows[0].shareSlug && isValidShareSlug(rows[0].shareSlug)) return rows[0].shareSlug;
-
-  // 無効な shareSlug（表示名など）が入っている場合は上書き生成する
-  if (rows[0].shareSlug && !isValidShareSlug(rows[0].shareSlug)) {
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const slug = randomShareSlug();
-      try {
-        await db.update(users).set({ shareSlug: slug }).where(eq(users.id, userId));
-        return slug;
-      } catch {
-        // UNIQUE 衝突 → 再試行
-      }
-    }
-    return null;
+  if (
+    rows[0].shareSlug &&
+    isValidShareSlug(rows[0].shareSlug) &&
+    !hasAmbiguousShareSlugChars(rows[0].shareSlug)
+  ) {
+    return rows[0].shareSlug;
   }
 
+  // 未設定・無効・紛らわしい shareSlug は上書き生成
   for (let attempt = 0; attempt < 5; attempt++) {
     const slug = randomShareSlug();
     try {
-      await db
-        .update(users)
-        .set({ shareSlug: slug })
-        .where(and(eq(users.id, userId), isNull(users.shareSlug)));
-      const check = await db
-        .select({ shareSlug: users.shareSlug })
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
-      if (check[0]?.shareSlug) return check[0].shareSlug;
+      await db.update(users).set({ shareSlug: slug }).where(eq(users.id, userId));
+      return slug;
     } catch {
-      // UNIQUE 衝突 → 別スラッグで再試行
+      // UNIQUE 衝突 → 再試行
     }
   }
   return null;
@@ -1455,10 +1432,16 @@ export async function getPublicTrailByShareSlug(
  * isSuspended / locationPausedUntil / homeMaskCell を尊重し、
  * 公開してよい場合のみ地点を返す。座標は500m丸め（latGrid/lngGrid）。
  */
+export type GetShareInfoOptions = {
+  /** OGP クローラー向け: 本人が発行した /u/<slug> なので自宅マスクを緩和 */
+  ogpContext?: boolean;
+};
+
 export async function getShareInfoBySlug(
   db: DB,
   slug: string,
   viewerUserId?: number | null,
+  options?: GetShareInfoOptions,
 ): Promise<ShareInfo | null> {
   const userRows = await db
     .select({
@@ -1530,7 +1513,13 @@ export async function getShareInfoBySlug(
   );
   if (!allowed) return null;
 
-  const maskHomeFromShare = shouldMaskHomeCellFromShare(homeMaskCell, viewerUserId, u.id);
+  const effectiveViewerId =
+    options?.ogpContext === true ? u.id : viewerUserId;
+  const maskHomeFromShare = shouldMaskHomeCellFromShare(
+    homeMaskCell,
+    effectiveViewerId,
+    u.id,
+  );
 
   const locRows = await db
     .select({
@@ -1660,6 +1649,164 @@ export async function getMostFrequentH3R8(
     .limit(1);
 
   return rows.length > 0 ? rows[0].h3R8 : null;
+}
+
+/**
+ * 夜間帯（JST 23:00〜05:59）のチェックインだけから自宅候補 h3R8 を推定。
+ * 旅行先の昼チェックインを自宅と誤判定しないため checkIn の homeMaskCell 更新に使う。
+ */
+export async function getMostFrequentNightH3R8(
+  db: DB,
+  userId: number,
+): Promise<string | null> {
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const rows = await db
+    .select({
+      h3R8: locations.h3R8,
+      cnt: sql<number>`count(*)::int`,
+    })
+    .from(locations)
+    .where(
+      and(
+        eq(locations.userId, userId),
+        isNull(locations.deletedAt),
+        gte(locations.recordedAt, since),
+        sql`(extract(hour from ${locations.recordedAt} at time zone 'Asia/Tokyo') >= 23 OR extract(hour from ${locations.recordedAt} at time zone 'Asia/Tokyo') <= 5)`,
+      ),
+    )
+    .groupBy(locations.h3R8)
+    .orderBy(sql`count(*) DESC`)
+    .limit(1);
+
+  if (rows.length === 0 || Number(rows[0].cnt) < HOME_MASK_MIN_NIGHT_VISITS) {
+    return null;
+  }
+  return rows[0].h3R8;
+}
+
+export type ActivePrefectureRow = {
+  prefecture: string;
+  peopleCount: number;
+  liveCount: number;
+};
+
+export type ActivePrefecturesSummary = {
+  prefectures: ActivePrefectureRow[];
+  totalPeople: number;
+};
+
+/**
+ * 公開中のユーザーが「いま／直近24h」にいる都道府県の集計（サイドナビ・図鑑マップ用）。
+ */
+export async function getActivePrefecturesSummary(db: DB): Promise<ActivePrefecturesSummary> {
+  const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const liveStaleBefore = new Date(Date.now() - 5 * 60 * 1000);
+  const liveWindowMs = 30 * 60 * 1000;
+  const now = Date.now();
+
+  type Acc = { userIds: Set<number>; liveCount: number };
+  const byPref = new Map<string, Acc>();
+
+  const bump = (prefecture: string, userId: number, isLive: boolean) => {
+    if (!prefecture) return;
+    let acc = byPref.get(prefecture);
+    if (!acc) {
+      acc = { userIds: new Set(), liveCount: 0 };
+      byPref.set(prefecture, acc);
+    }
+    acc.userIds.add(userId);
+    if (isLive) acc.liveCount += 1;
+  };
+
+  const liveRows = await db
+    .select({
+      userId: userSettings.userId,
+      livePresenceMunicipality: userSettings.livePresenceMunicipality,
+      livePresenceLat: userSettings.livePresenceLat,
+      livePresenceLng: userSettings.livePresenceLng,
+      livePresenceUpdatedAt: userSettings.livePresenceUpdatedAt,
+      trailVisibility: userSettings.trailVisibility,
+    })
+    .from(userSettings)
+    .innerJoin(users, eq(users.id, userSettings.userId))
+    .where(
+      and(
+        eq(userSettings.livePresenceEnabled, true),
+        eq(users.isSuspended, false),
+        gte(userSettings.livePresenceUpdatedAt, liveStaleBefore),
+      ),
+    );
+
+  for (const row of liveRows) {
+    if (!isListedInPrefectureDirectory(parseTrailVisibility(row.trailVisibility))) continue;
+    if (!row.livePresenceUpdatedAt) continue;
+    const pref = classifyLocationToPrefectureName(
+      null,
+      row.livePresenceMunicipality,
+      row.livePresenceLat,
+      row.livePresenceLng,
+    );
+    if (!pref) continue;
+    const isLive = now - row.livePresenceUpdatedAt.getTime() < liveWindowMs;
+    bump(pref, row.userId, isLive);
+  }
+
+  const recentRows = await db
+    .select({
+      userId: locations.userId,
+      prefecture: locations.prefecture,
+      municipality: locations.municipality,
+      lat: locations.lat,
+      lng: locations.lng,
+      latGrid: locations.latGrid,
+      lngGrid: locations.lngGrid,
+      recordedAt: locations.recordedAt,
+      visibility: locations.visibility,
+      trailVisibility: userSettings.trailVisibility,
+    })
+    .from(locations)
+    .innerJoin(users, eq(users.id, locations.userId))
+    .leftJoin(userSettings, eq(userSettings.userId, locations.userId))
+    .where(
+      and(
+        eq(users.isSuspended, false),
+        isNull(locations.deletedAt),
+        gte(locations.recordedAt, since24h),
+      ),
+    );
+
+  for (const row of recentRows) {
+    if (!isLocationVisibleToOthers(row.visibility)) continue;
+    if (
+      !isListedInPrefectureDirectory(
+        parseTrailVisibility(row.trailVisibility ?? "public"),
+      )
+    ) {
+      continue;
+    }
+    const pref = classifyLocationToPrefectureName(
+      row.prefecture,
+      row.municipality,
+      row.lat ?? row.latGrid,
+      row.lng ?? row.lngGrid,
+    );
+    if (!pref) continue;
+    bump(pref, row.userId, false);
+  }
+
+  const prefectures: ActivePrefectureRow[] = [...byPref.entries()]
+    .map(([prefecture, acc]) => ({
+      prefecture,
+      peopleCount: acc.userIds.size,
+      liveCount: acc.liveCount,
+    }))
+    .sort((a, b) => b.peopleCount - a.peopleCount || b.liveCount - a.liveCount);
+
+  const totalPeople = new Set(
+    [...byPref.values()].flatMap((acc) => [...acc.userIds]),
+  ).size;
+
+  return { prefectures, totalPeople };
 }
 
 // ---------------------------------------------------------------------------

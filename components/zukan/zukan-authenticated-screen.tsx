@@ -45,8 +45,17 @@ export function ZukanAuthenticatedScreen() {
     { limit: 500 },
     { ...AUTHENTICATED_QUERY_OPTIONS },
   );
+  const { data: activeData, refetch: refetchActive } = trpc.zukan.activePrefectures.useQuery(
+    undefined,
+    { ...AUTHENTICATED_QUERY_OPTIONS, staleTime: 60_000 },
+  );
   const trailLocations: TrailPoint[] = trailData?.locations ?? [];
   const isLoading = isLoadingAreas || isLoadingTrail;
+
+  const activePrefSet = useMemo(
+    () => new Set((activeData?.prefectures ?? []).map((p) => p.prefecture)),
+    [activeData],
+  );
 
   const mapW = Math.max(320, Math.min(windowWidth - 32, 980));
   const mapH = windowWidth < 640 ? 340 : 460;
@@ -58,7 +67,8 @@ export function ZukanAuthenticatedScreen() {
   const onRefresh = useCallback(() => {
     refetch();
     refetchTrail();
-  }, [refetch, refetchTrail]);
+    refetchActive();
+  }, [refetch, refetchTrail, refetchActive]);
 
   const {
     deletingLocationId,
@@ -122,7 +132,7 @@ export function ZukanAuthenticatedScreen() {
   return (
     <ScreenContainer containerClassName="bg-background">
       <TabScreenHeader
-        title="図鑑"
+        title="みんなの現在地"
         contextKey="zukan"
         showCharacters={false}
         isDesktop={isDesktop}
@@ -141,6 +151,39 @@ export function ZukanAuthenticatedScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: tabInset }]}
       >
         <View style={styles.pageBody}>
+          <Text style={styles.sectionTitle}>みんながいる現在地（都道府県別）</Text>
+          {activeData && activeData.totalPeople > 0 ? (
+            <Text style={styles.sectionLead}>
+              直近24時間で {activeData.totalPeople} 人が公開中の足あとを残しています
+            </Text>
+          ) : null}
+
+          <View style={styles.legendRow}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: palette.kimitoBlue }]} />
+              <Text style={styles.legendText}>いま記録中</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: color.accentIndigo }]} />
+              <Text style={styles.legendText}>あなたの訪問</Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: color.accentAlt }]} />
+              <Text style={styles.legendText}>すれ違い相手</Text>
+            </View>
+          </View>
+
+          <LazyJapanBlockMap
+            visitedPrefSet={visitedPrefSet}
+            encounteredPrefSet={encounteredPrefSet}
+            activePrefSet={activePrefSet}
+            encounterCountMap={encounterCountMap}
+            onPressPrefecture={(pref) => {
+              router.push({ pathname: "/zukan/[prefecture]", params: { prefecture: pref } } as any);
+            }}
+          />
+
+          <Text style={[styles.sectionTitle, styles.sectionTitleSpaced]}>あなたの記録</Text>
           <View style={styles.summaryRow}>
             <View style={styles.summaryCard}>
               <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>
@@ -165,21 +208,6 @@ export function ZukanAuthenticatedScreen() {
               <Text style={styles.summaryLabel} numberOfLines={2}>
                 すれ違った人
               </Text>
-            </View>
-          </View>
-
-          <View style={styles.legendRow}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: color.accentIndigo }]} />
-              <Text style={styles.legendText}>訪問済み</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: color.accentAlt }]} />
-              <Text style={styles.legendText}>すれ違い相手</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: color.border }]} />
-              <Text style={styles.legendText}>未訪問</Text>
             </View>
           </View>
 
@@ -212,16 +240,6 @@ export function ZukanAuthenticatedScreen() {
               </View>
             </View>
           ) : null}
-
-          <Text style={styles.sectionTitle}>みんながいる現在地（都道府県別）</Text>
-          <LazyJapanBlockMap
-            visitedPrefSet={visitedPrefSet}
-            encounteredPrefSet={encounteredPrefSet}
-            encounterCountMap={encounterCountMap}
-            onPressPrefecture={(pref) => {
-              router.push({ pathname: "/zukan/[prefecture]", params: { prefecture: pref } } as any);
-            }}
-          />
 
           {municipalitySummary.length > 0 && (
             <>
@@ -359,6 +377,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textTransform: "uppercase",
     letterSpacing: 0.5,
+  },
+  sectionTitleSpaced: {
+    marginTop: 24,
+  },
+  sectionLead: {
+    color: color.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 6,
   },
   trailMapSection: {
     marginBottom: 20,

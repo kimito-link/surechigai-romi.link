@@ -16,11 +16,29 @@ import {
   getMyVisitedAreas,
   getEncounterUsersByPrefecture,
   getCreatorsByPrefecture,
+  getActivePrefecturesSummary,
   softDeleteLocation,
   setLocationVisibility,
 } from "../db/queries.js";
 
 export const zukanRouter = router({
+  /**
+   * 公開ユーザーが直近24h / リアルタイム居場所でいる都道府県（サイドナビ・図鑑マップ用）。
+   */
+  activePrefectures: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return { prefectures: [], totalPeople: 0 };
+    const summary = await getActivePrefecturesSummary(db);
+    return {
+      prefectures: summary.prefectures.map((row) => ({
+        prefecture: row.prefecture,
+        peopleCount: row.peopleCount,
+        liveCount: row.liveCount,
+      })),
+      totalPeople: summary.totalPeople,
+    };
+  }),
+
   /**
    * 都道府県図鑑。
    * - 自分の訪問エリア（visitedAreas）の prefecture 集計

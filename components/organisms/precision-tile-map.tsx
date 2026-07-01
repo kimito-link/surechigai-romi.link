@@ -141,6 +141,7 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
   const { width: windowWidth } = useWindowDimensions();
   const mapWidth = propWidth ?? Math.max(320, Math.min(windowWidth - 32, 980));
   const mapHeight = propHeight ?? (windowWidth < 640 ? 430 : 560);
+  const isCompactMap = windowWidth < 640;
   const [showDetails, setShowDetails] = useState(false);
   
   const latest = locations[0];
@@ -312,12 +313,17 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
       )}
 
       {showInfoPanel && latest && (
-        <View style={styles.mapInfoPanel}>
+        <View
+          style={[
+            isCompactMap ? styles.mapInfoPanelBottom : styles.mapInfoPanel,
+            { maxWidth: isCompactMap ? mapWidth - 24 : 320 },
+          ]}
+        >
           <Text style={styles.mapInfoEyebrow}>最新の足あと</Text>
-          <Text style={styles.mapInfoTitle} numberOfLines={1}>
+          <Text style={styles.mapInfoTitle} numberOfLines={2}>
             {formatPlace(latest)}
           </Text>
-          <Text style={styles.mapInfoSub} numberOfLines={1}>
+          <Text style={styles.mapInfoSub} numberOfLines={2}>
             {formatDateTime(latest.recordedAt)}
             {latest.accuracyM ? ` / 精度 ±${Math.round(latest.accuracyM)}m` : ""}
           </Text>
@@ -398,13 +404,26 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 12,
     top: 12,
-    maxWidth: 320,
     backgroundColor: color.surface + "ee",
     borderWidth: 1,
     borderColor: color.borderAlt,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
+    zIndex: 5,
+  },
+  mapInfoPanelBottom: {
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 28,
+    backgroundColor: color.surface + "ee",
+    borderWidth: 1,
+    borderColor: color.borderAlt,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    zIndex: 5,
   },
   mapInfoEyebrow: {
     color: color.accentIndigo,

@@ -1,16 +1,18 @@
 # Git プッシュ・デプロイ時の必須ルール
 
-このドキュメントは、AIアシスタントが「コミットしてプッシュして」「デプロイして」と依頼されたときに **忘れずに守る** 手順を記載します。  
-**CLAUDE.md の「Git コミット・プッシュ・デプロイ」セクションと内容を一致させてください。**
+AIアシスタントは **コード変更を完了したら毎回**（ユーザーが明示依頼しなくても）この手順を実行する。  
+**CLAUDE.md / AGENTS.md の「ディレクティブ 4」と `.cursor/rules/commit-push-deploy.mdc` と内容を一致させてください。**
 
 ---
 
-## ルール: push は必ず `all` 権限で実行する
+## ルール: 変更完了 → コミット → プッシュ → デプロイ確認（必須）
 
 | 作業 | 権限 | 備考 |
 |------|------|------|
-| `git add` / `git commit` | `git_write` で可 | 通常どおり |
-| **`git push origin main`** | **必ず `required_permissions: ['all']`** | これがないと認証で失敗する |
+| `pnpm check` | 通常 | エラー 0 を確認してから commit |
+| `git add` / `git commit` | `git_write` で可 | 関連ファイルのみ |
+| **`git push origin main`** | **必ず `all` 権限** | Windows 認証のため |
+| デプロイ確認 | `network` / `all` | GHA または version.json |
 
 ---
 
@@ -23,15 +25,18 @@
 
 ---
 
-## 手順（依頼されたら実行する流れ）
+## 手順（変更完了のたびに実行）
 
-1. 変更をステージ: `git add`（対象パスを指定）
-2. コミット: `git commit -m "..."`（`git_write` で可）
-3. **プッシュ: `git push origin main` を `required_permissions: ['all']` で実行**
-4. ユーザーに「push 完了。Vercel が自動でデプロイします」と伝える
+1. `pnpm check`（エラー 0）
+2. 変更をステージ: `git add`（対象パスを指定。`dist/`・ログ・秘密は除外）
+3. コミット: `git commit -m "..."`
+4. **プッシュ: `git push origin main` を `all` 権限で実行**
+5. **デプロイ確認**: `gh run list --workflow=deploy-vercel.yml --limit 1` または `version.json` の `commitSha`
+6. 失敗時: `gh workflow run deploy-vercel.yml`
 
 ---
 
 ## 更新履歴
 
-- 初回: push を `all` 権限で実行するルールを CLAUDE.md とこの md に明記（忘れないため）。
+- 初回: push を `all` 権限で実行するルールを CLAUDE.md とこの md に明記。
+- 2026-06: 「依頼されたら」→ **変更完了のたび必須** に昇格。`.cursor/rules/commit-push-deploy.mdc` 追加。

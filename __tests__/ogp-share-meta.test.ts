@@ -4,6 +4,8 @@ import {
   buildOgImageSearchParams,
   buildPublicSharePageUrl,
   featureShareLocationFirst,
+  parseShareLocationFromQuery,
+  preferExplicitShareLocation,
 } from "@/lib/ogp/share-meta";
 import { shouldMaskHomeCellFromShare } from "@/modules/encounter/core/location-visibility";
 
@@ -42,6 +44,23 @@ describe("buildPublicSharePageUrl", () => {
     const at = new Date("2026-06-30T12:00:00.000Z");
     expect(buildPublicSharePageUrl("abc123", at)).toBe(
       `https://surechigai.kimito.link/u/abc123?v=${at.getTime()}`,
+    );
+  });
+
+  it("地点ヒントをクエリに含める", () => {
+    const at = new Date("2026-06-30T12:00:00.000Z");
+    expect(
+      buildPublicSharePageUrl("abc123", at, "https://surechigai.kimito.link", {
+        area: "岡谷市",
+        prefecture: "長野県",
+        lat: 36.07,
+        lng: 138.06,
+        hasLocation: true,
+        zoom: 13,
+        recordedAt: at,
+      }),
+    ).toBe(
+      `https://surechigai.kimito.link/u/abc123?v=${at.getTime()}&area=${encodeURIComponent("岡谷市")}&pref=${encodeURIComponent("長野県")}&lat=36.07&lng=138.06&zoom=13`,
     );
   });
 });
@@ -112,5 +131,45 @@ describe("buildOgImageSearchParams", () => {
     });
     expect(params.get("area")).toBe("塩尻市");
     expect(params.get("v")).toBe(String(at.getTime()));
+  });
+});
+
+describe("parseShareLocationFromQuery", () => {
+  it("シェア URL の地点クエリを復元", () => {
+    const hint = parseShareLocationFromQuery({
+      area: "岡谷市",
+      pref: "長野県",
+      lat: "36.07",
+      lng: "138.06",
+      zoom: "13",
+      v: "1782865622212",
+    });
+    expect(hint?.area).toBe("岡谷市");
+    expect(hint?.hasLocation).toBe(true);
+    expect(hint?.lat).toBe(36.07);
+  });
+});
+
+describe("preferExplicitShareLocation", () => {
+  it("明示シェア地点が新しければ優先", () => {
+    const resolved = {
+      area: "千代田区",
+      prefecture: "東京都",
+      lat: 35.68,
+      lng: 139.76,
+      hasLocation: true,
+      zoom: 13,
+      recordedAt: new Date("2026-06-30T13:48:00Z"),
+    };
+    const explicit = {
+      area: "岡谷市",
+      prefecture: "長野県",
+      lat: 36.07,
+      lng: 138.06,
+      hasLocation: true,
+      zoom: 13,
+      recordedAt: new Date("2026-06-30T15:50:00Z"),
+    };
+    expect(preferExplicitShareLocation(resolved, explicit)?.area).toBe("岡谷市");
   });
 });

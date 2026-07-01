@@ -24,11 +24,11 @@ describe("isNarrowTrailRow", () => {
     expect(isNarrowTrailRow(360)).toBe(true);
   });
 
-  it("419px は狭幅=true（閾値未満）", () => {
+  it("479px は狭幅=true（閾値未満）", () => {
     expect(isNarrowTrailRow(NARROW_ROW_WIDTH - 1)).toBe(true);
   });
 
-  it("420px 以上は1行レイアウト", () => {
+  it("480px 以上は1行レイアウト", () => {
     expect(isNarrowTrailRow(NARROW_ROW_WIDTH)).toBe(false);
     expect(isNarrowTrailRow(768)).toBe(false);
   });
@@ -124,8 +124,13 @@ describe("computeAppChromeInsets", () => {
     expect(paddingBottom + tabInset).toBe(108);
   });
 
-  it("Web: 上部はヘッダー高さ + safeAreaTop", () => {
+  it("Webタブ画面: 上部は TabHeaderSpacer に任せ safeAreaTop のみ", () => {
     const { paddingTop } = computeAppChromeInsets({ ...base, inTabs: true });
+    expect(paddingTop).toBe(0);
+  });
+
+  it("Web非タブ画面: 上部はヘッダー高さ + safeAreaTop", () => {
+    const { paddingTop } = computeAppChromeInsets({ ...base, inTabs: false });
     expect(paddingTop).toBe(124);
   });
 });

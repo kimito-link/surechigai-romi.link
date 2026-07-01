@@ -2,7 +2,7 @@ import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSegments } from "expo-router";
 
-import { APP_HEADER_CHROME_HEIGHT } from "@/components/organisms/app-header";
+import { APP_HEADER_CHROME_HEIGHT } from "@/theme/tokens";
 import { tabBar } from "@/theme/tokens";
 import { computeAppChromeInsets } from "@/lib/layout/responsive-layout";
 

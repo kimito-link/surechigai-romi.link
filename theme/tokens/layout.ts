@@ -43,8 +43,21 @@ export const contentMaxWidth = {
   standard: 980,
 } as const;
 
+/** AppHeader が2段になる狭幅しきい値（アカウントピル下段） */
+export const HEADER_NARROW_BREAKPOINT = 480;
+
 /** 1行レイアウトを縦積みへ切り替える狭幅しきい値（履歴行など） */
-export const NARROW_ROW_WIDTH = 420;
+export const NARROW_ROW_WIDTH = HEADER_NARROW_BREAKPOINT;
+
+/** コンテキストバー（ScreenContextBar）の高さ */
+export const SCREEN_CONTEXT_BAR_HEIGHT = 40;
+/** 2行メッセージまで想定したスペーサー用の最大高さ */
+export const SCREEN_CONTEXT_BAR_MAX_HEIGHT = 48;
+
+/** 固定 AppHeader の chrome 高さ（TabHeaderSpacer 計算用） */
+export const APP_HEADER_CHROME_HEIGHT_COMPACT = 68;
+export const APP_HEADER_CHROME_HEIGHT_FULL = 124;
+export const APP_HEADER_CHROME_HEIGHT = APP_HEADER_CHROME_HEIGHT_FULL;
 
 /** 固定タブバー・スクロール inset 計算用定数（_layout / hooks と共有） */
 export const tabBar = {

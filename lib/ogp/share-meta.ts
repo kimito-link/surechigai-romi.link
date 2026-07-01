@@ -18,14 +18,24 @@ export function resolveShareAreaLabel(info: ShareLocationInfo | null | undefined
   return info.area ?? info.prefecture ?? null;
 }
 
-/** X シェア用 URL（?v= で Card キャッシュを bust） */
+/** X シェア用 URL（?v= で Card キャッシュを bust。地点ヒントも付与） */
 export function buildPublicSharePageUrl(
   slug: string,
   recordedAt: Date | null | undefined,
   origin = "https://surechigai.kimito.link",
+  location?: ShareLocationInfo | null,
 ): string {
+  const params = new URLSearchParams();
   const v = recordedAt?.getTime() ?? Date.now();
-  return `${origin}/u/${slug}?v=${v}`;
+  params.set("v", String(v));
+  if (location?.area) params.set("area", location.area);
+  if (location?.prefecture) params.set("pref", location.prefecture);
+  if (location?.hasLocation && location.lat != null && location.lng != null) {
+    params.set("lat", String(location.lat));
+    params.set("lng", String(location.lng));
+    params.set("zoom", String(location.zoom));
+  }
+  return `${origin}/u/${slug}?${params.toString()}`;
 }
 
 export type ShareFeaturedTrailPoint = {
@@ -97,4 +107,54 @@ export function buildOgImageSearchParams(info: ShareLocationInfo): URLSearchPara
     params.set("v", String(info.recordedAt.getTime()));
   }
   return params;
+}
+
+/** /u/<slug>?area=...&lat=... から OGP 用地点ヒントを復元（シェア URL 付属） */
+export function parseShareLocationFromQuery(
+  query: Record<string, string | string[] | undefined>,
+): ShareLocationInfo | null {
+  const single = (key: string): string | undefined => {
+    const v = query[key];
+    return Array.isArray(v) ? v[0] : v;
+  };
+  const area = single("area") ?? null;
+  const prefecture = single("pref") ?? null;
+  const latRaw = single("lat");
+  const lngRaw = single("lng");
+  const zoomRaw = single("zoom");
+  const vRaw = single("v");
+  const lat = latRaw != null ? Number(latRaw) : null;
+  const lng = lngRaw != null ? Number(lngRaw) : null;
+  const zoom = zoomRaw != null ? Number(zoomRaw) : 13;
+  if (lat != null && (!Number.isFinite(lat) || lat < -90 || lat > 90)) return null;
+  if (lng != null && (!Number.isFinite(lng) || lng < -180 || lng > 180)) return null;
+  if (!area && lat == null) return null;
+  const hasLocation =
+    lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
+  const recordedAt =
+    vRaw != null && Number.isFinite(Number(vRaw))
+      ? new Date(Number(vRaw))
+      : null;
+  return {
+    area,
+    prefecture,
+    lat: hasLocation ? lat : null,
+    lng: hasLocation ? lng : null,
+    hasLocation,
+    zoom: Number.isFinite(zoom) ? zoom : 13,
+    recordedAt,
+  };
+}
+
+/** クエリ付きシェア URL の地点ヒントを DB 解決結果より優先（明示シェア時） */
+export function preferExplicitShareLocation(
+  resolved: ShareLocationInfo | null | undefined,
+  explicit: ShareLocationInfo | null | undefined,
+): ShareLocationInfo | null {
+  if (!explicit?.hasLocation || explicit.lat == null || explicit.lng == null) {
+    return resolved ?? null;
+  }
+  if (!resolved?.recordedAt || !explicit.recordedAt) return explicit;
+  if (explicit.recordedAt.getTime() >= resolved.recordedAt.getTime()) return explicit;
+  return resolved;
 }

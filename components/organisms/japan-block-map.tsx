@@ -1,9 +1,12 @@
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from "react-native";
-import { color } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
+import { prefectureShortLabel } from "@/modules/encounter/core/prefecture-labels";
 
 type JapanBlockMapProps = {
   visitedPrefSet: Set<string>;
   encounteredPrefSet: Set<string>;
+  /** 公開ユーザーの直近24h / リアルタイム居場所（みんなの現在地） */
+  activePrefSet?: Set<string>;
   encounterCountMap?: Record<string, number>;
   onPressPrefecture: (prefecture: string) => void;
 };
@@ -29,6 +32,7 @@ const JAPAN_GRID: (string | null)[][] = [
 export function JapanBlockMap({
   visitedPrefSet,
   encounteredPrefSet,
+  activePrefSet,
   encounterCountMap,
   onPressPrefecture,
 }: JapanBlockMapProps) {
@@ -60,21 +64,27 @@ export function JapanBlockMap({
               );
             }
 
+            const isActiveNow = activePrefSet?.has(pref) ?? false;
             const isVisited = visitedPrefSet.has(pref);
             const isEncountered = encounteredPrefSet.has(pref);
             const encounterCount = encounterCountMap?.[pref] || 0;
 
-            const bg = isVisited
+            const bg = isActiveNow
+              ? palette.kimitoBlue + "55"
+              : isVisited
               ? color.accentIndigo + "44"
               : isEncountered
                 ? color.accentAlt + "44"
                 : color.surfaceAlt;
-            const borderColor = isVisited
+            const borderColor = isActiveNow
+              ? palette.kimitoBlue
+              : isVisited
               ? color.accentIndigo
               : isEncountered
                 ? color.accentAlt
                 : color.border;
-            const textColor = isVisited || isEncountered ? color.textPrimary : color.textMuted;
+            const textColor =
+              isActiveNow || isVisited || isEncountered ? color.textPrimary : color.textMuted;
 
             return (
               <Pressable
@@ -95,11 +105,9 @@ export function JapanBlockMap({
               >
                 <Text
                   style={[styles.cellText, { color: textColor, fontSize }]}
-                  adjustsFontSizeToFit
                   numberOfLines={1}
-                  minimumFontScale={0.7}
                 >
-                  {pref.replace(/(都|道|府|県)$/, "")}
+                  {prefectureShortLabel(pref)}
                 </Text>
                 {encounterCount > 0 && (
                   <View style={styles.badge}>

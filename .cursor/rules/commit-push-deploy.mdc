@@ -1,0 +1,30 @@
+---
+description: コード変更完了後は必ずコミット・プッシュ・本番デプロイ確認まで実行する
+alwaysApply: true
+---
+
+# コミット・プッシュ・デプロイ（必須）
+
+機能修正・UI 変更・バグ修正を完了したら、**ユーザーに確認せず**同じターン内で以下まで必ず実行する。
+
+## 手順
+
+1. `pnpm check`（エラー 0）
+2. 関連テストがあれば実行
+3. 関連ファイルのみ `git add` → `git commit`（`.env` 等の秘密は含めない）
+4. `git push origin main`（Windows ではサンドボックス無効＝`all` 権限）
+5. **デプロイ完了確認**
+   - `gh run list --workflow=deploy-vercel.yml --limit 1` で success
+   - または `https://surechigai.kimito.link/version.json` の `commitSha` が push した SHA と一致
+6. workflow 失敗時: `gh workflow run deploy-vercel.yml`
+
+## 禁止
+
+- 「コミットしますか？」「デプロイしますか？」と聞いて止まる
+- push だけしてデプロイ確認を省略する
+- `dist/`・ログ・一時ファイルをコミットに含める
+
+## 参照
+
+- 詳細: `docs/DEPLOY-PUSH-RULE.md`
+- 本番: https://surechigai.kimito.link/（`main` push → `.github/workflows/deploy-vercel.yml`）

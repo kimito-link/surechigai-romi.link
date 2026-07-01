@@ -149,10 +149,10 @@ export default function TabLayout() {
             name="zukan"
             options={{
               lazy: true,
-              title: "図鑑",
-              tabBarAccessibilityLabel: "図鑑 — 訪れた場所",
+              title: "現在地",
+              tabBarAccessibilityLabel: "みんなの現在地 — 都道府県別",
               tabBarIcon: ({ color: iconColor }) => (
-                <IconSymbol size={26} name="book.fill" color={iconColor} />
+                <IconSymbol size={26} name="globe.asia.australia.fill" color={iconColor} />
               ),
             }}
           />

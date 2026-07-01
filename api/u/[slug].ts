@@ -9,7 +9,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getDb } from "../../server/db/connection.js";
 import { getShareInfoBySlug } from "../../modules/encounter/db/queries.js";
-import { buildOgImageSearchParams } from "../../lib/ogp/share-meta.js";
+import {
+  buildOgImageSearchParams,
+  parseShareLocationFromQuery,
+  preferExplicitShareLocation,
+  resolveShareAreaLabel,
+} from "../../lib/ogp/share-meta.js";
 
 const ORIGIN = "https://surechigai.kimito.link";
 
@@ -34,23 +39,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const db = await getDb();
       if (db) {
-        const info = await getShareInfoBySlug(db, slug);
-        if (info) {
-          const who = info.username ? `@${info.username}` : info.name ?? "この人";
-          const place = info.area ?? info.prefecture ?? "どこか";
+        const info = await getShareInfoBySlug(db, slug, undefined, { ogpContext: true });
+        const queryHint = parseShareLocationFromQuery(req.query);
+        const location = preferExplicitShareLocation(
+          info
+            ? {
+                area: info.area,
+                prefecture: info.prefecture,
+                lat: info.lat,
+                lng: info.lng,
+                hasLocation: info.hasLocation,
+                zoom: info.zoom,
+                recordedAt: info.recordedAt,
+              }
+            : null,
+          queryHint,
+        );
+
+        if (info || location) {
+          const who = info?.username ? `@${info.username}` : info?.name ?? "この人";
+          const place =
+            resolveShareAreaLabel(location) ??
+            resolveShareAreaLabel(
+              info
+                ? {
+                    area: info.area,
+                    prefecture: info.prefecture,
+                    lat: info.lat,
+                    lng: info.lng,
+                    hasLocation: info.hasLocation,
+                    zoom: info.zoom,
+                    recordedAt: info.recordedAt,
+                  }
+                : null,
+            ) ??
+            "どこか";
           title = `${who} は ${place} にいるよ｜君斗りんくのすれ違ひ通信`;
           description = `${place} で記録された足あと。会いたい君がいる現在地をたどろう。`;
-          if (info.username) ogParams.set("name", info.username);
-          const built = buildOgImageSearchParams({
-            area: info.area,
-            prefecture: info.prefecture,
-            lat: info.lat,
-            lng: info.lng,
-            hasLocation: info.hasLocation,
-            zoom: info.zoom,
-            recordedAt: info.recordedAt,
-          });
-          built.forEach((value, key) => ogParams.set(key, value));
+          if (info?.username) ogParams.set("name", info.username);
+          if (location) {
+            const built = buildOgImageSearchParams(location);
+            built.forEach((value, key) => ogParams.set(key, value));
+          }
         }
       }
     } catch {

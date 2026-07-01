@@ -9,7 +9,8 @@ import {
 import { usePathname, useRouter, type Href } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color, palette } from "@/theme/tokens";
-import { hrefToTabPrefetchKey, usePrefetchTab } from "@/hooks/use-tab-prefetch";
+import { NavLivePrefecturePanel } from "@/components/molecules/nav-live-prefecture-panel";
+import { usePrefetchTab } from "@/hooks/use-tab-prefetch";
 import type { TabPrefetchKey } from "@/lib/bootstrap/prefetch-tab-data";
 
 export const WEB_SIDE_NAV_WIDTH = 200;
@@ -24,6 +25,13 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
+  {
+    href: "/(tabs)/zukan",
+    label: "みんなの現在地",
+    icon: "public",
+    activePaths: ["/zukan"],
+    prefetchKey: "zukan",
+  },
   {
     href: "/(tabs)",
     label: "ポスト",
@@ -44,13 +52,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: "event",
     activePaths: ["/events"],
     prefetchKey: "events",
-  },
-  {
-    href: "/(tabs)/zukan",
-    label: "図鑑",
-    icon: "menu-book",
-    activePaths: ["/zukan"],
-    prefetchKey: "zukan",
   },
   {
     href: "/(tabs)/map",
@@ -90,6 +91,7 @@ export function WebSideNav() {
   return (
     <View style={styles.nav}>
       <Text style={styles.brand}>君斗りんく</Text>
+      <NavLivePrefecturePanel />
       {NAV_ITEMS.map((item) => {
         const active = isActive(pathname, item);
         return (
