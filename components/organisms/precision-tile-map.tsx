@@ -8,6 +8,8 @@ import {
   MAX_TILE_LAT,
   clamp,
   fitCenterZoom,
+  pixelToLatLng,
+  latLngToWorldPixel,
   type TrailPoint,
 } from "@/lib/map/tile-geo";
 
@@ -16,6 +18,8 @@ export {
   MAX_TILE_LAT,
   clamp,
   fitCenterZoom,
+  pixelToLatLng,
+  latLngToWorldPixel,
   type TrailPoint,
 } from "@/lib/map/tile-geo";
 
@@ -30,17 +34,6 @@ type VisibleTile = {
   left: number;
   top: number;
 };
-
-export function latLngToWorldPixel(lat: number, lng: number, zoom: number): Pixel {
-  const clampedLat = clamp(lat, -MAX_TILE_LAT, MAX_TILE_LAT);
-  const sinLat = Math.sin((clampedLat * Math.PI) / 180);
-  const scale = TILE_SIZE * 2 ** zoom;
-
-  return {
-    x: ((lng + 180) / 360) * scale,
-    y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale,
-  };
-}
 
 export function getVisibleTiles(
   center: { lat: number; lng: number },
@@ -124,6 +117,9 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
     markerIcon?: React.ComponentProps<typeof MaterialIcons>["name"];
     /** 最新地点マーカーの一辺サイズ(px)。小さい地図で地図中心を隠さないために縮小できる。 */
     markerSize?: number;
+    /** 地図クリックで座標を選べる（PC Web 向け位置修正） */
+    interactive?: boolean;
+    onCoordinateSelect?: (coords: { lat: number; lng: number }) => void;
   }
 
   export function PrecisionTileMap({
@@ -137,6 +133,8 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
     userImageUrl,
     markerIcon = "my-location",
     markerSize = 44,
+    interactive = false,
+    onCoordinateSelect,
   }: PrecisionTileMapProps) {
   const { width: windowWidth } = useWindowDimensions();
   const mapWidth = propWidth ?? Math.max(320, Math.min(windowWidth - 32, 980));
@@ -187,6 +185,12 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
   );
   
   const latestPosition = projected[0]?.pixel ?? { x: mapWidth / 2, y: mapHeight / 2 };
+
+  const handleMapPress = (locationX: number, locationY: number) => {
+    if (!interactive || !onCoordinateSelect) return;
+    const coords = pixelToLatLng(locationX, locationY, topLeft, zoom);
+    onCoordinateSelect(coords);
+  };
   
   const metersPerPixel = metersPerPixelAtLat(center.lat, zoom);
   const accuracyRadius = clamp(((latest?.accuracyM ?? 25) / metersPerPixel), 22, 180);
@@ -231,6 +235,17 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
             opacity={0.82}
           />
         </Svg>
+      ) : null}
+
+      {interactive ? (
+        <Pressable
+          style={[StyleSheet.absoluteFill, styles.mapTapLayer]}
+          onPress={(e) => {
+            const { locationX, locationY } = e.nativeEvent;
+            handleMapPress(locationX, locationY);
+          }}
+          accessibilityLabel="地図をタップして位置を修正"
+        />
       ) : null}
 
       {latest && (
@@ -284,7 +299,8 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
             </View>
           )}
           <Pressable
-            onPress={() => setShowDetails(!showDetails)}
+            onPress={interactive ? undefined : () => setShowDetails(!showDetails)}
+            disabled={interactive}
             style={[
               styles.latestMarker,
               {
@@ -367,6 +383,9 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: color.bg + "55",
   },
+  mapTapLayer: {
+    zIndex: 2,
+  },
   svgOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -399,6 +418,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.42,
     shadowRadius: 18,
+    zIndex: 3,
   },
   mapInfoPanel: {
     position: "absolute",

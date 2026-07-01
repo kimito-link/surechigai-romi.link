@@ -1564,7 +1564,7 @@ export async function getShareInfoBySlug(
       lat: useExact ? loc.lat : loc.latGrid,
       lng: useExact ? loc.lng : loc.lngGrid,
       hasLocation: true,
-      zoom: useExact ? 16 : 13,
+      zoom: useExact ? 14 : 13,
       precise,
       recordedAt: loc.recordedAt,
     };

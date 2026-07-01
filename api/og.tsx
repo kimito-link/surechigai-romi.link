@@ -85,6 +85,15 @@ function toBase64(buf: ArrayBuffer): string {
 const TILE = 256;
 const TILE_UA =
   "surechigai-romi-og/1.0 (+https://surechigai-romi.link; contact@surechigai-romi.link)";
+const TILE_LOAD_TIMEOUT_MS = 2200;
+const OGP_MAX_ZOOM = 14;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
 
 function lngToTileX(lng: number, z: number): number {
   return ((lng + 180) / 360) * Math.pow(2, z);
@@ -166,6 +175,35 @@ async function loadMapTiles(lat: number, lng: number, zoom: number): Promise<Til
   return settled.filter((t): t is Tile => t !== null);
 }
 
+/** MapTiler Static Maps: 1 リクエストで背景取得（X クローラーのタイムアウト対策） */
+async function loadStaticMapImage(
+  lat: number,
+  lng: number,
+  zoom: number,
+): Promise<string | null> {
+  const key = process.env.MAPTILER_KEY;
+  if (!key) return null;
+  const style = process.env.MAPTILER_STYLE || "streets-v2";
+  const z = Math.min(Math.max(zoom, 3), OGP_MAX_ZOOM);
+  const url = `https://api.maptiler.com/maps/${style}/static/${lng},${lat},${z}/${WIDTH}x${HEIGHT}.png?key=${key}`;
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(TILE_LOAD_TIMEOUT_MS) });
+    if (!r.ok) return null;
+    const buf = await r.arrayBuffer();
+    return `data:image/png;base64,${toBase64(buf)}`;
+  } catch {
+    return null;
+  }
+}
+
+async function loadMapTilesWithTimeout(
+  lat: number,
+  lng: number,
+  zoom: number,
+): Promise<Tile[]> {
+  return withTimeout(loadMapTiles(lat, lng, zoom), TILE_LOAD_TIMEOUT_MS, []);
+}
+
 export default async function handler(req: Request): Promise<Response> {
   try {
     return await renderOgImage(req);
@@ -181,7 +219,10 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
   const lngRaw = parseFloat(searchParams.get("lng") ?? "");
   const hasCoord =
     !options?.gradientOnly && Number.isFinite(latRaw) && Number.isFinite(lngRaw);
-  const zoom = Math.min(Math.max(parseInt(searchParams.get("zoom") ?? "13", 10) || 13, 3), 17);
+  const zoom = Math.min(
+    Math.max(parseInt(searchParams.get("zoom") ?? "13", 10) || 13, 3),
+    OGP_MAX_ZOOM,
+  );
   const area = (searchParams.get("area") ?? "").slice(0, 24);
   const pref = (searchParams.get("pref") ?? "").slice(0, 12);
   const name = (searchParams.get("name") ?? "").slice(0, 24);
@@ -197,16 +238,31 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
 
   // 必要文字をまとめてサブセット取得
   const fontText = `${brand}${tagline}${placeLabel}${handleLine}にいるよのどこか日本SURECHIGAINOW@`;
-  const [fonts, mapTiles] = await Promise.all([
+  const [fonts, staticMap, mapTiles] = await Promise.all([
     loadFonts(fontText),
-    hasCoord ? loadMapTiles(latRaw, lngRaw, zoom) : Promise.resolve([] as Tile[]),
+    hasCoord ? loadStaticMapImage(latRaw, lngRaw, zoom) : Promise.resolve(null),
+    hasCoord ? loadMapTilesWithTimeout(latRaw, lngRaw, zoom) : Promise.resolve([] as Tile[]),
   ]);
   const hasFont = fonts.length > 0;
   const fontFamily = fonts[0]?.name ?? "sans-serif";
 
-  // 背景: OSM タイル合成 or ブランドグラデーション（タイル取得失敗時）
+  // 背景: Static Map / OSM タイル合成 / ブランドグラデーション
   const background =
-    mapTiles.length > 0
+    staticMap
+      ? h("img", {
+          src: staticMap,
+          width: WIDTH,
+          height: HEIGHT,
+          style: {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: WIDTH,
+            height: HEIGHT,
+            objectFit: "cover",
+          },
+        })
+      : mapTiles.length > 0
       ? h(
           "div",
           {

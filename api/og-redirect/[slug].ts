@@ -1,13 +1,12 @@
 /**
- * OGP 画像への 302 リダイレクト（Node）。
- * HTML meta の og:image はクエリ少なめのこの URL を指し、
- * X/Twitter が Location ヘッダー経由で /api/og?lat=... を取得する。
+ * OGP 画像プロキシ（Node）。
+ * slug から地点を解決し /api/og を内部 fetch して PNG を 200 で返す。
+ * X/Twitter は og:image の 302 追従が不安定なためリダイレクトは使わない。
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getDb } from "../../server/db/connection.js";
 import { getShareInfoBySlug } from "../../modules/encounter/db/queries.js";
 import {
-  buildOgImageSearchParams,
   buildOgRedirectImageTarget,
   parseShareLocationFromQuery,
   preferExplicitShareLocation,
@@ -28,13 +27,42 @@ function toShareLocation(info: NonNullable<Awaited<ReturnType<typeof getShareInf
   };
 }
 
+/** X/Twitter は og:image の 302 追従が不安定なため、200 で PNG を返す */
+async function proxyOgImage(target: string): Promise<{ ok: boolean; body?: Buffer; contentType?: string }> {
+  try {
+    const ogRes = await fetch(target, {
+      headers: {
+        Accept: "image/png,image/*",
+        "User-Agent": "surechigai-og-redirect/1.0 (+https://surechigai.kimito.link)",
+      },
+      signal: AbortSignal.timeout(12_000),
+    });
+    if (!ogRes.ok) return { ok: false };
+    const body = Buffer.from(await ogRes.arrayBuffer());
+    return {
+      ok: true,
+      body,
+      contentType: ogRes.headers.get("content-type") ?? "image/png",
+    };
+  } catch {
+    return { ok: false };
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const slugParam = req.query.slug;
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
 
   if (!slug || !/^[A-Za-z0-9]{1,16}$/.test(slug)) {
+    const fallback = await proxyOgImage(`${ORIGIN}/api/og`);
+    if (fallback.ok && fallback.body) {
+      res.setHeader("Content-Type", fallback.contentType ?? "image/png");
+      res.setHeader("Cache-Control", "public, max-age=60");
+      res.status(200).send(fallback.body);
+      return;
+    }
     res.setHeader("Cache-Control", "public, max-age=60");
-    res.redirect(302, `${ORIGIN}/api/og`);
+    res.status(502).send("OGP image unavailable");
     return;
   }
 
@@ -62,6 +90,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     version: v ?? location?.recordedAt?.getTime() ?? Date.now(),
   });
 
-  res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300, stale-while-revalidate=86400");
-  res.redirect(302, target);
+  const proxied = await proxyOgImage(target);
+  if (proxied.ok && proxied.body) {
+    res.setHeader("Content-Type", proxied.contentType ?? "image/png");
+    res.setHeader(
+      "Cache-Control",
+      "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
+    );
+    res.status(200).send(proxied.body);
+    return;
+  }
+
+  const fallback = await proxyOgImage(`${ORIGIN}/api/og`);
+  if (fallback.ok && fallback.body) {
+    res.setHeader("Content-Type", fallback.contentType ?? "image/png");
+    res.setHeader("Cache-Control", "public, max-age=60");
+    res.status(200).send(fallback.body);
+    return;
+  }
+
+  res.setHeader("Cache-Control", "public, max-age=60");
+  res.status(502).send("OGP image unavailable");
 }

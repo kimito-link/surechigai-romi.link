@@ -19,6 +19,32 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+/** 地図上のクリック座標 → 緯度経度（PrecisionTileMap の projectPoint の逆変換） */
+export function pixelToLatLng(
+  x: number,
+  y: number,
+  topLeft: { x: number; y: number },
+  zoom: number,
+): { lat: number; lng: number } {
+  const scale = TILE_SIZE * 2 ** zoom;
+  const worldX = x + topLeft.x;
+  const worldY = y + topLeft.y;
+  const lng = (worldX / scale) * 360 - 180;
+  const latRad = Math.atan(Math.sinh(Math.PI * (1 - (2 * worldY) / scale)));
+  const lat = clamp((latRad * 180) / Math.PI, -MAX_TILE_LAT, MAX_TILE_LAT);
+  return { lat, lng };
+}
+
+export function latLngToWorldPixel(lat: number, lng: number, zoom: number): { x: number; y: number } {
+  const clampedLat = clamp(lat, -MAX_TILE_LAT, MAX_TILE_LAT);
+  const sinLat = Math.sin((clampedLat * Math.PI) / 180);
+  const scale = TILE_SIZE * 2 ** zoom;
+  return {
+    x: ((lng + 180) / 360) * scale,
+    y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale,
+  };
+}
+
 /**
  * 複数の点がすべて収まる中心座標とズームを算出。
  */

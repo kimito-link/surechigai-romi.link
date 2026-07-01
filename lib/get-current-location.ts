@@ -25,6 +25,8 @@ export type PreciseLocationAnchor = {
 
 export type CheckinLocationOptions = {
   preciseAnchor?: PreciseLocationAnchor | null;
+  /** 直近の足あと（スマホ高精度を PC Wi-Fi 測位より優先） */
+  preciseAnchors?: PreciseLocationAnchor[];
 };
 
 const WEB_BALANCED: PositionOptions = {
@@ -39,10 +41,14 @@ const WEB_HIGH_ACCURACY: PositionOptions = {
   maximumAge: 0,
 };
 
-const ANCHOR_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+const ANCHOR_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const ANCHOR_MAX_DISTANCE_M = 300;
-const ANCHOR_MAX_ACCURACY_M = 50;
-const PC_COARSE_ACCURACY_M = 50;
+const DESKTOP_TRAIL_MAX_DISTANCE_M = 1500;
+const DESKTOP_RECENT_MAX_DISTANCE_M = 2000;
+const ANCHOR_MAX_ACCURACY_M = 100;
+const ANCHOR_PRECISE_ACCURACY_M = 50;
+const PC_COARSE_ACCURACY_M = 35;
+const DESKTOP_RECENT_TRAIL_MS = 30 * 60 * 1000;
 
 export function isDesktopWeb(): boolean {
   if (Platform.OS !== "web" || typeof window === "undefined") return false;
@@ -65,13 +71,13 @@ export function haversineMeters(
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/** PCの粗い測位を、直近のスマホ高精度足あとに寄せる（同一場所での端末差を縮める） */
+/** PCの粗い測位を、直近の高精度足あとに寄せる（同一場所での端末差を縮める） */
 export function refineWithPreciseAnchor(
   pos: CurrentLocation,
   anchor: PreciseLocationAnchor | null | undefined,
 ): CurrentLocation {
   if (!anchor) return pos;
-  if (anchor.accuracyM == null || anchor.accuracyM > ANCHOR_MAX_ACCURACY_M) return pos;
+  if (anchor.accuracyM == null || anchor.accuracyM > ANCHOR_PRECISE_ACCURACY_M) return pos;
 
   const posAccuracy = pos.accuracy ?? Number.POSITIVE_INFINITY;
   if (posAccuracy <= PC_COARSE_ACCURACY_M) return pos;
@@ -87,6 +93,55 @@ export function refineWithPreciseAnchor(
     lng: anchor.lng,
     accuracy: anchor.accuracyM ?? pos.accuracy,
   };
+}
+
+function pickBestTrailAnchor(anchors: PreciseLocationAnchor[]): PreciseLocationAnchor | null {
+  const now = Date.now();
+  const valid = anchors.filter(
+    (a) =>
+      a.accuracyM != null &&
+      a.accuracyM <= ANCHOR_MAX_ACCURACY_M &&
+      now - new Date(a.recordedAt).getTime() >= 0 &&
+      now - new Date(a.recordedAt).getTime() <= ANCHOR_MAX_AGE_MS,
+  );
+  if (valid.length === 0) return null;
+
+  return [...valid].sort((a, b) => {
+    const accDiff = (a.accuracyM ?? 999) - (b.accuracyM ?? 999);
+    if (accDiff !== 0) return accDiff;
+    return new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime();
+  })[0] ?? null;
+}
+
+/** PC ブラウザ: スマホ等で記録した高精度足あとを Wi-Fi 測位より優先 */
+export function refineDesktopCheckinLocation(
+  pos: CurrentLocation,
+  anchors: PreciseLocationAnchor[],
+): CurrentLocation {
+  const best = pickBestTrailAnchor(anchors);
+  if (!best) {
+    return refineWithPreciseAnchor(pos, anchors[0]);
+  }
+
+  const pcAcc = pos.accuracy ?? Number.POSITIVE_INFINITY;
+  const dist = haversineMeters(pos, best);
+  const bestAcc = best.accuracyM ?? Number.POSITIVE_INFINITY;
+  const ageMs = Date.now() - new Date(best.recordedAt).getTime();
+
+  if (Platform.OS === "web" && isDesktopWeb()) {
+    if (bestAcc <= ANCHOR_MAX_ACCURACY_M && dist <= DESKTOP_TRAIL_MAX_DISTANCE_M && pcAcc > PC_COARSE_ACCURACY_M) {
+      return { lat: best.lat, lng: best.lng, accuracy: bestAcc };
+    }
+    if (
+      bestAcc <= ANCHOR_PRECISE_ACCURACY_M &&
+      ageMs <= DESKTOP_RECENT_TRAIL_MS &&
+      dist <= DESKTOP_RECENT_MAX_DISTANCE_M
+    ) {
+      return { lat: best.lat, lng: best.lng, accuracy: bestAcc };
+    }
+  }
+
+  return refineWithPreciseAnchor(pos, best);
 }
 
 function toCurrentLocation(pos: GeolocationPosition): CurrentLocation {
@@ -247,21 +302,31 @@ export async function getCheckinLocation(options?: CheckinLocationOptions): Prom
   if (Platform.OS === "web") {
     const desktop = isDesktopWeb();
     pos = await watchWebLocationBestSample({
-      maxWaitMs: desktop ? 32_000 : 20_000,
-      targetAccuracyM: desktop ? 40 : 25,
-      settleMs: desktop ? 3_000 : 2_000,
+      maxWaitMs: desktop ? 45_000 : 22_000,
+      targetAccuracyM: desktop ? 30 : 25,
+      settleMs: desktop ? 4_000 : 2_000,
     });
   } else {
     pos = await getNativeCheckinLocation();
   }
 
-  return refineWithPreciseAnchor(pos, options?.preciseAnchor);
+  const anchors = options?.preciseAnchors?.length
+    ? options.preciseAnchors
+    : options?.preciseAnchor
+      ? [options.preciseAnchor]
+      : [];
+
+  if (anchors.length > 0) {
+    return refineDesktopCheckinLocation(pos, anchors);
+  }
+
+  return pos;
 }
 
 /** チェックイン測位中の UI 文言 */
 export function getCheckinLocatingLabel(): string {
   if (Platform.OS === "web" && isDesktopWeb()) {
-    return "位置を精密測位中…（PCは最大30秒）";
+    return "位置を精密測位中…（PCは最大45秒）";
   }
   return "位置を取得中…";
 }
