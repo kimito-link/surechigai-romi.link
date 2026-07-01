@@ -15,6 +15,8 @@ interface BrandTaglineProps {
   align?: "left" | "center";
   /** 濃色ヒーロー向け（guest トップ LCP） */
   variant?: "default" | "heroDark";
+  /** ゲストホーム LCP 向け — 「現在地」を大きく */
+  lcpProminent?: boolean;
   /** 文字色のトーン: light=濃いネイビー(淡色地向け) */
   style?: TextStyle;
 }
@@ -23,6 +25,7 @@ export function BrandTagline({
   compact = true,
   align = "center",
   variant = "default",
+  lcpProminent = false,
   style,
 }: BrandTaglineProps) {
   const onDark = variant === "heroDark";
@@ -45,8 +48,10 @@ export function BrandTagline({
       style={{ alignItems: align === "center" ? "center" : "flex-start" }}
       accessibilityLabel="会いたい君がいる現在地"
     >
-      <Text style={[styles.line1, onDark && styles.line1OnDark]}>会いたい君がいる</Text>
-      <Text style={[styles.line2, onDark && styles.line2OnDark]}>現在地</Text>
+      <Text style={[styles.line1, onDark && styles.line1OnDark, lcpProminent && styles.line1Lcp]}>
+        会いたい君がいる
+      </Text>
+      <Text style={[styles.line2, onDark && styles.line2OnDark, lcpProminent && styles.line2Lcp]}>現在地</Text>
     </View>
   );
 }
@@ -88,5 +93,14 @@ const styles = StyleSheet.create({
     color: palette.kimitoOrange,
     fontSize: 32,
     fontWeight: "900",
+  },
+  line1Lcp: {
+    fontSize: 20,
+    fontWeight: "800",
+  },
+  line2Lcp: {
+    fontSize: 36,
+    fontWeight: "900",
+    marginTop: 4,
   },
 });

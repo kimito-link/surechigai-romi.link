@@ -1,4 +1,4 @@
-import { scheduleAfterWindowLoad } from "@/lib/schedule-after-idle";
+import { scheduleAfterIdle, scheduleAfterWindowLoad } from "@/lib/schedule-after-idle";
 
 const PREFETCH_MODULES = [
   () => import("@/components/post/post-authenticated-screen"),
@@ -41,11 +41,20 @@ export function prefetchHeavyTabChunks(): () => void {
   return runPrefetch(PREFETCH_MODULES);
 }
 
-/** Guest Web: LCP 後に tRPC / 集まり guest chunk を先読み（`/→/events` 短縮）。 */
+/** Guest Web: LCP 確定後 idle で tRPC / 集まり guest chunk を先読み。 */
 export function prefetchGuestTabChunks(): () => void {
   if (guestStarted || typeof window === "undefined") {
     return () => {};
   }
   guestStarted = true;
-  return runPrefetch(GUEST_PREFETCH_MODULES);
+  return scheduleAfterWindowLoad(() =>
+    scheduleAfterIdle(
+      () => {
+        for (const load of GUEST_PREFETCH_MODULES) {
+          void load().catch(() => {});
+        }
+      },
+      { fallbackDelayMs: 2_000, timeoutMs: 5_000 },
+    ),
+  );
 }

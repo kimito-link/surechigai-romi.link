@@ -2,92 +2,28 @@
  * ログイン誘導バナー（プレビュー画面の先頭に置く）
  */
 import { View, Text, StyleSheet } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { usePathname } from "expo-router";
-import { useState } from "react";
-import { color, palette } from "@/theme/tokens";
-import { buildSignInHref } from "@/lib/clerk-route";
-import { useAuth } from "@/hooks/use-auth";
-import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
+import { LoginPreviewBannerExtras, type LoginPreviewBenefit } from "@/components/molecules/login-preview-banner-extras";
+import { palette } from "@/theme/tokens";
 
-interface Benefit {
-  icon: keyof typeof MaterialIcons.glyphMap;
-  label: string;
-}
+export type { LoginPreviewBenefit };
 
-const DEFAULT_BENEFITS: Benefit[] = [
+const DEFAULT_BENEFITS: LoginPreviewBenefit[] = [
   { icon: "place", label: "足あとを正確に残せる" },
   { icon: "groups", label: "通りすがりの人とすれ違える" },
   { icon: "ios-share", label: "現在地をXでシェアできる" },
 ];
 
-function normalizeReturnTo(pathname: string | null): string {
-  if (!pathname || pathname === "/auth/kimito-link") return "/";
-  if (pathname.startsWith("/(tabs)/")) return pathname.replace("/(tabs)", "");
-  if (pathname === "/(tabs)") return "/";
-  return pathname.startsWith("/") ? pathname : `/${pathname}`;
-}
-
 interface LoginPreviewBannerProps {
   headline: string;
-  benefits?: Benefit[];
-}
-
-function BannerBody({
-  headline,
-  benefits,
-  signInHref,
-  isStarting,
-  onNativeLogin,
-}: {
-  headline: string;
-  benefits: Benefit[];
-  signInHref: string;
-  isStarting: boolean;
-  onNativeLogin?: () => void;
-}) {
-  return (
-    <View style={styles.card}>
-      <Text style={styles.headline}>{headline}</Text>
-      <View style={styles.benefits}>
-        {benefits.map((b) => (
-          <View key={b.label} style={styles.benefitRow}>
-            <View style={styles.benefitIcon}>
-              <MaterialIcons name={b.icon} size={15} color={palette.kimitoOrange} />
-            </View>
-            <Text style={styles.benefitText}>{b.label}</Text>
-          </View>
-        ))}
-      </View>
-      <KimitoLoginCta signInHref={signInHref} isStarting={isStarting} onPress={onNativeLogin} />
-      <Text style={styles.note}>無料・1タップ / 新規登録もこちら</Text>
-    </View>
-  );
+  benefits?: LoginPreviewBenefit[];
 }
 
 export function LoginPreviewBanner({ headline, benefits = DEFAULT_BENEFITS }: LoginPreviewBannerProps) {
-  const pathname = usePathname();
-  const signInHref = buildSignInHref(normalizeReturnTo(pathname));
-  const { login } = useAuth();
-  const [isStarting, setIsStarting] = useState(false);
-
-  const handleNativeLogin = async () => {
-    setIsStarting(true);
-    try {
-      await login(normalizeReturnTo(pathname));
-    } finally {
-      setIsStarting(false);
-    }
-  };
-
   return (
-    <BannerBody
-      headline={headline}
-      benefits={benefits}
-      signInHref={signInHref}
-      isStarting={isStarting}
-      onNativeLogin={() => void handleNativeLogin()}
-    />
+    <View style={styles.card}>
+      <Text style={styles.headline}>{headline}</Text>
+      <LoginPreviewBannerExtras benefits={benefits} />
+    </View>
   );
 }
 
@@ -105,34 +41,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     marginBottom: 12,
-  },
-  benefits: {
-    gap: 8,
-    marginBottom: 14,
-  },
-  benefitRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  benefitIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: palette.white,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  benefitText: {
-    flex: 1,
-    color: color.textPrimary,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  note: {
-    color: palette.kimitoInkMuted,
-    fontSize: 12,
-    textAlign: "center",
-    marginTop: 8,
   },
 });
