@@ -79,7 +79,7 @@ export function OnboardingNavigation({
           accessibilityLabel={isLastSlide ? "はじめる" : "次へ"}
         >
           <Text style={[styles.nextButtonText, isLastSlide && styles.completeButtonText]}>
-            {isLastSlide ? "はじめる ✨" : "次へ →"}
+            {isLastSlide ? "はじめる" : "次へ →"}
           </Text>
         </TouchableOpacity>
       </View>

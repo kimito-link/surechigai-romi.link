@@ -2,12 +2,13 @@
  * OnboardingSlide — midnight signal テーマ（DESIGN.md 準拠）
  */
 
-import { View, Text, StyleSheet, Dimensions, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions, useWindowDimensions, Pressable, Platform } from "react-native";
 import { Image } from "expo-image";
 import Animated, { FadeIn, SlideInRight, SlideOutLeft } from "react-native-reanimated";
 import type { OnboardingSlide as SlideType, OnboardingSlideAccent } from "../constants";
-import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
 import { palette } from "@/theme/tokens";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { navigate } from "@/lib/navigation";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -16,8 +17,6 @@ const characterImages = {
   konta: require("@/assets/images/characters/konta/kitsune-yukkuri-smile-mouth-open.png"),
   tanune: require("@/assets/images/characters/tanunee/tanuki-yukkuri-smile-mouth-open.png"),
 };
-
-const logoImage = require("@/assets/images/logos/kimitolink-logo.jpg");
 
 const ACCENT: Record<OnboardingSlideAccent, string> = {
   pink: palette.primary500,
@@ -56,6 +55,53 @@ function SignalGlow({ accent }: { accent: OnboardingSlideAccent }) {
   );
 }
 
+function InstallSlideActions({ accent }: { accent: string }) {
+  const { isInstallable, promptInstall } = usePwaInstall();
+
+  const handleInstall = () => {
+    void promptInstall();
+  };
+
+  const handleInstructions = () => {
+    navigate.toInstallInstructions();
+  };
+
+  if (Platform.OS !== "web") return null;
+
+  return (
+    <Animated.View entering={FadeIn.delay(420).duration(320)} style={styles.installActions}>
+      {isInstallable ? (
+        <Pressable
+          onPress={handleInstall}
+          style={({ pressed }) => [
+            styles.installPrimaryBtn,
+            { backgroundColor: accent },
+            pressed && { opacity: 0.9 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="アプリをインストール"
+        >
+          <Text style={styles.installPrimaryText}>インストール</Text>
+        </Pressable>
+      ) : null}
+      <Pressable
+        onPress={handleInstructions}
+        style={({ pressed }) => [
+          styles.installSecondaryBtn,
+          { borderColor: accent + "66" },
+          pressed && { opacity: 0.85 },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel="追加方法を見る"
+      >
+        <Text style={[styles.installSecondaryText, { color: accent }]}>
+          {isInstallable ? "手順を見る" : "追加方法を見る"}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
   const { width } = useWindowDimensions();
   const compact = width < 380;
@@ -68,30 +114,26 @@ export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
       return (
         <View style={styles.allCharactersContainer}>
           <Image source={characterImages.konta} style={styles.sideCharacter} contentFit="contain" />
-          <Image source={characterImages.rinku} style={styles.mainCharacter} contentFit="contain" />
+          <Image source={characterImages.rinku} style={styles.heroCharacter} contentFit="contain" />
           <Image source={characterImages.tanune} style={styles.sideCharacter} contentFit="contain" />
         </View>
       );
     }
-    if (slide.characterType === "brand") {
-      return (
-        <View style={styles.singleCharacterContainer}>
-          <Image source={APP_BRAND_ICON} style={styles.brandCharacter} contentFit="contain" />
-        </View>
-      );
-    }
-    if (slide.characterType === "rinku") {
-      return (
-        <View style={styles.singleCharacterContainer}>
-          <Image source={characterImages.rinku} style={styles.largeCharacter} contentFit="contain" />
-        </View>
-      );
-    }
-    const src =
-      slide.characterType === "konta" ? characterImages.konta : characterImages.tanune;
+
+    const isRinku = slide.characterType === "rinku";
+    const src = isRinku
+      ? characterImages.rinku
+      : slide.characterType === "konta"
+        ? characterImages.konta
+        : characterImages.tanune;
+
     return (
       <View style={styles.singleCharacterContainer}>
-        <Image source={src} style={styles.largeCharacter} contentFit="contain" />
+        <Image
+          source={src}
+          style={isRinku ? styles.heroCharacter : styles.largeCharacter}
+          contentFit="contain"
+        />
       </View>
     );
   };
@@ -108,12 +150,6 @@ export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
         <View style={[styles.chipDot, { backgroundColor: accent }]} />
         <Text style={[styles.chipText, { color: accent }]}>{slide.chip}</Text>
       </Animated.View>
-
-      {slide.showLogo ? (
-        <Animated.View entering={FadeIn.delay(120).duration(320)} style={styles.logoContainer}>
-          <Image source={logoImage} style={styles.logo} contentFit="contain" />
-        </Animated.View>
-      ) : null}
 
       <Animated.View entering={FadeIn.delay(160).duration(320)} style={styles.characterWrapper}>
         {renderCharacters()}
@@ -141,6 +177,8 @@ export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
           ))}
         </Animated.View>
       ) : null}
+
+      {slide.id === "install" ? <InstallSlideActions accent={accent} /> : null}
     </Animated.View>
   );
 }
@@ -191,14 +229,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.3,
   },
-  logoContainer: {
-    marginBottom: 12,
-  },
-  logo: {
-    width: 160,
-    height: 52,
-    borderRadius: 8,
-  },
   characterWrapper: {
     marginBottom: 20,
   },
@@ -211,11 +241,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  mainCharacter: {
-    width: 76,
-    height: 76,
-    marginHorizontal: 6,
-  },
   sideCharacter: {
     width: 56,
     height: 56,
@@ -224,10 +249,9 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
   },
-  brandCharacter: {
-    width: 128,
-    height: 128,
-    borderRadius: 28,
+  heroCharacter: {
+    width: 168,
+    height: 168,
   },
   title: {
     fontSize: 30,
@@ -277,5 +301,34 @@ const styles = StyleSheet.create({
     color: "#E5E5E5",
     flex: 1,
     lineHeight: 20,
+  },
+  installActions: {
+    width: "100%",
+    maxWidth: 340,
+    gap: 10,
+    marginTop: 8,
+  },
+  installPrimaryBtn: {
+    minHeight: 48,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  installPrimaryText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  installSecondaryBtn: {
+    minHeight: 44,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  installSecondaryText: {
+    fontSize: 14,
+    fontWeight: "700",
   },
 });

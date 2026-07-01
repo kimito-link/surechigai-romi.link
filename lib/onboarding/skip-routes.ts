@@ -7,6 +7,7 @@ export function shouldSkipOnboarding(pathname: string | null | undefined): boole
   if (path.startsWith("/lp")) return true;
   if (path.startsWith("/sign-in") || path.startsWith("/sign-up")) return true;
   if (path === "/admin" || path.startsWith("/admin/")) return true;
+  if (path === "/install-instructions" || path.startsWith("/install-instructions")) return true;
 
   return false;
 }

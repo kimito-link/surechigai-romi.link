@@ -1,11 +1,13 @@
 /**
- * 君斗りんくのすれ違ひ通信 — 初回オンボーディング（星野ロミ型・価値ファースト）
+ * 君斗りんくのすれ違ひ通信 — 初回オンボーディング v5（ゆっくりりんく中心）
  */
 
-export const ONBOARDING_STORAGE_KEY = "@onboarding_completed_v4";
+export const ONBOARDING_STORAGE_KEY = "@onboarding_completed_v5";
 export const POST_LOGIN_LOCATION_INTRO_KEY = "@post_login_location_intro_v1";
 
 export type OnboardingSlideAccent = "pink" | "purple" | "teal" | "signal";
+
+export type OnboardingCharacterType = "all" | "rinku" | "konta" | "tanune";
 
 export interface OnboardingSlide {
   id: string;
@@ -14,8 +16,9 @@ export interface OnboardingSlide {
   description: string;
   accent: OnboardingSlideAccent;
   features?: string[];
-  characterType?: "all" | "brand" | "rinku" | "konta" | "tanune";
-  showLogo?: boolean;
+  characterType: OnboardingCharacterType;
+  /** Web + 非 standalone のときだけ表示 */
+  webInstallOnly?: boolean;
 }
 
 export const ONBOARDING_SLIDES: OnboardingSlide[] = [
@@ -30,8 +33,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
       "思い出の場所にもう一度行ける",
       "推しの軌跡をファンがたどれる",
     ],
-    characterType: "brand",
-    showLogo: false,
+    characterType: "rinku",
   },
   {
     id: "live-map",
@@ -57,7 +59,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
       "封筒が届くかもしれない",
       "タイムシフトで過去30日もマッチ",
     ],
-    characterType: "brand",
+    characterType: "rinku",
   },
   {
     id: "trail",
@@ -73,6 +75,20 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
     characterType: "tanune",
   },
   {
+    id: "install",
+    chip: "ホーム画面に追加",
+    title: "アプリのように\nすぐ開ける",
+    description: "ホーム画面に追加すると\nチェックインが1タップで始まる",
+    accent: "signal",
+    features: [
+      "ブラウザのアドレスバー不要",
+      "オフラインでも起動画面から再開",
+      "通知や位置の許可もスムーズ",
+    ],
+    characterType: "rinku",
+    webInstallOnly: true,
+  },
+  {
     id: "start",
     chip: "はじめる",
     title: "さあ、\n扉を開こう",
@@ -83,7 +99,6 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
       "移動専用Xアカウントの利用を推奨",
       "ログイン後、位置の許可でチェックイン",
     ],
-    characterType: "brand",
-    showLogo: false,
+    characterType: "rinku",
   },
 ];

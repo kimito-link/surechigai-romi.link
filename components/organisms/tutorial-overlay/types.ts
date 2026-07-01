@@ -16,9 +16,8 @@ export const CHARACTER_IMAGES = {
   tanune_normal: require("@/assets/images/characters/tanunee/tanuki-yukkuri-normal-mouth-open.png"),
   tanune_smile: require("@/assets/images/characters/tanunee/tanuki-yukkuri-smile-mouth-open.png"),
   tanune_blink: require("@/assets/images/characters/tanunee/tanuki-yukkuri-blink-mouth-open.png"),
-  // 君斗りんく（メイン）
-  kimitolink: require("@/assets/images/characters/KimitoLink.png"),
-  idol: require("@/assets/images/characters/idolKimitoLink.png"),
+  // 君斗りんく（メイン — ゆっくりりんく）
+  kimitolink: require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png"),
 };
 
 export type CharacterKey = keyof typeof CHARACTER_IMAGES;

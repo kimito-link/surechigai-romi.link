@@ -37,7 +37,7 @@ export const SURECHIGAI_TUTORIAL_STEPS: TutorialStep[] = [
   {
     message: "軌跡を\nあとからたどる",
     subMessage: "「軌跡」タブ — 正確な地図と市区町村図鑑",
-    character: "idol",
+    character: "rinku_smile",
     speech: "移動専用Xアカウントの利用もおすすめ。さあ、行こう！",
     messagePosition: "center",
     tapToContinue: true,

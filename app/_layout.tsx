@@ -26,6 +26,7 @@ import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallb
 import { GestureRoot } from "@/components/providers/gesture-root";
 import { WebDocumentHead } from "@/components/brand/web-document-head";
 import { OnboardingWrapper } from "@/components/providers/onboarding-wrapper";
+import { OnboardingProvider } from "@/features/onboarding/context/OnboardingProvider";
 
 const ClerkRootProvider = lazy(() =>
   import("@/components/providers/clerk-root-provider").then((m) => ({
@@ -173,13 +174,17 @@ export default function RootLayout() {
           <SafeAreaFrameContext.Provider value={frame}>
             <SafeAreaInsetsContext.Provider value={insets}>
               <AppShell liteBoundary={useGuestWebShell}>
-                <OnboardingWrapper>{shellContent}</OnboardingWrapper>
+                <OnboardingProvider>
+                  <OnboardingWrapper>{shellContent}</OnboardingWrapper>
+                </OnboardingProvider>
               </AppShell>
             </SafeAreaInsetsContext.Provider>
           </SafeAreaFrameContext.Provider>
         ) : (
           <AppShell liteBoundary={useGuestWebShell}>
-            <OnboardingWrapper>{shellContent}</OnboardingWrapper>
+            <OnboardingProvider>
+              <OnboardingWrapper>{shellContent}</OnboardingWrapper>
+            </OnboardingProvider>
           </AppShell>
         )}
       </SafeAreaProvider>

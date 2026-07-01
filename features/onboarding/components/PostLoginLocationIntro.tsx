@@ -15,10 +15,11 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { POST_LOGIN_LOCATION_INTRO_KEY } from "@/features/onboarding/constants";
-import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
 import { getCurrentLocation } from "@/lib/get-current-location";
 import { useAuth } from "@/hooks/use-auth";
 import { palette } from "@/theme/tokens";
+
+const RINKU_HERO = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 
 function readIntroDoneSync(): boolean | null {
   if (Platform.OS === "web" && typeof window !== "undefined") {
@@ -100,7 +101,7 @@ export function PostLoginLocationIntro() {
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={handleLater}>
       <View style={styles.backdrop}>
         <View style={styles.card} accessibilityRole="alert">
-          <Image source={APP_BRAND_ICON} style={styles.hero} contentFit="contain" />
+          <Image source={RINKU_HERO} style={styles.hero} contentFit="contain" />
 
           <View style={styles.iconRow}>
             <MaterialIcons name="my-location" size={20} color={palette.teal500} />
@@ -138,7 +139,7 @@ export function PostLoginLocationIntro() {
             style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.8 }]}
             accessibilityRole="button"
           >
-            <Text style={styles.secondaryBtnText}>あとで（チェックイン時に再表示）</Text>
+            <Text style={styles.secondaryBtnText}>位置はチェックイン時に許可できます</Text>
           </Pressable>
         </View>
       </View>
@@ -165,7 +166,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   hero: {
-    width: 88,
+    width: 120,
     height: 120,
     alignSelf: "center",
     marginBottom: 4,

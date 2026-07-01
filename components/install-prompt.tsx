@@ -1,63 +1,45 @@
 import { useState, useEffect } from "react";
 import { View, Text, Pressable, Platform } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useColors } from "@/hooks/use-colors";
 import { color, palette } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
-const STORAGE_KEY = "@install_prompt_dismissed";
+const SHOW_DELAY_MS = 3000;
 
 /**
- * PWAインストールプロンプトコンポーネント
- * 
- * ユーザーに「ホーム画面に追加」を促すバナーを表示します。
- * - すでにインストール済み（standalone mode）なら表示しない
- * - ユーザーが「後で」を選択したら、AsyncStorageに保存して非表示
- * - Web版のみ表示（ネイティブアプリでは不要）
+ * PWA インストールプロンプト — オンボード完了後に表示
  */
 export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
   const colors = useColors();
+  const { shouldShowInstallUi, isInstallable, promptInstall, dismissPrompt, isStandalone } =
+    usePwaInstall();
 
   useEffect(() => {
-    async function checkInstallStatus() {
-      // Web版以外では表示しない
-      if (Platform.OS !== "web") {
-        return;
-      }
+    if (!shouldShowInstallUi) return;
 
-      // すでにホーム画面に追加済みか確認
-      const standalone = window.matchMedia("(display-mode: standalone)").matches;
-      setIsStandalone(standalone);
-
-      if (standalone) {
-        return;
-      }
-
-      // ユーザーが「後で」を選択したか確認
-      const dismissed = await AsyncStorage.getItem(STORAGE_KEY);
-      if (dismissed === "true") {
-        return;
-      }
-
-      // バナーを表示
+    const timer = setTimeout(() => {
       setShowPrompt(true);
-    }
+    }, SHOW_DELAY_MS);
 
-    checkInstallStatus();
-  }, []);
+    return () => clearTimeout(timer);
+  }, [shouldShowInstallUi]);
 
-  const handleDismiss = async () => {
-    await AsyncStorage.setItem(STORAGE_KEY, "true");
+  const handleDismiss = () => {
+    void dismissPrompt();
     setShowPrompt(false);
   };
 
-  const handleShowInstructions = () => {
+  const handlePrimary = () => {
+    if (isInstallable) {
+      void promptInstall();
+      return;
+    }
     navigate.toInstallInstructions();
   };
 
-  if (!showPrompt || isStandalone) {
+  if (!showPrompt || isStandalone || Platform.OS !== "web") {
     return null;
   }
 
@@ -82,10 +64,10 @@ export function InstallPrompt() {
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 16, fontWeight: "bold", color: color.textWhite, marginBottom: 4 }}>
-            📱 ホーム画面に追加
+            ホーム画面に追加
           </Text>
           <Text style={{ fontSize: 14, color: color.textWhite + "E6" }}>
-            アプリのように使えます
+            チェックインが1タップで始まります
           </Text>
         </View>
         <Pressable
@@ -94,6 +76,8 @@ export function InstallPrompt() {
             padding: 4,
             opacity: pressed ? 0.6 : 1,
           })}
+          accessibilityRole="button"
+          accessibilityLabel="閉じる"
         >
           <Text style={{ fontSize: 20, color: color.textWhite, fontWeight: "bold" }}>×</Text>
         </Pressable>
@@ -101,7 +85,7 @@ export function InstallPrompt() {
 
       <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
         <Pressable
-          onPress={handleShowInstructions}
+          onPress={handlePrimary}
           style={({ pressed }) => ({
             flex: 1,
             backgroundColor: color.textWhite,
@@ -111,9 +95,10 @@ export function InstallPrompt() {
             alignItems: "center",
             opacity: pressed ? 0.8 : 1,
           })}
+          accessibilityRole="button"
         >
           <Text style={{ color: colors.primary, fontWeight: "600", fontSize: 14 }}>
-            追加方法を見る
+            {isInstallable ? "インストール" : "追加方法を見る"}
           </Text>
         </Pressable>
 
@@ -130,6 +115,7 @@ export function InstallPrompt() {
             alignItems: "center",
             opacity: pressed ? 0.8 : 1,
           })}
+          accessibilityRole="button"
         >
           <Text style={{ color: color.textWhite, fontWeight: "600", fontSize: 14 }}>
             後で

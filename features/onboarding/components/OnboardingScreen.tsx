@@ -9,17 +9,12 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../hooks/useOnboarding";
-import { ONBOARDING_SLIDES } from "../constants";
 import { OnboardingSlide } from "./OnboardingSlide";
 import { OnboardingNavigation } from "./OnboardingNavigation";
 import { APP_VERSION } from "@/shared/version";
 import { palette } from "@/theme/tokens";
 
-interface OnboardingScreenProps {
-  onComplete: () => void;
-}
-
-export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
+export function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const touchMovedRef = useRef(false);
 
@@ -28,6 +23,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     isLastSlide,
     isFirstSlide,
     totalSlides,
+    visibleSlides,
     goToNextSlide,
     goToPrevSlide,
     goToSlide,
@@ -38,13 +34,11 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
 
   const handleComplete = useCallback(async () => {
     await completeOnboarding();
-    onComplete();
-  }, [completeOnboarding, onComplete]);
+  }, [completeOnboarding]);
 
   const handleSkip = useCallback(async () => {
     await completeOnboarding();
-    onComplete();
-  }, [completeOnboarding, onComplete]);
+  }, [completeOnboarding]);
 
   const handleScreenTap = () => {
     if (touchMovedRef.current) return;
@@ -107,7 +101,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
 
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.slideContainer, animatedStyle]}>
-          {ONBOARDING_SLIDES.map((slide, index) => (
+          {visibleSlides.map((slide, index) => (
             <OnboardingSlide key={slide.id} slide={slide} isActive={index === currentSlideIndex} />
           ))}
         </Animated.View>

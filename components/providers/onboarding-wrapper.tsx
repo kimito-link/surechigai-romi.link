@@ -9,7 +9,7 @@ import { shouldSkipOnboarding } from "@/lib/onboarding/skip-routes";
 
 export function OnboardingWrapper({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { hasCompletedOnboarding, completeOnboarding } = useOnboarding();
+  const { hasCompletedOnboarding } = useOnboarding();
 
   if (shouldSkipOnboarding(pathname)) {
     return <>{children}</>;
@@ -20,7 +20,7 @@ export function OnboardingWrapper({ children }: { children: ReactNode }) {
   }
 
   if (hasCompletedOnboarding === false) {
-    return <OnboardingScreen onComplete={completeOnboarding} />;
+    return <OnboardingScreen />;
   }
 
   return <>{children}</>;

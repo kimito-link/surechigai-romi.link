@@ -9,6 +9,7 @@ describe("shouldSkipOnboarding", () => {
   it("skips auth and admin routes", () => {
     expect(shouldSkipOnboarding("/sign-in")).toBe(true);
     expect(shouldSkipOnboarding("/admin/users")).toBe(true);
+    expect(shouldSkipOnboarding("/install-instructions")).toBe(true);
   });
 
   it("shows onboarding on main app tabs", () => {

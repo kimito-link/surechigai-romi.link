@@ -1,5 +1,5 @@
 /**
- * Web タブタイトル / ファビコン — 君斗りんく アイドルキャラ（pnpm brand:icons）
+ * Web タブタイトル / ファビコン — ゆっくりりんく（pnpm brand:icons）
  */
 import Head from "expo-router/head";
 import { Platform } from "react-native";
@@ -26,6 +26,8 @@ export function WebDocumentHead() {
       <title>{PWA_APP_NAME}</title>
       <meta name="application-name" content={PWA_APP_NAME} />
       <meta name="apple-mobile-web-app-title" content={PWA_APP_NAME} />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       <link rel="manifest" href={MANIFEST_HREF} />
       <link rel="icon" href={TAB_ICON} type="image/png" sizes="48x48" />
       <link rel="shortcut icon" href={TAB_ICON} type="image/png" />

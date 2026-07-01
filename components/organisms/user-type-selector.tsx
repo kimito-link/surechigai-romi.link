@@ -20,7 +20,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const characterImages = {
   fan: require("@/assets/images/characters/link/link-yukkuri-normal-mouth-open.png"),
   host: require("@/assets/images/characters/tanunee/tanuki-yukkuri-normal-mouth-open.png"),
-  main: require("@/assets/images/characters/KimitoLink.png"),
+  main: require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png"),
 };
 
 type UserTypeSelectorProps = {
