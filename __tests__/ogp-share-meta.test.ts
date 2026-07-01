@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   resolveShareAreaLabel,
   buildOgImageSearchParams,
+  buildPublicSharePageUrl,
 } from "@/lib/ogp/share-meta";
+import { shouldMaskHomeCellFromShare } from "@/modules/encounter/core/location-visibility";
 
 describe("resolveShareAreaLabel", () => {
   it("area を優先", () => {
@@ -31,6 +33,26 @@ describe("resolveShareAreaLabel", () => {
         recordedAt: null,
       }),
     ).toBe("長野県");
+  });
+});
+
+describe("buildPublicSharePageUrl", () => {
+  it("recordedAt を v= クエリに含める", () => {
+    const at = new Date("2026-06-30T12:00:00.000Z");
+    expect(buildPublicSharePageUrl("abc123", at)).toBe(
+      `https://surechigai.kimito.link/u/abc123?v=${at.getTime()}`,
+    );
+  });
+});
+
+describe("shouldMaskHomeCellFromShare", () => {
+  it("本人は自宅マスクをシェアから除外しない", () => {
+    expect(shouldMaskHomeCellFromShare("8928308280fffff", 1, 1)).toBe(false);
+  });
+
+  it("第三者は自宅マスクをシェアから除外する", () => {
+    expect(shouldMaskHomeCellFromShare("8928308280fffff", null, 1)).toBe(true);
+    expect(shouldMaskHomeCellFromShare("8928308280fffff", 2, 1)).toBe(true);
   });
 });
 

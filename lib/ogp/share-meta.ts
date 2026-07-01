@@ -18,6 +18,16 @@ export function resolveShareAreaLabel(info: ShareLocationInfo | null | undefined
   return info.area ?? info.prefecture ?? null;
 }
 
+/** X シェア用 URL（?v= で Card キャッシュを bust） */
+export function buildPublicSharePageUrl(
+  slug: string,
+  recordedAt: Date | null | undefined,
+  origin = "https://surechigai.kimito.link",
+): string {
+  const v = recordedAt?.getTime() ?? Date.now();
+  return `${origin}/u/${slug}?v=${v}`;
+}
+
 /** og:image クエリ（位置更新で v= が変わり X のキャッシュを bust） */
 export function buildOgImageSearchParams(info: ShareLocationInfo): URLSearchParams {
   const params = new URLSearchParams();

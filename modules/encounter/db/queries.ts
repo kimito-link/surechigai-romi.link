@@ -35,7 +35,7 @@ import {
 } from "../core/trail-visibility.js";
 import { isLivePresenceFresh, shortPlaceLabel } from "../core/live-presence.js";
 import { isHomeMasked } from "../core/privacy.js";
-import { isLocationVisibleToOthers } from "../core/location-visibility.js";
+import { isLocationVisibleToOthers, shouldMaskHomeCellFromShare } from "../core/location-visibility.js";
 import {
   resolvePrefectureCreatorProfiles,
   toPrefectureCreatorListProfile,
@@ -1528,6 +1528,8 @@ export async function getShareInfoBySlug(
   );
   if (!allowed) return null;
 
+  const maskHomeFromShare = shouldMaskHomeCellFromShare(homeMaskCell, viewerUserId, u.id);
+
   const locRows = await db
     .select({
       lat: locations.lat,
@@ -1542,21 +1544,18 @@ export async function getShareInfoBySlug(
     })
     .from(locations)
     .where(
-      homeMaskCell
+      maskHomeFromShare
         ? and(
             eq(locations.userId, u.id),
             isNull(locations.deletedAt),
-            ne(locations.h3R8, homeMaskCell),
+            ne(locations.h3R8, homeMaskCell!),
           )
-        : and(eq(locations.userId, u.id), isNull(locations.deletedAt))
+        : and(eq(locations.userId, u.id), isNull(locations.deletedAt)),
     )
     .orderBy(desc(locations.recordedAt))
     .limit(20);
 
-  const isOwner = viewerUserId === u.id;
-  const latestPublic = locRows.find(
-    (loc) => isOwner || isLocationVisibleToOthers(loc.visibility),
-  );
+  const latestPublic = locRows.find((loc) => isLocationVisibleToOthers(loc.visibility));
 
   if (latestPublic) {
     const loc = latestPublic;

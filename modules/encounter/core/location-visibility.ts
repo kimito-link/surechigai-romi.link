@@ -29,3 +29,12 @@ export function isLocationVisibleToOthers(
 ): boolean {
   return parseLocationVisibility(value) === "public";
 }
+
+/** 自宅マスクセルは第三者向けシェアのみ除外（本人の明示シェアは最新公開地点を優先） */
+export function shouldMaskHomeCellFromShare(
+  homeMaskCell: string | null | undefined,
+  viewerUserId: number | null | undefined,
+  ownerUserId: number,
+): boolean {
+  return !!homeMaskCell && viewerUserId !== ownerUserId;
+}

@@ -106,6 +106,8 @@ export default function CheckinAuthenticatedScreen() {
   const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>("locating");
   const [newCount, setNewCount] = useState(0);
   const [checkinLocationName, setCheckinLocationName] = useState<string | null>(null);
+  const [checkinMunicipality, setCheckinMunicipality] = useState<string | null>(null);
+  const [checkinPrefecture, setCheckinPrefecture] = useState<string | null>(null);
   const [checkinAddress, setCheckinAddress] = useState<string | null>(null);
   const [checkinLatLng, setCheckinLatLng] = useState<{lat: number, lng: number} | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
@@ -124,11 +126,16 @@ export default function CheckinAuthenticatedScreen() {
     }
     try {
       const res = await shareSlugMutation.mutateAsync();
-      await shareMyLocation(res.url, res.areaLabel ?? undefined);
+      const areaLabel =
+        checkinMunicipality ??
+        checkinPrefecture ??
+        res.areaLabel ??
+        undefined;
+      await shareMyLocation(res.url, areaLabel);
     } catch {
       showError("共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
     }
-  }, [shareSlugMutation, showError]);
+  }, [shareSlugMutation, showError, checkinMunicipality, checkinPrefecture]);
 
   // アニメーション
   const scale = useSharedValue(1);
@@ -230,6 +237,8 @@ export default function CheckinAuthenticatedScreen() {
         ? `${result.prefecture}${result.municipality || ""}${result.areaName ? ` ${result.areaName}` : ""}`
         : null;
       setCheckinLocationName(locName);
+      setCheckinMunicipality(result.municipality ?? null);
+      setCheckinPrefecture(result.prefecture ?? null);
       setCheckinAddress(result.address ?? null);
       setCheckinLatLng({ lat: result.lat, lng: result.lng });
 
