@@ -16,7 +16,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { POST_LOGIN_LOCATION_INTRO_KEY } from "@/features/onboarding/constants";
 import { getCurrentLocation } from "@/lib/get-current-location";
+import { saveLocationOptIn } from "@/lib/location-opt-in";
 import { useAuth } from "@/hooks/use-auth";
+import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 
 const RINKU_HERO = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
@@ -34,6 +36,10 @@ function readIntroDoneSync(): boolean | null {
 
 export function PostLoginLocationIntro() {
   const { isAuthenticated, isAuthReady } = useAuth();
+  const utils = trpc.useUtils();
+  const setLivePresence = trpc.presence.setEnabled.useMutation({
+    onSuccess: () => utils.settings.invalidate(),
+  });
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -83,13 +89,15 @@ export function PostLoginLocationIntro() {
     setBusy(true);
     try {
       await getCurrentLocation();
+      await saveLocationOptIn();
+      await setLivePresence.mutateAsync({ enabled: true });
       await markDone();
     } catch {
       await markDone();
     } finally {
       setBusy(false);
     }
-  }, [markDone]);
+  }, [markDone, setLivePresence]);
 
   const handleLater = useCallback(async () => {
     await markDone();
@@ -110,7 +118,7 @@ export function PostLoginLocationIntro() {
 
           <Text style={styles.title}>正確な場所を残して、{"\n"}あとでたどれる</Text>
           <Text style={styles.body}>
-            位置情報はチェックインと軌跡の表示に使います。すれ違いマッチング用のグリッド丸めとは別に、思い出の場所へ戻れる精度で保存します。
+            位置情報はチェックインと軌跡の表示に使います。許可すると「居場所をリアルタイム公開」も ON になり、みんなの現在地マップに載ります。
           </Text>
 
           <View style={styles.noteBox}>

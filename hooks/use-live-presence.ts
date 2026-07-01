@@ -5,8 +5,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState, Platform, type AppStateStatus } from "react-native";
 import { trpc } from "@/lib/trpc";
-import { LIVE_PRESENCE_PULSE_INTERVAL_MS } from "@/modules/encounter/core/live-presence";
+import {
+  LIVE_PRESENCE_MIN_PULSE_GAP_MS,
+  LIVE_PRESENCE_PULSE_INTERVAL_MS,
+} from "@/modules/encounter/core/live-presence";
 import type { CurrentLocation } from "@/lib/get-current-location";
+import { startWebLiveLocationSession, type LiveLocationSession } from "@/lib/live-location-session";
 
 type PulseInput = {
   lat: number;
@@ -25,30 +29,6 @@ async function readNativeLocation(): Promise<CurrentLocation> {
     lng: pos.coords.longitude,
     accuracy: pos.coords.accuracy,
   };
-}
-
-function readWebLocation(): Promise<CurrentLocation> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === "undefined" || !navigator.geolocation) {
-      reject(new Error("位置情報を取得できません"));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        resolve({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        }),
-      (err) => reject(err),
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 15000 },
-    );
-  });
-}
-
-async function readCurrentLocation(): Promise<CurrentLocation> {
-  if (Platform.OS === "web") return readWebLocation();
-  return readNativeLocation();
 }
 
 /** マイページ等: ON/OFF トグル用（位置送信はしない） */
@@ -102,7 +82,7 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
 
   const liveEnabled = settingsQuery.data?.livePresenceEnabled ?? false;
   const liveEnabledRef = useRef(false);
-  const watchIdRef = useRef<number | null>(null);
+  const webSessionRef = useRef<LiveLocationSession | null>(null);
   const nativeWatchRef = useRef<{ remove: () => void } | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastPulseAtRef = useRef(0);
@@ -115,7 +95,7 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
     async (loc: PulseInput) => {
       if (!liveEnabledRef.current) return;
       const now = Date.now();
-      if (now - lastPulseAtRef.current < 20_000) return;
+      if (now - lastPulseAtRef.current < LIVE_PRESENCE_MIN_PULSE_GAP_MS) return;
       lastPulseAtRef.current = now;
       try {
         await pulseMutation.mutateAsync({
@@ -136,13 +116,8 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
       clearInterval(pulseTimerRef.current);
       pulseTimerRef.current = null;
     }
-    if (Platform.OS === "web") {
-      if (watchIdRef.current != null && typeof navigator !== "undefined") {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-      return;
-    }
+    webSessionRef.current?.stop();
+    webSessionRef.current = null;
     nativeWatchRef.current?.remove();
     nativeWatchRef.current = null;
   }, []);
@@ -151,36 +126,35 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
     stopWatching();
     if (!liveEnabledRef.current) return;
 
+    const onLocation = (loc: CurrentLocation) => {
+      void sendPulse(loc);
+    };
+
+    if (Platform.OS === "web") {
+      const session = startWebLiveLocationSession(onLocation);
+      webSessionRef.current = session;
+
+      // watch の補助（タブ放置時の stale 対策）
+      pulseTimerRef.current = setInterval(() => {
+        if (!liveEnabledRef.current) return;
+        webSessionRef.current?.refreshNow();
+      }, LIVE_PRESENCE_PULSE_INTERVAL_MS);
+      return;
+    }
+
     try {
-      const initial = await readCurrentLocation();
+      const initial = await readNativeLocation();
       await sendPulse(initial);
     } catch {
-      // watch / interval に任せる
+      // watch に任せる
     }
 
     pulseTimerRef.current = setInterval(() => {
       if (!liveEnabledRef.current) return;
-      readCurrentLocation()
+      readNativeLocation()
         .then((loc) => sendPulse(loc))
         .catch(() => {});
     }, LIVE_PRESENCE_PULSE_INTERVAL_MS);
-
-    if (Platform.OS === "web") {
-      if (typeof navigator !== "undefined" && navigator.geolocation) {
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          (pos) => {
-            void sendPulse({
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              accuracy: pos.coords.accuracy,
-            });
-          },
-          () => {},
-          { enableHighAccuracy: true, maximumAge: 30_000, timeout: 25_000 },
-        );
-      }
-      return;
-    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Location = (await import("expo-location")) as any;
@@ -191,7 +165,7 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
       {
         accuracy: Location.Accuracy?.Balanced ?? 4,
         timeInterval: LIVE_PRESENCE_PULSE_INTERVAL_MS,
-        distanceInterval: 40,
+        distanceInterval: 30,
       },
       (pos: { coords: { latitude: number; longitude: number; accuracy: number } }) => {
         void sendPulse({
