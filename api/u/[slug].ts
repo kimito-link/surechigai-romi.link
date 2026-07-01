@@ -3,14 +3,14 @@
  *
  * 公開共有リンク /u/<slug> のクローラー向けメタHTMLを返す Vercel Function。
  * - slug から「最後の記録地点」を解決し、OGP/Twitter Card メタを生成。
- * - og:image は /api/og-redirect/<slug>（200 PNG、内部で軽量 OGP を生成）。
+ * - og:image は /api/og?... を直接指す（1ホップ・軽量 PNG）。
  * - 人間のブラウザは Expo SPA の /u/<slug> 地図画面へ（middleware は bot のみ rewrite）。
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getDb } from "../../server/db/connection.js";
 import { getShareInfoBySlug } from "../../modules/encounter/db/queries.js";
 import {
-  buildOgRedirectMetaUrl,
+  buildOgRedirectImageTarget,
   parseShareLocationFromQuery,
   preferExplicitShareLocation,
   resolveShareAreaLabel,
@@ -40,12 +40,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let description =
     "位置情報で近くにいた人とすれ違える、無料のすれ違い通信。会いたい君がいる現在地をたどろう。";
   let resolvedLocation: ShareLocationInfo | null = null;
+  let shareUsername: string | null = null;
 
   if (slug && /^[A-Za-z0-9]{1,16}$/.test(slug)) {
     try {
       const db = await getDb();
       if (db) {
         const info = await getShareInfoBySlug(db, slug, undefined, { ogpContext: true });
+        shareUsername = info?.username ?? null;
         const queryHint = parseShareLocationFromQuery(req.query);
         resolvedLocation = preferExplicitShareLocation(
           info
@@ -96,10 +98,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const ogImage =
     slug && /^[A-Za-z0-9]{1,16}$/.test(slug)
-      ? buildOgRedirectMetaUrl(
-          slug,
-          resolvedLocation?.recordedAt ?? versionFromQuery,
-        )
+      ? buildOgRedirectImageTarget({
+          origin: ORIGIN,
+          location: resolvedLocation,
+          username: shareUsername,
+          version:
+            resolvedLocation?.recordedAt?.getTime() ??
+            versionFromQuery?.getTime() ??
+            Date.now(),
+        })
       : `${ORIGIN}/api/og`;
   const pageUrl = slug ? `${ORIGIN}/u/${slug}` : ORIGIN;
   const imageAlt = title.replace(/｜.*$/, "").trim();
