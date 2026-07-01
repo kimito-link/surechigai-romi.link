@@ -2,7 +2,7 @@
 
 **実施日:** 2026-06-30  
 **対象 URL:** https://surechigai.kimito.link  
-**デプロイ SHA:** `ecd85dc3ab6ff3a7030ce6fbe05f6a77ee2b10fc`  
+**デプロイ SHA:** `2948ed8136acf3276473fb8b4236f4e7030062f7`（以降 `62d76dd` CI 修正）  
 **監査タグ:** `prod-final`  
 **実行コマンド:**
 
@@ -77,7 +77,7 @@ pnpm e2e:audit       # audit-auth-mobile / audit-auth-desktop を含む
 
 | 項目 | 優先度 | 状態 |
 |------|--------|------|
-| `/checkin` auth — `encounter.checkIn` UNKNOWN_ERROR | 高 | コード側: 生エラーログ + メッセージ強化済（未デプロイ） |
+| `/checkin` auth — `encounter.checkIn` UNKNOWN_ERROR | 高 | 生エラーログ + BAD_REQUEST マッピング済（`2948ed8`） |
 | Auth 6タブ E2E | 中 | auth-state 保存後に `audit-auth-*` 実行 |
 | `/u/[slug]` 公開共有 | 低 | 監査ルート未追加（有効 slug 要） |
 

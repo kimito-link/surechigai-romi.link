@@ -135,18 +135,37 @@ export function toUserFriendlyError(error: unknown): UserFriendlyError {
 
   // tRPC エラーコード
   if (error && typeof error === "object") {
-    const trpcData = (error as { data?: { code?: string; httpStatus?: number } }).data;
-    if (trpcData?.code === "UNAUTHORIZED" || trpcData?.httpStatus === 401) {
+    const trpcData = (error as { data?: { code?: string; httpStatus?: number; message?: string } }).data;
+    const trpcCode = trpcData?.code;
+    const trpcMsg = trpcData?.message?.trim() || errorMessage;
+
+    if (trpcCode === "BAD_REQUEST" || trpcData?.httpStatus === 400) {
+      return {
+        code: "VALIDATION_ERROR",
+        message: trpcMsg.includes("位置精度") || trpcMsg.includes("座標")
+          ? trpcMsg
+          : trpcMsg || ERROR_MESSAGES.VALIDATION_ERROR,
+        canRetry: true,
+      };
+    }
+    if (trpcCode === "UNAUTHORIZED" || trpcData?.httpStatus === 401) {
       return {
         code: "UNAUTHORIZED",
         message: ERROR_MESSAGES.UNAUTHORIZED,
         canRetry: false,
       };
     }
-    if (trpcData?.code === "INTERNAL_SERVER_ERROR" || trpcData?.httpStatus === 500) {
+    if (trpcCode === "INTERNAL_SERVER_ERROR" || trpcData?.httpStatus === 500) {
       return {
         code: "SERVER_ERROR",
         message: ERROR_MESSAGES.SERVER_ERROR,
+        canRetry: true,
+      };
+    }
+    if (trpcCode === "TOO_MANY_REQUESTS" || trpcData?.httpStatus === 429) {
+      return {
+        code: "TIMEOUT",
+        message: "リクエストが多すぎます。しばらく待ってから再度お試しください。",
         canRetry: true,
       };
     }

@@ -124,6 +124,24 @@ pnpm dev
 
 ---
 
+## E2E（Playwright）
+
+```bash
+# 本番向け guest smoke + 全ページ監査（mobile + desktop）
+PLAYWRIGHT_BASE_URL=https://surechigai.kimito.link pnpm e2e
+
+# 監査のみ
+pnpm e2e:audit
+
+# 認証済み E2E 用 — ブラウザで X ログイン完了後 .auth/auth-state.json を保存
+pnpm e2e:auth-save
+```
+
+手動チェックリスト（認証 6タブ）: `docs/critical-features-checklist.md`  
+監査結果: `docs/investigation/full-site-audit-results.md`
+
+---
+
 ## Vercel デプロイ設定
 
 | 設定項目 | 値 |
