@@ -10,6 +10,8 @@ import { color } from "@/theme/tokens";
 type TabQueryShellProps = {
   isLoading: boolean;
   isEmpty: boolean;
+  /** true のとき fetch 中でも children を表示（再訪問 SWR） */
+  keepContentWhileRefetching?: boolean;
   loadingFallback?: ReactNode;
   emptyFallback: ReactNode;
   children: ReactNode;
@@ -19,12 +21,15 @@ type TabQueryShellProps = {
 export function TabQueryShell({
   isLoading,
   isEmpty,
+  keepContentWhileRefetching = false,
   loadingFallback,
   emptyFallback,
   children,
   minHeight = 320,
 }: TabQueryShellProps) {
-  if (isLoading) {
+  const showLoading = isLoading && !keepContentWhileRefetching;
+
+  if (showLoading) {
     return (
       <View testID="tab-query-loading" style={[styles.loadingWrap, { minHeight }]}>
         {loadingFallback ?? <ActivityIndicator size="large" color={color.accentPrimary} />}

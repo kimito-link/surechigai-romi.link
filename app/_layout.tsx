@@ -19,7 +19,7 @@ import {
   shouldUseGuestWebShell,
 } from "@/lib/clerk-public-routes";
 import { startDeferredWebBootstrap } from "@/lib/bootstrap/web-bootstrap";
-import { prefetchHeavyTabChunks } from "@/lib/bootstrap/prefetch-tab-chunks";
+import { prefetchGuestTabChunks, prefetchHeavyTabChunks } from "@/lib/bootstrap/prefetch-tab-chunks";
 import { GuestWebProviders } from "@/components/providers/guest-web-providers";
 import { GuestAuthProvider } from "@/lib/auth-context";
 import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallback";
@@ -94,7 +94,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (Platform.OS === "web") {
       const cancelBootstrap = startDeferredWebBootstrap();
-      const cancelPrefetch = useGuestWebShell ? () => {} : prefetchHeavyTabChunks();
+      const cancelPrefetch = useGuestWebShell ? prefetchGuestTabChunks() : prefetchHeavyTabChunks();
       return () => {
         cancelBootstrap();
         cancelPrefetch();

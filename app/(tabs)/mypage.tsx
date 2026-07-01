@@ -2,7 +2,7 @@
  * マイページ — 認証ゲート。未ログイン時は tRPC / 設定 chunk を読まない。
  */
 import { lazy, Suspense } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/hooks/use-auth";
 import { TabGuestPreviewScreen } from "@/components/tabs/tab-guest-preview-screen";
@@ -33,11 +33,7 @@ export default function MypageScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
   if (!isAuthReadyForUI) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={color.accentPrimary} />
-      </View>
-    );
+    return <ChunkFallback minHeight={360} />;
   }
 
   if (!isAuthenticated) {
@@ -62,15 +58,6 @@ export default function MypageScreen() {
     </Suspense>
   );
 }
-
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F0F4F8",
-  },
-});
 
 const guestStyles = StyleSheet.create({
   profileCard: {

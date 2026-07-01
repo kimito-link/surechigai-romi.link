@@ -1,14 +1,48 @@
-import { View, ActivityIndicator } from "react-native";
-import { color } from "@/theme/tokens";
+import { View, StyleSheet } from "react-native";
 
-/** lazy-heavy-components とは別 chunk（index 初回 eval を軽くする）。 */
+const SKELETON = "#E2E8F0";
+
+/** メイン領域のみ — タブ shell（サイドナビ/フッター）は隠さない。 */
 export function ChunkFallback({ minHeight = 220 }: { minHeight?: number }) {
   return (
-    <View style={{ minHeight, alignItems: "center", justifyContent: "center" }}>
-      <ActivityIndicator color={color.accentPrimary} size="large" />
+    <View style={[styles.wrap, { minHeight }]}>
+      <View style={[styles.line, styles.title, { backgroundColor: SKELETON }]} />
+      <View style={[styles.line, styles.sub, { backgroundColor: SKELETON }]} />
+      <View style={[styles.line, styles.subShort, { backgroundColor: SKELETON }]} />
+      <View style={[styles.card, { backgroundColor: SKELETON }]} />
     </View>
   );
 }
 
 /** @deprecated MapChunkFallback の別名 */
 export const MapChunkFallback = ChunkFallback;
+
+const styles = StyleSheet.create({
+  wrap: {
+    width: "100%",
+    padding: 16,
+    gap: 12,
+    backgroundColor: "#F0F4F8",
+  },
+  line: {
+    borderRadius: 6,
+  },
+  title: {
+    height: 28,
+    width: "55%",
+  },
+  sub: {
+    height: 14,
+    width: "92%",
+  },
+  subShort: {
+    height: 14,
+    width: "72%",
+  },
+  card: {
+    height: 120,
+    width: "100%",
+    borderRadius: 12,
+    marginTop: 4,
+  },
+});

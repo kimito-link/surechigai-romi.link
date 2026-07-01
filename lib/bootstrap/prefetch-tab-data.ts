@@ -15,7 +15,7 @@ const TAB_PREFETCH: Record<TabPrefetchKey, (utils: TrpcUtils) => Promise<unknown
   ],
   checkin: (utils) => [
     utils.settings.get.prefetch(undefined),
-    utils.zukan.myTrail.prefetch({ limit: 1 }),
+    utils.zukan.myTrail.prefetch({ limit: 10 }),
   ],
   events: (utils) => [
     utils.event.listUpcoming.prefetch({ limit: 100 }),

@@ -106,6 +106,7 @@ export function WebTrailMap({
       <TabQueryShell
         isLoading={isLoading}
         isEmpty={locations.length === 0}
+        keepContentWhileRefetching={locations.length > 0}
         loadingFallback={<TabMapLoadingFallback minHeight={320} />}
         emptyFallback={
           <View style={styles.emptyMap}>

@@ -1,46 +1,31 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "expo-router";
 import { shouldDeferTrpcOnGuestWeb } from "@/lib/clerk-public-routes";
 import { scheduleAfterWindowLoad } from "@/lib/schedule-after-idle";
-import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallback";
-
-const PublicWebProvidersLazy = lazy(() =>
-  import("@/components/providers/public-web-providers").then((m) => ({
-    default: m.PublicWebProviders,
-  })),
-);
+import { PublicWebProviders } from "@/components/providers/public-web-providers";
 
 /**
  * Guest Web シェル用: `/` 初回 paint では tRPC/React Query を読まない。
- * 他タブへ移動したら即 load、トップに留まる場合は load 後に idle prefetch。
+ * 他タブへ移動したら即 mount。トップに留まる場合は idle prefetch。
+ * children（タブ shell 含む）は常にアンマウントしない。
  */
 export function GuestWebProviders({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const deferTrpc = shouldDeferTrpcOnGuestWeb(pathname);
-  const needsTrpcNow = !deferTrpc;
-  const [trpcMounted, setTrpcMounted] = useState(false);
+  const [idleTrpcReady, setIdleTrpcReady] = useState(false);
 
   useEffect(() => {
-    if (needsTrpcNow) {
-      setTrpcMounted(true);
-      return;
-    }
+    if (!deferTrpc) return;
     return scheduleAfterWindowLoad(() => {
-      setTrpcMounted(true);
+      setIdleTrpcReady(true);
     });
-  }, [needsTrpcNow]);
+  }, [deferTrpc]);
 
-  if (needsTrpcNow && !trpcMounted) {
-    return <AppBootstrapFallback />;
+  const trpcReady = !deferTrpc || idleTrpcReady;
+
+  if (!trpcReady) {
+    return <>{children}</>;
   }
 
-  if (!trpcMounted) {
-    return <AppBootstrapFallback />;
-  }
-
-  return (
-    <Suspense fallback={<AppBootstrapFallback />}>
-      <PublicWebProvidersLazy>{children}</PublicWebProvidersLazy>
-    </Suspense>
-  );
+  return <PublicWebProviders>{children}</PublicWebProviders>;
 }
