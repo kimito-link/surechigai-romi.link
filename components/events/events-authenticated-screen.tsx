@@ -73,8 +73,6 @@ function CalendarList() {
     return `${m}月${d}日(${wd})`;
   }, [selectedKey]);
 
-  if (q.isLoading && !q.data) return <EventsEmptyState loading />;
-
   return (
     <View style={styles.list}>
       <LazyEventCalendar
@@ -86,7 +84,9 @@ function CalendarList() {
       />
 
       <Text style={styles.sectionLabel}>{selectedLabel}の予定</Text>
-      {selectedEvents.length === 0 ? (
+      {q.isLoading && !q.data ? (
+        <EventsEmptyState loading />
+      ) : selectedEvents.length === 0 ? (
         <EventsEmptyState message={"この日の予定はありません\nカレンダーの色つきの日をタップしてみてください"} />
       ) : (
         selectedEvents.map((e) => <EventCard key={e.id} {...e} />)

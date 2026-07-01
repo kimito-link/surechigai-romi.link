@@ -3,7 +3,7 @@
  */
 import { lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { EventsGuestScreen } from "@/components/events/events-guest-screen";
+import { EventsGuestContent } from "@/components/events/events-guest-content";
 import { ChunkFallback } from "@/lib/chunk-fallback";
 
 const EventsAuthenticatedScreen = lazy(() =>
@@ -20,7 +20,7 @@ export default function EventsScreen() {
   }
 
   if (!isAuthenticated) {
-    return <EventsGuestScreen />;
+    return <EventsGuestContent />;
   }
 
   return (

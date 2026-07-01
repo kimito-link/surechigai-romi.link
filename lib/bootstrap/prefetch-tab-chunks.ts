@@ -41,6 +41,13 @@ export function prefetchHeavyTabChunks(): () => void {
   return runPrefetch(PREFETCH_MODULES);
 }
 
+/** `/events` 直リンク向け — idle 待ちせず guest 集まり chunk を先読み。 */
+export function prefetchGuestEventsImmediate(): void {
+  if (typeof window === "undefined") return;
+  void import("@/components/events/events-guest-content").catch(() => {});
+  void import("@/components/molecules/event-calendar").catch(() => {});
+}
+
 /** Guest Web: LCP 確定後 idle で tRPC / 集まり guest chunk を先読み。 */
 export function prefetchGuestTabChunks(): () => void {
   if (guestStarted || typeof window === "undefined") {

@@ -299,8 +299,6 @@ function CalendarList() {
     return `${m}月${d}日(${wd})`;
   }, [selectedKey]);
 
-  if (q.isLoading) return <EmptyOrLoading loading />;
-
   return (
     <View style={styles.list}>
       <LazyEventCalendar
@@ -312,7 +310,9 @@ function CalendarList() {
       />
 
       <Text style={styles.sectionLabel}>{selectedLabel}の予定</Text>
-      {selectedEvents.length === 0 ? (
+      {q.isLoading && !q.data ? (
+        <EmptyOrLoading loading />
+      ) : selectedEvents.length === 0 ? (
         <EmptyOrLoading message={"この日の予定はありません\nカレンダーの色つきの日をタップしてみてください"} />
       ) : (
         selectedEvents.map((e) => <EventCard key={e.id} {...e} />)
@@ -324,8 +324,10 @@ function CalendarList() {
 /** ライブ中（在席）タブ。 */
 function LiveList() {
   const q = trpc.event.listLive.useQuery(undefined, { refetchInterval: 30_000 });
-  if (q.isLoading) return <EmptyOrLoading loading />;
   const items = q.data ?? [];
+  if (q.isLoading && !q.data) {
+    return <EmptyOrLoading loading />;
+  }
   if (items.length === 0)
     return <EmptyOrLoading message={"今ライブ中の人はいません\nログインすると自分の集まりをライブ表明できます"} />;
   return (
@@ -397,6 +399,8 @@ export function EventsGuestContent() {
         contentContainerStyle={[styles.scroll, { paddingBottom: tabInset }]}
         showsVerticalScrollIndicator={false}
       >
+        {segment === "calendar" && <CalendarList />}
+        {segment === "live" && <LiveList />}
         <LoginPreviewBanner
           headline="ログインすると集まりを主催・ライブ表明できます"
           benefits={[
@@ -405,8 +409,6 @@ export function EventsGuestContent() {
             { icon: "add-circle-outline", label: "ログイン後に自分の集まりを作成できる" },
           ]}
         />
-        {segment === "calendar" && <CalendarList />}
-        {segment === "live" && <LiveList />}
       </ScrollView>
     </ScreenContainer>
   );
