@@ -941,7 +941,7 @@ const styles = StyleSheet.create({
     maxWidth: contentMaxWidth.standard,
     minHeight: 52,
     borderRadius: 14,
-    backgroundColor: palette.twitter,
+    backgroundColor: "#0F1419",
   },
   recheckButton: {
     flexDirection: "row",

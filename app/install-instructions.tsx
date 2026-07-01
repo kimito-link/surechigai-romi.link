@@ -7,7 +7,7 @@ import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
-import { palette } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 
 const RINKU = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 
@@ -68,7 +68,7 @@ export default function InstallInstructionsScreen() {
           accessibilityRole="button"
           accessibilityLabel="戻る"
         >
-          <MaterialIcons name="arrow-back" size={22} color="#F5F5F5" />
+          <MaterialIcons name="arrow-back" size={22} color={palette.kimitoBlue} />
           <Text style={styles.backText}>戻る</Text>
         </Pressable>
 
@@ -124,7 +124,7 @@ export default function InstallInstructionsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: "#0a0a0a",
+    backgroundColor: palette.kimitoBg,
   },
   content: {
     paddingHorizontal: 20,
@@ -136,10 +136,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0a0a0a",
+    backgroundColor: palette.kimitoBg,
   },
   unsupportedText: {
-    color: "#A3A3A3",
+    color: color.textMuted,
   },
   backBtn: {
     flexDirection: "row",
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   backText: {
-    color: "#F5F5F5",
+    color: palette.kimitoBlue,
     fontSize: 15,
     fontWeight: "600",
   },
@@ -169,25 +169,25 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 12,
     fontWeight: "800",
-    color: palette.teal500,
+    color: palette.kimitoOrange,
     marginBottom: 4,
   },
   title: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#F5F5F5",
+    color: palette.kimitoBlue,
     lineHeight: 32,
   },
   doneBox: {
-    backgroundColor: "rgba(255,255,255,0.06)",
+    backgroundColor: palette.kimitoBlueSoft,
     borderRadius: 12,
     padding: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: palette.kimitoBorderSoft,
   },
   doneText: {
-    color: palette.teal500,
+    color: palette.kimitoBlue,
     fontSize: 14,
     fontWeight: "700",
     textAlign: "center",
@@ -195,21 +195,21 @@ const styles = StyleSheet.create({
   installBtn: {
     minHeight: 52,
     borderRadius: 999,
-    backgroundColor: palette.primary500,
+    backgroundColor: palette.kimitoBlue,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
   },
   installBtnText: {
-    color: "#FFFFFF",
+    color: palette.white,
     fontSize: 16,
     fontWeight: "800",
   },
   stepsCard: {
-    backgroundColor: "#171717",
+    backgroundColor: palette.white,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#262626",
+    borderColor: palette.kimitoBorderSoft,
     padding: 18,
     gap: 16,
   },
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: palette.kimitoBlue + "33",
+    backgroundColor: palette.kimitoBlueSoft,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -244,18 +244,18 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#F5F5F5",
+    color: color.textPrimary,
   },
   stepDesc: {
     fontSize: 13,
     lineHeight: 20,
-    color: "#A3A3A3",
+    color: color.textMuted,
   },
   footerNote: {
     marginTop: 20,
     fontSize: 12,
     lineHeight: 18,
-    color: "#737373",
+    color: color.textHint,
     textAlign: "center",
   },
 });

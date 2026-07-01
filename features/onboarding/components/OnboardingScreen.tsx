@@ -12,7 +12,7 @@ import { useOnboarding } from "../hooks/useOnboarding";
 import { OnboardingSlide } from "./OnboardingSlide";
 import { OnboardingNavigation } from "./OnboardingNavigation";
 import { APP_VERSION } from "@/shared/version";
-import { palette } from "@/theme/tokens";
+import { palette, color } from "@/theme/tokens";
 
 export function OnboardingScreen() {
   const insets = useSafeAreaInsets();
@@ -97,7 +97,7 @@ export function OnboardingScreen() {
       accessibilityViewIsModal
       accessibilityLabel="君斗りんくのすれ違ひ通信 初回ガイド"
     >
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.slideContainer, animatedStyle]}>
@@ -130,8 +130,8 @@ export function OnboardingScreen() {
 export function OnboardingBootSplash() {
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <ActivityIndicator size="large" color={palette.primary500} />
+      <StatusBar barStyle="dark-content" />
+      <ActivityIndicator size="large" color={palette.kimitoBlue} />
     </View>
   );
 }
@@ -139,7 +139,7 @@ export function OnboardingBootSplash() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0a0a0a",
+    backgroundColor: palette.kimitoBg,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   versionText: {
-    color: "rgba(245,245,245,0.45)",
+    color: color.textHint,
     fontSize: 11,
     fontWeight: "600",
   },

@@ -71,8 +71,8 @@ export default function CheckinScreen() {
           />
           <Text style={styles.description}>現在地を記録して、すれ違いを探します</Text>
           <View style={styles.buttonWrap}>
-            <View style={[styles.checkinButton, { backgroundColor: color.border, opacity: 0.85 }]}>
-              <MaterialIcons name="location-on" size={48} color={color.textWhite} />
+            <View style={[styles.checkinButton, { backgroundColor: palette.kimitoBlueSoft, borderWidth: 2, borderColor: palette.kimitoBlue }]}>
+              <MaterialIcons name="location-on" size={48} color={palette.kimitoBlue} />
             </View>
             <Text style={styles.buttonLabel}>ログイン後にチェックインできます</Text>
           </View>

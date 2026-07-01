@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 12,
   },
   emptyOverlayText: {
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(255,255,255,0.88)",
     fontSize: 13,
     textAlign: "center",
     lineHeight: 20,
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    color: color.textWhite,
+    color: color.textPrimary,
     fontSize: 14,
     fontWeight: "600",
   },
@@ -651,7 +651,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 14,
     borderRadius: 14,
-    backgroundColor: color.surfaceDark,
+    backgroundColor: color.surfaceEmphasis,
+    borderWidth: 1,
+    borderColor: color.border,
   },
   historyAvatar: {
     width: 48,

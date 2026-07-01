@@ -17,7 +17,7 @@ import { Image } from "expo-image";
 import { POST_LOGIN_LOCATION_INTRO_KEY } from "@/features/onboarding/constants";
 import { getCurrentLocation } from "@/lib/get-current-location";
 import { useAuth } from "@/hooks/use-auth";
-import { palette } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 
 const RINKU_HERO = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 
@@ -150,7 +150,7 @@ export function PostLoginLocationIntro() {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.72)",
+    backgroundColor: "rgba(15,23,42,0.45)",
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
@@ -158,10 +158,10 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 400,
-    backgroundColor: "#171717",
+    backgroundColor: palette.white,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#262626",
+    borderColor: palette.kimitoBorderSoft,
     padding: 22,
     gap: 12,
   },
@@ -180,44 +180,44 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 12,
     fontWeight: "800",
-    color: palette.teal500,
+    color: palette.kimitoOrange,
   },
   title: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#F5F5F5",
+    color: palette.kimitoBlue,
     textAlign: "center",
     lineHeight: 28,
   },
   body: {
     fontSize: 14,
     lineHeight: 22,
-    color: "#D4D4D4",
+    color: color.textSecondary,
     textAlign: "center",
   },
   noteBox: {
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: palette.kimitoBlueSoft,
     borderRadius: 10,
     padding: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: palette.kimitoBorderSoft,
   },
   noteText: {
     fontSize: 12,
     lineHeight: 18,
-    color: "#A3A3A3",
+    color: color.textMuted,
     textAlign: "center",
   },
   primaryBtn: {
     marginTop: 4,
     minHeight: 48,
     borderRadius: 999,
-    backgroundColor: palette.primary500,
+    backgroundColor: palette.kimitoBlue,
     alignItems: "center",
     justifyContent: "center",
   },
   primaryBtnText: {
-    color: "#FFFFFF",
+    color: palette.white,
     fontSize: 15,
     fontWeight: "800",
   },
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   secondaryBtnText: {
-    color: "#A3A3A3",
+    color: color.textMuted,
     fontSize: 13,
     fontWeight: "600",
   },

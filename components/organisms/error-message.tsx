@@ -54,7 +54,7 @@ export function ErrorMessage({ message, onRetry, type = "error" }: ErrorMessageP
     >
       <MaterialIcons name={config.icon} size={24} color={config.iconColor} />
       <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text style={{ color: color.textWhite, fontSize: 14, lineHeight: 20 }}>
+        <Text style={{ color: color.textPrimary, fontSize: 14, lineHeight: 20 }}>
           {message}
         </Text>
       </View>
@@ -76,7 +76,7 @@ export function NetworkError({ onRetry }: { onRetry?: () => void }) {
   return (
     <View style={{ padding: 20, alignItems: "center" }}>
       <MaterialIcons name="wifi-off" size={64} color={color.textSubtle} />
-      <Text style={{ color: color.textWhite, fontSize: 18, fontWeight: "bold", marginTop: 16, marginBottom: 8 }}>
+      <Text style={{ color: color.textPrimary, fontSize: 18, fontWeight: "bold", marginTop: 16, marginBottom: 8 }}>
         接続エラー
       </Text>
       <Text style={{ color: color.textMuted, fontSize: 14, textAlign: "center", marginBottom: 20 }}>
@@ -130,7 +130,7 @@ export function EmptyState({
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
       <MaterialIcons name={icon} size={64} color={color.textSubtle} />
-      <Text style={{ color: color.textWhite, fontSize: 18, fontWeight: "bold", marginTop: 16, marginBottom: 8 }}>
+      <Text style={{ color: color.textPrimary, fontSize: 18, fontWeight: "bold", marginTop: 16, marginBottom: 8 }}>
         {title}
       </Text>
       <Text style={{ color: color.textMuted, fontSize: 14, textAlign: "center" }}>

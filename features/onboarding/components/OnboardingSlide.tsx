@@ -1,12 +1,12 @@
 /**
- * OnboardingSlide — midnight signal テーマ（DESIGN.md 準拠）
+ * OnboardingSlide — kimito.link ライト UI
  */
 
 import { View, Text, StyleSheet, Dimensions, useWindowDimensions, Pressable, Platform } from "react-native";
 import { Image } from "expo-image";
 import Animated, { FadeIn, SlideInRight, SlideOutLeft } from "react-native-reanimated";
 import type { OnboardingSlide as SlideType, OnboardingSlideAccent } from "../constants";
-import { palette } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { navigate } from "@/lib/navigation";
 
@@ -19,9 +19,9 @@ const characterImages = {
 };
 
 const ACCENT: Record<OnboardingSlideAccent, string> = {
-  pink: palette.primary500,
-  purple: palette.accent500,
-  teal: palette.teal500,
+  pink: palette.kimitoOrange,
+  purple: palette.kimitoPurple,
+  teal: palette.teal600,
   signal: palette.kimitoBlue,
 };
 
@@ -31,26 +31,11 @@ interface OnboardingSlideProps {
 }
 
 function SignalGlow({ accent }: { accent: OnboardingSlideAccent }) {
-  const color = ACCENT[accent];
+  const accentColor = ACCENT[accent];
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <View style={[styles.glowOrb, styles.glowOrbA, { backgroundColor: color + "22" }]} />
-      <View style={[styles.glowOrb, styles.glowOrbB, { backgroundColor: color + "14" }]} />
-      {Array.from({ length: 18 }, (_, i) => (
-        <View
-          key={i}
-          style={{
-            position: "absolute",
-            left: `${(i * 17 + 7) % 100}%`,
-            top: `${(i * 23 + 11) % 88}%`,
-            width: i % 3 === 0 ? 2 : 1,
-            height: i % 3 === 0 ? 2 : 1,
-            borderRadius: 2,
-            backgroundColor: i % 4 === 0 ? color : "#FFFFFF",
-            opacity: 0.15 + (i % 5) * 0.08,
-          }}
-        />
-      ))}
+      <View style={[styles.glowOrb, styles.glowOrbA, { backgroundColor: accentColor + "18" }]} />
+      <View style={[styles.glowOrb, styles.glowOrbB, { backgroundColor: accentColor + "10" }]} />
     </View>
   );
 }
@@ -58,21 +43,13 @@ function SignalGlow({ accent }: { accent: OnboardingSlideAccent }) {
 function InstallSlideActions({ accent }: { accent: string }) {
   const { isInstallable, promptInstall } = usePwaInstall();
 
-  const handleInstall = () => {
-    void promptInstall();
-  };
-
-  const handleInstructions = () => {
-    navigate.toInstallInstructions();
-  };
-
   if (Platform.OS !== "web") return null;
 
   return (
     <Animated.View entering={FadeIn.delay(420).duration(320)} style={styles.installActions}>
       {isInstallable ? (
         <Pressable
-          onPress={handleInstall}
+          onPress={() => void promptInstall()}
           style={({ pressed }) => [
             styles.installPrimaryBtn,
             { backgroundColor: accent },
@@ -85,10 +62,10 @@ function InstallSlideActions({ accent }: { accent: string }) {
         </Pressable>
       ) : null}
       <Pressable
-        onPress={handleInstructions}
+        onPress={() => navigate.toInstallInstructions()}
         style={({ pressed }) => [
           styles.installSecondaryBtn,
-          { borderColor: accent + "66" },
+          { borderColor: accent },
           pressed && { opacity: 0.85 },
         ]}
         accessibilityRole="button"
@@ -146,7 +123,7 @@ export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
     >
       <SignalGlow accent={slide.accent} />
 
-      <Animated.View entering={FadeIn.delay(80).duration(320)} style={[styles.chip, { borderColor: accent + "66" }]}>
+      <Animated.View entering={FadeIn.delay(80).duration(320)} style={[styles.chip, { borderColor: accent + "44" }]}>
         <View style={[styles.chipDot, { backgroundColor: accent }]} />
         <Text style={[styles.chipText, { color: accent }]}>{slide.chip}</Text>
       </Animated.View>
@@ -190,7 +167,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 28,
     paddingBottom: 148,
-    backgroundColor: "#0a0a0a",
+    backgroundColor: palette.kimitoBg,
   },
   glowOrb: {
     position: "absolute",
@@ -216,7 +193,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: palette.kimitoBlueSoft,
     marginBottom: 16,
   },
   chipDot: {
@@ -256,7 +233,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: "800",
-    color: "#F5F5F5",
+    color: palette.kimitoBlue,
     textAlign: "center",
     marginBottom: 12,
     lineHeight: 38,
@@ -267,7 +244,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: "rgba(245,245,245,0.88)",
+    color: color.textSecondary,
     textAlign: "center",
     lineHeight: 26,
     marginBottom: 24,
@@ -284,7 +261,7 @@ const styles = StyleSheet.create({
   featureItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    backgroundColor: palette.white,
     paddingVertical: 11,
     paddingHorizontal: 14,
     borderRadius: 10,
@@ -298,7 +275,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 14,
-    color: "#E5E5E5",
+    color: color.textPrimary,
     flex: 1,
     lineHeight: 20,
   },
@@ -315,7 +292,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   installPrimaryText: {
-    color: "#FFFFFF",
+    color: palette.white,
     fontSize: 15,
     fontWeight: "800",
   },
@@ -325,7 +302,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.04)",
+    backgroundColor: palette.white,
   },
   installSecondaryText: {
     fontSize: 14,

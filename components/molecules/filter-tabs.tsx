@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet, ScrollView, Platform } from "react-native";
-import { color } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 import { useCallback } from "react";
 import * as Haptics from "expo-haptics";
 
@@ -65,8 +65,8 @@ export function FilterTabs({
               style={({ pressed }) => [
                 styles.shabettaTab,
                 {
-                  backgroundColor: isActive ? color.surfaceAlt : "transparent",
-                  borderColor: isActive ? color.surfaceAlt : color.textPrimary,
+                  backgroundColor: isActive ? palette.kimitoBlue : "transparent",
+                  borderColor: isActive ? palette.kimitoBlue : palette.kimitoBlue,
                   paddingHorizontal: sizeStyles.paddingHorizontal,
                   paddingVertical: sizeStyles.paddingVertical,
                 },
@@ -77,7 +77,7 @@ export function FilterTabs({
                 style={[
                   styles.shabettaTabText,
                   {
-                    color: isActive ? color.textWhite : color.textMuted,
+                    color: isActive ? color.textOnAccent : color.textMuted,
                     fontSize: sizeStyles.fontSize,
                     fontWeight: isActive ? "600" : "400",
                   },

@@ -36,20 +36,22 @@
 
 ---
 
-### 2. グラデーション背景上のテキストコントラスト比が低い
+### 2. ライト地（kimito UI）でのテキストコントラスト
 
 **問題**:
-- ピンク/紫のグラデーション背景に黒いテキストを表示してしまう
-- WCAG 2.1 AA基準（コントラスト比4.5:1以上）を満たさない
+- 白文字（`textWhite`）を `#E2EDF7` / 白カード上に使う
+- Web で `Link asChild` + `Pressable` のみだと CTA 背景が効かず、白文字だけが残る
+- 旧 midnight ダーク用スタイルをライト shell にそのまま流用
 
 **防止策**:
-- **グラデーション背景上では、必ず白色テキスト（`color.textWhite`）を使用**
-- `TwitterUserCard`に`onGradient` propsを追加し、テキスト色を動的に変更
+- **ライト UI 単一テーマ** — `kimitoBg` / `kimitoBlueSoft` / `white` 上は `textPrimary` / `textMuted`
+- **CTA** — [`KimitoLoginCta`](components/molecules/kimito-login-cta.tsx): 背景 `kimitoBlue` + 白文字
+- **`textWhite`** — `kimitoBlue` / `#0F1419` / 地図オーバーレイ上のみ
 
 **チェックリスト**:
-- [ ] グラデーション背景上のテキスト色は白色か？
-- [ ] WCAG 2.1 AA基準を満たしているか？
-- [ ] `onGradient` propsを使用しているか？
+- [ ] 淡色カード上の文字はネイビー/スレート系か？
+- [ ] WCAG 2.1 AA（4.5:1）を満たしているか？
+- [ ] `pnpm test` の `contrast-tokens.test.ts` が通るか？
 
 ---
 

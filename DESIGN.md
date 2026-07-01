@@ -9,7 +9,7 @@ identity:
     - "後から思い出の場所をたどりたいユーザー"
     - "推しの軌跡を聖地巡礼したいファン"
   mood:
-    - "midnight signal"
+    - "kimito light"
     - "precise location"
     - "nostalgic streetpass"
     - "X-native"
@@ -34,23 +34,15 @@ brandCopy:
     - "ぼかした位置だけを保存"
 
 colorTokens:
-  background: "#0a0a0a"
-  surface: "#171717"
-  surfaceAlt: "#1f1f1f"
-  border: "#262626"
-  borderAlt: "#404040"
-  text: "#f5f5f5"
-  textSecondary: "#d4d4d4"
-  textMuted: "#a3a3a3"
-  primary: "#EC4899"
-  primaryLight: "#F472B6"
-  primaryDark: "#DB2777"
-  accent: "#A855F7"
-  accentDark: "#9333EA"
-  teal: "#14B8A6"
-  tealDark: "#0D9488"
-  twitter: "#1DA1F2"
-  line: "#00B900"
+  background: "#F0F4F8"
+  surface: "#FFFFFF"
+  surfaceEmphasis: "#E2EDF7"
+  border: "#E2E8F0"
+  text: "#0F172A"
+  textSecondary: "#334155"
+  textMuted: "#475569"
+  primary: "#00427B"
+  accent: "#DD6500"
 
 typography:
   family: "system sans; monospace only for coordinates, h3 cells, debug-like data"
@@ -109,11 +101,12 @@ UI、画面文言、レイアウト、配色、余白、モーション、地図
 
 ## Visual Taste
 
-黒を基調に、ピンク、紫、ティールを信号色として使います。  
-背景は夜、UIは電波、ピン、足あと、封筒、レーダーのように「そこに誰かの気配がある」方向へ寄せます。
+kimito.link 親ブランドに合わせ、**淡いクール白（#F0F4F8）** をページ地、**薄青（#E2EDF7）** をヘッダー・強調カード、**ネイビー（#00427B）** と **オレンジ（#DD6500）** をアクセントに使います。  
+アプリ全体はライト UI 単一テーマです（旧 midnight ダークは廃止）。地図ヒーロー上のオーバーレイだけ、読みやすさのため白文字を許容します。
 
 避けるべき方向:
 
+- 黒一色のオンボード/モーダル（ライト shell と混在させない）
 - 汎用SaaSのような白いカード中心の画面
 - ベージュ、淡色グラデーション、抽象的な装飾だけで雰囲気を作る画面
 - 機能説明テキストだけが目立つチュートリアル風の画面
@@ -200,6 +193,14 @@ Appleの「探す」のように、場所が正確にわかることを優先し
 
 モーションは「信号を受信している」「現在地を測位している」「足あとが残った」ことを伝えるために使います。  
 レーダーパルス、スキャンライン、ピンのフォーカス、軽いグローは許容します。画面全体を重くする装飾アニメーションは避けます。
+
+## Contrast Contract（WCAG 2.1 AA）
+
+- **本文（14px+）**: 背景とのコントラスト比 **4.5:1 以上** — `textPrimary` / `textSecondary` / `textMuted` on `kimitoBg` / `white` / `kimitoBlueSoft`
+- **CTA**: 背景 `kimitoBlue` または `#0F1419`（X）+ 文字 `textOnAccent`（白）
+- **禁止**: `textWhite` を `#E2EDF7` / `#FFFFFF` / 白カード上に使用。本文に `opacity < 0.75` を使わない
+- **Web CTA**: `Link asChild` + `Pressable` だけに頼らず、[`KimitoLoginCta`](components/molecules/kimito-login-cta.tsx) のように `<a>` / `Link` へ背景色を直付け
+- **最小サイズ**: 補助テキスト 12px（タブラベル 11px のみ例外）
 
 ## Anti-Slop Checklist
 

@@ -5,7 +5,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { haptics } from "@/lib/haptics";
-import { palette } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 
 interface OnboardingNavigationProps {
   currentIndex: number;
@@ -97,9 +97,9 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingTop: 12,
-    backgroundColor: "rgba(10,10,10,0.92)",
+    backgroundColor: "rgba(240,244,248,0.96)",
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.08)",
+    borderTopColor: palette.kimitoBorderSoft,
   },
   topRow: {
     flexDirection: "row",
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 14,
-    color: "rgba(245,245,245,0.65)",
+    color: color.textMuted,
     textAlign: "right",
   },
   dotsContainer: {
@@ -127,11 +127,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    backgroundColor: palette.kimitoBorderSoft,
   },
   dotActive: {
     width: 22,
-    backgroundColor: palette.primary500,
+    backgroundColor: palette.kimitoBlue,
   },
   buttonsContainer: {
     flexDirection: "row",
@@ -145,34 +145,34 @@ const styles = StyleSheet.create({
   },
   prevButtonText: {
     fontSize: 15,
-    color: "rgba(245,245,245,0.7)",
+    color: color.textMuted,
   },
   nextButton: {
-    backgroundColor: "rgba(255,255,255,0.1)",
+    backgroundColor: palette.white,
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 999,
     minWidth: 128,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: palette.kimitoBorderSoft,
   },
   nextButtonText: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#F5F5F5",
+    color: palette.kimitoBlue,
   },
   completeButton: {
-    backgroundColor: palette.primary500,
-    borderColor: palette.primary500,
+    backgroundColor: palette.kimitoBlue,
+    borderColor: palette.kimitoBlue,
   },
   completeButtonText: {
-    color: "#FFFFFF",
+    color: palette.white,
   },
   hintText: {
     marginTop: 10,
     textAlign: "center",
-    fontSize: 11,
-    color: "rgba(245,245,245,0.4)",
+    fontSize: 12,
+    color: color.textHint,
   },
 });

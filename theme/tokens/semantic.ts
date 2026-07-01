@@ -1,22 +1,20 @@
 /**
  * theme/tokens/semantic.ts
- * アプリ全体の意味（semantic）
- * ここが "components/ 置換の受け皿" になります
- *
- * v6.67: 黒ベース・ピンクアクセント（仕様確定メモ準拠）
- * - ベースカラー: 黒 (#0a0a0a)
- * - 黄色: 完全廃止（全てピンク/パープルに置換）
- * - アクセント色: ピンク・紫・ティールのみ
+ * kimito.link 親ブランド準拠 — ライト UI 単一テーマ
+ * ページ地 #F0F4F8 / ヘッダー・カード #E2EDF7 / ネイビー #00427B / オレンジ #DD6500
  */
 
 import { palette } from "./palette";
 
 export const color = {
-  // Surfaces - Black Base
-  bg: palette.kimitoBg,           // #0a0a0a
-  surface: palette.white,      // #171717
-  surfaceAlt: palette.white,   // #1f1f1f
-  surfaceDark: palette.gray200,  // #121212
+  // Surfaces — kimito ライト
+  bg: palette.kimitoBg,
+  surface: palette.white,
+  surfaceAlt: palette.white,
+  /** 強調カード（ログイン誘導・履歴行など） */
+  surfaceEmphasis: palette.kimitoBlueSoft,
+  /** @deprecated 旧 dark 名。surfaceEmphasis と同値 */
+  surfaceDark: palette.kimitoBlueSoft,
 
   // Borders / dividers
   border: palette.gray400,       // #262626
@@ -29,7 +27,9 @@ export const color = {
   textSubtle: palette.gray750,    // #475569（旧#94A3B8→大幅に濃く）
   textSecondary: palette.gray800, // #334155（ラベル・小見出し）
   textHint: palette.gray700,      // #64748B（プレースホルダ。旧#CBD5E1→読める濃さに）
+  /** ネイビー/黒 CTA・地図オーバーレイ上のみ */
   textWhite: palette.white,
+  textOnAccent: palette.white,
 
   // Accents - kimito.link 親ブランド（ネイビー基調 + 紫/オレンジ）
   accentPrimary: palette.kimitoBlue,      // #00427B（ネイビー・メインアクション）
