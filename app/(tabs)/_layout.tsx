@@ -22,6 +22,7 @@ import {
   WEB_SIDE_NAV_WIDTH,
 } from "@/components/organisms/web-side-nav";
 import { WebAppFooter } from "@/components/organisms/web-app-footer";
+import { PostLoginLocationIntro } from "@/features/onboarding/components/PostLoginLocationIntro";
 
 const CheckinTabIconAuthenticated = lazy(() =>
   import("@/components/tabs/checkin-tab-icon-authenticated").then((m) => ({
@@ -71,6 +72,7 @@ export default function TabLayout() {
     <>
       <WebSideNav />
       {sideNavActive ? <WebAppFooter /> : null}
+      <PostLoginLocationIntro />
       <View style={{ flex: 1, marginLeft: sideNavActive ? WEB_SIDE_NAV_WIDTH : 0 }}>
         <LivePresenceRunner />
         <EventReminderRunner />

@@ -1,29 +1,28 @@
 /**
- * OnboardingScreen Component
- * v6.33: 画面タップで次へ進む機能を追加（チュートリアルと同じUX）
+ * OnboardingScreen — スワイプ / タップ / キーボード操作
  */
 
-import { View, StyleSheet, StatusBar, Platform, Pressable } from "react-native";
+import { useEffect, useRef, useCallback } from "react";
+import { View, StyleSheet, StatusBar, Platform, Text, ActivityIndicator } from "react-native";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle,
-  withTiming,
-  runOnJS,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../hooks/useOnboarding";
 import { ONBOARDING_SLIDES } from "../constants";
 import { OnboardingSlide } from "./OnboardingSlide";
 import { OnboardingNavigation } from "./OnboardingNavigation";
 import { APP_VERSION } from "@/shared/version";
-import { Text } from "react-native";
+import { palette } from "@/theme/tokens";
 
 interface OnboardingScreenProps {
   onComplete: () => void;
 }
 
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
+  const insets = useSafeAreaInsets();
+  const touchMovedRef = useRef(false);
+
   const {
     currentSlideIndex,
     isLastSlide,
@@ -34,81 +33,86 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     goToSlide,
     completeOnboarding,
   } = useOnboarding();
-  
+
   const translateX = useSharedValue(0);
-  
-  const handleComplete = async () => {
+
+  const handleComplete = useCallback(async () => {
     await completeOnboarding();
     onComplete();
-  };
-  
-  const handleSkip = async () => {
+  }, [completeOnboarding, onComplete]);
+
+  const handleSkip = useCallback(async () => {
     await completeOnboarding();
     onComplete();
-  };
-  
-  // 画面タップで次へ進む（チュートリアルと同じUX）
+  }, [completeOnboarding, onComplete]);
+
   const handleScreenTap = () => {
-    // ハプティックフィードバック
+    if (touchMovedRef.current) return;
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    
-    if (isLastSlide) {
-      handleComplete();
-    } else {
-      goToNextSlide();
-    }
+    if (isLastSlide) void handleComplete();
+    else goToNextSlide();
   };
-  
-  // スワイプジェスチャー
+
   const panGesture = Gesture.Pan()
+    .onBegin(() => {
+      touchMovedRef.current = false;
+    })
     .onUpdate((event) => {
+      if (Math.abs(event.translationX) > 8) touchMovedRef.current = true;
       translateX.value = event.translationX;
     })
     .onEnd((event) => {
       const threshold = 50;
-      
-      if (event.translationX < -threshold && !isLastSlide) {
-        runOnJS(goToNextSlide)();
-      } else if (event.translationX > threshold && !isFirstSlide) {
-        runOnJS(goToPrevSlide)();
-      }
-      
+      if (event.translationX < -threshold && !isLastSlide) runOnJS(goToNextSlide)();
+      else if (event.translationX > threshold && !isFirstSlide) runOnJS(goToPrevSlide)();
       translateX.value = withTiming(0, { duration: 200 });
     });
-  
-  // タップジェスチャー
-  const tapGesture = Gesture.Tap()
-    .onEnd(() => {
-      runOnJS(handleScreenTap)();
-    });
-  
-  // スワイプとタップを組み合わせ
+
+  const tapGesture = Gesture.Tap().onEnd(() => {
+    runOnJS(handleScreenTap)();
+  });
+
   const composedGesture = Gesture.Race(panGesture, tapGesture);
-  
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value * 0.3 }],
+    transform: [{ translateX: translateX.value * 0.25 }],
   }));
-  
-  const currentSlide = ONBOARDING_SLIDES[currentSlideIndex];
-  
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === "Enter") {
+        if (isLastSlide) void handleComplete();
+        else goToNextSlide();
+      } else if (e.key === "ArrowLeft" && !isFirstSlide) {
+        goToPrevSlide();
+      } else if (e.key === "Escape") {
+        void handleSkip();
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isLastSlide, isFirstSlide, goToNextSlide, goToPrevSlide, handleComplete, handleSkip]);
+
   return (
-    <View style={[styles.container, { backgroundColor: "#0a1628" }]}>
+    <View
+      style={styles.container}
+      accessibilityViewIsModal
+      accessibilityLabel="君斗りんくのすれ違ひ通信 初回ガイド"
+    >
       <StatusBar barStyle="light-content" />
-      
+
       <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.slideContainer, animatedStyle]}>
           {ONBOARDING_SLIDES.map((slide, index) => (
-            <OnboardingSlide
-              key={slide.id}
-              slide={slide}
-              isActive={index === currentSlideIndex}
-            />
+            <OnboardingSlide key={slide.id} slide={slide} isActive={index === currentSlideIndex} />
           ))}
         </Animated.View>
       </GestureDetector>
-      
+
       <OnboardingNavigation
         currentIndex={currentSlideIndex}
         totalSlides={totalSlides}
@@ -120,11 +124,20 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
         onComplete={handleComplete}
         onDotPress={goToSlide}
       />
-      
-      {/* バージョン表示 */}
-      <View style={styles.versionContainer}>
+
+      <View style={[styles.versionContainer, { top: Math.max(insets.top, 12) + 4 }]}>
         <Text style={styles.versionText}>v{APP_VERSION}</Text>
       </View>
+    </View>
+  );
+}
+
+/** 永続化状態読み込み中 */
+export function OnboardingBootSplash() {
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <ActivityIndicator size="large" color={palette.primary500} />
     </View>
   );
 }
@@ -132,22 +145,24 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#0a0a0a",
+    alignItems: "center",
+    justifyContent: "center",
   },
   slideContainer: {
     flex: 1,
   },
   versionContainer: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 50 : 20,
-    right: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    right: 16,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   versionText: {
-    color: "rgba(255, 255, 255, 0.6)",
-    fontSize: 12,
+    color: "rgba(245,245,245,0.45)",
+    fontSize: 11,
     fontWeight: "600",
   },
 });

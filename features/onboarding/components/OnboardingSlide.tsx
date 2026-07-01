@@ -1,62 +1,54 @@
 /**
- * OnboardingSlide Component
- * v6.31: 宇宙テーマとキャラクター対応
+ * OnboardingSlide — midnight signal テーマ（DESIGN.md 準拠）
  */
 
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
-import Animated, { 
-  FadeIn, 
-  FadeOut,
-  SlideInRight,
-  SlideOutLeft,
-} from "react-native-reanimated";
-import type { OnboardingSlide as SlideType } from "../constants";
+import Animated, { FadeIn, SlideInRight, SlideOutLeft } from "react-native-reanimated";
+import type { OnboardingSlide as SlideType, OnboardingSlideAccent } from "../constants";
+import { palette } from "@/theme/tokens";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-// キャラクター画像
 const characterImages = {
   rinku: require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png"),
   konta: require("@/assets/images/characters/konta/kitsune-yukkuri-smile-mouth-open.png"),
   tanune: require("@/assets/images/characters/tanunee/tanuki-yukkuri-smile-mouth-open.png"),
 };
 
-// ロゴ画像
 const logoImage = require("@/assets/images/logos/kimitolink-logo.jpg");
-
-// アイドル版りんくちゃん
 const idolRinku = require("@/assets/images/characters/idolKimitoLink.png");
+
+const ACCENT: Record<OnboardingSlideAccent, string> = {
+  pink: palette.primary500,
+  purple: palette.accent500,
+  teal: palette.teal500,
+  signal: palette.kimitoBlue,
+};
 
 interface OnboardingSlideProps {
   slide: SlideType;
   isActive: boolean;
 }
 
-// 星を生成するコンポーネント
-function Stars() {
-  const stars = Array.from({ length: 30 }, (_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    top: Math.random() * 100,
-    size: Math.random() * 2 + 1,
-    opacity: Math.random() * 0.5 + 0.3,
-  }));
-
+function SignalGlow({ accent }: { accent: OnboardingSlideAccent }) {
+  const color = ACCENT[accent];
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {stars.map((star) => (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <View style={[styles.glowOrb, styles.glowOrbA, { backgroundColor: color + "22" }]} />
+      <View style={[styles.glowOrb, styles.glowOrbB, { backgroundColor: color + "14" }]} />
+      {Array.from({ length: 18 }, (_, i) => (
         <View
-          key={star.id}
+          key={i}
           style={{
             position: "absolute",
-            left: `${star.left}%`,
-            top: `${star.top}%`,
-            width: star.size,
-            height: star.size,
-            borderRadius: star.size / 2,
-            backgroundColor: "#FFFFFF",
-            opacity: star.opacity,
+            left: `${(i * 17 + 7) % 100}%`,
+            top: `${(i * 23 + 11) % 88}%`,
+            width: i % 3 === 0 ? 2 : 1,
+            height: i % 3 === 0 ? 2 : 1,
+            borderRadius: 2,
+            backgroundColor: i % 4 === 0 ? color : "#FFFFFF",
+            opacity: 0.15 + (i % 5) * 0.08,
           }}
         />
       ))}
@@ -65,8 +57,12 @@ function Stars() {
 }
 
 export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
+  const { width } = useWindowDimensions();
+  const compact = width < 380;
+  const accent = ACCENT[slide.accent];
+
   if (!isActive) return null;
-  
+
   const renderCharacters = () => {
     if (slide.characterType === "all") {
       return (
@@ -76,83 +72,68 @@ export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
           <Image source={characterImages.tanune} style={styles.sideCharacter} contentFit="contain" />
         </View>
       );
-    } else if (slide.characterType === "rinku") {
+    }
+    if (slide.characterType === "rinku") {
       return (
         <View style={styles.singleCharacterContainer}>
           <Image source={idolRinku} style={styles.idolCharacter} contentFit="contain" />
         </View>
       );
-    } else if (slide.characterType === "konta") {
-      return (
-        <View style={styles.singleCharacterContainer}>
-          <Image source={characterImages.konta} style={styles.largeCharacter} contentFit="contain" />
-        </View>
-      );
-    } else if (slide.characterType === "tanune") {
-      return (
-        <View style={styles.singleCharacterContainer}>
-          <Image source={characterImages.tanune} style={styles.largeCharacter} contentFit="contain" />
-        </View>
-      );
     }
-    return null;
+    const src =
+      slide.characterType === "konta" ? characterImages.konta : characterImages.tanune;
+    return (
+      <View style={styles.singleCharacterContainer}>
+        <Image source={src} style={styles.largeCharacter} contentFit="contain" />
+      </View>
+    );
   };
-  
+
   return (
     <Animated.View
-      entering={SlideInRight.duration(300)}
-      exiting={SlideOutLeft.duration(300)}
-      style={[styles.container, { backgroundColor: slide.backgroundColor }]}
+      entering={SlideInRight.duration(280)}
+      exiting={SlideOutLeft.duration(220)}
+      style={[styles.container, { width: SCREEN_WIDTH }]}
     >
-      {/* 星空背景 */}
-      <Stars />
-      
-      {/* ロゴ（showLogoがtrueの場合） */}
-      {slide.showLogo && (
-        <Animated.View 
-          entering={FadeIn.delay(100).duration(400)}
-          style={styles.logoContainer}
-        >
+      <SignalGlow accent={slide.accent} />
+
+      <Animated.View entering={FadeIn.delay(80).duration(320)} style={[styles.chip, { borderColor: accent + "66" }]}>
+        <View style={[styles.chipDot, { backgroundColor: accent }]} />
+        <Text style={[styles.chipText, { color: accent }]}>{slide.chip}</Text>
+      </Animated.View>
+
+      {slide.showLogo ? (
+        <Animated.View entering={FadeIn.delay(120).duration(320)} style={styles.logoContainer}>
           <Image source={logoImage} style={styles.logo} contentFit="contain" />
         </Animated.View>
-      )}
-      
-      {/* キャラクター */}
-      <Animated.View 
-        entering={FadeIn.delay(200).duration(400)}
-        style={styles.characterWrapper}
-      >
+      ) : null}
+
+      <Animated.View entering={FadeIn.delay(160).duration(320)} style={styles.characterWrapper}>
         {renderCharacters()}
       </Animated.View>
-      
-      {/* Title */}
-      <Animated.View entering={FadeIn.delay(300).duration(400)}>
-        <Text style={styles.title}>{slide.title}</Text>
+
+      <Animated.View entering={FadeIn.delay(220).duration(320)}>
+        <Text style={[styles.title, compact && styles.titleCompact]}>{slide.title}</Text>
       </Animated.View>
-      
-      {/* Description */}
-      <Animated.View entering={FadeIn.delay(400).duration(400)}>
-        <Text style={styles.description}>{slide.description}</Text>
+
+      <Animated.View entering={FadeIn.delay(280).duration(320)}>
+        <Text style={[styles.description, compact && styles.descriptionCompact]}>{slide.description}</Text>
       </Animated.View>
-      
-      {/* Features */}
-      {slide.features && (
-        <Animated.View 
-          entering={FadeIn.delay(500).duration(400)}
-          style={styles.featuresContainer}
-        >
+
+      {slide.features ? (
+        <Animated.View entering={FadeIn.delay(340).duration(320)} style={styles.featuresContainer}>
           {slide.features.map((feature, index) => (
-            <Animated.View 
-              key={index}
-              entering={FadeIn.delay(600 + index * 100).duration(300)}
-              style={styles.featureItem}
+            <Animated.View
+              key={feature}
+              entering={FadeIn.delay(380 + index * 70).duration(260)}
+              style={[styles.featureItem, { borderColor: accent + "33" }]}
             >
-              <Text style={styles.featureBullet}>✓</Text>
+              <Text style={[styles.featureBullet, { color: accent }]}>✓</Text>
               <Text style={styles.featureText}>{feature}</Text>
             </Animated.View>
           ))}
         </Animated.View>
-      )}
+      ) : null}
     </Animated.View>
   );
 }
@@ -160,22 +141,59 @@ export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: SCREEN_WIDTH,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 32,
-    paddingBottom: 120,
+    paddingHorizontal: 28,
+    paddingBottom: 148,
+    backgroundColor: "#0a0a0a",
   },
-  logoContainer: {
+  glowOrb: {
+    position: "absolute",
+    borderRadius: 999,
+  },
+  glowOrbA: {
+    width: 280,
+    height: 280,
+    top: "8%",
+    right: "-20%",
+  },
+  glowOrbB: {
+    width: 220,
+    height: 220,
+    bottom: "18%",
+    left: "-18%",
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    backgroundColor: "rgba(255,255,255,0.04)",
     marginBottom: 16,
   },
+  chipDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  chipText: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+  logoContainer: {
+    marginBottom: 12,
+  },
   logo: {
-    width: 180,
-    height: 60,
+    width: 160,
+    height: 52,
     borderRadius: 8,
   },
   characterWrapper: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   allCharactersContainer: {
     flexDirection: "row",
@@ -187,60 +205,69 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   mainCharacter: {
-    width: 80,
-    height: 80,
-    marginHorizontal: 8,
+    width: 76,
+    height: 76,
+    marginHorizontal: 6,
   },
   sideCharacter: {
-    width: 60,
-    height: 60,
+    width: 56,
+    height: 56,
   },
   largeCharacter: {
-    width: 100,
-    height: 100,
+    width: 96,
+    height: 96,
   },
   idolCharacter: {
-    width: 120,
-    height: 180,
+    width: 110,
+    height: 160,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#FFFFFF",
+    fontSize: 30,
+    fontWeight: "800",
+    color: "#F5F5F5",
     textAlign: "center",
-    marginBottom: 16,
+    marginBottom: 12,
+    lineHeight: 38,
+  },
+  titleCompact: {
+    fontSize: 26,
+    lineHeight: 34,
   },
   description: {
-    fontSize: 18,
-    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 16,
+    color: "rgba(245,245,245,0.88)",
     textAlign: "center",
-    lineHeight: 28,
-    marginBottom: 32,
+    lineHeight: 26,
+    marginBottom: 24,
+  },
+  descriptionCompact: {
+    fontSize: 15,
+    lineHeight: 24,
   },
   featuresContainer: {
     width: "100%",
-    maxWidth: 300,
+    maxWidth: 340,
+    gap: 8,
   },
   featureItem: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    alignItems: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "rgba(255, 165, 0, 0.3)",
   },
   featureBullet: {
-    fontSize: 16,
-    color: "#FFA500",
-    marginRight: 12,
-    fontWeight: "bold",
+    fontSize: 14,
+    marginRight: 10,
+    fontWeight: "800",
+    marginTop: 1,
   },
   featureText: {
-    fontSize: 15,
-    color: "#FFFFFF",
+    fontSize: 14,
+    color: "#E5E5E5",
     flex: 1,
+    lineHeight: 20,
   },
 });

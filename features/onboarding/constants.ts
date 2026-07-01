@@ -1,87 +1,87 @@
 /**
- * オンボーディングチュートリアルの定数とスライドデータ
- * v6.31: 宇宙テーマとキャラクター対応
+ * 君斗りんくのすれ違ひ通信 — 初回オンボーディング（星野ロミ型・価値ファースト）
  */
 
-// v6.164: ストレージキーを変更して、既存ユーザーにもオンボーディングを再表示
-export const ONBOARDING_STORAGE_KEY = "@onboarding_completed_v2";
+export const ONBOARDING_STORAGE_KEY = "@onboarding_completed_v3";
+export const POST_LOGIN_LOCATION_INTRO_KEY = "@post_login_location_intro_v1";
+
+export type OnboardingSlideAccent = "pink" | "purple" | "teal" | "signal";
 
 export interface OnboardingSlide {
   id: string;
+  chip: string;
   title: string;
   description: string;
-  emoji: string;
-  backgroundColor: string;
+  accent: OnboardingSlideAccent;
   features?: string[];
-  // v6.31: キャラクター表示用
   characterType?: "all" | "rinku" | "konta" | "tanune";
   showLogo?: boolean;
 }
 
 export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
-    id: "welcome",
-    title: "全国のりんくちゃんファンへ",
-    description: "推しと同じ空気を吸うファンが\n今日もどこかにいる",
-    emoji: "🎉",
-    backgroundColor: "#0a1628",
+    id: "hero",
+    chip: "会いたい君がいる現在地",
+    title: "会いたい君がいる\n現在地",
+    description: "DSのすれ違い通信を、\n正確な足あととして残す",
+    accent: "pink",
     features: [
-      "全国のファンと「すれちがう」",
-      "出会いが図鑑に積み上がっていく",
-      "地図が日本全土に広がる",
+      "移動の場所を、あとで行ける精度で保存",
+      "思い出の場所にもう一度行ける",
+      "推しの軌跡をファンがたどれる",
     ],
     characterType: "all",
     showLogo: true,
   },
   {
-    id: "checkin",
-    title: "今いる場所でチェックイン",
-    description: "難しいことは何もない\n今ここにいるだけで始まる",
-    emoji: "📍",
-    backgroundColor: "#0a1628",
+    id: "live-map",
+    chip: "みんなの現在地",
+    title: "いま、誰が\nどこにいる？",
+    description: "公開中の足あとが\n都道府県マップにリアルタイムで並ぶ",
+    accent: "signal",
     features: [
-      "チェックインボタンをタップするだけ",
-      "すれちがったファンの封筒が届く",
-      "同じ場所にいた人と記念に残る",
-    ],
-    characterType: "rinku",
-  },
-  {
-    id: "friends",
-    title: "一人でも、みんなといる",
-    description: "遠くの友達も、初めて会う人も\n同じ推しでつながっている",
-    emoji: "👥",
-    backgroundColor: "#0a1628",
-    features: [
-      "友達と同行者登録ができる",
-      "SNSで盛り上がりをシェア",
-      "推しの記念日を一緒に祝おう",
+      "サイドナビですぐ都道府県がわかる",
+      "直近24時間の記録を一覧",
+      "すれ違いの予感が先に届く",
     ],
     characterType: "konta",
   },
   {
-    id: "map",
-    title: "あなたが地図を塗り替える",
-    description: "チェックインするたびに\n日本の地図が広がっていく",
-    emoji: "🗾",
-    backgroundColor: "#0a1628",
+    id: "checkin",
+    chip: "チェックイン",
+    title: "今ここにいる、\nだけで始まる",
+    description: "タップ一回で足あとを残す\n同じ場所を通った人とすれ違う",
+    accent: "teal",
     features: [
-      "47都道府県コレクションに挑戦",
-      "地域別の参加者数をリアルタイム確認",
-      "あなたの足跡が永遠に記録される",
+      "チェックインボタンを押すだけ",
+      "封筒が届くかもしれない",
+      "タイムシフトで過去30日もマッチ",
+    ],
+    characterType: "rinku",
+  },
+  {
+    id: "trail",
+    chip: "軌跡",
+    title: "移動の軌跡を\n地図に刻む",
+    description: "道路や建物まで辿れる精度\nあとからあの場所へ戻れる",
+    accent: "purple",
+    features: [
+      "正確な lat/lng を OpenStreetMap 上に表示",
+      "訪れた市区町村が図鑑に積もる",
+      "Xで市区町村粒度の思い出をシェア",
     ],
     characterType: "tanune",
   },
   {
     id: "start",
-    title: "さあ、扉を開こう",
-    description: "Xアカウントでログインするだけ\n今日、誰かとすれちがうかもしれない",
-    emoji: "✨",
-    backgroundColor: "#0a1628",
+    chip: "はじめる",
+    title: "さあ、\n扉を開こう",
+    description: "Xでログインして記録を始める\nゲストでも閲覧できます",
+    accent: "pink",
     features: [
-      "ログインは30秒",
-      "チェックイン後すぐに封筒が届くことも",
-      "推しの生誕祭を、全国のファンと",
+      "交流はXへ。アプリ内は一方向の合図",
+      "移動専用Xアカウントの利用を推奨",
+      "ログイン後、位置の許可でチェックイン",
     ],
     characterType: "all",
     showLogo: true,

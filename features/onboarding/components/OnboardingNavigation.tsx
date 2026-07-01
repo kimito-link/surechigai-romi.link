@@ -1,11 +1,11 @@
 /**
- * OnboardingNavigation Component
- * オンボーディングのナビゲーション（ドット、ボタン）
+ * OnboardingNavigation — ドット・戻る/次へ/スキップ
  */
 
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { haptics } from "@/lib/haptics";
+import { palette } from "@/theme/tokens";
 
 interface OnboardingNavigationProps {
   currentIndex: number;
@@ -31,77 +31,60 @@ export function OnboardingNavigation({
   onDotPress,
 }: OnboardingNavigationProps) {
   const insets = useSafeAreaInsets();
-  
+
   const handleNext = () => {
     haptics.lightTap();
-    if (isLastSlide) {
-      onComplete();
-    } else {
-      onNext();
-    }
+    if (isLastSlide) onComplete();
+    else onNext();
   };
-  
-  const handlePrev = () => {
-    haptics.lightTap();
-    onPrev();
-  };
-  
-  const handleSkip = () => {
-    haptics.lightTap();
-    onSkip();
-  };
-  
-  const handleDotPress = (index: number) => {
-    haptics.lightTap();
-    onDotPress(index);
-  };
-  
+
   return (
-    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-      {/* Skip button */}
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 16) }]}>
       <View style={styles.topRow}>
         {!isLastSlide ? (
-          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+          <TouchableOpacity onPress={() => { haptics.lightTap(); onSkip(); }} style={styles.skipButton} accessibilityRole="button" accessibilityLabel="オンボーディングをスキップ">
             <Text style={styles.skipText}>スキップ</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.skipButton} />
         )}
       </View>
-      
-      {/* Dots */}
-      <View style={styles.dotsContainer}>
+
+      <View style={styles.dotsContainer} accessibilityRole="tablist">
         {Array.from({ length: totalSlides }).map((_, index) => (
           <TouchableOpacity
             key={index}
-            onPress={() => handleDotPress(index)}
-            style={[
-              styles.dot,
-              index === currentIndex && styles.dotActive,
-            ]}
+            onPress={() => { haptics.lightTap(); onDotPress(index); }}
+            style={[styles.dot, index === currentIndex && styles.dotActive]}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: index === currentIndex }}
+            accessibilityLabel={`スライド ${index + 1}`}
           />
         ))}
       </View>
-      
-      {/* Navigation buttons */}
+
       <View style={styles.buttonsContainer}>
         {!isFirstSlide ? (
-          <TouchableOpacity onPress={handlePrev} style={styles.prevButton}>
+          <TouchableOpacity onPress={() => { haptics.lightTap(); onPrev(); }} style={styles.prevButton} accessibilityRole="button">
             <Text style={styles.prevButtonText}>戻る</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.prevButton} />
         )}
-        
-        <TouchableOpacity 
-          onPress={handleNext} 
+
+        <TouchableOpacity
+          onPress={handleNext}
           style={[styles.nextButton, isLastSlide && styles.completeButton]}
+          accessibilityRole="button"
+          accessibilityLabel={isLastSlide ? "はじめる" : "次へ"}
         >
           <Text style={[styles.nextButtonText, isLastSlide && styles.completeButtonText]}>
-            {isLastSlide ? "✨ 始める" : "次へ →"}
+            {isLastSlide ? "はじめる ✨" : "次へ →"}
           </Text>
         </TouchableOpacity>
       </View>
+
+      <Text style={styles.hintText}>画面タップ / スワイプでも進めます</Text>
     </View>
   );
 }
@@ -112,41 +95,43 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    backgroundColor: "rgba(10,10,10,0.92)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.08)",
   },
   topRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginBottom: 16,
+    marginBottom: 10,
   },
   skipButton: {
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    minWidth: 80,
+    paddingHorizontal: 12,
+    minWidth: 72,
   },
   skipText: {
-    fontSize: 15,
-    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 14,
+    color: "rgba(245,245,245,0.65)",
     textAlign: "right",
   },
   dotsContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 16,
+    gap: 6,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.4)",
-    marginHorizontal: 4,
+    backgroundColor: "rgba(255,255,255,0.25)",
   },
   dotActive: {
-    width: 24,
-    backgroundColor: "#FFFFFF",
+    width: 22,
+    backgroundColor: palette.primary500,
   },
   buttonsContainer: {
     flexDirection: "row",
@@ -155,30 +140,39 @@ const styles = StyleSheet.create({
   },
   prevButton: {
     paddingVertical: 12,
-    paddingHorizontal: 24,
-    minWidth: 100,
+    paddingHorizontal: 16,
+    minWidth: 88,
   },
   prevButtonText: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 15,
+    color: "rgba(245,245,245,0.7)",
   },
   nextButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "rgba(255,255,255,0.1)",
     paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 25,
-    minWidth: 120,
+    paddingHorizontal: 28,
+    borderRadius: 999,
+    minWidth: 128,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
   },
   nextButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#F5F5F5",
   },
   completeButton: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: palette.primary500,
+    borderColor: palette.primary500,
   },
   completeButtonText: {
-    color: "#FF6B6B",
+    color: "#FFFFFF",
+  },
+  hintText: {
+    marginTop: 10,
+    textAlign: "center",
+    fontSize: 11,
+    color: "rgba(245,245,245,0.4)",
   },
 });

@@ -25,6 +25,7 @@ import { GuestAuthProvider } from "@/lib/auth-context";
 import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallback";
 import { GestureRoot } from "@/components/providers/gesture-root";
 import { WebDocumentHead } from "@/components/brand/web-document-head";
+import { OnboardingWrapper } from "@/components/providers/onboarding-wrapper";
 
 const ClerkRootProvider = lazy(() =>
   import("@/components/providers/clerk-root-provider").then((m) => ({
@@ -171,11 +172,15 @@ export default function RootLayout() {
         {shouldOverrideSafeArea ? (
           <SafeAreaFrameContext.Provider value={frame}>
             <SafeAreaInsetsContext.Provider value={insets}>
-              <AppShell liteBoundary={useGuestWebShell}>{shellContent}</AppShell>
+              <AppShell liteBoundary={useGuestWebShell}>
+                <OnboardingWrapper>{shellContent}</OnboardingWrapper>
+              </AppShell>
             </SafeAreaInsetsContext.Provider>
           </SafeAreaFrameContext.Provider>
         ) : (
-          <AppShell liteBoundary={useGuestWebShell}>{shellContent}</AppShell>
+          <AppShell liteBoundary={useGuestWebShell}>
+            <OnboardingWrapper>{shellContent}</OnboardingWrapper>
+          </AppShell>
         )}
       </SafeAreaProvider>
     </ThemeProvider>

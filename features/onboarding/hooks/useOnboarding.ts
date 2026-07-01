@@ -100,15 +100,21 @@ export function useOnboarding(): UseOnboardingReturn {
   const completeOnboarding = useCallback(async () => {
     try {
       await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+      }
       setHasCompletedOnboarding(true);
     } catch (error) {
       console.error("Failed to save onboarding status:", error);
     }
   }, []);
-  
+
   const resetOnboarding = useCallback(async () => {
     try {
       await AsyncStorage.removeItem(ONBOARDING_STORAGE_KEY);
+      if (Platform.OS === "web" && typeof window !== "undefined") {
+        window.localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+      }
       setHasCompletedOnboarding(false);
       setCurrentSlideIndex(0);
     } catch (error) {
