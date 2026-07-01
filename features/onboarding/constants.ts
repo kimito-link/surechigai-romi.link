@@ -1,8 +1,11 @@
 /**
- * 君斗りんくのすれ違ひ通信 — 初回オンボーディング v5（ゆっくりりんく中心）
+ * 君斗りんくのすれ違ひ通信 — 初回オンボーディング v6
+ * ログイン後チュートリアル完了のあとに表示（起動時ブロックなし）
  */
 
-export const ONBOARDING_STORAGE_KEY = "@onboarding_completed_v5";
+export const ONBOARDING_STORAGE_KEY = "@onboarding_completed_v6";
+/** v5 完了ユーザーの再表示を防ぐ */
+export const ONBOARDING_STORAGE_KEY_LEGACY = "@onboarding_completed_v5";
 export const POST_LOGIN_LOCATION_INTRO_KEY = "@post_login_location_intro_v1";
 
 export type OnboardingSlideAccent = "pink" | "purple" | "teal" | "signal";
@@ -17,8 +20,6 @@ export interface OnboardingSlide {
   accent: OnboardingSlideAccent;
   features?: string[];
   characterType: OnboardingCharacterType;
-  /** Web + 非 standalone のときだけ表示 */
-  webInstallOnly?: boolean;
 }
 
 export const ONBOARDING_SLIDES: OnboardingSlide[] = [
@@ -62,6 +63,19 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
     characterType: "rinku",
   },
   {
+    id: "events",
+    chip: "集まり",
+    title: "予定とライブを\nひとつの場所で",
+    description: "「集まり」タブでカレンダーを見て\nいまライブ中の場所も追える",
+    accent: "purple",
+    features: [
+      "予定はゲストでも閲覧できる",
+      "ライブ表明で「いまここにいる」を共有",
+      "主催・参加表明はログイン後",
+    ],
+    characterType: "konta",
+  },
+  {
     id: "trail",
     chip: "軌跡",
     title: "移動の軌跡を\n地図に刻む",
@@ -75,29 +89,28 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
     characterType: "tanune",
   },
   {
-    id: "install",
-    chip: "ホーム画面に追加",
-    title: "アプリのように\nすぐ開ける",
-    description: "ホーム画面に追加すると\nチェックインが1タップで始まる",
-    accent: "signal",
+    id: "navigate",
+    chip: "ここへ向かう",
+    title: "思い出の場所へ\n地図で向かう",
+    description: "軌跡の足あとから\nGoogleマップなどでナビを開始",
+    accent: "teal",
     features: [
-      "ブラウザのアドレスバー不要",
-      "オフラインでも起動画面から再開",
-      "通知や位置の許可もスムーズ",
+      "保存した lat/lng をそのまま渡す",
+      "iOS / Android / Web それぞれの地図アプリ",
+      "聖地巡礼や再訪にそのまま使える",
     ],
-    characterType: "rinku",
-    webInstallOnly: true,
+    characterType: "tanune",
   },
   {
     id: "start",
     chip: "はじめる",
-    title: "さあ、\n扉を開こう",
-    description: "Xでログインして記録を始める\nゲストでも閲覧できます",
+    title: "さあ、\n記録を始めよう",
+    description: "チェックインで足あとを残して\nすれ違いと巡礼を楽しもう",
     accent: "pink",
     features: [
       "交流はXへ。アプリ内は一方向の合図",
       "移動専用Xアカウントの利用を推奨",
-      "ログイン後、位置の許可でチェックイン",
+      "位置の許可でチェックインが始まる",
     ],
     characterType: "rinku",
   },

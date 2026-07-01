@@ -7,14 +7,18 @@ describe("surechigai tutorial steps", () => {
     expect(TUTORIAL_SEEN_STORAGE_KEY).toBe("tutorial_seen_v2");
   });
 
-  it("has 4 post-login steps", () => {
-    expect(SURECHIGAI_TUTORIAL_STEPS).toHaveLength(4);
+  it("has 5 post-login steps including events and nav copy", () => {
+    expect(SURECHIGAI_TUTORIAL_STEPS).toHaveLength(5);
     expect(SURECHIGAI_TUTORIAL_STEPS.map((s) => s.previewType)).toEqual([
       "checkin",
       "envelope",
       "map",
       "trail",
+      "notification",
     ]);
+    const blob = JSON.stringify(SURECHIGAI_TUTORIAL_STEPS);
+    expect(blob).toContain("ここへ向かう");
+    expect(blob).toContain("集まり");
   });
 
   it("avoids legacy challenge copy", () => {

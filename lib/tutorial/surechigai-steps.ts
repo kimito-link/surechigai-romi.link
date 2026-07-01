@@ -1,5 +1,5 @@
 /**
- * 君斗りんく — ログイン後チュートリアル（4ステップ・UIガイド）
+ * 君斗りんく — ログイン後チュートリアル（UIガイド）
  */
 import type { TutorialStep } from "@/components/organisms/tutorial-overlay";
 
@@ -36,12 +36,22 @@ export const SURECHIGAI_TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     message: "軌跡を\nあとからたどる",
-    subMessage: "「軌跡」タブ — 正確な地図と市区町村図鑑",
+    subMessage: "「軌跡」タブ — 地図・図鑑・「ここへ向かう」ナビ",
     character: "rinku_smile",
-    speech: "移動専用Xアカウントの利用もおすすめ。さあ、行こう！",
+    speech: "あの場所にもう一度行けるの、うれしい。",
+    messagePosition: "center",
+    tapToContinue: true,
+    successAnimation: "sparkle",
+    previewType: "trail",
+  },
+  {
+    message: "集まりの\n予定が見える",
+    subMessage: "「集まり」タブ — カレンダーとライブ中",
+    character: "konta_smile",
+    speech: "ライブ表明で、いまどこにいるか先にわかるよ。",
     messagePosition: "center",
     tapToContinue: true,
     successAnimation: "confetti",
-    previewType: "trail",
+    previewType: "notification",
   },
 ];

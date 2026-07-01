@@ -39,7 +39,6 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { useTutorial } from "@/lib/tutorial-context";
 import { useOnboarding } from "@/features/onboarding/hooks/useOnboarding";
-import { isPwaStandalone } from "@/features/onboarding/slide-visibility";
 import { trpc } from "@/lib/trpc";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
@@ -523,7 +522,7 @@ export function MypageAuthenticatedScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.menuItemText, { color: color.textPrimary }]}>使い方ガイドをもう一度</Text>
               <Text style={{ color: color.textMuted, fontSize: 11, marginTop: 2 }}>
-                チェックイン・封筒・現在地・軌跡の4ステップ
+                チェックイン・封筒・現在地・軌跡・集まり・ナビの5ステップ
               </Text>
             </View>
           </Pressable>
@@ -535,21 +534,6 @@ export function MypageAuthenticatedScreen() {
             <MaterialIcons name="auto-stories" size={20} color={palette.kimitoBlue} style={{ marginRight: 12 }} />
             <Text style={[styles.menuItemText, { color: color.textPrimary }]}>初回スライドをもう一度</Text>
           </Pressable>
-
-          {Platform.OS === "web" && !isPwaStandalone() ? (
-            <Pressable
-              onPress={() => navigate.toInstallInstructions()}
-              style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
-            >
-              <MaterialIcons name="install-mobile" size={20} color={palette.kimitoBlue} style={{ marginRight: 12 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.menuItemText, { color: color.textPrimary }]}>ホーム画面に追加</Text>
-                <Text style={{ color: color.textMuted, fontSize: 11, marginTop: 2 }}>
-                  アプリのようにすぐチェックイン
-                </Text>
-              </View>
-            </Pressable>
-          ) : null}
 
           <Pressable
             onPress={navigate.toSpecialThanks}

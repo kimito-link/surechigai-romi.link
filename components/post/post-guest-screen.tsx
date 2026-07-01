@@ -2,11 +2,14 @@
  * ポスト画面 — 未ログイン guest 向け軽量 UI。
  * LCP（BrandTagline）を AppHeader / ScreenContainer / tRPC より先に paint する。
  */
-import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
+import { ScreenContainer } from "@/components/organisms/screen-container";
 import { scheduleAfterIdle } from "@/lib/schedule-after-idle";
-import { tabBar } from "@/theme/tokens";
+import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
+import { useResponsive } from "@/hooks/use-responsive";
+import { color } from "@/theme/tokens";
 
 const LazyAppHeader = lazy(() =>
   import("@/components/organisms/app-header").then((m) => ({ default: m.AppHeader })),
@@ -18,32 +21,36 @@ const LazyLoginPreviewBanner = lazy(() =>
   })),
 );
 
-/** Web タブバー + safe area 下余白の目安（hooks チェーンを避ける）。 */
-const GUEST_TAB_INSET = tabBar.bodyHeight + 12 + 12;
+const GUEST_HOME_BENEFITS = [
+  { icon: "place" as const, label: "足あとを正確に残し、あとから地図でたどる" },
+  { icon: "navigation" as const, label: "保存した場所へ「ここへ向かう」でナビ" },
+  { icon: "groups" as const, label: "通りすがりの人とすれ違い、封筒が届く" },
+  { icon: "calendar-today" as const, label: "集まりの予定を見て、ライブ表明もできる" },
+  { icon: "map" as const, label: "みんなの現在地を都道府県マップで確認" },
+];
 
 export function PostGuestScreen() {
-  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
-  const isDesktop = windowWidth >= 1024;
+  const { isDesktop } = useResponsive();
+  const tabInset = useTabBarInset();
   const [deferChrome, setDeferChrome] = useState(true);
 
   useEffect(() => {
     return scheduleAfterIdle(() => setDeferChrome(false), { fallbackDelayMs: 120 });
   }, []);
 
-  const heroHeight = isDesktop
-    ? Math.min(Math.max(windowHeight * 0.42, 280), 420)
-    : Math.min(Math.max(windowHeight * 0.36, 240), 320);
-
   const hero = (
-    <View style={[styles.hero, { minHeight: heroHeight }]}>
-      <BrandTagline compact={false} align="center" variant="heroDark" />
+    <View style={styles.hero}>
+      <BrandTagline compact={false} align="center" />
       <Text style={styles.heroSub}>移動の足あとを残して、すれ違いと聖地巡礼を</Text>
     </View>
   );
 
   const cta = deferChrome ? null : (
     <Suspense fallback={null}>
-      <LazyLoginPreviewBanner headline="ログインして、封筒と足あとを受け取ろう" />
+      <LazyLoginPreviewBanner
+        headline="ログインして、封筒と足あとを受け取ろう"
+        benefits={GUEST_HOME_BENEFITS}
+      />
     </Suspense>
   );
 
@@ -51,75 +58,48 @@ export function PostGuestScreen() {
     <View style={styles.headerStub} />
   ) : (
     <Suspense fallback={<View style={styles.headerStub} />}>
-      <LazyAppHeader showLoginButton />
+      <LazyAppHeader showLoginButton isDesktop={isDesktop} showMenu />
     </Suspense>
   );
 
   return (
-    <View style={styles.root}>
+    <ScreenContainer containerClassName="bg-background">
       {header}
-      {isDesktop ? (
-        <View style={styles.desktopBody}>
-          {hero}
-          <View style={styles.desktopCta}>{cta}</View>
-        </View>
-      ) : (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={{ paddingBottom: GUEST_TAB_INSET }}
-          showsVerticalScrollIndicator={false}
-        >
-          {hero}
-          <View style={styles.mobileCta}>{cta}</View>
-        </ScrollView>
-      )}
-    </View>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {hero}
+        {cta}
+      </ScrollView>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#020817",
-  },
   headerStub: {
     height: 56,
     backgroundColor: "#E2EDF7",
     borderBottomWidth: 1,
     borderBottomColor: "#00427B40",
   },
-  scroll: {
-    flex: 1,
-    backgroundColor: "#020817",
-  },
-  desktopBody: {
-    flex: 1,
-    backgroundColor: "#020817",
+  content: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    gap: 16,
   },
   hero: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    backgroundColor: "#020817",
+    paddingHorizontal: 8,
+    paddingVertical: 24,
   },
   heroSub: {
-    color: "rgba(255,255,255,0.82)",
+    color: color.textSecondary,
     fontSize: 14,
     textAlign: "center",
     lineHeight: 22,
     maxWidth: 320,
     marginTop: 12,
-  },
-  desktopCta: {
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    maxWidth: 480,
-    alignSelf: "center",
-    width: "100%",
-  },
-  mobileCta: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
   },
 });

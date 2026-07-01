@@ -1,27 +1,39 @@
 /**
- * 初回オンボーディングラッパー — 未完了時のみ全画面カルーセルを表示
+ * オンボーディング — 起動時はブロックせず、チュートリアル後などにオーバーレイ表示
  */
-import { usePathname } from "expo-router";
+import { Platform, StyleSheet, View } from "react-native";
 import type { ReactNode } from "react";
-import { OnboardingScreen, OnboardingBootSplash } from "@/features/onboarding/components/OnboardingScreen";
+import { OnboardingScreen } from "@/features/onboarding/components/OnboardingScreen";
 import { useOnboarding } from "@/features/onboarding/hooks/useOnboarding";
-import { shouldSkipOnboarding } from "@/lib/onboarding/skip-routes";
+
+const overlayStyle = Platform.select({
+  web: {
+    position: "fixed" as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+  },
+  default: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+  },
+});
 
 export function OnboardingWrapper({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const { hasCompletedOnboarding } = useOnboarding();
+  const { hasCompletedOnboarding, isShowingOnboarding } = useOnboarding();
 
-  if (shouldSkipOnboarding(pathname)) {
-    return <>{children}</>;
-  }
+  const showOverlay = isShowingOnboarding && hasCompletedOnboarding === false;
 
-  if (hasCompletedOnboarding === null) {
-    return <OnboardingBootSplash />;
-  }
-
-  if (hasCompletedOnboarding === false) {
-    return <OnboardingScreen />;
-  }
-
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {showOverlay ? (
+        <View style={overlayStyle} pointerEvents="auto">
+          <OnboardingScreen />
+        </View>
+      ) : null}
+    </>
+  );
 }

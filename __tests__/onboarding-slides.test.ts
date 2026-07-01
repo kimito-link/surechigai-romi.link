@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ONBOARDING_SLIDES, ONBOARDING_STORAGE_KEY } from "@/features/onboarding/constants";
 
 describe("onboarding slides", () => {
-  it("uses v5 storage key for fresh rollout", () => {
-    expect(ONBOARDING_STORAGE_KEY).toBe("@onboarding_completed_v5");
+  it("uses v6 storage key for deferred rollout", () => {
+    expect(ONBOARDING_STORAGE_KEY).toBe("@onboarding_completed_v6");
   });
 
   it("opens with yukkuri rinku on hero", () => {
@@ -11,11 +11,13 @@ describe("onboarding slides", () => {
     expect(ONBOARDING_SLIDES[0]?.id).toBe("hero");
   });
 
-  it("has 6 value-first slides including install and start", () => {
-    expect(ONBOARDING_SLIDES).toHaveLength(6);
+  it("has value-first slides including events, navigate, and start", () => {
+    expect(ONBOARDING_SLIDES).toHaveLength(7);
     expect(ONBOARDING_SLIDES[0]?.id).toBe("hero");
     expect(ONBOARDING_SLIDES[1]?.id).toBe("live-map");
-    expect(ONBOARDING_SLIDES.some((s) => s.id === "install")).toBe(true);
+    expect(ONBOARDING_SLIDES.some((s) => s.id === "events")).toBe(true);
+    expect(ONBOARDING_SLIDES.some((s) => s.id === "navigate")).toBe(true);
+    expect(ONBOARDING_SLIDES.some((s) => s.id === "install")).toBe(false);
     expect(ONBOARDING_SLIDES.at(-1)?.id).toBe("start");
   });
 

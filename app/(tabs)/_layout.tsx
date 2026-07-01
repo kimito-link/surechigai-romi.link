@@ -25,7 +25,6 @@ import { WebAppFooter } from "@/components/organisms/web-app-footer";
 import { PostLoginLocationIntro } from "@/features/onboarding/components/PostLoginLocationIntro";
 import { TutorialProvider } from "@/lib/tutorial-context";
 import { TutorialHub } from "@/components/organisms/tutorial-hub";
-import { InstallPrompt } from "@/components/install-prompt";
 
 const CheckinTabIconAuthenticated = lazy(() =>
   import("@/components/tabs/checkin-tab-icon-authenticated").then((m) => ({
@@ -77,7 +76,6 @@ export default function TabLayout() {
       {sideNavActive ? <WebAppFooter /> : null}
       <PostLoginLocationIntro />
       <TutorialHub />
-      {Platform.OS === "web" ? <InstallPrompt /> : null}
       <View style={{ flex: 1, marginLeft: sideNavActive ? WEB_SIDE_NAV_WIDTH : 0 }}>
         <LivePresenceRunner />
         <EventReminderRunner />

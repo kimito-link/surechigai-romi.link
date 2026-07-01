@@ -1,5 +1,5 @@
 /**
- * オンボーディング表示スライド — standalone / プラットフォーム分岐
+ * オンボーディング表示スライド
  */
 
 import { Platform } from "react-native";
@@ -14,9 +14,5 @@ export function isPwaStandalone(): boolean {
 }
 
 export function getVisibleOnboardingSlides(): OnboardingSlide[] {
-  const skipInstall = Platform.OS !== "web" || isPwaStandalone();
-  if (skipInstall) {
-    return ONBOARDING_SLIDES.filter((slide) => !slide.webInstallOnly);
-  }
   return ONBOARDING_SLIDES;
 }

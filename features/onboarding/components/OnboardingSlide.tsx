@@ -2,13 +2,11 @@
  * OnboardingSlide — kimito.link ライト UI
  */
 
-import { View, Text, StyleSheet, Dimensions, useWindowDimensions, Pressable, Platform } from "react-native";
+import { View, Text, StyleSheet, Dimensions, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
 import Animated, { FadeIn, SlideInRight, SlideOutLeft } from "react-native-reanimated";
 import type { OnboardingSlide as SlideType, OnboardingSlideAccent } from "../constants";
 import { color, palette } from "@/theme/tokens";
-import { usePwaInstall } from "@/hooks/use-pwa-install";
-import { navigate } from "@/lib/navigation";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -37,45 +35,6 @@ function SignalGlow({ accent }: { accent: OnboardingSlideAccent }) {
       <View style={[styles.glowOrb, styles.glowOrbA, { backgroundColor: accentColor + "18" }]} />
       <View style={[styles.glowOrb, styles.glowOrbB, { backgroundColor: accentColor + "10" }]} />
     </View>
-  );
-}
-
-function InstallSlideActions({ accent }: { accent: string }) {
-  const { isInstallable, promptInstall } = usePwaInstall();
-
-  if (Platform.OS !== "web") return null;
-
-  return (
-    <Animated.View entering={FadeIn.delay(420).duration(320)} style={styles.installActions}>
-      {isInstallable ? (
-        <Pressable
-          onPress={() => void promptInstall()}
-          style={({ pressed }) => [
-            styles.installPrimaryBtn,
-            { backgroundColor: accent },
-            pressed && { opacity: 0.9 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="アプリをインストール"
-        >
-          <Text style={styles.installPrimaryText}>インストール</Text>
-        </Pressable>
-      ) : null}
-      <Pressable
-        onPress={() => navigate.toInstallInstructions()}
-        style={({ pressed }) => [
-          styles.installSecondaryBtn,
-          { borderColor: accent },
-          pressed && { opacity: 0.85 },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel="追加方法を見る"
-      >
-        <Text style={[styles.installSecondaryText, { color: accent }]}>
-          {isInstallable ? "手順を見る" : "追加方法を見る"}
-        </Text>
-      </Pressable>
-    </Animated.View>
   );
 }
 
@@ -154,8 +113,6 @@ export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
           ))}
         </Animated.View>
       ) : null}
-
-      {slide.id === "install" ? <InstallSlideActions accent={accent} /> : null}
     </Animated.View>
   );
 }
@@ -278,34 +235,5 @@ const styles = StyleSheet.create({
     color: color.textPrimary,
     flex: 1,
     lineHeight: 20,
-  },
-  installActions: {
-    width: "100%",
-    maxWidth: 340,
-    gap: 10,
-    marginTop: 8,
-  },
-  installPrimaryBtn: {
-    minHeight: 48,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  installPrimaryText: {
-    color: palette.white,
-    fontSize: 15,
-    fontWeight: "800",
-  },
-  installSecondaryBtn: {
-    minHeight: 44,
-    borderRadius: 999,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: palette.white,
-  },
-  installSecondaryText: {
-    fontSize: 14,
-    fontWeight: "700",
   },
 });

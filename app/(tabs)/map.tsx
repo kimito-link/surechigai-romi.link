@@ -32,8 +32,8 @@ export default function MapScreen() {
         headline="ログインすると、あなたの足あとが地図に刻まれます"
         benefits={[
           { icon: "near-me", label: "道路や建物まで辿れる精度で記録" },
+          { icon: "navigation", label: "「ここへ向かう」で地図アプリのナビを開始" },
           { icon: "timeline", label: "移動の軌跡をあとから振り返れる" },
-          { icon: "place", label: "思い出の場所にもう一度行ける" },
         ]}
       />
     );

@@ -13,11 +13,16 @@ import {
 } from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ONBOARDING_STORAGE_KEY, type OnboardingSlide } from "../constants";
+import {
+  ONBOARDING_STORAGE_KEY,
+  ONBOARDING_STORAGE_KEY_LEGACY,
+  type OnboardingSlide,
+} from "../constants";
 import { getVisibleOnboardingSlides } from "../slide-visibility";
 
 interface OnboardingContextValue {
   hasCompletedOnboarding: boolean | null;
+  isShowingOnboarding: boolean;
   currentSlideIndex: number;
   isLastSlide: boolean;
   isFirstSlide: boolean;
@@ -28,15 +33,25 @@ interface OnboardingContextValue {
   goToSlide: (index: number) => void;
   completeOnboarding: () => Promise<void>;
   resetOnboarding: () => Promise<void>;
+  showOnboarding: () => void;
 }
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
+
+async function readOnboardingCompleted(): Promise<boolean> {
+  const completed = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
+  if (completed === "true") return true;
+  const legacy = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY_LEGACY);
+  return legacy === "true";
+}
 
 function getInitialOnboardingStatus(): boolean | null {
   if (Platform.OS === "web" && typeof window !== "undefined") {
     try {
       const completed = window.localStorage.getItem(ONBOARDING_STORAGE_KEY);
-      return completed === "true";
+      if (completed === "true") return true;
+      const legacy = window.localStorage.getItem(ONBOARDING_STORAGE_KEY_LEGACY);
+      return legacy === "true";
     } catch {
       return null;
     }
@@ -48,6 +63,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(
     getInitialOnboardingStatus,
   );
+  const [isShowingOnboarding, setIsShowingOnboarding] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const visibleSlides = useMemo(() => getVisibleOnboardingSlides(), []);
@@ -66,12 +82,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     const checkOnboardingStatus = async () => {
       try {
         const completed = await Promise.race([
-          AsyncStorage.getItem(ONBOARDING_STORAGE_KEY),
-          new Promise<string | null>((resolve) =>
-            setTimeout(() => resolve(null), RESTORE_TIMEOUT_MS),
-          ),
+          readOnboardingCompleted(),
+          new Promise<boolean>((resolve) => setTimeout(() => resolve(false), RESTORE_TIMEOUT_MS)),
         ]);
-        setHasCompletedOnboarding(completed === "true");
+        setHasCompletedOnboarding(completed);
       } catch (error) {
         console.error("Failed to check onboarding status:", error);
         setHasCompletedOnboarding(false);
@@ -83,6 +97,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     void checkOnboardingStatus();
     return () => clearTimeout(timeoutId);
   }, [hasCompletedOnboarding]);
+
+  const showOnboarding = useCallback(() => {
+    setCurrentSlideIndex(0);
+    setIsShowingOnboarding(true);
+  }, []);
 
   const goToNextSlide = useCallback(() => {
     if (currentSlideIndex < totalSlides - 1) {
@@ -112,6 +131,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
       }
       setHasCompletedOnboarding(true);
+      setIsShowingOnboarding(false);
     } catch (error) {
       console.error("Failed to save onboarding status:", error);
     }
@@ -125,6 +145,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
       setHasCompletedOnboarding(false);
       setCurrentSlideIndex(0);
+      setIsShowingOnboarding(true);
     } catch (error) {
       console.error("Failed to reset onboarding status:", error);
     }
@@ -133,6 +154,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     (): OnboardingContextValue => ({
       hasCompletedOnboarding,
+      isShowingOnboarding,
       currentSlideIndex,
       isLastSlide,
       isFirstSlide,
@@ -143,9 +165,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       goToSlide,
       completeOnboarding,
       resetOnboarding,
+      showOnboarding,
     }),
     [
       hasCompletedOnboarding,
+      isShowingOnboarding,
       currentSlideIndex,
       isLastSlide,
       isFirstSlide,
@@ -156,6 +180,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       goToSlide,
       completeOnboarding,
       resetOnboarding,
+      showOnboarding,
     ],
   );
 
