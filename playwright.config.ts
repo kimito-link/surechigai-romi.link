@@ -86,6 +86,11 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
+      name: "events-host-smoke",
+      testMatch: /events-host\.smoke\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "save-auth",
       testMatch: /save-auth-state\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },

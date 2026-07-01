@@ -20,6 +20,7 @@ const TAB_PREFETCH: Record<TabPrefetchKey, (utils: TrpcUtils) => Promise<unknown
   events: (utils) => [
     utils.event.listUpcoming.prefetch({ limit: 100 }),
     utils.event.listLive.prefetch(undefined),
+    utils.event.listMine.prefetch(undefined),
   ],
   zukan: (utils) => [
     utils.zukan.activePrefectures.prefetch(undefined),
@@ -48,6 +49,7 @@ export function prefetchCoreAuthenticatedData(utils: TrpcUtils): void {
     utils.zukan.activePrefectures.prefetch(undefined),
     utils.settings.get.prefetch(undefined),
     utils.eventParticipation.myUpcoming.prefetch(undefined),
+    utils.event.listMine.prefetch(undefined),
   ]);
 }
 

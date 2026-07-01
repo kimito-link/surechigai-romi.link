@@ -16,6 +16,7 @@ import {
 import { Image } from "expo-image";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
+import { invalidateEventListQueries } from "@/lib/events/invalidate-event-queries";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
@@ -117,8 +118,7 @@ export function EventParticipationPanel({
           setSavedDefaultPref(variables.prefecture!),
         );
       }
-      void utils.event.listUpcoming.invalidate();
-      void utils.event.listLive.invalidate();
+      invalidateEventListQueries(utils);
       void utils.eventParticipation.listByEvent.invalidate({ eventId });
       void utils.eventParticipation.mineForEvent.invalidate({ eventId });
       void utils.eventParticipation.myUpcoming.invalidate();
@@ -133,8 +133,7 @@ export function EventParticipationPanel({
 
   const cancelMut = trpc.eventParticipation.cancel.useMutation({
     onSuccess: () => {
-      void utils.event.listUpcoming.invalidate();
-      void utils.event.listLive.invalidate();
+      invalidateEventListQueries(utils);
       void utils.eventParticipation.listByEvent.invalidate({ eventId });
       void utils.eventParticipation.mineForEvent.invalidate({ eventId });
       void utils.eventParticipation.myUpcoming.invalidate();

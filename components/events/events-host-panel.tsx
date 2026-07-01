@@ -6,33 +6,39 @@ import { useState, useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { toDateKey } from "@/lib/events/date-key";
 import { toStartDate, type EventDateTimeValue } from "@/lib/events/datetime-value";
+import { invalidateEventListQueries } from "@/lib/events/invalidate-event-queries";
+import { validateEventCreateForm } from "@/modules/event/core/create-form-validation";
 import { LazyEventDateTimePicker, LazyPrefectureSelector } from "@/lib/lazy-heavy-components";
 import { trpc } from "@/lib/trpc";
 import { color } from "@/theme/tokens";
 import { EventCard, TYPE_TAG_LABELS } from "@/components/events/events-event-card";
 import { EventsEmptyState } from "@/components/events/events-empty-state";
+import { ConfirmModal } from "@/components/molecules/confirm-modal";
+
+function invalidateHostQueries(utils: ReturnType<typeof trpc.useUtils>) {
+  invalidateEventListQueries(utils);
+}
 
 export function EventsHostPanel() {
   const utils = trpc.useUtils();
   const myQuery = trpc.event.listMine.useQuery();
   const createMut = trpc.event.create.useMutation({
-    onSuccess: () => {
-      utils.event.listMine.invalidate();
-      utils.event.listUpcoming.invalidate();
-    },
+    onSuccess: () => invalidateHostQueries(utils),
   });
   const goLiveMut = trpc.event.goLive.useMutation({
-    onSuccess: () => {
-      utils.event.listMine.invalidate();
-      utils.event.listLive.invalidate();
-    },
+    onSuccess: () => invalidateHostQueries(utils),
   });
   const endMut = trpc.event.endLive.useMutation({
+    onSuccess: () => invalidateHostQueries(utils),
+  });
+  const cancelMut = trpc.event.cancel.useMutation({
     onSuccess: () => {
-      utils.event.listMine.invalidate();
-      utils.event.listLive.invalidate();
+      invalidateHostQueries(utils);
+      setCancelTarget(null);
     },
   });
+
+  const [cancelTarget, setCancelTarget] = useState<{ id: number; title: string } | null>(null);
 
   const [title, setTitle] = useState("");
   const [isOnline, setIsOnline] = useState(true);
@@ -74,12 +80,16 @@ export function EventsHostPanel() {
 
   const handleCreate = useCallback(() => {
     setFormError("");
-    if (!title.trim()) {
-      setFormError("タイトルを入れてください");
-      return;
-    }
-    if (!isOnline && !prefecture) {
-      setFormError("リアル開催は都道府県を選んでください");
+    const validationError = validateEventCreateForm({
+      title,
+      isOnline,
+      onlineUrl,
+      prefecture,
+      isUnlisted,
+      accessCode,
+    });
+    if (validationError) {
+      setFormError(validationError);
       return;
     }
     const start = toStartDate(startDateTime) ?? new Date(Date.now() + 60 * 60 * 1000);
@@ -87,16 +97,12 @@ export function EventsHostPanel() {
       setFormError("開始日時を選び直してください");
       return;
     }
-    if (isUnlisted && !accessCode.trim()) {
-      setFormError("限定にする場合は合言葉を決めてください");
-      return;
-    }
     createMut.mutate(
       {
         title: title.trim(),
         typeTags: typeTags.length > 0 ? typeTags : undefined,
         locationType: isOnline ? "online" : "offline",
-        onlineUrl: isOnline ? onlineUrl.trim() || undefined : undefined,
+        onlineUrl: isOnline ? onlineUrl.trim() : undefined,
         prefecture: !isOnline ? prefecture || undefined : undefined,
         venueName: !isOnline ? venueName.trim() || undefined : undefined,
         startAt: start.toISOString(),
@@ -186,15 +192,19 @@ export function EventsHostPanel() {
         </View>
 
         {isOnline ? (
-          <TextInput
-            style={styles.input}
-            placeholder="配信/通話URL（YouTube・ニコ生など）"
-            placeholderTextColor={color.textHint}
-            value={onlineUrl}
-            onChangeText={setOnlineUrl}
-            autoCapitalize="none"
-            accessibilityLabel="配信または通話のURL"
-          />
+          <>
+            <Text style={styles.fieldLabel}>配信/通話URL *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="https://youtube.com/... または https://twitch.tv/..."
+              placeholderTextColor={color.textHint}
+              value={onlineUrl}
+              onChangeText={setOnlineUrl}
+              autoCapitalize="none"
+              keyboardType="url"
+              accessibilityLabel="配信または通話のURL（必須）"
+            />
+          </>
         ) : (
           <>
             <LazyPrefectureSelector
@@ -319,6 +329,18 @@ export function EventsHostPanel() {
                     <Text style={styles.actionBtnText}>終了する</Text>
                   </Pressable>
                 )}
+                {e.status !== "live" && e.status !== "ended" && e.status !== "canceled" && (
+                  <Pressable
+                    onPress={() => setCancelTarget({ id: e.id, title: e.title })}
+                    disabled={cancelMut.isPending}
+                    accessibilityRole="button"
+                    accessibilityLabel="集まりをキャンセル"
+                    style={({ pressed }) => [styles.actionBtn, styles.cancelBtn, pressed && { opacity: 0.85 }]}
+                  >
+                    <MaterialIcons name="cancel" size={16} color={color.danger} />
+                    <Text style={styles.cancelBtnText}>キャンセル</Text>
+                  </Pressable>
+                )}
                 {e.status === "ended" && <Text style={styles.endedLabel}>終了しました</Text>}
                 {e.status === "canceled" && <Text style={styles.endedLabel}>キャンセル済み</Text>}
               </View>
@@ -326,6 +348,22 @@ export function EventsHostPanel() {
           />
         ))
       )}
+      <ConfirmModal
+        visible={cancelTarget != null}
+        title="集まりをキャンセル"
+        message={
+          cancelTarget
+            ? `「${cancelTarget.title}」をキャンセルしますか？\n予定・ライブ一覧から非表示になります。`
+            : ""
+        }
+        confirmText="キャンセルする"
+        cancelText="戻る"
+        confirmStyle="destructive"
+        onConfirm={() => {
+          if (cancelTarget) cancelMut.mutate({ eventId: cancelTarget.id });
+        }}
+        onCancel={() => setCancelTarget(null)}
+      />
     </View>
   );
 }
@@ -459,6 +497,16 @@ const styles = StyleSheet.create({
   },
   endBtn: {
     backgroundColor: color.textMuted,
+  },
+  cancelBtn: {
+    backgroundColor: color.danger + "14",
+    borderWidth: 1,
+    borderColor: color.danger + "44",
+  },
+  cancelBtnText: {
+    color: color.danger,
+    fontSize: 13,
+    fontWeight: "700",
   },
   actionBtnText: {
     color: color.textWhite,
