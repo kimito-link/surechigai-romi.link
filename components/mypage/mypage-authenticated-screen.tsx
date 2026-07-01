@@ -37,6 +37,8 @@ import { HostEventsSummary } from "@/components/dashboard/host-events-summary";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
+import { useTutorial } from "@/lib/tutorial-context";
+import { useOnboarding } from "@/features/onboarding/hooks/useOnboarding";
 import { trpc } from "@/lib/trpc";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
@@ -185,6 +187,8 @@ export function MypageAuthenticatedScreen() {
   const [showBlockList, setShowBlockList] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [localHitokoto, setLocalHitokoto] = useState("");
+  const { resetTutorial } = useTutorial();
+  const { resetOnboarding } = useOnboarding();
 
   const updateHitokoto = trpc.encounter.updateHitokoto.useMutation({
     onSuccess: () => {
@@ -509,6 +513,27 @@ export function MypageAuthenticatedScreen() {
         {/* 設定・ログアウト */}
         <View style={styles.settingsSubSection}>
           <Text style={styles.settingsSubHeading}>その他</Text>
+
+          <Pressable
+            onPress={() => void resetTutorial()}
+            style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
+          >
+            <MaterialIcons name="school" size={20} color={palette.kimitoBlue} style={{ marginRight: 12 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.menuItemText, { color: color.textPrimary }]}>使い方ガイドをもう一度</Text>
+              <Text style={{ color: color.textMuted, fontSize: 11, marginTop: 2 }}>
+                チェックイン・封筒・現在地・軌跡の4ステップ
+              </Text>
+            </View>
+          </Pressable>
+
+          <Pressable
+            onPress={() => void resetOnboarding()}
+            style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
+          >
+            <MaterialIcons name="auto-stories" size={20} color={palette.kimitoBlue} style={{ marginRight: 12 }} />
+            <Text style={[styles.menuItemText, { color: color.textPrimary }]}>初回スライドをもう一度</Text>
+          </Pressable>
 
           <Pressable
             onPress={navigate.toSpecialThanks}

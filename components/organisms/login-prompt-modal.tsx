@@ -3,7 +3,6 @@ import { color, palette } from "@/theme/tokens";
 import { Image } from "expo-image";
 import { useColors } from "@/hooks/use-colors";
 import { useLoginGuide } from "@/hooks/use-login-guide";
-import { useTutorial } from "@/lib/tutorial-context";
 import * as Haptics from "expo-haptics";
 import Animated, { 
   useAnimatedStyle, 
@@ -15,6 +14,7 @@ import Animated, {
 import { useEffect } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { navigate } from "@/lib/navigation";
+import { router } from "expo-router";
 
 // キャラクター画像
 const characterImage = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
@@ -37,7 +37,6 @@ interface LoginPromptModalProps {
 export function LoginPromptModal({ visible, onLogin, onSkip }: LoginPromptModalProps) {
   const colors = useColors();
   const openLoginGuide = useLoginGuide();
-  const { userType } = useTutorial();
   
   
   // キャラクターのワクワクアニメーション
@@ -81,28 +80,15 @@ export function LoginPromptModal({ visible, onLogin, onSkip }: LoginPromptModalP
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    onSkip(); // モーダルを閉じる
-    
-    if (userType === "host") {
-      // 主催者向け：チャレンジ作成画面へ
-      navigate.toCreate();
-    } else {
-      // ファン向け：ホーム画面（チャレンジ一覧）へ
-      navigate.toHome();
-    }
+    onSkip();
+    router.push("/(tabs)/checkin" as never);
   };
-  
+
   if (!visible) return null;
-  
-  // ユーザータイプに応じたメッセージ
-  const isHost = userType === "host";
+
   const title = "準備完了！";
-  const subtitle = isHost 
-    ? "さっそくチャレンジを作ってみよう"
-    : "気になるチャレンジを探してみよう";
-  const mainButtonText = isHost 
-    ? "チャレンジを作成する"
-    : "チャレンジを探す";
+  const subtitle = "さっそくチェックインして足あとを残そう";
+  const mainButtonText = "チェックインへ";
   
   return (
     <Modal
@@ -156,7 +142,7 @@ export function LoginPromptModal({ visible, onLogin, onSkip }: LoginPromptModalP
             ]}
           >
             <LinearGradient
-              colors={isHost ? [color.hostAccentLegacy, color.warning] : [color.accentPrimary, color.pink400]}
+              colors={[color.accentPrimary, color.pink400]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.mainButtonGradient}

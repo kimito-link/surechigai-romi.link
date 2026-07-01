@@ -29,6 +29,7 @@ export function TutorialOverlay({
   totalSteps,
   onNext,
   onComplete,
+  onSkip,
   visible,
 }: TutorialOverlayProps) {
   const [showConfetti, setShowConfetti] = useState(false);
@@ -139,12 +140,22 @@ export function TutorialOverlay({
       exiting={FadeOut.duration(200)}
       style={[styles.container]}
     >
-      <Pressable
-        
-        onPress={handleTap}
-        style={styles.overlay}
-      >
+      <Pressable onPress={handleTap} style={styles.overlay}>
         <View style={styles.darkOverlay} />
+
+        {onSkip ? (
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              onSkip();
+            }}
+            style={styles.skipButton}
+            accessibilityRole="button"
+            accessibilityLabel="チュートリアルをスキップ"
+          >
+            <Text style={styles.skipText}>スキップ</Text>
+          </Pressable>
+        ) : null}
 
         <Confetti active={showConfetti} />
         <Sparkles active={showSparkles} />
@@ -263,6 +274,21 @@ const styles = StyleSheet.create({
   darkOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: palette.black + "EB", // 92% opacity
+  },
+  skipButton: {
+    position: "absolute",
+    top: Platform.OS === "web" ? 16 : 48,
+    right: 16,
+    zIndex: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: palette.white + "14",
+  },
+  skipText: {
+    color: palette.white + "CC",
+    fontSize: 13,
+    fontWeight: "600",
   },
   contentContainer: {
     alignItems: "center",

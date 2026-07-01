@@ -23,6 +23,8 @@ import {
 } from "@/components/organisms/web-side-nav";
 import { WebAppFooter } from "@/components/organisms/web-app-footer";
 import { PostLoginLocationIntro } from "@/features/onboarding/components/PostLoginLocationIntro";
+import { TutorialProvider } from "@/lib/tutorial-context";
+import { TutorialHub } from "@/components/organisms/tutorial-hub";
 
 const CheckinTabIconAuthenticated = lazy(() =>
   import("@/components/tabs/checkin-tab-icon-authenticated").then((m) => ({
@@ -69,10 +71,11 @@ export default function TabLayout() {
   const compactTabs = windowWidth < 480;
 
   return (
-    <>
+    <TutorialProvider>
       <WebSideNav />
       {sideNavActive ? <WebAppFooter /> : null}
       <PostLoginLocationIntro />
+      <TutorialHub />
       <View style={{ flex: 1, marginLeft: sideNavActive ? WEB_SIDE_NAV_WIDTH : 0 }}>
         <LivePresenceRunner />
         <EventReminderRunner />
@@ -184,6 +187,6 @@ export default function TabLayout() {
           />
         </Tabs>
       </View>
-    </>
+    </TutorialProvider>
   );
 }

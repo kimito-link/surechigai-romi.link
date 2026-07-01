@@ -114,12 +114,67 @@ export function CrownPreview() {
 }
 
 /**
+ * チェックインボタンプレビュー
+ */
+export function CheckinPreview() {
+  return (
+    <View style={styles.container}>
+      <View style={styles.checkinButton}>
+        <Text style={styles.checkinIcon}>📍</Text>
+        <Text style={styles.checkinLabel}>チェックイン</Text>
+      </View>
+      <Text style={styles.caption}>今いる場所を1タップで記録</Text>
+    </View>
+  );
+}
+
+/**
+ * 封筒プレビュー（すれ違い）
+ */
+export function EnvelopePreview() {
+  return (
+    <View style={styles.container}>
+      <View style={styles.envelopeCard}>
+        <Text style={styles.envelopeIcon}>✉️</Text>
+        <View>
+          <Text style={styles.envelopeTitle}>すれ違いの封筒</Text>
+          <Text style={styles.envelopeBody}>長野県 · 30分前に同じ場所</Text>
+        </View>
+      </View>
+      <Text style={styles.caption}>同じ場所を通った記録</Text>
+    </View>
+  );
+}
+
+/**
+ * 軌跡マッププレビュー
+ */
+export function TrailPreview() {
+  return (
+    <View style={styles.container}>
+      <View style={styles.trailMap}>
+        <View style={styles.trailPin} />
+        <View style={[styles.trailLine, { transform: [{ rotate: "25deg" }] }]} />
+        <View style={[styles.trailPin, styles.trailPinAlt]} />
+      </View>
+      <Text style={styles.caption}>正確な足あとを地図で振り返る</Text>
+    </View>
+  );
+}
+
+/**
  * プレビューコンポーネントの選択
  */
 export function PreviewComponent({ type }: { type?: string }) {
   switch (type) {
     case "map":
       return <MapPreview />;
+    case "checkin":
+      return <CheckinPreview />;
+    case "envelope":
+      return <EnvelopePreview />;
+    case "trail":
+      return <TrailPreview />;
     case "participants":
       return <ParticipantsPreview />;
     case "chart":
@@ -212,5 +267,77 @@ const styles = StyleSheet.create({
     color: palette.white + "B3", // 70% opacity
     fontSize: 12,
     marginTop: 4,
+  },
+  checkinButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: color.accentPrimary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  checkinIcon: {
+    fontSize: 18,
+  },
+  checkinLabel: {
+    color: color.textWhite,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  envelopeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: palette.white + "26",
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+    width: "100%",
+  },
+  envelopeIcon: {
+    fontSize: 28,
+  },
+  envelopeTitle: {
+    color: color.textWhite,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  envelopeBody: {
+    color: palette.white + "B3",
+    fontSize: 11,
+    marginTop: 2,
+  },
+  trailMap: {
+    width: 180,
+    height: 90,
+    backgroundColor: palette.white + "14",
+    borderRadius: 12,
+    position: "relative",
+    overflow: "hidden",
+  },
+  trailPin: {
+    position: "absolute",
+    left: 24,
+    top: 48,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: color.accentPrimary,
+    borderWidth: 2,
+    borderColor: color.textWhite,
+  },
+  trailPinAlt: {
+    left: 120,
+    top: 22,
+    backgroundColor: palette.teal500,
+  },
+  trailLine: {
+    position: "absolute",
+    left: 30,
+    top: 40,
+    width: 100,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: palette.white + "55",
   },
 });
