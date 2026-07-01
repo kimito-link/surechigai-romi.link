@@ -1,7 +1,7 @@
 /**
  * ポスト画面 — 未ログイン guest 向け軽量 UI。
- * LCP: BrandTagline + CTA 見出しを初回 paint で同期描画（lazy/defer しない）。
- * 帯域譲渡: AppHeader / BrandStamp / benefits+CTA は idle 後 chunk。
+ * LCP: ヘッダー + タグライン + CTA を初回 paint で同期描画。
+ * benefits（MaterialIcons）は idle 後 chunk。
  */
 import { View, Text, ScrollView, StyleSheet, Platform, Pressable } from "react-native";
 import { useEffect, useState } from "react";
@@ -9,12 +9,16 @@ import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { scheduleAfterIdle } from "@/lib/schedule-after-idle";
 import { MARKETING_URL } from "@/lib/site-urls";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
-import { useResponsive } from "@/hooks/use-responsive";
-import { color, palette } from "@/theme/tokens";
+import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
+import { SIGN_IN_HREF } from "@/lib/clerk-route";
 import {
-  GuestHomeDeferredBody,
-  GuestHomeDeferredHeader,
+  GuestHomeDeferredBenefits,
+  GUEST_HOME_BENEFITS_PLACEHOLDER_HEIGHT,
 } from "@/components/post/guest-home-deferred-chrome";
+import {
+  GuestHomeShellHeader,
+  GUEST_HOME_HEADER_HEIGHT,
+} from "@/components/post/guest-home-shell-header";
 import type { LoginPreviewBenefit } from "@/components/molecules/login-preview-banner-extras";
 
 const GUEST_HOME_BENEFITS: LoginPreviewBenefit[] = [
@@ -28,26 +32,27 @@ const GUEST_HOME_BENEFITS: LoginPreviewBenefit[] = [
 const LCP_HEADLINE = "ログインして、封筒と足あとを受け取ろう";
 
 export function PostGuestScreen() {
-  const { isDesktop } = useResponsive();
   const tabInset = useTabBarInset();
-  const [showDeferred, setShowDeferred] = useState(false);
+  const [showBenefits, setShowBenefits] = useState(false);
 
   useEffect(() => {
-    return scheduleAfterIdle(() => setShowDeferred(true), {
-      fallbackDelayMs: 200,
-      timeoutMs: 2_500,
+    return scheduleAfterIdle(() => setShowBenefits(true), {
+      fallbackDelayMs: 800,
+      timeoutMs: 4_000,
     });
   }, []);
 
+  const headerOffset =
+    Platform.OS === "web" ? GUEST_HOME_HEADER_HEIGHT : 0;
+
   return (
     <View style={styles.root}>
-      {showDeferred ? (
-        <GuestHomeDeferredHeader isDesktop={isDesktop} />
-      ) : (
-        <View style={styles.headerStub} />
-      )}
+      <GuestHomeShellHeader />
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: 8 + headerOffset, paddingBottom: tabInset },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
@@ -56,23 +61,27 @@ export function PostGuestScreen() {
         </View>
         <View style={styles.ctaCard}>
           <Text style={styles.ctaHeadline}>{LCP_HEADLINE}</Text>
-          {showDeferred ? <GuestHomeDeferredBody benefits={GUEST_HOME_BENEFITS} /> : null}
+          <KimitoLoginCta signInHref={SIGN_IN_HREF} />
+          <Text style={styles.ctaNote}>無料・1タップ / 新規登録もこちら</Text>
+          {showBenefits ? (
+            <GuestHomeDeferredBenefits benefits={GUEST_HOME_BENEFITS} />
+          ) : (
+            <View style={styles.benefitsPlaceholder} />
+          )}
         </View>
-        {showDeferred ? (
-          <Pressable
-            accessibilityRole="link"
-            accessibilityLabel="kimito.link 公式の紹介ページ"
-            onPress={() => {
-              if (Platform.OS === "web" && typeof window !== "undefined") {
-                window.location.assign(MARKETING_URL);
-                return;
-              }
-            }}
-            style={styles.marketingLink}
-          >
-            <Text style={styles.marketingLinkText}>kimito.link 公式の紹介ページ</Text>
-          </Pressable>
-        ) : null}
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="kimito.link 公式の紹介ページ"
+          onPress={() => {
+            if (Platform.OS === "web" && typeof window !== "undefined") {
+              window.location.assign(MARKETING_URL);
+              return;
+            }
+          }}
+          style={styles.marketingLink}
+        >
+          <Text style={styles.marketingLinkText}>kimito.link 公式の紹介ページ</Text>
+        </Pressable>
       </ScrollView>
     </View>
   );
@@ -84,15 +93,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F4F8",
     overflow: "hidden",
   },
-  headerStub: {
-    height: 56,
-    backgroundColor: "#E2EDF7",
-    borderBottomWidth: 1,
-    borderBottomColor: "#00427B40",
-  },
   content: {
     paddingHorizontal: 16,
-    paddingTop: 8,
     gap: 16,
   },
   hero: {
@@ -102,7 +104,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   heroSub: {
-    color: color.textSecondary,
+    color: "#475569",
     fontSize: 14,
     textAlign: "center",
     lineHeight: 22,
@@ -110,18 +112,27 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   ctaCard: {
-    backgroundColor: palette.kimitoBlueSoft,
+    backgroundColor: "#E8F2FA",
     borderWidth: 1,
     borderColor: "#00427B22",
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    gap: 12,
   },
   ctaHeadline: {
-    color: palette.kimitoBlue,
+    color: "#00427B",
     fontSize: 16,
     fontWeight: "800",
-    marginBottom: 12,
+  },
+  ctaNote: {
+    color: "#64748B",
+    fontSize: 12,
+    textAlign: "center",
+  },
+  benefitsPlaceholder: {
+    height: GUEST_HOME_BENEFITS_PLACEHOLDER_HEIGHT,
+    width: "100%",
   },
   marketingLink: {
     alignSelf: "center",
@@ -130,7 +141,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   marketingLinkText: {
-    color: color.textSecondary,
+    color: "#64748B",
     fontSize: 13,
     textDecorationLine: "underline",
   },

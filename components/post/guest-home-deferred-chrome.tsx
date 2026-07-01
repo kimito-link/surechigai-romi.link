@@ -1,51 +1,32 @@
 /**
- * ゲストホーム — LCP 後 idle で載せる chrome（header / logo / CTA 詳細）。
- * kimito FontLoader 思想: 初回 paint の帯域を LCP テキストに譲る。
+ * ゲストホーム — LCP 確定後 idle で載せる benefits（MaterialIcons font 含む）。
  */
 import { lazy, Suspense } from "react";
 import { View, StyleSheet } from "react-native";
 import type { LoginPreviewBenefit } from "@/components/molecules/login-preview-banner-extras";
 
-const LazyAppHeader = lazy(() =>
-  import("@/components/organisms/app-header").then((m) => ({ default: m.AppHeader })),
-);
-
-const LazyBrandStamp = lazy(() =>
-  import("@/components/brand/brand-stamp").then((m) => ({ default: m.BrandStamp })),
-);
-
 const LazyLoginPreviewBannerExtras = lazy(() =>
   import("@/components/molecules/login-preview-banner-extras").then((m) => ({
-    default: m.LoginPreviewBannerExtras,
+    default: m.LoginPreviewBannerBenefitsOnly,
   })),
 );
 
-export function GuestHomeDeferredHeader({ isDesktop }: { isDesktop: boolean }) {
+/** benefits 5 行分 — 遅延 mount 時の CLS 抑制 */
+export const GUEST_HOME_BENEFITS_PLACEHOLDER_HEIGHT = 196;
+
+export function GuestHomeDeferredBenefits({ benefits }: { benefits: LoginPreviewBenefit[] }) {
   return (
-    <Suspense fallback={<View style={styles.headerStub} />}>
-      <LazyAppHeader showLoginButton isDesktop={isDesktop} showMenu />
+    <Suspense
+      fallback={<View style={styles.placeholder} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />}
+    >
+      <LazyLoginPreviewBannerExtras benefits={benefits} />
     </Suspense>
   );
 }
 
-export function GuestHomeDeferredBody({ benefits }: { benefits: LoginPreviewBenefit[] }) {
-  return (
-    <>
-      <Suspense fallback={null}>
-        <LazyBrandStamp variant="hero" />
-      </Suspense>
-      <Suspense fallback={null}>
-        <LazyLoginPreviewBannerExtras benefits={benefits} />
-      </Suspense>
-    </>
-  );
-}
-
 const styles = StyleSheet.create({
-  headerStub: {
-    height: 56,
-    backgroundColor: "#E2EDF7",
-    borderBottomWidth: 1,
-    borderBottomColor: "#00427B40",
+  placeholder: {
+    height: GUEST_HOME_BENEFITS_PLACEHOLDER_HEIGHT,
+    width: "100%",
   },
 });

@@ -3,6 +3,7 @@ import "@/lib/bootstrap/reanimated-init";
 // @ts-nocheck
 import { usePathname } from "expo-router";
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import { AppNavigationStack } from "@/components/providers/app-navigation-stack";
 import { Platform, View, Text } from "react-native";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
@@ -32,12 +33,6 @@ import { OnboardingProvider } from "@/features/onboarding/context/OnboardingProv
 const ClerkRootProvider = lazy(() =>
   import("@/components/providers/clerk-root-provider").then((m) => ({
     default: m.ClerkRootProvider,
-  })),
-);
-
-const AppNavigationStack = lazy(() =>
-  import("@/components/providers/app-navigation-stack").then((m) => ({
-    default: m.AppNavigationStack,
   })),
 );
 
@@ -150,11 +145,7 @@ export default function RootLayout() {
   const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const isMissingClerkKey = !clerkKey;
 
-  const stack = (
-    <Suspense fallback={useGuestWebShell ? null : <AppBootstrapFallback />}>
-      <AppNavigationStack />
-    </Suspense>
-  );
+  const stack = <AppNavigationStack />;
 
   let shellContent: ReactNode;
   if (isMissingClerkKey) {

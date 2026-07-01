@@ -23,6 +23,25 @@ function normalizeReturnTo(pathname: string | null): string {
   return pathname.startsWith("/") ? pathname : `/${pathname}`;
 }
 
+export function LoginPreviewBannerBenefitsOnly({
+  benefits,
+}: {
+  benefits: LoginPreviewBenefit[];
+}) {
+  return (
+    <View style={styles.benefitsOnly}>
+      {benefits.map((b) => (
+        <View key={b.label} style={styles.benefitRow}>
+          <View style={styles.benefitIcon}>
+            <MaterialIcons name={b.icon} size={15} color={palette.kimitoOrange} />
+          </View>
+          <Text style={styles.benefitText}>{b.label}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export function LoginPreviewBannerExtras({
   benefits,
 }: {
@@ -44,16 +63,7 @@ export function LoginPreviewBannerExtras({
 
   return (
     <>
-      <View style={styles.benefits}>
-        {benefits.map((b) => (
-          <View key={b.label} style={styles.benefitRow}>
-            <View style={styles.benefitIcon}>
-              <MaterialIcons name={b.icon} size={15} color={palette.kimitoOrange} />
-            </View>
-            <Text style={styles.benefitText}>{b.label}</Text>
-          </View>
-        ))}
-      </View>
+      <LoginPreviewBannerBenefitsOnly benefits={benefits} />
       <KimitoLoginCta signInHref={signInHref} isStarting={isStarting} onPress={() => void handleNativeLogin()} />
       <Text style={styles.note}>無料・1タップ / 新規登録もこちら</Text>
     </>
@@ -64,6 +74,10 @@ const styles = StyleSheet.create({
   benefits: {
     gap: 8,
     marginBottom: 14,
+  },
+  benefitsOnly: {
+    gap: 8,
+    marginTop: 4,
   },
   benefitRow: {
     flexDirection: "row",
