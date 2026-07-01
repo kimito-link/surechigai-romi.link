@@ -62,9 +62,6 @@ import { useTabScrollToTop } from "@/hooks/use-tab-scroll-to-top";
 const JapanRadarMap = lazy(() =>
   import("@/components/organisms/japan-radar-map").then((m) => ({ default: m.JapanRadarMap })),
 );
-const NightSkyBackdrop = lazy(() =>
-  import("@/components/organisms/night-sky-backdrop").then((m) => ({ default: m.NightSkyBackdrop })),
-);
 const RadarHud = lazy(() =>
   import("@/components/organisms/radar-hud").then((m) => ({ default: m.RadarHud })),
 );
@@ -356,7 +353,6 @@ export function PostAuthenticatedScreen() {
 
   const renderRadarStage = () => (
     <Suspense fallback={<DeferredRadarFallback />}>
-      <NightSkyBackdrop />
       <JapanRadarMap>
         {unopened.map((item) => {
           const randomX = 10 + (Math.sin(item.id * 123) * 0.5 + 0.5) * 80;
@@ -405,7 +401,7 @@ export function PostAuthenticatedScreen() {
           <Text style={styles.sisterBannerLabel}>SISTER_SERVICE</Text>
           <Text style={styles.sisterBannerName} numberOfLines={1}>{svc.name}</Text>
         </View>
-        <MaterialIcons name="open-in-new" size={14} color="rgba(255,255,255,0.5)" />
+        <MaterialIcons name="open-in-new" size={14} color={color.textMuted} />
       </Pressable>
     ));
 
@@ -447,7 +443,7 @@ export function PostAuthenticatedScreen() {
   );
 
   return (
-      <ScreenContainer style={{ backgroundColor: "#020817" }} edges={[]}>
+      <ScreenContainer style={{ backgroundColor: color.bg }} edges={[]}>
         <AppHeader variant="full" contextBar={postContext.element} />
         <TabHeaderSpacer variant="full" hasContextBar={postContext.hasBar} />
 
@@ -520,7 +516,7 @@ const styles = StyleSheet.create({
   mapContainer: {
     flex: 1,
     position: "relative",
-    backgroundColor: "#020817", // Kimito-link universe dark
+    backgroundColor: color.bg,
   },
   signalPanel: {
     position: "absolute",
@@ -538,7 +534,7 @@ const styles = StyleSheet.create({
   },
   mobileScroll: {
     flex: 1,
-    backgroundColor: "#020817",
+    backgroundColor: color.bg,
   },
   mobileScrollContent: {
     flexGrow: 1,
@@ -546,7 +542,7 @@ const styles = StyleSheet.create({
   mapHeroMobile: {
     position: "relative",
     overflow: "hidden",
-    backgroundColor: "#020817",
+    backgroundColor: color.bg,
   },
   mobileFooter: {
     gap: 10,
@@ -560,9 +556,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: "rgba(2,8,23,0.85)",
+    backgroundColor: palette.kimitoBlueSoft,
     borderWidth: 1,
-    borderColor: color.accentPrimary + "55",
+    borderColor: palette.kimitoBlue + "33",
   },
   emptyOverlayMobile: {
     top: "38%",
@@ -581,16 +577,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   emptyOverlayTitle: {
-    color: "#FFFFFF",
+    color: color.textPrimary,
     fontSize: 16,
     fontWeight: "700",
     textAlign: "center",
-    textShadowColor: color.accentPrimary,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 12,
   },
   emptyOverlayText: {
-    color: "rgba(255,255,255,0.88)",
+    color: color.textSecondary,
     fontSize: 13,
     textAlign: "center",
     lineHeight: 20,
@@ -861,19 +854,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: "rgba(2,8,23,0.85)",
+    backgroundColor: palette.kimitoBlueSoft,
     borderWidth: 1,
-    borderColor: color.accentPrimary + "55",
+    borderColor: palette.kimitoBlue + "33",
   },
   sisterBannerLabel: {
-    color: color.accentPrimary,
+    color: color.textMuted,
     fontSize: 9,
     fontWeight: "700",
     letterSpacing: 1,
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
   sisterBannerName: {
-    color: "#FFFFFF",
+    color: color.textPrimary,
     fontSize: 13,
     fontWeight: "600",
     marginTop: 1,

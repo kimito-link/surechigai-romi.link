@@ -17,6 +17,7 @@ type TutorialContextType = {
   currentStep: TutorialStep | null;
   totalSteps: number;
   nextStep: () => void;
+  prevStep: () => void;
   completeTutorial: () => void;
   skipTutorial: () => void;
   isCompleted: boolean;
@@ -105,6 +106,12 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     }
   }, [currentStepIndex, steps.length, completeTutorial]);
 
+  const prevStep = useCallback(() => {
+    if (currentStepIndex > 0) {
+      setCurrentStepIndex((i) => i - 1);
+    }
+  }, [currentStepIndex]);
+
   const resetTutorial = useCallback(async () => {
     await removeStorage(TUTORIAL_SEEN_STORAGE_KEY);
     setIsCompleted(false);
@@ -173,6 +180,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
         currentStep,
         totalSteps: steps.length,
         nextStep,
+        prevStep,
         completeTutorial,
         skipTutorial,
         isCompleted,

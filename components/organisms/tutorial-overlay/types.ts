@@ -49,7 +49,7 @@ export type TutorialStep = {
   /** 成功時のアニメーション */
   successAnimation?: "confetti" | "pulse" | "sparkle" | "none";
   /** プレビュー画像タイプ */
-  previewType?: "map" | "participants" | "chart" | "notification" | "crown" | "checkin" | "envelope" | "trail" | "none";
+  previewType?: "map" | "participants" | "chart" | "notification" | "crown" | "checkin" | "envelope" | "trail" | "events" | "navigate" | "none";
 };
 
 export type TutorialOverlayProps = {
@@ -61,6 +61,8 @@ export type TutorialOverlayProps = {
   totalSteps: number;
   /** 次のステップに進む */
   onNext: () => void;
+  /** 前のステップに戻る */
+  onPrev?: () => void;
   /** チュートリアル終了 */
   onComplete: () => void;
   /** スキップ（任意） */

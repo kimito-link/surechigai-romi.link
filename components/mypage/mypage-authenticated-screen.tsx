@@ -522,7 +522,7 @@ export function MypageAuthenticatedScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[styles.menuItemText, { color: color.textPrimary }]}>使い方ガイドをもう一度</Text>
               <Text style={{ color: color.textMuted, fontSize: 11, marginTop: 2 }}>
-                チェックイン・封筒・現在地・軌跡・集まり・ナビの5ステップ
+                封筒・チェックイン・現在地・ナビ・集まりの6ステップ
               </Text>
             </View>
           </Pressable>

@@ -1,170 +1,140 @@
 // components/organisms/tutorial-overlay/previews.tsx
-// v6.18: チュートリアルのプレビューコンポーネント
+// 君斗りんく — ライト UI プレビュー
 import { View, Text, StyleSheet } from "react-native";
-import Svg, { Circle, Path, Rect, G, Text as SvgText } from "react-native-svg";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import Svg, { Circle, G, Rect } from "react-native-svg";
 import { color, palette } from "@/theme/tokens";
 
-/**
- * 日本地図プレビュー（簡易版）
- */
+const previewCard = {
+  alignItems: "center" as const,
+  backgroundColor: palette.kimitoBlueSoft,
+  borderRadius: 14,
+  padding: 14,
+  minWidth: 240,
+  borderWidth: 1,
+  borderColor: palette.kimitoBlue + "18",
+};
+
+const caption = {
+  color: color.textMuted,
+  fontSize: 11,
+  marginTop: 8,
+  textAlign: "center" as const,
+};
+
 export function MapPreview() {
   return (
-    <View style={styles.container}>
-      <Svg width={200} height={150} viewBox="0 0 200 150">
+    <View style={previewCard}>
+      <Svg width={200} height={100} viewBox="0 0 200 100">
         <G>
-          <Circle cx={160} cy={30} r={15} fill={color.balloonLight} stroke={color.hostAccentLegacy} strokeWidth={1} />
-          <Circle cx={150} cy={55} r={12} fill={color.balloonLighter} stroke={color.hostAccentLegacy} strokeWidth={1} />
-          <Circle cx={145} cy={80} r={18} fill={color.balloonRed} stroke={color.hostAccentLegacy} strokeWidth={2} />
-          <Circle cx={125} cy={85} r={14} fill={color.balloonPink} stroke={color.hostAccentLegacy} strokeWidth={1} />
-          <Circle cx={105} cy={95} r={16} fill={color.balloonMedium} stroke={color.hostAccentLegacy} strokeWidth={1} />
-          <Circle cx={75} cy={100} r={12} fill={color.balloonPale} stroke={color.hostAccentLegacy} strokeWidth={1} />
-          <Circle cx={90} cy={115} r={10} fill={color.balloonLighter} stroke={color.hostAccentLegacy} strokeWidth={1} />
-          <Circle cx={50} cy={115} r={14} fill={color.balloonPink} stroke={color.hostAccentLegacy} strokeWidth={1} />
+          <Circle cx={130} cy={35} r={10} fill={palette.kimitoOrange} opacity={0.85} />
+          <Circle cx={115} cy={55} r={8} fill={palette.kimitoBlue} opacity={0.7} />
+          <Circle cx={95} cy={62} r={12} fill={palette.kimitoPurple} opacity={0.75} />
+          <Circle cx={72} cy={68} r={7} fill={palette.teal600} opacity={0.65} />
         </G>
-        <SvgText x={10} y={20} fontSize={10} fill={color.textWhite}>参加者が多い</SvgText>
-        <Rect x={10} y={25} width={15} height={8} fill={color.balloonRed} />
-        <SvgText x={10} y={50} fontSize={10} fill={color.textWhite}>参加者が少ない</SvgText>
-        <Rect x={10} y={55} width={15} height={8} fill={color.balloonPale} />
+        <Rect x={8} y={8} width={10} height={10} rx={2} fill={palette.kimitoOrange} />
+        <Rect x={8} y={24} width={10} height={10} rx={2} fill={palette.kimitoBlue} />
       </Svg>
-      <Text style={styles.caption}>地域別参加者マップ</Text>
+      <Text style={caption}>公開中の都道府県マップ</Text>
     </View>
   );
 }
 
-/**
- * 参加者リストプレビュー
- */
-export function ParticipantsPreview() {
-  const participants = [
-    { name: "@fan_user1", followers: "12.5K", badge: "👑" },
-    { name: "@supporter_2", followers: "8.2K", badge: "⭐" },
-    { name: "@love_oshi", followers: "5.1K", badge: "" },
-  ];
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.listContainer}>
-        {participants.map((p, i) => (
-          <View key={i} style={styles.listItem}>
-            <View style={styles.avatar} />
-            <View style={styles.listItemContent}>
-              <Text style={styles.listItemName}>{p.badge} {p.name}</Text>
-              <Text style={styles.listItemSub}>フォロワー {p.followers}</Text>
-            </View>
-          </View>
-        ))}
-      </View>
-      <Text style={styles.caption}>参加者リスト</Text>
-    </View>
-  );
-}
-
-/**
- * 男女比グラフプレビュー
- */
-export function ChartPreview() {
-  return (
-    <View style={styles.container}>
-      <Svg width={150} height={100} viewBox="0 0 150 100">
-        <G transform="translate(75, 50)">
-          <Path d="M 0 0 L 40 0 A 40 40 0 0 1 -20 34.6 Z" fill={color.tutorialBlue} />
-          <Path d="M 0 0 L -20 34.6 A 40 40 0 1 1 40 0 Z" fill={color.accentPrimary} />
-        </G>
-        <Rect x={5} y={10} width={12} height={12} fill={color.accentPrimary} />
-        <SvgText x={20} y={20} fontSize={10} fill={color.textWhite}>女性 65%</SvgText>
-        <Rect x={5} y={30} width={12} height={12} fill={color.tutorialBlue} />
-        <SvgText x={20} y={40} fontSize={10} fill={color.textWhite}>男性 35%</SvgText>
-      </Svg>
-      <Text style={styles.caption}>参加者の男女比</Text>
-    </View>
-  );
-}
-
-/**
- * 通知プレビュー
- */
-export function NotificationPreview() {
-  return (
-    <View style={styles.container}>
-      <View style={styles.notificationCard}>
-        <Text style={styles.notificationIcon}>🔔</Text>
-        <View>
-          <Text style={styles.notificationTitle}>新しい参加者！</Text>
-          <Text style={styles.notificationBody}>@fan_user1さんが参加表明しました</Text>
-        </View>
-      </View>
-      <Text style={styles.caption}>主催者に通知が届く</Text>
-    </View>
-  );
-}
-
-/**
- * 王冠プレビュー（常連表示）
- */
-export function CrownPreview() {
-  return (
-    <View style={styles.container}>
-      <View style={styles.crownContainer}>
-        <Text style={styles.crownIcon}>👑</Text>
-        <Text style={styles.crownText}>常連ファン</Text>
-        <Text style={styles.crownSub}>参加回数: 15回</Text>
-      </View>
-    </View>
-  );
-}
-
-/**
- * チェックインボタンプレビュー
- */
 export function CheckinPreview() {
   return (
-    <View style={styles.container}>
+    <View style={previewCard}>
       <View style={styles.checkinButton}>
-        <Text style={styles.checkinIcon}>📍</Text>
+        <MaterialIcons name="my-location" size={18} color={palette.white} />
         <Text style={styles.checkinLabel}>チェックイン</Text>
       </View>
-      <Text style={styles.caption}>今いる場所を1タップで記録</Text>
+      <Text style={caption}>タブバー「チェックイン」— 1タップで足あと</Text>
     </View>
   );
 }
 
-/**
- * 封筒プレビュー（すれ違い）
- */
 export function EnvelopePreview() {
   return (
-    <View style={styles.container}>
-      <View style={styles.envelopeCard}>
-        <Text style={styles.envelopeIcon}>✉️</Text>
-        <View>
-          <Text style={styles.envelopeTitle}>すれ違いの封筒</Text>
-          <Text style={styles.envelopeBody}>長野県 · 30分前に同じ場所</Text>
+    <View style={previewCard}>
+      <View style={styles.rowCard}>
+        <Text style={styles.emoji}>✉️</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.cardTitle}>未開封の封筒</Text>
+          <Text style={styles.cardBody}>長野県 · 同じ場所を通過</Text>
         </View>
       </View>
-      <Text style={styles.caption}>同じ場所を通った記録</Text>
+      <Text style={caption}>「現在地」タブに届く — タップで開封</Text>
     </View>
   );
 }
 
-/**
- * 軌跡マッププレビュー
- */
 export function TrailPreview() {
   return (
-    <View style={styles.container}>
+    <View style={previewCard}>
       <View style={styles.trailMap}>
         <View style={styles.trailPin} />
         <View style={[styles.trailLine, { transform: [{ rotate: "25deg" }] }]} />
         <View style={[styles.trailPin, styles.trailPinAlt]} />
       </View>
-      <Text style={styles.caption}>正確な足あとを地図で振り返る</Text>
+      <Text style={caption}>軌跡タブ — OpenStreetMap 上の足あと</Text>
     </View>
   );
 }
 
-/**
- * プレビューコンポーネントの選択
- */
+export function NavigatePreview() {
+  return (
+    <View style={previewCard}>
+      <View style={styles.navButton}>
+        <MaterialIcons name="navigation" size={16} color={palette.white} />
+        <Text style={styles.navButtonText}>ここへ向かう</Text>
+      </View>
+      <Text style={caption}>Google マップ / Apple マップでナビ開始</Text>
+    </View>
+  );
+}
+
+export function EventsPreview() {
+  return (
+    <View style={previewCard}>
+      <View style={styles.segmentRow}>
+        <View style={[styles.segment, styles.segmentActive]}>
+          <Text style={styles.segmentTextActive}>予定</Text>
+        </View>
+        <View style={styles.segment}>
+          <Text style={styles.segmentText}>ライブ中</Text>
+        </View>
+      </View>
+      <View style={styles.eventRow}>
+        <MaterialIcons name="calendar-today" size={16} color={palette.kimitoBlue} />
+        <View>
+          <Text style={styles.cardTitle}>7/15 14:00 推し活ライブ</Text>
+          <Text style={styles.cardBody}>東京都 · ライブ表明中</Text>
+        </View>
+      </View>
+      <Text style={caption}>集まりタブ — カレンダーとライブ追尾</Text>
+    </View>
+  );
+}
+
+/** @deprecated レガシー doin-challenge 用 */
+export function ParticipantsPreview() {
+  return null;
+}
+
+/** @deprecated レガシー doin-challenge 用 */
+export function ChartPreview() {
+  return null;
+}
+
+/** @deprecated レガシー doin-challenge 用 */
+export function NotificationPreview() {
+  return <EventsPreview />;
+}
+
+/** @deprecated レガシー doin-challenge 用 */
+export function CrownPreview() {
+  return null;
+}
+
 export function PreviewComponent({ type }: { type?: string }) {
   switch (type) {
     case "map":
@@ -175,169 +145,147 @@ export function PreviewComponent({ type }: { type?: string }) {
       return <EnvelopePreview />;
     case "trail":
       return <TrailPreview />;
-    case "participants":
-      return <ParticipantsPreview />;
-    case "chart":
-      return <ChartPreview />;
+    case "navigate":
+      return <NavigatePreview />;
+    case "events":
+      return <EventsPreview />;
     case "notification":
-      return <NotificationPreview />;
+      return <EventsPreview />;
+    case "participants":
+    case "chart":
     case "crown":
-      return <CrownPreview />;
+      return null;
     default:
       return null;
   }
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    backgroundColor: palette.white + "1A", // 10% opacity
-    borderRadius: 16,
-    padding: 16,
-    minWidth: 220,
-  },
-  caption: {
-    color: palette.white + "B3", // 70% opacity
-    fontSize: 11,
-    marginTop: 8,
-  },
-  listContainer: {
-    width: "100%",
-  },
-  listItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: palette.white + "1A", // 10% opacity
-  },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: color.hostAccentLegacy,
-    marginRight: 10,
-  },
-  listItemContent: {
-    flex: 1,
-  },
-  listItemName: {
-    color: color.textWhite,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  listItemSub: {
-    color: palette.white + "99", // 60% opacity
-    fontSize: 10,
-  },
-  notificationCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: palette.white + "26", // 15% opacity
-    borderRadius: 12,
-    padding: 12,
-    gap: 10,
-  },
-  notificationIcon: {
-    fontSize: 24,
-  },
-  notificationTitle: {
-    color: color.textWhite,
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  notificationBody: {
-    color: palette.white + "CC", // 80% opacity
-    fontSize: 11,
-  },
-  crownContainer: {
-    alignItems: "center",
-    padding: 16,
-  },
-  crownIcon: {
-    fontSize: 48,
-    marginBottom: 8,
-  },
-  crownText: {
-    color: color.rankGold,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  crownSub: {
-    color: palette.white + "B3", // 70% opacity
-    fontSize: 12,
-    marginTop: 4,
-  },
   checkinButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: color.accentPrimary,
+    backgroundColor: palette.kimitoBlue,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 999,
   },
-  checkinIcon: {
-    fontSize: 18,
-  },
   checkinLabel: {
-    color: color.textWhite,
+    color: palette.white,
     fontSize: 14,
     fontWeight: "800",
   },
-  envelopeCard: {
+  rowCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: palette.white + "26",
+    backgroundColor: palette.white,
     borderRadius: 12,
     padding: 12,
     gap: 10,
     width: "100%",
+    borderWidth: 1,
+    borderColor: palette.kimitoBlue + "18",
   },
-  envelopeIcon: {
-    fontSize: 28,
+  emoji: {
+    fontSize: 26,
   },
-  envelopeTitle: {
-    color: color.textWhite,
+  cardTitle: {
+    color: color.textPrimary,
     fontSize: 13,
     fontWeight: "800",
   },
-  envelopeBody: {
-    color: palette.white + "B3",
+  cardBody: {
+    color: color.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
   trailMap: {
-    width: 180,
-    height: 90,
-    backgroundColor: palette.white + "14",
+    width: 200,
+    height: 80,
+    backgroundColor: palette.white,
     borderRadius: 12,
     position: "relative",
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: palette.kimitoBlue + "18",
   },
   trailPin: {
     position: "absolute",
-    left: 24,
-    top: 48,
+    left: 28,
+    top: 44,
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: color.accentPrimary,
+    backgroundColor: palette.kimitoBlue,
     borderWidth: 2,
-    borderColor: color.textWhite,
+    borderColor: palette.white,
   },
   trailPinAlt: {
-    left: 120,
-    top: 22,
-    backgroundColor: palette.teal500,
+    left: 130,
+    top: 20,
+    backgroundColor: palette.kimitoOrange,
   },
   trailLine: {
     position: "absolute",
-    left: 30,
-    top: 40,
+    left: 34,
+    top: 36,
     width: 100,
     height: 3,
     borderRadius: 2,
-    backgroundColor: palette.white + "55",
+    backgroundColor: palette.kimitoBlue + "44",
+  },
+  navButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: palette.kimitoBlue,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+  },
+  navButtonText: {
+    color: palette.white,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  segmentRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 10,
+    width: "100%",
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: palette.kimitoBlue + "22",
+  },
+  segmentActive: {
+    backgroundColor: palette.kimitoBlueSoft,
+    borderColor: palette.kimitoBlue,
+  },
+  segmentText: {
+    color: color.textMuted,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  segmentTextActive: {
+    color: palette.kimitoBlue,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  eventRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    width: "100%",
+    backgroundColor: palette.white,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: palette.kimitoBlue + "18",
   },
 });

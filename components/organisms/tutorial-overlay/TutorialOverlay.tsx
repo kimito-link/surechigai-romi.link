@@ -1,5 +1,5 @@
 // components/organisms/tutorial-overlay/TutorialOverlay.tsx
-// v6.18: リファクタリング済みチュートリアルオーバーレイ
+// 君斗りんく — ライト kimito UI チュートリアル
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { useEffect, useState } from "react";
 import * as Haptics from "expo-haptics";
@@ -20,14 +20,12 @@ import { CHARACTER_IMAGES, type CharacterKey, type TutorialOverlayProps } from "
 import { Confetti, Sparkles } from "./effects";
 import { PreviewComponent } from "./previews";
 
-/**
- * 強化版チュートリアルオーバーレイ
- */
 export function TutorialOverlay({
   step,
   stepNumber,
   totalSteps,
   onNext,
+  onPrev,
   onComplete,
   onSkip,
   visible,
@@ -35,22 +33,19 @@ export function TutorialOverlay({
   const [showConfetti, setShowConfetti] = useState(false);
   const [showSparkles, setShowSparkles] = useState(false);
   const [currentExpression, setCurrentExpression] = useState<CharacterKey>("rinku_normal");
-  
-  // アニメーション値
+
   const messageOpacity = useSharedValue(0);
   const characterBounce = useSharedValue(0);
   const characterScale = useSharedValue(1);
   const previewScale = useSharedValue(0);
   const speechBubbleScale = useSharedValue(0);
 
-  // 表情変化のタイマー
   useEffect(() => {
     if (!visible) return;
-    
+
     const baseChar = step.character || "rinku_normal";
     setCurrentExpression(baseChar);
-    
-    // まばたきアニメーション
+
     const blinkInterval = setInterval(() => {
       const charBase = baseChar.split("_")[0];
       setCurrentExpression(`${charBase}_blink` as CharacterKey);
@@ -67,7 +62,7 @@ export function TutorialOverlay({
       messageOpacity.value = withTiming(1, { duration: 300 });
       characterBounce.value = 0;
       previewScale.value = withDelay(200, withSpring(1, { damping: 12 }));
-      
+
       if (step.speech) {
         speechBubbleScale.value = withDelay(400, withSpring(1, { damping: 10 }));
       }
@@ -91,10 +86,7 @@ export function TutorialOverlay({
   }));
 
   const characterStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: characterBounce.value },
-      { scale: characterScale.value },
-    ],
+    transform: [{ translateY: characterBounce.value }, { scale: characterScale.value }],
   }));
 
   const previewStyle = useAnimatedStyle(() => ({
@@ -107,41 +99,44 @@ export function TutorialOverlay({
     opacity: speechBubbleScale.value,
   }));
 
-  const handleTap = () => {
-    if (step.tapToContinue !== false) {
-      if (Platform.OS !== "web") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-      
-      const charBase = (step.character || "rinku_normal").split("_")[0];
-      setCurrentExpression(`${charBase}_smile` as CharacterKey);
-      characterScale.value = withSequence(
-        withTiming(1.1, { duration: 100 }),
-        withTiming(1, { duration: 100 })
-      );
-      
-      setTimeout(() => {
-        if (stepNumber >= totalSteps) {
-          onComplete();
-        } else {
-          onNext();
-        }
-      }, 200);
+  const advance = () => {
+    if (stepNumber >= totalSteps) {
+      onComplete();
+    } else {
+      onNext();
     }
+  };
+
+  const handleTap = () => {
+    if (step.tapToContinue === false) return;
+
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    const charBase = (step.character || "rinku_normal").split("_")[0];
+    setCurrentExpression(`${charBase}_smile` as CharacterKey);
+    characterScale.value = withSequence(
+      withTiming(1.1, { duration: 100 }),
+      withTiming(1, { duration: 100 }),
+    );
+
+    setTimeout(advance, 200);
   };
 
   if (!visible) return null;
 
   const characterSource = CHARACTER_IMAGES[currentExpression] || CHARACTER_IMAGES.rinku_normal;
+  const canGoBack = stepNumber > 1;
 
   return (
     <Animated.View
       entering={FadeIn.duration(200)}
       exiting={FadeOut.duration(200)}
-      style={[styles.container]}
+      style={styles.container}
     >
       <Pressable onPress={handleTap} style={styles.overlay}>
-        <View style={styles.darkOverlay} />
+        <View style={styles.lightScrim} />
 
         {onSkip ? (
           <Pressable
@@ -160,35 +155,30 @@ export function TutorialOverlay({
         <Confetti active={showConfetti} />
         <Sparkles active={showSparkles} />
 
-        <Animated.View style={[styles.contentContainer, messageStyle]}>
-          {step.previewType && step.previewType !== "none" && (
+        <Animated.View style={[styles.card, messageStyle]}>
+          {step.previewType && step.previewType !== "none" ? (
             <Animated.View style={[styles.previewContainer, previewStyle]}>
               <PreviewComponent type={step.previewType} />
             </Animated.View>
-          )}
+          ) : null}
 
           <View style={styles.characterSection}>
             <Animated.View style={[styles.characterContainer, characterStyle]}>
-              <Image
-                source={characterSource}
-                style={styles.characterImage}
-                contentFit="contain"
-              />
+              <Image source={characterSource} style={styles.characterImage} contentFit="contain" />
             </Animated.View>
-            
-            {step.speech && (
+
+            {step.speech ? (
               <Animated.View style={[styles.speechBubble, speechBubbleStyle]}>
                 <Text style={styles.speechText}>{step.speech}</Text>
                 <View style={styles.speechTail} />
               </Animated.View>
-            )}
+            ) : null}
           </View>
 
-          <View style={styles.messageBubble}>
+          <View style={styles.messageSection}>
+            <Text style={styles.chip}>STEP {stepNumber}</Text>
             <Text style={styles.messageText}>{step.message}</Text>
-            {step.subMessage && (
-              <Text style={styles.subMessageText}>{step.subMessage}</Text>
-            )}
+            {step.subMessage ? <Text style={styles.subMessageText}>{step.subMessage}</Text> : null}
           </View>
 
           <View style={styles.stepIndicator}>
@@ -204,34 +194,20 @@ export function TutorialOverlay({
             ))}
           </View>
 
-          <View style={styles.characterNavigation}>
+          <View style={styles.navRow}>
             <Pressable
               onPress={(e) => {
                 e.stopPropagation();
+                if (canGoBack) onPrev?.();
               }}
-              disabled={stepNumber <= 1}
-              style={[
-                styles.characterNavButton,
-                stepNumber <= 1 && styles.characterNavButtonDisabled
-              ]}
-              
+              disabled={!canGoBack}
+              style={[styles.navBtn, styles.navBtnSecondary, !canGoBack && styles.navBtnDisabled]}
+              accessibilityRole="button"
+              accessibilityLabel="前のステップ"
             >
-              <Image
-                source={CHARACTER_IMAGES.konta_normal}
-                style={styles.navCharacterImage}
-                contentFit="contain"
-              />
-              <View style={[
-                styles.navBubble,
-                styles.navBubbleLeft,
-                stepNumber <= 1 && styles.navBubbleDisabled
-              ]}>
-                <View style={styles.navBubbleTailLeft} />
-                <Text style={[
-                  styles.navBubbleText,
-                  stepNumber <= 1 && styles.navBubbleTextDisabled
-                ]}>← 戻る</Text>
-              </View>
+              <Text style={[styles.navBtnTextSecondary, !canGoBack && styles.navBtnTextDisabled]}>
+                ← 戻る
+              </Text>
             </Pressable>
 
             <Pressable
@@ -239,20 +215,13 @@ export function TutorialOverlay({
                 e.stopPropagation();
                 handleTap();
               }}
-              style={styles.characterNavButton}
-              
+              style={[styles.navBtn, styles.navBtnPrimary]}
+              accessibilityRole="button"
+              accessibilityLabel={stepNumber >= totalSteps ? "完了" : "次へ"}
             >
-              <View style={[styles.navBubble, styles.navBubbleRight, styles.navBubblePrimary]}>
-                <Text style={styles.navBubbleTextPrimary}>
-                  {stepNumber >= totalSteps ? "完了 ✓" : "次へ →"}
-                </Text>
-                <View style={styles.navBubbleTailRight} />
-              </View>
-              <Image
-                source={CHARACTER_IMAGES.tanune_normal}
-                style={styles.navCharacterImage}
-                contentFit="contain"
-              />
+              <Text style={styles.navBtnTextPrimary}>
+                {stepNumber >= totalSteps ? "完了 ✓" : "次へ →"}
+              </Text>
             </Pressable>
           </View>
         </Animated.View>
@@ -270,10 +239,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 16,
   },
-  darkOverlay: {
+  lightScrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: palette.black + "EB", // 92% opacity
+    backgroundColor: palette.kimitoBg + "E6",
   },
   skipButton: {
     position: "absolute",
@@ -283,178 +253,155 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: palette.white + "14",
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: palette.kimitoBlue + "33",
   },
   skipText: {
-    color: palette.white + "CC",
+    color: color.textSecondary,
     fontSize: 13,
     fontWeight: "600",
   },
-  contentContainer: {
-    alignItems: "center",
-    paddingHorizontal: 24,
+  card: {
+    width: "100%",
     maxWidth: 400,
+    backgroundColor: palette.white,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 20,
+    borderWidth: 1,
+    borderColor: palette.kimitoBlue + "22",
+    shadowColor: palette.kimitoBlue,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 8,
   },
   previewContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   characterSection: {
     flexDirection: "row",
     alignItems: "flex-end",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   characterContainer: {
     marginRight: 8,
   },
   characterImage: {
-    width: 120,
-    height: 120,
+    width: 88,
+    height: 88,
   },
   speechBubble: {
-    backgroundColor: color.textWhite,
-    paddingHorizontal: 16,
+    flex: 1,
+    backgroundColor: palette.kimitoBlueSoft,
+    paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 16,
-    maxWidth: 180,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: palette.kimitoBlue + "18",
     position: "relative",
   },
   speechText: {
-    color: color.tutorialText,
+    color: color.textPrimary,
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
+    fontWeight: "500",
   },
   speechTail: {
     position: "absolute",
     left: -8,
-    bottom: 15,
+    bottom: 14,
     width: 0,
     height: 0,
-    borderTopWidth: 8,
+    borderTopWidth: 7,
     borderTopColor: "transparent",
-    borderBottomWidth: 8,
+    borderBottomWidth: 7,
     borderBottomColor: "transparent",
-    borderRightWidth: 10,
-    borderRightColor: color.textWhite,
+    borderRightWidth: 9,
+    borderRightColor: palette.kimitoBlueSoft,
   },
-  messageBubble: {
-    backgroundColor: color.hostAccentLegacy,
-    paddingHorizontal: 28,
-    paddingVertical: 20,
-    borderRadius: 24,
+  messageSection: {
     alignItems: "center",
-    shadowColor: color.shadowBlack,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    marginBottom: 4,
+  },
+  chip: {
+    color: palette.kimitoOrange,
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+    marginBottom: 8,
   },
   messageText: {
-    color: color.textWhite,
+    color: palette.kimitoBlue,
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: "800",
     textAlign: "center",
     lineHeight: 32,
   },
   subMessageText: {
-    color: palette.white + "E6", // 90% opacity
+    color: color.textSecondary,
     fontSize: 14,
     textAlign: "center",
-    marginTop: 8,
-    lineHeight: 20,
+    marginTop: 10,
+    lineHeight: 22,
+    maxWidth: 320,
   },
   stepIndicator: {
     flexDirection: "row",
-    marginTop: 24,
-    gap: 8,
+    justifyContent: "center",
+    marginTop: 20,
+    gap: 6,
   },
   stepDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: palette.white + "4D", // 30% opacity
+    backgroundColor: palette.kimitoBlue + "22",
   },
   stepDotActive: {
-    backgroundColor: color.hostAccentLegacy,
-    width: 24,
+    backgroundColor: palette.kimitoBlue,
+    width: 22,
   },
   stepDotCompleted: {
-    backgroundColor: color.success,
+    backgroundColor: palette.teal600,
   },
-  characterNavigation: {
+  navRow: {
     flexDirection: "row",
+    gap: 10,
+    marginTop: 18,
+  },
+  navBtn: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 999,
+    alignItems: "center",
     justifyContent: "center",
-    alignItems: "flex-end",
-    marginTop: 24,
-    gap: 40,
   },
-  characterNavButton: {
-    flexDirection: "row",
-    alignItems: "flex-end",
+  navBtnSecondary: {
+    backgroundColor: palette.white,
+    borderWidth: 1.5,
+    borderColor: palette.kimitoBlue,
   },
-  characterNavButtonDisabled: {
-    opacity: 0.4,
+  navBtnPrimary: {
+    backgroundColor: palette.kimitoBlue,
   },
-  navCharacterImage: {
-    width: 48,
-    height: 48,
+  navBtnDisabled: {
+    opacity: 0.35,
+    borderColor: color.border,
   },
-  navBubble: {
-    backgroundColor: palette.white + "26", // 15% opacity
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    position: "relative",
-    marginBottom: 8,
-  },
-  navBubbleLeft: {
-    marginLeft: -8,
-  },
-  navBubbleRight: {
-    marginRight: -8,
-  },
-  navBubbleDisabled: {
-    backgroundColor: palette.white + "14", // 8% opacity
-  },
-  navBubblePrimary: {
-    backgroundColor: color.hotPink,
-  },
-  navBubbleTailLeft: {
-    position: "absolute",
-    left: -6,
-    bottom: 10,
-    width: 0,
-    height: 0,
-    borderTopWidth: 5,
-    borderTopColor: "transparent",
-    borderBottomWidth: 5,
-    borderBottomColor: "transparent",
-    borderRightWidth: 6,
-    borderRightColor: palette.white + "26", // 15% opacity
-  },
-  navBubbleTailRight: {
-    position: "absolute",
-    right: -6,
-    bottom: 10,
-    width: 0,
-    height: 0,
-    borderTopWidth: 5,
-    borderTopColor: "transparent",
-    borderBottomWidth: 5,
-    borderBottomColor: "transparent",
-    borderLeftWidth: 6,
-    borderLeftColor: color.hotPink,
-  },
-  navBubbleText: {
-    color: color.textWhite,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  navBubbleTextDisabled: {
-    color: palette.white + "66", // 40% opacity
-  },
-  navBubbleTextPrimary: {
-    color: color.textWhite,
-    fontSize: 13,
+  navBtnTextSecondary: {
+    color: palette.kimitoBlue,
+    fontSize: 14,
     fontWeight: "700",
+  },
+  navBtnTextDisabled: {
+    color: color.textMuted,
+  },
+  navBtnTextPrimary: {
+    color: palette.white,
+    fontSize: 14,
+    fontWeight: "800",
   },
 });

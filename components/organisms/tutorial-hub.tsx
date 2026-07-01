@@ -32,6 +32,7 @@ export function TutorialHub() {
       stepNumber={tutorial.currentStepIndex + 1}
       totalSteps={tutorial.totalSteps}
       onNext={tutorial.nextStep}
+      onPrev={tutorial.prevStep}
       onComplete={tutorial.completeTutorial}
       onSkip={tutorial.skipTutorial}
       visible={tutorial.isActive}
