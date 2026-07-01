@@ -106,6 +106,52 @@ export function toUserFriendlyError(error: unknown): UserFriendlyError {
     };
   }
   
+  // 位置情報エラー
+  if (
+    errorMessage.includes("位置情報") ||
+    errorMessage.includes("Geolocation") ||
+    errorMessage.includes("geolocation")
+  ) {
+    return {
+      code: "VALIDATION_ERROR",
+      message: errorMessage.includes("許可")
+        ? "位置情報の許可が必要です。ブラウザの設定で許可してください。"
+        : errorMessage,
+      canRetry: true,
+    };
+  }
+
+  // ログインセッション（チェックイン固有）
+  if (
+    errorMessage.includes("ログインセッション") ||
+    errorMessage.includes("APIで確認できません")
+  ) {
+    return {
+      code: "SESSION_EXPIRED",
+      message: errorMessage,
+      canRetry: false,
+    };
+  }
+
+  // tRPC エラーコード
+  if (error && typeof error === "object") {
+    const trpcData = (error as { data?: { code?: string; httpStatus?: number } }).data;
+    if (trpcData?.code === "UNAUTHORIZED" || trpcData?.httpStatus === 401) {
+      return {
+        code: "UNAUTHORIZED",
+        message: ERROR_MESSAGES.UNAUTHORIZED,
+        canRetry: false,
+      };
+    }
+    if (trpcData?.code === "INTERNAL_SERVER_ERROR" || trpcData?.httpStatus === 500) {
+      return {
+        code: "SERVER_ERROR",
+        message: ERROR_MESSAGES.SERVER_ERROR,
+        canRetry: true,
+      };
+    }
+  }
+
   // 認証エラー
   if (errorMessage.includes("ログインが必要") ||
       errorMessage.includes("Unauthorized") ||
@@ -187,6 +233,24 @@ export function toUserFriendlyError(error: unknown): UserFriendlyError {
     };
   }
   
+  // その他のエラー — 既知メッセージはそのまま表示
+  if (error instanceof Error && error.message && error.message.length < 200) {
+    const knownUserMessages = [
+      "位置精度",
+      "ログイン",
+      "チェックイン",
+      "ネットワーク",
+      "タイムアウト",
+    ];
+    if (knownUserMessages.some((k) => error.message.includes(k))) {
+      return {
+        code: "VALIDATION_ERROR",
+        message: error.message,
+        canRetry: true,
+      };
+    }
+  }
+
   // その他のエラー
   return {
     code: "UNKNOWN_ERROR",

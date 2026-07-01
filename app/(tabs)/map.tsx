@@ -1,10 +1,11 @@
 /**
  * 軌跡マップ — 認証ゲート。未ログイン時は WebTrailMap chunk を読まない。
  */
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { TabGuestPreviewScreen } from "@/components/tabs/tab-guest-preview-screen";
 import { ChunkFallback } from "@/lib/chunk-fallback";
+import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 
 const MapAuthenticatedScreen = lazy(() =>
   import("@/components/map/map-authenticated-screen").then((m) => ({
@@ -34,8 +35,8 @@ export default function MapScreen() {
   }
 
   return (
-    <Suspense fallback={<ChunkFallback minHeight={360} />}>
+    <TabAuthenticatedShell screenName="MapTab">
       <MapAuthenticatedScreen />
-    </Suspense>
+    </TabAuthenticatedShell>
   );
 }

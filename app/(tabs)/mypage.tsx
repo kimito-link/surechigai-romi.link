@@ -1,12 +1,13 @@
 /**
  * マイページ — 認証ゲート。未ログイン時は tRPC / 設定 chunk を読まない。
  */
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/hooks/use-auth";
 import { TabGuestPreviewScreen } from "@/components/tabs/tab-guest-preview-screen";
 import { ChunkFallback } from "@/lib/chunk-fallback";
+import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { color } from "@/theme/tokens";
 
 const MypageAuthenticatedScreen = lazy(() =>
@@ -53,9 +54,9 @@ export default function MypageScreen() {
   }
 
   return (
-    <Suspense fallback={<ChunkFallback minHeight={360} />}>
+    <TabAuthenticatedShell screenName="MypageTab">
       <MypageAuthenticatedScreen />
-    </Suspense>
+    </TabAuthenticatedShell>
   );
 }
 

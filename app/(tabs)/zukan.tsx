@@ -1,10 +1,11 @@
 /**
  * 図鑑 — 認証ゲート。未ログイン時は地図 chunk / tRPC を読まない。
  */
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { TabGuestPreviewScreen } from "@/components/tabs/tab-guest-preview-screen";
 import { ChunkFallback } from "@/lib/chunk-fallback";
+import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 
 const ZukanAuthenticatedScreen = lazy(() =>
   import("@/components/zukan/zukan-authenticated-screen").then((m) => ({
@@ -34,8 +35,8 @@ export default function ZukanScreen() {
   }
 
   return (
-    <Suspense fallback={<ChunkFallback minHeight={360} />}>
+    <TabAuthenticatedShell screenName="ZukanTab">
       <ZukanAuthenticatedScreen />
-    </Suspense>
+    </TabAuthenticatedShell>
   );
 }

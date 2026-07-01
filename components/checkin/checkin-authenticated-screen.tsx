@@ -41,6 +41,7 @@ import { trpc } from "@/lib/trpc";
 import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MOBILE_WEB_CHROME } from "@/theme/tokens";
 import { computeCheckinScrollBottomInset } from "@/lib/layout/responsive-layout";
 import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
+import { MapErrorBoundary } from "@/components/ui/map-error-boundary";
 import type { TrailPoint } from "@/lib/map/tile-geo";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import { useRouter } from "expo-router";
@@ -51,6 +52,14 @@ import { getCheckinLocation, getCheckinLocatingLabel, isDesktopWeb } from "@/lib
 
 type CheckinState = "idle" | "loading" | "adjust" | "success" | "error" | "zero";
 type LoadingPhase = "locating" | "saving";
+
+function resolveCheckinErrorMessage(err: unknown, fallback: string): string {
+  console.error("[checkin] operation failed:", err);
+  if (err && typeof err === "object" && "data" in err) {
+    console.error("[checkin] tRPC error data:", (err as { data?: unknown }).data);
+  }
+  return err instanceof Error ? toUserFriendlyError(err).message : fallback;
+}
 
 export default function CheckinAuthenticatedScreen() {
   const { isDesktop, isMobile } = useResponsive();
@@ -278,10 +287,7 @@ export default function CheckinAuthenticatedScreen() {
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-        const msg =
-          err instanceof Error
-            ? toUserFriendlyError(err).message
-            : "チェックインに失敗しました";
+        const msg = resolveCheckinErrorMessage(err, "チェックインに失敗しました");
         setErrorMsg(msg);
       }
       return;
@@ -351,10 +357,7 @@ export default function CheckinAuthenticatedScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
 
-      const msg =
-        err instanceof Error
-          ? toUserFriendlyError(err).message
-          : "位置情報の取得に失敗しました";
+      const msg = resolveCheckinErrorMessage(err, "位置情報の取得に失敗しました");
       setErrorMsg(msg);
 
       setTimeout(() => setState("idle"), 4000);
@@ -596,19 +599,21 @@ export default function CheckinAuthenticatedScreen() {
               </View>
 
               <Animated.View style={[styles.mapHeroCompact, mapStyle]}>
-                <LazyPrecisionTileMap
-                  locations={[mapPoint]}
-                  customCenter={fixedMapCenter ?? undefined}
-                  zoom={17}
-                  showInfoPanel={false}
-                  height={mapHeroHeight}
-                  width={Math.min(windowWidth - 32, contentMaxWidth.standard)}
-                  markerSize={28}
-                  containerStyle={styles.mapInner}
-                  userImageUrl={user?.profileImage ?? undefined}
-                  interactive={mapInteractive}
-                  onCoordinateSelect={handleMapPinAdjust}
-                />
+                <MapErrorBoundary mapType="heatmap" height={mapHeroHeight}>
+                  <LazyPrecisionTileMap
+                    locations={[mapPoint]}
+                    customCenter={fixedMapCenter ?? undefined}
+                    zoom={17}
+                    showInfoPanel={false}
+                    height={mapHeroHeight}
+                    width={Math.min(windowWidth - 32, contentMaxWidth.standard)}
+                    markerSize={28}
+                    containerStyle={styles.mapInner}
+                    userImageUrl={user?.profileImage ?? undefined}
+                    interactive={mapInteractive}
+                    onCoordinateSelect={handleMapPinAdjust}
+                  />
+                </MapErrorBoundary>
               </Animated.View>
 
               <View style={styles.bottomSheet}>
@@ -778,15 +783,17 @@ export default function CheckinAuthenticatedScreen() {
 
             {mapPoint && state === "idle" && (
               <Animated.View style={[styles.mapContainer, mapStyle]}>
-                <LazyPrecisionTileMap
-                  locations={[mapPoint]}
-                  zoom={17}
-                  showInfoPanel={false}
-                  height={200}
-                  markerSize={28}
-                  containerStyle={styles.mapInner}
-                  userImageUrl={user?.profileImage ?? undefined}
-                />
+                <MapErrorBoundary mapType="heatmap" height={200}>
+                  <LazyPrecisionTileMap
+                    locations={[mapPoint]}
+                    zoom={17}
+                    showInfoPanel={false}
+                    height={200}
+                    markerSize={28}
+                    containerStyle={styles.mapInner}
+                    userImageUrl={user?.profileImage ?? undefined}
+                  />
+                </MapErrorBoundary>
               </Animated.View>
             )}
 

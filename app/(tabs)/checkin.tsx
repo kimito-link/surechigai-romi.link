@@ -10,7 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
@@ -20,6 +20,7 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { color, palette } from "@/theme/tokens";
 import { ChunkFallback } from "@/lib/lazy-heavy-components";
+import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 
 const CheckinAuthenticatedScreen = lazy(() =>
   import("@/components/checkin/checkin-authenticated-screen"),
@@ -83,9 +84,9 @@ export default function CheckinScreen() {
   }
 
   return (
-    <Suspense fallback={<ChunkFallback minHeight={480} />}>
+    <TabAuthenticatedShell screenName="CheckinTab" fallbackMinHeight={480}>
       <CheckinAuthenticatedScreen />
-    </Suspense>
+    </TabAuthenticatedShell>
   );
 }
 

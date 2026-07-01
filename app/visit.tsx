@@ -16,7 +16,6 @@ import {
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
-import { AppHeader } from "@/components/organisms/app-header";
 import { HeaderHomeButton } from "@/components/molecules/header-back-button";
 import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
 import type { TrailPoint } from "@/lib/map/tile-geo";
@@ -264,16 +263,19 @@ export default function GroupVisitScreen() {
     reportMutation.isPending || !groupCode.trim() || !displayName.trim() || !draftPin;
 
   return (
-    <ScreenContainer containerClassName="bg-background" style={styles.screen}>
-      <AppHeader
-        title="訪問申告"
-        showCharacters={false}
-        isDesktop={isDesktop}
-        showLoginButton={!isAuthenticated}
-        showMenu
-        leftElement={<HeaderHomeButton />}
-      />
-
+    <ScreenContainer
+      containerClassName="bg-background"
+      style={styles.screen}
+      headerProps={{
+        title: "訪問申告",
+        showCharacters: false,
+        isDesktop,
+        showLoginButton: !isAuthenticated,
+        showMenu: true,
+        leftElement: <HeaderHomeButton />,
+        variant: "compact",
+      }}
+    >
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={

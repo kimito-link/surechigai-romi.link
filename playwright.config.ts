@@ -95,6 +95,32 @@ export default defineConfig({
       testMatch: /save-auth-state\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      name: "audit-guest-mobile",
+      testMatch: /full-site-audit\.spec\.ts/,
+      use: { ...devices["Pixel 5"] },
+    },
+    {
+      name: "audit-guest-desktop",
+      testMatch: /full-site-audit\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "audit-auth-mobile",
+      testMatch: /full-site-audit\.spec\.ts/,
+      use: {
+        ...devices["Pixel 5"],
+        storageState: authStatePath,
+      },
+    },
+    {
+      name: "audit-auth-desktop",
+      testMatch: /full-site-audit\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: authStatePath,
+      },
+    },
   ],
 
   webServer:

@@ -145,6 +145,22 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
   const latest = locations[0];
   const center = customCenter ?? latest;
 
+  const { tiles, topLeft } = useMemo(() => {
+    if (!center) {
+      return { tiles: [] as VisibleTile[], topLeft: { x: 0, y: 0 } };
+    }
+    return getVisibleTiles(center, mapWidth, mapHeight, zoom);
+  }, [center, mapHeight, mapWidth, zoom]);
+
+  const projected = useMemo(() => {
+    if (!center) return [];
+    return locations.slice(0, 80).map((point, index) => ({
+      point,
+      index,
+      pixel: projectPoint(point, topLeft, zoom),
+    }));
+  }, [center, locations, topLeft, zoom]);
+
   if (!center) {
     return (
       <View
@@ -160,21 +176,6 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
       </View>
     );
   }
-
-  const { tiles, topLeft } = useMemo(
-    () => getVisibleTiles(center, mapWidth, mapHeight, zoom),
-    [center.lat, center.lng, mapHeight, mapWidth, zoom]
-  );
-
-  const projected = useMemo(
-    () =>
-      locations.slice(0, 80).map((point, index) => ({
-        point,
-        index,
-        pixel: projectPoint(point, topLeft, zoom),
-      })),
-    [locations, topLeft, zoom]
-  );
 
   const visiblePoints = projected.filter(
     ({ pixel }) =>
