@@ -49,7 +49,7 @@ export default function Root({ children }: PropsWithChildren) {
         {/* Preconnect: 自サイトのみ（Clerk は /sign-in 画面だけで preconnect — kimito 準拠） */}
         <link rel="preconnect" href="https://surechigai.kimito.link" />
         <link rel="dns-prefetch" href="https://surechigai.kimito.link" />
-        {/* PWA / favicon — kimito-link 公式ゆっくりりんく + すれ違い（pnpm brand:icons） */}
+        {/* PWA / favicon — 君斗りんく アイドルキャラ（pnpm brand:icons） */}
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48" />
         <link rel="shortcut icon" href="/favicon-48.png" type="image/png" />

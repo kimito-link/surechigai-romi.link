@@ -30,8 +30,8 @@
   "brand": {
     "primaryColor": "#00427B",
     "accentColor": "#F97316",
-    "iconSource": "assets/images/icon.png",
-    "faviconSource": "assets/images/yukkuri/link/link-yukkuri-normal-mouth-closed.png",
+    "iconSource": "assets/images/site-icon-source.png",
+    "faviconSource": "assets/images/site-icon-source.png",
     "wordmarkSource": "assets/images/logos/kimitolink-logo.webp",
     "featureGraphicSource": "assets/images/feature-graphic-source.png"
   },

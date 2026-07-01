@@ -1,5 +1,5 @@
 /**
- * Web タブタイトル / ファビコン — ヘッダーと同じゆっくりりんく（pnpm brand:icons）
+ * Web タブタイトル / ファビコン — 君斗りんく アイドルキャラ（pnpm brand:icons）
  */
 import Head from "expo-router/head";
 import { Platform } from "react-native";
