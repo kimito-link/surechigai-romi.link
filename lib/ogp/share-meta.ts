@@ -94,7 +94,10 @@ export function featureShareLocationFirst<T extends ShareFeaturedTrailPoint>(
 }
 
 /** og:image クエリ（位置更新で v= が変わり X のキャッシュを bust） */
-export function buildOgImageSearchParams(info: ShareLocationInfo): URLSearchParams {
+export function buildOgImageSearchParams(
+  info: ShareLocationInfo,
+  options?: { name?: string | null },
+): URLSearchParams {
   const params = new URLSearchParams();
   if (info.area) params.set("area", info.area);
   if (info.prefecture) params.set("pref", info.prefecture);
@@ -106,7 +109,39 @@ export function buildOgImageSearchParams(info: ShareLocationInfo): URLSearchPara
   if (info.recordedAt) {
     params.set("v", String(info.recordedAt.getTime()));
   }
+  if (options?.name) params.set("name", options.name);
   return params;
+}
+
+/** HTML meta 用: クエリ最小の OGP 画像入口（302 → /api/og?...） */
+export function buildOgRedirectMetaUrl(
+  slug: string,
+  recordedAt: Date | null | undefined,
+  origin = "https://surechigai.kimito.link",
+): string {
+  const v = recordedAt?.getTime() ?? Date.now();
+  return `${origin}/api/og-redirect/${slug}?v=${v}`;
+}
+
+/** 302 Location: 地図入り OGP 画像の実 URL */
+export function buildOgRedirectImageTarget(input: {
+  origin?: string;
+  location: ShareLocationInfo | null;
+  username?: string | null;
+  version?: string | number;
+}): string {
+  const origin = input.origin ?? "https://surechigai.kimito.link";
+  const params =
+    input.location?.hasLocation && input.location.lat != null && input.location.lng != null
+      ? buildOgImageSearchParams(input.location, { name: input.username ?? null })
+      : new URLSearchParams();
+
+  if (input.version != null && input.version !== "") {
+    params.set("v", String(input.version));
+  }
+
+  const qs = params.toString();
+  return `${origin}/api/og${qs ? `?${qs}` : ""}`;
 }
 
 /** /u/<slug>?area=...&lat=... から OGP 用地点ヒントを復元（シェア URL 付属） */

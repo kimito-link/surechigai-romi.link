@@ -1505,13 +1505,15 @@ export async function getShareInfoBySlug(
   if (u.isSuspended) return noLocation;
   if (paused) return noLocation;
 
-  const allowed = await canViewerAccessOwnerTrail(
-    db,
-    u.id,
-    viewerUserId,
-    settings?.trailVisibility,
-  );
-  if (!allowed) return null;
+  if (options?.ogpContext !== true) {
+    const allowed = await canViewerAccessOwnerTrail(
+      db,
+      u.id,
+      viewerUserId,
+      settings?.trailVisibility,
+    );
+    if (!allowed) return null;
+  }
 
   const effectiveViewerId =
     options?.ogpContext === true ? u.id : viewerUserId;
@@ -1550,8 +1552,10 @@ export async function getShareInfoBySlug(
 
   if (latestPublic) {
     const loc = latestPublic;
-    // precise かつ正確座標があれば詳細ズーム、なければ500m丸め＋町ズーム
-    const useExact = precise && loc.lat !== null && loc.lng !== null;
+    const useExact =
+      options?.ogpContext === true
+        ? loc.lat !== null && loc.lng !== null
+        : precise && loc.lat !== null && loc.lng !== null;
     return {
       name: u.name,
       username,

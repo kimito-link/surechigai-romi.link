@@ -167,10 +167,20 @@ async function loadMapTiles(lat: number, lng: number, zoom: number): Promise<Til
 }
 
 export default async function handler(req: Request): Promise<Response> {
+  try {
+    return await renderOgImage(req);
+  } catch (error) {
+    console.error("[api/og] render failed, fallback gradient:", error);
+    return await renderOgImage(req, { gradientOnly: true });
+  }
+}
+
+async function renderOgImage(req: Request, options?: { gradientOnly?: boolean }): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const latRaw = parseFloat(searchParams.get("lat") ?? "");
   const lngRaw = parseFloat(searchParams.get("lng") ?? "");
-  const hasCoord = Number.isFinite(latRaw) && Number.isFinite(lngRaw);
+  const hasCoord =
+    !options?.gradientOnly && Number.isFinite(latRaw) && Number.isFinite(lngRaw);
   const zoom = Math.min(Math.max(parseInt(searchParams.get("zoom") ?? "13", 10) || 13, 3), 17);
   const area = (searchParams.get("area") ?? "").slice(0, 24);
   const pref = (searchParams.get("pref") ?? "").slice(0, 12);

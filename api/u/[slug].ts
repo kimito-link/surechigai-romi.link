@@ -3,27 +3,33 @@
  *
  * 公開共有リンク /u/<slug> のクローラー向けメタHTMLを返す Vercel Function。
  * - slug から「最後の記録地点」を解決し、OGP/Twitter Card メタを生成。
- * - og:image は /api/og に座標・地名を渡した動的画像を指す。
+ * - og:image は /api/og-redirect/<slug> 経由で地図サムネを返す（302 → /api/og）。
  * - 人間のブラウザは Expo SPA の /u/<slug> 地図画面へ（middleware は bot のみ rewrite）。
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getDb } from "../../server/db/connection.js";
 import { getShareInfoBySlug } from "../../modules/encounter/db/queries.js";
 import {
-  buildOgImageSearchParams,
+  buildOgRedirectMetaUrl,
   parseShareLocationFromQuery,
   preferExplicitShareLocation,
   resolveShareAreaLabel,
+  type ShareLocationInfo,
 } from "../../lib/ogp/share-meta.js";
 
 const ORIGIN = "https://surechigai.kimito.link";
 
-function esc(s: string): string {
+function escHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/** URL 属性用（& はエスケープしない — X/Facebook の og:image 取得互換） */
+function escUrlAttr(url: string): string {
+  return url.replace(/"/g, "&quot;");
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -33,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let title = "君斗りんくのすれ違ひ通信｜会いたい君がいる現在地";
   let description =
     "位置情報で近くにいた人とすれ違える、無料のすれ違い通信。会いたい君がいる現在地をたどろう。";
-  const ogParams = new URLSearchParams();
+  let resolvedLocation: ShareLocationInfo | null = null;
 
   if (slug && /^[A-Za-z0-9]{1,16}$/.test(slug)) {
     try {
@@ -41,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (db) {
         const info = await getShareInfoBySlug(db, slug, undefined, { ogpContext: true });
         const queryHint = parseShareLocationFromQuery(req.query);
-        const location = preferExplicitShareLocation(
+        resolvedLocation = preferExplicitShareLocation(
           info
             ? {
                 area: info.area,
@@ -56,10 +62,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           queryHint,
         );
 
-        if (info || location) {
+        if (info || resolvedLocation) {
           const who = info?.username ? `@${info.username}` : info?.name ?? "この人";
           const place =
-            resolveShareAreaLabel(location) ??
+            resolveShareAreaLabel(resolvedLocation) ??
             resolveShareAreaLabel(
               info
                 ? {
@@ -76,11 +82,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             "どこか";
           title = `${who} は ${place} にいるよ｜君斗りんくのすれ違ひ通信`;
           description = `${place} で記録された足あと。会いたい君がいる現在地をたどろう。`;
-          if (info?.username) ogParams.set("name", info.username);
-          if (location) {
-            const built = buildOgImageSearchParams(location);
-            built.forEach((value, key) => ogParams.set(key, value));
-          }
         }
       }
     } catch {
@@ -88,36 +89,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const ogImage = `${ORIGIN}/api/og${
-    ogParams.toString() ? `?${ogParams.toString()}` : ""
-  }`;
+  const vRaw = req.query.v;
+  const vHint = Array.isArray(vRaw) ? vRaw[0] : vRaw;
+  const versionFromQuery =
+    vHint != null && Number.isFinite(Number(vHint)) ? new Date(Number(vHint)) : null;
+
+  const ogImage =
+    slug && /^[A-Za-z0-9]{1,16}$/.test(slug)
+      ? buildOgRedirectMetaUrl(
+          slug,
+          resolvedLocation?.recordedAt ?? versionFromQuery,
+        )
+      : `${ORIGIN}/api/og`;
   const pageUrl = slug ? `${ORIGIN}/u/${slug}` : ORIGIN;
 
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader(
     "Cache-Control",
-    "public, max-age=300, s-maxage=300, stale-while-revalidate=86400"
+    "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
   );
   res.status(200).send(`<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${esc(title)}</title>
-<meta name="description" content="${esc(description)}" />
-<link rel="canonical" href="${esc(pageUrl)}" />
+<title>${escHtml(title)}</title>
+<meta name="description" content="${escHtml(description)}" />
+<link rel="canonical" href="${escUrlAttr(pageUrl)}" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="君斗りんくのすれ違ひ通信" />
-<meta property="og:title" content="${esc(title)}" />
-<meta property="og:description" content="${esc(description)}" />
-<meta property="og:url" content="${esc(pageUrl)}" />
-<meta property="og:image" content="${esc(ogImage)}" />
+<meta property="og:title" content="${escHtml(title)}" />
+<meta property="og:description" content="${escHtml(description)}" />
+<meta property="og:url" content="${escUrlAttr(pageUrl)}" />
+<meta property="og:image" content="${escUrlAttr(ogImage)}" />
+<meta property="og:image:secure_url" content="${escUrlAttr(ogImage)}" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
+<meta property="og:image:type" content="image/png" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="${esc(title)}" />
-<meta name="twitter:description" content="${esc(description)}" />
-<meta name="twitter:image" content="${esc(ogImage)}" />
+<meta name="twitter:title" content="${escHtml(title)}" />
+<meta name="twitter:description" content="${escHtml(description)}" />
+<meta name="twitter:image" content="${escUrlAttr(ogImage)}" />
 </head>
 <body></body>
 </html>`);

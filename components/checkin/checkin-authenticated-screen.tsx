@@ -47,7 +47,7 @@ import { useRouter } from "expo-router";
 import { shareMyLocation } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
 import { toUserFriendlyError } from "@/shared/error-messages";
-import { getCheckinLocation } from "@/lib/get-current-location";
+import { getCheckinLocation, getCheckinLocatingLabel } from "@/lib/get-current-location";
 
 type CheckinState = "idle" | "loading" | "success" | "error" | "zero";
 type LoadingPhase = "locating" | "saving";
@@ -168,11 +168,24 @@ export default function CheckinAuthenticatedScreen() {
         throw new Error("ログインセッションを確認できません。もう一度Xログインしてください");
       }
 
+      const preciseAnchor =
+        latestLocation?.lat != null &&
+        latestLocation.lng != null &&
+        latestLocation.accuracyM != null &&
+        latestLocation.accuracyM <= 50
+          ? {
+              lat: latestLocation.lat,
+              lng: latestLocation.lng,
+              accuracyM: latestLocation.accuracyM,
+              recordedAt: latestLocation.recordedAt,
+            }
+          : null;
+
       const [, pos] = await Promise.all([
         utils.settings.get.fetch().catch(() => {
           throw new Error("ログインセッションをAPIで確認できません。もう一度Xログインしてください");
         }),
-        getCheckinLocation(),
+        getCheckinLocation({ preciseAnchor }),
       ]);
 
       if (pos.accuracy && pos.accuracy > 10000) {
@@ -298,7 +311,7 @@ export default function CheckinAuthenticatedScreen() {
 
       setTimeout(() => setState("idle"), 4000);
     }
-  }, [state, checkIn, utils, scale, pulse]);
+  }, [state, checkIn, utils, scale, pulse, latestLocation]);
 
   const handlePauseToggle = useCallback(() => {
     if (pauseLocation.isPending || resumeLocation.isPending) return;

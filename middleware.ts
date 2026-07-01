@@ -6,7 +6,7 @@
  */
 
 const BOT_UA =
-  /bot|crawl|spider|slurp|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegram|embedly|pinterest|vkshare|line-poker/i;
+  /bot|crawl|spider|slurp|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegram|embedly|pinterest|vkshare|line-poker|meta-externalagent|redditbot|skypeuripreview/i;
 
 export const config = {
   matcher: ["/u/:slug"],

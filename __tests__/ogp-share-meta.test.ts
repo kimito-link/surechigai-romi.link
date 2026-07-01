@@ -3,6 +3,8 @@ import {
   resolveShareAreaLabel,
   buildOgImageSearchParams,
   buildPublicSharePageUrl,
+  buildOgRedirectMetaUrl,
+  buildOgRedirectImageTarget,
   featureShareLocationFirst,
   parseShareLocationFromQuery,
   preferExplicitShareLocation,
@@ -114,6 +116,36 @@ describe("featureShareLocationFirst", () => {
       recordedAt: okaya.recordedAt,
     });
     expect(ordered[0]?.municipality).toBe("岡谷市");
+  });
+});
+
+describe("buildOgRedirectMetaUrl", () => {
+  it("slug ベースの OGP 入口 URL を返す", () => {
+    const at = new Date("2026-06-30T12:00:00.000Z");
+    expect(buildOgRedirectMetaUrl("abc123", at)).toBe(
+      `https://surechigai.kimito.link/api/og-redirect/abc123?v=${at.getTime()}`,
+    );
+  });
+});
+
+describe("buildOgRedirectImageTarget", () => {
+  it("座標付き /api/og へリダイレクト先を組み立てる", () => {
+    const target = buildOgRedirectImageTarget({
+      location: {
+        area: "岡谷市",
+        prefecture: "長野県",
+        lat: 36.07,
+        lng: 138.06,
+        hasLocation: true,
+        zoom: 15,
+        recordedAt: new Date("2026-06-30T12:00:00.000Z"),
+      },
+      username: "streamerfunch",
+      version: 123,
+    });
+    expect(target).toContain("/api/og?");
+    expect(target).toContain("lat=36.07");
+    expect(target).toContain("name=streamerfunch");
   });
 });
 
