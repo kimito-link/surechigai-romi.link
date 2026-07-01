@@ -9,7 +9,7 @@ import { publicProcedure, protectedProcedure, router } from "../_core/trpc.js";
 import { getDb } from "../db/connection.js";
 import { getEventById } from "../../modules/event/db/queries.js";
 import { getOrCreateUserShareSlug, getShareInfoBySlug, getPublicTrailByShareSlug } from "../../modules/encounter/db/queries.js";
-import { resolveShareAreaLabel, buildPublicSharePageUrl } from "../../lib/ogp/share-meta.js";
+import { resolveShareAreaLabel, buildPublicSharePageUrl, featureShareLocationFirst } from "../../lib/ogp/share-meta.js";
 import { TRPCError } from "@trpc/server";
 
 const APP_ORIGIN = "https://surechigai.kimito.link";
@@ -96,9 +96,24 @@ export const ogpRouter = router({
       const viewerId = ctx.user && ctx.user.id > 0 ? ctx.user.id : null;
       const trail = await getPublicTrailByShareSlug(db, input.slug, input.limit ?? 120, viewerId);
       if (!trail) throw new TRPCError({ code: "NOT_FOUND", message: "共有リンクが見つかりません" });
+      const shareInfo = await getShareInfoBySlug(db, input.slug, viewerId);
+      const orderedLocations = featureShareLocationFirst(
+        trail.locations,
+        shareInfo
+          ? {
+              area: shareInfo.area,
+              prefecture: shareInfo.prefecture,
+              lat: shareInfo.lat,
+              lng: shareInfo.lng,
+              hasLocation: shareInfo.hasLocation,
+              zoom: shareInfo.zoom,
+              recordedAt: shareInfo.recordedAt,
+            }
+          : null,
+      );
       return {
         ...trail,
-        locations: trail.locations.map((loc) => ({
+        locations: orderedLocations.map((loc) => ({
           ...loc,
           recordedAt: loc.recordedAt.toISOString(),
         })),

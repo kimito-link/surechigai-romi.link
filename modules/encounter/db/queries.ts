@@ -1388,6 +1388,8 @@ export async function getPublicTrailByShareSlug(
   }
 
   const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 500);
+  const maskHomeFromShare = shouldMaskHomeCellFromShare(homeMaskCell, viewerUserId, u.id);
+
   const locRows = await db
     .select({
       id: locations.id,
@@ -1405,11 +1407,11 @@ export async function getPublicTrailByShareSlug(
     })
     .from(locations)
     .where(
-      homeMaskCell
+      maskHomeFromShare
         ? and(
             eq(locations.userId, u.id),
             isNull(locations.deletedAt),
-            ne(locations.h3R8, homeMaskCell),
+            ne(locations.h3R8, homeMaskCell!),
             sql`${locations.lat} IS NOT NULL`,
             sql`${locations.lng} IS NOT NULL`,
           )

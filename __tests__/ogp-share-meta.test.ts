@@ -3,6 +3,7 @@ import {
   resolveShareAreaLabel,
   buildOgImageSearchParams,
   buildPublicSharePageUrl,
+  featureShareLocationFirst,
 } from "@/lib/ogp/share-meta";
 import { shouldMaskHomeCellFromShare } from "@/modules/encounter/core/location-visibility";
 
@@ -53,6 +54,47 @@ describe("shouldMaskHomeCellFromShare", () => {
   it("第三者は自宅マスクをシェアから除外する", () => {
     expect(shouldMaskHomeCellFromShare("8928308280fffff", null, 1)).toBe(true);
     expect(shouldMaskHomeCellFromShare("8928308280fffff", 2, 1)).toBe(true);
+  });
+});
+
+describe("featureShareLocationFirst", () => {
+  const base = {
+    id: 10,
+    h3R8: "abc",
+    latGrid: 35.68,
+    lngGrid: 139.76,
+    lat: 35.681,
+    lng: 139.767,
+    accuracyM: 50,
+    municipality: "千代田区",
+    prefecture: "東京都",
+    address: null,
+    recordedAt: new Date("2026-07-01T07:48:00Z"),
+    visibility: "public",
+  };
+
+  it("OGP 地点を先頭に移動する", () => {
+    const okaya = {
+      ...base,
+      id: 20,
+      lat: 36.07,
+      lng: 138.06,
+      latGrid: 36.07,
+      lngGrid: 138.06,
+      municipality: "岡谷市",
+      prefecture: "長野県",
+      recordedAt: new Date("2026-07-01T09:00:00Z"),
+    };
+    const ordered = featureShareLocationFirst([base, okaya], {
+      area: "岡谷市",
+      prefecture: "長野県",
+      lat: 36.07,
+      lng: 138.06,
+      hasLocation: true,
+      zoom: 13,
+      recordedAt: okaya.recordedAt,
+    });
+    expect(ordered[0]?.municipality).toBe("岡谷市");
   });
 });
 
