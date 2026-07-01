@@ -179,31 +179,31 @@ function TabNav() {
 
 export default function TabLayout() {
   const { isAuthenticated } = useAuth();
-  const sideNavActive = useWebSideNavActive();
 
   const chrome = (
     <>
       <WebSideNav />
-      {sideNavActive ? <WebAppFooter /> : null}
+      {useWebSideNavActive() ? <WebAppFooter /> : null}
     </>
   );
 
+  const body = (
+    <View style={{ flex: 1 }}>
+      {chrome}
+      <TabNav />
+    </View>
+  );
+
   if (!isAuthenticated) {
-    return (
-      <>
-        {chrome}
-        <TabNav />
-      </>
-    );
+    return body;
   }
 
   return (
     <TutorialProvider>
-      {chrome}
+      {body}
       <Suspense fallback={null}>
         <TabAuthenticatedExtras />
       </Suspense>
-      <TabNav />
     </TutorialProvider>
   );
 }

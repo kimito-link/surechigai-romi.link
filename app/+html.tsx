@@ -2,25 +2,6 @@ import { ScrollViewStyleReset } from "expo-router/html";
 import { PWA_APP_NAME } from "@/components/brand/web-document-head";
 import type { PropsWithChildren } from "react";
 
-/** JS 実行前の LCP 用静的シェル（React mount 後に除去） */
-const LCP_FALLBACK_HTML = `
-<div id="kimito-lcp-fallback" role="presentation" aria-hidden="true" style="box-sizing:border-box;min-height:100vh;background:#F0F4F8;padding:72px 16px 24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Hiragino Sans',Meiryo,sans-serif">
-  <div style="max-width:420px;margin:0 auto;text-align:center">
-    <p style="margin:0;color:#00427B;font-size:20px;font-weight:800">会いたい君がいる</p>
-    <p style="margin:4px 0 0;color:#E85D04;font-size:36px;font-weight:900;line-height:1.15">現在地</p>
-    <p style="margin:14px 0 0;color:#475569;font-size:14px;line-height:1.5">移動の足あとを残して、すれ違いと聖地巡礼を</p>
-    <div style="margin-top:20px;background:#E8F0FA;border:1px solid rgba(0,66,123,0.13);border-radius:16px;padding:16px;text-align:left">
-      <p style="margin:0;color:#00427B;font-size:16px;font-weight:800;line-height:1.45">ログインして、封筒と足あとを受け取ろう</p>
-    </div>
-  </div>
-</div>`;
-
-const LCP_FALLBACK_DISMISS_SCRIPT = `
-(function(){function d(){var f=document.getElementById('kimito-lcp-fallback');if(f)f.remove();}
-var r=document.getElementById('root');if(!r)return;
-if(r.childNodes.length>0){d();return;}
-new MutationObserver(function(){if(r.childNodes.length>0){d();this.disconnect();}}).observe(r,{childList:true});})();`;
-
 /**
  * This file is web-only and used to configure the root HTML for every web page during static rendering.
  * The contents of this function only run in Node.js environments and do not have access to the DOM or browser APIs.
@@ -99,12 +80,9 @@ export default function Root({ children }: PropsWithChildren) {
             text-rendering: optimizeSpeed;
           }
           #root { background-color: var(--color-background); min-height: 100%; }
-          #kimito-lcp-fallback { contain: layout style paint; }
         `}} />
       </head>
       <body>
-        <div dangerouslySetInnerHTML={{ __html: LCP_FALLBACK_HTML }} />
-        <script dangerouslySetInnerHTML={{ __html: LCP_FALLBACK_DISMISS_SCRIPT }} />
         {children}
         {enableSpeedInsights && (
           <script

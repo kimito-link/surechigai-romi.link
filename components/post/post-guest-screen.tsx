@@ -3,11 +3,10 @@
  * LCP: BrandTagline + CTA 見出しを初回 paint で同期描画（lazy/defer しない）。
  * 帯域譲渡: AppHeader / BrandStamp / benefits+CTA は idle 後 chunk。
  */
-import { View, Text, ScrollView, StyleSheet, Platform } from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { useEffect, useState } from "react";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { scheduleAfterIdle } from "@/lib/schedule-after-idle";
-import { dismissLcpFallback } from "@/lib/bootstrap/dismiss-lcp-fallback";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { color, palette } from "@/theme/tokens";
@@ -33,9 +32,6 @@ export function PostGuestScreen() {
   const [showDeferred, setShowDeferred] = useState(false);
 
   useEffect(() => {
-    if (Platform.OS === "web") {
-      dismissLcpFallback();
-    }
     return scheduleAfterIdle(() => setShowDeferred(true), {
       fallbackDelayMs: 200,
       timeoutMs: 2_500,
