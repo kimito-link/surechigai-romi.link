@@ -1,0 +1,48 @@
+# Lighthouse 計測 — デプロイとは分離（push ごとの待ち時間を削減）
+name: PageSpeed audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: audit mode
+        required: false
+        default: performance
+        type: choice
+        options:
+          - performance
+          - full
+  schedule:
+    # 日曜 03:00 UTC — 週次フル計測
+    - cron: "0 3 * * 0"
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Run Lighthouse (mobile)
+        run: |
+          MODE="${{ github.event.inputs.mode || 'performance' }}"
+          if [[ "$MODE" == "full" || "${{ github.event_name }}" == "schedule" ]]; then
+            node scripts/pagespeed-check.mjs \
+              --categories=performance,accessibility,best-practices,seo
+          else
+            node scripts/pagespeed-check.mjs --categories=performance
+          fi
+
+      - name: Upload PageSpeed report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pagespeed-report
+          path: |
+            pagespeed-report.json
+            pagespeed-summary.md

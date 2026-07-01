@@ -4,14 +4,20 @@
  *
  * Usage:
  *   pnpm pagespeed
+ *   pnpm pagespeed:full
  *   pnpm pagespeed -- --url=https://surechigai.kimito.link/
+ *   pnpm pagespeed -- --categories=performance
  */
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 
+const DEFAULT_CATEGORIES = "performance,accessibility,best-practices,seo";
+
 const url =
   process.argv.find((a) => a.startsWith("--url="))?.slice(6) ??
   "https://surechigai.kimito.link/";
+const categories =
+  process.argv.find((a) => a.startsWith("--categories="))?.slice(13) ?? DEFAULT_CATEGORIES;
 const out = resolve("pagespeed-report.json");
 
 const lh = spawnSync(
@@ -19,7 +25,7 @@ const lh = spawnSync(
   [
     "lighthouse@12",
     url,
-    "--only-categories=performance,accessibility,best-practices,seo",
+    `--only-categories=${categories}`,
     "--form-factor=mobile",
     "--screenEmulation.mobile=true",
     "--throttling-method=simulate",

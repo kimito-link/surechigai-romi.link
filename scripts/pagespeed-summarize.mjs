@@ -15,12 +15,13 @@ if (!existsSync(reportPath)) {
 const report = JSON.parse(readFileSync(reportPath, "utf8"));
 const categories = report.categories ?? {};
 
-const scores = {
-  performance: Math.round((categories.performance?.score ?? 0) * 100),
-  accessibility: Math.round((categories.accessibility?.score ?? 0) * 100),
-  "best-practices": Math.round((categories["best-practices"]?.score ?? 0) * 100),
-  seo: Math.round((categories.seo?.score ?? 0) * 100),
-};
+const scoreKeys = ["performance", "accessibility", "best-practices", "seo"];
+const scores = {};
+for (const key of scoreKeys) {
+  if (categories[key]?.score != null) {
+    scores[key] = Math.round(categories[key].score * 100);
+  }
+}
 
 const metrics = report.audits ?? {};
 const vitals = {
@@ -64,7 +65,9 @@ for (const f of failing) {
 }
 
 const targets = { performance: 90, accessibility: 95, "best-practices": 95, seo: 100 };
-const below = Object.entries(targets).filter(([k, t]) => (scores[k] ?? 0) < t);
+const below = Object.entries(targets).filter(
+  ([k, t]) => k in scores && (scores[k] ?? 0) < t,
+);
 if (below.length > 0) {
   console.log("\n### Below target\n");
   for (const [k, t] of below) {
