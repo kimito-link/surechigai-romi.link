@@ -1,23 +1,11 @@
 // components/organisms/tutorial-overlay/TutorialOverlay.tsx
-// 君斗りんく — ライト kimito UI チュートリアル
+// 君斗りんく — ライト kimito UI チュートリアル（アニメーションなし・読みやすさ優先）
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
-import { useEffect, useState } from "react";
 import * as Haptics from "expo-haptics";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  withDelay,
-  withSequence,
-  FadeIn,
-  FadeOut,
-} from "react-native-reanimated";
 import { Image } from "expo-image";
 import { color, palette } from "@/theme/tokens";
 
 import { CHARACTER_IMAGES, type CharacterKey, type TutorialOverlayProps } from "./types";
-import { Confetti, Sparkles } from "./effects";
 import { PreviewComponent } from "./previews";
 
 export function TutorialOverlay({
@@ -30,75 +18,6 @@ export function TutorialOverlay({
   onSkip,
   visible,
 }: TutorialOverlayProps) {
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [showSparkles, setShowSparkles] = useState(false);
-  const [currentExpression, setCurrentExpression] = useState<CharacterKey>("rinku_normal");
-
-  const messageOpacity = useSharedValue(0);
-  const characterBounce = useSharedValue(0);
-  const characterScale = useSharedValue(1);
-  const previewScale = useSharedValue(0);
-  const speechBubbleScale = useSharedValue(0);
-
-  useEffect(() => {
-    if (!visible) return;
-
-    const baseChar = step.character || "rinku_normal";
-    setCurrentExpression(baseChar);
-
-    const blinkInterval = setInterval(() => {
-      const charBase = baseChar.split("_")[0];
-      setCurrentExpression(`${charBase}_blink` as CharacterKey);
-      setTimeout(() => {
-        setCurrentExpression(baseChar);
-      }, 150);
-    }, 3000 + Math.random() * 2000);
-
-    return () => clearInterval(blinkInterval);
-  }, [visible, step.character]);
-
-  useEffect(() => {
-    if (visible) {
-      messageOpacity.value = withTiming(1, { duration: 300 });
-      characterBounce.value = 0;
-      previewScale.value = withDelay(200, withSpring(1, { damping: 12 }));
-
-      if (step.speech) {
-        speechBubbleScale.value = withDelay(400, withSpring(1, { damping: 10 }));
-      }
-
-      if (step.successAnimation === "confetti") {
-        setTimeout(() => setShowConfetti(true), 300);
-      } else if (step.successAnimation === "sparkle") {
-        setShowSparkles(true);
-      }
-    } else {
-      previewScale.value = 0;
-      speechBubbleScale.value = 0;
-      setShowConfetti(false);
-      setShowSparkles(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, step]);
-
-  const messageStyle = useAnimatedStyle(() => ({
-    opacity: messageOpacity.value,
-  }));
-
-  const characterStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: characterBounce.value }, { scale: characterScale.value }],
-  }));
-
-  const previewStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: previewScale.value }],
-    opacity: previewScale.value,
-  }));
-
-  const speechBubbleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: speechBubbleScale.value }],
-    opacity: speechBubbleScale.value,
-  }));
-
   const advance = () => {
     if (stepNumber >= totalSteps) {
       onComplete();
@@ -107,43 +26,28 @@ export function TutorialOverlay({
     }
   };
 
-  const handleTap = () => {
+  const handleNext = () => {
     if (step.tapToContinue === false) return;
-
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-
-    const charBase = (step.character || "rinku_normal").split("_")[0];
-    setCurrentExpression(`${charBase}_smile` as CharacterKey);
-    characterScale.value = withSequence(
-      withTiming(1.1, { duration: 100 }),
-      withTiming(1, { duration: 100 }),
-    );
-
-    setTimeout(advance, 200);
+    advance();
   };
 
   if (!visible) return null;
 
-  const characterSource = CHARACTER_IMAGES[currentExpression] || CHARACTER_IMAGES.rinku_normal;
+  const characterKey = (step.character || "rinku_smile") as CharacterKey;
+  const characterSource = CHARACTER_IMAGES[characterKey] || CHARACTER_IMAGES.rinku_smile;
   const canGoBack = stepNumber > 1;
 
   return (
-    <Animated.View
-      entering={FadeIn.duration(200)}
-      exiting={FadeOut.duration(200)}
-      style={styles.container}
-    >
-      <Pressable onPress={handleTap} style={styles.overlay}>
+    <View style={styles.container}>
+      <View style={styles.overlay}>
         <View style={styles.lightScrim} />
 
         {onSkip ? (
           <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              onSkip();
-            }}
+            onPress={onSkip}
             style={styles.skipButton}
             accessibilityRole="button"
             accessibilityLabel="チュートリアルをスキップ"
@@ -152,26 +56,23 @@ export function TutorialOverlay({
           </Pressable>
         ) : null}
 
-        <Confetti active={showConfetti} />
-        <Sparkles active={showSparkles} />
-
-        <Animated.View style={[styles.card, messageStyle]}>
+        <View style={styles.card}>
           {step.previewType && step.previewType !== "none" ? (
-            <Animated.View style={[styles.previewContainer, previewStyle]}>
+            <View style={styles.previewContainer}>
               <PreviewComponent type={step.previewType} />
-            </Animated.View>
+            </View>
           ) : null}
 
           <View style={styles.characterSection}>
-            <Animated.View style={[styles.characterContainer, characterStyle]}>
+            <View style={styles.characterContainer}>
               <Image source={characterSource} style={styles.characterImage} contentFit="contain" />
-            </Animated.View>
+            </View>
 
             {step.speech ? (
-              <Animated.View style={[styles.speechBubble, speechBubbleStyle]}>
+              <View style={styles.speechBubble}>
                 <Text style={styles.speechText}>{step.speech}</Text>
                 <View style={styles.speechTail} />
-              </Animated.View>
+              </View>
             ) : null}
           </View>
 
@@ -196,8 +97,7 @@ export function TutorialOverlay({
 
           <View style={styles.navRow}>
             <Pressable
-              onPress={(e) => {
-                e.stopPropagation();
+              onPress={() => {
                 if (canGoBack) onPrev?.();
               }}
               disabled={!canGoBack}
@@ -211,10 +111,7 @@ export function TutorialOverlay({
             </Pressable>
 
             <Pressable
-              onPress={(e) => {
-                e.stopPropagation();
-                handleTap();
-              }}
+              onPress={handleNext}
               style={[styles.navBtn, styles.navBtnPrimary]}
               accessibilityRole="button"
               accessibilityLabel={stepNumber >= totalSteps ? "完了" : "次へ"}
@@ -224,9 +121,9 @@ export function TutorialOverlay({
               </Text>
             </Pressable>
           </View>
-        </Animated.View>
-      </Pressable>
-    </Animated.View>
+        </View>
+      </View>
+    </View>
   );
 }
 
