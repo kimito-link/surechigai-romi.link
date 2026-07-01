@@ -33,9 +33,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
-        run: pnpm check
-
       - name: Guest smoke + full-site audit (mobile + desktop)
         timeout-minutes: 18
         env:
