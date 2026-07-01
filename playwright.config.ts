@@ -64,11 +64,21 @@ export default defineConfig({
     },
     {
       name: "trail-auth-smoke",
-      testMatch: /trail-auth\.smoke\.spec\.ts|tab-instant-display\.spec\.ts/,
+      testMatch: /trail-auth\.smoke\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
         storageState: authStatePath,
       },
+    },
+    {
+      name: "tab-instant-display",
+      testMatch: /tab-instant-display\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "tab-wait-investigation",
+      testMatch: /tab-wait-investigation\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "save-auth",

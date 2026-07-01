@@ -1,0 +1,368 @@
+{
+  "baseUrl": "https://surechigai.kimito.link",
+  "version": {
+    "commitSha": "9415340e1b9436f600446b0bc165a12a945cfedb",
+    "version": "9415340e1b9436f600446b0bc165a12a945cfedb",
+    "builtAt": "2026-07-01T05:11:57.264Z"
+  },
+  "probedAt": "2026-07-01T05:31:45.711Z",
+  "routeResults": [
+    {
+      "route": "/",
+      "scriptCount": 6,
+      "jsChunks": [
+        {
+          "url": "/_expo/static/js/web/__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "file": "__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "bytes": 2234430,
+          "kb": 2182
+        },
+        {
+          "url": "/_expo/static/js/web/entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "file": "entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "bytes": 983989,
+          "kb": 961
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "file": "_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "bytes": 276550,
+          "kb": 270
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "file": "_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "bytes": 34732,
+          "kb": 34
+        },
+        {
+          "url": "/_expo/static/js/web/index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "file": "index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "bytes": 4625,
+          "kb": 5
+        },
+        {
+          "url": "/_expo/static/js/web/__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "file": "__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "bytes": 3802,
+          "kb": 4
+        }
+      ],
+      "totalJsKb": 3455
+    },
+    {
+      "route": "/checkin",
+      "scriptCount": 6,
+      "jsChunks": [
+        {
+          "url": "/_expo/static/js/web/__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "file": "__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "bytes": 2234430,
+          "kb": 2182
+        },
+        {
+          "url": "/_expo/static/js/web/entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "file": "entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "bytes": 983989,
+          "kb": 961
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "file": "_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "bytes": 276550,
+          "kb": 270
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "file": "_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "bytes": 34732,
+          "kb": 34
+        },
+        {
+          "url": "/_expo/static/js/web/index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "file": "index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "bytes": 4625,
+          "kb": 5
+        },
+        {
+          "url": "/_expo/static/js/web/__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "file": "__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "bytes": 3802,
+          "kb": 4
+        }
+      ],
+      "totalJsKb": 3455
+    },
+    {
+      "route": "/events",
+      "scriptCount": 6,
+      "jsChunks": [
+        {
+          "url": "/_expo/static/js/web/__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "file": "__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "bytes": 2234430,
+          "kb": 2182
+        },
+        {
+          "url": "/_expo/static/js/web/entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "file": "entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "bytes": 983989,
+          "kb": 961
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "file": "_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "bytes": 276550,
+          "kb": 270
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "file": "_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "bytes": 34732,
+          "kb": 34
+        },
+        {
+          "url": "/_expo/static/js/web/index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "file": "index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "bytes": 4625,
+          "kb": 5
+        },
+        {
+          "url": "/_expo/static/js/web/__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "file": "__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "bytes": 3802,
+          "kb": 4
+        }
+      ],
+      "totalJsKb": 3455
+    },
+    {
+      "route": "/zukan",
+      "scriptCount": 6,
+      "jsChunks": [
+        {
+          "url": "/_expo/static/js/web/__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "file": "__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "bytes": 2234430,
+          "kb": 2182
+        },
+        {
+          "url": "/_expo/static/js/web/entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "file": "entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "bytes": 983989,
+          "kb": 961
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "file": "_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "bytes": 276550,
+          "kb": 270
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "file": "_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "bytes": 34732,
+          "kb": 34
+        },
+        {
+          "url": "/_expo/static/js/web/index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "file": "index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "bytes": 4625,
+          "kb": 5
+        },
+        {
+          "url": "/_expo/static/js/web/__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "file": "__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "bytes": 3802,
+          "kb": 4
+        }
+      ],
+      "totalJsKb": 3455
+    },
+    {
+      "route": "/map",
+      "scriptCount": 6,
+      "jsChunks": [
+        {
+          "url": "/_expo/static/js/web/__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "file": "__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "bytes": 2234430,
+          "kb": 2182
+        },
+        {
+          "url": "/_expo/static/js/web/entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "file": "entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "bytes": 983989,
+          "kb": 961
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "file": "_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "bytes": 276550,
+          "kb": 270
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "file": "_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "bytes": 34732,
+          "kb": 34
+        },
+        {
+          "url": "/_expo/static/js/web/index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "file": "index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "bytes": 4625,
+          "kb": 5
+        },
+        {
+          "url": "/_expo/static/js/web/__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "file": "__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "bytes": 3802,
+          "kb": 4
+        }
+      ],
+      "totalJsKb": 3455
+    },
+    {
+      "route": "/mypage",
+      "scriptCount": 6,
+      "jsChunks": [
+        {
+          "url": "/_expo/static/js/web/__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "file": "__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+          "bytes": 2234430,
+          "kb": 2182
+        },
+        {
+          "url": "/_expo/static/js/web/entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "file": "entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+          "bytes": 983989,
+          "kb": 961
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "file": "_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+          "bytes": 276550,
+          "kb": 270
+        },
+        {
+          "url": "/_expo/static/js/web/_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "file": "_layout-40334b5787545aacc32c4ae73df931e8.js",
+          "bytes": 34732,
+          "kb": 34
+        },
+        {
+          "url": "/_expo/static/js/web/index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "file": "index-26e4d4ca0e815969e279a6d66ea65f58.js",
+          "bytes": 4625,
+          "kb": 5
+        },
+        {
+          "url": "/_expo/static/js/web/__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "file": "__expo-metro-runtime-0c48b0beee2d3ce6030b475fcc5b1846.js",
+          "bytes": 3802,
+          "kb": 4
+        }
+      ],
+      "totalJsKb": 3455
+    }
+  ],
+  "prefetchGapCandidates": [
+    {
+      "module": "post-authenticated-screen",
+      "priority": "P0",
+      "reason": "route lazy 未 prefetch"
+    },
+    {
+      "module": "events-authenticated-screen",
+      "priority": "P0",
+      "reason": "route lazy 未 prefetch"
+    },
+    {
+      "module": "zukan-authenticated-screen",
+      "priority": "P0",
+      "reason": "route lazy 未 prefetch"
+    },
+    {
+      "module": "mypage-authenticated-screen",
+      "priority": "P1",
+      "reason": "route lazy 未 prefetch"
+    },
+    {
+      "module": "public-web-providers",
+      "priority": "P2",
+      "reason": "guest tRPC mount"
+    }
+  ],
+  "top5ChunksByHeadSize": [
+    {
+      "url": "/_expo/static/js/web/__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+      "file": "__common-7214ee798e19d2bddecdbc88a5cc980a.js",
+      "bytes": 2234430,
+      "kb": 2182,
+      "seenOn": [
+        "/",
+        "/checkin",
+        "/events",
+        "/zukan",
+        "/map",
+        "/mypage"
+      ]
+    },
+    {
+      "url": "/_expo/static/js/web/entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+      "file": "entry-616d5ea2e5374b074d91a75c106066e4.js?v=local-1782882814781",
+      "bytes": 983989,
+      "kb": 961,
+      "seenOn": [
+        "/",
+        "/checkin",
+        "/events",
+        "/zukan",
+        "/map",
+        "/mypage"
+      ]
+    },
+    {
+      "url": "/_expo/static/js/web/_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+      "file": "_layout-16592e398ee8553bb5f9b24a659e43c8.js",
+      "bytes": 276550,
+      "kb": 270,
+      "seenOn": [
+        "/",
+        "/checkin",
+        "/events",
+        "/zukan",
+        "/map",
+        "/mypage"
+      ]
+    },
+    {
+      "url": "/_expo/static/js/web/_layout-40334b5787545aacc32c4ae73df931e8.js",
+      "file": "_layout-40334b5787545aacc32c4ae73df931e8.js",
+      "bytes": 34732,
+      "kb": 34,
+      "seenOn": [
+        "/",
+        "/checkin",
+        "/events",
+        "/zukan",
+        "/map",
+        "/mypage"
+      ]
+    },
+    {
+      "url": "/_expo/static/js/web/index-26e4d4ca0e815969e279a6d66ea65f58.js",
+      "file": "index-26e4d4ca0e815969e279a6d66ea65f58.js",
+      "bytes": 4625,
+      "kb": 5,
+      "seenOn": [
+        "/",
+        "/checkin",
+        "/events",
+        "/zukan",
+        "/map",
+        "/mypage"
+      ]
+    }
+  ]
+}

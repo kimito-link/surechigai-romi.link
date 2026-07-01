@@ -52,3 +52,33 @@ const EMPTY_TRAIL_TEXT = "まだ正確な足あとがありません";
     }
   });
 });
+
+test.describe("tab instant display — guest baseline", () => {
+  test("ゲスト: / → /events 往復で主要見出しが15秒以内", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText(/会いたい君がいる|ログイン/).first()).toBeVisible({ timeout: 5000 });
+
+    await page.goto("/events", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText(/集まり|予定/).first()).toBeVisible({ timeout: 15000 });
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText(/会いたい君がいる|ログイン/).first()).toBeVisible({ timeout: 15000 });
+  });
+
+  test("ゲスト: 6タブ直リンクで見出し表示（各15秒以内）", async ({ page }) => {
+    const tabs: { path: string; heading: RegExp }[] = [
+      { path: "/", heading: /会いたい君がいる|ログイン/ },
+      { path: "/checkin", heading: /チェックイン|現在地/ },
+      { path: "/events", heading: /集まり|予定/ },
+      { path: "/zukan", heading: /みんなの現在地|図鑑|都道府県/ },
+      { path: "/map", heading: /軌跡|足あと/ },
+      { path: "/mypage", heading: /マイページ|ログイン/ },
+    ];
+
+    for (const tab of tabs) {
+      await page.goto(tab.path, { waitUntil: "domcontentloaded" });
+      await expect(page.getByText(tab.heading).first()).toBeVisible({ timeout: 15000 });
+    }
+  });
+});
