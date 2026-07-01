@@ -87,7 +87,7 @@ export const visitRouter = router({
         throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続です" });
       }
 
-      const geocode = await reverseGeocode(latGrid, lngGrid);
+      const geocode = await reverseGeocode(latLng.lat, latLng.lng);
       const report = await insertGroupVisitReport(db, {
         groupKey,
         visitorToken: cleanText(input.visitorToken),

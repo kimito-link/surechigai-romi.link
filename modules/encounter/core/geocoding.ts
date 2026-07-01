@@ -137,7 +137,7 @@ export async function reverseGeocode(
 
     const url =
       `https://nominatim.openstreetmap.org/reverse` +
-      `?lat=${lat}&lon=${lng}&format=json&zoom=16&accept-language=ja`;
+      `?lat=${lat}&lon=${lng}&format=json&zoom=18&accept-language=ja`;
 
     const res = await fetch(url, {
       headers: { "User-Agent": USER_AGENT },

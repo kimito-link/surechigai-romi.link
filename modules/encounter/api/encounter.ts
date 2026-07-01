@@ -89,7 +89,7 @@ export const encounterRouter = router({
       let areaName: string | null = null;
 
       // バックグラウンドで geocode（await しない: チェックインレイテンシを下げる）
-      const g = await reverseGeocode(latGrid, lngGrid);
+      const g = await reverseGeocode(latLng.lat, latLng.lng);
       municipality = municipality ?? g.municipality;
       prefecture = g.prefecture;
       areaName = g.areaName;

@@ -47,52 +47,7 @@ import { useRouter } from "expo-router";
 import { shareMyLocation } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
 import { toUserFriendlyError } from "@/shared/error-messages";
-
-/** Web用 Geolocation ラッパー */
-function getWebLocation(): Promise<{ lat: number; lng: number; accuracy?: number }> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === "undefined" || !navigator.geolocation) {
-      reject(new Error("Geolocation is not supported"));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        resolve({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        });
-      },
-      (err) => reject(err),
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 },
-    );
-  });
-}
-
-/** Native用 expo-location ラッパー（動的import） */
-async function getNativeLocation(): Promise<{ lat: number; lng: number; accuracy?: number }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Location = (await import("expo-location")) as any;
-  const { status } = await Location.requestForegroundPermissionsAsync();
-  if (status !== "granted") {
-    throw new Error("位置情報の権限がありません");
-  }
-  const pos = await Location.getCurrentPositionAsync({
-    accuracy: Location.Accuracy?.Balanced ?? 4,
-  });
-  return {
-    lat: pos.coords.latitude,
-    lng: pos.coords.longitude,
-    accuracy: pos.coords.accuracy,
-  };
-}
-
-async function getCurrentLocation(): Promise<{ lat: number; lng: number; accuracy?: number }> {
-  if (Platform.OS === "web") {
-    return getWebLocation();
-  }
-  return getNativeLocation();
-}
+import { getCheckinLocation } from "@/lib/get-current-location";
 
 type CheckinState = "idle" | "loading" | "success" | "error" | "zero";
 type LoadingPhase = "locating" | "saving";
@@ -110,6 +65,7 @@ export default function CheckinAuthenticatedScreen() {
   const [checkinPrefecture, setCheckinPrefecture] = useState<string | null>(null);
   const [checkinAddress, setCheckinAddress] = useState<string | null>(null);
   const [checkinLatLng, setCheckinLatLng] = useState<{lat: number, lng: number} | null>(null);
+  const [checkinAccuracyM, setCheckinAccuracyM] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [isPausing, setIsPausing] = useState(false);
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
@@ -216,7 +172,7 @@ export default function CheckinAuthenticatedScreen() {
         utils.settings.get.fetch().catch(() => {
           throw new Error("ログインセッションをAPIで確認できません。もう一度Xログインしてください");
         }),
-        getCurrentLocation(),
+        getCheckinLocation(),
       ]);
 
       if (pos.accuracy && pos.accuracy > 10000) {
@@ -225,6 +181,7 @@ export default function CheckinAuthenticatedScreen() {
 
       // GPS 取得直後に地図中心を確定（DB の古い足あとより優先）
       setCheckinLatLng({ lat: pos.lat, lng: pos.lng });
+      setCheckinAccuracyM(pos.accuracy ?? null);
       setLoadingPhase("saving");
 
       const result = await checkIn.mutateAsync({
@@ -241,6 +198,7 @@ export default function CheckinAuthenticatedScreen() {
       setCheckinPrefecture(result.prefecture ?? null);
       setCheckinAddress(result.address ?? null);
       setCheckinLatLng({ lat: result.lat, lng: result.lng });
+      setCheckinAccuracyM(pos.accuracy ?? null);
 
       const latestLabel = [result.prefecture, result.municipality].filter(Boolean).join(" ") || null;
       utils.dashboard.mySignal.setData(undefined, (old) =>
@@ -420,7 +378,7 @@ export default function CheckinAuthenticatedScreen() {
           id: 0,
           lat: checkinLatLng.lat,
           lng: checkinLatLng.lng,
-          accuracyM: null,
+          accuracyM: checkinAccuracyM,
           municipality: null,
           prefecture: null,
           address: checkinAddress ?? checkinLocationName,
@@ -588,7 +546,15 @@ export default function CheckinAuthenticatedScreen() {
                   <Text style={styles.placeLine} numberOfLines={3}>{placeLine}</Text>
                 ) : null}
                 {coordLine ? (
-                  <Text style={styles.coordLine}>{coordLine}</Text>
+                  <Text style={styles.coordLine}>
+                    {coordLine}
+                    {checkinAccuracyM ? ` / 精度 ±${Math.round(checkinAccuracyM)}m` : ""}
+                  </Text>
+                ) : null}
+                {checkinAccuracyM && checkinAccuracyM > 80 ? (
+                  <Text style={styles.accuracyHint}>
+                    位置が少しずれている場合は、スマホのブラウザで再チェックインするか、屋外でGPSが安定してからもう一度お試しください。
+                  </Text>
                 ) : null}
 
                 {mapPoint && state !== "loading" ? (
@@ -851,6 +817,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     fontVariant: ["tabular-nums"],
+  },
+  accuracyHint: {
+    color: color.warning,
+    fontSize: 11,
+    lineHeight: 16,
+    textAlign: "center",
+    marginTop: 4,
   },
   privacyNote: {
     color: color.textMuted,

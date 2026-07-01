@@ -24,7 +24,7 @@ import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { getCurrentLocation, type CurrentLocation } from "@/lib/get-current-location";
+import { getCheckinLocation, type CurrentLocation } from "@/lib/get-current-location";
 import { formatCoordinate, parseCoordinateInput } from "@/lib/parse-coordinate-input";
 import { color, palette } from "@/theme/tokens";
 
@@ -182,7 +182,7 @@ export default function GroupVisitScreen() {
     }
 
     try {
-      const pos = await getCurrentLocation();
+      const pos = await getCheckinLocation();
       setDraftPin(pos);
       setCoordinateText(formatCoordinate(pos.lat, pos.lng));
       setStatusMessage("現在地にピンを置きました");

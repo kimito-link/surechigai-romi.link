@@ -17,7 +17,7 @@ import {
   updateLivePresencePosition,
   listLivePresenceForViewer,
 } from "../db/queries.js";
-import { assertFiniteLatLng, toGrid } from "../core/geo.js";
+import { assertFiniteLatLng } from "../core/geo.js";
 import { reverseGeocode } from "../core/geocoding.js";
 
 export const presenceRouter = router({
@@ -86,8 +86,7 @@ export const presenceRouter = router({
       let municipality = input.municipality ?? null;
       let prefecture = input.prefecture ?? null;
       if (!municipality || !prefecture) {
-        const { latGrid, lngGrid } = toGrid(latLng.lat, latLng.lng);
-        const g = await reverseGeocode(latGrid, lngGrid);
+        const g = await reverseGeocode(latLng.lat, latLng.lng);
         municipality = municipality ?? g.municipality;
         prefecture = prefecture ?? g.prefecture;
       }
