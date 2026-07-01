@@ -117,6 +117,18 @@ export function EventsAuthenticatedScreen() {
   const [segment, setSegment] = useState<Segment>("calendar");
   const router = useRouter();
   const tabInset = useTabBarInset();
+  const utils = trpc.useUtils();
+
+  const selectSegment = useCallback(
+    (key: Segment) => {
+      setSegment(key);
+      if (key === "host") {
+        void utils.event.listMine.prefetch();
+        void import("@/components/events/events-host-panel");
+      }
+    },
+    [utils],
+  );
 
   return (
     <ScreenContainer containerClassName="bg-background">
@@ -140,7 +152,7 @@ export function EventsAuthenticatedScreen() {
         ).map((s) => (
           <Pressable
             key={s.key}
-            onPress={() => setSegment(s.key)}
+            onPress={() => selectSegment(s.key)}
             accessibilityRole="tab"
             accessibilityState={{ selected: segment === s.key }}
             accessibilityLabel={s.label}

@@ -35,17 +35,9 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { useRouter } from "expo-router";
+import { TYPE_TAG_LABELS } from "@/lib/events/type-tag-labels";
 
 type Segment = "calendar" | "live";
-
-const TYPE_TAG_LABELS: Record<string, string> = {
-  haishin: "配信",
-  totsumachi: "凸待ち",
-  offkai: "オフ会",
-  sagyo: "作業通話",
-  utawaku: "歌枠",
-  other: "その他",
-};
 
 function formatDateTime(value: string | Date): string {
   const d = typeof value === "string" ? new Date(value) : value;
@@ -384,6 +376,9 @@ export function EventsGuestContent() {
           <Pressable
             key={s.key}
             onPress={() => setSegment(s.key)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: segment === s.key }}
+            accessibilityLabel={s.label}
             style={[styles.segmentItem, segment === s.key && styles.segmentItemActive]}
           >
             <MaterialIcons

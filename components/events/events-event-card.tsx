@@ -6,15 +6,9 @@ import { color } from "@/theme/tokens";
 import { openExternalUrl } from "@/lib/navigation/external-links";
 import { EventParticipationPanel } from "@/components/events/event-participation-panel";
 import { EventCreatorLink } from "@/components/events/event-creator-link";
+import { TYPE_TAG_LABELS } from "@/lib/events/type-tag-labels";
 
-export const TYPE_TAG_LABELS: Record<string, string> = {
-  haishin: "配信",
-  totsumachi: "凸待ち",
-  offkai: "オフ会",
-  sagyo: "作業通話",
-  utawaku: "歌枠",
-  other: "その他",
-};
+export { TYPE_TAG_LABELS };
 
 export function formatEventDateTime(value: string | Date): string {
   const d = typeof value === "string" ? new Date(value) : value;

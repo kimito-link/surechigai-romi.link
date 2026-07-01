@@ -1,7 +1,8 @@
 # 集まり（主催）— 検証チェックリスト結果
 
 **実施日:** 2026-06-30  
-**環境:** 本番 `https://surechigai.kimito.link`（デプロイ前後）
+**環境:** 本番 `https://surechigai.kimito.link`  
+**デプロイ SHA:** `fc7bf84`（2026-07-01 確認済み）
 
 ## 自動検証
 

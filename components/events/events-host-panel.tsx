@@ -2,18 +2,23 @@
  * 主催タブ — PrefectureSelector / EventDateTimePicker chunk はタブ選択時のみ load。
  */
 import { View, Text, StyleSheet, TextInput, Platform, Pressable } from "react-native";
-import { useState, useCallback } from "react";
+import { lazy, Suspense, useState, useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { toDateKey } from "@/lib/events/date-key";
 import { toStartDate, type EventDateTimeValue } from "@/lib/events/datetime-value";
 import { invalidateEventListQueries } from "@/lib/events/invalidate-event-queries";
+import { TYPE_TAG_LABELS } from "@/lib/events/type-tag-labels";
 import { validateEventCreateForm } from "@/modules/event/core/create-form-validation";
 import { LazyEventDateTimePicker, LazyPrefectureSelector } from "@/lib/lazy-heavy-components";
 import { trpc } from "@/lib/trpc";
 import { color } from "@/theme/tokens";
-import { EventCard, TYPE_TAG_LABELS } from "@/components/events/events-event-card";
 import { EventsEmptyState } from "@/components/events/events-empty-state";
 import { ConfirmModal } from "@/components/molecules/confirm-modal";
+import { ChunkFallback } from "@/lib/chunk-fallback";
+
+const LazyEventCard = lazy(() =>
+  import("@/components/events/events-event-card").then((m) => ({ default: m.EventCard })),
+);
 
 function invalidateHostQueries(utils: ReturnType<typeof trpc.useUtils>) {
   invalidateEventListQueries(utils);
@@ -301,11 +306,12 @@ export function EventsHostPanel() {
       ) : items.length === 0 ? (
         <EventsEmptyState message="まだありません。上から立ててみましょう" />
       ) : (
-        items.map((e) => (
-          <EventCard
-            key={e.id}
-            {...e}
-            footer={
+        <Suspense fallback={<ChunkFallback minHeight={120} />}>
+          {items.map((e) => (
+            <LazyEventCard
+              key={e.id}
+              {...e}
+              footer={
               <View style={styles.hostActions}>
                 {e.status !== "live" && e.status !== "ended" && e.status !== "canceled" && (
                   <Pressable
@@ -346,7 +352,8 @@ export function EventsHostPanel() {
               </View>
             }
           />
-        ))
+          ))}
+        </Suspense>
       )}
       <ConfirmModal
         visible={cancelTarget != null}
