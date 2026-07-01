@@ -1,7 +1,8 @@
 /**
  * OGP / X シェア用メタデータの純粋関数（vitest 可能）。
+ * サーバーless では @/ エイリアス不可のため定数は直書き（lib/site-urls と同期）。
  */
-import { APP_ORIGIN } from "../site-urls.js";
+const APP_ORIGIN = "https://surechigai.kimito.link";
 
 export type ShareLocationInfo = {
   area: string | null;

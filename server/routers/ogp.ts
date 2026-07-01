@@ -12,7 +12,7 @@ import { getOrCreateUserShareSlug, getShareInfoBySlug, getPublicTrailByShareSlug
 import { resolveShareAreaLabel, buildPublicSharePageUrl, featureShareLocationFirst } from "../../lib/ogp/share-meta.js";
 import { TRPCError } from "@trpc/server";
 
-import { APP_ORIGIN } from "../../lib/site-urls.js";
+const APP_ORIGIN = "https://surechigai.kimito.link";
 
 export const ogpRouter = router({
   // エリアのOGPメタデータを取得
