@@ -34,6 +34,7 @@ const TAB_PREFETCH: Record<TabPrefetchKey, (utils: TrpcUtils) => Promise<unknown
     utils.dashboard.mySignal.prefetch(undefined),
     utils.settings.get.prefetch(undefined),
     utils.eventParticipation.myUpcoming.prefetch(undefined),
+    utils.zukan.activePrefectures.prefetch(undefined),
   ],
 };
 
@@ -46,9 +47,39 @@ export function prefetchCoreAuthenticatedData(utils: TrpcUtils): void {
     utils.zukan.myAreas.prefetch(undefined),
     utils.zukan.activePrefectures.prefetch(undefined),
     utils.settings.get.prefetch(undefined),
+    utils.eventParticipation.myUpcoming.prefetch(undefined),
   ]);
 }
 
+const TAB_CHUNK_LOADERS: Record<TabPrefetchKey, () => Promise<unknown>> = {
+  post: () => import("@/components/post/post-authenticated-screen"),
+  checkin: () => import("@/components/checkin/checkin-authenticated-screen"),
+  events: () => import("@/components/events/events-authenticated-screen"),
+  zukan: () => import("@/components/zukan/zukan-authenticated-screen"),
+  map: () => import("@/components/map/map-authenticated-screen"),
+  mypage: () => import("@/components/mypage/mypage-authenticated-screen"),
+};
+
+/** タブ本体 JS chunk を先読み（lazy screen の ChunkFallback を短縮） */
+export function prefetchTabChunk(tab: TabPrefetchKey): void {
+  void TAB_CHUNK_LOADERS[tab]();
+}
+
 export function prefetchTabData(utils: TrpcUtils, tab: TabPrefetchKey): void {
+  prefetchTabChunk(tab);
   void Promise.allSettled(TAB_PREFETCH[tab](utils));
+}
+
+const ALL_TAB_KEYS: TabPrefetchKey[] = ["post", "checkin", "events", "zukan", "map", "mypage"];
+
+/** ログイン直後のアイドル時間に全タブ chunk を温める */
+export function prefetchAllTabChunksIdle(): void {
+  const run = () => {
+    for (const tab of ALL_TAB_KEYS) prefetchTabChunk(tab);
+  };
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(run, { timeout: 4_000 });
+  } else {
+    setTimeout(run, 1_500);
+  }
 }

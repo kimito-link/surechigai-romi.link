@@ -11,8 +11,8 @@ type UserAccountChipProps = {
   style?: ViewStyle;
 };
 
-function formatFollowers(count?: number | null): string {
-  if (typeof count !== "number" || !Number.isFinite(count)) return "取得中";
+function formatFollowers(count?: number | null): string | null {
+  if (typeof count !== "number" || !Number.isFinite(count)) return null;
   return count.toLocaleString("ja-JP");
 }
 
@@ -96,7 +96,7 @@ export function UserAccountChip({ user, compact = false, onPress, style }: UserA
           <View style={styles.metaPill}>
             <MaterialIcons name="groups" size={compact ? 12 : 13} color={palette.kimitoBlue} />
             <Text style={[styles.metaValue, styles.followersValue, { fontSize: compact ? 11 : 12 }]} numberOfLines={1}>
-              フォロワー {followers}
+              フォロワー {followers ?? "—"}
             </Text>
           </View>
         </View>

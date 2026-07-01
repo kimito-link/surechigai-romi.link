@@ -73,7 +73,7 @@ function CalendarList() {
     return `${m}月${d}日(${wd})`;
   }, [selectedKey]);
 
-  if (q.isLoading) return <EventsEmptyState loading />;
+  if (q.isLoading && !q.data) return <EventsEmptyState loading />;
 
   return (
     <View style={styles.list}>
@@ -98,7 +98,7 @@ function CalendarList() {
 /** ライブ中（在席）タブ。 */
 function LiveList() {
   const q = trpc.event.listLive.useQuery(undefined, { refetchInterval: 30_000 });
-  if (q.isLoading) return <EventsEmptyState loading />;
+  if (q.isLoading && !q.data) return <EventsEmptyState loading />;
   const items = q.data ?? [];
   if (items.length === 0)
     return <EventsEmptyState message={"今ライブ中の人はいません\n「主催」タブから自分の集まりをライブ表明できます"} />;

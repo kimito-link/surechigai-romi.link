@@ -82,7 +82,8 @@ export function MapAuthenticatedScreen() {
   }, [visited]);
 
   const encounterCount = areasData?.encounterPartnerCount ?? 0;
-  const isLoading = isLoadingAreas || isLoadingTrail;
+  const hasTrailData = areasData != null || trailData != null;
+  const isLoading = (isLoadingAreas || isLoadingTrail) && !hasTrailData;
 
   if (!isAuthReady) {
     return (

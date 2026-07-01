@@ -7,7 +7,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { prefectureShortLabel } from "@/modules/encounter/core/prefecture-labels";
-import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
+import { AUTHENTICATED_QUERY_OPTIONS, isInitialQueryLoad } from "@/lib/authenticated-query-options";
 import { useAuth } from "@/hooks/use-auth";
 
 const MAX_CHIPS = 4;
@@ -21,6 +21,7 @@ export function NavLivePrefecturePanel() {
 
   const prefectures = data?.prefectures ?? [];
   const totalPeople = data?.totalPeople ?? 0;
+  const initialLoad = isInitialQueryLoad(isLoading, data);
 
   return (
     <Pressable
@@ -38,8 +39,8 @@ export function NavLivePrefecturePanel() {
         <Text style={styles.title}>みんなの現在地</Text>
       </View>
 
-      {isLoading ? (
-        <Text style={styles.meta}>読み込み中…</Text>
+      {initialLoad ? (
+        <Text style={styles.meta}>公開中の足あとを集計中</Text>
       ) : prefectures.length === 0 ? (
         <Text style={styles.meta}>まだ誰も記録していません</Text>
       ) : (

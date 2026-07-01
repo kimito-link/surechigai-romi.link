@@ -341,9 +341,11 @@ export function MypageAuthenticatedScreen() {
               {user.twitterId && (
                 <Text style={styles.profileMetaText}>ID {user.twitterId}</Text>
               )}
-              <Text style={styles.profileMetaText}>
-                フォロワー {typeof user.followersCount === "number" ? user.followersCount.toLocaleString("ja-JP") : "取得中"}
-              </Text>
+              {typeof user.followersCount === "number" ? (
+                <Text style={styles.profileMetaText}>
+                  フォロワー {user.followersCount.toLocaleString("ja-JP")}
+                </Text>
+              ) : null}
             </View>
           </View>
         </View>

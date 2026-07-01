@@ -1,10 +1,11 @@
 /**
  * マイページ — 参加表明中の集まり + リマインド切替
  */
-import { View, Text, Pressable, StyleSheet, Switch, ActivityIndicator, Platform } from "react-native";
+import { View, Text, Pressable, StyleSheet, Switch, Platform } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
+import { AUTHENTICATED_QUERY_OPTIONS, isInitialQueryLoad } from "@/lib/authenticated-query-options";
 import { color, palette } from "@/theme/tokens";
 import { formatEventDateTime } from "@/components/events/events-event-card";
 import { EventCreatorLink } from "@/components/events/event-creator-link";
@@ -42,7 +43,7 @@ export function MypageUpcomingEventsSection({ embedded = false }: { embedded?: b
   const [permHint, setPermHint] = useState<string | null>(null);
 
   const { data: items, isLoading } = trpc.eventParticipation.myUpcoming.useQuery(undefined, {
-    staleTime: 30_000,
+    ...AUTHENTICATED_QUERY_OPTIONS,
   });
 
   const setReminderMut = trpc.eventParticipation.setReminder.useMutation({
@@ -79,12 +80,14 @@ export function MypageUpcomingEventsSection({ embedded = false }: { embedded?: b
   );
 
   const wrapStyle = embedded ? styles.embeddedWrap : styles.section;
+  const initialLoad = isInitialQueryLoad(isLoading, items);
 
-  if (isLoading) {
+  if (initialLoad) {
+    if (embedded) return null;
     return (
       <View style={wrapStyle}>
-        <Text style={styles.subTitle}>参加表明中の集まり</Text>
-        <ActivityIndicator color={color.accentPrimary} style={{ marginTop: 12 }} />
+        <Text style={styles.sectionTitle}>参加表明中の集まり</Text>
+        <Text style={styles.emptyText}>まだ参加表明した集まりはありません。</Text>
       </View>
     );
   }

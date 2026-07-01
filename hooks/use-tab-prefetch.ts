@@ -1,4 +1,5 @@
-import { createContext, createElement, useCallback, useContext, type ReactNode } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, type ReactNode } from "react";
+import { usePathname } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import {
@@ -44,6 +45,7 @@ export function hrefToTabPrefetchKey(href: string | undefined): TabPrefetchKey |
 export function TabPrefetchProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
+  const pathname = usePathname();
 
   const prefetch = useCallback(
     (tab: TabPrefetchKey) => {
@@ -52,6 +54,12 @@ export function TabPrefetchProvider({ children }: { children: ReactNode }) {
     },
     [isAuthenticated, utils],
   );
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const tab = hrefToTabPrefetchKey(pathname);
+    if (tab) prefetch(tab);
+  }, [isAuthenticated, pathname, prefetch]);
 
   return createElement(TabPrefetchContext.Provider, { value: prefetch }, children);
 }

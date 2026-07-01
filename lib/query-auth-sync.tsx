@@ -5,7 +5,10 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { prefetchCoreAuthenticatedData } from "@/lib/bootstrap/prefetch-tab-data";
+import {
+  prefetchAllTabChunksIdle,
+  prefetchCoreAuthenticatedData,
+} from "@/lib/bootstrap/prefetch-tab-data";
 
 export function AuthQuerySync() {
   const { isAuthenticated, isAuthReady } = useAuth();
@@ -26,6 +29,7 @@ export function AuthQuerySync() {
       void utils.eventParticipation.invalidate();
       void utils.presence.invalidate();
       prefetchCoreAuthenticatedData(utils);
+      prefetchAllTabChunksIdle();
     }
 
     prevAuthenticated.current = isAuthenticated;
