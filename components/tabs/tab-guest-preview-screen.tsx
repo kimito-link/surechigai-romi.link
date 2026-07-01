@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/organisms/screen-container";
+import { BrandStamp } from "@/components/brand/brand-stamp";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { palette } from "@/theme/tokens";
@@ -59,6 +60,7 @@ export function TabGuestPreviewScreen({
           <LazyLoginPreviewBanner headline={headline} benefits={benefits} />
         </Suspense>
         {children}
+        <BrandStamp variant="hero" />
       </ScrollView>
     </ScreenContainer>
   );

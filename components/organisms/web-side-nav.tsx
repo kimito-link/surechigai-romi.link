@@ -10,6 +10,7 @@ import { usePathname, useRouter, type Href } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { color, palette } from "@/theme/tokens";
 import { NavLivePrefecturePanel } from "@/components/molecules/nav-live-prefecture-panel";
+import { BrandStamp } from "@/components/brand/brand-stamp";
 import { usePrefetchTab } from "@/hooks/use-tab-prefetch";
 import type { TabPrefetchKey } from "@/lib/bootstrap/prefetch-tab-data";
 
@@ -90,33 +91,36 @@ export function WebSideNav() {
 
   return (
     <View style={styles.nav}>
-      <Text style={styles.brand}>君斗りんく</Text>
+      <BrandStamp variant="sideNav" />
       <NavLivePrefecturePanel />
-      {NAV_ITEMS.map((item) => {
-        const active = isActive(pathname, item);
-        return (
-          <Pressable
-            key={item.label}
-            onPress={() => router.push(item.href)}
-            onPressIn={() => prefetchTab(item.prefetchKey)}
-            style={({ pressed, hovered }) => [
-              styles.item,
-              active && styles.itemActive,
-              Platform.OS === "web" && (hovered as boolean) && styles.itemHover,
-              pressed && { opacity: 0.85 },
-            ]}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
-          >
-            <MaterialIcons
-              name={item.icon}
-              size={20}
-              color={active ? palette.kimitoBlue : color.textMuted}
-            />
-            <Text style={[styles.label, active && styles.labelActive]}>{item.label}</Text>
-          </Pressable>
-        );
-      })}
+      <View style={styles.navItems}>
+        {NAV_ITEMS.map((item) => {
+          const active = isActive(pathname, item);
+          return (
+            <Pressable
+              key={item.label}
+              onPress={() => router.push(item.href)}
+              onPressIn={() => prefetchTab(item.prefetchKey)}
+              style={({ pressed, hovered }) => [
+                styles.item,
+                active && styles.itemActive,
+                Platform.OS === "web" && (hovered as boolean) && styles.itemHover,
+                pressed && { opacity: 0.85 },
+              ]}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+            >
+              <MaterialIcons
+                name={item.icon}
+                size={20}
+                color={active ? palette.kimitoBlue : color.textMuted}
+              />
+              <Text style={[styles.label, active && styles.labelActive]}>{item.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <BrandStamp variant="sideNavFoot" />
     </View>
   );
 }
@@ -136,12 +140,9 @@ const styles = StyleSheet.create({
     borderRightColor: color.border,
     gap: 4,
   },
-  brand: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: palette.kimitoBlue,
-    marginBottom: 12,
-    paddingHorizontal: 8,
+  navItems: {
+    flex: 1,
+    gap: 4,
   },
   item: {
     flexDirection: "row",

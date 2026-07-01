@@ -5,6 +5,7 @@
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
+import { BrandStamp } from "@/components/brand/brand-stamp";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { scheduleAfterIdle } from "@/lib/schedule-after-idle";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
@@ -42,6 +43,7 @@ export function PostGuestScreen() {
     <View style={styles.hero}>
       <BrandTagline compact={false} align="center" />
       <Text style={styles.heroSub}>移動の足あとを残して、すれ違いと聖地巡礼を</Text>
+      <BrandStamp variant="hero" />
     </View>
   );
 

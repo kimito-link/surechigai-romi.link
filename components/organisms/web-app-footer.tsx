@@ -1,32 +1,36 @@
 import { View, Text, StyleSheet, Pressable, Linking, Platform } from "react-native";
-import { color, palette } from "@/theme/tokens";
+import { color } from "@/theme/tokens";
+import { BrandStamp } from "@/components/brand/brand-stamp";
 import { useWebSideNavActive, WEB_SIDE_NAV_WIDTH } from "@/components/organisms/web-side-nav";
 
-/** Web PC 用 — 規約リンクの軽量フッター */
+/** Web 用 — ブランド + 規約リンクの軽量フッター（操作を邪魔しない高さ） */
 export function WebAppFooter() {
   const sideNav = useWebSideNavActive();
-  if (Platform.OS !== "web" || !sideNav) return null;
+  if (Platform.OS !== "web") return null;
 
   return (
-    <View style={[styles.footer, { left: WEB_SIDE_NAV_WIDTH }]}>
-      <Pressable
-        onPress={() => Linking.openURL("https://surechigai-romi.link/terms")}
-        style={({ pressed }) => [styles.link, pressed && { opacity: 0.7 }]}
-      >
-        <Text style={styles.linkText}>利用規約</Text>
-      </Pressable>
-      <Text style={styles.sep}>·</Text>
-      <Pressable
-        onPress={() => Linking.openURL("https://surechigai-romi.link/privacy")}
-        style={({ pressed }) => [styles.link, pressed && { opacity: 0.7 }]}
-      >
-        <Text style={styles.linkText}>プライバシーポリシー</Text>
-      </Pressable>
+    <View style={[styles.footer, { left: sideNav ? WEB_SIDE_NAV_WIDTH : 0 }]}>
+      <BrandStamp variant="footer" />
+      <View style={styles.links}>
+        <Pressable
+          onPress={() => Linking.openURL("https://surechigai-romi.link/terms")}
+          style={({ pressed }) => [styles.link, pressed && { opacity: 0.7 }]}
+        >
+          <Text style={styles.linkText}>利用規約</Text>
+        </Pressable>
+        <Text style={styles.sep}>·</Text>
+        <Pressable
+          onPress={() => Linking.openURL("https://surechigai-romi.link/privacy")}
+          style={({ pressed }) => [styles.link, pressed && { opacity: 0.7 }]}
+        >
+          <Text style={styles.linkText}>プライバシー</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
-export const WEB_APP_FOOTER_HEIGHT = 36;
+export const WEB_APP_FOOTER_HEIGHT = 40;
 
 const styles = StyleSheet.create({
   footer: {
@@ -37,12 +41,19 @@ const styles = StyleSheet.create({
     zIndex: 90,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
     height: WEB_APP_FOOTER_HEIGHT,
+    paddingHorizontal: 12,
     backgroundColor: color.surface,
     borderTopWidth: 1,
     borderTopColor: color.border,
+    gap: 12,
+  },
+  links: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
+    flexShrink: 0,
   },
   link: {
     padding: 4,

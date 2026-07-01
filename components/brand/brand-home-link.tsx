@@ -8,6 +8,7 @@ import { Image } from "expo-image";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
+import { KIMITO_LINK_LOGO } from "@/components/brand/brand-constants";
 import { navigate } from "@/lib/navigation";
 import { triggerHomeScroll } from "@/lib/home-scroll";
 import { palette } from "@/theme/tokens";
@@ -57,18 +58,23 @@ export function BrandHomeLink({
         style={[styles.icon, { width: iconSize, height: iconSize, borderRadius: iconSize / 2 }]}
         contentFit="cover"
       />
-      <View style={compact || isNarrow ? styles.titleCol : styles.titleRow}>
-        <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={compact ? 1 : isNarrow ? 2 : 1}>
-          {title}
-        </Text>
+      <View style={styles.textBlock}>
         {!compact ? (
-          <Text
-            style={[styles.version, { fontSize: versionSize }]}
-            accessibilityLabel={`バージョン ${DISPLAY_VERSION}`}
-          >
-            v{DISPLAY_VERSION}
-          </Text>
+          <Image source={KIMITO_LINK_LOGO} style={styles.wordmark} contentFit="contain" />
         ) : null}
+        <View style={compact || isNarrow ? styles.titleCol : styles.titleRow}>
+          <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={compact ? 1 : isNarrow ? 2 : 1}>
+            {title}
+          </Text>
+          {!compact ? (
+            <Text
+              style={[styles.version, { fontSize: versionSize }]}
+              accessibilityLabel={`バージョン ${DISPLAY_VERSION}`}
+            >
+              v{DISPLAY_VERSION}
+            </Text>
+          ) : null}
+        </View>
       </View>
     </Pressable>
   );
@@ -118,6 +124,13 @@ const styles = StyleSheet.create({
     borderRadius: ICON_SIZE / 2,
     flexShrink: 0,
   },
+  textBlock: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 2,
+    flexShrink: 1,
+    minWidth: 0,
+  },
   titleRow: {
     flexDirection: "row",
     alignItems: "baseline",
@@ -131,6 +144,12 @@ const styles = StyleSheet.create({
     gap: 2,
     flexShrink: 1,
     minWidth: 0,
+  },
+  wordmark: {
+    width: 88,
+    height: 22,
+    marginBottom: 2,
+    flexShrink: 0,
   },
   title: {
     color: palette.kimitoBlue,
