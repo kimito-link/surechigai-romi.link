@@ -67,11 +67,12 @@ function MissingClerkKeyScreen() {
 
 function AppShell({ children, liteBoundary = false }: { children: ReactNode; liteBoundary?: boolean }) {
   const Boundary = liteBoundary ? ErrorBoundaryLite : ErrorBoundary;
+  const Shell = liteBoundary && Platform.OS === "web" ? View : GestureRoot;
   return (
     <Boundary screenName="App">
-      <GestureRoot style={{ flex: 1, overflow: "hidden", backgroundColor: "#F0F4F8" }}>
+      <Shell style={{ flex: 1, overflow: "hidden", backgroundColor: "#F0F4F8" }}>
         {children}
-      </GestureRoot>
+      </Shell>
     </Boundary>
   );
 }
@@ -174,17 +175,25 @@ export default function RootLayout() {
           <SafeAreaFrameContext.Provider value={frame}>
             <SafeAreaInsetsContext.Provider value={insets}>
               <AppShell liteBoundary={useGuestWebShell}>
-                <OnboardingProvider>
-                  <OnboardingWrapper>{shellContent}</OnboardingWrapper>
-                </OnboardingProvider>
+                {useGuestWebShell ? (
+                  shellContent
+                ) : (
+                  <OnboardingProvider>
+                    <OnboardingWrapper>{shellContent}</OnboardingWrapper>
+                  </OnboardingProvider>
+                )}
               </AppShell>
             </SafeAreaInsetsContext.Provider>
           </SafeAreaFrameContext.Provider>
         ) : (
           <AppShell liteBoundary={useGuestWebShell}>
-            <OnboardingProvider>
-              <OnboardingWrapper>{shellContent}</OnboardingWrapper>
-            </OnboardingProvider>
+            {useGuestWebShell ? (
+              shellContent
+            ) : (
+              <OnboardingProvider>
+                <OnboardingWrapper>{shellContent}</OnboardingWrapper>
+              </OnboardingProvider>
+            )}
           </AppShell>
         )}
       </SafeAreaProvider>
