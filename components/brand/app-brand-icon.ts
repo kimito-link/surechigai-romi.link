@@ -1,2 +1,2 @@
-/** タブ favicon と同じ — 君斗りんく アイドルキャラ（pnpm brand:icons で生成） */
+/** タブ favicon / PWA アイコンと同じ（site-icon-source → pnpm brand:icons） */
 export const APP_BRAND_ICON = require("@/assets/images/favicon.png");

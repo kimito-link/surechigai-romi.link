@@ -2,8 +2,13 @@ import { describe, expect, it } from "vitest";
 import { ONBOARDING_SLIDES, ONBOARDING_STORAGE_KEY } from "@/features/onboarding/constants";
 
 describe("onboarding slides", () => {
-  it("uses v3 storage key for fresh rollout", () => {
-    expect(ONBOARDING_STORAGE_KEY).toBe("@onboarding_completed_v3");
+  it("uses v4 storage key for fresh rollout", () => {
+    expect(ONBOARDING_STORAGE_KEY).toBe("@onboarding_completed_v4");
+  });
+
+  it("opens with favicon brand character on hero", () => {
+    expect(ONBOARDING_SLIDES[0]?.characterType).toBe("brand");
+    expect(ONBOARDING_SLIDES[0]?.showLogo).toBe(false);
   });
 
   it("has 5 value-first slides ending with start", () => {

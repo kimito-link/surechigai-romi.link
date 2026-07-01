@@ -35,11 +35,11 @@ export function GuestWebProviders({ children }: { children: ReactNode }) {
   }
 
   if (!trpcMounted) {
-    return <>{children}</>;
+    return <AppBootstrapFallback />;
   }
 
   return (
-    <Suspense fallback={needsTrpcNow ? <AppBootstrapFallback /> : <>{children}</>}>
+    <Suspense fallback={<AppBootstrapFallback />}>
       <PublicWebProvidersLazy>{children}</PublicWebProvidersLazy>
     </Suspense>
   );

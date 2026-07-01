@@ -2,7 +2,7 @@
  * 君斗りんくのすれ違ひ通信 — 初回オンボーディング（星野ロミ型・価値ファースト）
  */
 
-export const ONBOARDING_STORAGE_KEY = "@onboarding_completed_v3";
+export const ONBOARDING_STORAGE_KEY = "@onboarding_completed_v4";
 export const POST_LOGIN_LOCATION_INTRO_KEY = "@post_login_location_intro_v1";
 
 export type OnboardingSlideAccent = "pink" | "purple" | "teal" | "signal";
@@ -14,7 +14,7 @@ export interface OnboardingSlide {
   description: string;
   accent: OnboardingSlideAccent;
   features?: string[];
-  characterType?: "all" | "rinku" | "konta" | "tanune";
+  characterType?: "all" | "brand" | "rinku" | "konta" | "tanune";
   showLogo?: boolean;
 }
 
@@ -30,8 +30,8 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
       "思い出の場所にもう一度行ける",
       "推しの軌跡をファンがたどれる",
     ],
-    characterType: "all",
-    showLogo: true,
+    characterType: "brand",
+    showLogo: false,
   },
   {
     id: "live-map",
@@ -57,7 +57,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
       "封筒が届くかもしれない",
       "タイムシフトで過去30日もマッチ",
     ],
-    characterType: "rinku",
+    characterType: "brand",
   },
   {
     id: "trail",
@@ -83,7 +83,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
       "移動専用Xアカウントの利用を推奨",
       "ログイン後、位置の許可でチェックイン",
     ],
-    characterType: "all",
-    showLogo: true,
+    characterType: "brand",
+    showLogo: false,
   },
 ];

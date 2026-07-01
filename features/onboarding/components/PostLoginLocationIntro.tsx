@@ -15,11 +15,10 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { POST_LOGIN_LOCATION_INTRO_KEY } from "@/features/onboarding/constants";
+import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
 import { getCurrentLocation } from "@/lib/get-current-location";
 import { useAuth } from "@/hooks/use-auth";
 import { palette } from "@/theme/tokens";
-
-const idolRinku = require("@/assets/images/characters/idolKimitoLink.png");
 
 function readIntroDoneSync(): boolean | null {
   if (Platform.OS === "web" && typeof window !== "undefined") {
@@ -101,7 +100,7 @@ export function PostLoginLocationIntro() {
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={handleLater}>
       <View style={styles.backdrop}>
         <View style={styles.card} accessibilityRole="alert">
-          <Image source={idolRinku} style={styles.hero} contentFit="contain" />
+          <Image source={APP_BRAND_ICON} style={styles.hero} contentFit="contain" />
 
           <View style={styles.iconRow}>
             <MaterialIcons name="my-location" size={20} color={palette.teal500} />

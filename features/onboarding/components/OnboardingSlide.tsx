@@ -6,6 +6,7 @@ import { View, Text, StyleSheet, Dimensions, useWindowDimensions } from "react-n
 import { Image } from "expo-image";
 import Animated, { FadeIn, SlideInRight, SlideOutLeft } from "react-native-reanimated";
 import type { OnboardingSlide as SlideType, OnboardingSlideAccent } from "../constants";
+import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
 import { palette } from "@/theme/tokens";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -17,7 +18,6 @@ const characterImages = {
 };
 
 const logoImage = require("@/assets/images/logos/kimitolink-logo.jpg");
-const idolRinku = require("@/assets/images/characters/idolKimitoLink.png");
 
 const ACCENT: Record<OnboardingSlideAccent, string> = {
   pink: palette.primary500,
@@ -73,10 +73,17 @@ export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
         </View>
       );
     }
+    if (slide.characterType === "brand") {
+      return (
+        <View style={styles.singleCharacterContainer}>
+          <Image source={APP_BRAND_ICON} style={styles.brandCharacter} contentFit="contain" />
+        </View>
+      );
+    }
     if (slide.characterType === "rinku") {
       return (
         <View style={styles.singleCharacterContainer}>
-          <Image source={idolRinku} style={styles.idolCharacter} contentFit="contain" />
+          <Image source={characterImages.rinku} style={styles.largeCharacter} contentFit="contain" />
         </View>
       );
     }
@@ -217,9 +224,10 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
   },
-  idolCharacter: {
-    width: 110,
-    height: 160,
+  brandCharacter: {
+    width: 128,
+    height: 128,
+    borderRadius: 28,
   },
   title: {
     fontSize: 30,
