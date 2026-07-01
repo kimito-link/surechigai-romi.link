@@ -85,8 +85,9 @@ function toBase64(buf: ArrayBuffer): string {
 const TILE = 256;
 const TILE_UA =
   "surechigai-romi-og/1.0 (+https://surechigai-romi.link; contact@surechigai-romi.link)";
-const TILE_LOAD_TIMEOUT_MS = 2200;
+const TILE_LOAD_TIMEOUT_MS = 1500;
 const OGP_MAX_ZOOM = 14;
+const FONT_LOAD_TIMEOUT_MS = 1800;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
   return Promise.race([
@@ -238,15 +239,15 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
 
   // 必要文字をまとめてサブセット取得
   const fontText = `${brand}${tagline}${placeLabel}${handleLine}にいるよのどこか日本SURECHIGAINOW@`;
-  const [fonts, staticMap, mapTiles] = await Promise.all([
-    loadFonts(fontText),
+  // X クローラーは ~2s でタイムアウトしやすい。OSM タイル合成は使わず Static Map かグラデのみ。
+  const [fonts, staticMap] = await Promise.all([
+    withTimeout(loadFonts(fontText), FONT_LOAD_TIMEOUT_MS, []),
     hasCoord ? loadStaticMapImage(latRaw, lngRaw, zoom) : Promise.resolve(null),
-    hasCoord ? loadMapTilesWithTimeout(latRaw, lngRaw, zoom) : Promise.resolve([] as Tile[]),
   ]);
   const hasFont = fonts.length > 0;
   const fontFamily = fonts[0]?.name ?? "sans-serif";
 
-  // 背景: Static Map / OSM タイル合成 / ブランドグラデーション
+  // 背景: MapTiler Static Map（1 リクエスト）/ ブランドグラデーション
   const background =
     staticMap
       ? h("img", {
@@ -262,37 +263,6 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
             objectFit: "cover",
           },
         })
-      : mapTiles.length > 0
-      ? h(
-          "div",
-          {
-            style: {
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: WIDTH,
-              height: HEIGHT,
-              display: "flex",
-              overflow: "hidden",
-              backgroundColor: "#AAD3DF",
-            },
-          },
-          ...mapTiles.map((t, i) =>
-            h("img", {
-              key: i,
-              src: t.src,
-              width: TILE,
-              height: TILE,
-              style: {
-                position: "absolute",
-                left: t.left,
-                top: t.top,
-                width: TILE,
-                height: TILE,
-              },
-            })
-          )
-        )
       : h("div", {
           style: {
             position: "absolute",
