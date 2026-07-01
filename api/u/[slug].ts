@@ -17,7 +17,7 @@ import {
   type ShareLocationInfo,
 } from "../../lib/ogp/share-meta.js";
 
-import { APP_ORIGIN } from "../../lib/site-urls.js";
+const APP_ORIGIN = "https://surechigai.kimito.link";
 
 function escHtml(s: string): string {
   return s
