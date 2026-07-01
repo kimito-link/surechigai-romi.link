@@ -10,9 +10,10 @@ on:
 
 jobs:
   e2e-guest:
-    # ubuntu-latest (24.04) は playwright install-deps 非対応のため 22.04 を使用
-    runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright:v1.57.0-jammy
 
     steps:
       - name: Checkout code
@@ -32,22 +33,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-
-      - name: Install Playwright Chromium
-        timeout-minutes: 15
-        run: pnpm exec playwright install chromium --with-deps
-
       - name: Typecheck
         run: pnpm check
 
       - name: Guest smoke + full-site audit (mobile + desktop)
-        timeout-minutes: 20
+        timeout-minutes: 18
         env:
           PLAYWRIGHT_BASE_URL: https://surechigai.kimito.link
           CI: "true"

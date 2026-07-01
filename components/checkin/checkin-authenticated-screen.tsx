@@ -171,11 +171,17 @@ export default function CheckinAuthenticatedScreen() {
     async (pos: { lat: number; lng: number; accuracy?: number }) => {
       setLoadingPhase("saving");
 
-      const result = await checkIn.mutateAsync({
-        lat: pos.lat,
-        lng: pos.lng,
-        accuracy: pos.accuracy,
-      });
+      let result;
+      try {
+        result = await checkIn.mutateAsync({
+          lat: pos.lat,
+          lng: pos.lng,
+          accuracy: pos.accuracy,
+        });
+      } catch (err) {
+        console.error("[checkin] checkIn.mutateAsync failed:", err);
+        throw err;
+      }
 
       const locName = result.prefecture
         ? `${result.prefecture}${result.municipality || ""}${result.areaName ? ` ${result.areaName}` : ""}`
@@ -283,7 +289,7 @@ export default function CheckinAuthenticatedScreen() {
         });
       } catch (err: unknown) {
         pulse.value = withTiming(1);
-        setState("adjust");
+        setState("error");
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }

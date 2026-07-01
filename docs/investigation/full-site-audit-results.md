@@ -2,7 +2,7 @@
 
 **実施日:** 2026-06-30  
 **対象 URL:** https://surechigai.kimito.link  
-**デプロイ SHA:** `2948ed8136acf3276473fb8b4236f4e7030062f7`（以降 `62d76dd` CI 修正）  
+**デプロイ SHA:** `5048e90d42457e4bd2af0c9872b08c3ab4e71977`（監査再実行 `prod-post-5048e90` も PASS）  
 **監査タグ:** `prod-final`  
 **実行コマンド:**
 
