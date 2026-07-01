@@ -1,16 +1,14 @@
-import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
+/**
+ * 未ログインタブ向け — 地図/tRPC chunk を読まないプレビュー。
+ */
+import { View, ScrollView, StyleSheet } from "react-native";
 import { lazy, Suspense } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/organisms/screen-container";
+import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { BrandStamp } from "@/components/brand/brand-stamp";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
-import { palette } from "@/theme/tokens";
-
-const LazyAppHeader = lazy(() =>
-  import("@/components/organisms/app-header").then((m) => ({ default: m.AppHeader })),
-);
 
 const LazyLoginPreviewBanner = lazy(() =>
   import("@/components/molecules/login-preview-banner").then((m) => ({
@@ -38,21 +36,19 @@ export function TabGuestPreviewScreen({
   children,
 }: TabGuestPreviewScreenProps) {
   const { isDesktop } = useResponsive();
-  const router = useRouter();
   const tabInset = useTabBarInset();
 
   return (
     <ScreenContainer containerClassName="bg-background">
-      <Suspense fallback={<View style={styles.headerStub} />}>
-        <LazyAppHeader
-          title={title}
-          showCharacters={false}
-          isDesktop={isDesktop}
-          showMenu
-          showLoginButton
-        />
-      </Suspense>
+      <TabScreenHeader
+        title={title}
+        showCharacters={false}
+        isDesktop={isDesktop}
+        showMenu
+        showLoginButton
+      />
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}
         showsVerticalScrollIndicator={false}
       >
@@ -67,9 +63,8 @@ export function TabGuestPreviewScreen({
 }
 
 const styles = StyleSheet.create({
-  headerStub: {
-    height: 56,
-    backgroundColor: "#E2EDF7",
+  scrollView: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: 16,

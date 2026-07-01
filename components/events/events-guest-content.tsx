@@ -24,7 +24,7 @@ import {
 import { useState, useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
+import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { toDateKey } from "@/lib/events/date-key";
 import {
   LazyEventCalendar,
@@ -360,11 +360,11 @@ export function EventsGuestContent() {
 
   return (
     <ScreenContainer containerClassName="bg-background">
-      <AppHeader
+      <TabScreenHeader
         title="集まり"
         showCharacters={false}
         isDesktop={isDesktop}
-        showMenu={true}
+        showMenu
         showLoginButton
       />
 
@@ -396,6 +396,7 @@ export function EventsGuestContent() {
       </View>
 
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={[styles.scroll, { paddingBottom: tabInset }]}
         showsVerticalScrollIndicator={false}
       >
@@ -444,6 +445,9 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     color: color.accentIndigo,
+  },
+  scrollView: {
+    flex: 1,
   },
   scroll: {
     paddingHorizontal: 16,

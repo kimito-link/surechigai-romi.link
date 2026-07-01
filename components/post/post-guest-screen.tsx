@@ -1,54 +1,38 @@
 /**
  * ポスト画面 — 未ログイン guest 向け軽量 UI。
  * LCP: ヘッダー + タグライン + CTA を初回 paint で同期描画。
- * benefits（MaterialIcons）は idle 後 chunk。
  */
 import { View, Text, ScrollView, StyleSheet, Platform, Pressable } from "react-native";
-import { useEffect, useState } from "react";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
-import { scheduleAfterIdle } from "@/lib/schedule-after-idle";
 import { MARKETING_URL } from "@/lib/site-urls";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
 import { SIGN_IN_HREF } from "@/lib/clerk-route";
 import {
-  GuestHomeDeferredBenefits,
-  GUEST_HOME_BENEFITS_PLACEHOLDER_HEIGHT,
-} from "@/components/post/guest-home-deferred-chrome";
-import {
   GuestHomeShellHeader,
   GUEST_HOME_HEADER_HEIGHT,
 } from "@/components/post/guest-home-shell-header";
-import type { LoginPreviewBenefit } from "@/components/molecules/login-preview-banner-extras";
 
-const GUEST_HOME_BENEFITS: LoginPreviewBenefit[] = [
-  { icon: "place", label: "足あとを正確に残し、あとから地図でたどる" },
-  { icon: "navigation", label: "保存した場所へ「ここへ向かう」でナビ" },
-  { icon: "groups", label: "通りすがりの人とすれ違い、封筒が届く" },
-  { icon: "calendar-today", label: "集まりの予定を見て、ライブ表明もできる" },
-  { icon: "map", label: "みんなの現在地を都道府県マップで確認" },
-];
+const GUEST_HOME_BENEFITS = [
+  "足あとを正確に残し、あとから地図でたどる",
+  "保存した場所へ「ここへ向かう」でナビ",
+  "通りすがりの人とすれ違い、封筒が届く",
+  "集まりの予定を見て、ライブ表明もできる",
+  "みんなの現在地を都道府県マップで確認",
+] as const;
 
 const LCP_HEADLINE = "ログインして、封筒と足あとを受け取ろう";
 
 export function PostGuestScreen() {
   const tabInset = useTabBarInset();
-  const [showBenefits, setShowBenefits] = useState(false);
 
-  useEffect(() => {
-    return scheduleAfterIdle(() => setShowBenefits(true), {
-      fallbackDelayMs: 800,
-      timeoutMs: 4_000,
-    });
-  }, []);
-
-  const headerOffset =
-    Platform.OS === "web" ? GUEST_HOME_HEADER_HEIGHT : 0;
+  const headerOffset = Platform.OS === "web" ? GUEST_HOME_HEADER_HEIGHT : 0;
 
   return (
     <View style={styles.root}>
       <GuestHomeShellHeader />
       <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
           { paddingTop: 8 + headerOffset, paddingBottom: tabInset },
@@ -63,11 +47,16 @@ export function PostGuestScreen() {
           <Text style={styles.ctaHeadline}>{LCP_HEADLINE}</Text>
           <KimitoLoginCta signInHref={SIGN_IN_HREF} />
           <Text style={styles.ctaNote}>無料・1タップ / 新規登録もこちら</Text>
-          {showBenefits ? (
-            <GuestHomeDeferredBenefits benefits={GUEST_HOME_BENEFITS} />
-          ) : (
-            <View style={styles.benefitsPlaceholder} />
-          )}
+          <View style={styles.benefits}>
+            {GUEST_HOME_BENEFITS.map((label) => (
+              <View key={label} style={styles.benefitRow}>
+                <Text style={styles.bullet} accessibilityElementsHidden>
+                  •
+                </Text>
+                <Text style={styles.benefitText}>{label}</Text>
+              </View>
+            ))}
+          </View>
         </View>
         <Pressable
           accessibilityRole="link"
@@ -92,6 +81,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F0F4F8",
     overflow: "hidden",
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: 16,
@@ -130,9 +122,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
   },
-  benefitsPlaceholder: {
-    height: GUEST_HOME_BENEFITS_PLACEHOLDER_HEIGHT,
-    width: "100%",
+  benefits: {
+    gap: 8,
+    marginTop: 4,
+  },
+  benefitRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  bullet: {
+    color: "#F97316",
+    fontSize: 16,
+    fontWeight: "800",
+    lineHeight: 20,
+    width: 12,
+  },
+  benefitText: {
+    flex: 1,
+    color: "#0F172A",
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 20,
   },
   marketingLink: {
     alignSelf: "center",

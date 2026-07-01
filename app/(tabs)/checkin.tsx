@@ -13,7 +13,7 @@ import {
 import { lazy, Suspense } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { AppHeader } from "@/components/organisms/app-header";
+import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -33,7 +33,7 @@ export default function CheckinScreen() {
   if (!isAuthReady) {
     return (
       <ScreenContainer containerClassName="bg-background">
-        <AppHeader
+        <TabScreenHeader
           title="チェックイン"
           showCharacters={false}
           isDesktop={isDesktop}
@@ -50,7 +50,7 @@ export default function CheckinScreen() {
   if (!isAuthenticated) {
     return (
       <ScreenContainer containerClassName="bg-background">
-        <AppHeader
+        <TabScreenHeader
           title="チェックイン"
           showCharacters={false}
           isDesktop={isDesktop}
@@ -58,6 +58,7 @@ export default function CheckinScreen() {
           showLoginButton
         />
         <ScrollView
+          style={styles.scrollView}
           contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}
           showsVerticalScrollIndicator={false}
         >
@@ -94,6 +95,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
     padding: 20,

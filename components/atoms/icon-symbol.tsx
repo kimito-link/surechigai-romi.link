@@ -39,6 +39,7 @@ const MAPPING: Record<string, MaterialIconName> = {
   "clock.fill": "access-time",
   "arrow.clockwise": "refresh",
   "photo.fill": "photo",
+  "globe.asia.australia.fill": "public",
 };
 
 type IconSymbolName = keyof typeof MAPPING;

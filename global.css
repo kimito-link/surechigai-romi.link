@@ -25,7 +25,15 @@ body {
   }
 }
 
-/* kimito .lp-defer: ファーストビュー外の描画コストを遅延 */
+/* RN Web ScrollView — スマホで縦スクロールを確実に */
+#root div[style*="overflow: auto"],
+#root div[style*="overflow-y: auto"],
+#root div[style*="overflow: scroll"],
+#root div[style*="overflow-y: scroll"] {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
 .lp-defer {
   content-visibility: auto;
   contain-intrinsic-size: auto 720px;
