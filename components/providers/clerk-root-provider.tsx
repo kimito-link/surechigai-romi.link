@@ -20,6 +20,7 @@ import { createPerformanceQueryCache, createPerformanceMutationCache } from "@/l
 import { asyncStoragePersister } from "@/lib/query-persister";
 import { shouldPersistQuery } from "@/lib/query-persist-policy";
 import { AuthQuerySync } from "@/lib/query-auth-sync";
+import { AuthenticatedPresenceShell } from "@/components/presence/authenticated-presence-shell";
 import { getClerkProviderProps } from "@/lib/clerk-provider-props";
 import { NetworkToast } from "@/components/organisms/network-toast";
 import { ClerkAuthBridge } from "@/components/providers/clerk-auth-bridge";
@@ -254,6 +255,7 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
         }}
       >
         <AuthQuerySync />
+        <AuthenticatedPresenceShell />
         <TabPrefetchProvider>{children}</TabPrefetchProvider>
         {authDebugEnabled ? <AuthDebugPanel payload={authDebugPayload} /> : null}
       </PersistQueryClientProvider>

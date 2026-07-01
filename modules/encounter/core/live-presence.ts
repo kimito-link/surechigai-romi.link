@@ -6,10 +6,10 @@
 export const LIVE_PRESENCE_STALE_MS = 5 * 60 * 1000;
 
 /** クライアントの位置送信間隔（目安・watch 補助用） */
-export const LIVE_PRESENCE_PULSE_INTERVAL_MS = 30 * 1000;
+export const LIVE_PRESENCE_PULSE_INTERVAL_MS = 20 * 1000;
 
 /** 連続 pulse の最短間隔（API / バッテリー保護） */
-export const LIVE_PRESENCE_MIN_PULSE_GAP_MS = 10 * 1000;
+export const LIVE_PRESENCE_MIN_PULSE_GAP_MS = 5_000;
 
 export function isLivePresenceFresh(
   updatedAt: Date | string | null | undefined,

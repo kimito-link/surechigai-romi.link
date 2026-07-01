@@ -17,6 +17,8 @@ import { Image } from "expo-image";
 import { POST_LOGIN_LOCATION_INTRO_KEY } from "@/features/onboarding/constants";
 import { getCurrentLocation } from "@/lib/get-current-location";
 import { saveLocationOptIn } from "@/lib/location-opt-in";
+import { setOptimisticLivePresenceDesired, saveLivePresenceUserOff } from "@/lib/live-presence-user-prefs";
+import { warmGeolocationCache } from "@/lib/geolocation-warmup";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
@@ -87,14 +89,17 @@ export function PostLoginLocationIntro() {
 
   const handleAllow = useCallback(async () => {
     setBusy(true);
+    setOptimisticLivePresenceDesired(true);
+    warmGeolocationCache();
+    void saveLocationOptIn();
+    void saveLivePresenceUserOff(false);
+    setLivePresence.mutate({ enabled: true });
     try {
       await getCurrentLocation();
-      await saveLocationOptIn();
-      await setLivePresence.mutateAsync({ enabled: true });
-      await markDone();
     } catch {
-      await markDone();
+      // watch が続行
     } finally {
+      await markDone();
       setBusy(false);
     }
   }, [markDone, setLivePresence]);

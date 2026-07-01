@@ -9,6 +9,8 @@ import {
   prefetchAllTabChunksIdle,
   prefetchCoreAuthenticatedData,
 } from "@/lib/bootstrap/prefetch-tab-data";
+import { warmGeolocationCache } from "@/lib/geolocation-warmup";
+import { readLocationOptInSync } from "@/lib/location-opt-in";
 
 export function AuthQuerySync() {
   const { isAuthenticated, isAuthReady } = useAuth();
@@ -30,6 +32,9 @@ export function AuthQuerySync() {
       void utils.presence.invalidate();
       prefetchCoreAuthenticatedData(utils);
       prefetchAllTabChunksIdle();
+      if (readLocationOptInSync()) {
+        warmGeolocationCache();
+      }
     }
 
     prevAuthenticated.current = isAuthenticated;

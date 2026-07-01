@@ -1,12 +1,17 @@
 /**
- * 位置オプトイン済みユーザー — 再訪問時に居場所をすぐ ON（fujisan の自動 requestLocation 相当）。
+ * 位置オプトイン済み — サーバー settings 応答を待たず居場所 ON（星野ロミ型常駐）。
  */
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { readLocationOptIn, readLocationOptInSync } from "@/lib/location-opt-in";
 import { detectInstalledWebShell, shouldAutoStartLocation } from "@/lib/location-start-policy";
-import { getCurrentLocation } from "@/lib/get-current-location";
+import { warmGeolocationCache } from "@/lib/geolocation-warmup";
+import {
+  readLivePresenceUserOffSync,
+  saveLivePresenceUserOff,
+  setOptimisticLivePresenceDesired,
+} from "@/lib/live-presence-user-prefs";
 
 export function useAutoStartLivePresence() {
   const { isAuthenticated, isAuthReady } = useAuth();
@@ -15,56 +20,67 @@ export function useAutoStartLivePresence() {
     enabled: isAuthenticated && isAuthReady,
   });
   const setEnabledMutation = trpc.presence.setEnabled.useMutation({
-    onSuccess: () => utils.settings.invalidate(),
+    onMutate: async ({ enabled }) => {
+      await utils.settings.get.cancel();
+      const prev = utils.settings.get.getData();
+      if (prev) {
+        utils.settings.get.setData(undefined, { ...prev, livePresenceEnabled: enabled });
+      }
+      if (enabled) setOptimisticLivePresenceDesired(true);
+      return { prev };
+    },
+    onError: (_err, _input, ctx) => {
+      if (ctx?.prev) utils.settings.get.setData(undefined, ctx.prev);
+      setOptimisticLivePresenceDesired(false);
+    },
+    onSettled: () => {
+      void utils.settings.invalidate();
+    },
   });
   const startedRef = useRef(false);
 
-  useEffect(() => {
-    if (!isAuthReady || !isAuthenticated || startedRef.current) return;
-    if (settingsQuery.isLoading || !settingsQuery.data) return;
+  const armLivePresence = () => {
+    if (startedRef.current || readLivePresenceUserOffSync()) return;
+    startedRef.current = true;
+    setOptimisticLivePresenceDesired(true);
+    warmGeolocationCache();
+    void saveLivePresenceUserOff(false);
+    setEnabledMutation.mutate({ enabled: true });
+  };
 
-    const settings = settingsQuery.data;
-    if (settings.livePresenceEnabled) {
+  useEffect(() => {
+    if (!isAuthReady || !isAuthenticated) return;
+
+    if (settingsQuery.data?.livePresenceEnabled) {
+      setOptimisticLivePresenceDesired(true);
       startedRef.current = true;
+      warmGeolocationCache();
       return;
     }
+
+    if (readLivePresenceUserOffSync()) return;
 
     const installedShell = detectInstalledWebShell();
     const syncOptIn = readLocationOptInSync();
 
-    void (async () => {
-      const locationOptIn = syncOptIn || (await readLocationOptIn());
+    if (syncOptIn || installedShell) {
+      armLivePresence();
+    }
+
+    void readLocationOptIn().then((locationOptIn) => {
       if (
-        !shouldAutoStartLocation({
+        shouldAutoStartLocation({
           locationOptIn,
           installedShell,
         })
       ) {
-        return;
+        armLivePresence();
       }
-
-      if (
-        settings.locationPausedUntil &&
-        new Date(settings.locationPausedUntil).getTime() > Date.now()
-      ) {
-        return;
-      }
-
-      startedRef.current = true;
-
-      try {
-        await getCurrentLocation();
-      } catch {
-        // 許可ダイアログは別導線に任せる
-      }
-
-      setEnabledMutation.mutate({ enabled: true });
-    })();
+    });
   }, [
     isAuthReady,
     isAuthenticated,
-    settingsQuery.data,
-    settingsQuery.isLoading,
+    settingsQuery.data?.livePresenceEnabled,
     setEnabledMutation,
   ]);
 }

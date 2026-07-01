@@ -11,6 +11,14 @@ import {
 } from "@/modules/encounter/core/live-presence";
 import type { CurrentLocation } from "@/lib/get-current-location";
 import { startWebLiveLocationSession, type LiveLocationSession } from "@/lib/live-location-session";
+import { readLocationOptInSync } from "@/lib/location-opt-in";
+import {
+  readLivePresenceUserOffSync,
+  readOptimisticLivePresenceDesired,
+  saveLivePresenceUserOff,
+  setOptimisticLivePresenceDesired,
+  subscribeOptimisticLivePresenceDesired,
+} from "@/lib/live-presence-user-prefs";
 
 type PulseInput = {
   lat: number;
@@ -31,7 +39,7 @@ async function readNativeLocation(): Promise<CurrentLocation> {
   };
 }
 
-/** マイページ等: ON/OFF トグル用（位置送信はしない） */
+/** マイページ等: ON/OFF トグル用 */
 export function useLivePresenceControls() {
   const utils = trpc.useUtils();
   const settingsQuery = trpc.settings.get.useQuery();
@@ -51,9 +59,21 @@ export function useLivePresenceControls() {
     (next: boolean) => {
       const prev = liveEnabled;
       setLiveEnabled(next);
+      if (next) {
+        void saveLivePresenceUserOff(false);
+        setOptimisticLivePresenceDesired(true);
+      } else {
+        void saveLivePresenceUserOff(true);
+        setOptimisticLivePresenceDesired(false);
+      }
       setEnabledMutation.mutate(
         { enabled: next },
-        { onError: () => setLiveEnabled(prev) },
+        {
+          onError: () => {
+            setLiveEnabled(prev);
+            setOptimisticLivePresenceDesired(prev);
+          },
+        },
       );
     },
     [liveEnabled, setEnabledMutation],
@@ -71,6 +91,20 @@ export function useLivePresenceControls() {
   };
 }
 
+function useEffectiveLivePresenceEnabled(serverEnabled: boolean): boolean {
+  const [optimistic, setOptimistic] = useState(readOptimisticLivePresenceDesired);
+
+  useEffect(() => subscribeOptimisticLivePresenceDesired(() => {
+    setOptimistic(readOptimisticLivePresenceDesired());
+  }), []);
+
+  if (readLivePresenceUserOffSync()) return false;
+  if (serverEnabled) return true;
+  if (optimistic) return true;
+  if (readLocationOptInSync() && !readLivePresenceUserOffSync()) return true;
+  return false;
+}
+
 /** タブ内バックグラウンド: ON 中に watch + pulse */
 export function useLivePresenceSync(options?: { enabled?: boolean }) {
   const shouldRun = options?.enabled ?? true;
@@ -80,12 +114,14 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
   });
   const pulseMutation = trpc.presence.pulse.useMutation();
 
-  const liveEnabled = settingsQuery.data?.livePresenceEnabled ?? false;
+  const serverEnabled = settingsQuery.data?.livePresenceEnabled ?? false;
+  const liveEnabled = useEffectiveLivePresenceEnabled(serverEnabled);
   const liveEnabledRef = useRef(false);
   const webSessionRef = useRef<LiveLocationSession | null>(null);
   const nativeWatchRef = useRef<{ remove: () => void } | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastPulseAtRef = useRef(0);
+  const allowImmediatePulseRef = useRef(true);
 
   useEffect(() => {
     liveEnabledRef.current = liveEnabled;
@@ -95,7 +131,11 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
     async (loc: PulseInput) => {
       if (!liveEnabledRef.current) return;
       const now = Date.now();
-      if (now - lastPulseAtRef.current < LIVE_PRESENCE_MIN_PULSE_GAP_MS) return;
+      const immediate = allowImmediatePulseRef.current;
+      if (!immediate && now - lastPulseAtRef.current < LIVE_PRESENCE_MIN_PULSE_GAP_MS) {
+        return;
+      }
+      allowImmediatePulseRef.current = false;
       lastPulseAtRef.current = now;
       try {
         await pulseMutation.mutateAsync({
@@ -126,15 +166,15 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
     stopWatching();
     if (!liveEnabledRef.current) return;
 
+    allowImmediatePulseRef.current = true;
+    lastPulseAtRef.current = 0;
+
     const onLocation = (loc: CurrentLocation) => {
       void sendPulse(loc);
     };
 
     if (Platform.OS === "web") {
-      const session = startWebLiveLocationSession(onLocation);
-      webSessionRef.current = session;
-
-      // watch の補助（タブ放置時の stale 対策）
+      webSessionRef.current = startWebLiveLocationSession(onLocation);
       pulseTimerRef.current = setInterval(() => {
         if (!liveEnabledRef.current) return;
         webSessionRef.current?.refreshNow();
