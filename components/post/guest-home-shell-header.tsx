@@ -1,14 +1,18 @@
 /**
  * ゲストホーム — LCP 向け同期ヘッダー（AppHeader / MaterialIcons / tRPC を読まない）。
  */
-import { View, Text, StyleSheet, Platform } from "react-native";
+import { View, Text, StyleSheet, Platform, useWindowDimensions } from "react-native";
 import { Link, type Href } from "expo-router";
 import { APP_HEADER_CHROME_HEIGHT_COMPACT, palette } from "@/theme/tokens";
 import { SIGN_IN_HREF } from "@/lib/clerk-route";
+import { useLoginGuide } from "@/hooks/use-login-guide";
 
 export const GUEST_HOME_HEADER_HEIGHT = APP_HEADER_CHROME_HEIGHT_COMPACT;
 
 export function GuestHomeShellHeader() {
+  const openLoginGuide = useLoginGuide();
+  const { width } = useWindowDimensions();
+  const glyphOnly = width < 360;
   const webFixed =
     Platform.OS === "web"
       ? ({
@@ -27,11 +31,13 @@ export function GuestHomeShellHeader() {
       </Text>
       <Link
         href={SIGN_IN_HREF as Href}
+        onPress={() => openLoginGuide({ returnTo: "/" })}
         accessibilityRole="button"
         accessibilityLabel="Xでログイン"
-        style={styles.loginLink}
+        style={[styles.loginLink, glyphOnly && styles.loginLinkGlyphOnly]}
       >
-        <Text style={styles.loginText}>ログイン</Text>
+        <Text style={styles.loginGlyph}>𝕏</Text>
+        {!glyphOnly ? <Text style={styles.loginText}>ではじめる</Text> : null}
       </Link>
     </View>
   );
@@ -44,9 +50,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    backgroundColor: "#E2EDF7",
+    backgroundColor: palette.kimitoBlueSoft,
     borderBottomWidth: 1,
-    borderBottomColor: "#00427B40",
+    borderBottomColor: `${palette.kimitoBlue}66`,
   },
   title: {
     flex: 1,
@@ -56,13 +62,24 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   loginLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     backgroundColor: palette.kimitoBlue,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    height: 40,
     borderRadius: 999,
-    minHeight: 36,
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ textDecorationLine: "none" } as object) : null),
+  },
+  loginLinkGlyphOnly: {
+    width: 40,
+    paddingHorizontal: 0,
+  },
+  loginGlyph: {
+    color: palette.white,
+    fontSize: 15,
+    fontWeight: "900",
   },
   loginText: {
     color: palette.white,

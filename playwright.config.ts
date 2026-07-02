@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
+import fs from "node:fs";
 import path from "path";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
@@ -31,6 +32,9 @@ if (vercelBypassSecret) {
 }
 
 const authStatePath = path.resolve(process.cwd(), ".auth/auth-state.json");
+const authStorageState = fs.existsSync(authStatePath)
+  ? { storageState: authStatePath }
+  : {};
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -67,7 +71,7 @@ export default defineConfig({
       testMatch: /trail-auth\.smoke\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
-        storageState: authStatePath,
+        ...authStorageState,
       },
     },
     {
@@ -110,7 +114,7 @@ export default defineConfig({
       testMatch: /full-site-audit\.spec\.ts/,
       use: {
         ...devices["Pixel 5"],
-        storageState: authStatePath,
+        ...authStorageState,
       },
     },
     {
@@ -118,7 +122,7 @@ export default defineConfig({
       testMatch: /full-site-audit\.spec\.ts/,
       use: {
         ...devices["Desktop Chrome"],
-        storageState: authStatePath,
+        ...authStorageState,
       },
     },
   ],

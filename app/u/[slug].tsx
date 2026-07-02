@@ -16,7 +16,7 @@ import { ScreenContainer } from "@/components/organisms/screen-container";
 import { PublicShareHeader } from "@/components/organisms/public-share-header";
 import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
-import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
 import { trpc } from "@/lib/trpc";
 import { hasClerkSessionInStorage } from "@/lib/has-clerk-session";
 import { Platform } from "react-native";
@@ -131,7 +131,7 @@ export default function ShareLocationScreen() {
               </View>
               {!isAuthenticated ? (
                 <View style={styles.bannerWrap}>
-                  <LoginPreviewBanner headline="ログインすると、あなたの足あとも地図に刻まれます" />
+                  <InlineLoginPrompt headline="あなたの足あとも、地図に刻めます" />
                 </View>
               ) : null}
             </>

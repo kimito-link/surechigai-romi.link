@@ -12,7 +12,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";
-import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
 import { DeleteTrailConfirmModal } from "@/components/molecules/delete-trail-confirm-modal";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -132,12 +132,13 @@ export function MapAuthenticatedScreen() {
         topContent={
           !isAuthenticated ? (
             <View style={styles.bannerWrap}>
-              <LoginPreviewBanner
-                headline="ログインすると、あなたの足あとが地図に刻まれます"
+              <InlineLoginPrompt
+                headline="移動の軌跡を、地図に刻めます"
+                returnTo="/map"
                 benefits={[
-                  { icon: "near-me", label: "道路や建物まで辿れる精度で記録" },
-                  { icon: "timeline", label: "移動の軌跡をあとから振り返れる" },
-                  { icon: "place", label: "思い出の場所にもう一度行ける" },
+                  { icon: "timeline", label: "軌跡" },
+                  { icon: "navigation", label: "ここへ向かう" },
+                  { icon: "place", label: "聖地巡礼" },
                 ]}
               />
             </View>

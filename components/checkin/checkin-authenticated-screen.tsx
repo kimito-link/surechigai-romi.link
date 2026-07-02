@@ -19,7 +19,7 @@ import {
   useWindowDimensions,
   ActivityIndicator,
 } from "react-native";
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -49,6 +49,10 @@ import { shareMyLocation } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
 import { toUserFriendlyError } from "@/shared/error-messages";
 import { getCheckinLocation, getCheckinLocatingLabel, isDesktopWeb } from "@/lib/get-current-location";
+import {
+  hasCompletedPostLoginLocationIntro,
+  PostLoginLocationIntro,
+} from "@/features/onboarding/components/PostLoginLocationIntro";
 
 type CheckinState = "idle" | "loading" | "adjust" | "success" | "error" | "zero";
 type LoadingPhase = "locating" | "saving";
@@ -78,6 +82,8 @@ export default function CheckinAuthenticatedScreen() {
   const [fixedMapCenter, setFixedMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [isPausing, setIsPausing] = useState(false);
+  const [showLocationIntro, setShowLocationIntro] = useState(false);
+  const skipLocationIntroRef = useRef(false);
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
   const [showSettings, setShowSettings] = useState(false);
   const utils = trpc.useUtils();
@@ -299,6 +305,15 @@ export default function CheckinAuthenticatedScreen() {
       return;
     }
 
+    if (!skipLocationIntroRef.current) {
+      const introDone = await hasCompletedPostLoginLocationIntro().catch(() => true);
+      if (!introDone) {
+        setShowLocationIntro(true);
+        return;
+      }
+    }
+    skipLocationIntroRef.current = false;
+
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
@@ -382,6 +397,17 @@ export default function CheckinAuthenticatedScreen() {
     isDesktopBrowser,
   ]);
 
+  const handleLocationIntroAllow = useCallback(async () => {
+    skipLocationIntroRef.current = true;
+    setShowLocationIntro(false);
+    await handleCheckin();
+  }, [handleCheckin]);
+
+  const handleLocationIntroLater = useCallback(() => {
+    skipLocationIntroRef.current = false;
+    setShowLocationIntro(false);
+  }, []);
+
   const handlePauseToggle = useCallback(() => {
     if (pauseLocation.isPending || resumeLocation.isPending) return;
 
@@ -434,7 +460,7 @@ export default function CheckinAuthenticatedScreen() {
       case "success": return `${newCount}件のすれ違い！`;
       case "error": return "エラー";
       case "zero": return "チェックイン完了";
-      default: return "チェックイン";
+      default: return "現在地を記録する";
     }
   };
 
@@ -595,9 +621,9 @@ export default function CheckinAuthenticatedScreen() {
                   <Text style={styles.encounterBannerText}>
                     位置を確認してください。地図をクリックしてピンを動かせます。
                   </Text>
-                ) : state === "success" ? (
+                ) : state === "success" || state === "zero" ? (
                   <Text style={styles.encounterBannerText}>
-                    {newCount}件のすれ違いが届きました！
+                    足あとを残しました
                   </Text>
                 ) : (
                   <Text style={styles.encounterBannerText}>チェックイン完了</Text>
@@ -623,16 +649,21 @@ export default function CheckinAuthenticatedScreen() {
               </Animated.View>
 
               <View style={styles.bottomSheet}>
-                {state === "success" ? (
+                {state === "success" || state === "zero" ? (
                   <Pressable
-                    onPress={() => router.push("/(tabs)")}
+                    onPress={() => router.push("/map" as never)}
                     style={({ pressed }) => [pressed && { opacity: 0.75 }]}
-                    accessibilityLabel="ホームですれ違いを見る"
+                    accessibilityLabel="軌跡で見る"
                   >
                     <Text style={[styles.bottomSheetHint, styles.bottomSheetHintLink]}>
-                      ポストを見てみよう →
+                      軌跡で見る →
                     </Text>
                   </Pressable>
+                ) : null}
+                {state === "success" ? (
+                  <Text style={styles.bottomSheetHint}>
+                    {newCount}件のすれ違いが届きました！
+                  </Text>
                 ) : null}
                 {state === "zero" ? (
                   <Text style={styles.bottomSheetHint}>
@@ -756,7 +787,7 @@ export default function CheckinAuthenticatedScreen() {
                 />
               )}
 
-              <Animated.View style={buttonStyle}>
+              <Animated.View style={[buttonStyle, styles.primaryButtonAnimated]}>
                 <Pressable
                   onPress={handleCheckin}
                   disabled={state === "loading" || isPausing}
@@ -769,13 +800,12 @@ export default function CheckinAuthenticatedScreen() {
                 >
                   <MaterialIcons
                     name={getButtonIcon() as "check" | "close" | "refresh" | "location-on"}
-                    size={48}
+                    size={22}
                     color={color.textWhite}
                   />
+                  <Text style={styles.checkinButtonText}>{getButtonLabel()}</Text>
                 </Pressable>
               </Animated.View>
-
-              <Text style={styles.buttonLabel}>{getButtonLabel()}</Text>
             </View>
 
             {state === "error" && (
@@ -806,6 +836,11 @@ export default function CheckinAuthenticatedScreen() {
             {settingsBlock}
           </ScrollView>
         )}
+      <PostLoginLocationIntro
+        visible={showLocationIntro}
+        onAllow={handleLocationIntroAllow}
+        onLater={handleLocationIntroLater}
+      />
     </ScreenContainer>
   );
 }
@@ -1027,27 +1062,39 @@ const styles = StyleSheet.create({
   buttonWrap: {
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    width: "100%",
+    maxWidth: contentMaxWidth.standard,
     marginVertical: 4,
   },
   pulseRing: {
     position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
+    left: 8,
+    right: 8,
+    height: 64,
+    borderRadius: 999,
+    borderWidth: 2,
+  },
+  primaryButtonAnimated: {
+    width: "100%",
   },
   checkinButton: {
-    width: 112,
-    height: 112,
-    borderRadius: 56,
+    width: "100%",
+    minHeight: 52,
+    borderRadius: 999,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
     shadowColor: palette.black,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  checkinButtonText: {
+    color: color.textWhite,
+    fontSize: 16,
+    fontWeight: "800",
   },
   checkmarkOverlay: {
     position: "absolute",

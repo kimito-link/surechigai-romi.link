@@ -69,12 +69,14 @@ test.describe("full site audit — guest tabs", () => {
   test.setTimeout(180_000);
 
   test("6タブ監査", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name.startsWith("audit-auth"), "guest audit project only");
     const prefix = `guest-${testInfo.project.name}`;
     const tabResults = await runTabAudit(page, prefix);
     writeResultsJson(`${prefix}-tabs`, tabResults);
   });
 
   test("非タブ主要ルート", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name.startsWith("audit-auth"), "guest audit project only");
     const prefix = `guest-${testInfo.project.name}`;
     const extraResults = await runExtraAudit(page, prefix);
     writeResultsJson(`${prefix}-extra`, extraResults);
@@ -82,16 +84,22 @@ test.describe("full site audit — guest tabs", () => {
 });
 
 test.describe("API health (no auth)", () => {
-  test("version.json + health + public tRPC", async ({ request, baseURL }) => {
+  test("version.json + health + public tRPC", async ({ request, baseURL }, testInfo) => {
+    test.skip(testInfo.project.name !== "audit-guest-desktop", "single-project API health check");
+    const apiBaseURL =
+      process.env.E2E_API_BASE_URL ??
+      process.env.EXPO_PUBLIC_API_BASE_URL ??
+      baseURL;
+
     const versionRes = await request.get(`${baseURL}/version.json`);
     expect(versionRes.status()).toBe(200);
     const version = await versionRes.json();
     expect(version.commitSha).toBeTruthy();
 
-    const healthRes = await request.get(`${baseURL}/api/health`);
+    const healthRes = await request.get(`${apiBaseURL}/api/health`);
     expect(healthRes.status()).toBe(200);
 
-    const trpcBase = `${baseURL}/api/trpc`;
+    const trpcBase = `${apiBaseURL}/api/trpc`;
     for (const proc of ["event.listUpcoming", "event.listLive"]) {
       const res = await request.get(`${trpcBase}/${proc}?input=${encodeURIComponent(JSON.stringify({}))}`);
       expect(res.status(), proc).toBeLessThan(500);
@@ -103,6 +111,7 @@ test.describe("API health (no auth)", () => {
   test.use({ storageState: authFile });
 
   test("6タブ監査（認証済み）", async ({ page }, testInfo) => {
+    test.skip(!testInfo.project.name.startsWith("audit-auth"), "authenticated audit project only");
     const prefix = `auth-${testInfo.project.name}`;
     const tabResults = await runTabAudit(page, prefix);
     writeResultsJson(`${prefix}-tabs`, tabResults);

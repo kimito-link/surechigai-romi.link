@@ -91,6 +91,9 @@ export async function auditRoute(
       await waitForAppHydration(page, 25000);
     }
     await page.waitForTimeout(isStaticPage ? 400 : 600);
+    if (!route.skipHeaderOverlap) {
+      await page.getByText(route.expectText).first().waitFor({ state: "visible", timeout: 30000 });
+    }
 
     await assertNoFatalErrorUi(page);
     if (!route.skipHeaderOverlap) {

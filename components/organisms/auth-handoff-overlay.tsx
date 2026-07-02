@@ -6,6 +6,7 @@
  * （出典: kimitolink-linktree/components/AuthHandoffOverlay.tsx）
  */
 import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { Animated, Easing, Platform, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { palette } from "@/theme/tokens";
@@ -16,11 +17,16 @@ const useNative = Platform.OS !== "web";
 
 export function AuthHandoffOverlay() {
   const { visible, provider } = useAuthHandoff();
+  const [showSlowHint, setShowSlowHint] = useState(false);
   const bounce = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) {
+      setShowSlowHint(false);
+      return;
+    }
+    const slowHintTimer = setTimeout(() => setShowSlowHint(true), 3000);
 
     const bounceLoop = Animated.loop(
       Animated.sequence([
@@ -50,6 +56,8 @@ export function AuthHandoffOverlay() {
     slideLoop.start();
 
     return () => {
+      clearTimeout(slowHintTimer);
+      setShowSlowHint(false);
       bounceLoop.stop();
       slideLoop.stop();
       bounce.setValue(0);
@@ -72,12 +80,15 @@ export function AuthHandoffOverlay() {
       </Animated.View>
 
       <View style={styles.textWrap}>
-        <Text style={styles.title}>りんくが鍵を開けています…</Text>
+        <Text style={styles.title}>X に接続中…</Text>
         <Text style={styles.subtitle}>
           {isX
-            ? "Xの画面に少し変わります。すぐ戻ってきます。"
+            ? "りんくが鍵を開けています。すぐ戻ります。"
             : "すぐにあなたのページへ。"}
         </Text>
+        {showSlowHint ? (
+          <Text style={styles.slowHint}>kimito.link の画面が表示されます</Text>
+        ) : null}
       </View>
 
       <View style={styles.track}>
@@ -119,6 +130,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
     color: "rgba(255,255,255,0.85)",
     fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  slowHint: {
+    marginTop: 10,
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 13,
     fontWeight: "500",
     textAlign: "center",
   },

@@ -1,148 +1,91 @@
-/**
- * ログイン後の位置情報許可 — surechigai-nico 型の専用1画面
- */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  Pressable,
-  Platform,
   ActivityIndicator,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { POST_LOGIN_LOCATION_INTRO_KEY } from "@/features/onboarding/constants";
-import { getCurrentLocation } from "@/lib/get-current-location";
-import { saveLocationOptIn } from "@/lib/location-opt-in";
-import { setOptimisticLivePresenceDesired, saveLivePresenceUserOff } from "@/lib/live-presence-user-prefs";
-import { warmGeolocationCache } from "@/lib/geolocation-warmup";
-import { useAuth } from "@/hooks/use-auth";
-import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 
 const RINKU_HERO = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 
-function readIntroDoneSync(): boolean | null {
+export async function hasCompletedPostLoginLocationIntro(): Promise<boolean> {
   if (Platform.OS === "web" && typeof window !== "undefined") {
     try {
-      return window.localStorage.getItem(POST_LOGIN_LOCATION_INTRO_KEY) === "true";
+      if (window.localStorage.getItem(POST_LOGIN_LOCATION_INTRO_KEY) === "true") {
+        return true;
+      }
     } catch {
-      return null;
+      // AsyncStorage fallback
     }
   }
-  return null;
+  return (await AsyncStorage.getItem(POST_LOGIN_LOCATION_INTRO_KEY)) === "true";
 }
 
-export function PostLoginLocationIntro() {
-  const { isAuthenticated, isAuthReady } = useAuth();
-  const utils = trpc.useUtils();
-  const setLivePresence = trpc.presence.setEnabled.useMutation({
-    onSuccess: () => utils.settings.invalidate(),
-  });
-  const [visible, setVisible] = useState(false);
+async function markPostLoginLocationIntroDone(): Promise<void> {
+  await AsyncStorage.setItem(POST_LOGIN_LOCATION_INTRO_KEY, "true");
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    window.localStorage.setItem(POST_LOGIN_LOCATION_INTRO_KEY, "true");
+  }
+}
+
+type PostLoginLocationIntroProps = {
+  visible: boolean;
+  onAllow: () => void | Promise<void>;
+  onLater: () => void | Promise<void>;
+};
+
+export function PostLoginLocationIntro({
+  visible,
+  onAllow,
+  onLater,
+}: PostLoginLocationIntroProps) {
   const [busy, setBusy] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthReady || !isAuthenticated) {
-      setVisible(false);
-      return;
-    }
-
-    const syncDone = readIntroDoneSync();
-    if (syncDone) {
-      setHydrated(true);
-      return;
-    }
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const stored = await AsyncStorage.getItem(POST_LOGIN_LOCATION_INTRO_KEY);
-        if (cancelled) return;
-        if (stored === "true") {
-          setHydrated(true);
-          return;
-        }
-        setVisible(true);
-        setHydrated(true);
-      } catch {
-        if (!cancelled) setHydrated(true);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthReady, isAuthenticated]);
-
-  const markDone = useCallback(async () => {
-    await AsyncStorage.setItem(POST_LOGIN_LOCATION_INTRO_KEY, "true");
-    if (Platform.OS === "web" && typeof window !== "undefined") {
-      window.localStorage.setItem(POST_LOGIN_LOCATION_INTRO_KEY, "true");
-    }
-    setVisible(false);
-  }, []);
 
   const handleAllow = useCallback(async () => {
     setBusy(true);
-    setOptimisticLivePresenceDesired(true);
-    warmGeolocationCache();
-    void saveLocationOptIn();
-    void saveLivePresenceUserOff(false);
-    setLivePresence.mutate({ enabled: true });
     try {
-      await getCurrentLocation();
-    } catch {
-      // watch が続行
+      await markPostLoginLocationIntroDone();
+      await onAllow();
     } finally {
-      await markDone();
       setBusy(false);
     }
-  }, [markDone, setLivePresence]);
+  }, [onAllow]);
 
   const handleLater = useCallback(async () => {
-    await markDone();
-  }, [markDone]);
-
-  if (!hydrated || !visible) return null;
+    await markPostLoginLocationIntroDone();
+    await onLater();
+  }, [onLater]);
 
   return (
-    <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={handleLater}>
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={handleLater}>
       <View style={styles.backdrop}>
-        <View style={styles.card} accessibilityRole="alert">
+        <View style={styles.sheet} accessibilityRole="alert">
           <Image source={RINKU_HERO} style={styles.hero} contentFit="contain" />
-
-          <View style={styles.iconRow}>
-            <MaterialIcons name="my-location" size={20} color={palette.teal500} />
-            <Text style={styles.eyebrow}>チェックインの準備</Text>
+          <View style={styles.titleRow}>
+            <MaterialIcons name="my-location" size={20} color={palette.kimitoBlue} />
+            <Text style={styles.title}>位置情報を使います</Text>
           </View>
-
-          <Text style={styles.title}>正確な場所を残して、{"\n"}あとでたどれる</Text>
-          <Text style={styles.body}>
-            位置情報はチェックインと軌跡の表示に使います。許可すると「居場所をリアルタイム公開」も ON になり、みんなの現在地マップに載ります。
-          </Text>
-
-          <View style={styles.noteBox}>
-            <Text style={styles.noteText}>
-              プライバシーは移動専用の X アカウント利用で調整できます。自宅付近は夜間チェックインから自動マスクします。
-            </Text>
-          </View>
+          <Text style={styles.body}>あとで行ける精度で、この場所を保存するためです</Text>
 
           <Pressable
             onPress={handleAllow}
             disabled={busy}
             style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.9 }, busy && { opacity: 0.7 }]}
             accessibilityRole="button"
-            accessibilityLabel="位置情報を許可する"
+            accessibilityLabel="位置情報を許可して記録"
           >
             {busy ? (
-              <ActivityIndicator color="#FFF" />
+              <ActivityIndicator color={palette.white} />
             ) : (
-              <Text style={styles.primaryBtnText}>位置情報を許可する</Text>
+              <Text style={styles.primaryBtnText}>位置情報を許可して記録</Text>
             )}
           </Pressable>
 
@@ -152,7 +95,7 @@ export function PostLoginLocationIntro() {
             style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.8 }]}
             accessibilityRole="button"
           >
-            <Text style={styles.secondaryBtnText}>位置はチェックイン時に許可できます</Text>
+            <Text style={styles.secondaryBtnText}>今はしない</Text>
           </Pressable>
         </View>
       </View>
@@ -168,57 +111,38 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 20,
   },
-  card: {
+  sheet: {
     width: "100%",
-    maxWidth: 400,
+    maxWidth: 360,
     backgroundColor: palette.white,
-    borderRadius: 16,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: palette.kimitoBorderSoft,
-    padding: 22,
+    padding: 20,
     gap: 12,
   },
   hero: {
-    width: 120,
-    height: 120,
+    width: 96,
+    height: 96,
     alignSelf: "center",
-    marginBottom: 4,
   },
-  iconRow: {
+  titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
     justifyContent: "center",
-  },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: palette.kimitoOrange,
+    gap: 6,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "800",
     color: palette.kimitoBlue,
-    textAlign: "center",
+    fontSize: 20,
     lineHeight: 28,
+    fontWeight: "800",
+    textAlign: "center",
   },
   body: {
+    color: color.textSecondary,
     fontSize: 14,
     lineHeight: 22,
-    color: color.textSecondary,
-    textAlign: "center",
-  },
-  noteBox: {
-    backgroundColor: palette.kimitoBlueSoft,
-    borderRadius: 10,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: palette.kimitoBorderSoft,
-  },
-  noteText: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: color.textMuted,
     textAlign: "center",
   },
   primaryBtn: {
@@ -242,6 +166,6 @@ const styles = StyleSheet.create({
   secondaryBtnText: {
     color: color.textMuted,
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "700",
   },
 });

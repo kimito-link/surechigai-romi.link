@@ -41,6 +41,7 @@ export function KimitoLoginCta({
     return (
       <Link
         href={signInHref as Href}
+        onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`Xで${displayLabel}`}
         style={[

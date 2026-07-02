@@ -3,7 +3,8 @@
  */
 import { lazy } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { TabGuestPreviewScreen } from "@/components/tabs/tab-guest-preview-screen";
+import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
+import { TrailGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 import { ChunkFallback } from "@/lib/chunk-fallback";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 
@@ -22,13 +23,14 @@ export default function MapScreen() {
 
   if (!isAuthenticated) {
     return (
-      <TabGuestPreviewScreen
+      <OneTapGuestShell
         title="軌跡"
-        headline="ログインすると、あなたの足あとが地図に刻まれます"
+        headline="移動の軌跡を、地図に刻む"
+        preview={<TrailGuestPreview />}
         benefits={[
-          { icon: "near-me", label: "道路や建物まで辿れる精度で記録" },
-          { icon: "navigation", label: "「ここへ向かう」で地図アプリのナビを開始" },
-          { icon: "timeline", label: "移動の軌跡をあとから振り返れる" },
+          { icon: "timeline", label: "軌跡" },
+          { icon: "navigation", label: "ここへ向かう" },
+          { icon: "place", label: "聖地巡礼" },
         ]}
       />
     );

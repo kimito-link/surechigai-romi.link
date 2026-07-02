@@ -15,7 +15,7 @@ import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useCallback } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
-import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
 import { PrefectureCreatorCard } from "@/components/molecules/prefecture-creator-card";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
@@ -99,7 +99,9 @@ export default function PrefectureCreatorsScreen() {
       headerProps={{ showLoginButton: !isAuthenticated }}
     >
       {!isAuthenticated ? (
-        <LoginPreviewBanner headline="ログインすると、あなたの記録もこの一覧に載ります" />
+        <View style={styles.loginPromptWrap}>
+          <InlineLoginPrompt headline="あなたの記録も、この都道府県に残せます" />
+        </View>
       ) : null}
 
       <ScrollView
@@ -181,6 +183,13 @@ export default function PrefectureCreatorsScreen() {
 }
 
 const styles = StyleSheet.create({
+  loginPromptWrap: {
+    width: "100%",
+    maxWidth: 420,
+    alignSelf: "center",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
   scrollContent: {
     flexGrow: 1,
     backgroundColor: "#FAFAFA",

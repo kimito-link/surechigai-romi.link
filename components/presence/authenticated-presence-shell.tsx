@@ -3,7 +3,6 @@
  */
 import { useAuth } from "@/hooks/use-auth";
 import { LivePresenceRunner } from "@/components/presence/live-presence-runner";
-import { PostLoginLocationIntro } from "@/features/onboarding/components/PostLoginLocationIntro";
 
 export function AuthenticatedPresenceShell() {
   const { isAuthenticated, isAuthReady } = useAuth();
@@ -12,7 +11,6 @@ export function AuthenticatedPresenceShell() {
   return (
     <>
       <LivePresenceRunner />
-      <PostLoginLocationIntro />
     </>
   );
 }

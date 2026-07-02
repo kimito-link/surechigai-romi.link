@@ -3,7 +3,8 @@
  */
 import { lazy } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { TabGuestPreviewScreen } from "@/components/tabs/tab-guest-preview-screen";
+import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
+import { ZukanGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 import { ChunkFallback } from "@/lib/chunk-fallback";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 
@@ -22,13 +23,14 @@ export default function ZukanScreen() {
 
   if (!isAuthenticated) {
     return (
-      <TabGuestPreviewScreen
-        title="みんなの現在地"
-        headline="会いたい君がいる都道府県が、地図ですぐわかる"
+      <OneTapGuestShell
+        title="現在地"
+        headline="会いたい君がいる都道府県"
+        preview={<ZukanGuestPreview />}
         benefits={[
-          { icon: "public", label: "公開中のクリエイターがどこにいるか一覧" },
-          { icon: "map", label: "訪れた都道府県・市区町村が色づく" },
-          { icon: "place", label: "足あとの正確な場所をあとからたどれる" },
+          { icon: "map", label: "都道府県" },
+          { icon: "groups", label: "みんな" },
+          { icon: "ios-share", label: "Xでシェア" },
         ]}
       />
     );

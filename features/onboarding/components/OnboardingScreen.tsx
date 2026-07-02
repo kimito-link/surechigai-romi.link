@@ -7,6 +7,7 @@ import { View, StyleSheet, StatusBar, Platform, Text, ActivityIndicator } from "
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../hooks/useOnboarding";
 import { OnboardingSlide } from "./OnboardingSlide";
@@ -34,6 +35,7 @@ export function OnboardingScreen() {
 
   const handleComplete = useCallback(async () => {
     await completeOnboarding();
+    router.push("/(tabs)/checkin" as never);
   }, [completeOnboarding]);
 
   const handleSkip = useCallback(async () => {

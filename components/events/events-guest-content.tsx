@@ -14,7 +14,6 @@
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   TextInput,
   Platform,
@@ -23,18 +22,13 @@ import {
 } from "react-native";
 import { useState, useCallback, useMemo } from "react";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { ScreenContainer } from "@/components/organisms/screen-container";
-import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { toDateKey } from "@/lib/events/date-key";
 import {
   LazyEventCalendar,
 } from "@/lib/lazy-heavy-components";
-import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
-import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
-import { useResponsive } from "@/hooks/use-responsive";
+import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
-import { useRouter } from "expo-router";
 import { TYPE_TAG_LABELS } from "@/lib/events/type-tag-labels";
 
 type Segment = "calendar" | "live";
@@ -353,21 +347,18 @@ function EmptyOrLoading({ loading, message }: { loading?: boolean; message?: str
 }
 
 export function EventsGuestContent() {
-  const { isDesktop } = useResponsive();
   const [segment, setSegment] = useState<Segment>("calendar");
-  const router = useRouter();
-  const tabInset = useTabBarInset();
 
   return (
-    <ScreenContainer containerClassName="bg-background">
-      <TabScreenHeader
+    <OneTapGuestShell
         title="集まり"
-        showCharacters={false}
-        isDesktop={isDesktop}
-        showMenu
-        showLoginButton
-      />
-
+        headline="集まりの予定は、そのまま見られます"
+        benefits={[
+          { icon: "calendar-today", label: "予定" },
+          { icon: "sensors", label: "ライブ" },
+          { icon: "login", label: "表明はログイン" },
+        ]}
+      >
       <View style={styles.segmentBar}>
         {(
           [
@@ -395,23 +386,11 @@ export function EventsGuestContent() {
         ))}
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scroll, { paddingBottom: tabInset }]}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.contentList}>
         {segment === "calendar" && <CalendarList />}
         {segment === "live" && <LiveList />}
-        <LoginPreviewBanner
-          headline="ログインすると集まりを主催・ライブ表明できます"
-          benefits={[
-            { icon: "calendar-today", label: "予定は未ログインでも閲覧できます" },
-            { icon: "sensors", label: "ライブ中の集まりをリアルタイムで見られる" },
-            { icon: "add-circle-outline", label: "ログイン後に自分の集まりを作成できる" },
-          ]}
-        />
-      </ScrollView>
-    </ScreenContainer>
+      </View>
+    </OneTapGuestShell>
   );
 }
 
@@ -419,8 +398,7 @@ const styles = StyleSheet.create({
   segmentBar: {
     flexDirection: "row",
     gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 4,
   },
   segmentItem: {
     flex: 1,
@@ -429,7 +407,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 8,
     backgroundColor: color.surface,
     borderWidth: 1,
     borderColor: color.border,
@@ -446,19 +424,15 @@ const styles = StyleSheet.create({
   segmentTextActive: {
     color: color.accentIndigo,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scroll: {
-    paddingHorizontal: 16,
-    paddingBottom: 40,
+  contentList: {
+    gap: 12,
   },
   list: {
     gap: 12,
   },
   card: {
     backgroundColor: color.surface,
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 16,
     gap: 8,
     borderWidth: 1,

@@ -27,7 +27,7 @@ import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { toDateKey } from "@/lib/events/date-key";
 import { LazyEventCalendar } from "@/lib/lazy-heavy-components";
-import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
+import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
@@ -175,12 +175,13 @@ export function EventsAuthenticatedScreen() {
         showsVerticalScrollIndicator={false}
       >
         {!isAuthenticated && (
-          <LoginPreviewBanner
-            headline="ログインすると集まりを主催・ライブ表明できます"
+          <InlineLoginPrompt
+            headline="表明にはログインが要ります"
+            returnTo="/events"
             benefits={[
-              { icon: "calendar-today", label: "予定は未ログインでも閲覧できます" },
-              { icon: "sensors", label: "ライブ中の集まりをリアルタイムで見られる" },
-              { icon: "add-circle-outline", label: "ログイン後に自分の集まりを作成できる" },
+              { icon: "calendar-today", label: "予定" },
+              { icon: "sensors", label: "ライブ" },
+              { icon: "add-circle-outline", label: "主催" },
             ]}
           />
         )}

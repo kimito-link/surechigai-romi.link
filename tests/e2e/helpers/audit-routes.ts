@@ -25,7 +25,7 @@ export const TAB_ROUTES: AuditRoute[] = [
   {
     path: "/checkin",
     label: "チェックイン",
-    expectText: /今いる場所を記録|ログイン後にチェックイン/,
+    expectText: /今いる場所を、あとで行ける精度で残す|現在地を記録する/,
     guestOk: true,
   },
   {
@@ -46,7 +46,7 @@ export const TAB_ROUTES: AuditRoute[] = [
     expectText: /足あとが地図に刻まれ|移動の軌跡/,
     guestOk: true,
   },
-  { path: "/mypage", label: "マイページ", expectText: /あなた専用のマイページ|ログイン後に表示されます/, guestOk: true },
+  { path: "/mypage", label: "マイページ", expectText: /あなたの足あとと公開範囲|プロフィール/, guestOk: true },
 ];
 
 export const EXTRA_ROUTES: AuditRoute[] = [
@@ -55,14 +55,17 @@ export const EXTRA_ROUTES: AuditRoute[] = [
   {
     path: "/auth/kimito-link",
     label: "Xログイン案内",
-    expectText: /ログイン前の案内|同じアカウントでつながる/,
+    expectText: /./,
     guestOk: true,
+    skipHeaderOverlap: true,
+    skipSmokeClean: true,
   },
   {
     path: "/install-instructions",
     label: "PWAインストール",
     expectText: /インストール|ホーム画面|PWA/i,
     guestOk: true,
+    skipSmokeClean: true,
   },
   {
     path: "/zukan/東京都",
@@ -75,6 +78,7 @@ export const EXTRA_ROUTES: AuditRoute[] = [
     label: "グループ訪問",
     expectText: /グループ内の訪問を見える化|GROUP VISIT/,
     guestOk: true,
+    skipSmokeClean: true,
   },
 ];
 

@@ -5,7 +5,6 @@
 import { lazy } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { PostGuestScreen } from "@/components/post/post-guest-screen";
-import { ChunkFallback } from "@/lib/chunk-fallback";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 
 const PostAuthenticatedScreen = lazy(() =>
@@ -18,7 +17,7 @@ export default function PostScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
   if (!isAuthReadyForUI) {
-    return <ChunkFallback minHeight={360} />;
+    return <PostGuestScreen />;
   }
 
   if (!isAuthenticated) {

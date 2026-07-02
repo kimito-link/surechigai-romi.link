@@ -28,16 +28,6 @@ interface OnboardingSlideProps {
   isActive: boolean;
 }
 
-function SignalGlow({ accent }: { accent: OnboardingSlideAccent }) {
-  const accentColor = ACCENT[accent];
-  return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <View style={[styles.glowOrb, styles.glowOrbA, { backgroundColor: accentColor + "18" }]} />
-      <View style={[styles.glowOrb, styles.glowOrbB, { backgroundColor: accentColor + "10" }]} />
-    </View>
-  );
-}
-
 export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
   const { width } = useWindowDimensions();
   const compact = width < 380;
@@ -80,8 +70,6 @@ export function OnboardingSlide({ slide, isActive }: OnboardingSlideProps) {
       exiting={SlideOutLeft.duration(220)}
       style={[styles.container, { width: SCREEN_WIDTH }]}
     >
-      <SignalGlow accent={slide.accent} />
-
       <Animated.View entering={FadeIn.delay(80).duration(320)} style={[styles.chip, { borderColor: accent + "44" }]}>
         <View style={[styles.chipDot, { backgroundColor: accent }]} />
         <Text style={[styles.chipText, { color: accent }]}>{slide.chip}</Text>
@@ -125,22 +113,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingBottom: 148,
     backgroundColor: palette.kimitoBg,
-  },
-  glowOrb: {
-    position: "absolute",
-    borderRadius: 999,
-  },
-  glowOrbA: {
-    width: 280,
-    height: 280,
-    top: "8%",
-    right: "-20%",
-  },
-  glowOrbB: {
-    width: 220,
-    height: 220,
-    bottom: "18%",
-    left: "-18%",
   },
   chip: {
     flexDirection: "row",

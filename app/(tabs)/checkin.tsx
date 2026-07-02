@@ -5,22 +5,19 @@
 
 import {
   View,
-  Text,
   StyleSheet,
-  ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { lazy } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
-import { LoginPreviewBanner } from "@/components/molecules/login-preview-banner";
-import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
-import { color, palette } from "@/theme/tokens";
+import { palette } from "@/theme/tokens";
 import { ChunkFallback } from "@/lib/lazy-heavy-components";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
+import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
+import { CheckinGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 
 const CheckinAuthenticatedScreen = lazy(() =>
   import("@/components/checkin/checkin-authenticated-screen"),
@@ -29,7 +26,6 @@ const CheckinAuthenticatedScreen = lazy(() =>
 export default function CheckinScreen() {
   const { isDesktop } = useResponsive();
   const { isAuthenticated, isAuthReady } = useAuth();
-  const tabInset = useTabBarInset();
 
   if (!isAuthReady) {
     return (
@@ -50,36 +46,16 @@ export default function CheckinScreen() {
 
   if (!isAuthenticated) {
     return (
-      <ScreenContainer containerClassName="bg-background">
-        <TabScreenHeader
-          title="チェックイン"
-          showCharacters={false}
-          isDesktop={isDesktop}
-          showMenu
-          showLoginButton
-        />
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.content, { paddingBottom: tabInset }]}
-          showsVerticalScrollIndicator={false}
-        >
-          <LoginPreviewBanner
-            headline="ログインすると、今いる場所を記録してすれ違いが成立します"
-            benefits={[
-              { icon: "place", label: "正確な現在地を足あととして残せる" },
-              { icon: "groups", label: "同じ場所を通った人とすれ違える" },
-              { icon: "ios-share", label: "チェックインした場所をXでシェアできる" },
-            ]}
-          />
-          <Text style={styles.description}>現在地を記録して、すれ違いを探します</Text>
-          <View style={styles.buttonWrap}>
-            <View style={[styles.checkinButton, { backgroundColor: palette.kimitoBlueSoft, borderWidth: 2, borderColor: palette.kimitoBlue }]}>
-              <MaterialIcons name="location-on" size={48} color={palette.kimitoBlue} />
-            </View>
-            <Text style={styles.buttonLabel}>ログイン後にチェックインできます</Text>
-          </View>
-        </ScrollView>
-      </ScreenContainer>
+      <OneTapGuestShell
+        title="チェックイン"
+        headline="今いる場所を、あとで行ける精度で残す"
+        preview={<CheckinGuestPreview />}
+        benefits={[
+          { icon: "place", label: "正確に残す" },
+          { icon: "near-me", label: "すれ違う" },
+          { icon: "map", label: "たどれる" },
+        ]}
+      />
     );
   }
 
@@ -96,39 +72,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 20,
-    gap: 16,
-    maxWidth: 480,
-    width: "100%",
-    alignSelf: "center",
-  },
-  description: {
-    color: color.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: "center",
-  },
-  buttonWrap: {
-    alignItems: "center",
-    gap: 12,
-    marginTop: 8,
-  },
-  checkinButton: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonLabel: {
-    color: color.textMuted,
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
   },
 });

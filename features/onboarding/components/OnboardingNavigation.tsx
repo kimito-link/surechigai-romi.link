@@ -41,13 +41,9 @@ export function OnboardingNavigation({
   return (
     <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 16) }]}>
       <View style={styles.topRow}>
-        {!isLastSlide ? (
-          <TouchableOpacity onPress={() => { haptics.lightTap(); onSkip(); }} style={styles.skipButton} accessibilityRole="button" accessibilityLabel="オンボーディングをスキップ">
-            <Text style={styles.skipText}>スキップ</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.skipButton} />
-        )}
+        <TouchableOpacity onPress={() => { haptics.lightTap(); onSkip(); }} style={styles.skipButton} accessibilityRole="button" accessibilityLabel="オンボーディングをスキップ">
+          <Text style={styles.skipText}>スキップ</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.dotsContainer} accessibilityRole="tablist">
@@ -76,10 +72,10 @@ export function OnboardingNavigation({
           onPress={handleNext}
           style={[styles.nextButton, isLastSlide && styles.completeButton]}
           accessibilityRole="button"
-          accessibilityLabel={isLastSlide ? "はじめる" : "次へ"}
+          accessibilityLabel={isLastSlide ? "チェックインへ" : "次へ"}
         >
           <Text style={[styles.nextButtonText, isLastSlide && styles.completeButtonText]}>
-            {isLastSlide ? "はじめる" : "次へ →"}
+            {isLastSlide ? "チェックインへ" : "次へ →"}
           </Text>
         </TouchableOpacity>
       </View>

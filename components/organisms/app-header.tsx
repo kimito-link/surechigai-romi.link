@@ -91,6 +91,7 @@ export function AppHeader({
   const accountMaxWidth = windowWidth < 400 ? 168 : windowWidth < 520 ? 220 : 260;
   const isNarrow = windowWidth < 480;
   const isCompactAccount = windowWidth < 520;
+  const isLoginGlyphOnly = windowWidth < 360;
   const webChromeStyle = useWebHeaderStyle();
 
   const { data: settings } = trpc.settings.get.useQuery(undefined, {
@@ -176,18 +177,22 @@ export function AppHeader({
                   </View>
                 </View>
               </Pressable>
-            ) : !isNarrow && showLoginButtonStable ? (
+            ) : showLoginButtonStable ? (
               <Pressable
                 onPress={() => openLoginGuide()}
                 accessibilityRole="button"
                 accessibilityLabel="Xでログイン"
+                hitSlop={4}
                 style={({ pressed }) => [
                   styles.loginButton,
+                  isLoginGlyphOnly && styles.loginButtonGlyphOnly,
                   pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
                 ]}
               >
-                <MaterialIcons name="login" size={17} color={palette.white} style={{ marginRight: 4 }} />
-                <Text style={styles.loginButtonText}>ログイン</Text>
+                <Text style={styles.loginGlyph}>𝕏</Text>
+                {!isLoginGlyphOnly ? (
+                  <Text style={styles.loginButtonText}>ではじめる</Text>
+                ) : null}
               </Pressable>
             ) : null}
 
@@ -239,20 +244,6 @@ export function AppHeader({
                 {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId}
               </Text>
             </View>
-          </Pressable>
-        ) : isNarrow && showLoginButtonStable ? (
-          <Pressable
-            onPress={() => openLoginGuide()}
-            accessibilityRole="button"
-            accessibilityLabel="Xでログイン"
-            style={({ pressed }) => [
-              styles.loginButton,
-              styles.loginButtonNarrow,
-              pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
-            ]}
-          >
-            <MaterialIcons name="login" size={17} color={palette.white} style={{ marginRight: 4 }} />
-            <Text style={styles.loginButtonText}>ログイン</Text>
           </Pressable>
         ) : null}
 
@@ -368,10 +359,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
   },
-  loginButtonNarrow: {
-    alignSelf: "stretch",
-    marginTop: 4,
-  },
   avatar: {
     width: 36,
     height: 36,
@@ -424,14 +411,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     minHeight: 40,
+    height: 40,
     paddingHorizontal: 14,
     borderRadius: 999,
     backgroundColor: palette.kimitoBlue,
+    gap: 6,
+  },
+  loginButtonGlyphOnly: {
+    width: 40,
+    paddingHorizontal: 0,
+  },
+  loginGlyph: {
+    color: palette.white,
+    fontSize: 15,
+    fontWeight: "900",
   },
   loginButtonText: {
     color: palette.white,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
   menuButton: {
     width: 44,
