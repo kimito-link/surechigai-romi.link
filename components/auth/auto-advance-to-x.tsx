@@ -64,20 +64,25 @@ function removeAutoXParam(): void {
   );
 }
 
+function resolveClickableTarget(candidate: HTMLElement): HTMLElement | null {
+  const target =
+    candidate.closest<HTMLElement>("button, a, [role='button']") ?? candidate;
+  if (target.getAttribute("aria-disabled") === "true") return null;
+  if (target instanceof HTMLButtonElement && target.disabled) return null;
+  return target;
+}
+
 function findClickableXButton(): HTMLElement | null {
   const matched = document.querySelector<HTMLElement>(X_BUTTON_SELECTOR);
-  const candidates = matched
-    ? [matched]
-    : Array.from(
-        document.querySelectorAll<HTMLElement>("button, a, [role='button']"),
-      );
+  if (matched) return resolveClickableTarget(matched);
+
+  const candidates = Array.from(
+    document.querySelectorAll<HTMLElement>("button, a, [role='button']"),
+  );
 
   for (const candidate of candidates) {
-    const target =
-      candidate.closest<HTMLElement>("button, a, [role='button']") ?? candidate;
-    if (target.getAttribute("aria-disabled") === "true") continue;
-    if (target instanceof HTMLButtonElement && target.disabled) continue;
-
+    const target = resolveClickableTarget(candidate);
+    if (!target) continue;
     const hay = (
       (target.getAttribute("data-provider") || "") +
       " " +
@@ -85,11 +90,13 @@ function findClickableXButton(): HTMLElement | null {
       " " +
       (target.getAttribute("data-localization-key") || "") +
       " " +
+      (target.getAttribute("class") || "") +
+      " " +
       (target.className || "") +
       " " +
       (target.textContent || "")
     ).toLowerCase();
-    if (/twitter|\bx\b/.test(hay)) return target;
+    if (/twitter|\bx\b|__x\b|\boauth_x\b/.test(hay)) return target;
   }
 
   return null;
