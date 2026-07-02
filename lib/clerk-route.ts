@@ -6,6 +6,7 @@ export const DEFAULT_POST_AUTH_PATH = "/";
  * redirect_url を付け忘れるとログイン後に迷子になるため single source にする（kimito 準拠）。
  */
 export const SIGN_IN_HREF = `/sign-in?redirect_url=${encodeURIComponent(DEFAULT_POST_AUTH_PATH)}`;
+export const SIGN_IN_AUTO_X_HREF = `${SIGN_IN_HREF}&auto=x`;
 export const SIGN_UP_HREF = SIGN_IN_HREF;
 
 /** パスセグメントベースの SSO コールバック判定（Next.js 互換）。 */
@@ -30,6 +31,15 @@ export function upgradeAuthHref(href: string): string {
 }
 
 /** returnTo を付けた sign-in URL を組み立てる。 */
-export function buildSignInHref(returnTo: string = DEFAULT_POST_AUTH_PATH): string {
+export function buildSignInHref(
+  returnTo: string = DEFAULT_POST_AUTH_PATH,
+): string {
   return `/sign-in?redirect_url=${encodeURIComponent(returnTo)}`;
+}
+
+/** kimito.link と同じ 1 タップ導線: sign-in 着地後に Clerk の X ボタンを自動 click する。 */
+export function buildSignInAutoXHref(
+  returnTo: string = DEFAULT_POST_AUTH_PATH,
+): string {
+  return `${buildSignInHref(returnTo)}&auto=x`;
 }

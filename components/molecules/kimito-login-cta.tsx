@@ -25,7 +25,7 @@ const buttonStyle = {
 
 export function KimitoLoginCta({
   signInHref,
-  label = "ではじめる",
+  label = "1タップではじめる",
   isStarting = false,
   onPress,
 }: KimitoLoginCtaProps) {
@@ -44,11 +44,7 @@ export function KimitoLoginCta({
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`Xで${displayLabel}`}
-        style={[
-          buttonStyle,
-          styles.webLink,
-          isStarting && { opacity: 0.65 },
-        ]}
+        style={[buttonStyle, styles.webLink, isStarting && { opacity: 0.65 }]}
       >
         {content}
       </Link>

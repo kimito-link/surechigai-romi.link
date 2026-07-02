@@ -1,9 +1,8 @@
-import { USER_INFO_KEY } from "@/constants/oauth";
-
 /**
  * Clerk SDK を読み込まない公開 Web ルート（kimito の middleware 公開ルート相当）。
  * OGP クローラー・共有リンク `/u/*` の初回 JS を軽くする。
  */
+const USER_INFO_KEY = "manus-runtime-user-info";
 const PUBLIC_WEB_PREFIXES = ["/u/"] as const;
 
 /** Guest preview 向けアプリタブ（Clerk セッションなしで閲覧可）。 */
@@ -23,17 +22,23 @@ export function isPublicWebRoute(pathname: string | null | undefined): boolean {
   return PUBLIC_WEB_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
 
-export function isGuestAppWebRoute(pathname: string | null | undefined): boolean {
+export function isGuestAppWebRoute(
+  pathname: string | null | undefined,
+): boolean {
   if (!pathname) return false;
   const path = normalizePath(pathname);
-  return GUEST_APP_TAB_ROUTES.some((route) => path === route || path.startsWith(`${route}/`));
+  return GUEST_APP_TAB_ROUTES.some(
+    (route) => path === route || path.startsWith(`${route}/`),
+  );
 }
 
 /**
  * Clerk 非ロードの guest Web シェル（全タブ preview + 公開 `/u/*`）。
  * localStorage に Clerk セッション hint があれば false（ログイン後フルシェル）。
  */
-export function shouldUseGuestWebShell(pathname: string | null | undefined): boolean {
+export function shouldUseGuestWebShell(
+  pathname: string | null | undefined,
+): boolean {
   if (!pathname) return false;
   if (hasClerkSessionHint()) return false;
   const path = normalizePath(pathname);
@@ -43,7 +48,9 @@ export function shouldUseGuestWebShell(pathname: string | null | undefined): boo
 }
 
 /** Guest トップ `/` だけ tRPC/React Query を初回 paint まで defer。 */
-export function shouldDeferTrpcOnGuestWeb(pathname: string | null | undefined): boolean {
+export function shouldDeferTrpcOnGuestWeb(
+  pathname: string | null | undefined,
+): boolean {
   if (!pathname) return false;
   const path = normalizePath(pathname);
   return path === "/" || path === "/index";
@@ -54,7 +61,9 @@ export function shouldDeferTrpcOnGuestWeb(pathname: string | null | undefined): 
  * Clerk SDK（~1.2MB）を初回 paint まで defer する。
  * ただし localStorage に Clerk セッションがあれば defer しない（ログイン後の `/` 着地）。
  */
-export function shouldDeferClerkOnWeb(pathname: string | null | undefined): boolean {
+export function shouldDeferClerkOnWeb(
+  pathname: string | null | undefined,
+): boolean {
   if (!pathname) return false;
   const path = normalizePath(pathname);
   if (path !== "/" && path !== "/index") return false;
@@ -68,9 +77,13 @@ export function hasClerkSessionHint(): boolean {
     if (window.localStorage.getItem(USER_INFO_KEY)) return true;
     for (let i = 0; i < window.localStorage.length; i++) {
       const key = window.localStorage.key(i);
-      if (key && (key.startsWith("__clerk") || key.includes("clerk"))) return true;
+      if (key && (key.startsWith("__clerk") || key.includes("clerk")))
+        return true;
     }
-    if (typeof document !== "undefined" && document.cookie.includes("__session=")) {
+    if (
+      typeof document !== "undefined" &&
+      document.cookie.includes("__session=")
+    ) {
       return true;
     }
   } catch {

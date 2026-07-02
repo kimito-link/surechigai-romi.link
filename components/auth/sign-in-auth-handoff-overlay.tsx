@@ -37,6 +37,11 @@ function detectProvider(el: Element | null): Provider | null {
   return "other";
 }
 
+function isAutoXEntry(): boolean {
+  if (Platform.OS !== "web" || typeof window === "undefined") return false;
+  return new URL(window.location.href).searchParams.get("auto") === "x";
+}
+
 export function SignInAuthHandoffOverlay() {
   const { hideHandoff } = useAuthHandoff();
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -50,6 +55,7 @@ export function SignInAuthHandoffOverlay() {
 
   useEffect(() => {
     if (Platform.OS !== "web") return;
+    if (isAutoXEntry()) return;
     setProvider("x");
     setPhase("intro");
     const introTimer = window.setTimeout(() => {
@@ -61,6 +67,7 @@ export function SignInAuthHandoffOverlay() {
 
   useEffect(() => {
     if (Platform.OS !== "web") return;
+    if (isAutoXEntry()) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const onClick = (e: MouseEvent) => {
@@ -127,10 +134,14 @@ export function SignInAuthHandoffOverlay() {
 
   if (!provider) return null;
 
-  const overlayPosition = Platform.OS === "web" ? ("fixed" as const) : ("absolute" as const);
+  const overlayPosition =
+    Platform.OS === "web" ? ("fixed" as const) : ("absolute" as const);
 
   const isX = provider === "x";
-  const barTranslate = slide.interpolate({ inputRange: [0, 1], outputRange: [-80, 160] });
+  const barTranslate = slide.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-80, 160],
+  });
 
   return (
     <View
@@ -149,10 +160,21 @@ export function SignInAuthHandoffOverlay() {
       }}
     >
       <Animated.View style={{ transform: [{ translateY: bounce }] }}>
-        <Image source={LINK_CHARACTER} style={{ width: 128, height: 128 }} contentFit="contain" />
+        <Image
+          source={LINK_CHARACTER}
+          style={{ width: 128, height: 128 }}
+          contentFit="contain"
+        />
       </Animated.View>
       <View style={{ marginTop: 24, alignItems: "center" }}>
-        <Text style={{ fontSize: 24, fontWeight: "900", color: palette.white, textAlign: "center" }}>
+        <Text
+          style={{
+            fontSize: 24,
+            fontWeight: "900",
+            color: palette.white,
+            textAlign: "center",
+          }}
+        >
           りんくが鍵を開けています…
         </Text>
         <Text

@@ -5,7 +5,7 @@ import { View, Text, Pressable, Platform, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { Link, type Href } from "expo-router";
 import MaterialIcons from "@/lib/icons/material-icons";
-import { buildSignInHref } from "@/lib/clerk-route";
+import { buildSignInAutoXHref } from "@/lib/clerk-route";
 import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
 import { palette } from "@/theme/tokens";
 
@@ -33,14 +33,18 @@ export function PublicShareHeader({
   showLoginButton = true,
   returnTo = "/",
 }: PublicShareHeaderProps) {
-  const signInHref = buildSignInHref(returnTo);
+  const signInHref = buildSignInAutoXHref(returnTo);
 
   return (
     <View style={[styles.shell, webChromeStyle]}>
       <View style={styles.row}>
         <View style={styles.left}>
           {leftElement}
-          <Image source={APP_BRAND_ICON} style={styles.logo} contentFit="cover" />
+          <Image
+            source={APP_BRAND_ICON}
+            style={styles.logo}
+            contentFit="cover"
+          />
           <Text style={styles.title} numberOfLines={1}>
             {title}
           </Text>
@@ -48,7 +52,12 @@ export function PublicShareHeader({
         {showLoginButton ? (
           Platform.OS === "web" ? (
             <Link href={signInHref as Href} asChild>
-              <Pressable style={({ pressed }) => [styles.loginBtn, pressed && { opacity: 0.85 }]}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.loginBtn,
+                  pressed && { opacity: 0.85 },
+                ]}
+              >
                 <Text style={styles.loginBtnText}>ログイン</Text>
               </Pressable>
             </Link>

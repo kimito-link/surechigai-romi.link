@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthHandoff } from "@/lib/auth-handoff-context";
-import { buildSignInHref } from "@/lib/clerk-route";
+import { buildSignInAutoXHref } from "@/lib/clerk-route";
 import { color, palette } from "@/theme/tokens";
 
 export default function KimitoLinkAuthGuideScreen() {
@@ -13,7 +13,9 @@ export default function KimitoLinkAuthGuideScreen() {
   useEffect(() => {
     if (!isAuthReadyForUI) return;
     showHandoff("x");
-    router.replace(isAuthenticated ? "/" : (buildSignInHref("/") as never));
+    router.replace(
+      isAuthenticated ? "/" : (buildSignInAutoXHref("/") as never),
+    );
   }, [isAuthenticated, isAuthReadyForUI, showHandoff]);
 
   return (

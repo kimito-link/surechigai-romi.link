@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
 import { useLoginGuide } from "@/hooks/use-login-guide";
-import { buildSignInHref } from "@/lib/clerk-route";
+import { buildSignInAutoXHref } from "@/lib/clerk-route";
 import { color, palette } from "@/theme/tokens";
 
 type InlineLoginPromptBenefit = {
@@ -45,7 +45,11 @@ export function InlineLoginPrompt({
       <View style={styles.benefits}>
         {benefits.slice(0, 3).map((benefit) => (
           <View key={benefit.label} style={styles.benefit}>
-            <MaterialIcons name={benefit.icon} size={18} color={palette.kimitoBlue} />
+            <MaterialIcons
+              name={benefit.icon}
+              size={18}
+              color={palette.kimitoBlue}
+            />
             <Text style={styles.benefitText} numberOfLines={1}>
               {benefit.label}
             </Text>
@@ -53,7 +57,7 @@ export function InlineLoginPrompt({
         ))}
       </View>
       <KimitoLoginCta
-        signInHref={buildSignInHref(resolvedReturnTo)}
+        signInHref={buildSignInAutoXHref(resolvedReturnTo)}
         onPress={() => openLoginGuide({ returnTo: resolvedReturnTo })}
       />
       <Text style={styles.note}>無料・1タップ / 新規登録もこちら</Text>

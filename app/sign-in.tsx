@@ -7,6 +7,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
+import { AutoAdvanceToX } from "@/components/auth/auto-advance-to-x";
 import { AuthCallbackShell } from "@/components/auth/auth-callback-shell";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { ClerkSignIn } from "@/components/organisms/clerk-sign-in";
@@ -35,15 +36,21 @@ export default function SignInScreen() {
 
   if (isCallback) {
     return (
-      <AuthCallbackShell>
-        <ClerkSignIn redirectUrl={redirectUrl} />
-      </AuthCallbackShell>
+      <>
+        <AutoAdvanceToX />
+        <AuthCallbackShell>
+          <ClerkSignIn redirectUrl={redirectUrl} />
+        </AuthCallbackShell>
+      </>
     );
   }
 
   return (
-    <AuthPageShell variant="sign-in">
-      <ClerkSignIn redirectUrl={redirectUrl} />
-    </AuthPageShell>
+    <>
+      <AutoAdvanceToX />
+      <AuthPageShell variant="sign-in">
+        <ClerkSignIn redirectUrl={redirectUrl} />
+      </AuthPageShell>
+    </>
   );
 }

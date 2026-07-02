@@ -1,12 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   SIGN_IN_HREF,
+  SIGN_IN_AUTO_X_HREF,
   SIGN_UP_HREF,
+  buildSignInAutoXHref,
   buildSignInHref,
   isClerkSsoCallback,
   upgradeAuthHref,
 } from "@/lib/clerk-route";
-import { isPublicWebRoute, shouldDeferClerkOnWeb, hasClerkSessionHint, shouldUseGuestWebShell, shouldDeferTrpcOnGuestWeb, isGuestAppWebRoute } from "@/lib/clerk-public-routes";
+import {
+  isPublicWebRoute,
+  shouldDeferClerkOnWeb,
+  hasClerkSessionHint,
+  shouldUseGuestWebShell,
+  shouldDeferTrpcOnGuestWeb,
+  isGuestAppWebRoute,
+} from "@/lib/clerk-public-routes";
 
 describe("isClerkSsoCallback", () => {
   it("detects the Clerk callback segment", () => {
@@ -22,11 +31,15 @@ describe("isClerkSsoCallback", () => {
 describe("auth href 定数", () => {
   it("ホーム直行の redirect_url を持つ", () => {
     expect(SIGN_IN_HREF).toBe("/sign-in?redirect_url=%2F");
+    expect(SIGN_IN_AUTO_X_HREF).toBe("/sign-in?redirect_url=%2F&auto=x");
     expect(SIGN_UP_HREF).toBe(SIGN_IN_HREF);
   });
 
   it("buildSignInHref が returnTo をエンコードする", () => {
     expect(buildSignInHref("/map")).toBe("/sign-in?redirect_url=%2Fmap");
+    expect(buildSignInAutoXHref("/map")).toBe(
+      "/sign-in?redirect_url=%2Fmap&auto=x",
+    );
   });
 });
 
@@ -68,7 +81,10 @@ describe("shouldDeferClerkOnWeb", () => {
       key: (i: number) => (i === 0 ? "__clerk_db_jwt" : null),
       getItem: () => null,
     };
-    vi.stubGlobal("window", { localStorage: storage, document: { cookie: "" } });
+    vi.stubGlobal("window", {
+      localStorage: storage,
+      document: { cookie: "" },
+    });
     expect(hasClerkSessionHint()).toBe(true);
     expect(shouldDeferClerkOnWeb("/")).toBe(false);
     vi.unstubAllGlobals();
@@ -104,9 +120,13 @@ describe("shouldUseGuestWebShell", () => {
     const storage = {
       length: 0,
       key: () => null,
-      getItem: (key: string) => (key === "manus-runtime-user-info" ? "{}" : null),
+      getItem: (key: string) =>
+        key === "manus-runtime-user-info" ? "{}" : null,
     };
-    vi.stubGlobal("window", { localStorage: storage, document: { cookie: "" } });
+    vi.stubGlobal("window", {
+      localStorage: storage,
+      document: { cookie: "" },
+    });
     expect(hasClerkSessionHint()).toBe(true);
     expect(shouldUseGuestWebShell("/")).toBe(false);
     vi.unstubAllGlobals();

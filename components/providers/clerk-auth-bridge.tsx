@@ -5,12 +5,23 @@ import * as Auth from "@/lib/_core/auth";
 import { USER_INFO_KEY } from "@/constants/oauth";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { clearAllTokenData } from "@/lib/token-manager";
-import { buildSignInHref } from "@/lib/clerk-route";
+import { buildSignInAutoXHref } from "@/lib/clerk-route";
 import { AuthContextProvider, type AuthState } from "@/lib/auth-context";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useUser, useAuth as useClerkAuth, useOAuth, useClerk } from "@clerk/expo";
+import {
+  useUser,
+  useAuth as useClerkAuth,
+  useOAuth,
+  useClerk,
+} from "@clerk/expo";
 
 function resolveReturnUrl(returnUrl?: string): string | undefined {
   if (typeof window === "undefined") {
@@ -20,13 +31,35 @@ function resolveReturnUrl(returnUrl?: string): string | undefined {
     return undefined;
   }
   const origin = window.location.origin;
-  const normalized =
-    returnUrl.startsWith("/(tabs)/") ? returnUrl.replace("/(tabs)/", "/") : returnUrl;
+  const normalized = returnUrl.startsWith("/(tabs)/")
+    ? returnUrl.replace("/(tabs)/", "/")
+    : returnUrl;
   if (/^https?:\/\//i.test(normalized)) {
     return normalized;
   }
-  const withLeadingSlash = normalized.startsWith("/") ? normalized : `/${normalized}`;
+  const withLeadingSlash = normalized.startsWith("/")
+    ? normalized
+    : `/${normalized}`;
   return `${origin}${withLeadingSlash}`;
+}
+
+function resolveReturnPath(returnUrl?: string): string {
+  if (typeof window === "undefined") return "/";
+  if (typeof returnUrl !== "string" || !returnUrl) return "/";
+
+  const normalized = returnUrl.startsWith("/(tabs)/")
+    ? returnUrl.replace("/(tabs)/", "/")
+    : returnUrl;
+  if (/^https?:\/\//i.test(normalized)) {
+    try {
+      const url = new URL(normalized);
+      if (url.origin !== window.location.origin) return "/";
+      return `${url.pathname}${url.search}${url.hash}` || "/";
+    } catch {
+      return "/";
+    }
+  }
+  return normalized.startsWith("/") ? normalized : `/${normalized}`;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,7 +74,11 @@ function firstString(...values: any[]): string | undefined {
 function firstNumber(...values: any[]): number | undefined {
   for (const value of values) {
     if (typeof value === "number" && Number.isFinite(value)) return value;
-    if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) {
+    if (
+      typeof value === "string" &&
+      value.trim() &&
+      Number.isFinite(Number(value))
+    ) {
       return Number(value);
     }
   }
@@ -49,7 +86,10 @@ function firstNumber(...values: any[]): number | undefined {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function waitForClerkReady(clerk: any, timeoutMs = 5000): Promise<boolean> {
+async function waitForClerkReady(
+  clerk: any,
+  timeoutMs = 5000,
+): Promise<boolean> {
   if (!clerk) return false;
   if (clerk.loaded) return true;
   const start = Date.now();
@@ -141,7 +181,8 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (returnUrl?: string, forceSwitch = false) => {
       try {
-        const safeReturnUrl = typeof returnUrl === "string" ? returnUrl : undefined;
+        const safeReturnUrl =
+          typeof returnUrl === "string" ? returnUrl : undefined;
         if (safeReturnUrl) {
           if (Platform.OS === "web" && typeof window !== "undefined") {
             localStorage.setItem("auth_return_url", safeReturnUrl);
@@ -157,7 +198,10 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
             await Auth.clearUserInfo();
             await clearAllTokenData();
           } catch (signOutErr) {
-            console.warn("[Auth] signOut before account switch failed:", signOutErr);
+            console.warn(
+              "[Auth] signOut before account switch failed:",
+              signOutErr,
+            );
           }
         }
 
@@ -166,13 +210,17 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
           const redirectComplete = resolveReturnUrl(safeReturnUrl) ?? origin;
           const ready = await waitForClerkReady(clerk);
           if (!ready) {
-            throw new Error("認証システムの準備中です。数秒おいてもう一度お試しください。");
+            throw new Error(
+              "認証システムの準備中です。数秒おいてもう一度お試しください。",
+            );
           }
           if (clerk.user) {
             window.location.href = redirectComplete;
             return;
           }
-          window.location.href = buildSignInHref(redirectComplete);
+          window.location.href = buildSignInAutoXHref(
+            resolveReturnPath(safeReturnUrl),
+          );
           return;
         }
 
@@ -198,7 +246,8 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
         }
       } catch (err: unknown) {
         console.error("[Auth] OAuth login error:", err);
-        const message = err instanceof Error ? err.message : "ログイン処理に失敗しました";
+        const message =
+          err instanceof Error ? err.message : "ログイン処理に失敗しました";
         if (Platform.OS === "web") {
           window.alert(message);
         } else {

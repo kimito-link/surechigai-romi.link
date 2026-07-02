@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { Platform } from "react-native";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthHandoff } from "@/lib/auth-handoff-context";
-import { buildSignInHref } from "@/lib/clerk-route";
+import { buildSignInAutoXHref } from "@/lib/clerk-route";
 
 export type LoginGuideMode = "same" | "switch";
 
@@ -35,7 +35,7 @@ export function useLoginGuide() {
       const isSwitch = options.mode === "switch";
       showHandoff("x");
       if (Platform.OS === "web" && typeof window !== "undefined" && !isSwitch) {
-        window.location.href = buildSignInHref(returnTo);
+        window.location.href = buildSignInAutoXHref(returnTo);
         return;
       }
       void login(returnTo, isSwitch);

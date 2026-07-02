@@ -8,7 +8,7 @@ import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
-import { buildSignInHref } from "@/lib/clerk-route";
+import { buildSignInAutoXHref } from "@/lib/clerk-route";
 import { color, contentMaxWidth, palette } from "@/theme/tokens";
 
 export type OneTapGuestBenefit = {
@@ -20,11 +20,19 @@ type OneTapGuestShellProps = {
   title: string;
   headline: string;
   preview?: React.ReactNode;
-  benefits?: readonly [OneTapGuestBenefit, OneTapGuestBenefit, OneTapGuestBenefit];
+  benefits?: readonly [
+    OneTapGuestBenefit,
+    OneTapGuestBenefit,
+    OneTapGuestBenefit,
+  ];
   children?: React.ReactNode;
 };
 
-const DEFAULT_BENEFITS: readonly [OneTapGuestBenefit, OneTapGuestBenefit, OneTapGuestBenefit] = [
+const DEFAULT_BENEFITS: readonly [
+  OneTapGuestBenefit,
+  OneTapGuestBenefit,
+  OneTapGuestBenefit,
+] = [
   { icon: "place", label: "足あと" },
   { icon: "groups", label: "すれ違い" },
   { icon: "ios-share", label: "X連携" },
@@ -44,7 +52,11 @@ function BenefitRow({ benefits }: { benefits: readonly OneTapGuestBenefit[] }) {
     <View style={styles.benefitRow}>
       {benefits.slice(0, 3).map((benefit) => (
         <View key={benefit.label} style={styles.benefitItem}>
-          <MaterialIcons name={benefit.icon} size={20} color={palette.kimitoBlue} />
+          <MaterialIcons
+            name={benefit.icon}
+            size={20}
+            color={palette.kimitoBlue}
+          />
           <Text style={styles.benefitLabel} numberOfLines={1}>
             {benefit.label}
           </Text>
@@ -66,7 +78,7 @@ export function OneTapGuestShell({
   const pathname = usePathname();
   const openLoginGuide = useLoginGuide();
   const returnTo = normalizeReturnTo(pathname);
-  const signInHref = buildSignInHref(returnTo);
+  const signInHref = buildSignInAutoXHref(returnTo);
   const handleLogin = () => openLoginGuide({ returnTo });
 
   const cta = (
@@ -91,7 +103,10 @@ export function OneTapGuestShell({
         contentContainerStyle={[
           styles.content,
           isDesktop && styles.contentDesktop,
-          { paddingBottom: tabInset + (isDesktop ? 24 : FOOTER_ESTIMATED_HEIGHT) },
+          {
+            paddingBottom:
+              tabInset + (isDesktop ? 24 : FOOTER_ESTIMATED_HEIGHT),
+          },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -104,7 +119,12 @@ export function OneTapGuestShell({
       </ScrollView>
 
       {!isDesktop ? (
-        <View style={[styles.fixedFooter, { paddingBottom: Math.max(tabInset - 24, 16) }]}>
+        <View
+          style={[
+            styles.fixedFooter,
+            { paddingBottom: Math.max(tabInset - 24, 16) },
+          ]}
+        >
           {cta}
         </View>
       ) : null}

@@ -1,10 +1,16 @@
 /**
  * ゲストホーム — LCP 向け同期ヘッダー（AppHeader / MaterialIcons / tRPC を読まない）。
  */
-import { View, Text, StyleSheet, Platform, useWindowDimensions } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { Link, type Href } from "expo-router";
 import { APP_HEADER_CHROME_HEIGHT_COMPACT, palette } from "@/theme/tokens";
-import { SIGN_IN_HREF } from "@/lib/clerk-route";
+import { SIGN_IN_AUTO_X_HREF } from "@/lib/clerk-route";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 
 export const GUEST_HOME_HEADER_HEIGHT = APP_HEADER_CHROME_HEIGHT_COMPACT;
@@ -30,14 +36,14 @@ export function GuestHomeShellHeader() {
         君斗りんくのすれ違ひ通信
       </Text>
       <Link
-        href={SIGN_IN_HREF as Href}
+        href={SIGN_IN_AUTO_X_HREF as Href}
         onPress={() => openLoginGuide({ returnTo: "/" })}
         accessibilityRole="button"
         accessibilityLabel="Xでログイン"
         style={[styles.loginLink, glyphOnly && styles.loginLinkGlyphOnly]}
       >
         <Text style={styles.loginGlyph}>𝕏</Text>
-        {!glyphOnly ? <Text style={styles.loginText}>ではじめる</Text> : null}
+        {!glyphOnly ? <Text style={styles.loginText}>1タップ</Text> : null}
       </Link>
     </View>
   );
@@ -70,7 +76,9 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 999,
     justifyContent: "center",
-    ...(Platform.OS === "web" ? ({ textDecorationLine: "none" } as object) : null),
+    ...(Platform.OS === "web"
+      ? ({ textDecorationLine: "none" } as object)
+      : null),
   },
   loginLinkGlyphOnly: {
     width: 40,

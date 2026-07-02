@@ -2,13 +2,20 @@
  * ポスト画面 — 未ログイン guest 向け軽量 UI。
  * LCP: ヘッダー + タグライン + CTA を初回 paint で同期描画。
  */
-import { View, Text, ScrollView, StyleSheet, Platform, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Platform,
+  Pressable,
+} from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { MARKETING_URL } from "@/lib/site-urls";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
-import { SIGN_IN_HREF } from "@/lib/clerk-route";
+import { SIGN_IN_AUTO_X_HREF } from "@/lib/clerk-route";
 import { RadarGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { color, palette } from "@/theme/tokens";
@@ -42,7 +49,9 @@ export function PostGuestScreen() {
       >
         <View style={styles.hero}>
           <BrandTagline compact={false} align="center" lcpProminent />
-          <Text style={styles.heroSub}>移動の足あとを残して、すれ違いと聖地巡礼を</Text>
+          <Text style={styles.heroSub}>
+            移動の足あとを残して、すれ違いと聖地巡礼を
+          </Text>
         </View>
         <View style={styles.previewWrap}>
           <RadarGuestPreview />
@@ -50,14 +59,18 @@ export function PostGuestScreen() {
         <View style={styles.benefits}>
           {GUEST_HOME_BENEFITS.map((benefit) => (
             <View key={benefit.label} style={styles.benefitItem}>
-              <MaterialIcons name={benefit.icon} size={20} color={palette.kimitoBlue} />
+              <MaterialIcons
+                name={benefit.icon}
+                size={20}
+                color={palette.kimitoBlue}
+              />
               <Text style={styles.benefitText}>{benefit.label}</Text>
             </View>
           ))}
         </View>
         <View style={styles.ctaBlock}>
           <KimitoLoginCta
-            signInHref={SIGN_IN_HREF}
+            signInHref={SIGN_IN_AUTO_X_HREF}
             onPress={() => openLoginGuide({ returnTo: "/" })}
           />
           <Text style={styles.ctaNote}>無料・1タップ / 新規登録もこちら</Text>
@@ -73,7 +86,9 @@ export function PostGuestScreen() {
           }}
           style={styles.marketingLink}
         >
-          <Text style={styles.marketingLinkText}>kimito.link 公式の紹介ページ</Text>
+          <Text style={styles.marketingLinkText}>
+            kimito.link 公式の紹介ページ
+          </Text>
         </Pressable>
       </ScrollView>
     </View>
