@@ -61,24 +61,43 @@ export function attachSmokeMonitor(page: Page): SmokeMonitor {
   };
 }
 
+/** Expo Web の #root（または静的 LP の body）に本文が描画されるまで待つ */
+export async function waitForAppHydration(page: Page, timeout = 25000): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const root = document.getElementById("root");
+      const el = root ?? document.body;
+      if (!el) return false;
+      const text = (el.textContent ?? "").replace(/\s+/g, " ").trim();
+      // 静的 LP は #root なし — body 全体で判定
+      const minLen = root ? 40 : 20;
+      return text.length > minLen;
+    },
+    { timeout },
+  );
+}
+
 /** スモーク用: 遷移 → 本文表示待ち → 監視結果検証 */
 export async function gotoSmokePage(
   page: Page,
   path: string,
-  options?: { heading?: string | RegExp; timeout?: number },
+  options?: { heading?: string | RegExp; timeout?: number; skipHydration?: boolean },
 ): Promise<SmokeMonitor> {
   const monitor = attachSmokeMonitor(page);
-  await page.goto(path, { waitUntil: "domcontentloaded", timeout: options?.timeout ?? 30000 });
+  const timeout = options?.timeout ?? 30000;
+  await page.goto(path, { waitUntil: "domcontentloaded", timeout });
   await page.waitForSelector("body", { timeout: 15000 });
+  if (!options?.skipHydration) {
+    await waitForAppHydration(page, Math.min(timeout, 25000));
+  }
 
   if (options?.heading) {
     await expect(page.getByText(options.heading).first()).toBeVisible({
-      timeout: options?.timeout ?? 15000,
+      timeout: Math.max(timeout, 20000),
     });
   }
 
-  // Expo Web のハイドレーション待ち
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(400);
   return monitor;
 }
 

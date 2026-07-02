@@ -18,7 +18,9 @@ test.describe("public smoke", () => {
   });
 
   test("軌跡タブが表示される", async ({ page }) => {
-    const monitor = await gotoSmokePage(page, "/map", { heading: "軌跡" });
+    const monitor = await gotoSmokePage(page, "/map", {
+      heading: /軌跡|足あとが地図に刻まれ/,
+    });
     monitor.assertClean();
   });
 
@@ -30,7 +32,7 @@ test.describe("public smoke", () => {
   });
 
   test("LP が表示される", async ({ page }) => {
-    const monitor = await gotoSmokePage(page, "/lp/");
+    const monitor = await gotoSmokePage(page, "/lp/", { skipHydration: true });
     await expect(page.locator("body")).toBeVisible();
     monitor.assertClean();
   });

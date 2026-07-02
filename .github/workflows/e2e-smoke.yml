@@ -1,15 +1,20 @@
 name: E2E smoke (production)
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Deploy to Vercel"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * *"
 
 jobs:
   e2e-guest:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     container:
@@ -18,6 +23,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -35,18 +42,9 @@ jobs:
 
       - name: Wait for production deploy
         env:
-          EXPECTED_SHA: ${{ github.sha }}
-        run: |
-          for i in $(seq 1 36); do
-            ACTUAL=$(curl -sf https://surechigai.kimito.link/version.json | node -pe "JSON.parse(require('fs').readFileSync(0,'utf8')).commitSha" 2>/dev/null || echo "")
-            echo "attempt $i/36: version.json=$ACTUAL want=$EXPECTED_SHA"
-            if [ "$ACTUAL" = "$EXPECTED_SHA" ]; then
-              sleep 15
-              exit 0
-            fi
-            sleep 10
-          done
-          echo "Deploy SHA not matched yet; running smoke anyway"
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          DEPLOY_SETTLE_MS: "25000"
+        run: node scripts/wait-production-deploy.mjs
 
       - name: Guest smoke + full-site audit (mobile + desktop)
         timeout-minutes: 18

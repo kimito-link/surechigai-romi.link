@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
-import { attachSmokeMonitor } from "./smoke-monitor";
+import { attachSmokeMonitor, waitForAppHydration } from "./smoke-monitor";
 import { FATAL_ERROR_PATTERNS, type AuditRoute } from "./audit-routes";
 
 export type AuditResult = {
@@ -86,7 +86,11 @@ export async function auditRoute(
   try {
     await page.goto(route.path, { waitUntil: "domcontentloaded", timeout: 45000 });
     await page.waitForSelector("body", { timeout: 15000 });
-    await page.waitForTimeout(1200);
+    const isStaticPage = route.path.startsWith("/lp") || route.skipSmokeClean;
+    if (!isStaticPage) {
+      await waitForAppHydration(page, 25000);
+    }
+    await page.waitForTimeout(isStaticPage ? 400 : 600);
 
     await assertNoFatalErrorUi(page);
     if (!route.skipHeaderOverlap) {

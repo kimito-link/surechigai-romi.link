@@ -1,9 +1,9 @@
 # 全ページ監査結果 — surechigai.kimito.link
 
-**実施日:** 2026-06-30  
+**実施日:** 2026-07-01  
 **対象 URL:** https://surechigai.kimito.link  
-**デプロイ SHA:** `5048e90d42457e4bd2af0c9872b08c3ab4e71977`（監査再実行 `prod-post-5048e90` も PASS）  
-**監査タグ:** `prod-final`  
+**デプロイ SHA:** `f6eecdc393224bf84434940fb497e387561b60ba`（ローカル再監査 PASS）  
+**監査タグ:** `prod-f6eecdc`  
 **実行コマンド:**
 
 ```bash
