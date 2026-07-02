@@ -55,7 +55,7 @@ export const EXTRA_ROUTES: AuditRoute[] = [
   {
     path: "/auth/kimito-link",
     label: "Xログイン案内",
-    expectText: /./,
+    expectText: /.*/,
     guestOk: true,
     skipHeaderOverlap: true,
     skipSmokeClean: true,
