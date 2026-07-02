@@ -14,7 +14,7 @@
 
 import React, { Component, type ReactNode, type ErrorInfo } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color, typography } from "@/theme/tokens";
 import { RetryButton } from "./retry-button";
 

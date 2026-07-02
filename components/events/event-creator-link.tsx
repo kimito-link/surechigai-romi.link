@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { openExternalUrl } from "@/lib/navigation/external-links";
 import { buildCreatorXUrl } from "@/lib/event-creator-url";

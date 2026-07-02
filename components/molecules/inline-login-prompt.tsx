@@ -1,6 +1,6 @@
 import { usePathname } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { buildSignInHref } from "@/lib/clerk-route";

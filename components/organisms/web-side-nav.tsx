@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color, palette } from "@/theme/tokens";
 import { NavLivePrefecturePanel } from "@/components/molecules/nav-live-prefecture-panel";
 import { BrandStamp } from "@/components/brand/brand-stamp";

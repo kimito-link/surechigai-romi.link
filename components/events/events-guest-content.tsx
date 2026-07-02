@@ -21,7 +21,7 @@ import {
   Pressable,
 } from "react-native";
 import { useState, useCallback, useMemo } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { toDateKey } from "@/lib/events/date-key";
 import {
   LazyEventCalendar,

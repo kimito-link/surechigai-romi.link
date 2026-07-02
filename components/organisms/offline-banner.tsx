@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Animated } from "react-native";
 import { color, palette } from "@/theme/tokens";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { useEffect, useRef, useState } from "react";
 import { addNetworkListener, initNetworkMonitoring } from "@/lib/offline-cache";
 

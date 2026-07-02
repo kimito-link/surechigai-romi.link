@@ -1,4 +1,4 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import type * as Auth from "@/lib/_core/auth";

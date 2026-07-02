@@ -3,7 +3,7 @@
 
 import { useCallback } from "react";
 import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { color } from "@/theme/tokens";
 import { useColors } from "@/hooks/use-colors";

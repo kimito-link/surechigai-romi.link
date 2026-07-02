@@ -15,7 +15,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
 } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { color } from "@/theme/tokens";
 

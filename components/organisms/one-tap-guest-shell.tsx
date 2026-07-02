@@ -1,6 +1,6 @@
 import { usePathname } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { BrandStamp } from "@/components/brand/brand-stamp";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
 import { ScreenContainer } from "@/components/organisms/screen-container";

@@ -3,7 +3,7 @@
  * LCP: ヘッダー + タグライン + CTA を初回 paint で同期描画。
  */
 import { View, Text, ScrollView, StyleSheet, Platform, Pressable } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { MARKETING_URL } from "@/lib/site-urls";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";

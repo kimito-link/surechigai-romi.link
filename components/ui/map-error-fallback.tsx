@@ -5,7 +5,7 @@
  */
 
 import { View, Text, StyleSheet } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color } from "@/theme/tokens";
 import { RetryButton } from "./retry-button";
 import type { FallbackProps } from "./error-boundary";

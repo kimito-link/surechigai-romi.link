@@ -26,7 +26,7 @@ import {
 } from "react-native";
 import { useState, useCallback, useEffect } from "react";
 import { Image } from "expo-image";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import appConfig from "@/app.config.json";
 import * as Haptics from "expo-haptics";
 import { ScreenContainer } from "@/components/organisms/screen-container";

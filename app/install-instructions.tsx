@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from "react-n
 import { Image } from "expo-image";
 import { Stack, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { color, palette } from "@/theme/tokens";
 

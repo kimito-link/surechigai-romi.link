@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Image } from "expo-image";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { useMySignal } from "@/hooks/use-my-signal";
 import { formatEventDateTime } from "@/components/events/events-event-card";
 import { EventParticipantsModal } from "@/components/events/event-participants-modal";

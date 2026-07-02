@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Platform } from "react-native";
 import { color, palette } from "@/theme/tokens";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { RetryButton } from "@/components/ui/retry-button";
 import * as Haptics from "expo-haptics";
 

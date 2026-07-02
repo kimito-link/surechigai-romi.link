@@ -3,7 +3,7 @@
  */
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import { prefectureShortLabel } from "@/modules/encounter/core/prefecture-labels";

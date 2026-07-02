@@ -5,7 +5,7 @@
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color } from "@/theme/tokens";
 import { TAB_BAR_BODY_HEIGHT } from "@/hooks/use-tab-bar-inset";
 import { usePrefetchTab } from "@/hooks/use-tab-prefetch";

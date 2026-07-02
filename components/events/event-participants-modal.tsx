@@ -9,7 +9,7 @@ import {
   Linking,
 } from "react-native";
 import { Image } from "expo-image";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 

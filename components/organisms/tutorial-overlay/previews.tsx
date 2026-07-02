@@ -1,7 +1,7 @@
 // components/organisms/tutorial-overlay/previews.tsx
 // 君斗りんく — ライト UI プレビュー
 import { View, Text, StyleSheet } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import Svg, { Circle, G, Rect } from "react-native-svg";
 import { color, palette } from "@/theme/tokens";
 

@@ -10,7 +10,7 @@ import { useState } from "react";
 import { color, palette, APP_HEADER_CHROME_HEIGHT, APP_HEADER_CHROME_HEIGHT_COMPACT, APP_HEADER_CHROME_HEIGHT_FULL } from "@/theme/tokens";
 import { View, Text, Pressable, Platform, StyleSheet, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { LazyGlobalMenu } from "@/lib/lazy-heavy-components";

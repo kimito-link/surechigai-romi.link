@@ -14,7 +14,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { HeaderHomeButton } from "@/components/molecules/header-back-button";
 import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";

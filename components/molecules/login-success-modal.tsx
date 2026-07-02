@@ -1,4 +1,4 @@
-import { MaterialIcons } from "@expo/vector-icons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color, palette } from "@/theme/tokens";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";

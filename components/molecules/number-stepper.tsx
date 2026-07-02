@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import { color, palette } from "@/theme/tokens";
 import { useCallback } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
 

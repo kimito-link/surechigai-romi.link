@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, Image, useWindowDimensions, StyleProp, ViewStyle, Pressable } from "react-native";
 import Svg, { Polyline } from "react-native-svg";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color } from "@/theme/tokens";
 import {
   TILE_SIZE,

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TextInput, Pressable } from "react-native";
 import { useState, useCallback } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { trpc } from "@/lib/trpc";
 import { color } from "@/theme/tokens";
 import { openExternalUrl } from "@/lib/navigation/external-links";

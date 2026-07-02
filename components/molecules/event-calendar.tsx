@@ -12,7 +12,7 @@
 
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useMemo } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color } from "@/theme/tokens";
 import { toDateKey } from "@/lib/events/date-key";
 

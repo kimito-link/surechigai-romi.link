@@ -7,7 +7,7 @@ import { Platform, View, Text, Pressable, Modal, StyleSheet } from "react-native
 import * as Haptics from "expo-haptics";
 import { color, palette } from "@/theme/tokens";
 import { useState, useEffect } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 
 interface DatePickerProps {
   value: string; // YYYY-MM-DD format

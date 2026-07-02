@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
 import Svg, { Circle, G, Line, Path, Polyline, Rect } from "react-native-svg";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color, palette } from "@/theme/tokens";
 
 const BLUE_10 = `${palette.kimitoBlue}1A`;

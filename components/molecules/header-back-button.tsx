@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Platform } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { useRouter } from "expo-router";
 import { palette } from "@/theme/tokens";
 

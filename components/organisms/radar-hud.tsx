@@ -9,7 +9,7 @@ import Animated, {
   useReducedMotion,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color, palette } from "@/theme/tokens";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 

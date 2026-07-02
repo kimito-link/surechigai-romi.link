@@ -2,7 +2,7 @@
  * マイページ — 参加表明中の集まり + リマインド切替
  */
 import { View, Text, Pressable, StyleSheet, Switch, Platform } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { AUTHENTICATED_QUERY_OPTIONS, isInitialQueryLoad } from "@/lib/authenticated-query-options";

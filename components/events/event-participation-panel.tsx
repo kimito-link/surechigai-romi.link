@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { invalidateEventListQueries } from "@/lib/events/invalidate-event-queries";
 import { trpc } from "@/lib/trpc";

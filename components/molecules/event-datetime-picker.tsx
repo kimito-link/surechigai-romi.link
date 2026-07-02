@@ -6,7 +6,7 @@
  */
 import { View, Text, Pressable, ScrollView, StyleSheet } from "react-native";
 import { useMemo, useState } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color } from "@/theme/tokens";
 import { EventCalendar } from "./event-calendar";
 import { type EventDateTimeValue } from "@/lib/events/datetime-value";

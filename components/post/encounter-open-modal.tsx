@@ -19,7 +19,7 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import {
   type EncounterItem,

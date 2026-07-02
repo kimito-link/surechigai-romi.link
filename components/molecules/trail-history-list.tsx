@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import {
   formatPlace,
   formatDateTime,

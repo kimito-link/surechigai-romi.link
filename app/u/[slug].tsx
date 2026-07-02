@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { PublicShareHeader } from "@/components/organisms/public-share-header";
 import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";

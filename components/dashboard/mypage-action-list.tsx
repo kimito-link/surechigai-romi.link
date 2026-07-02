@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { useRouter } from "expo-router";
 import { useMySignal } from "@/hooks/use-my-signal";
 import { MypageUpcomingEventsSection } from "@/components/mypage/mypage-upcoming-events-section";

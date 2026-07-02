@@ -2,7 +2,7 @@
 // v6.20: 統一されたRetryButtonコンポーネント
 
 import { Pressable, Text, StyleSheet, Platform } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color } from "@/theme/tokens";
 import * as Haptics from "expo-haptics";
 

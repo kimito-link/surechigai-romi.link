@@ -15,7 +15,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color, shadows } from "@/theme/tokens";
 import { useColors } from "@/hooks/use-colors";
 

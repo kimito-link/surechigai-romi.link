@@ -13,7 +13,7 @@
 
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { lazy, Suspense, useState, useCallback, useMemo } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { ChunkFallback } from "@/lib/chunk-fallback";
 import { EventCard } from "@/components/events/events-event-card";
 import { EventsEmptyState } from "@/components/events/events-empty-state";

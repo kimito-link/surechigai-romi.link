@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from "react-na
 import { color } from "@/theme/tokens";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useResponsive } from "@/hooks/use-responsive";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { Image } from "expo-image";
 import { navigateBack } from "@/lib/navigation";
 

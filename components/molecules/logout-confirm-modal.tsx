@@ -2,7 +2,7 @@ import { View, Text, Pressable, Modal, StyleSheet, Animated, Platform } from "re
 import { color, palette } from "@/theme/tokens";
 import { useRef, useEffect } from "react";
 import { Image } from "expo-image";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 

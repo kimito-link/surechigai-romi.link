@@ -2,7 +2,7 @@
  * 未開封封筒カード（reanimated 非依存 — 初回 bundle から reanimated を外す）。
  */
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import {
   type EncounterItem,

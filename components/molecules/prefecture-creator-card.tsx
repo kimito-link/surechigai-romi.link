@@ -1,4 +1,4 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { formatRelativeJa } from "@/lib/date-utils";
 import type { PrefectureCreatorListRow } from "@/modules/encounter/core/prefecture-creator-types";

@@ -7,7 +7,7 @@ import { color, palette } from "@/theme/tokens";
 import { View, Text, Modal, Pressable, ScrollView, Platform } from "react-native";
 import { Link } from "expo-router";
 import { navigate } from "@/lib/navigation";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { UserAccountChip } from "@/components/molecules/user-account-chip";

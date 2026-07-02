@@ -3,7 +3,7 @@
  */
 import { useCallback } from "react";
 import { Pressable, Text, StyleSheet, Platform } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { openMapsDirections } from "@/lib/navigation/open-maps-directions";
 import { showAlert } from "@/lib/web-alert";
 import { color } from "@/theme/tokens";

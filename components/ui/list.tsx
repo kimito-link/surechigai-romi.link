@@ -11,7 +11,7 @@ import {
   type ViewStyle,
   type ImageStyle,
 } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { color } from "@/theme/tokens";
 import { Image } from "expo-image";

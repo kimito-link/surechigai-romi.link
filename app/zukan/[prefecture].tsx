@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useCallback } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
 import { PrefectureCreatorCard } from "@/components/molecules/prefecture-creator-card";

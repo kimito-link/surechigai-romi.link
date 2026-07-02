@@ -1,6 +1,6 @@
 import { useEffect, useRef, createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { Text, Animated, StyleSheet, Platform } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color, palette } from "@/theme/tokens";
 import * as Haptics from "expo-haptics";
 

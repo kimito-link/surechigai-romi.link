@@ -4,7 +4,7 @@
  */
 
 import { View, Text, Pressable, ScrollView } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color } from "@/theme/tokens";
 import { useColors } from "@/hooks/use-colors";
 import { prefectures } from "@/constants/prefectures";

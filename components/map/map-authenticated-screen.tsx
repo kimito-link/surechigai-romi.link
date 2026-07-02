@@ -8,7 +8,7 @@
 
 import { View, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { useCallback, useMemo } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";

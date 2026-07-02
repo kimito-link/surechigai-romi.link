@@ -12,7 +12,7 @@ import {
   StyleSheet,
   type ViewStyle,
 } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import Animated, { 
   useSharedValue, 

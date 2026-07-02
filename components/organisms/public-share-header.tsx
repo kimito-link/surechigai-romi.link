@@ -4,7 +4,7 @@
 import { View, Text, Pressable, Platform, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import { Link, type Href } from "expo-router";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { buildSignInHref } from "@/lib/clerk-route";
 import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
 import { palette } from "@/theme/tokens";

@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color, palette, SCREEN_CONTEXT_BAR_HEIGHT } from "@/theme/tokens";
 
 export type ContextBarTone = "default" | "accent" | "warn";

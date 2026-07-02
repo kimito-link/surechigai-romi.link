@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { POST_LOGIN_LOCATION_INTRO_KEY } from "@/features/onboarding/constants";

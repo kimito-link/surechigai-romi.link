@@ -25,7 +25,7 @@ import {
 } from "react-native";
 import { useState, useCallback, lazy, Suspense, useMemo } from "react";
 import { useRouter } from "expo-router";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/atoms/toast";
 import { ScreenContainer } from "@/components/organisms/screen-container";

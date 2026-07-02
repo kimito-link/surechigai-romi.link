@@ -2,7 +2,7 @@
 // v6.19: セクション関連の統一コンポーネント
 
 import { View, Text, StyleSheet, type ViewStyle } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { color } from "@/theme/tokens";
 
 // ==================== SectionHeader ====================

@@ -3,7 +3,7 @@
  */
 import { View, Text, StyleSheet, TextInput, Platform, Pressable } from "react-native";
 import { lazy, Suspense, useState, useCallback } from "react";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { toDateKey } from "@/lib/events/date-key";
 import { toStartDate, type EventDateTimeValue } from "@/lib/events/datetime-value";
 import { invalidateEventListQueries } from "@/lib/events/invalidate-event-queries";

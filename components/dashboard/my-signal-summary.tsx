@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from "react-native";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { useMySignal } from "@/hooks/use-my-signal";
 import { isInitialQueryLoad } from "@/lib/authenticated-query-options";
 import { color, palette } from "@/theme/tokens";
