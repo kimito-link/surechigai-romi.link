@@ -6,6 +6,12 @@ import { TabPrefetchProvider } from "@/hooks/use-tab-prefetch";
 /**
  * 公開 Web ルート用の軽量 Provider（Clerk SDK 非ロード）。
  * publicProcedure の tRPC のみ利用する画面向け。
+ *
+ * 注: このコンポーネントは常に同一の要素ツリー（trpc.Provider →
+ * QueryClientProvider → TabPrefetchProvider）で children を包む。
+ * guest `/` でも条件分岐で親を差し替えないことで、children（LCP 要素を含む
+ * ゲストホーム）が idle 時に unmount→remount されるのを防ぐ。
+ * client 生成コストより LCP 安定化を優先する。
  */
 export function PublicWebProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
