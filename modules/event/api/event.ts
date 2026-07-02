@@ -26,7 +26,8 @@ import { isValidPrefecture } from "../core/prefectures.js";
 import { serializeTypeTags, parseTypeTags } from "../core/status.js";
 import { hashAccessCode, verifyAccessCode } from "../core/access.js";
 import { venueLabelFromGeocode } from "../core/venue-label.js";
-import { reverseGeocode } from "../../encounter/core/geocoding.js";
+import { reverseGeocodeWithTimeout } from "../../encounter/core/geocoding.js";
+import { classifyLocationToPrefectureName } from "../../encounter/core/prefecture-classify.js";
 import { parseCoordinateInput } from "../../../lib/parse-coordinate-input.js";
 import type { Event } from "../../../drizzle/schema/event.js";
 import {
@@ -235,8 +236,10 @@ export const eventRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "座標を取得できませんでした" });
       }
 
-      const geo = await reverseGeocode(lat, lng);
-      if (!geo.prefecture || !isValidPrefecture(geo.prefecture)) {
+      const geo = await reverseGeocodeWithTimeout(lat, lng, 1_200);
+      const prefecture =
+        geo.prefecture ?? classifyLocationToPrefectureName(null, geo.municipality, lat, lng);
+      if (!prefecture || !isValidPrefecture(prefecture)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "この場所の都道府県を特定できませんでした。別の地点を試してください",
@@ -244,7 +247,7 @@ export const eventRouter = router({
       }
 
       return {
-        prefecture: geo.prefecture,
+        prefecture,
         venueName: venueLabelFromGeocode(geo),
         lat,
         lng,

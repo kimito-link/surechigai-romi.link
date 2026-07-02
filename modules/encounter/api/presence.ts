@@ -118,12 +118,17 @@ export const presenceRouter = router({
       const db = await getDb();
       if (!db) return { ok: false, masked: false };
 
-      return updateLivePresencePosition(db, ctx.user.id, {
-        lat: latLng.lat,
-        lng: latLng.lng,
-        municipality: normalizePlace(input.municipality),
-        prefecture: normalizePlace(input.prefecture),
-      });
+      try {
+        return await updateLivePresencePosition(db, ctx.user.id, {
+          lat: latLng.lat,
+          lng: latLng.lng,
+          municipality: normalizePlace(input.municipality),
+          prefecture: normalizePlace(input.prefecture),
+        });
+      } catch (error) {
+        console.error("[presence.pulse] DB update failed:", error);
+        return { ok: false, masked: false };
+      }
     }),
 
   /** レーダー上に表示する居場所（最大5分以内の更新） */

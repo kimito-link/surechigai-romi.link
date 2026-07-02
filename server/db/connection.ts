@@ -30,9 +30,9 @@ export async function getDb(): Promise<DrizzleDB | null> {
     const postgres = (await import("postgres")).default;
 
     const client = postgres(databaseUrl, {
-      max: 5,                    // 接続プールサイズ
-      idle_timeout: 20,          // アイドル接続タイムアウト（秒）
-      connect_timeout: 10,       // 接続タイムアウト（秒）
+      max: 2,                    // Vercel 関数のスパイク時に DB 接続を増やしすぎない
+      idle_timeout: 10,          // アイドル接続タイムアウト（秒）
+      connect_timeout: 3,        // 接続詰まりで関数を長く待たせない
       ssl: databaseUrl.includes("sslmode=require") || databaseUrl.includes("supabase.co")
         ? { rejectUnauthorized: false }
         : false,

@@ -12,7 +12,8 @@ import { z } from "zod";
 import { publicProcedure, router } from "../../../server/_core/trpc.js";
 import { getDb } from "../../../server/db/connection.js";
 import { assertFiniteLatLng, toGrid, toH3Cell } from "../core/geo.js";
-import { reverseGeocode } from "../core/geocoding.js";
+import { reverseGeocodeWithTimeout } from "../core/geocoding.js";
+import { classifyLocationToPrefectureName } from "../core/prefecture-classify.js";
 import {
   getGroupVisitStats,
   insertGroupVisitReport,
@@ -87,25 +88,49 @@ export const visitRouter = router({
         throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続です" });
       }
 
-      const geocode = await reverseGeocode(latLng.lat, latLng.lng);
-      const report = await insertGroupVisitReport(db, {
-        groupKey,
-        visitorToken: cleanText(input.visitorToken),
-        displayName,
-        placeName: cleanText(input.placeName),
-        note: cleanText(input.note),
-        lat: latLng.lat,
-        lng: latLng.lng,
-        accuracyM: input.accuracy ?? null,
-        latGrid,
-        lngGrid,
-        h3R8,
-        municipality: geocode.municipality,
-        prefecture: geocode.prefecture,
-        address: geocode.address,
-      });
+      const geocode = await reverseGeocodeWithTimeout(latLng.lat, latLng.lng, 1_200);
+      const prefecture =
+        geocode.prefecture ??
+        classifyLocationToPrefectureName(null, geocode.municipality, latLng.lat, latLng.lng);
 
-      const stats = await getGroupVisitStats(db, groupKey);
+      let report;
+      try {
+        report = await insertGroupVisitReport(db, {
+          groupKey,
+          visitorToken: cleanText(input.visitorToken),
+          displayName,
+          placeName: cleanText(input.placeName),
+          note: cleanText(input.note),
+          lat: latLng.lat,
+          lng: latLng.lng,
+          accuracyM: input.accuracy ?? null,
+          latGrid,
+          lngGrid,
+          h3R8,
+          municipality: geocode.municipality,
+          prefecture,
+          address: geocode.address,
+        });
+      } catch (error) {
+        console.error("[visit.report] DB insert failed:", error);
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "申告が混み合っています。少し時間をおいてください",
+        });
+      }
+
+      let stats;
+      try {
+        stats = await getGroupVisitStats(db, groupKey);
+      } catch (error) {
+        console.error("[visit.report] stats query failed:", error);
+        stats = {
+          totalReports: 1,
+          uniqueVisitors: 1,
+          areaCount: 1,
+          latestReportedAt: report.reportedAt,
+        };
+      }
       return { report, stats };
     }),
 

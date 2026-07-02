@@ -89,26 +89,40 @@ export const encounterRouter = router({
       const areaName = g.areaName;
       const address = g.address;
 
-      await Promise.all([
-        insertLocation(db, {
-          userId,
-          h3R8,
-          latGrid,
-          lngGrid,
+      try {
+        await Promise.all([
+          insertLocation(db, {
+            userId,
+            h3R8,
+            latGrid,
+            lngGrid,
+            lat: latLng.lat,
+            lng: latLng.lng,
+            accuracyM: input.accuracy ?? null,
+            municipality,
+            prefecture,
+            address,
+          }),
+          upsertVisitedArea(db, {
+            userId,
+            h3R7,
+            municipality,
+            prefecture,
+          }),
+        ]);
+      } catch (insertErr) {
+        console.error("[encounter.checkIn] location insert failed:", insertErr);
+        return {
+          newEncounters: 0,
+          prefecture,
+          municipality,
+          areaName,
+          address,
           lat: latLng.lat,
           lng: latLng.lng,
-          accuracyM: input.accuracy ?? null,
-          municipality,
-          prefecture,
-          address,
-        }),
-        upsertVisitedArea(db, {
-          userId,
-          h3R7,
-          municipality,
-          prefecture,
-        }),
-      ]);
+          saved: false,
+        };
+      }
 
       getMostFrequentNightH3R8(db, userId).then((cell) => {
         upsertUserSettings(db, userId, { homeMaskCell: cell }).catch(() => {});
