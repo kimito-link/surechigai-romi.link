@@ -70,3 +70,36 @@ Production commit: `b769c2b2c238c2b54e6c08a8aba55f1cca89a305`
 | 3 | 90 | 1.3 s | 1.3 s | 340 ms | 0.003 | 3.8 s | 18.1 s | 3,688 KiB | 2,260 KiB savings |
 
 Median score: 87. Best run: 90. The target command can pass, but the score is still variance-sensitive. The largest remaining avoidable transfer in this deployment was the initial 349 KiB MaterialIcons font request, which the follow-up `IconSymbol` change targets.
+
+## Production PageSpeed final
+
+Production commit: `ed01671710f79cc53f20488aab77e31e9a964e35`
+
+Additional fixes after the first deploy:
+
+- All app/component/feature `MaterialIcons` imports were routed through the platform-aware wrapper.
+- `mail-outline` was added to `MATERIAL_SVG_PATHS`; the guest home route now renders its critical icons as SVG and does not trigger the MaterialIcons font fallback after `window.load`.
+
+Lighthouse command:
+
+- `npx lighthouse@12 https://surechigai.kimito.link/ --only-categories=performance --form-factor=mobile --screenEmulation.mobile=true --throttling-method=simulate`
+
+The local Lighthouse process returned `EBUSY` while deleting its temporary Chrome profile after each run, but each JSON report was written successfully and has no `runtimeError`.
+
+| Run | Score | FCP | LCP | TBT | SI | Total byte weight |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 96 | 1.2 s | 1.4 s | 210 ms | 1.2 s | 3,264.7 KiB |
+| 2 | 97 | 1.2 s | 1.2 s | 190 ms | 1.2 s | 3,264.7 KiB |
+| 3 | 97 | 1.2 s | 1.4 s | 170 ms | 2.9 s | 3,264.7 KiB |
+
+Median score: 97. Best run: 97. Worst run: 96. The initial MaterialIcons font request is gone (`MaterialIcons` / `MaterialIcons-Regular` / `material-icons` network matches: none).
+
+Largest remaining transfers in run 3:
+
+| Transfer | Type | URL |
+| ---: | --- | --- |
+| 2,134.5 KiB | Script | `/_expo/static/js/web/__common-c6ec01ebcc18438bb5bbca826a024ee2.js` |
+| 962.4 KiB | Script | `/_expo/static/js/web/entry-7000308cb89195a5d484d0e1b320a19f.js?v=local-1782969320660` |
+| 50.9 KiB | Document | `/` |
+| 34.1 KiB | Other | `/pwa-icon-192.png` |
+| 16.4 KiB | Script | `/_expo/static/js/web/_layout-2b90920b930360ed765cd6dcd17976a4.js` |
