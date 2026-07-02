@@ -259,6 +259,38 @@
       "destination": "/api/:path*"
     },
     {
+      "source": "/sign-in",
+      "destination": "/sign-in.html"
+    },
+    {
+      "source": "/sign-in/",
+      "destination": "/sign-in.html"
+    },
+    {
+      "source": "/auth/kimito-link",
+      "destination": "/auth/kimito-link.html"
+    },
+    {
+      "source": "/auth/kimito-link/",
+      "destination": "/auth/kimito-link.html"
+    },
+    {
+      "source": "/sso-callback",
+      "destination": "/sso-callback.html"
+    },
+    {
+      "source": "/sso-callback/",
+      "destination": "/sso-callback.html"
+    },
+    {
+      "source": "/oauth/twitter-callback",
+      "destination": "/oauth/twitter-callback.html"
+    },
+    {
+      "source": "/oauth/twitter-callback/",
+      "destination": "/oauth/twitter-callback.html"
+    },
+    {
       "source": "/((?!api/|lp(?:/|$)|fonts/|_expo/|assets/|favicon|icon-|pwa-icon-|apple-touch-icon|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt).*)",
       "destination": "/index.html"
     }
