@@ -14,6 +14,7 @@ Commands:
 - `npx browserslist` resolves to Chrome/Edge/Firefox 100+, Safari/iOS 15.4+.
 - No `_classCallCheck`, `regeneratorRuntime`, or `_asyncToGenerator` match was found in exported web JS bundles.
 - `react-native-gesture-handler` did not appear in the client chunk scan after the root provider changes, so no extra `GestureRoot` lazy boundary was added.
+- After the first production PageSpeed pass, `IconSymbol` was changed to use the existing platform-aware MaterialIcons wrapper. This avoids the initial direct `@expo/vector-icons/MaterialIcons` web font request when SVG path data is available for the tab icons.
 
 ## Atlas after snapshot
 
@@ -57,3 +58,15 @@ Top `__common` modules after:
 Rejected intermediate attempt:
 
 - A naive `authenticated-screens.ts` re-export funnel produced a tiny `authenticated-screens` chunk and moved screen modules into `__common` (`__common` rose to about 2.37 MB). It was replaced with a single loader plus `authenticated-screen-funnel` and `prefetch-tab-data.ts` was updated to remove the remaining individual dynamic imports.
+
+## Production PageSpeed after first deploy
+
+Production commit: `b769c2b2c238c2b54e6c08a8aba55f1cca89a305`
+
+| Run | Score | FCP | LCP | TBT | CLS | SI | TTI | Total byte weight | Unused JS |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| 1 | 84 | 1.5 s | 1.5 s | 460 ms | 0.006 | 5.0 s | 18.1 s | 3,688 KiB | 2,260 KiB savings |
+| 2 | 87 | 1.4 s | 1.4 s | 420 ms | 0.003 | 4.2 s | 18.2 s | 3,688 KiB | 2,260 KiB savings |
+| 3 | 90 | 1.3 s | 1.3 s | 340 ms | 0.003 | 3.8 s | 18.1 s | 3,688 KiB | 2,260 KiB savings |
+
+Median score: 87. Best run: 90. The target command can pass, but the score is still variance-sensitive. The largest remaining avoidable transfer in this deployment was the initial 349 KiB MaterialIcons font request, which the follow-up `IconSymbol` change targets.
