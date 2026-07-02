@@ -106,11 +106,16 @@ export function ThemeProvider({ children, deferNativeWind = false }: ThemeProvid
     [setColorScheme, setThemeMode, toggleTheme],
   );
 
+  // Web: NativeWind の CSS 変数は applyDocumentTheme() が documentElement に
+  // 同期設定済み（子孫へ継承で届く）。ルート View へ vars() を後付けすると、
+  // window.load 後の setNativeWindStyle でルート以下が再ペイントされ、
+  // SSG 済みの LCP 要素が「再ペイント時刻」で確定してしまう（LCP=JS完了に張り付く）。
+  // よって Web ではルート View への二重注入を避け、初回 paint を LCP として成立させる。
   const shellStyle = useMemo(
     () => ({
       flex: 1,
       backgroundColor: SchemeColors[FIXED_SCHEME].background,
-      ...(nativeWindStyle ?? {}),
+      ...(Platform.OS === "web" ? {} : (nativeWindStyle ?? {})),
     }),
     [nativeWindStyle],
   );
