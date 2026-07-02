@@ -1,18 +1,12 @@
 /**
  * 軌跡マップ — 認証ゲート。未ログイン時は WebTrailMap chunk を読まない。
  */
-import { lazy } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { TrailGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 import { ChunkFallback } from "@/lib/chunk-fallback";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
-
-const MapAuthenticatedScreen = lazy(() =>
-  import("@/components/map/map-authenticated-screen").then((m) => ({
-    default: m.MapAuthenticatedScreen,
-  })),
-);
+import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 
 export default function MapScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
@@ -38,7 +32,7 @@ export default function MapScreen() {
 
   return (
     <TabAuthenticatedShell screenName="MapTab">
-      <MapAuthenticatedScreen />
+      <AuthenticatedScreenSlot screen="map" />
     </TabAuthenticatedShell>
   );
 }

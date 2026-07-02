@@ -27,12 +27,15 @@ import { GuestAuthProvider } from "@/lib/auth-context";
 import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallback";
 import { GestureRoot } from "@/components/providers/gesture-root";
 import { WebDocumentHead } from "@/components/brand/web-document-head";
-import { OnboardingWrapper } from "@/components/providers/onboarding-wrapper";
-import { OnboardingProvider } from "@/features/onboarding/context/OnboardingProvider";
 
 const ClerkRootProvider = lazy(() =>
   import("@/components/providers/clerk-root-provider").then((m) => ({
     default: m.ClerkRootProvider,
+  })),
+);
+const OnboardingGate = lazy(() =>
+  import("@/components/providers/onboarding-gate").then((m) => ({
+    default: m.OnboardingGate,
   })),
 );
 
@@ -164,6 +167,14 @@ export default function RootLayout() {
     );
   }
 
+  const appContent = useGuestWebShell ? (
+    shellContent
+  ) : (
+    <Suspense fallback={<AppBootstrapFallback />}>
+      <OnboardingGate>{shellContent}</OnboardingGate>
+    </Suspense>
+  );
+
   const shouldOverrideSafeArea = Platform.OS === "web";
 
   return (
@@ -173,27 +184,11 @@ export default function RootLayout() {
         {shouldOverrideSafeArea ? (
           <SafeAreaFrameContext.Provider value={frame}>
             <SafeAreaInsetsContext.Provider value={insets}>
-              <AppShell liteBoundary={useGuestWebShell}>
-                {useGuestWebShell ? (
-                  shellContent
-                ) : (
-                  <OnboardingProvider>
-                    <OnboardingWrapper>{shellContent}</OnboardingWrapper>
-                  </OnboardingProvider>
-                )}
-              </AppShell>
+              <AppShell liteBoundary={useGuestWebShell}>{appContent}</AppShell>
             </SafeAreaInsetsContext.Provider>
           </SafeAreaFrameContext.Provider>
         ) : (
-          <AppShell liteBoundary={useGuestWebShell}>
-            {useGuestWebShell ? (
-              shellContent
-            ) : (
-              <OnboardingProvider>
-                <OnboardingWrapper>{shellContent}</OnboardingWrapper>
-              </OnboardingProvider>
-            )}
-          </AppShell>
+          <AppShell liteBoundary={useGuestWebShell}>{appContent}</AppShell>
         )}
       </SafeAreaProvider>
     </ThemeProvider>

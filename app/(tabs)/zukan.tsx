@@ -1,18 +1,12 @@
 /**
  * 図鑑 — 認証ゲート。未ログイン時は地図 chunk / tRPC を読まない。
  */
-import { lazy } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { ZukanGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 import { ChunkFallback } from "@/lib/chunk-fallback";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
-
-const ZukanAuthenticatedScreen = lazy(() =>
-  import("@/components/zukan/zukan-authenticated-screen").then((m) => ({
-    default: m.ZukanAuthenticatedScreen,
-  })),
-);
+import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 
 export default function ZukanScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
@@ -38,7 +32,7 @@ export default function ZukanScreen() {
 
   return (
     <TabAuthenticatedShell screenName="ZukanTab">
-      <ZukanAuthenticatedScreen />
+      <AuthenticatedScreenSlot screen="zukan" />
     </TabAuthenticatedShell>
   );
 }

@@ -1,17 +1,11 @@
 /**
  * 集まり画面 — 認証ゲート + guest / 認証済み chunk の遅延読み込み。
  */
-import { lazy } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { EventsGuestContent } from "@/components/events/events-guest-content";
 import { ChunkFallback } from "@/lib/chunk-fallback";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
-
-const EventsAuthenticatedScreen = lazy(() =>
-  import("@/components/events/events-authenticated-screen").then((m) => ({
-    default: m.EventsAuthenticatedScreen,
-  })),
-);
+import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 
 export default function EventsScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
@@ -26,7 +20,7 @@ export default function EventsScreen() {
 
   return (
     <TabAuthenticatedShell screenName="EventsTab">
-      <EventsAuthenticatedScreen />
+      <AuthenticatedScreenSlot screen="events" />
     </TabAuthenticatedShell>
   );
 }

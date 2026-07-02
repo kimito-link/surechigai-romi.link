@@ -7,6 +7,15 @@
   },
   "type": "module",
   "main": "expo-router/entry",
+  "sideEffects": [
+    "app/_layout.tsx",
+    "lib/bootstrap/**",
+    "*.css",
+    "global.css",
+    "scripts/**",
+    "server/**",
+    "babel-plugins/**"
+  ],
   "scripts": {
     "dev": "concurrently -k \"pnpm dev:server\" \"pnpm dev:metro\"",
     "dev:server": "cross-env NODE_ENV=development node --import tsx server/_core/index.ts",
@@ -135,6 +144,7 @@
     "esbuild": "^0.25.12",
     "eslint": "^9.39.2",
     "eslint-config-expo": "~10.0.0",
+    "expo-atlas": "^0.4.3",
     "jsdom": "^27.4.0",
     "playwright": "^1.57.0",
     "prettier": "^3.7.4",

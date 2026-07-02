@@ -1,0 +1,8 @@
+# ゲスト Web の配信ターゲット（モバイル Lighthouse 対策）
+# ES2020 / ES modules をネイティブ実行できるブラウザのみ
+Chrome >= 100
+Edge >= 100
+Firefox >= 100
+Safari >= 15.4
+iOS >= 15.4
+not dead

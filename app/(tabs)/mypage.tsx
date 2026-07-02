@@ -1,18 +1,12 @@
 /**
  * マイページ — 認証ゲート。未ログイン時は tRPC / 設定 chunk を読まない。
  */
-import { lazy } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { MypageGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 import { ChunkFallback } from "@/lib/chunk-fallback";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
-
-const MypageAuthenticatedScreen = lazy(() =>
-  import("@/components/mypage/mypage-authenticated-screen").then((m) => ({
-    default: m.MypageAuthenticatedScreen,
-  })),
-);
+import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 
 export default function MypageScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
@@ -38,7 +32,7 @@ export default function MypageScreen() {
 
   return (
     <TabAuthenticatedShell screenName="MypageTab">
-      <MypageAuthenticatedScreen />
+      <AuthenticatedScreenSlot screen="mypage" />
     </TabAuthenticatedShell>
   );
 }

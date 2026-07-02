@@ -52,13 +52,15 @@ export function prefetchCoreAuthenticatedData(utils: TrpcUtils): void {
   ]);
 }
 
+const loadAuthenticatedScreens = () => import("@/components/tabs/authenticated-screen-funnel");
+
 const TAB_CHUNK_LOADERS: Record<TabPrefetchKey, () => Promise<unknown>> = {
-  post: () => import("@/components/post/post-authenticated-screen"),
-  checkin: () => import("@/components/checkin/checkin-authenticated-screen"),
-  events: () => import("@/components/events/events-authenticated-screen"),
-  zukan: () => import("@/components/zukan/zukan-authenticated-screen"),
-  map: () => import("@/components/map/map-authenticated-screen"),
-  mypage: () => import("@/components/mypage/mypage-authenticated-screen"),
+  post: loadAuthenticatedScreens,
+  checkin: loadAuthenticatedScreens,
+  events: loadAuthenticatedScreens,
+  zukan: loadAuthenticatedScreens,
+  map: loadAuthenticatedScreens,
+  mypage: loadAuthenticatedScreens,
 };
 
 /** タブ本体 JS chunk を先読み（lazy screen の ChunkFallback を短縮） */

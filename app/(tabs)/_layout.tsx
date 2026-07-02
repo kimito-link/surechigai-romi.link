@@ -18,7 +18,6 @@ import {
   WEB_SIDE_NAV_WIDTH,
 } from "@/components/organisms/web-side-nav";
 import { WebAppFooter } from "@/components/organisms/web-app-footer";
-import { TutorialProvider } from "@/lib/tutorial-context";
 
 const CheckinTabIconAuthenticated = lazy(() =>
   import("@/components/tabs/checkin-tab-icon-authenticated").then((m) => ({
@@ -30,9 +29,9 @@ const EventsTabIconAuthenticated = lazy(() =>
     default: m.EventsTabIconAuthenticated,
   })),
 );
-const TabAuthenticatedExtras = lazy(() =>
-  import("@/components/tabs/tab-authenticated-extras").then((m) => ({
-    default: m.TabAuthenticatedExtras,
+const TabAuthenticatedChrome = lazy(() =>
+  import("@/components/tabs/tab-authenticated-chrome").then((m) => ({
+    default: m.TabAuthenticatedChrome,
   })),
 );
 
@@ -199,11 +198,8 @@ export default function TabLayout() {
   }
 
   return (
-    <TutorialProvider>
-      {body}
-      <Suspense fallback={null}>
-        <TabAuthenticatedExtras />
-      </Suspense>
-    </TutorialProvider>
+    <Suspense fallback={<View style={{ flex: 1 }} />}>
+      <TabAuthenticatedChrome>{body}</TabAuthenticatedChrome>
+    </Suspense>
   );
 }

@@ -8,20 +8,15 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { lazy } from "react";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { palette } from "@/theme/tokens";
-import { ChunkFallback } from "@/lib/lazy-heavy-components";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { CheckinGuestPreview } from "@/components/organisms/one-tap-guest-previews";
-
-const CheckinAuthenticatedScreen = lazy(() =>
-  import("@/components/checkin/checkin-authenticated-screen"),
-);
+import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 
 export default function CheckinScreen() {
   const { isDesktop } = useResponsive();
@@ -61,7 +56,7 @@ export default function CheckinScreen() {
 
   return (
     <TabAuthenticatedShell screenName="CheckinTab" fallbackMinHeight={480}>
-      <CheckinAuthenticatedScreen />
+      <AuthenticatedScreenSlot screen="checkin" />
     </TabAuthenticatedShell>
   );
 }
