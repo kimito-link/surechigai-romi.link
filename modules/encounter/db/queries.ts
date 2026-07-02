@@ -1851,9 +1851,16 @@ export async function updateLivePresencePosition(
   const h3R8 = toH3Cell(latGrid, lngGrid, 8);
   const masked = isHomeMasked(h3R8, settings.homeMaskCell);
 
+  const inferredPrefecture = classifyLocationToPrefectureName(
+    input.prefecture,
+    input.municipality,
+    input.lat,
+    input.lng,
+  );
+
   const place = masked
     ? "ひみつの場所"
-    : shortPlaceLabel(input.municipality ?? null, input.prefecture ?? null);
+    : shortPlaceLabel(input.municipality ?? null, inferredPrefecture);
 
   await upsertUserSettings(db, userId, {
     livePresenceLat: input.lat,
