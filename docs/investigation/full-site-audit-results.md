@@ -2,8 +2,8 @@
 
 **実施日:** 2026-07-01  
 **対象 URL:** https://surechigai.kimito.link  
-**デプロイ SHA:** `f6eecdc393224bf84434940fb497e387561b60ba`（ローカル再監査 PASS）  
-**監査タグ:** `prod-f6eecdc`  
+**デプロイ SHA:** `e7b8909b65850685974929cc34578732ccb2620b`（CI E2E 12/12 PASS）  
+**監査タグ:** `prod-e7b8909`  
 **実行コマンド:**
 
 ```bash
@@ -98,3 +98,5 @@ pnpm e2e:audit       # audit-auth-mobile / audit-auth-desktop を含む
 
 初回実行（`prod-2026-06-30`）では、監査ヘルパーが固定ヘッダー内テキスト（例: タブタイトル「チェックイン」）を本文と誤判定し、レイアウト FAIL が多発。  
 `audit-assertions.ts` を修正（`role="header"` 除外 + 動的 headerBottom 計測）後、`prod-final` で Guest 全ルート PASS を確認。
+
+`e7b8909` で E2E を Deploy 完了後 `workflow_run` トリガー + entry chunk MIME 検証 + ハイドレーション待機を追加。**GitHub Actions E2E: 12 passed / 4 skipped（auth）**。
