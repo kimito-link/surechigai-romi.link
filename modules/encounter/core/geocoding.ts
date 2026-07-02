@@ -10,15 +10,30 @@
 
 const USER_AGENT = "surechigai-romi/0.1.0 (https://surechigai-romi.link)";
 const THROTTLE_MS = 1_100;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ERROR_COOLDOWN_MS = 5 * 60 * 1000;
 
 let lastRequestTime = 0;
+let externalDisabledUntil = 0;
+
+type CacheEntry = {
+  result: GeocodeResult;
+  expiresAt: number;
+};
+
+const cache = new Map<string, CacheEntry>();
+const inFlight = new Map<string, Promise<GeocodeResult>>();
+
+function cacheKey(lat: number, lng: number): string {
+  return `${lat.toFixed(4)},${lng.toFixed(4)}`;
+}
 
 async function throttle(): Promise<void> {
   const now = Date.now();
   const diff = now - lastRequestTime;
   if (diff < THROTTLE_MS) {
     await new Promise<void>((resolve) =>
-      setTimeout(resolve, THROTTLE_MS - diff)
+      setTimeout(resolve, THROTTLE_MS - diff),
     );
   }
   lastRequestTime = Date.now();
@@ -52,13 +67,53 @@ type NominatimAddress = {
  * JP-13 → 東京都 のように code-1 を index にして名前へ変換する。
  */
 const PREFECTURES_BY_ISO = [
-  "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
-  "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
-  "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県",
-  "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県",
-  "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県",
-  "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
-  "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県",
+  "北海道",
+  "青森県",
+  "岩手県",
+  "宮城県",
+  "秋田県",
+  "山形県",
+  "福島県",
+  "茨城県",
+  "栃木県",
+  "群馬県",
+  "埼玉県",
+  "千葉県",
+  "東京都",
+  "神奈川県",
+  "新潟県",
+  "富山県",
+  "石川県",
+  "福井県",
+  "山梨県",
+  "長野県",
+  "岐阜県",
+  "静岡県",
+  "愛知県",
+  "三重県",
+  "滋賀県",
+  "京都府",
+  "大阪府",
+  "兵庫県",
+  "奈良県",
+  "和歌山県",
+  "鳥取県",
+  "島根県",
+  "岡山県",
+  "広島県",
+  "山口県",
+  "徳島県",
+  "香川県",
+  "愛媛県",
+  "高知県",
+  "福岡県",
+  "佐賀県",
+  "長崎県",
+  "熊本県",
+  "大分県",
+  "宮崎県",
+  "鹿児島県",
+  "沖縄県",
 ];
 
 /**
@@ -107,10 +162,8 @@ function parseMunicipality(addr: NominatimAddress): string | null {
  * 表示用エリア名を Nominatim 住所から生成する。
  */
 function parseAreaName(addr: NominatimAddress): string {
-  const town =
-    addr.suburb || addr.neighbourhood || addr.quarter || null;
-  const district =
-    addr.city_district || addr.city || addr.town || null;
+  const town = addr.suburb || addr.neighbourhood || addr.quarter || null;
+  const district = addr.city_district || addr.city || addr.town || null;
 
   if (!town && !district) return "不明なエリア";
 
@@ -125,6 +178,23 @@ const fallbackGeocode = (): GeocodeResult => ({
   prefecture: null,
   areaName: "不明なエリア",
 });
+
+function getCached(key: string, now = Date.now()): GeocodeResult | null {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt <= now) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.result;
+}
+
+function setCached(key: string, result: GeocodeResult): void {
+  cache.set(key, {
+    result,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  });
+}
 
 /**
  * チェックイン向け: 上限時間付き逆ジオコーディング。超過時は fallback（500 にしない）。
@@ -152,9 +222,37 @@ export async function reverseGeocodeWithTimeout(
  */
 export async function reverseGeocode(
   lat: number,
-  lng: number
+  lng: number,
 ): Promise<GeocodeResult> {
   const fallback: GeocodeResult = fallbackGeocode();
+  const key = cacheKey(lat, lng);
+  const now = Date.now();
+  const cached = getCached(key, now);
+  if (cached) return cached;
+
+  const pending = inFlight.get(key);
+  if (pending) return pending;
+
+  if (externalDisabledUntil > now) {
+    return fallback;
+  }
+
+  const task = reverseGeocodeUncached(lat, lng, key, fallback);
+  inFlight.set(key, task);
+  try {
+    return await task;
+  } finally {
+    inFlight.delete(key);
+  }
+}
+
+async function reverseGeocodeUncached(
+  lat: number,
+  lng: number,
+  key: string,
+  fallback: GeocodeResult,
+): Promise<GeocodeResult> {
+  let shouldCacheFallback = false;
 
   try {
     await throttle();
@@ -168,20 +266,40 @@ export async function reverseGeocode(
       signal: AbortSignal.timeout(8_000),
     });
 
-    if (!res.ok) return fallback;
+    if (!res.ok) {
+      if (res.status === 429 || res.status >= 500) {
+        externalDisabledUntil = Date.now() + ERROR_COOLDOWN_MS;
+      } else {
+        shouldCacheFallback = true;
+      }
+      return fallback;
+    }
 
-    const data = (await res.json()) as { address?: NominatimAddress; display_name?: string };
+    const data = (await res.json()) as {
+      address?: NominatimAddress;
+      display_name?: string;
+    };
     const addr = data.address;
-    if (!addr) return fallback;
+    if (!addr) {
+      shouldCacheFallback = true;
+      return fallback;
+    }
 
     const prefecture = parsePrefecture(addr);
     const municipality = parseMunicipality(addr);
     const areaName = parseAreaName(addr);
 
     const address = data.display_name ?? null;
-    return { municipality, prefecture, areaName, address };
+    const result = { municipality, prefecture, areaName, address };
+    setCached(key, result);
+    return result;
   } catch (e) {
+    externalDisabledUntil = Date.now() + ERROR_COOLDOWN_MS;
     console.error("[geocoding] 逆ジオコーディングエラー:", e);
     return fallback;
+  } finally {
+    if (shouldCacheFallback) {
+      setCached(key, fallback);
+    }
   }
 }

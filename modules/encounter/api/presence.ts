@@ -18,7 +18,38 @@ import {
   listLivePresenceForViewer,
 } from "../db/queries.js";
 import { assertFiniteLatLng } from "../core/geo.js";
-import { reverseGeocode } from "../core/geocoding.js";
+import { LIVE_PRESENCE_MIN_PULSE_GAP_MS } from "../core/live-presence.js";
+
+const RECENT_PULSE_CACHE_MAX = 5_000;
+const RECENT_PULSE_CACHE_TTL_MS = 10 * 60 * 1000;
+
+const recentPulseAtByUserId = new Map<number, number>();
+
+function normalizePlace(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function canAcceptPulse(userId: number, now = Date.now()): boolean {
+  const lastAcceptedAt = recentPulseAtByUserId.get(userId);
+  if (
+    lastAcceptedAt !== undefined &&
+    now - lastAcceptedAt < LIVE_PRESENCE_MIN_PULSE_GAP_MS
+  ) {
+    return false;
+  }
+
+  recentPulseAtByUserId.set(userId, now);
+  if (recentPulseAtByUserId.size > RECENT_PULSE_CACHE_MAX) {
+    const cutoff = now - RECENT_PULSE_CACHE_TTL_MS;
+    for (const [cachedUserId, acceptedAt] of recentPulseAtByUserId) {
+      if (acceptedAt < cutoff) {
+        recentPulseAtByUserId.delete(cachedUserId);
+      }
+    }
+  }
+  return true;
+}
 
 export const presenceRouter = router({
   /** 居場所のリアルタイム公開を ON/OFF */
@@ -68,9 +99,6 @@ export const presenceRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) return { ok: false, masked: false };
-
       if (input.accuracy !== undefined && input.accuracy > 10_000) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -83,19 +111,18 @@ export const presenceRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "無効な座標です" });
       }
 
-      let municipality = input.municipality ?? null;
-      let prefecture = input.prefecture ?? null;
-      if (!municipality || !prefecture) {
-        const g = await reverseGeocode(latLng.lat, latLng.lng);
-        municipality = municipality ?? g.municipality;
-        prefecture = prefecture ?? g.prefecture;
+      if (!canAcceptPulse(ctx.user.id)) {
+        return { ok: true, masked: false };
       }
+
+      const db = await getDb();
+      if (!db) return { ok: false, masked: false };
 
       return updateLivePresencePosition(db, ctx.user.id, {
         lat: latLng.lat,
         lng: latLng.lng,
-        municipality,
-        prefecture,
+        municipality: normalizePlace(input.municipality),
+        prefecture: normalizePlace(input.prefecture),
       });
     }),
 

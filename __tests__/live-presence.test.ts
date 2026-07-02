@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { latLngToRadarPercent } from "../lib/japan-radar-position.js";
 import {
+  LIVE_PRESENCE_MIN_PULSE_GAP_MS,
+  LIVE_PRESENCE_PULSE_INTERVAL_MS,
   isLivePresenceFresh,
   shortPlaceLabel,
 } from "../modules/encounter/core/live-presence.js";
@@ -28,5 +30,10 @@ describe("live-presence", () => {
     const now = Date.now();
     expect(isLivePresenceFresh(new Date(now - 4 * 60 * 1000), now)).toBe(true);
     expect(isLivePresenceFresh(new Date(now - 6 * 60 * 1000), now)).toBe(false);
+  });
+
+  it("pulse 間隔は API 負荷を抑える設定", () => {
+    expect(LIVE_PRESENCE_PULSE_INTERVAL_MS).toBe(60 * 1000);
+    expect(LIVE_PRESENCE_MIN_PULSE_GAP_MS).toBe(30 * 1000);
   });
 });
