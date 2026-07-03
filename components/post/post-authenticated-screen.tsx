@@ -22,8 +22,9 @@ import {
   Platform,
   useWindowDimensions,
   ActivityIndicator,
+  InteractionManager,
 } from "react-native";
-import { useState, useCallback, lazy, Suspense, useMemo } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense, useMemo } from "react";
 import { useRouter } from "expo-router";
 import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
@@ -47,6 +48,7 @@ import {
 import { EnvelopeCard } from "@/components/post/envelope-card";
 import { HomeStatusLine } from "@/components/post/home-status-line";
 import { EnvelopeRail } from "@/components/post/envelope-rail";
+import { RadarStageBoundary } from "@/components/post/radar-stage-boundary";
 import type { SignalAccountItem } from "@/components/organisms/signal-account-grid";
 import {
   LazySignalAccountGrid,
@@ -68,10 +70,37 @@ const RadarHud = lazy(() =>
   import("@/components/organisms/radar-hud").then((m) => ({ default: m.RadarHud })),
 );
 
-function DeferredRadarFallback() {
+function DeferredRadarFallback({ style }: { style?: object }) {
   return (
-    <View style={{ minHeight: 120, alignItems: "center", justifyContent: "center" }}>
+    <View style={[{ minHeight: 120, alignItems: "center", justifyContent: "center" }, style]}>
       <ActivityIndicator color={color.accentPrimary} />
+    </View>
+  );
+}
+
+/**
+ * 認証済みホーム OOM の bisect 用キルスイッチ（恒久的に残す）。
+ * docs/auth-home-oom-diagnosis-v2.md Phase 0-1: `?romiLiteHome=1` または
+ * localStorage で立てると、地図/マーカーの重い描画を丸ごとスキップし、
+ * ステータスライン・封筒レール・シグナル一覧だけの軽量表示にする。
+ * これで OOM の原因がレーダーステージ配下かどうかを実機1回で二分できる。
+ */
+function isLiteHomeRequested() {
+  if (Platform.OS !== "web" || typeof window === "undefined") return false;
+  try {
+    return (
+      new URLSearchParams(window.location.search).has("romiLiteHome") ||
+      window.localStorage.getItem("romiLiteHome") === "1"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function LiteRadarPlaceholder({ style }: { style?: object }) {
+  return (
+    <View style={[{ backgroundColor: color.bg, alignItems: "center", justifyContent: "center" }, style]}>
+      <Text style={{ color: color.textMuted, fontSize: 12 }}>軽量表示中（地図オフ）</Text>
     </View>
   );
 }
@@ -245,6 +274,18 @@ export function PostAuthenticatedScreen() {
   const [openModalVisible, setOpenModalVisible] = useState(false);
   const [reportItem, setReportItem] = useState<EncounterItem | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [liteMode] = useState(isLiteHomeRequested);
+  const [radarStageReady, setRadarStageReady] = useState(false);
+
+  // 初期ピークを分散するため、レーダーステージ（地図+マーカー）のマウントを
+  // 他の操作が落ち着くまで1tick遅らせる（docs/auth-home-oom-diagnosis-v2.md Phase 0-2）。
+  useEffect(() => {
+    if (liteMode) return;
+    const task = InteractionManager.runAfterInteractions(() => {
+      setRadarStageReady(true);
+    });
+    return () => task.cancel();
+  }, [liteMode]);
 
   const { data: encounters, refetch, isFetching, isLoading: isLoadingEncounters } = trpc.encounter.list.useQuery(
     { cursor: undefined },
@@ -390,54 +431,61 @@ export function PostAuthenticatedScreen() {
   const presenceMarkers = [...presenceSelf, ...presenceOthers].slice(0, MAX_PRESENCE_MARKERS);
   const hiddenPresenceCount = presenceAll.length - presenceMarkers.length;
 
-  const renderRadarStage = () => (
-    <Suspense fallback={<DeferredRadarFallback />}>
-      <JapanRadarMap>
-        {envelopeMarkers.map((item, index) => {
-          const randomX = 10 + (Math.sin(item.id * 123) * 0.5 + 0.5) * 80;
-          const randomY = 10 + (Math.cos(item.id * 321) * 0.5 + 0.5) * 80;
-          return (
-            <LazyEnvelopePulse
-              key={item.id}
-              x={randomX}
-              y={randomY}
-              onPress={() => handleOpen(item)}
-              animate={index < ANIMATE_ENVELOPE_N}
-            />
-          );
-        })}
-        {presenceMarkers.map((marker, index) => {
-          const pos = latLngToRadarPercent(marker.lat, marker.lng);
-          if (!pos) return null;
-          // モバイルは自分＋最新数人だけパルスを動かし、残りは静止。
-          const shouldAnimate = marker.isSelf || index < ANIMATE_PRESENCE_N;
-          return (
-            <LazyCharacterHere
-              key={`live-${marker.userId}`}
-              imageUrl={marker.profileImage}
-              name={marker.name ?? "ユーザー"}
-              place={marker.place ?? undefined}
-              x={pos.x}
-              y={pos.y}
-              delay={index * 120}
-              isSelf={marker.isSelf}
-              animate={shouldAnimate}
-            />
-          );
-        })}
-        {(hiddenEnvelopeCount > 0 || hiddenPresenceCount > 0) ? (
-          <View style={styles.radarOverflowChip} pointerEvents="none">
-            {hiddenEnvelopeCount > 0 ? (
-              <Text style={styles.radarOverflowText}>＋他{hiddenEnvelopeCount}通のシグナル</Text>
+  const renderRadarStage = (stageStyle?: object) => {
+    if (liteMode) return <LiteRadarPlaceholder style={stageStyle} />;
+    if (!radarStageReady) return <DeferredRadarFallback style={stageStyle} />;
+
+    return (
+      <RadarStageBoundary style={stageStyle}>
+        <Suspense fallback={<DeferredRadarFallback style={stageStyle} />}>
+          <JapanRadarMap>
+            {envelopeMarkers.map((item, index) => {
+              const randomX = 10 + (Math.sin(item.id * 123) * 0.5 + 0.5) * 80;
+              const randomY = 10 + (Math.cos(item.id * 321) * 0.5 + 0.5) * 80;
+              return (
+                <LazyEnvelopePulse
+                  key={item.id}
+                  x={randomX}
+                  y={randomY}
+                  onPress={() => handleOpen(item)}
+                  animate={index < ANIMATE_ENVELOPE_N}
+                />
+              );
+            })}
+            {presenceMarkers.map((marker, index) => {
+              const pos = latLngToRadarPercent(marker.lat, marker.lng);
+              if (!pos) return null;
+              // モバイルは自分＋最新数人だけパルスを動かし、残りは静止。
+              const shouldAnimate = marker.isSelf || index < ANIMATE_PRESENCE_N;
+              return (
+                <LazyCharacterHere
+                  key={`live-${marker.userId}`}
+                  imageUrl={marker.profileImage}
+                  name={marker.name ?? "ユーザー"}
+                  place={marker.place ?? undefined}
+                  x={pos.x}
+                  y={pos.y}
+                  delay={index * 120}
+                  isSelf={marker.isSelf}
+                  animate={shouldAnimate}
+                />
+              );
+            })}
+            {(hiddenEnvelopeCount > 0 || hiddenPresenceCount > 0) ? (
+              <View style={styles.radarOverflowChip} pointerEvents="none">
+                {hiddenEnvelopeCount > 0 ? (
+                  <Text style={styles.radarOverflowText}>＋他{hiddenEnvelopeCount}通のシグナル</Text>
+                ) : null}
+                {hiddenPresenceCount > 0 ? (
+                  <Text style={styles.radarOverflowText}>＋他{hiddenPresenceCount}人がどこかにいる</Text>
+                ) : null}
+              </View>
             ) : null}
-            {hiddenPresenceCount > 0 ? (
-              <Text style={styles.radarOverflowText}>＋他{hiddenPresenceCount}人がどこかにいる</Text>
-            ) : null}
-          </View>
-        ) : null}
-      </JapanRadarMap>
-    </Suspense>
-  );
+          </JapanRadarMap>
+        </Suspense>
+      </RadarStageBoundary>
+    );
+  };
 
   const renderSisterBanners = (inFlow = false) =>
     (appConfig.siblingServices ?? []).map((svc) => (
@@ -502,7 +550,7 @@ export function PostAuthenticatedScreen() {
 
         {isDesktop ? (
         <View style={styles.mapContainer}>
-          {renderRadarStage()}
+          {renderRadarStage(StyleSheet.absoluteFillObject)}
           {signalGrid}
           {emptyOverlay}
           {renderSisterBanners()}
@@ -532,7 +580,7 @@ export function PostAuthenticatedScreen() {
             <EnvelopeRail items={unopened} onOpen={handleOpen} />
           ) : null}
           <View style={[styles.mapHeroMobile, { height: mapMobileHeight }]}>
-            {renderRadarStage()}
+            {renderRadarStage({ flex: 1 })}
             {emptyOverlay}
             {!isAuthenticated && (
             <Suspense fallback={null}>
