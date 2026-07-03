@@ -249,6 +249,7 @@ export default function CheckinAuthenticatedScreen() {
             municipality: result.municipality,
             visitCount: 1,
             lastVisitedAt: optimisticRecordedAt,
+            firstVisitedAt: optimisticRecordedAt,
           });
         }
         return { ...old, visited };
