@@ -351,10 +351,28 @@ export function PostAuthenticatedScreen() {
     [handleOpen, handleSendStamp, handleBlock, handleReport],
   );
 
+  // モバイル実機の OOM 対策: 地図に撒くマーカー数と、同時に動く無限アニメの
+  // 本数を上限で絞る。あふれた分は「他N件」の集約チップで示し、全件は下部の
+  // シグナル一覧から開封できるため情報自体は失われない（docs/auth-home-lightweight-PLAN.md §5）。
+  const MAX_ENVELOPE_MARKERS = isDesktop ? 10 : 4;
+  const ANIMATE_ENVELOPE_N = isDesktop ? 4 : 2;
+  const MAX_PRESENCE_MARKERS = isDesktop ? 12 : 5;
+  const ANIMATE_PRESENCE_N = 3;
+
+  const envelopeMarkers = unopened.slice(0, MAX_ENVELOPE_MARKERS);
+  const hiddenEnvelopeCount = unopened.length - envelopeMarkers.length;
+
+  // isSelf を必ず含めた上で上限を適用（自分は常に地図に出す）。
+  const presenceAll = livePresence ?? [];
+  const presenceSelf = presenceAll.filter((m) => m.isSelf);
+  const presenceOthers = presenceAll.filter((m) => !m.isSelf);
+  const presenceMarkers = [...presenceSelf, ...presenceOthers].slice(0, MAX_PRESENCE_MARKERS);
+  const hiddenPresenceCount = presenceAll.length - presenceMarkers.length;
+
   const renderRadarStage = () => (
     <Suspense fallback={<DeferredRadarFallback />}>
       <JapanRadarMap>
-        {unopened.map((item) => {
+        {envelopeMarkers.map((item, index) => {
           const randomX = 10 + (Math.sin(item.id * 123) * 0.5 + 0.5) * 80;
           const randomY = 10 + (Math.cos(item.id * 321) * 0.5 + 0.5) * 80;
           return (
@@ -363,12 +381,15 @@ export function PostAuthenticatedScreen() {
               x={randomX}
               y={randomY}
               onPress={() => handleOpen(item)}
+              animate={index < ANIMATE_ENVELOPE_N}
             />
           );
         })}
-        {(livePresence ?? []).map((marker, index) => {
+        {presenceMarkers.map((marker, index) => {
           const pos = latLngToRadarPercent(marker.lat, marker.lng);
           if (!pos) return null;
+          // モバイルは自分＋最新数人だけパルスを動かし、残りは静止。
+          const shouldAnimate = marker.isSelf || index < ANIMATE_PRESENCE_N;
           return (
             <LazyCharacterHere
               key={`live-${marker.userId}`}
@@ -379,9 +400,20 @@ export function PostAuthenticatedScreen() {
               y={pos.y}
               delay={index * 120}
               isSelf={marker.isSelf}
+              animate={shouldAnimate}
             />
           );
         })}
+        {(hiddenEnvelopeCount > 0 || hiddenPresenceCount > 0) ? (
+          <View style={styles.radarOverflowChip} pointerEvents="none">
+            {hiddenEnvelopeCount > 0 ? (
+              <Text style={styles.radarOverflowText}>＋他{hiddenEnvelopeCount}通のシグナル</Text>
+            ) : null}
+            {hiddenPresenceCount > 0 ? (
+              <Text style={styles.radarOverflowText}>＋他{hiddenPresenceCount}人がどこかにいる</Text>
+            ) : null}
+          </View>
+        ) : null}
       </JapanRadarMap>
     </Suspense>
   );
@@ -513,6 +545,27 @@ export function PostAuthenticatedScreen() {
 }
 
 const styles = StyleSheet.create({
+  // 地図マーカーの上限を超えた分を示す集約チップ（sisterBanner と衝突しない上寄せ）。
+  radarOverflowChip: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    maxWidth: "70%",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "rgba(13,17,23,0.72)",
+    borderWidth: 1,
+    borderColor: palette.kimitoBlue + "55",
+    gap: 2,
+    zIndex: 20,
+  },
+  radarOverflowText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+    textAlign: "right",
+  },
   mapContainer: {
     flex: 1,
     position: "relative",
