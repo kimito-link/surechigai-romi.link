@@ -8,6 +8,8 @@ import Animated, {
   withSequence,
   withSpring,
   Easing,
+  cancelAnimation,
+  useReducedMotion,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { color } from "@/theme/tokens";
@@ -16,16 +18,32 @@ export function EnvelopePulse({
   onPress,
   x,
   y,
+  animate = true,
 }: {
   onPress: () => void;
   x: number;
   y: number;
+  /**
+   * false のとき無限パルスを回さず静的リングを表示する。
+   * 認証済みホームで同時に脈打つマーカー数を上限で絞り、
+   * 無限ループの積み重ねによる OOM を防ぐため（他は静止）。
+   */
+  animate?: boolean;
 }) {
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.8);
   const buttonScale = useSharedValue(1);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
+    // animate=false / reduced-motion 時は静的リング（scale 1.4・opacity 0.35固定）。
+    // 「そこにシグナルがある」表示は残しつつ、動きだけ止める。
+    if (!animate || reduceMotion) {
+      pulseScale.value = 1.4;
+      pulseOpacity.value = 0.35;
+      return;
+    }
+
     pulseScale.value = withRepeat(
       withTiming(2.5, { duration: 1500, easing: Easing.out(Easing.ease) }),
       -1,
@@ -36,7 +54,13 @@ export function EnvelopePulse({
       -1,
       false
     );
-  }, []);
+
+    // cleanup: アンマウント/依存変更時に無限ループを必ず停止（OOM対策の要）。
+    return () => {
+      cancelAnimation(pulseScale);
+      cancelAnimation(pulseOpacity);
+    };
+  }, [animate, reduceMotion]);
 
   const animatedPulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],

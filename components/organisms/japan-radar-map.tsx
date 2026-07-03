@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { G, Path, Polygon, Line } from 'react-native-svg';
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cancelAnimation, useReducedMotion } from 'react-native-reanimated';
 import { color } from '@/theme/tokens';
 
 export function JapanRadarMap({ children }: { children?: React.ReactNode }) {
@@ -12,16 +12,33 @@ export function JapanRadarMap({ children }: { children?: React.ReactNode }) {
   // Radar sweep animation
   const rotation = useSharedValue(0);
   const mapOpacity = useSharedValue(0);
-  
+  // モーション削減設定を尊重（RadarHud と同様）。ON のときは回転を回さない。
+  const reduceMotion = useReducedMotion();
+
   React.useEffect(() => {
+    // 初期描画の「白く光る」のを防ぐためフェードイン（回転有無に関わらず表示は出す）
+    mapOpacity.value = withTiming(0.5, { duration: 800 });
+
+    if (reduceMotion) {
+      // reduced-motion 時は静止。回転を回さないことでアニメ由来の GC 圧を発生させない。
+      rotation.value = 0;
+      return;
+    }
+
     rotation.value = withRepeat(
       withTiming(360, { duration: 4000, easing: Easing.linear }),
       -1,
       false
     );
-    // 初期描画の「白く光る」のを防ぐためフェードイン
-    mapOpacity.value = withTiming(0.5, { duration: 800 });
-  }, []);
+
+    // cleanup: アンマウント時に無限回転を必ず停止する。
+    // これが無いと画面を離れても withRepeat(-1) が走り続け、
+    // 認証済みホームの他の無限アニメと積み重なって OOM の原因になる。
+    return () => {
+      cancelAnimation(rotation);
+      cancelAnimation(mapOpacity);
+    };
+  }, [reduceMotion]);
 
   const animatedRadarStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],

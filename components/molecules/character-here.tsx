@@ -12,6 +12,8 @@ import Animated, {
   withRepeat,
   withTiming,
   Easing,
+  cancelAnimation,
+  useReducedMotion,
 } from "react-native-reanimated";
 import { color } from "@/theme/tokens";
 
@@ -24,13 +26,27 @@ type Props = {
   y: number; // 地図上の縦位置（%）
   delay?: number;
   isSelf?: boolean;
+  /**
+   * false のとき地面パルスの無限ループを回さず静止表示にする。
+   * 認証済みホームで同時に動くマーカー数を絞り、無限ループ蓄積による
+   * OOM を防ぐため。吹き出し・アイコン・名前の表示は常に残す。
+   */
+  animate?: boolean;
 };
 
-export function CharacterHere({ source, imageUrl, name, place, x, y, delay = 0, isSelf }: Props) {
+export function CharacterHere({ source, imageUrl, name, place, x, y, delay = 0, isSelf, animate = true }: Props) {
   const float = useSharedValue(0);
   const pulse = useSharedValue(0.8);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
+    // animate=false / reduced-motion 時は静止（float=0・pulseは静的リング相当）。
+    if (!animate || reduceMotion) {
+      float.value = 0;
+      pulse.value = 0.5;
+      return;
+    }
+
     float.value = withRepeat(
       withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
       -1,
@@ -41,7 +57,13 @@ export function CharacterHere({ source, imageUrl, name, place, x, y, delay = 0, 
       -1,
       false,
     );
-  }, [float, pulse]);
+
+    // cleanup: アンマウント/依存変更時に無限ループを必ず停止（OOM対策の要）。
+    return () => {
+      cancelAnimation(float);
+      cancelAnimation(pulse);
+    };
+  }, [float, pulse, animate, reduceMotion]);
 
   const floatStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: float.value * -4 }],
