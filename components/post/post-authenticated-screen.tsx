@@ -63,6 +63,12 @@ import { LIVE_PRESENCE_PULSE_INTERVAL_MS } from "@/modules/encounter/core/live-p
 import { CheckinCtaButton } from "@/components/molecules/checkin-cta-button";
 import { useTabScrollToTop } from "@/hooks/use-tab-scroll-to-top";
 
+// docs/auth-home-oom-diagnosis-v2.md: 認証済みホームのOOMが e0cbccf(居場所リアルタイム公開)
+// 導入以前は起きていなかったとの実機報告を受け、原因切り分けのため居場所マーカーの
+// 描画とpresence.list定期クエリを一時停止する。マイページの設定・API・DBは変更しない
+// （UI表示のみのオフ）。原因が確定し次第、安全な形で作り直して再有効化する。
+const LIVE_PRESENCE_RADAR_ENABLED = false;
+
 const JapanRadarMap = lazy(() =>
   import("@/components/organisms/japan-radar-map").then((m) => ({ default: m.JapanRadarMap })),
 );
@@ -293,7 +299,7 @@ export function PostAuthenticatedScreen() {
   );
 
   const { data: livePresence } = trpc.presence.list.useQuery(undefined, {
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && LIVE_PRESENCE_RADAR_ENABLED,
     refetchInterval: Math.max(LIVE_PRESENCE_PULSE_INTERVAL_MS, 30_000),
   });
 
@@ -425,7 +431,7 @@ export function PostAuthenticatedScreen() {
   const hiddenEnvelopeCount = unopened.length - envelopeMarkers.length;
 
   // isSelf を必ず含めた上で上限を適用（自分は常に地図に出す）。
-  const presenceAll = livePresence ?? [];
+  const presenceAll = LIVE_PRESENCE_RADAR_ENABLED ? (livePresence ?? []) : [];
   const presenceSelf = presenceAll.filter((m) => m.isSelf);
   const presenceOthers = presenceAll.filter((m) => !m.isSelf);
   const presenceMarkers = [...presenceSelf, ...presenceOthers].slice(0, MAX_PRESENCE_MARKERS);
