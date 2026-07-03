@@ -17,9 +17,9 @@ import { LazyGlobalMenu } from "@/lib/lazy-heavy-components";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { BrandHomeLink, BrandHomeTaglineLink } from "@/components/brand/brand-home-link";
 import { navigate } from "@/lib/navigation";
-import { trpc } from "@/lib/trpc";
 import * as Haptics from "expo-haptics";
 import { useWebSideNavActive, WEB_SIDE_NAV_WIDTH } from "@/components/organisms/web-side-nav";
+import { LivePresenceBadge } from "@/components/organisms/live-presence-badge";
 
 // kimito ブランドの不透明度付きライン色
 const BLUE_BORDER = "#00427B40"; // kimitoBlue 25%
@@ -94,11 +94,6 @@ export function AppHeader({
   const isLoginGlyphOnly = windowWidth < 360;
   const webChromeStyle = useWebHeaderStyle();
 
-  const { data: settings } = trpc.settings.get.useQuery(undefined, {
-    enabled: Boolean(showLoginStatus && isAuthReadyForUI && user),
-    staleTime: 30_000,
-  });
-  const livePresenceOn = settings?.livePresenceEnabled ?? false;
 
   const goMypage = () => {
     triggerHaptic();
@@ -254,11 +249,8 @@ export function AppHeader({
                 <BrandTagline compact align="left" />
               </View>
             </BrandHomeTaglineLink>
-            {livePresenceOn ? (
-              <View style={styles.liveBadge} accessibilityLabel="居場所をリアルタイム公開中">
-                <View style={styles.liveDot} />
-                <Text style={styles.liveBadgeText}>居場所ON</Text>
-              </View>
+            {showLoginStatusStable ? (
+              <LivePresenceBadge enabled={isAuthReadyForUI && !!user} />
             ) : null}
           </View>
         )}
@@ -451,29 +443,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexWrap: "wrap",
     gap: 8,
-  },
-  liveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,128,51,0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(255,128,51,0.35)",
-  },
-  liveDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: palette.kimitoOrange,
-  },
-  liveBadgeText: {
-    color: palette.kimitoOrange,
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.3,
   },
   subtitle: {
     color: palette.kimitoInkMuted,

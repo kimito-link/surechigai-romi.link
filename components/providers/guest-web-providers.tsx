@@ -3,6 +3,7 @@ import { usePathname } from "expo-router";
 import { shouldDeferTrpcOnGuestWeb } from "@/lib/clerk-public-routes";
 import { scheduleAfterWindowLoad } from "@/lib/schedule-after-idle";
 import { PublicWebProviders } from "@/components/providers/public-web-providers";
+import { TrpcReadyProvider } from "@/lib/trpc-ready-context";
 
 /**
  * Guest Web シェル用: `/` 初回 paint では tRPC/React Query を読まない。
@@ -24,7 +25,9 @@ export function GuestWebProviders({ children }: { children: ReactNode }) {
   const trpcReady = !deferTrpc || idleTrpcReady;
 
   if (!trpcReady) {
-    return <>{children}</>;
+    // tRPC Provider がまだ無い窓。この間に `trpc.*.useQuery` を呼ぶコンポーネントは
+    // Context 不在で throw するため、useTrpcReady() でゲートできるよう false を配る。
+    return <TrpcReadyProvider value={false}>{children}</TrpcReadyProvider>;
   }
 
   return <PublicWebProviders>{children}</PublicWebProviders>;

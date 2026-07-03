@@ -9,10 +9,48 @@ import { color, palette } from "@/theme/tokens";
 import { prefectureShortLabel } from "@/modules/encounter/core/prefecture-labels";
 import { AUTHENTICATED_QUERY_OPTIONS, isInitialQueryLoad } from "@/lib/authenticated-query-options";
 import { useAuth } from "@/hooks/use-auth";
+import { useTrpcReady } from "@/lib/trpc-ready-context";
 
 const MAX_CHIPS = 4;
 
+/**
+ * ゲスト `/` は tRPC Provider を window load + idle まで mount しない
+ * （guest-web-providers.tsx の defer 境界）。その窓の間は tRPC フックを
+ * 一切呼ばず、既存の「集計中」表示と同じ見た目のスケルトンで待つ。
+ * `enabled: false` では Context 不在の throw を防げないため、hook 呼び出し
+ * 自体を Inner コンポーネントへ分離してマウントを止める。
+ */
 export function NavLivePrefecturePanel() {
+  const trpcReady = useTrpcReady();
+  if (!trpcReady) {
+    return <NavLivePrefecturePanelShell />;
+  }
+  return <NavLivePrefecturePanelInner />;
+}
+
+function NavLivePrefecturePanelShell() {
+  const router = useRouter();
+  return (
+    <Pressable
+      onPress={() => router.push("/(tabs)/zukan")}
+      style={({ pressed, hovered }) => [
+        styles.panel,
+        Platform.OS === "web" && (hovered as boolean) && styles.panelHover,
+        pressed && { opacity: 0.9 },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel="みんなの現在地を図鑑で見る"
+    >
+      <View style={styles.headRow}>
+        <MaterialIcons name="place" size={14} color={palette.kimitoBlue} />
+        <Text style={styles.title}>みんなの現在地</Text>
+      </View>
+      <Text style={styles.meta}>公開中の足あとを集計中</Text>
+    </Pressable>
+  );
+}
+
+function NavLivePrefecturePanelInner() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { data, isLoading } = trpc.zukan.activePrefectures.useQuery(undefined, {
