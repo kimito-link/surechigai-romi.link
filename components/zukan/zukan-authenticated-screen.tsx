@@ -26,8 +26,6 @@ import { TabMapLoadingFallback } from "@/components/molecules/tab-query-shell";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
 import { DeleteTrailConfirmModal } from "@/components/molecules/delete-trail-confirm-modal";
 import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
-import { ZukanCompleteHeader } from "@/components/zukan/zukan-complete-header";
-import { MunicipalityStampCard } from "@/components/zukan/municipality-stamp-card";
 
 export function ZukanAuthenticatedScreen() {
   const { isDesktop } = useResponsive();
@@ -107,13 +105,7 @@ export function ZukanAuthenticatedScreen() {
   const municipalitySummary = useMemo(() => {
     const map = new Map<
       string,
-      {
-        municipality: string;
-        prefecture: string | null;
-        visitCount: number;
-        lastVisitedAt: Date | string;
-        firstVisitedAt: Date | string;
-      }
+      { municipality: string; prefecture: string | null; visitCount: number; lastVisitedAt: Date | string }
     >();
     for (const v of data?.visited ?? []) {
       const name = v.municipality || v.prefecture;
@@ -125,16 +117,12 @@ export function ZukanAuthenticatedScreen() {
         if (new Date(v.lastVisitedAt) > new Date(prev.lastVisitedAt)) {
           prev.lastVisitedAt = v.lastVisitedAt;
         }
-        if (new Date(v.firstVisitedAt) < new Date(prev.firstVisitedAt)) {
-          prev.firstVisitedAt = v.firstVisitedAt;
-        }
       } else {
         map.set(key, {
           municipality: name,
           prefecture: v.prefecture,
           visitCount: v.visitCount,
           lastVisitedAt: v.lastVisitedAt,
-          firstVisitedAt: v.firstVisitedAt,
         });
       }
     }
@@ -196,11 +184,6 @@ export function ZukanAuthenticatedScreen() {
           />
 
           <Text style={[styles.sectionTitle, styles.sectionTitleSpaced]}>あなたの記録</Text>
-          <ZukanCompleteHeader
-            visitedPrefectureCount={visitedCount}
-            municipalityCount={municipalitySummary.length}
-            encounterPartnerCount={data?.encounterPartnerCount ?? 0}
-          />
           <View style={styles.summaryRow}>
             <View style={styles.summaryCard}>
               <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>
@@ -260,22 +243,24 @@ export function ZukanAuthenticatedScreen() {
 
           {municipalitySummary.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>訪問した市区町村（切手帳）</Text>
-              <View style={styles.stampGrid}>
+              <Text style={styles.sectionTitle}>訪問した市区町村</Text>
+              <View style={styles.municipalityList}>
                 {municipalitySummary.map((m, i) => (
-                  <MunicipalityStampCard
-                    key={i}
-                    municipality={m.municipality}
-                    prefecture={m.prefecture}
-                    visitCount={m.visitCount}
-                    firstVisitedAt={m.firstVisitedAt}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/map",
-                        params: { municipality: m.municipality },
-                      } as any)
-                    }
-                  />
+                  <View key={i} style={styles.municipalityRow}>
+                    <View style={styles.municipalityInfo}>
+                      <Text style={styles.municipalityPrefecture} numberOfLines={1}>
+                        {m.municipality}
+                      </Text>
+                      <Text style={styles.municipalityVisitCount} numberOfLines={1}>
+                        {m.prefecture && m.prefecture !== m.municipality
+                          ? `${m.prefecture}・${m.visitCount} 回訪問`
+                          : `${m.visitCount} 回訪問`}
+                      </Text>
+                    </View>
+                    <Text style={styles.municipalityDate} numberOfLines={1}>
+                      {formatDate(m.lastVisitedAt)}
+                    </Text>
+                  </View>
                 ))}
               </View>
             </>
@@ -319,6 +304,11 @@ export function ZukanAuthenticatedScreen() {
       />
     </ScreenContainer>
   );
+}
+
+function formatDate(d: Date | string): string {
+  const date = d instanceof Date ? d : new Date(d);
+  return date.toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" });
 }
 
 const styles = StyleSheet.create({
@@ -425,16 +415,25 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 2,
   },
+  municipalityInfo: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: 12,
+  },
   municipalityPrefecture: {
     color: color.textPrimary,
     fontSize: 13,
     fontWeight: "600",
   },
-  stampGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 20,
+  municipalityVisitCount: {
+    color: color.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  municipalityDate: {
+    color: color.textMuted,
+    fontSize: 11,
+    flexShrink: 0,
   },
   encounterBadge: {
     paddingHorizontal: 10,

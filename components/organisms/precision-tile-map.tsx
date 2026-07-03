@@ -120,14 +120,7 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
     /** 地図クリックで座標を選べる（PC Web 向け位置修正） */
     interactive?: boolean;
     onCoordinateSelect?: (coords: { lat: number; lng: number }) => void;
-    /** ピン（最新・履歴とも）タップで足あとカードを開く（docs/uiux-brushup-SPEC.md §3.3） */
-    onPointPress?: (point: TrailPoint) => void;
-    /** ズーム+/-ボタンを表示し、変更を呼び出し側の state に反映する（docs/uiux-brushup-SPEC.md §3.2） */
-    onZoomChange?: (nextZoom: number) => void;
   }
-
-const MIN_ZOOM = 11;
-const MAX_ZOOM = 19;
 
   export function PrecisionTileMap({
     locations,
@@ -142,8 +135,6 @@ const MAX_ZOOM = 19;
     markerSize = 44,
     interactive = false,
     onCoordinateSelect,
-    onPointPress,
-    onZoomChange,
   }: PrecisionTileMapProps) {
   const { width: windowWidth } = useWindowDimensions();
   const mapWidth = propWidth ?? Math.max(320, Math.min(windowWidth - 32, 980));
@@ -210,13 +201,6 @@ const MAX_ZOOM = 19;
     .map(({ pixel }) => `${pixel.x},${pixel.y}`)
     .join(" ");
 
-  /**
-   * ズーム別の精度表現（docs/uiux-brushup-SPEC.md §3.2）。
-   * 精度円は「その場に行ける」高ズームでしか意味を持たない — 引きの地図で
-   * 常時描くと周辺文脈（道路・建物）と視覚的に競合するため、低ズームでは隠す。
-   */
-  const showAccuracyCircle = zoom >= 16;
-
   return (
     <View style={[styles.mapFrame, { width: mapWidth, height: mapHeight }, containerStyle]}>
       {tiles.map((tile) => (
@@ -265,7 +249,7 @@ const MAX_ZOOM = 19;
         />
       ) : null}
 
-      {latest && showAccuracyCircle && (
+      {latest && (
         <View
           pointerEvents="none"
           style={[
@@ -283,39 +267,23 @@ const MAX_ZOOM = 19;
 
       {visiblePoints
         .filter(({ index }) => index !== 0)
-        .map(({ point, pixel, index }) =>
-          onPointPress ? (
-            <Pressable
-              key={`${point.id}:${index}`}
-              onPress={() => onPointPress(point)}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={[
-                styles.historyDot,
-                {
-                  left: pixel.x - 5,
-                  top: pixel.y - 5,
-                },
-              ]}
-              accessibilityLabel={`${formatPlace(point)}の足あとを見る`}
-            />
-          ) : (
-            <View
-              key={`${point.id}:${index}`}
-              pointerEvents="none"
-              style={[
-                styles.historyDot,
-                {
-                  left: pixel.x - 5,
-                  top: pixel.y - 5,
-                },
-              ]}
-            />
-          ),
-        )}
+        .map(({ point, pixel, index }) => (
+          <View
+            key={`${point.id}:${index}`}
+            pointerEvents="none"
+            style={[
+              styles.historyDot,
+              {
+                left: pixel.x - 5,
+                top: pixel.y - 5,
+              },
+            ]}
+          />
+        ))}
 
       {latest && (
         <>
-          {showDetails && !onPointPress && (
+          {showDetails && (
             <View
               style={[
                 styles.detailPopup,
@@ -332,13 +300,7 @@ const MAX_ZOOM = 19;
             </View>
           )}
           <Pressable
-            onPress={
-              interactive
-                ? undefined
-                : onPointPress
-                  ? () => onPointPress(latest)
-                  : () => setShowDetails(!showDetails)
-            }
+            onPress={interactive ? undefined : () => setShowDetails(!showDetails)}
             disabled={interactive}
             style={[
               styles.latestMarker,
@@ -385,40 +347,10 @@ const MAX_ZOOM = 19;
         </View>
       )}
 
-      {onZoomChange ? (
-        <View style={styles.zoomControl}>
-          <Pressable
-            onPress={() => onZoomChange(clamp(zoom - 1, MIN_ZOOM, MAX_ZOOM))}
-            disabled={zoom <= MIN_ZOOM}
-            style={({ pressed }) => [
-              styles.zoomButton,
-              pressed && { opacity: 0.7 },
-              zoom <= MIN_ZOOM && { opacity: 0.4 },
-            ]}
-            accessibilityLabel="縮小"
-          >
-            <MaterialIcons name="remove" size={18} color={color.textWhite} />
-          </Pressable>
-          <Text style={styles.zoomBadgeText}>z{zoom}</Text>
-          <Pressable
-            onPress={() => onZoomChange(clamp(zoom + 1, MIN_ZOOM, MAX_ZOOM))}
-            disabled={zoom >= MAX_ZOOM}
-            style={({ pressed }) => [
-              styles.zoomButton,
-              pressed && { opacity: 0.7 },
-              zoom >= MAX_ZOOM && { opacity: 0.4 },
-            ]}
-            accessibilityLabel="拡大"
-          >
-            <MaterialIcons name="add" size={18} color={color.textWhite} />
-          </Pressable>
-        </View>
-      ) : (
-        <View pointerEvents="none" style={styles.zoomBadge}>
-          <MaterialIcons name="layers" size={16} color={color.textWhite} />
-          <Text style={styles.zoomBadgeText}>z{zoom}</Text>
-        </View>
-      )}
+      <View pointerEvents="none" style={styles.zoomBadge}>
+        <MaterialIcons name="layers" size={16} color={color.textWhite} />
+        <Text style={styles.zoomBadgeText}>z{zoom}</Text>
+      </View>
 
       <Text pointerEvents="none" style={styles.mapAttribution}>© OpenStreetMap contributors</Text>
     </View>
@@ -541,27 +473,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 7,
-  },
-  zoomControl: {
-    position: "absolute",
-    right: 12,
-    top: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(15, 23, 42, 0.72)",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    zIndex: 6,
-  },
-  zoomButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
   },
   zoomBadgeText: {
     color: color.textWhite,

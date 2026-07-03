@@ -28,7 +28,6 @@ import Animated, {
   withTiming,
   withRepeat,
   Easing,
-  cancelAnimation,
 } from "react-native-reanimated";
 import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
@@ -43,11 +42,8 @@ import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MO
 import { computeCheckinScrollBottomInset } from "@/lib/layout/responsive-layout";
 import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
 import { MapErrorBoundary } from "@/components/ui/map-error-boundary";
-import { formatDateTime } from "@/components/organisms/precision-tile-map";
 import type { TrailPoint } from "@/lib/map/tile-geo";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
-import { CheckinPreviewCard } from "@/components/checkin/checkin-preview-card";
-import { CheckinSuccessPanel } from "@/components/checkin/checkin-success-panel";
 import { useRouter } from "expo-router";
 import { shareMyLocation } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
@@ -83,7 +79,6 @@ export default function CheckinAuthenticatedScreen() {
   const [checkinAddress, setCheckinAddress] = useState<string | null>(null);
   const [checkinLatLng, setCheckinLatLng] = useState<{lat: number, lng: number} | null>(null);
   const [checkinAccuracyM, setCheckinAccuracyM] = useState<number | null>(null);
-  const [checkinLocationId, setCheckinLocationId] = useState<number | null>(null);
   const [fixedMapCenter, setFixedMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [isPausing, setIsPausing] = useState(false);
@@ -121,13 +116,6 @@ export default function CheckinAuthenticatedScreen() {
   // マップ用アニメーション
   const mapScale = useSharedValue(0.9);
   const mapOpacity = useSharedValue(0.8);
-
-  // 測位中の無限パルスは画面離脱時に必ず止める（地雷2: cleanup漏れ対策）
-  useEffect(() => {
-    return () => {
-      cancelAnimation(pulse);
-    };
-  }, [pulse]);
 
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -210,7 +198,6 @@ export default function CheckinAuthenticatedScreen() {
       setCheckinAddress(result.address ?? null);
       setCheckinLatLng({ lat: result.lat, lng: result.lng });
       setCheckinAccuracyM(pos.accuracy ?? null);
-      setCheckinLocationId(result.locationId ?? null);
 
       const latestLabel = [result.prefecture, result.municipality].filter(Boolean).join(" ") || null;
       utils.dashboard.mySignal.setData(undefined, (old) =>
@@ -262,7 +249,6 @@ export default function CheckinAuthenticatedScreen() {
             municipality: result.municipality,
             visitCount: 1,
             lastVisitedAt: optimisticRecordedAt,
-            firstVisitedAt: optimisticRecordedAt,
           });
         }
         return { ...old, visited };
@@ -295,8 +281,39 @@ export default function CheckinAuthenticatedScreen() {
     [checkIn, utils, pulse, mapScale, mapOpacity],
   );
 
-  /** 測位して adjust または success/zero へ進む（state="adjust" の再測位からも呼ばれる） */
-  const performLocateAndCheckin = useCallback(async () => {
+  const handleCheckin = useCallback(async () => {
+    if (state === "loading") return;
+
+    if (state === "adjust") {
+      if (!checkinLatLng) return;
+      setState("loading");
+      try {
+        await performCheckinSave({
+          lat: checkinLatLng.lat,
+          lng: checkinLatLng.lng,
+          accuracy: checkinAccuracyM ?? 8,
+        });
+      } catch (err: unknown) {
+        pulse.value = withTiming(1);
+        setState("error");
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        }
+        const msg = resolveCheckinErrorMessage(err, "チェックインに失敗しました");
+        setErrorMsg(msg);
+      }
+      return;
+    }
+
+    if (!skipLocationIntroRef.current) {
+      const introDone = await hasCompletedPostLoginLocationIntro().catch(() => true);
+      if (!introDone) {
+        setShowLocationIntro(true);
+        return;
+      }
+    }
+    skipLocationIntroRef.current = false;
+
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
@@ -367,6 +384,9 @@ export default function CheckinAuthenticatedScreen() {
       setTimeout(() => setState("idle"), 4000);
     }
   }, [
+    state,
+    checkinLatLng,
+    checkinAccuracyM,
     performCheckinSave,
     utils,
     scale,
@@ -376,52 +396,6 @@ export default function CheckinAuthenticatedScreen() {
     preciseAnchors,
     isDesktopBrowser,
   ]);
-
-  /** adjust 状態で「この場所に足あとを残す」: 確定済み座標でそのまま保存 */
-  const confirmAdjustedCheckin = useCallback(async () => {
-    if (!checkinLatLng) return;
-    setState("loading");
-    try {
-      await performCheckinSave({
-        lat: checkinLatLng.lat,
-        lng: checkinLatLng.lng,
-        accuracy: checkinAccuracyM ?? 8,
-      });
-    } catch (err: unknown) {
-      pulse.value = withTiming(1);
-      setState("error");
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-      const msg = resolveCheckinErrorMessage(err, "チェックインに失敗しました");
-      setErrorMsg(msg);
-    }
-  }, [checkinLatLng, checkinAccuracyM, performCheckinSave, pulse]);
-
-  const handleCheckin = useCallback(async () => {
-    if (state === "loading") return;
-
-    if (state === "adjust") {
-      await confirmAdjustedCheckin();
-      return;
-    }
-
-    if (!skipLocationIntroRef.current) {
-      const introDone = await hasCompletedPostLoginLocationIntro().catch(() => true);
-      if (!introDone) {
-        setShowLocationIntro(true);
-        return;
-      }
-    }
-    skipLocationIntroRef.current = false;
-
-    await performLocateAndCheckin();
-  }, [state, confirmAdjustedCheckin, performLocateAndCheckin]);
-
-  /** 保存前プレビューで「もう一度測る」: adjust のまま再測位する（idle を経由しない） */
-  const handleRetryLocation = useCallback(() => {
-    void performLocateAndCheckin();
-  }, [performLocateAndCheckin]);
 
   const handleLocationIntroAllow = useCallback(async () => {
     skipLocationIntroRef.current = true;
@@ -528,6 +502,9 @@ export default function CheckinAuthenticatedScreen() {
       : latestLocation ?? null;
 
   const placeLine = checkinAddress ?? checkinLocationName;
+  const coordLine = checkinLatLng
+    ? `(${checkinLatLng.lat.toFixed(6)}, ${checkinLatLng.lng.toFixed(6)})`
+    : null;
 
   const pausedBanner = isPausing ? (
     <View style={styles.pausedBanner}>
@@ -629,112 +606,163 @@ export default function CheckinAuthenticatedScreen() {
               ]}
               showsVerticalScrollIndicator={false}
             >
-              {state === "loading" ? (
-                <View style={styles.encounterBanner}>
+              <View
+                style={[
+                  styles.encounterBanner,
+                  state === "success" && styles.encounterBannerSuccess,
+                  state === "zero" && styles.encounterBannerZero,
+                ]}
+              >
+                {state === "loading" ? (
                   <Text style={styles.encounterBannerText}>
                     {loadingPhase === "saving" ? "記録中…" : getCheckinLocatingLabel()}
                   </Text>
-                </View>
-              ) : null}
-
-              {state === "adjust" && mapPoint ? (
-                <CheckinPreviewCard
-                  mapPoint={mapPoint}
-                  mapCenter={fixedMapCenter ?? { lat: mapPoint.lat, lng: mapPoint.lng }}
-                  mapHeight={mapHeroHeight}
-                  mapWidth={Math.min(windowWidth - 32, contentMaxWidth.standard)}
-                  accuracyM={checkinAccuracyM}
-                  placeLabel={placeLine}
-                  userImageUrl={user?.profileImage ?? undefined}
-                  isRetrying={false}
-                  interactive={mapInteractive}
-                  onCoordinateSelect={handleMapPinAdjust}
-                  onRetry={handleRetryLocation}
-                  onSave={handleCheckin}
-                />
-              ) : null}
-
-              {(state === "success" || state === "zero") && mapPoint ? (
-                <CheckinSuccessPanel
-                  mapPoint={mapPoint}
-                  mapCenter={fixedMapCenter ?? { lat: mapPoint.lat, lng: mapPoint.lng }}
-                  mapHeight={mapHeroHeight}
-                  mapWidth={Math.min(windowWidth - 32, contentMaxWidth.standard)}
-                  accuracyM={checkinAccuracyM}
-                  placeLabel={placeLine}
-                  recordedAtLabel={formatDateTime(mapPoint.recordedAt)}
-                  newEncounterCount={state === "success" ? newCount : 0}
-                  userImageUrl={user?.profileImage ?? undefined}
-                  onViewMap={() =>
-                    router.push(
-                      checkinLocationId != null
-                        ? ({ pathname: "/map", params: { focus: String(checkinLocationId) } } as never)
-                        : ("/map" as never),
-                    )
-                  }
-                  onShare={handleShareLocation}
-                  isSharing={shareSlugMutation.isPending}
-                />
-              ) : null}
-
-              {state === "success" || state === "zero" ? (
-                <View style={styles.bottomSheet}>
-                  <Text style={styles.privacyNote}>
-                    正確な場所を保存します。プライバシーが気になる方は移動専用アカウントの利用をおすすめします。
+                ) : state === "adjust" ? (
+                  <Text style={styles.encounterBannerText}>
+                    位置を確認してください。地図をクリックしてピンを動かせます。
                   </Text>
+                ) : state === "success" || state === "zero" ? (
+                  <Text style={styles.encounterBannerText}>
+                    足あとを残しました
+                  </Text>
+                ) : (
+                  <Text style={styles.encounterBannerText}>チェックイン完了</Text>
+                )}
+              </View>
 
+              <Animated.View style={[styles.mapHeroCompact, mapStyle]}>
+                <MapErrorBoundary mapType="heatmap" height={mapHeroHeight}>
+                  <LazyPrecisionTileMap
+                    locations={[mapPoint]}
+                    customCenter={fixedMapCenter ?? undefined}
+                    zoom={17}
+                    showInfoPanel={false}
+                    height={mapHeroHeight}
+                    width={Math.min(windowWidth - 32, contentMaxWidth.standard)}
+                    markerSize={28}
+                    containerStyle={styles.mapInner}
+                    userImageUrl={user?.profileImage ?? undefined}
+                    interactive={mapInteractive}
+                    onCoordinateSelect={handleMapPinAdjust}
+                  />
+                </MapErrorBoundary>
+              </Animated.View>
+
+              <View style={styles.bottomSheet}>
+                {state === "success" || state === "zero" ? (
                   <Pressable
-                    onPress={handleCheckin}
-                    disabled={isPausing}
-                    style={({ pressed }) => [
-                      styles.recheckButton,
-                      isPausing && { opacity: 0.55 },
-                      pressed && !isPausing && { opacity: 0.85 },
-                    ]}
+                    onPress={() => router.push("/map" as never)}
+                    style={({ pressed }) => [pressed && { opacity: 0.75 }]}
+                    accessibilityLabel="軌跡で見る"
                   >
-                    <MaterialIcons name="refresh" size={18} color={color.accentIndigo} />
-                    <Text style={styles.recheckButtonText}>もう一度チェックイン</Text>
+                    <Text style={[styles.bottomSheetHint, styles.bottomSheetHintLink]}>
+                      軌跡で見る →
+                    </Text>
                   </Pressable>
+                ) : null}
+                {state === "success" ? (
+                  <Text style={styles.bottomSheetHint}>
+                    {newCount}件のすれ違いが届きました！
+                  </Text>
+                ) : null}
+                {state === "zero" ? (
+                  <Text style={styles.bottomSheetHint}>
+                    まだ誰も… あなたの軌跡が誰かの封筒になります
+                  </Text>
+                ) : null}
 
-                  {settingsBlock}
-                </View>
-              ) : null}
+                {placeLine ? (
+                  <Text style={styles.placeLine} numberOfLines={3}>{placeLine}</Text>
+                ) : null}
+                {coordLine ? (
+                  <Text style={styles.coordLine}>
+                    {coordLine}
+                    {checkinAccuracyM ? ` / 精度 ±${Math.round(checkinAccuracyM)}m` : ""}
+                  </Text>
+                ) : null}
+                {checkinAccuracyM && checkinAccuracyM > 80 ? (
+                  <Text style={styles.accuracyHint}>
+                    PCブラウザはWi-Fi測位のため誤差が出やすいです。地図をクリックして正しい位置に直すか、スマホでチェックインしてください。
+                  </Text>
+                ) : isDesktopBrowser && state === "adjust" ? (
+                  <Text style={styles.accuracyHint}>
+                    スマホで記録した足あとが近くにあれば自動で寄せています。ズレている場合は地図をクリックして修正してください。
+                  </Text>
+                ) : null}
 
-              {state === "adjust" ? (
-                <View style={styles.bottomSheet}>
-                  {checkinAccuracyM && checkinAccuracyM > 80 ? (
-                    <Text style={styles.accuracyHint}>
-                      PCブラウザはWi-Fi測位のため誤差が出やすいです。地図をクリックして正しい位置に直すか、スマホでチェックインしてください。
-                    </Text>
-                  ) : isDesktopBrowser ? (
-                    <Text style={styles.accuracyHint}>
-                      スマホで記録した足あとが近くにあれば自動で寄せています。ズレている場合は地図をクリックして修正してください。
-                    </Text>
-                  ) : null}
-                  {settingsBlock}
-                </View>
-              ) : null}
+                {mapPoint && state !== "loading" ? (
+                  <NavigateToPlaceButton
+                    lat={mapPoint.lat}
+                    lng={mapPoint.lng}
+                    placeLabel={placeLine ?? undefined}
+                    label="この場所へ向かう"
+                    fullWidth
+                    testID="checkin-navigate-button"
+                  />
+                ) : null}
+
+                <Text style={styles.privacyNote}>
+                  正確な場所を保存します。プライバシーが気になる方は移動専用アカウントの利用をおすすめします。
+                </Text>
+
+                <Pressable
+                  onPress={handleCheckin}
+                  disabled={(state === "loading" || isPausing) && state !== "adjust"}
+                  style={({ pressed }) => [
+                    state === "adjust" ? styles.confirmCheckinButton : styles.recheckButton,
+                    (state === "loading" || isPausing) && state !== "adjust" && { opacity: 0.55 },
+                    pressed && !isPausing && state !== "loading" && { opacity: 0.85 },
+                  ]}
+                >
+                  <MaterialIcons
+                    name={state === "adjust" ? "check" : "refresh"}
+                    size={18}
+                    color={state === "adjust" ? color.textWhite : color.accentIndigo}
+                  />
+                  <Text
+                    style={state === "adjust" ? styles.confirmCheckinButtonText : styles.recheckButtonText}
+                  >
+                    {state === "loading"
+                      ? loadingPhase === "saving"
+                        ? "記録中…"
+                        : getCheckinLocatingLabel()
+                      : state === "adjust"
+                        ? "この位置で記録"
+                        : "もう一度チェックイン"}
+                  </Text>
+                </Pressable>
+
+                {settingsBlock}
+              </View>
             </ScrollView>
 
-            {/* success/zero は成功パネル内の「地図で見る/Xでシェア」が出口を担うため、
-                測位・確認中（loading/adjust）だけ下部固定ドックでシェア導線を待機表示する。 */}
-            {state === "loading" || state === "adjust" ? (
-              <View
-                style={[
-                  styles.stickyShareDock,
-                  { paddingBottom: tabInset + mobileWebChrome },
+            {/* シェアはスクロール外・タブバー直上に固定（最重要CTA） */}
+            <View
+              style={[
+                styles.stickyShareDock,
+                { paddingBottom: tabInset + mobileWebChrome },
+              ]}
+            >
+              <Pressable
+                onPress={handleShareLocation}
+                disabled={shareSlugMutation.isPending || state === "loading" || state === "adjust"}
+                style={({ pressed }) => [
+                  styles.shareButton,
+                  styles.shareButtonSticky,
+                  pressed && { opacity: 0.9 },
+                  (shareSlugMutation.isPending || state === "loading" || state === "adjust") && {
+                    opacity: 0.6,
+                  },
                 ]}
+                accessibilityLabel="この現在地をXでシェア"
+                testID="checkin-share-button"
               >
-                <Pressable
-                  disabled
-                  style={[styles.shareButton, styles.shareButtonSticky, { opacity: 0.5 }]}
-                  accessibilityLabel="この現在地をXでシェア（記録完了後に押せます）"
-                >
-                  <MaterialIcons name="ios-share" size={20} color={color.textWhite} />
-                  <Text style={styles.shareButtonText}>この現在地をXでシェア</Text>
-                </Pressable>
-              </View>
-            ) : null}
+                <MaterialIcons name="ios-share" size={20} color={color.textWhite} />
+                <Text style={styles.shareButtonText}>
+                  {shareSlugMutation.isPending ? "リンクを準備中…" : "この現在地をXでシェア"}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         ) : (
           /* チェックイン前: ボタンファースト */

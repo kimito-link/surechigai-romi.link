@@ -45,8 +45,6 @@ import {
   formatEncounterDate,
 } from "@/lib/post/encounter-shared";
 import { EnvelopeCard } from "@/components/post/envelope-card";
-import { HomeStatusLine } from "@/components/post/home-status-line";
-import { EnvelopeRail } from "@/components/post/envelope-rail";
 import type { SignalAccountItem } from "@/components/organisms/signal-account-grid";
 import {
   LazySignalAccountGrid,
@@ -260,25 +258,6 @@ export function PostAuthenticatedScreen() {
     { limit: 1 },
     { enabled: isAuthenticated, staleTime: 60_000 },
   );
-
-  const { data: mySignal } = trpc.dashboard.mySignal.useQuery(undefined, {
-    enabled: isAuthenticated,
-    staleTime: 60_000,
-  });
-
-  const { data: settingsData } = trpc.settings.get.useQuery(undefined, {
-    enabled: isAuthenticated,
-    staleTime: 60_000,
-  });
-  const isPausing =
-    !!settingsData?.locationPausedUntil &&
-    new Date(settingsData.locationPausedUntil) > new Date();
-  const pausedUntilLabel = isPausing
-    ? new Date(settingsData!.locationPausedUntil!).toLocaleTimeString("ja-JP", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : null;
 
   const openMutation = trpc.encounter.open.useMutation();
   const reactMutation = trpc.encounter.react.useMutation();
@@ -519,18 +498,6 @@ export function PostAuthenticatedScreen() {
           contentContainerStyle={[styles.mobileScrollContent, { paddingBottom: tabInset }]}
           showsVerticalScrollIndicator={false}
         >
-          {isAuthenticated && mySignal ? (
-            <HomeStatusLine
-              checkedInToday={mySignal.checkedInToday}
-              latestPlaceLabel={mySignal.latestPlaceLabel}
-              latestRecordedAt={mySignal.latestRecordedAt}
-              isPausing={isPausing}
-              pausedUntilLabel={pausedUntilLabel}
-            />
-          ) : null}
-          {isAuthenticated && unopened.length > 0 ? (
-            <EnvelopeRail items={unopened} onOpen={handleOpen} />
-          ) : null}
           <View style={[styles.mapHeroMobile, { height: mapMobileHeight }]}>
             {renderRadarStage()}
             {emptyOverlay}

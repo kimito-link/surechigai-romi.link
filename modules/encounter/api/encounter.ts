@@ -67,7 +67,7 @@ export const encounterRouter = router({
       }
 
       const db = await getDb();
-      if (!db) return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng, locationId: null };
+      if (!db) return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng };
 
       const { latGrid, lngGrid } = toGrid(latLng.lat, latLng.lng);
       const h3R8 = toH3Cell(latGrid, lngGrid, 8);
@@ -81,7 +81,7 @@ export const encounterRouter = router({
         settings?.locationPausedUntil &&
         settings.locationPausedUntil > new Date()
       ) {
-        return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng, locationId: null };
+        return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng };
       }
 
       let municipality = input.municipality ?? g.municipality;
@@ -89,9 +89,8 @@ export const encounterRouter = router({
       const areaName = g.areaName;
       const address = g.address;
 
-      let locationId: number;
       try {
-        const [insertedId] = await Promise.all([
+        await Promise.all([
           insertLocation(db, {
             userId,
             h3R8,
@@ -111,7 +110,6 @@ export const encounterRouter = router({
             prefecture,
           }),
         ]);
-        locationId = insertedId;
       } catch (insertErr) {
         console.error("[encounter.checkIn] location insert failed:", insertErr);
         return {
@@ -122,7 +120,6 @@ export const encounterRouter = router({
           address,
           lat: latLng.lat,
           lng: latLng.lng,
-          locationId: null,
           saved: false,
         };
       }
@@ -182,7 +179,7 @@ export const encounterRouter = router({
         }
       }
 
-      return { newEncounters, prefecture, municipality, areaName, address, lat: latLng.lat, lng: latLng.lng, locationId };
+      return { newEncounters, prefecture, municipality, areaName, address, lat: latLng.lat, lng: latLng.lng };
     }),
 
   /**
