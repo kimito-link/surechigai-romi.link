@@ -221,20 +221,24 @@ export async function insertLocation(
     prefecture: string | null;
     address?: string | null;
   }
-): Promise<void> {
-  await db.insert(locations).values({
-    userId: params.userId,
-    h3R8: params.h3R8,
-    latGrid: params.latGrid,
-    lngGrid: params.lngGrid,
-    lat: params.lat ?? null,
-    lng: params.lng ?? null,
-    accuracyM: params.accuracyM ?? null,
-    municipality: params.municipality ?? null,
-    prefecture: params.prefecture ?? null,
-    address: params.address ?? null,
-    recordedAt: new Date(),
-  });
+): Promise<number> {
+  const [row] = await db
+    .insert(locations)
+    .values({
+      userId: params.userId,
+      h3R8: params.h3R8,
+      latGrid: params.latGrid,
+      lngGrid: params.lngGrid,
+      lat: params.lat ?? null,
+      lng: params.lng ?? null,
+      accuracyM: params.accuracyM ?? null,
+      municipality: params.municipality ?? null,
+      prefecture: params.prefecture ?? null,
+      address: params.address ?? null,
+      recordedAt: new Date(),
+    })
+    .returning({ id: locations.id });
+  return row.id;
 }
 
 export type TrailLocation = {
@@ -715,6 +719,7 @@ export type ZukanRow = {
   municipality: string | null;
   visitCount: number;
   lastVisitedAt: Date;
+  firstVisitedAt: Date;
 };
 
 export async function getMyVisitedAreas(
@@ -727,6 +732,7 @@ export async function getMyVisitedAreas(
       municipality: visitedAreas.municipality,
       visitCount: visitedAreas.visitCount,
       lastVisitedAt: visitedAreas.lastVisitedAt,
+      firstVisitedAt: visitedAreas.firstVisitedAt,
     })
     .from(visitedAreas)
     .where(eq(visitedAreas.userId, selfUserId))
@@ -1346,6 +1352,7 @@ export async function getPublicTrailByShareSlug(
       municipality: visitedAreas.municipality,
       visitCount: visitedAreas.visitCount,
       lastVisitedAt: visitedAreas.lastVisitedAt,
+      firstVisitedAt: visitedAreas.firstVisitedAt,
     })
     .from(visitedAreas)
     .where(eq(visitedAreas.userId, u.id))

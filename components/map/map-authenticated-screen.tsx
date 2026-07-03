@@ -19,7 +19,7 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { palette, contentMaxWidth } from "@/theme/tokens";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
 import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
 
@@ -28,6 +28,9 @@ export function MapAuthenticatedScreen() {
   const { isAuthenticated, isAuthReady, user } = useAuth();
   const router = useRouter();
   const tabInset = useTabBarInset();
+  const params = useLocalSearchParams<{ municipality?: string; focus?: string }>();
+  const focusMunicipality = typeof params.municipality === "string" ? params.municipality : undefined;
+  const focusLocationId = typeof params.focus === "string" ? Number(params.focus) : undefined;
 
   const {
     data: areasData,
@@ -128,6 +131,8 @@ export function MapAuthenticatedScreen() {
         deletingLocationId={deletingLocationId}
         updatingLocationId={updatingLocationId}
         historyLimit={30}
+        focusMunicipality={focusMunicipality}
+        focusLocationId={focusLocationId}
         style={styles.trailMap}
         topContent={
           !isAuthenticated ? (
