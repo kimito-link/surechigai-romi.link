@@ -3,6 +3,7 @@
  * surechigai-nico の一覧タップ後に見せる地図 UI のベース。
  */
 import type { ReactNode } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -21,6 +22,7 @@ import {
 import { color, contentMaxWidth } from "@/theme/tokens";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
 import { TabMapLoadingFallback, TabQueryShell } from "@/components/molecules/tab-query-shell";
+import { FootprintSheet } from "@/components/map/footprint-sheet";
 import type { LocationVisibility } from "@/modules/encounter/core/location-visibility";
 
 export type VisitedAreaSummary = {
@@ -51,6 +53,10 @@ type WebTrailMapProps = {
   historyLimit?: number;
   /** 公開閲覧向け: 履歴ヘッダーに保存地点の注記 */
   showSavedLocationHint?: boolean;
+  /** Zukanの切手カードから遷移: この市区町村の最新地点にフォーカスする（docs/uiux-brushup-SPEC.md §4.5） */
+  focusMunicipality?: string;
+  /** Check-in成功パネルから遷移: この location にフォーカスしシートを開く（docs/uiux-brushup-SPEC.md §3.2 P0） */
+  focusLocationId?: number;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -74,6 +80,8 @@ export function WebTrailMap({
   updatingLocationId = null,
   historyLimit = 30,
   showSavedLocationHint = false,
+  focusMunicipality,
+  focusLocationId,
   style,
 }: WebTrailMapProps) {
   const total = visited.reduce((s, v) => s + v.visitCount, 0);
@@ -84,6 +92,31 @@ export function WebTrailMap({
         .map((v) => v.municipality || v.prefecture)
         .filter((name): name is string => !!name),
     ).size;
+
+  const [zoom, setZoom] = useState(18);
+  const [selectedPoint, setSelectedPoint] = useState<TrailPoint | null>(null);
+  const [focusCenter, setFocusCenter] = useState<{ lat: number; lng: number } | undefined>(undefined);
+  const appliedFocusRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (locations.length === 0) return;
+    const focusKey = `${focusMunicipality ?? ""}:${focusLocationId ?? ""}`;
+    if (!focusMunicipality && focusLocationId == null) return;
+    if (appliedFocusRef.current === focusKey) return;
+
+    const target = focusLocationId != null
+      ? locations.find((l) => l.id === focusLocationId)
+      : locations.find((l) => (l.municipality ?? l.address ?? "") === focusMunicipality);
+
+    if (target) {
+      appliedFocusRef.current = focusKey;
+      setFocusCenter({ lat: target.lat, lng: target.lng });
+      setZoom(17);
+      if (focusLocationId != null) {
+        setSelectedPoint(target);
+      }
+    }
+  }, [locations, focusMunicipality, focusLocationId]);
 
   return (
     <ScrollView
@@ -116,7 +149,14 @@ export function WebTrailMap({
           </View>
         }
       >
-        <PrecisionTileMap locations={locations} userImageUrl={userImageUrl} />
+        <PrecisionTileMap
+          locations={locations}
+          userImageUrl={userImageUrl}
+          zoom={zoom}
+          customCenter={focusCenter}
+          onZoomChange={setZoom}
+          onPointPress={setSelectedPoint}
+        />
       </TabQueryShell>
 
       <View style={styles.summaryRow}>
@@ -152,6 +192,24 @@ export function WebTrailMap({
           updatingLocationId={updatingLocationId}
         />
       ) : null}
+
+      <FootprintSheet
+        point={selectedPoint}
+        visible={selectedPoint != null}
+        onClose={() => setSelectedPoint(null)}
+        canManage={canDeleteLocations}
+        onDeleteLocation={
+          onDeleteLocation
+            ? (locationId) => {
+                onDeleteLocation(locationId);
+                setSelectedPoint(null);
+              }
+            : undefined
+        }
+        onToggleVisibility={onToggleVisibility}
+        isDeleting={selectedPoint != null && deletingLocationId === selectedPoint.id}
+        isUpdatingVisibility={selectedPoint != null && updatingLocationId === selectedPoint.id}
+      />
     </ScrollView>
   );
 }

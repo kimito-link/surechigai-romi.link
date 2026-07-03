@@ -50,6 +50,7 @@ import {
   type TrailVisibility,
 } from "@/modules/encounter/core/trail-visibility";
 import { useLivePresenceControls } from "@/hooks/use-live-presence";
+import { LocationPauseControl } from "@/components/mypage/location-pause-control";
 
 const MAX_HITOKOTO = 140;
 
@@ -216,6 +217,18 @@ export function MypageAuthenticatedScreen() {
   const [trailVisibility, setTrailVisibilityState] = useState<TrailVisibility>("public");
   const { liveEnabled, toggleLivePresence, isPausing, isLoading: livePresenceLoading } =
     useLivePresenceControls();
+  const pauseLocationMutation = trpc.settings.pauseLocation.useMutation({
+    onSuccess: () => void settingsQuery.refetch(),
+  });
+  const resumeLocationMutation = trpc.settings.resume.useMutation({
+    onSuccess: () => void settingsQuery.refetch(),
+  });
+  const pausedUntilLabel = isPausing && settingsQuery.data?.locationPausedUntil
+    ? new Date(settingsQuery.data.locationPausedUntil).toLocaleTimeString("ja-JP", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
   useEffect(() => {
     if (settingsQuery.data) {
       setSharePrecise(settingsQuery.data.shareLocationPrecise ?? false);
@@ -299,6 +312,26 @@ export function MypageAuthenticatedScreen() {
     navigate.toHome();
   }, [logout]);
 
+  const handlePauseLocation = useCallback(
+    (hours: number) => {
+      pauseLocationMutation.mutate({ hours });
+    },
+    [pauseLocationMutation],
+  );
+
+  const handleResumeLocation = useCallback(() => {
+    resumeLocationMutation.mutate();
+  }, [resumeLocationMutation]);
+
+  const handleViewPublicPage = useCallback(async () => {
+    try {
+      const res = await shareSlugMutation.mutateAsync();
+      router.push({ pathname: "/u/[slug]", params: { slug: res.slug } } as never);
+    } catch {
+      Alert.alert("エラー", "公開ページの取得に失敗しました。時間をおいて再度お試しください。");
+    }
+  }, [shareSlugMutation, router]);
+
   if (!user) {
     return null;
   }
@@ -349,6 +382,21 @@ export function MypageAuthenticatedScreen() {
             </View>
           </View>
         </View>
+
+        <Pressable
+          onPress={handleViewPublicPage}
+          disabled={shareSlugMutation.isPending}
+          style={({ pressed }) => [
+            styles.publicPagePreviewLink,
+            pressed && { opacity: 0.7 },
+            shareSlugMutation.isPending && { opacity: 0.6 },
+          ]}
+        >
+          <MaterialIcons name="visibility" size={16} color={color.accentIndigo} />
+          <Text style={styles.publicPagePreviewText}>
+            {shareSlugMutation.isPending ? "準備中…" : "あなたの公開ページを見る"}
+          </Text>
+        </Pressable>
 
         <MySignalSummary />
         <MypageActionList />
@@ -472,6 +520,17 @@ export function MypageAuthenticatedScreen() {
           })}
         </View>
 
+        {/* 足あとの一時停止（docs/uiux-brushup-SPEC.md §6.3） */}
+        <View style={styles.section}>
+          <LocationPauseControl
+            isPausing={isPausing}
+            pausedUntilLabel={pausedUntilLabel}
+            isBusy={pauseLocationMutation.isPending || resumeLocationMutation.isPending}
+            onPause={handlePauseLocation}
+            onResume={handleResumeLocation}
+          />
+        </View>
+
         {/* ひとこと */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -565,6 +624,8 @@ export function MypageAuthenticatedScreen() {
             </Pressable>
           ))}
 
+          <View style={styles.dangerZoneDivider} />
+
           <Pressable
             onPress={handleLogout}
             style={({ pressed }) => [styles.menuItem, styles.dangerItem, pressed && { opacity: 0.7 }]}
@@ -642,6 +703,20 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     gap: 16,
+  },
+  publicPagePreviewLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    minHeight: 36,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  publicPagePreviewText: {
+    color: color.accentIndigo,
+    fontSize: 13,
+    fontWeight: "700",
   },
   // 現在地シェアボタン
   shareLocationButton: {
@@ -871,6 +946,11 @@ const styles = StyleSheet.create({
   },
   dangerItem: {
     backgroundColor: color.danger + "11",
+  },
+  dangerZoneDivider: {
+    height: 1,
+    backgroundColor: color.border,
+    marginVertical: 16,
   },
   menuItemText: {
     fontSize: 14,
