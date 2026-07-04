@@ -2,15 +2,15 @@
 
 このファイルは、実装担当モデルに `/goal refactor-instructions.md に書かれたことを完遂しろ` と渡すための作業指示書です。
 
-## 実装前に確認すべき質問
+## ユーザー確認済みの確定事項（2026-07-04）
 
-現時点で、実装担当モデルが勝手に決めてはいけない事項は以下です。
+以下はユーザーに確認済み。実装担当モデルはこれを前提として作業し、再質問しないこと。
 
-1. `modules/event/` と `app/(tabs)/events.tsx` は、君斗りんくのすれ違ひ通信本体で残す予定の「予定×ライブ表明」機能か、旧テンプレート由来の削除候補か。
-2. `README.md` に残る Supabase / `sweeper.yml` 記述は、すぐに Railway / `sweep.yml` へ更新してよいか。
-3. 認証フローを分割する場合、Clerk Satellite と kimito.link 連携の手動E2E確認を誰がどの環境で行うか。
-4. `getMyEncounters` のN+1クエリ最適化で返却順・件数・ブロック除外・停止ユーザー除外の厳密な期待値をどこまでテスト化するか。
-5. `drizzle/` 直下の古いマイグレーション群と `meta_broken/` を削除候補にしてよいか。DB履歴に影響しうるため、承認なしに消さないこと。
+1. **`modules/event/` と `app/(tabs)/events.tsx` は残す本体機能**（「予定×ライブ表明」。doin-challenge にも移植する共通機能）。旧テンプレート由来の削除候補ではない。削除調査は不要。触らないこと。
+2. **`README.md` の Supabase / `sweeper.yml` 記述は Railway / `sweep.yml` へ更新してよい**（Phase 2 で実施）。
+3. 認証フローの分割は今回**提案のみ**。手動E2E確認は今回計画しないため、認証実装には触らない。
+4. `getMyEncounters` の返却契約は**モックDBの単体テストで固定する**: 返却順・件数・cursor・ブロック除外・停止ユーザー除外・24hひとこと表示を対象とする。契約テストが通ってから N+1 最適化を小さく行う。
+5. `drizzle/` 直下の古いマイグレーション群と `meta_broken/` は**削除しない**。整理は提案のみ。
 
 ## Objective
 
@@ -120,8 +120,7 @@
 - 正確な座標保存、永続保存、Railway DB方針と矛盾する変更が必要になった。
 - `drizzle/schema/*`、`drizzle/migrations/*`、本番DBデータに影響する変更が必要になった。
 - `hooks/use-auth.ts`、`server/_core/oauth.ts`、`server/twitter-routes.ts`、Clerk Satellite の挙動に影響する。
-- `modules/event/` や旧テンプレート由来に見えるコードの削除判断が必要になった。
-- `README.md` と `AGENTS.md` / `CLAUDE.md` の矛盾について、どちらを修正対象にするか判断が必要になった。
+- `modules/event/` の削除・変更が必要になった（残す本体機能と確定済みのため、触る必要が生じたら停止）。
 - テストと実装の期待値が矛盾する。
 - 公開API、tRPC契約、DBカラム、保存済みデータの互換性を壊す可能性がある。
 - 大規模な責務分離やファイル移動が必要で、インポート修正だけでは済まない。
@@ -166,7 +165,7 @@ pnpm db:push
 | `checkIn` ルーターの責務集中 | `modules/encounter/api/encounter.ts` | validation、geocode、insert、matching、初回ボーナス、settings更新が1 mutationに集中 | 位置記録、マッチング、UX | 高 | 先に `checkIn` の入力/出力・副作用順のテストまたは手動再現手順を作り、純粋計算だけ抽出 | `pnpm check`, `pnpm test`, ローカル手動チェックイン | 段階的なら実装可 |
 | `getMyEncounters` のN+1クエリ | `modules/encounter/db/queries.ts` | encounter一覧取得後、partner取得・Twitter cache取得・件数取得をループ内で実行 | ポスト画面、DB負荷 | 中から高。返却形の維持が必要 | 返却契約テストを追加後、join/集約でまとめる | DBあり統合テストまたはモックDBテスト、`pnpm check` | テスト先行なら実装可 |
 | 認証フローの高結合 | `hooks/use-auth.ts`, `app/auth/kimito-link.tsx`, `server/_core/index.ts`, OAuth関連 | Web/Native/Clerk Satellite/kimito.link/バックエンド同期が密接 | ログイン不能リスク | 高 | 設計案作成に留め、実装は手動E2E確認計画がある場合のみ | 実機/ブラウザ手動E2E、`pnpm check` | 提案のみ |
-| 旧テンプレート由来らしき残存物 | `modules/event/*`, `app/(tabs)/events.tsx`, 旧イベント/チャレンジ系 navigation entries | AGENTSでは削除済みモジュールの再利用禁止がある一方、現コードでは event router が登録されている | ルート、API、型、将来削除 | 高。プロダクト判断が必要 | 使用実態を調査し、削除候補リストだけ作る | `git grep` 相当、`pnpm check` | 提案のみ |
+| ~~旧テンプレート由来らしき残存物~~（解決済み） | `modules/event/*`, `app/(tabs)/events.tsx` | ユーザー確認の結果、**残す本体機能**と確定（確定事項1）。負債ではない | — | — | 対応不要。触らない | — | 対象外 |
 | mojibake コメント | `server/_core/index.ts`, `.github/workflows/sweep.yml` | コメントが読めず、セキュリティヘッダーやsweep意図のレビュー性が低い | 保守性 | 低。ただしコードは触らない | コメントのみ日本語/英語へ修正 | `pnpm check` | 実装可 |
 | lint warnings の蓄積 | `pnpm lint` 出力 | 直書きカラー、未使用、hook deps などが多い | レビュー信号の低下 | 中。UI差分を生みやすい | エラーだけ優先。警告は対象ファイルを限定して別フェーズで処理 | `pnpm lint` | 小分けなら実装可 |
 | schema/migration 配置の混在 | `drizzle/` 直下SQL、`drizzle/migrations/`, `drizzle/meta_broken/` | どれが現行マイグレーションか誤解しやすい | DB運用 | 高 | 現行運用を確認し、削除せずREADME/AGENTSへ整理 | `pnpm check`, DB履歴確認 | 提案のみ |
@@ -186,8 +185,8 @@ pnpm db:push
 
 ### Phase 2: 安全なドキュメント/コメント整合
 
-- `refactor-instructions.md`、schemaコメント、sweepコメントなど、現行方針と明確に矛盾する記述を修正する。
-- READMEの運用手順は確認事項に入っているため、承認なしに広範囲更新しない。
+- schemaコメント、sweepコメントなど、現行方針と明確に矛盾する記述を修正する。
+- `README.md` の Supabase / `sweeper.yml` 記述を Railway / `sweep.yml` の現行運用へ更新する（確定事項2で承認済み）。CLAUDE.md の「Railway / データベースについて」を正とする。
 - コード挙動は変えない。
 
 検証:
@@ -238,9 +237,9 @@ pnpm test
 
 ### Phase 6: DBクエリ改善の準備
 
-- `getMyEncounters` の返却契約をテストまたは具体的な検証手順に落とす。
-- N+1最適化は、契約が固まってから小さく行う。
-- 返却順、cursor、ブロック除外、停止ユーザー除外、24hひとこと表示を変えない。
+- `getMyEncounters` の返却契約を**モックDBの単体テスト**に落とす（確定事項4）。対象: 返却順、件数、cursor、ブロック除外、停止ユーザー除外、24hひとこと表示。
+- 契約テストが通ってから、N+1最適化を小さく行う。
+- 上記の返却契約を一切変えない。
 
 検証:
 
