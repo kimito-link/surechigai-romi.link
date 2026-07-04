@@ -69,6 +69,15 @@ export const tabBar = {
   chromeExtra: 16,
 } as const;
 
+/**
+ * Web モバイル: 固定タブバー本体の実高さ（bodyHeight + 下パディング。safe area 抜き）。
+ * チェックイン等の `position:fixed, bottom:0` な独自ドックをタブバーの真上に
+ * 隙間なく重ねるための値。`tabBar.scrollExtra`（ScrollView 用の見た目の余白）を
+ * 混ぜて使うと、モバイルブラウザのアドレスバー収縮でドックとタブバーの間に
+ * 隙間や二重の帯が見えることがあるため、ドックの `bottom` には必ずこちらを使う。
+ */
+export const WEB_TAB_BAR_HEIGHT = tabBar.bodyHeight + tabBar.webBottomPadding;
+
 /** チェックイン完了画面の下部固定シェアドック高さ */
 export const CHECKIN_STICKY_DOCK_HEIGHT = 76;
 

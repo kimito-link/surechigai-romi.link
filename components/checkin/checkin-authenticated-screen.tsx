@@ -40,7 +40,7 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
-import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MOBILE_WEB_CHROME } from "@/theme/tokens";
+import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MOBILE_WEB_CHROME, WEB_TAB_BAR_HEIGHT } from "@/theme/tokens";
 import { computeCheckinScrollBottomInset } from "@/lib/layout/responsive-layout";
 import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
 import { MapErrorBoundary } from "@/components/ui/map-error-boundary";
@@ -803,12 +803,18 @@ export default function CheckinAuthenticatedScreen() {
             </ScrollView>
 
             {/* success/zero は成功パネル内の「地図で見る/Xでシェア」が出口を担うため、
-                測位・確認中（loading/adjust）だけ下部固定ドックでシェア導線を待機表示する。 */}
+                測位・確認中（loading/adjust）だけ下部固定ドックでシェア導線を待機表示する。
+                Web モバイルでは Tabs の固定タブバー（position:fixed, zIndex:100）と
+                このドック（position:absolute, zIndex:20）が別レイヤーで両方 bottom を
+                主張するため、ドックの View 自体をタブバーの実高さぶん持ち上げて
+                隙間なく重ねる（2026-07-05: スクロール/スワイプ中に帯が二段に見える不具合の修正）。 */}
             {state === "loading" || state === "adjust" ? (
               <View
                 style={[
                   styles.stickyShareDock,
-                  { paddingBottom: tabInset + mobileWebChrome },
+                  Platform.OS === "web" && isMobile
+                    ? { bottom: WEB_TAB_BAR_HEIGHT, paddingBottom: 10 }
+                    : { paddingBottom: tabInset + mobileWebChrome },
                 ]}
               >
                 <Pressable
