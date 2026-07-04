@@ -565,3 +565,97 @@ describe("location-visibility", () => {
     expect(locationVisibilityLabel("private")).toBe("非公開");
   });
 });
+
+// ---------------------------------------------------------------------------
+// checkin-guards.ts
+// ---------------------------------------------------------------------------
+import {
+  isAcceptableAccuracy,
+  isLocationRecordingPaused,
+  resolveMunicipality,
+  excludeSelfMatches,
+  MAX_ACCEPTABLE_ACCURACY_M,
+} from "../modules/encounter/core/checkin-guards.js";
+
+describe("checkin-guards: isAcceptableAccuracy", () => {
+  it("accuracy が undefined なら許可する（精度不明は既存挙動どおり許可）", () => {
+    expect(isAcceptableAccuracy(undefined)).toBe(true);
+  });
+
+  it("MAX_ACCEPTABLE_ACCURACY_M ちょうどは許可する", () => {
+    expect(isAcceptableAccuracy(MAX_ACCEPTABLE_ACCURACY_M)).toBe(true);
+  });
+
+  it("MAX_ACCEPTABLE_ACCURACY_M を超えると拒否する", () => {
+    expect(isAcceptableAccuracy(MAX_ACCEPTABLE_ACCURACY_M + 1)).toBe(false);
+  });
+
+  it("小さい accuracy（高精度）は許可する", () => {
+    expect(isAcceptableAccuracy(10)).toBe(true);
+  });
+});
+
+describe("checkin-guards: isLocationRecordingPaused", () => {
+  it("locationPausedUntil が null なら停止していない", () => {
+    expect(isLocationRecordingPaused(null)).toBe(false);
+  });
+
+  it("locationPausedUntil が undefined なら停止していない", () => {
+    expect(isLocationRecordingPaused(undefined)).toBe(false);
+  });
+
+  it("locationPausedUntil が現在時刻より未来なら停止中", () => {
+    const now = new Date("2026-07-04T00:00:00Z");
+    const pausedUntil = new Date("2026-07-05T00:00:00Z");
+    expect(isLocationRecordingPaused(pausedUntil, now)).toBe(true);
+  });
+
+  it("locationPausedUntil が現在時刻より過去なら停止していない（解除済み）", () => {
+    const now = new Date("2026-07-04T00:00:00Z");
+    const pausedUntil = new Date("2026-07-03T00:00:00Z");
+    expect(isLocationRecordingPaused(pausedUntil, now)).toBe(false);
+  });
+
+  it("locationPausedUntil が現在時刻ちょうどなら停止していない（境界値）", () => {
+    const now = new Date("2026-07-04T00:00:00Z");
+    expect(isLocationRecordingPaused(now, now)).toBe(false);
+  });
+});
+
+describe("checkin-guards: resolveMunicipality", () => {
+  it("クライアント指定があればそれを優先する", () => {
+    expect(resolveMunicipality("渋谷区", "新宿区")).toBe("渋谷区");
+  });
+
+  it("クライアント指定がなければ逆ジオコーディング結果を使う", () => {
+    expect(resolveMunicipality(undefined, "新宿区")).toBe("新宿区");
+  });
+
+  it("どちらもなければ null", () => {
+    expect(resolveMunicipality(undefined, null)).toBeNull();
+    expect(resolveMunicipality(undefined, undefined)).toBeNull();
+  });
+});
+
+describe("checkin-guards: excludeSelfMatches", () => {
+  it("userAId === userBId のマッチを除外する", () => {
+    const matches = [
+      { userAId: 1, userBId: 2 },
+      { userAId: 3, userBId: 3 },
+      { userAId: 4, userBId: 5 },
+    ];
+    expect(excludeSelfMatches(matches)).toEqual([
+      { userAId: 1, userBId: 2 },
+      { userAId: 4, userBId: 5 },
+    ]);
+  });
+
+  it("自己マッチがなければ全件そのまま返す", () => {
+    const matches = [{ userAId: 1, userBId: 2 }];
+    expect(excludeSelfMatches(matches)).toEqual(matches);
+  });
+
+  it("空配列を渡すと空配列を返す", () => {
+    expect(excludeSelfMatches([])).toEqual([]);
+  });
+});

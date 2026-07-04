@@ -17,6 +17,12 @@ import { toGrid, toH3Cell, toH3R7, assertFiniteLatLng } from "../core/geo.js";
 import { findMatches } from "../core/matching.js";
 import { moderateText } from "../core/moderation.js";
 import { reverseGeocodeWithTimeout } from "../core/geocoding.js";
+import {
+  isAcceptableAccuracy,
+  isLocationRecordingPaused,
+  resolveMunicipality,
+  excludeSelfMatches,
+} from "../core/checkin-guards.js";
 import { reactions, users } from "../../../drizzle/schema/index.js";
 import { eq } from "drizzle-orm";
 import {
@@ -53,7 +59,7 @@ export const encounterRouter = router({
       const userId = ctx.user.id;
 
       // accuracy チェック
-      if (input.accuracy !== undefined && input.accuracy > 10_000) {
+      if (!isAcceptableAccuracy(input.accuracy)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "位置精度が低すぎます (accuracy > 10000m)",
@@ -77,14 +83,11 @@ export const encounterRouter = router({
         getUserSettings(db, userId),
         reverseGeocodeWithTimeout(latLng.lat, latLng.lng, 2_500),
       ]);
-      if (
-        settings?.locationPausedUntil &&
-        settings.locationPausedUntil > new Date()
-      ) {
+      if (isLocationRecordingPaused(settings?.locationPausedUntil)) {
         return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng, locationId: null };
       }
 
-      let municipality = input.municipality ?? g.municipality;
+      let municipality = resolveMunicipality(input.municipality, g.municipality);
       const prefecture = g.prefecture;
       const areaName = g.areaName;
       const address = g.address;
@@ -154,18 +157,19 @@ export const encounterRouter = router({
         recordedAt: new Date(),
       };
 
-      const matchResults = findMatches({
-        self: selfLocation,
-        nearbyCandidates,
-        timeshiftCandidates,
-        blockSet,
-        todayPairSet,
-      });
+      const matchResults = excludeSelfMatches(
+        findMatches({
+          self: selfLocation,
+          nearbyCandidates,
+          timeshiftCandidates,
+          blockSet,
+          todayPairSet,
+        }),
+      );
 
       // encounters INSERT（UNIQUE衝突は無視）
       let newEncounters = 0;
       for (const m of matchResults) {
-        if (m.userAId === m.userBId) continue;
         try {
           const inserted = await insertEncounterIfNew(db, {
             userAId: m.userAId,
