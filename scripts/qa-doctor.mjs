@@ -1,12 +1,17 @@
 /**
- * qa-doctor.mjs — QA ツールキットの一元エントリポイント
+ * qa-doctor.mjs — QA ツールキットの一元エントリポイント（全自動）
  *
  *   pnpm qa:doctor
  *
- * やること:
- *   1. 認証状態（.auth/auth-state.json）の有無・中身・鮮度を診断して表示
- *   2. 直近の soak / first-load の結果があれば要約を表示
- *   3. 番号を選ぶだけで各ツールを起動（個別コマンドを覚える必要なし）
+ * メニュー選択は一切ない。実行するだけで:
+ *   1. 認証状態（.auth/auth-state.json）を自動診断
+ *   2. 無効/失効/空なら X ログイン画面を自動で開き、完了を自動検知するまで待つ
+ *      （ここだけは X 本人にしかできない操作なので人手が必要。それ以外は無人）
+ *   3. ログインが有効になったら、そのまま続けて soak → first-load を自動実行
+ *   4. 最後に結果をまとめて表示
+ *
+ * 個別に実行したいときのために --skip-login / --only=save|verify|soak|first-load|e2e
+ * のフラグも用意している（省略時は上記のフルフローを実行）。
  *
  * 各ツールの詳細: docs/qa-toolkit-design.md / docs/auth-home-soak-HOWTO.md
  */
@@ -14,7 +19,6 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -126,66 +130,103 @@ function run(cmd, args) {
 const node = (script, ...extra) => run(process.execPath, [path.join(ROOT, "scripts", script), ...extra]);
 
 // ---------- 表示 ----------
-function printStatus() {
-  const auth = diagnoseAuth();
-  console.log("\n================ QA ドクター ================");
+function printStatus(auth) {
+  console.log("\n================ QA ドクター（全自動） ================");
   console.log(`対象サイト : ${BASE_URL}`);
   console.log(`ログイン状態: ${auth.label}`);
   if (auth.stale) {
-    console.log("             ※ 保存から1週間以上経過。失効していたら [1] で再保存してください");
+    console.log("             ※ 保存から1週間以上経過。念のため再ログインで更新します");
   }
   const soak = latestSoakSummary();
   const fl = latestFirstLoadSummary();
   if (soak) console.log(`直近ソーク : ${soak}`);
   if (fl) console.log(`直近初回計測: ${fl}`);
-  console.log("=============================================");
-  if (!auth.ok) {
-    console.log("\n→ まだ X ログインが保存されていません。最初に [1] を実行してください。");
-    console.log("  （ブラウザが開くので X ログインを 1 回完了するだけ。完了は自動検知されます）");
-  }
-  return auth;
+  console.log("=========================================================");
 }
 
-const MENU = `
-何をしますか？（番号を入力して Enter）
-  [1] X ログインを保存/更新する            … ブラウザが開きます（1回だけの手動作業）
-  [2] 保存済みログインが今も使えるか確認   … 約30秒・全自動
-  [3] ホーム滞在ソーク（OOM/ちかちか検出） … 既定3分・全自動
-  [4] 初回アクセス〜クラッシュの記録       … 既定3回反復・全自動
-  [5] E2E スモークテスト一式               … 全自動
-  [q] 終了
-`;
+// ---------- 引数 ----------
+const argv = process.argv.slice(2);
+const hasFlag = (name) => argv.includes(`--${name}`);
+const argVal = (name) => argv.find((a) => a.startsWith(`--${name}=`))?.split("=")[1];
+const SKIP_LOGIN = hasFlag("skip-login");
+const ONLY = argVal("only"); // "save" | "verify" | "soak" | "first-load" | "e2e"
 
 async function main() {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const ask = (q) => new Promise((res) => rl.question(q, res));
+  let auth = diagnoseAuth();
+  printStatus(auth);
 
-  for (;;) {
-    const auth = printStatus();
-    console.log(MENU);
-    const ans = (await ask("> ")).trim().toLowerCase();
-
-    if (ans === "q" || ans === "quit" || ans === "exit") break;
-    if (ans === "1") {
-      await node("save-auth-state.mjs");
-    } else if (ans === "2") {
-      await node("save-auth-state.mjs", "--verify");
-    } else if (ans === "3" || ans === "4") {
-      if (!auth.ok) {
-        console.log("\n※ ログイン状態が未保存です。先に [1] を実行してください（ゲスト計測なら各コマンドに --allow-guest）。");
-        continue;
-      }
-      if (ans === "3") await node("auth-home-soak.mjs");
-      else await node("first-load-crash.mjs");
-    } else if (ans === "5") {
-      await run("pnpm", ["e2e"]);
-    } else if (ans !== "") {
-      console.log("1〜5 または q を入力してください。");
+  // ---------- ONLY 指定時は該当ステップだけ実行して終了 ----------
+  if (ONLY) {
+    const map = {
+      save: () => node("save-auth-state.mjs"),
+      verify: () => node("save-auth-state.mjs", "--verify"),
+      soak: () => node("auth-home-soak.mjs"),
+      "first-load": () => node("first-load-crash.mjs"),
+      e2e: () => run("pnpm", ["e2e"]),
+    };
+    const fn = map[ONLY];
+    if (!fn) {
+      console.error(`[qa-doctor] 不明な --only=${ONLY}（save|verify|soak|first-load|e2e）`);
+      process.exit(2);
     }
+    process.exit(await fn());
   }
 
-  rl.close();
-  console.log("終了します。");
+  // ---------- フルフロー: ログイン確保 → soak → first-load ----------
+  if (!auth.ok && !SKIP_LOGIN) {
+    console.log("\n→ X ログインが必要です。ブラウザを自動で開きます。");
+    console.log("  ここだけは本人にしかできない操作です。それ以外はこのまま自動で進みます。\n");
+    const code = await node("save-auth-state.mjs");
+    if (code !== 0) {
+      console.error("\n[qa-doctor] ログイン保存に失敗したため、以降の検証はスキップします。");
+      console.error("            もう一度 `pnpm qa:doctor` を実行してください。");
+      process.exit(code);
+    }
+    auth = diagnoseAuth();
+  } else if (!auth.ok && SKIP_LOGIN) {
+    console.log("\n※ --skip-login が指定されているため、ログイン未保存のままゲスト計測に進みます。");
+  } else if (auth.stale) {
+    console.log("\n→ 保存済みログインが1週間以上経過しています。有効性を確認します…");
+    const verifyCode = await node("save-auth-state.mjs", "--verify");
+    if (verifyCode !== 0) {
+      console.log("→ 失効していたため、再ログインします。");
+      const code = await node("save-auth-state.mjs");
+      if (code !== 0) {
+        console.error("\n[qa-doctor] 再ログインに失敗しました。もう一度 `pnpm qa:doctor` を実行してください。");
+        process.exit(code);
+      }
+      auth = diagnoseAuth();
+    }
+  } else {
+    console.log("\n→ 有効なログインが保存済みです。そのまま検証に進みます。");
+  }
+
+  const guestArgs = auth.ok ? [] : ["--allow-guest"];
+
+  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("[1/2] ホーム滞在ソーク（OOM/ちかちか検出・約3分）を実行します…");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  const soakCode = await node("auth-home-soak.mjs", ...guestArgs);
+
+  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("[2/2] 初回アクセス〜クラッシュの記録を実行します…");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  const firstLoadCode = await node("first-load-crash.mjs", ...guestArgs);
+
+  console.log("\n================== 全体結果 ==================");
+  const soak = latestSoakSummary();
+  const fl = latestFirstLoadSummary();
+  console.log(`ソーク     : ${soak ?? "(結果なし)"}`);
+  console.log(`初回ロード : ${fl ?? "(結果なし)"}`);
+  console.log("================================================\n");
+  console.log("個別に実行したい場合:");
+  console.log("  pnpm qa:doctor --only=save        # ログイン保存のみ");
+  console.log("  pnpm qa:doctor --only=verify       # ログイン生存確認のみ");
+  console.log("  pnpm qa:doctor --only=soak         # ソークのみ");
+  console.log("  pnpm qa:doctor --only=first-load   # 初回ロード計測のみ");
+  console.log("  pnpm qa:doctor --only=e2e          # E2E スモークのみ");
+
+  process.exit(soakCode !== 0 || firstLoadCode !== 0 ? 1 : 0);
 }
 
 main().catch((err) => {
