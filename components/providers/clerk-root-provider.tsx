@@ -3,7 +3,7 @@
  * _layout.tsx から @clerk/expo の静的 import を除去するため分離。
  */
 // @ts-nocheck
-import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/expo";
+import { ClerkProvider, getClerkInstance, useAuth as useClerkAuth } from "@clerk/expo";
 import * as SecureStore from "expo-secure-store";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -123,6 +123,21 @@ async function readClerkToken(getToken: ClerkGetToken): Promise<string | null> {
     try {
       // キャッシュ優先（Clerk内部キャッシュがあれば即時解決・ネットワーク往復なし）
       let token = await fetchTokenOnce(getToken(), 3_000, "Clerk token fetch");
+      if (!token) {
+        // React フック経由の getToken が null を返す環境があるため、
+        // Clerk インスタンスのセッションを直接叩く（実機で最も確実に通る経路。
+        // 旧実装で実働していたのはこの脚だった — 削除しないこと）。
+        try {
+          const clerk = getClerkInstance();
+          token = await fetchTokenOnce(
+            clerk?.session?.getToken(),
+            3_000,
+            "Clerk session token fallback",
+          );
+        } catch (error) {
+          console.warn("[Auth] Clerk instance unavailable:", error);
+        }
+      }
       if (!token && Date.now() >= tokenRateLimitedUntil) {
         token = await fetchTokenOnce(
           getToken({ skipCache: true }),
