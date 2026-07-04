@@ -94,8 +94,13 @@ function describeLocation(url) {
       return "X の認可画面（ログイン情報を入力 →「アプリにアクセスを許可」まで進んでください）";
     if (host.includes("clerk")) return "Clerk の認証処理中（そのままお待ちください）";
     if (host === APP_HOST) {
-      if (u.pathname.startsWith("/sign-in"))
-        return "アプリのログイン画面（「X でログイン」ボタンを押してください）";
+      if (u.pathname.startsWith("/sign-in")) {
+        // auto=x 付きなら AutoAdvanceToX が X ボタンを自動 click するはず。
+        // 8〜9秒たっても X の画面に進まない場合は自動導線が空振りしている（要調査）。
+        return u.searchParams.get("auto") === "x"
+          ? "アプリのログイン画面（1タップ自動導線が動作中… 進まなければ手動で「X でログイン」を押してください）"
+          : "アプリのログイン画面（「X でログイン」ボタンを押してください）";
+      }
       if (u.pathname.includes("sso-callback")) return "認証コールバック処理中（自動で進みます）";
       return `アプリ画面 (${u.pathname})`;
     }
@@ -243,8 +248,13 @@ async function saveFlow() {
     browserClosed = true;
   });
 
-  const signInUrl = `${BASE_URL}/sign-in?redirect_url=${encodeURIComponent("/map")}`;
+  // 実際のユーザー導線（ゲスト画面の「Xで1タップではじめる」CTA）と同じ
+  // auto=x 付き URL でアクセスする。これを付けないと AutoAdvanceToX
+  // （lib/clerk-route.ts の SIGN_IN_AUTO_X_HREF）が発動せず、1タップ導線を
+  // 検証したいのに素の2タップ画面を開いてしまう（2026-07-04 に実際に発生した事故）。
+  const signInUrl = `${BASE_URL}/sign-in?redirect_url=${encodeURIComponent("/map")}&auto=x`;
   console.log(`ログイン画面を開いています: ${signInUrl}`);
+  console.log("（実際のユーザー導線と同じ auto=x 付き = 1タップ自動導線が動く想定です）");
   await page.goto(signInUrl, { waitUntil: "domcontentloaded", timeout: 60_000 });
   await page.bringToFront().catch(() => {});
   console.log("ブラウザを開きました（別ウィンドウの裏に隠れている場合は前面に出してください）。\n");
