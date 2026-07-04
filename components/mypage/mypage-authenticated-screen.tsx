@@ -9,7 +9,6 @@
  * - 利用規約/プライバシーポリシーリンク（プレースホルダ）
  */
 
-import { useRouter } from "expo-router";
 import {
   View,
   Text,
@@ -181,7 +180,6 @@ function BlockedUserRow({
 export function MypageAuthenticatedScreen() {
   const { isDesktop } = useResponsive();
   const { user, logout } = useAuth();
-  const router = useRouter();
   const tabInset = useTabBarInset();
 
   const [hitokotoModalVisible, setHitokotoModalVisible] = useState(false);
@@ -326,11 +324,11 @@ export function MypageAuthenticatedScreen() {
   const handleViewPublicPage = useCallback(async () => {
     try {
       const res = await shareSlugMutation.mutateAsync();
-      router.push({ pathname: "/u/[slug]", params: { slug: res.slug } } as never);
+      navigate.toPublicTrail(res.slug);
     } catch {
       Alert.alert("エラー", "公開ページの取得に失敗しました。時間をおいて再度お試しください。");
     }
-  }, [shareSlugMutation, router]);
+  }, [shareSlugMutation]);
 
   if (!user) {
     return null;

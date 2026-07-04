@@ -1,6 +1,6 @@
 import { Pressable, Text, StyleSheet, Platform } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
-import { useRouter } from "expo-router";
+import { navigate } from "@/lib/navigation";
 import * as Haptics from "expo-haptics";
 import { color, palette } from "@/theme/tokens";
 
@@ -15,13 +15,11 @@ export function CheckinCtaButton({
   compact = false,
   style,
 }: Props) {
-  const router = useRouter();
-
   const handlePress = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    router.push("/(tabs)/checkin");
+    navigate.toCheckinTab();
   };
 
   return (

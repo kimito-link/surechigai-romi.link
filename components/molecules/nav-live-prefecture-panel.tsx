@@ -2,7 +2,7 @@
  * サイドナビ上部 — 「みんなの現在地」を星野ロミ型で即座に見せる（価値ファースト）。
  */
 import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
-import { useRouter } from "expo-router";
+import { navigate } from "@/lib/navigation";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
@@ -29,10 +29,9 @@ export function NavLivePrefecturePanel() {
 }
 
 function NavLivePrefecturePanelShell() {
-  const router = useRouter();
   return (
     <Pressable
-      onPress={() => router.push("/(tabs)/zukan")}
+      onPress={() => navigate.toZukanTab()}
       style={({ pressed, hovered }) => [
         styles.panel,
         Platform.OS === "web" && (hovered as boolean) && styles.panelHover,
@@ -51,7 +50,6 @@ function NavLivePrefecturePanelShell() {
 }
 
 function NavLivePrefecturePanelInner() {
-  const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { data, isLoading } = trpc.zukan.activePrefectures.useQuery(undefined, {
     ...(isAuthenticated ? AUTHENTICATED_QUERY_OPTIONS : { retry: 1, staleTime: 60_000 }),
@@ -63,7 +61,7 @@ function NavLivePrefecturePanelInner() {
 
   return (
     <Pressable
-      onPress={() => router.push("/(tabs)/zukan")}
+      onPress={() => navigate.toZukanTab()}
       style={({ pressed, hovered }) => [
         styles.panel,
         Platform.OS === "web" && (hovered as boolean) && styles.panelHover,

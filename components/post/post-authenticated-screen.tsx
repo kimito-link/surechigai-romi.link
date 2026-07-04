@@ -25,7 +25,7 @@ import {
   InteractionManager,
 } from "react-native";
 import { useState, useEffect, useCallback, lazy, Suspense, useMemo } from "react";
-import { useRouter } from "expo-router";
+import { navigate } from "@/lib/navigation";
 import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/atoms/toast";
@@ -168,7 +168,6 @@ export function PostAuthenticatedScreen() {
   // タブ切替（expo-router Tabsはアンマウントしない）/ブラウザタブ非アクティブ時に
   // レーダーの無限アニメを止める（docs/auth-home-oom-diagnosis-v2.md 施策K）。
   const focused = useScreenFocused();
-  const router = useRouter();
   const { height: windowHeight } = useWindowDimensions();
   const mapMobileHeight = Math.min(Math.max(windowHeight * 0.36, 240), 320);
   const postContext = useScreenContextBar("post");
@@ -421,7 +420,7 @@ export function PostAuthenticatedScreen() {
         <CheckinCtaButton compact style={{ marginTop: 14 }} />
       ) : (
         <Pressable
-          onPress={() => router.push("/(tabs)/checkin")}
+          onPress={() => navigate.toCheckinTab()}
           style={({ pressed }) => [styles.checkinLink, pressed && { opacity: 0.8 }]}
         >
           <Text style={styles.checkinLinkText}>チェックイン画面へ</Text>

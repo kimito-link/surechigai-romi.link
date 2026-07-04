@@ -3,7 +3,7 @@
  */
 import { View, Text, Pressable, StyleSheet, Switch, Platform } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
-import { useRouter } from "expo-router";
+import { navigate } from "@/lib/navigation";
 import { trpc } from "@/lib/trpc";
 import { AUTHENTICATED_QUERY_OPTIONS, isInitialQueryLoad } from "@/lib/authenticated-query-options";
 import { color, palette } from "@/theme/tokens";
@@ -38,7 +38,6 @@ function placeLabel(item: {
 }
 
 export function MypageUpcomingEventsSection({ embedded = false }: { embedded?: boolean }) {
-  const router = useRouter();
   const utils = trpc.useUtils();
   const [permHint, setPermHint] = useState<string | null>(null);
 
@@ -102,7 +101,7 @@ export function MypageUpcomingEventsSection({ embedded = false }: { embedded?: b
           「集まり」タブから予定を選んで参加表明できます。
         </Text>
         <Pressable
-          onPress={() => router.push("/(tabs)/events")}
+          onPress={() => navigate.toEventsTab()}
           style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.85 }]}
         >
           <MaterialIcons name="calendar-today" size={18} color={palette.kimitoBlue} />
@@ -182,7 +181,7 @@ export function MypageUpcomingEventsSection({ embedded = false }: { embedded?: b
               </View>
 
               <Pressable
-                onPress={() => router.push("/(tabs)/events")}
+                onPress={() => navigate.toEventsTab()}
                 style={({ pressed }) => [styles.detailLink, pressed && { opacity: 0.8 }]}
               >
                 <Text style={styles.detailLinkText}>集まりタブで詳細を見る</Text>

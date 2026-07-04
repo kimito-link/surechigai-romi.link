@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
-import { useRouter } from "expo-router";
+import { navigate } from "@/lib/navigation";
 import { useMySignal } from "@/hooks/use-my-signal";
 import { MypageUpcomingEventsSection } from "@/components/mypage/mypage-upcoming-events-section";
 import { color, palette } from "@/theme/tokens";
@@ -43,7 +43,6 @@ function ActionRow({
 
 /** マイページ — 「いまやること」 */
 export function MypageActionList() {
-  const router = useRouter();
   const { data } = useMySignal();
 
   const hasActions =
@@ -61,7 +60,7 @@ export function MypageActionList() {
           title={`未開封のすれ違い ${data.unopenedCount} 件`}
           subtitle="封筒を開いて相手を確認"
           tone="accent"
-          onPress={() => router.push("/(tabs)")}
+          onPress={() => navigate.toHome()}
         />
       ) : null}
 
@@ -71,7 +70,7 @@ export function MypageActionList() {
           title="今日のチェックイン"
           subtitle="現在地を記録してすれ違いを探す"
           tone="warn"
-          onPress={() => router.push("/(tabs)/checkin")}
+          onPress={() => navigate.toCheckinTab()}
         />
       ) : null}
 

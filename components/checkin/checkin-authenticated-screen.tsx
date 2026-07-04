@@ -48,7 +48,7 @@ import type { TrailPoint } from "@/lib/map/tile-geo";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import { CheckinPreviewCard } from "@/components/checkin/checkin-preview-card";
 import { CheckinSuccessPanel } from "@/components/checkin/checkin-success-panel";
-import { useRouter } from "expo-router";
+import { navigate } from "@/lib/navigation";
 import { shareMyLocation } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
 import { toUserFriendlyError } from "@/shared/error-messages";
@@ -92,7 +92,6 @@ export default function CheckinAuthenticatedScreen() {
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
   const [showSettings, setShowSettings] = useState(false);
   const utils = trpc.useUtils();
-  const router = useRouter();
   const { showError } = useToast();
 
   // チェックイン直後にその場で「現在地をXでシェア」できる導線
@@ -666,10 +665,10 @@ export default function CheckinAuthenticatedScreen() {
                   newEncounterCount={state === "success" ? newCount : 0}
                   userImageUrl={user?.profileImage ?? undefined}
                   onViewMap={() =>
-                    router.push(
+                    navigate.toMapTab(
                       checkinLocationId != null
-                        ? ({ pathname: "/map", params: { focus: String(checkinLocationId) } } as never)
-                        : ("/map" as never),
+                        ? { focus: String(checkinLocationId) }
+                        : undefined,
                     )
                   }
                   onShare={handleShareLocation}

@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthHandoff } from "@/lib/auth-handoff-context";
 import { buildSignInAutoXHref } from "@/lib/clerk-route";
+import { navigateReplace } from "@/lib/navigation";
 import { color, palette } from "@/theme/tokens";
 
 export default function KimitoLinkAuthGuideScreen() {
@@ -13,9 +13,11 @@ export default function KimitoLinkAuthGuideScreen() {
   useEffect(() => {
     if (!isAuthReadyForUI) return;
     showHandoff("x");
-    router.replace(
-      isAuthenticated ? "/" : (buildSignInAutoXHref("/") as never),
-    );
+    if (isAuthenticated) {
+      navigateReplace.toHomeRoot();
+    } else {
+      navigateReplace.withUrl(buildSignInAutoXHref("/"));
+    }
   }, [isAuthenticated, isAuthReadyForUI, showHandoff]);
 
   return (

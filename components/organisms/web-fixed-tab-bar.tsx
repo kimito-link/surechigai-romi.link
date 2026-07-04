@@ -3,9 +3,10 @@
  * (tabs) レイアウトと同じ6タブへリンクする。
  */
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { usePathname, useRouter, type Href } from "expo-router";
+import { usePathname, type Href } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "@/lib/icons/material-icons";
+import { navigate } from "@/lib/navigation";
 import { color } from "@/theme/tokens";
 import { TAB_BAR_BODY_HEIGHT } from "@/hooks/use-tab-bar-inset";
 import { usePrefetchTab } from "@/hooks/use-tab-prefetch";
@@ -69,7 +70,6 @@ function isTabActive(pathname: string, tab: TabItem): boolean {
 }
 
 export function WebFixedTabBar() {
-  const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -95,7 +95,7 @@ export function WebFixedTabBar() {
         return (
           <Pressable
             key={tab.label}
-            onPress={() => router.push(tab.href)}
+            onPress={() => navigate.toTabPath(tab.href)}
             onPressIn={() => prefetchTab(tab.prefetchKey)}
             style={styles.item}
             accessibilityRole="tab"

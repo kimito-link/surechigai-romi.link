@@ -6,8 +6,9 @@ import {
   Platform,
   useWindowDimensions,
 } from "react-native";
-import { usePathname, useRouter, type Href } from "expo-router";
+import { usePathname, type Href } from "expo-router";
 import MaterialIcons from "@/lib/icons/material-icons";
+import { navigate } from "@/lib/navigation";
 import { color, palette } from "@/theme/tokens";
 import { NavLivePrefecturePanel } from "@/components/molecules/nav-live-prefecture-panel";
 import { BrandStamp } from "@/components/brand/brand-stamp";
@@ -81,7 +82,6 @@ export function useWebSideNavActive(): boolean {
 
 /** Web PC（≥900px）— 左サイドナビ */
 export function WebSideNav() {
-  const router = useRouter();
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const prefetchTab = usePrefetchTab();
@@ -99,7 +99,7 @@ export function WebSideNav() {
           return (
             <Pressable
               key={item.label}
-              onPress={() => router.push(item.href)}
+              onPress={() => navigate.toTabPath(item.href)}
               onPressIn={() => prefetchTab(item.prefetchKey)}
               style={({ pressed, hovered }) => [
                 styles.item,

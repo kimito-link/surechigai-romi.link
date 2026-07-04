@@ -3,10 +3,11 @@
  */
 import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from "react-native";
 import { Image } from "expo-image";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
+import { navigateBack } from "@/lib/navigation";
 import { color, palette } from "@/theme/tokens";
 
 const RINKU = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
@@ -40,7 +41,6 @@ function getSteps(platform: ReturnType<typeof usePwaInstall>["platform"]): Step[
 
 export default function InstallInstructionsScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { platform, isInstallable, promptInstall, isStandalone } = usePwaInstall();
   const steps = getSteps(platform);
 
@@ -63,7 +63,7 @@ export default function InstallInstructionsScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => navigateBack()}
           style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.7 }]}
           accessibilityRole="button"
           accessibilityLabel="戻る"

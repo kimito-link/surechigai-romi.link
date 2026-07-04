@@ -5,7 +5,7 @@
  * アプリ内のルーティングを型安全に管理します。
  */
 
-import { router } from "expo-router";
+import { router, type Href } from "expo-router";
 
 // ============================================
 // ルート定義
@@ -19,8 +19,12 @@ export const STATIC_ROUTES = {
   HOME: "/(tabs)",
   HOME_ROOT: "/",
   CREATE_TAB: "/(tabs)/create",
+  CHECKIN_TAB: "/(tabs)/checkin",
+  EVENTS_TAB: "/(tabs)/events",
+  ZUKAN_TAB: "/(tabs)/zukan",
+  MAP_TAB: "/(tabs)/map",
   MYPAGE_TAB: "/(tabs)/mypage",
-  
+
   // 認証関連
   OAUTH: "/oauth",
   LOGIN_GUIDE: "/auth/kimito-link",
@@ -68,6 +72,10 @@ export const DYNAMIC_ROUTES = {
   // その他
   JOIN: "/join/[code]",
   REMINDERS: "/reminders/[id]",
+
+  // すれ違ひ通信固有
+  ZUKAN_PREFECTURE: "/zukan/[prefecture]",
+  PUBLIC_TRAIL: "/u/[slug]",
 } as const;
 
 // ============================================
@@ -85,6 +93,10 @@ export type RouteParams = {
   [STATIC_ROUTES.HOME]: undefined;
   [STATIC_ROUTES.HOME_ROOT]: undefined;
   [STATIC_ROUTES.CREATE_TAB]: undefined;
+  [STATIC_ROUTES.CHECKIN_TAB]: undefined;
+  [STATIC_ROUTES.EVENTS_TAB]: undefined;
+  [STATIC_ROUTES.ZUKAN_TAB]: undefined;
+  [STATIC_ROUTES.MAP_TAB]: { focus?: string; municipality?: string } | undefined;
   [STATIC_ROUTES.MYPAGE_TAB]: undefined;
   [STATIC_ROUTES.OAUTH]: undefined;
   [STATIC_ROUTES.LOGIN_GUIDE]: { returnTo?: string; mode?: "same" | "switch" } | undefined;
@@ -116,6 +128,8 @@ export type RouteParams = {
   [DYNAMIC_ROUTES.MESSAGES]: { id: string | number; challengeId?: string | number };
   [DYNAMIC_ROUTES.JOIN]: { code: string };
   [DYNAMIC_ROUTES.REMINDERS]: { id: string | number };
+  [DYNAMIC_ROUTES.ZUKAN_PREFECTURE]: { prefecture: string };
+  [DYNAMIC_ROUTES.PUBLIC_TRAIL]: { slug: string };
 };
 
 // ============================================
@@ -141,7 +155,43 @@ export const navigate = {
     console.log("[Navigation] Navigating to mypage tab");
     router.push(STATIC_ROUTES.MYPAGE_TAB as never);
   },
-  
+
+  toCheckinTab: () => {
+    console.log("[Navigation] Navigating to checkin tab");
+    router.push(STATIC_ROUTES.CHECKIN_TAB as never);
+  },
+
+  toEventsTab: () => {
+    console.log("[Navigation] Navigating to events tab");
+    router.push(STATIC_ROUTES.EVENTS_TAB as never);
+  },
+
+  toZukanTab: () => {
+    console.log("[Navigation] Navigating to zukan tab");
+    router.push(STATIC_ROUTES.ZUKAN_TAB as never);
+  },
+
+  toMapTab: (params?: { focus?: string; municipality?: string }) => {
+    console.log("[Navigation] Navigating to map tab");
+    if (params?.focus || params?.municipality) {
+      router.push({ pathname: STATIC_ROUTES.MAP_TAB, params } as never);
+    } else {
+      router.push(STATIC_ROUTES.MAP_TAB as never);
+    }
+  },
+
+  // 図鑑 都道府県別クリエイター一覧（動的）
+  toZukanPrefecture: (prefecture: string) => {
+    console.log(`[Navigation] Navigating to zukan prefecture: ${prefecture}`);
+    router.push({ pathname: DYNAMIC_ROUTES.ZUKAN_PREFECTURE, params: { prefecture } } as never);
+  },
+
+  // 公開共有軌跡ページ（動的）
+  toPublicTrail: (slug: string) => {
+    console.log(`[Navigation] Navigating to public trail: ${slug}`);
+    router.push({ pathname: DYNAMIC_ROUTES.PUBLIC_TRAIL, params: { slug } } as never);
+  },
+
   toMypageWithReturn: (returnTo: string) => {
     console.log(`[Navigation] Navigating to mypage with return: ${returnTo}`);
     router.push({ pathname: STATIC_ROUTES.MYPAGE_TAB, params: { returnTo } } as never);
@@ -332,7 +382,22 @@ toApiUsage: () => {
     console.log("[Navigation] Navigating to install instructions");
     router.push(STATIC_ROUTES.INSTALL_INSTRUCTIONS as never);
   },
-  
+
+  /**
+   * タブバー/サイドナビの配列駆動ナビゲーション用の汎用ヘルパー。
+   * `Href` 型（expo-router）をそのまま受け取って push する。
+   * 個別の toXxx() が存在するルートはそちらを優先すること。
+   */
+  toTabPath: (href: Href) => {
+    if (typeof href === "string" && !isValidAppRoute(href)) {
+      console.error(`[Navigation] Invalid tab path: ${href}`);
+      return;
+    }
+    console.log(`[Navigation] Navigating to tab path: ${String(href)}`);
+    router.push(href as never);
+  },
+
+
   toEditParticipation: (participationId: string | number, challengeId: string | number) => {
     console.log(`[Navigation] Navigating to edit participation: ${participationId}, challengeId: ${challengeId}`);
     router.push({ pathname: "/edit-participation/[id]", params: { id: String(participationId), challengeId: String(challengeId) } } as never);
@@ -371,7 +436,12 @@ export const navigateReplace = {
     console.log("[Navigation] Replacing to mypage tab");
     router.replace(STATIC_ROUTES.MYPAGE_TAB as never);
   },
-  
+
+  toZukanTab: () => {
+    console.log("[Navigation] Replacing to zukan tab");
+    router.replace(STATIC_ROUTES.ZUKAN_TAB as never);
+  },
+
   // 動的ルートへのリプレース
   withUrl: (url: string) => {
     console.log(`[Navigation] Replacing to: ${url}`);

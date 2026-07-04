@@ -11,7 +11,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
@@ -19,6 +19,7 @@ import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
 import { PrefectureCreatorCard } from "@/components/molecules/prefecture-creator-card";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
+import { navigate } from "@/lib/navigation";
 import { palette } from "@/theme/tokens";
 
 function Breadcrumb({
@@ -47,7 +48,6 @@ function Breadcrumb({
 
 export default function PrefectureCreatorsScreen() {
   const { prefecture } = useLocalSearchParams<{ prefecture: string }>();
-  const router = useRouter();
   const { isAuthenticated } = useAuth();
 
   const prefName = typeof prefecture === "string" ? prefecture : prefecture?.[0] ?? "";
@@ -66,19 +66,16 @@ export default function PrefectureCreatorsScreen() {
   }, [refetch]);
 
   const goHome = useCallback(() => {
-    router.push("/(tabs)");
-  }, [router]);
+    navigate.toHome();
+  }, []);
 
   const goZukan = useCallback(() => {
-    router.push("/(tabs)/zukan");
-  }, [router]);
+    navigate.toZukanTab();
+  }, []);
 
-  const openTrail = useCallback(
-    (shareSlug: string) => {
-      router.push(`/u/${shareSlug}` as Href);
-    },
-    [router],
-  );
+  const openTrail = useCallback((shareSlug: string) => {
+    navigate.toPublicTrail(shareSlug);
+  }, []);
 
   if (!prefName) {
     return (

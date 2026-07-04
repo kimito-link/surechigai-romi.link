@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Platform } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
-import { useRouter } from "expo-router";
+import { navigate, navigateBack } from "@/lib/navigation";
 import { palette } from "@/theme/tokens";
 
 type Props = {
@@ -8,16 +8,14 @@ type Props = {
   accessibilityLabel?: string;
 };
 
-/** 子画面ヘッダー左 — 戻る（デフォルト router.back） */
+/** 子画面ヘッダー左 — 戻る（デフォルト navigateBack） */
 export function HeaderBackButton({
   onPress,
   accessibilityLabel = "戻る",
 }: Props) {
-  const router = useRouter();
-
   return (
     <Pressable
-      onPress={onPress ?? (() => router.back())}
+      onPress={onPress ?? (() => navigateBack())}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       hitSlop={8}
@@ -30,10 +28,9 @@ export function HeaderBackButton({
 
 /** 子画面からポスト（ホーム）へ */
 export function HeaderHomeButton({ onPress }: { onPress?: () => void }) {
-  const router = useRouter();
   return (
     <Pressable
-      onPress={onPress ?? (() => router.push("/(tabs)"))}
+      onPress={onPress ?? (() => navigate.toHome())}
       accessibilityRole="link"
       accessibilityLabel="ホーム — ポスト"
       hitSlop={8}

@@ -20,7 +20,7 @@ import { trpc } from "@/lib/trpc";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
 import { fitCenterZoom, type TrailPoint } from "@/lib/map/tile-geo";
 import { LazyJapanBlockMap, LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
-import { useRouter } from "expo-router";
+import { navigate } from "@/lib/navigation";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
 import { TabMapLoadingFallback } from "@/components/molecules/tab-query-shell";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
@@ -31,7 +31,6 @@ import { MunicipalityStampCard } from "@/components/zukan/municipality-stamp-car
 
 export function ZukanAuthenticatedScreen() {
   const { isDesktop } = useResponsive();
-  const router = useRouter();
   const tabInset = useTabBarInset();
   const { width: windowWidth } = useWindowDimensions();
 
@@ -191,7 +190,7 @@ export function ZukanAuthenticatedScreen() {
             activePrefSet={activePrefSet}
             encounterCountMap={encounterCountMap}
             onPressPrefecture={(pref) => {
-              router.push({ pathname: "/zukan/[prefecture]", params: { prefecture: pref } } as any);
+              navigate.toZukanPrefecture(pref);
             }}
           />
 
@@ -270,10 +269,7 @@ export function ZukanAuthenticatedScreen() {
                     visitCount={m.visitCount}
                     firstVisitedAt={m.firstVisitedAt}
                     onPress={() =>
-                      router.push({
-                        pathname: "/map",
-                        params: { municipality: m.municipality },
-                      } as any)
+                      navigate.toMapTab({ municipality: m.municipality })
                     }
                   />
                 ))}

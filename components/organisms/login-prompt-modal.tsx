@@ -14,7 +14,6 @@ import Animated, {
 import { useEffect } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { navigate } from "@/lib/navigation";
-import { router } from "expo-router";
 
 // キャラクター画像
 const characterImage = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
@@ -81,7 +80,7 @@ export function LoginPromptModal({ visible, onLogin, onSkip }: LoginPromptModalP
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     onSkip();
-    router.push("/(tabs)/checkin" as never);
+    navigate.toCheckinTab();
   };
 
   if (!visible) return null;

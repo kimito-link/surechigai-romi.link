@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useEffect, useState } from "react";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { PublicShareHeader } from "@/components/organisms/public-share-header";
@@ -19,6 +19,7 @@ import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
 import { trpc } from "@/lib/trpc";
 import { hasClerkSessionInStorage } from "@/lib/has-clerk-session";
+import { navigateBack, navigateReplace } from "@/lib/navigation";
 import { Platform } from "react-native";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
 
@@ -31,7 +32,6 @@ function displayWho(name: string | null, username: string | null): string {
 export default function ShareLocationScreen() {
   const { slug: slugParam } = useLocalSearchParams<{ slug: string }>();
   const slug = typeof slugParam === "string" ? slugParam : slugParam?.[0] ?? "";
-  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export default function ShareLocationScreen() {
           showLoginButton={!isAuthenticated}
           returnTo={`/u/${slug}`}
           leftElement={
-            <Pressable onPress={() => router.back()} style={{ padding: 4 }}>
+            <Pressable onPress={() => navigateBack()} style={{ padding: 4 }}>
               <MaterialIcons name="arrow-back" size={24} color={palette.kimitoBlue} />
             </Pressable>
           }
@@ -82,7 +82,7 @@ export default function ShareLocationScreen() {
             リンクの有効期限が切れたか、公開が停止されている可能性があります。
           </Text>
           <Pressable
-            onPress={() => router.replace("/(tabs)/zukan")}
+            onPress={() => navigateReplace.toZukanTab()}
             style={({ pressed }) => [styles.primaryButton, pressed && { opacity: 0.85 }]}
           >
             <Text style={styles.primaryButtonText}>都道府県別一覧へ</Text>
