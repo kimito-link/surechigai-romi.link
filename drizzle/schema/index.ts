@@ -2,7 +2,7 @@
  * Database Schema Index
  *
  * 全テーブル定義を再エクスポート
- * 君斗りんくのすれ違ひ通信: pg-core (Supabase Postgres) 版
+ * 君斗りんくのすれ違ひ通信: pg-core (Railway PostgreSQL) 版
  */
 
 // Users & Auth

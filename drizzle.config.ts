@@ -10,8 +10,8 @@ const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error(
     "DATABASE_URL is required to run drizzle commands.\n" +
-    "Supabase: プロジェクト設定 > Database > Connection string (URI) を .env.local に設定してください。\n" +
-    "例: DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres"
+    "Railway: プロジェクト設定 > Postgres > Connect > 外部URL(Public Network) を .env.local に設定してください。\n" +
+    "例: DATABASE_URL=postgresql://postgres:[password]@[host].proxy.rlwy.net:[port]/railway"
   );
 }
 

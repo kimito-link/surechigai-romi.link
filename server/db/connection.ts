@@ -1,7 +1,7 @@
 /**
  * Database Connection
  *
- * drizzle-orm/postgres-js (postgres.js) を使った Supabase Postgres 接続。
+ * drizzle-orm/postgres-js (postgres.js) を使った Railway PostgreSQL 接続。
  * DATABASE_URL 未設定でもサーバーが起動できるよう graceful に扱う。
  */
 

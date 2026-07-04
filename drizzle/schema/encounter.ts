@@ -1,9 +1,10 @@
 /**
  * 君斗りんくのすれ違ひ通信: Encounter-related Schema Tables
  *
- * 設計書 V2-SURECHIGAI-DESIGN.md のデータ設計骨子に準拠。
- * 生緯度経度は保存しない（H3 res8 + 500mグリッドに丸めて永続化）。
- * DB: Supabase Free (Postgres) / pg-core
+ * 設計書 V2-SURECHIGAI-DESIGN.md のデータ設計骨子をベースに、方針転換済み。
+ * 正確な緯度経度（lat/lng/accuracyM）を保存し、削除しない（永続保存）。
+ * すれ違いマッチング用に H3 res8 + 500mグリッドの丸め値（h3R8/latGrid/lngGrid）も併せて保持する。
+ * DB: Railway PostgreSQL / pg-core
  */
 
 import {
@@ -20,7 +21,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 // =============================================================================
-// locations — 48h TTL物理削除。生の緯度経度は保存しない。
+// locations — 正確な緯度経度を永続保存（48h削除は廃止）。
 // =============================================================================
 
 export const locations = pgTable(

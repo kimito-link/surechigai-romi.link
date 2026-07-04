@@ -10,7 +10,7 @@
  *
  * このモジュールは姉妹サービス doin-challenge.com にも移植する想定のため、
  * 君斗りんくのすれ違ひ通信固有のテーブル（encounters 等）には依存しない自己完結スキーマにする。
- * DB: Supabase Free (Postgres) / pg-core
+ * DB: Railway PostgreSQL / pg-core
  */
 
 import {

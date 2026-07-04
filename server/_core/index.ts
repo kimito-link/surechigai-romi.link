@@ -608,7 +608,7 @@ async function startServer() {
       // 1. locations は削除しない（永続保存方針）。互換のため呼ぶが常に0件。
       const deletedLocations = await deleteExpiredLocations(db);
 
-      // 2. Supabase keepalive（SELECT 1 で接続維持）
+      // 2. Railway PostgreSQL keepalive（SELECT 1 で接続維持）
       const { sql: rawSql } = await import("drizzle-orm");
       await db.execute(rawSql`SELECT 1`);
 

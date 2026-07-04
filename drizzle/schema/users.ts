@@ -2,7 +2,7 @@
  * User-related Schema Tables
  *
  * ユーザー認証・プロフィール関連のテーブル定義
- * 君斗りんくのすれ違ひ通信: pg-core (Supabase Postgres) 版
+ * 君斗りんくのすれ違ひ通信: pg-core (Railway PostgreSQL) 版
  */
 
 import {

@@ -1,7 +1,7 @@
 /**
  * APIコスト設定の初期化スクリプト
  * 実行: npx tsx scripts/init-api-cost-settings.ts
- * .env.local または .env の DATABASE_URL (Supabase Postgres) を使用します。
+ * .env.local または .env の DATABASE_URL (Railway PostgreSQL) を使用します。
  */
 import { config } from "dotenv";
 import path from "path";
