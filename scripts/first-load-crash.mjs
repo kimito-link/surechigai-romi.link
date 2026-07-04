@@ -18,8 +18,10 @@
  *   pnpm qa:first-load --heap-mb=512         # ヒープ上限を絞って再現加速
  *   pnpm qa:first-load --headed
  *   pnpm qa:first-load --base-url=http://localhost:8081
+ *   pnpm qa:first-load --allow-guest         # 認証状態が空/無しでもゲストとして計測
  *
- * 前提: .auth/auth-state.json（無ければ pnpm e2e:auth-save で保存）。
+ * 前提: .auth/auth-state.json が存在し **空でない** こと（無ければ pnpm e2e:auth-save で保存。
+ *       空 = ログイン未完了保存。その場合はエラーで止まる）。
  * 出力: qa-results/first-load/<timestamp>/iter-N/ に events.ndjson / metrics.csv / shots/ / summary.json
  */
 
@@ -57,16 +59,41 @@ const EVAL_TIMEOUT_MS = 1_500; // これを超えて evaluate が返らない = 
 
 const AUTH_STATE_PATH = path.join(ROOT, ".auth", "auth-state.json");
 
-if (!fs.existsSync(AUTH_STATE_PATH)) {
+// 認証状態チェック。存在するだけでなく **空でない** ことも見る。
+// ログイン未完了でブラウザを閉じると空の storageState（{"cookies":[],"origins":[]}）が
+// 保存され、ゲスト画面を黙って計測して偽陰性（OK）を出す事故が実際に起きた（2026-07-04）。
+function authStateStatus() {
+  if (!fs.existsSync(AUTH_STATE_PATH)) return "missing";
+  try {
+    const st = JSON.parse(fs.readFileSync(AUTH_STATE_PATH, "utf8"));
+    const empty =
+      (!Array.isArray(st.cookies) || st.cookies.length === 0) &&
+      (!Array.isArray(st.origins) || st.origins.length === 0);
+    return empty ? "empty" : "ok";
+  } catch {
+    return "invalid";
+  }
+}
+const AUTH_STATUS = authStateStatus();
+if (AUTH_STATUS !== "ok" && !hasFlag("allow-guest")) {
   console.error(`
-[first-load] 認証状態ファイルがありません: ${AUTH_STATE_PATH}
+[first-load] 認証状態が使えません（状態: ${AUTH_STATUS}）: ${AUTH_STATE_PATH}
+
+- missing … ファイルがない
+- empty   … ファイルはあるが cookies/origins が空 = X ログインが最後まで完了していない
+- invalid … JSON として読めない
 
 最初に 1回だけ 手動で X ログインして認証状態を保存してください:
   (Git Bash)
   export PLAYWRIGHT_BASE_URL=${BASE_URL}
   pnpm e2e:auth-save
+
+ゲスト状態のまま初回ロードを計測したい場合のみ --allow-guest を付けてください。
 `);
   process.exit(2);
+}
+if (AUTH_STATUS !== "ok") {
+  console.warn(`[first-load] 認証状態=${AUTH_STATUS} のため **ゲストとして** 計測します（--allow-guest）`);
 }
 
 const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
@@ -126,7 +153,7 @@ async function runIteration(iter) {
 
   const context = await browser.newContext({
     ...devices["Pixel 5"],
-    storageState: AUTH_STATE_PATH,
+    storageState: AUTH_STATUS === "ok" ? AUTH_STATE_PATH : undefined,
     extraHTTPHeaders,
   });
   const page = await context.newPage();

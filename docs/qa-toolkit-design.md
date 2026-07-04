@@ -2,6 +2,7 @@
 
 作成: 2026-07-04（Fable）
 関連: `docs/auth-home-oom-diagnosis-v2.md` / `scripts/auth-home-soak.mjs` / メモリ [[surechigai-auth-home-oom]]
+全体戦略（メタ分析・故障モードマトリクス・Sentry導入含むロードマップ）: `docs/qa-toolkit-roadmap.md`
 
 ---
 
