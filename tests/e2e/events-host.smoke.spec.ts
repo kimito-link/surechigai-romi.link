@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
-import fs from "node:fs";
-import path from "node:path";
-import { AUTH_STATE_PATH, attachSmokeMonitor } from "./helpers/smoke-monitor";
+import { attachSmokeMonitor } from "./helpers/smoke-monitor";
+import { hasUsableAuthState, resolveAuthStatePath } from "./helpers/auth-state";
 
-const authFile = path.resolve(process.cwd(), AUTH_STATE_PATH);
-const hasAuth = fs.existsSync(authFile);
+const authFile = resolveAuthStatePath();
+// 空ファイル（ログイン未完了の残骸）はゲスト実行になるので「無い」扱いにする
+const hasAuth = hasUsableAuthState(authFile);
 
 (hasAuth ? test.describe : test.describe.skip)("events host smoke", () => {
   test.use({ storageState: authFile });

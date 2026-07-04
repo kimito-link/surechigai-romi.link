@@ -1,10 +1,9 @@
 import { test, expect } from "@playwright/test";
-import fs from "node:fs";
-import path from "node:path";
-import { AUTH_STATE_PATH, gotoSmokePage } from "./helpers/smoke-monitor";
+import { gotoSmokePage } from "./helpers/smoke-monitor";
+import { hasUsableAuthState } from "./helpers/auth-state";
 
-const authFile = path.resolve(process.cwd(), AUTH_STATE_PATH);
-const hasAuth = fs.existsSync(authFile);
+// 空ファイル（ログイン未完了の残骸）はゲスト実行になるので「無い」扱いにする
+const hasAuth = hasUsableAuthState();
 
 /**
  * ログイン済みセッション（.auth/auth-state.json）が必要。

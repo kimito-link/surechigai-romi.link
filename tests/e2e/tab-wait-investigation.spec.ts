@@ -12,7 +12,6 @@
 import { test } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
-import { AUTH_STATE_PATH } from "./helpers/smoke-monitor";
 import {
   appendMarkdownTimings,
   measureTabNavigation,
@@ -20,9 +19,11 @@ import {
   writeSamples,
   type TabWaitSample,
 } from "./helpers/tab-wait-metrics";
+import { hasUsableAuthState, resolveAuthStatePath } from "./helpers/auth-state";
 
-const authFile = path.resolve(process.cwd(), AUTH_STATE_PATH);
-const hasAuth = fs.existsSync(authFile);
+const authFile = resolveAuthStatePath();
+// 空ファイル（ログイン未完了の残骸）はゲスト実行になるので「無い」扱いにする
+const hasAuth = hasUsableAuthState(authFile);
 
 const GUEST_TABS: { path: string; heading: RegExp; label: string }[] = [
   { path: "/", heading: /会いたい君がいる|現在地|ログイン/, label: "post" },

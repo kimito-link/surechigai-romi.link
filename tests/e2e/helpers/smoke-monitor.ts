@@ -101,4 +101,4 @@ export async function gotoSmokePage(
   return monitor;
 }
 
-export const AUTH_STATE_PATH = ".auth/auth-state.json";
+export { AUTH_STATE_PATH } from "./auth-state";
