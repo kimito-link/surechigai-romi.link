@@ -102,6 +102,12 @@ UI、画面文言、レイアウト、配色、余白、モーション、地図
 4. **デプロイ完了確認**: GHA `Deploy to Vercel` success、または `https://surechigai.kimito.link/version.json` の `commitSha` 一致
 5. 失敗時: `gh workflow run deploy-vercel.yml` で手動再デプロイ
 
+> ⚠️ **version.json 一致だけでは不十分な場合がある（2026-07-04 実障害）**: Metro は子チャンクの
+> 参照先URLを親チャンクのファイル名ハッシュに含めないため、CDN の immutable キャッシュに
+> 「同名・別内容」の親チャンクが残ると旧コードが配信され続ける。修正が反映されない時は
+> `theme/tokens/index.ts` の `CDN_CACHE_EPOCH` を +1 してデプロイ（全チャンク強制改名）。
+> 重要な修正は「HTML→_layout→対象チャンク」を curl で辿りマーカー文字列で配信確認すること。
+
 ---
 
 ## 開発ロードマップ（現在地: 週1 初期）
