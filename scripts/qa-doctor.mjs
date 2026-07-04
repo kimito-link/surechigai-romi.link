@@ -95,14 +95,27 @@ function latestFirstLoadSummary() {
 }
 
 // ---------- 子プロセス実行 ----------
+// Windows の shell:true は cmd 文字列をそのまま cmd.exe に渡すため、
+// スペースを含むパス（例: "C:\Program Files\nodejs\node.exe"）は
+// 引用符で囲まないと "C:\Program" だけが実行ファイル名として解釈されて壊れる。
+// cmd・args とも、スペースを含み得るものはダブルクォートで囲む
+// （Node公式ドキュメント記載の shell:true + Windows の既知の罠）。
+const quoteWin = (s) => (/[\s]/.test(s) ? `"${s}"` : s);
+
 function run(cmd, args) {
   return new Promise((resolve) => {
     console.log(`\n$ ${cmd} ${args.join(" ")}\n`);
-    const child = spawn(cmd, args, {
-      cwd: ROOT,
-      stdio: "inherit",
-      shell: process.platform === "win32", // Windows で pnpm 等の .cmd を解決するため
-    });
+    const isWin = process.platform === "win32";
+    const child = spawn(
+      isWin ? quoteWin(cmd) : cmd,
+      isWin ? args.map(quoteWin) : args,
+      {
+        cwd: ROOT,
+        stdio: "inherit",
+        shell: isWin, // Windows で pnpm 等の .cmd を解決するため
+        windowsVerbatimArguments: isWin,
+      },
+    );
     child.on("close", (code) => {
       console.log(`\n(終了コード: ${code})`);
       resolve(code ?? 1);
