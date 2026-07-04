@@ -33,3 +33,15 @@ export {
 } from "./layout";
 export { typographyScale } from "./typography";
 export type { TypographyScaleKey } from "./typography";
+
+/**
+ * CDNキャッシュ・エポック。
+ * Metro は「子チャンクの参照先URL」をファイル名ハッシュに含めないため、
+ * 子チャンクだけが変わるデプロイでは親チャンクが「同名・別内容」になり、
+ * CDN の immutable キャッシュ（Cloudflare/Vercel edge）が旧内容を配り続ける
+ * （2026-07-04 の本番障害: 修正版 clerk-root-provider が配信されなかった真因）。
+ * ほぼ全チャンクが本モジュールを import しているため、この値を +1 すると
+ * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
+ * デプロイが「反映されない」時は +1 してデプロイすること。
+ */
+export const CDN_CACHE_EPOCH = 1;
