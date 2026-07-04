@@ -15,6 +15,7 @@ const path = require("path");
 const DIST = path.join(process.cwd(), "dist");
 const versionBase =
   process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.GITHUB_SHA ||
   process.env.COMMIT_SHA ||
   "local";
 const version = `${versionBase}-${Date.now()}`.replace(/[^0-9a-zA-Z._-]/g, "-");
@@ -41,7 +42,12 @@ if (!fs.existsSync(DIST)) {
 
 let patched = 0;
 const htmlFiles = listHtml(DIST, []);
-const re = /(\/_expo\/static\/js\/web\/entry-[a-f0-9]+\.js)(\?v=[^"']*)?/g;
+// entry だけでなく HTML が参照する全チャンクに付与する。
+// 2026-07-04 障害: _layout チャンクも「同名・別内容」になり得る
+// （Metro は参照先 async チャンクのURLをファイル名ハッシュに含めない）ため、
+// entry 限定だと _layout 経由で旧コード（旧 clerk-root-provider 等）が
+// ブラウザ/CDN の immutable キャッシュから配信され続けた。
+const re = /(\/_expo\/static\/js\/web\/[A-Za-z0-9_\[\]().+-]+\.js)(\?v=[^"']*)?/g;
 for (const file of htmlFiles) {
   const before = fs.readFileSync(file, "utf8");
   const after = before.replace(re, `$1?v=${version}`);
