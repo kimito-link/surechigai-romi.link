@@ -55,10 +55,22 @@
 - **ブラックボックスレコーダー**: 安全な同一オリジンページ（/version.json）で計測フックを仕込み、
   `history.replaceState(null,'','/')` → アプリ HTML を `document.write` で同一 realm に注入。
   凍結後も localStorage から飛行記録を回収できる。
-- **CDP `Debugger.pause`**: 無限ループ中でも割り込みで停止でき、凍結中のコールスタックを採取できる
-  （`.tmp-freeze-probe*.mjs`）。ソースマップ付きローカルビルド（`npx expo export --source-maps`）で
-  シンボリケート。
+- **CDP `Debugger.pause`**: 無限ループ中でも割り込みで停止でき、凍結中のコールスタックを採取できる。
+  ソースマップ付きローカルビルド（`npx expo export --source-maps`）でシンボリケート。
 - 凍結検出: `page.evaluate("1")` が 1.5 秒×2連続で無応答なら凍結と判定。
+
+このとき使った使い捨てスクリプト（`.tmp-freeze-probe*.mjs` / `.tmp-static-server.mjs` /
+`.tmp-verify-fix2.mjs` / `.tmp-symbolicate.mjs`）は [scripts/qa/freeze-probe.mjs](../../scripts/qa/freeze-probe.mjs)
+（`pnpm qa:freeze-probe`）として恒久化済み。同種の凍結調査が再び必要になった場合はこちらを使う:
+
+```bash
+npx expo export --source-maps --output-dir .tmp-oom-dist
+pnpm qa:freeze-probe serve .tmp-oom-dist --port=8788 &
+pnpm qa:freeze-probe verify /checkin / /zukan /mypage /events
+pnpm qa:freeze-probe symbolicate --maps-dir=.tmp-oom-dist/_expo/static/js/web
+```
+
+既存の `qa:doctor` / `soak:auth-home` との役割分担・重複整理は [docs/qa-toolkit-roadmap.md](../qa-toolkit-roadmap.md) を参照。
 
 ## 残課題
 
