@@ -127,6 +127,13 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
     liveEnabledRef.current = liveEnabled;
   }, [liveEnabled]);
 
+  // 依存は安定参照のみにする（2026-07-04 障害対応）:
+  // `pulseMutation` オブジェクトはレンダー毎に新しい参照になるため、これを依存に入れると
+  // 「pulse送信 → mutation状態変化で再レンダー → sendPulse/startWatching 再生成 →
+  // effect 再実行で watch 再起動＝即時pulse許可リセット → 即pulse送信 → …」の
+  // 無限ループになる（実測: presence.pulse が数秒で1000リクエスト・全429）。
+  // mutateAsync は React Query が安定参照を保証している。
+  const pulseMutateAsync = pulseMutation.mutateAsync;
   const sendPulse = useCallback(
     async (loc: PulseInput) => {
       if (!liveEnabledRef.current) return;
@@ -138,17 +145,18 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
       allowImmediatePulseRef.current = false;
       lastPulseAtRef.current = now;
       try {
-        await pulseMutation.mutateAsync({
+        await pulseMutateAsync({
           lat: loc.lat,
           lng: loc.lng,
           accuracy: loc.accuracy,
         });
         utils.presence.list.invalidate();
       } catch {
-        // 次回 pulse に任せる
+        // 次回 pulse に任せる（lastPulseAtRef は送信前に更新済みなので
+        // 失敗時も MIN_PULSE_GAP のクールダウンが効く）
       }
     },
-    [pulseMutation, utils.presence.list],
+    [pulseMutateAsync, utils],
   );
 
   const stopWatching = useCallback(() => {
