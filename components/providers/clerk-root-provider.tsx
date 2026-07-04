@@ -3,7 +3,7 @@
  * _layout.tsx から @clerk/expo の静的 import を除去するため分離。
  */
 // @ts-nocheck
-import { ClerkProvider, getClerkInstance, useAuth as useClerkAuth } from "@clerk/expo";
+import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/expo";
 import * as SecureStore from "expo-secure-store";
 import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -59,28 +59,54 @@ type AuthDebugPayload = {
   protectedOk: boolean | null;
 };
 
-async function resolveWithTimeout<T>(
-  operation: Promise<T>,
+/**
+ * トークン取得の暴走防止（2026-07-04 障害対応）:
+ * 旧実装は全APIコールごとに skipCache:true のフレッシュ取得を最初に行っており、
+ * Clerk のトークンAPIをリクエスト嵐にして 429 → 無トークンで401 → クエリ再試行 →
+ * さらに429、の雪だるまを起こしていた（実測: 数秒で1000リクエスト超・タブ凍結）。
+ * 対策: (1) Clerk内部キャッシュ優先 (2) モジュール単一の in-flight 共有
+ * (3) 45秒メモ（トークン寿命60秒より短く） (4) 429時は20秒クールダウン。
+ */
+const TOKEN_MEMO_MS = 45_000;
+const RATE_LIMIT_COOLDOWN_MS = 20_000;
+let tokenMemo: { value: string; expiresAt: number } | null = null;
+let tokenInFlight: Promise<string | null> | null = null;
+let tokenRateLimitedUntil = 0;
+
+function resetClerkTokenMemo(): void {
+  tokenMemo = null;
+  tokenInFlight = null;
+  tokenRateLimitedUntil = 0;
+}
+
+function isRateLimitError(error: unknown): boolean {
+  const status = (error as { status?: number } | null)?.status;
+  if (status === 429) return true;
+  return /\b429\b|too many/i.test(String((error as Error | null)?.message ?? ""));
+}
+
+async function fetchTokenOnce(
+  operation: Promise<string | null> | undefined,
   timeoutMs: number,
   label: string,
-): Promise<T | null> {
+): Promise<string | null> {
+  if (!operation) return null;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let timedOut = false;
-  const timeout = new Promise<null>((resolve) => {
-    timer = setTimeout(() => {
-      timedOut = true;
-      resolve(null);
-    }, timeoutMs);
-  });
-
   try {
-    const result = await Promise.race([operation, timeout]);
-    if (timedOut) {
-      console.warn(`[Auth] ${label} timed out after ${timeoutMs}ms`);
-    }
-    return result;
+    const result = await Promise.race([
+      operation,
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), timeoutMs);
+      }),
+    ]);
+    return result ?? null;
   } catch (error) {
-    console.warn(`[Auth] ${label} failed:`, error);
+    if (isRateLimitError(error)) {
+      tokenRateLimitedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS;
+      console.warn(`[Auth] ${label} rate limited (429). cooling down.`);
+    } else {
+      console.warn(`[Auth] ${label} failed:`, error);
+    }
     return null;
   } finally {
     if (timer) clearTimeout(timer);
@@ -88,30 +114,31 @@ async function resolveWithTimeout<T>(
 }
 
 async function readClerkToken(getToken: ClerkGetToken): Promise<string | null> {
-  const freshToken = await resolveWithTimeout(
-    getToken({ skipCache: true }),
-    2500,
-    "Fresh Clerk token fetch",
-  );
-  if (freshToken) return freshToken;
+  const now = Date.now();
+  if (tokenMemo && now < tokenMemo.expiresAt) return tokenMemo.value;
+  if (now < tokenRateLimitedUntil) return tokenMemo?.value ?? null;
+  if (tokenInFlight) return tokenInFlight;
 
-  const cachedToken = await resolveWithTimeout(getToken(), 1500, "Cached Clerk token fetch");
-  if (cachedToken) return cachedToken;
-
-  try {
-    const clerk = getClerkInstance();
-    const sessionTokenRequest = clerk?.session?.getToken({ skipCache: true });
-    if (!sessionTokenRequest) return null;
-    const sessionToken = await resolveWithTimeout(
-      sessionTokenRequest,
-      1500,
-      "Clerk session token fallback",
-    );
-    return sessionToken ?? null;
-  } catch (error) {
-    console.warn("[Auth] Clerk session token fallback failed:", error);
-    return null;
-  }
+  tokenInFlight = (async () => {
+    try {
+      // キャッシュ優先（Clerk内部キャッシュがあれば即時解決・ネットワーク往復なし）
+      let token = await fetchTokenOnce(getToken(), 3_000, "Clerk token fetch");
+      if (!token && Date.now() >= tokenRateLimitedUntil) {
+        token = await fetchTokenOnce(
+          getToken({ skipCache: true }),
+          3_000,
+          "Fresh Clerk token fetch",
+        );
+      }
+      if (token) {
+        tokenMemo = { value: token, expiresAt: Date.now() + TOKEN_MEMO_MS };
+      }
+      return token;
+    } finally {
+      tokenInFlight = null;
+    }
+  })();
+  return tokenInFlight;
 }
 
 function isAuthDebugRequested() {
@@ -153,6 +180,8 @@ function ClerkAwareTRPCProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     getTokenRef.current = getToken;
+    // セッション（getToken の identity）が変わったらメモを破棄して取り直す
+    resetClerkTokenMemo();
     setClerkTokenGetter(() => readClerkToken(getTokenRef.current));
   }, [getToken]);
 
