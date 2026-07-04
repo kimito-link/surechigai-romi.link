@@ -10,7 +10,11 @@
  *   3. ログインが有効になったら、そのまま続けて soak → first-load を自動実行
  *   4. 最後に結果をまとめて表示
  *
- * 個別に実行したいときのために --skip-login / --only=save|verify|soak|first-load|e2e
+ * フルフローの先頭では、ログイン不要の「1タップXログイン導線チェック」
+ * （tests/e2e/login-one-tap-x.spec.ts をゲストで実行）も自動で走る。
+ *
+ * 個別に実行したいときのために --skip-login /
+ * --only=save|verify|one-tap|soak|first-load|e2e
  * のフラグも用意している（省略時は上記のフルフローを実行）。
  *
  * 各ツールの詳細: docs/qa-toolkit-design.md / docs/auth-home-soak-HOWTO.md
@@ -106,7 +110,7 @@ function latestFirstLoadSummary() {
 // （Node公式ドキュメント記載の shell:true + Windows の既知の罠）。
 const quoteWin = (s) => (/[\s]/.test(s) ? `"${s}"` : s);
 
-function run(cmd, args) {
+function run(cmd, args, extraEnv = {}) {
   return new Promise((resolve) => {
     console.log(`\n$ ${cmd} ${args.join(" ")}\n`);
     const isWin = process.platform === "win32";
@@ -118,6 +122,7 @@ function run(cmd, args) {
         stdio: "inherit",
         shell: isWin, // Windows で pnpm 等の .cmd を解決するため
         windowsVerbatimArguments: isWin,
+        env: { ...process.env, ...extraEnv },
       },
     );
     child.on("close", (code) => {
@@ -128,6 +133,15 @@ function run(cmd, args) {
 }
 
 const node = (script, ...extra) => run(process.execPath, [path.join(ROOT, "scripts", script), ...extra]);
+
+// 1タップXログイン導線チェック（tests/e2e/login-one-tap-x.spec.ts）。
+// ゲスト（storageState なし）で走るのでログイン保存は不要。
+// playwright.config.ts の既定 baseURL は localhost なので、
+// qa-doctor の対象サイト（既定: 本番）を必ず env で引き継ぐ。
+const oneTapCheck = () =>
+  run("pnpm", ["exec", "playwright", "test", "--project=one-tap-x"], {
+    PLAYWRIGHT_BASE_URL: BASE_URL,
+  });
 
 // ---------- 表示 ----------
 function printStatus(auth) {
@@ -149,7 +163,7 @@ const argv = process.argv.slice(2);
 const hasFlag = (name) => argv.includes(`--${name}`);
 const argVal = (name) => argv.find((a) => a.startsWith(`--${name}=`))?.split("=")[1];
 const SKIP_LOGIN = hasFlag("skip-login");
-const ONLY = argVal("only"); // "save" | "verify" | "soak" | "first-load" | "e2e"
+const ONLY = argVal("only"); // "save" | "verify" | "one-tap" | "soak" | "first-load" | "e2e"
 
 async function main() {
   let auth = diagnoseAuth();
@@ -160,19 +174,34 @@ async function main() {
     const map = {
       save: () => node("save-auth-state.mjs"),
       verify: () => node("save-auth-state.mjs", "--verify"),
+      "one-tap": oneTapCheck,
       soak: () => node("auth-home-soak.mjs"),
       "first-load": () => node("first-load-crash.mjs"),
       e2e: () => run("pnpm", ["e2e"]),
     };
     const fn = map[ONLY];
     if (!fn) {
-      console.error(`[qa-doctor] 不明な --only=${ONLY}（save|verify|soak|first-load|e2e）`);
+      console.error(`[qa-doctor] 不明な --only=${ONLY}（save|verify|one-tap|soak|first-load|e2e）`);
       process.exit(2);
     }
     process.exit(await fn());
   }
 
-  // ---------- フルフロー: ログイン確保 → soak → first-load ----------
+  // ---------- フルフロー: 1タップ導線 → ログイン確保 → soak → first-load ----------
+  // 1タップ導線チェックはゲスト前提（storageState なし）なので、
+  // ログイン確保より前に置く。ログインに失敗しても導線の判定だけは残る。
+  console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("[1/3] 1タップXログイン導線チェック（ゲスト・約1分）を実行します…");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  const oneTapCode = await oneTapCheck();
+  if (oneTapCode !== 0) {
+    console.error(
+      "\n[qa-doctor] ⚠ 1タップ導線が壊れている可能性があります" +
+        "（auto=x 着地で X ボタンへ自動 click が届いていない）。\n" +
+        "            tests/e2e/login-one-tap-x.spec.ts の失敗内容を確認してください。",
+    );
+  }
+
   if (!auth.ok && !SKIP_LOGIN) {
     console.log("\n→ X ログインが必要です。ブラウザを自動で開きます。");
     console.log("  ここだけは本人にしかできない操作です。それ以外はこのまま自動で進みます。\n");
@@ -204,29 +233,31 @@ async function main() {
   const guestArgs = auth.ok ? [] : ["--allow-guest"];
 
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("[1/2] ホーム滞在ソーク（OOM/ちかちか検出・約3分）を実行します…");
+  console.log("[2/3] ホーム滞在ソーク（OOM/ちかちか検出・約3分）を実行します…");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   const soakCode = await node("auth-home-soak.mjs", ...guestArgs);
 
   console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("[2/2] 初回アクセス〜クラッシュの記録を実行します…");
+  console.log("[3/3] 初回アクセス〜クラッシュの記録を実行します…");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   const firstLoadCode = await node("first-load-crash.mjs", ...guestArgs);
 
   console.log("\n================== 全体結果 ==================");
   const soak = latestSoakSummary();
   const fl = latestFirstLoadSummary();
+  console.log(`1タップ導線: ${oneTapCode === 0 ? "OK（auto=x で自動 click 発火）" : "NG（要調査: --only=one-tap で再実行）"}`);
   console.log(`ソーク     : ${soak ?? "(結果なし)"}`);
   console.log(`初回ロード : ${fl ?? "(結果なし)"}`);
   console.log("================================================\n");
   console.log("個別に実行したい場合:");
   console.log("  pnpm qa:doctor --only=save        # ログイン保存のみ");
   console.log("  pnpm qa:doctor --only=verify       # ログイン生存確認のみ");
+  console.log("  pnpm qa:doctor --only=one-tap      # 1タップ導線チェックのみ");
   console.log("  pnpm qa:doctor --only=soak         # ソークのみ");
   console.log("  pnpm qa:doctor --only=first-load   # 初回ロード計測のみ");
   console.log("  pnpm qa:doctor --only=e2e          # E2E スモークのみ");
 
-  process.exit(soakCode !== 0 || firstLoadCode !== 0 ? 1 : 0);
+  process.exit(oneTapCode !== 0 || soakCode !== 0 || firstLoadCode !== 0 ? 1 : 0);
 }
 
 main().catch((err) => {

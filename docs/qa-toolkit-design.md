@@ -55,6 +55,7 @@
 |--------|------|------|
 | **`scripts/first-load-crash.mjs`（新規・最優先）** | 初回アクセス〜クラッシュ/白画面までの再現・記録 | 本設計で実装 |
 | `scripts/auth-home-soak.mjs`（既存） | 滞在中のヒープ単調増加・タブ切替劣化 | 変更なし（役割維持） |
+| `tests/e2e/login-one-tap-x.spec.ts`（§5） | 1タップXログイン導線（AutoAdvanceToX）の常設検証 | 実装済み（`qa:doctor` フルフロー先頭 / `pnpm e2e` に組込済） |
 | romiLiteHome キルスイッチ（Phase 0 実装済） | 容疑コンポーネントの bisect | first-load プローブの `--url` と組み合わせて使う |
 
 **初回症状が確認されたら**: first-load プローブをキルスイッチ ON/OFF で回して bisect するのが最短の切り分けルート。
@@ -110,7 +111,74 @@ pnpm qa:first-load --base-url=http://localhost:8081
 
 ---
 
-## 4. 将来拡張（今回はやらない）
+## 4. ⚠️ 原則: QA ツールは「本番相当の URL・パラメータ」でアクセスする
+
+### 事故の記録（2026-07-04）
+
+`scripts/save-auth-state.mjs` が `/sign-in` に **`auto=x` を付けずに**直接アクセスしていたため、
+1タップ導線（`AutoAdvanceToX`）が発動しない「素の2タップ画面」が表示され、
+ユーザーが「1タップになっていない＝アプリのバグ」と誤認する事故が起きた。
+**アプリ本体は正しく、QA ツールだけが実際のユーザー導線と違う URL を叩いていた。**
+
+### 再発防止のチェックリスト（QA ツール新規作成時に必ず確認）
+
+1. **URL を手書きしない**。アプリの CTA が使う定数（`lib/clerk-route.ts` の
+   `SIGN_IN_AUTO_X_HREF` / `buildSignInAutoXHref` 等）を単一の正とする。
+   Playwright spec ならそのまま import する（`tests/e2e/login-one-tap-x.spec.ts` が手本）。
+   `.mjs` スクリプトから import できない場合も、定数の値をコメントで出典明記の上、
+   `lib/clerk-route.ts` と食い違ったら壊れるテスト（`__tests__/clerk-route.test.ts`）に値を寄せる。
+2. **クエリパラメータまで一致させる**。`redirect_url` と `auto=x` の有無で
+   画面の挙動が変わる。「同じパスなら同じ画面」ではない。
+3. **どのユーザー導線を再現しているかをスクリプト冒頭コメントに書く**
+   （例: 「ゲストホーム CTA『Xで1タップではじめる』と同じ URL」）。
+4. **導線の変更はテストも追随させる**。CTA の href を変えたら
+   `login-one-tap-x.spec.ts` の CTA 整合テストが落ちて教えてくれる（落ちたら directional に直す）。
+
+---
+
+## 5. 1タップXログイン導線チェック（`tests/e2e/login-one-tap-x.spec.ts`）
+
+kimito.link 側 `e2e/login-one-tap-x.spec.ts`（`HANDOFF-login-one-tap-x.md` §7「新spec」）の移植。
+実 X 認可は bot 対策で自動化できないため、**X 向けナビゲーションを route intercept で
+ブロックしつつ「遷移の試行が発生したか」を検証する**手法を踏襲している。
+
+### 検証項目（4テスト）
+
+| # | 検証 | 壊れると何が起きるか |
+|---|------|--------------------|
+| 1 | `auto=x` 付き sign-in 着地で、ユーザー操作ゼロ・9秒以内（`TIMEOUT_MS`）に X ボタンへ click が1回届き、X 方向 OAuth が試行される | 1タップが2タップに退化（今回の誤認と同じ症状が本物になる） |
+| 2 | `auto=x` なしの素の `/sign-in` では自動発火しない | 一般ログインまで勝手に X へ飛び、Apple/Google 併設義務（iOS §4.8）に抵触 |
+| 3 | クールダウン中の再訪では再発火しない | 連続リロードで X 側レート制限を踏む（既知の地雷） |
+| 4 | ゲストホームのメイン CTA・ヘッダー CTA の href が `auto=x` を保持 | CTA の付け忘れ・リグレッションで導線が静かに死ぬ |
+
+### kimito 版との実装差分（このリポ固有の事情）
+
+kimito 版は「fake X ボタン + `fetch("https://x.com/...")` で試行を記録」する方式だが、
+このリポの本番 CSP は `connect-src` に `x.com` を含まない（`api.x.com` のみ）ため、
+fetch はネットワーク到達前に遮断されて route intercept に届かない（2026-07-04 実測で判明）。
+
+そこで surechigai 版は **本物の Clerk X ボタンをそのまま自動 click させ、
+click の帰結である x.com へのトップレベルナビゲーションを route intercept で捕まえる**。
+204 で fulfill するとブラウザは遷移を中止してページは sign-in に残るため、
+X 側には一切届かず（レート制限を踏まない）、後続の URL 検証も継続できる。
+fake ボタンより本番に忠実（Clerk マウント → 自動 click → OAuth 開始まで実経路を通る）。
+副作用は Clerk 側に sign_in attempt が1件作られる程度で無害。
+
+### 実行方法
+
+```bash
+pnpm qa:doctor                    # フルフロー先頭 [1/3] で自動実行（ゲスト・ログイン不要）
+pnpm qa:doctor --only=one-tap     # 単独実行（対象: qa-doctor の BASE_URL = 既定本番）
+pnpm e2e:one-tap                  # playwright 直接（既定 baseURL = localhost:8081）
+pnpm e2e                          # E2E スモーク一式にも含まれる
+```
+
+注意: playwright.config.ts の `one-tap-x` プロジェクトは **storageState を注入しない**
+（ゲスト前提）。ログイン済み状態では sign-in 着地の挙動が変わり導線を検証できない。
+
+---
+
+## 6. 将来拡張（今回はやらない）
 
 - CI（GitHub Actions）への常設: 認証状態のシークレット化が必要（diagnosis-v2 Phase 3 と合流）
 - ゲスト `/` 用のプロファイル追加（NavLivePrefecturePanel 系の再発監視）

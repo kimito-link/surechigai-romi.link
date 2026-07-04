@@ -78,6 +78,14 @@ export default defineConfig({
       },
     },
     {
+      // 1タップXログイン導線（AutoAdvanceToX）の常設検証。
+      // 必ずゲスト（storageState なし）で走らせる: ログイン済みだと
+      // sign-in 着地の挙動が変わり、導線そのものを検証できないため。
+      name: "one-tap-x",
+      testMatch: /login-one-tap-x\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "tab-instant-display",
       testMatch: /tab-instant-display\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
