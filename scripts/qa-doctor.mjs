@@ -80,26 +80,48 @@ function latestDir(base) {
   return dirs[dirs.length - 1] ?? null;
 }
 
-function latestSoakSummary() {
+function latestSoakInfo() {
   const dir = latestDir(path.join(ROOT, "soak-results"));
   if (!dir) return null;
   try {
     const s = JSON.parse(fs.readFileSync(path.join(dir, "summary.json"), "utf8"));
-    return `${path.basename(dir)}: 判定=${s.verdict} (auth=${s.authState}, ${s.minutes}分)`;
+    return {
+      verdict: s.verdict,
+      label: `${path.basename(dir)}: 判定=${s.verdict} (auth=${s.authState}, ${s.minutes}分)`,
+    };
   } catch {
     return null;
   }
 }
 
-function latestFirstLoadSummary() {
+function latestFirstLoadInfo() {
   const dir = latestDir(path.join(ROOT, "qa-results", "first-load"));
   if (!dir) return null;
   try {
     const a = JSON.parse(fs.readFileSync(path.join(dir, "aggregate.json"), "utf8"));
-    return `${path.basename(dir)}: クラッシュ ${a.crashCount}/${a.iterations}, 白画面 ${a.whiteScreenCount}/${a.iterations}`;
+    return {
+      crashCount: a.crashCount,
+      whiteScreenCount: a.whiteScreenCount,
+      iterations: a.iterations,
+      label: `${path.basename(dir)}: クラッシュ ${a.crashCount}/${a.iterations}, 白画面 ${a.whiteScreenCount}/${a.iterations}`,
+    };
   } catch {
     return null;
   }
+}
+
+// 総合判定（技術詳細より先に「結局正常か異常か」を一言で言い切る）
+function overallVerdictLine({ oneTapCode, soakCode, firstLoadCode, soak, fl }) {
+  const problems = [];
+  if (oneTapCode !== 0) problems.push("1タップ導線NG");
+  if (soakCode !== 0 && !soak) problems.push("ホーム滞在=実行失敗");
+  else if (soak && soak.verdict !== "OK") problems.push(`ホーム滞在=${soak.verdict}`);
+  if (firstLoadCode !== 0 && !fl) problems.push("初回ロード=実行失敗");
+  else if (fl && (fl.crashCount > 0 || fl.whiteScreenCount > 0))
+    problems.push(`初回ロード=クラッシュ${fl.crashCount}/白画面${fl.whiteScreenCount}（${fl.iterations}回中）`);
+  return problems.length === 0
+    ? "総合判定: OK — 1タップ導線・ホーム滞在・初回ロードのすべてで異常なし"
+    : `総合判定: NG — ${problems.join(" / ")}`;
 }
 
 // ---------- 子プロセス実行 ----------
@@ -151,10 +173,10 @@ function printStatus(auth) {
   if (auth.stale) {
     console.log("             ※ 保存から1週間以上経過。念のため再ログインで更新します");
   }
-  const soak = latestSoakSummary();
-  const fl = latestFirstLoadSummary();
-  if (soak) console.log(`直近ソーク : ${soak}`);
-  if (fl) console.log(`直近初回計測: ${fl}`);
+  const soak = latestSoakInfo();
+  const fl = latestFirstLoadInfo();
+  if (soak) console.log(`直近ソーク : ${soak.label}`);
+  if (fl) console.log(`直近初回計測: ${fl.label}`);
   console.log("=========================================================");
 }
 
@@ -243,11 +265,13 @@ async function main() {
   const firstLoadCode = await node("first-load-crash.mjs", ...guestArgs);
 
   console.log("\n================== 全体結果 ==================");
-  const soak = latestSoakSummary();
-  const fl = latestFirstLoadSummary();
+  const soak = latestSoakInfo();
+  const fl = latestFirstLoadInfo();
+  console.log(overallVerdictLine({ oneTapCode, soakCode, firstLoadCode, soak, fl }));
+  console.log("----------------------------------------------");
   console.log(`1タップ導線: ${oneTapCode === 0 ? "OK（auto=x で自動 click 発火）" : "NG（要調査: --only=one-tap で再実行）"}`);
-  console.log(`ソーク     : ${soak ?? "(結果なし)"}`);
-  console.log(`初回ロード : ${fl ?? "(結果なし)"}`);
+  console.log(`ソーク     : ${soak?.label ?? "(結果なし)"}`);
+  console.log(`初回ロード : ${fl?.label ?? "(結果なし)"}`);
   console.log("================================================\n");
   console.log("個別に実行したい場合:");
   console.log("  pnpm qa:doctor --only=save        # ログイン保存のみ");
