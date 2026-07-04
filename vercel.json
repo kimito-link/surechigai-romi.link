@@ -190,6 +190,9 @@
   "functions": {
     "api/trpc/[trpc].ts": {
       "maxDuration": 30
+    },
+    "api/sweep.ts": {
+      "maxDuration": 30
     }
   },
   "redirects": [
