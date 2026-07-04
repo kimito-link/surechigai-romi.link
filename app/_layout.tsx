@@ -42,6 +42,16 @@ const OnboardingGate = lazy(() =>
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
+/**
+ * +html.tsx が掛けたブートベール（data-auth-boot）を外す。
+ * このモジュールの実コードを変えると _layout チャンクが改名される点も利用している
+ * （CDNキャッシュ地雷の汚染払い。docs/investigation 参照）。
+ */
+function releaseBootVeil(): void {
+  if (Platform.OS !== "web" || typeof document === "undefined") return;
+  document.documentElement.removeAttribute("data-auth-boot");
+}
+
 function MissingClerkKeyScreen() {
   return (
     <View
@@ -93,9 +103,7 @@ export default function RootLayout() {
 
   // +html.tsx のブートベール解除（React がマウントした瞬間に本物のUIへ引き継ぐ）
   useEffect(() => {
-    if (Platform.OS === "web" && typeof document !== "undefined") {
-      document.documentElement.removeAttribute("data-auth-boot");
-    }
+    releaseBootVeil();
   }, []);
 
   useEffect(() => {
