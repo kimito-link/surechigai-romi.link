@@ -81,3 +81,6 @@ test-results/
 
 # 認証済みホーム ソークテスト出力 (scripts/auth-home-soak.mjs)
 soak-results/
+
+# 初回ロードOOMプローブ出力 (scripts/first-load-crash.mjs)
+qa-results/
