@@ -2,8 +2,7 @@
  * チェックイン保存前プレビュー（docs/uiux-brushup-SPEC.md §2.2/2.5）
  *
  * 測位確定後、保存前に「何を残すか」を可視化する。
- * ミニ地図 + 精度円 + 精度コピー + 市区町村。保存はブロックしない
- * （精度が悪くても「もう一度測る」を提示するだけ）。
+ * ミニ地図 + 精度円 + 精度コピー + 市区町村。
  */
 
 import { View, Text, Pressable, StyleSheet } from "react-native";
@@ -45,6 +44,7 @@ export function CheckinPreviewCard({
   onSave,
 }: CheckinPreviewCardProps) {
   const lowAccuracy = isAccuracyLow(accuracyM);
+  const cannotSave = accuracyM != null && accuracyM > 10_000;
 
   return (
     <View style={styles.card}>
@@ -96,9 +96,20 @@ export function CheckinPreviewCard({
         </Pressable>
       ) : null}
 
+      {cannotSave ? (
+        <Text style={styles.blockingHint}>
+          この精度では残せません。地図をクリックして位置を指定してください。
+        </Text>
+      ) : null}
+
       <Pressable
         onPress={onSave}
-        style={({ pressed }) => [styles.saveButton, pressed && { opacity: 0.85 }]}
+        disabled={cannotSave}
+        style={({ pressed }) => [
+          styles.saveButton,
+          cannotSave && styles.saveButtonDisabled,
+          pressed && !cannotSave && { opacity: 0.85 },
+        ]}
         accessibilityLabel="この場所に足あとを残す"
         testID="checkin-save-button"
       >
@@ -164,6 +175,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
+  blockingHint: {
+    color: color.danger,
+    fontSize: 12,
+    fontWeight: "700",
+    lineHeight: 18,
+    textAlign: "center",
+  },
   saveButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -172,6 +190,9 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: borderRadius.md,
     backgroundColor: color.accentIndigo,
+  },
+  saveButtonDisabled: {
+    backgroundColor: color.textMuted,
   },
   saveButtonText: {
     color: color.textWhite,

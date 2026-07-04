@@ -20,6 +20,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -52,7 +53,14 @@ import { navigate } from "@/lib/navigation";
 import { shareMyLocation } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
 import { toUserFriendlyError } from "@/shared/error-messages";
-import { getCheckinLocation, getCheckinLocatingLabel, isDesktopWeb } from "@/lib/get-current-location";
+import { isDesktopWeb } from "@/lib/get-current-location";
+import {
+  acquireCheckinLocation,
+  canStartWebCheckinWarmup,
+  formatCheckinAccuracy,
+  startWebCheckinWarmup,
+  type CheckinFix,
+} from "@/lib/checkin-location-session";
 import {
   hasCompletedPostLoginLocationIntro,
   PostLoginLocationIntro,
@@ -60,6 +68,7 @@ import {
 
 type CheckinState = "idle" | "loading" | "adjust" | "success" | "error" | "zero";
 type LoadingPhase = "locating" | "saving";
+const RETRY_FIX_MAX_AGE_MS = 60_000;
 
 function resolveCheckinErrorMessage(err: unknown, fallback: string): string {
   console.error("[checkin] operation failed:", err);
@@ -89,6 +98,9 @@ export default function CheckinAuthenticatedScreen() {
   const [isPausing, setIsPausing] = useState(false);
   const [showLocationIntro, setShowLocationIntro] = useState(false);
   const skipLocationIntroRef = useRef(false);
+  const prewarmedFixRef = useRef<CheckinFix | null>(null);
+  const lastFixRef = useRef<CheckinFix | null>(null);
+  const activeLocationAbortRef = useRef<AbortController | null>(null);
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
   const [showSettings, setShowSettings] = useState(false);
   const utils = trpc.useUtils();
@@ -125,6 +137,7 @@ export default function CheckinAuthenticatedScreen() {
   useEffect(() => {
     return () => {
       cancelAnimation(pulse);
+      activeLocationAbortRef.current?.abort();
     };
   }, [pulse]);
 
@@ -169,6 +182,30 @@ export default function CheckinAuthenticatedScreen() {
     [trailData],
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== "web") return undefined;
+
+      let canceled = false;
+      let warmupSession: { stop: () => void } | null = null;
+
+      void canStartWebCheckinWarmup().then((canStart) => {
+        if (canceled || !canStart) return;
+        warmupSession = startWebCheckinWarmup({
+          preciseAnchors,
+          onProgress: (best) => {
+            prewarmedFixRef.current = best;
+          },
+        });
+      });
+
+      return () => {
+        canceled = true;
+        warmupSession?.stop();
+      };
+    }, [preciseAnchors]),
+  );
+
   // 設定が変わったら isPausing を同期
   useEffect(() => {
     const data = settingsQuery.data;
@@ -182,6 +219,7 @@ export default function CheckinAuthenticatedScreen() {
   const handleMapPinAdjust = useCallback((coords: { lat: number; lng: number }) => {
     setCheckinLatLng(coords);
     setCheckinAccuracyM(8);
+    lastFixRef.current = { lat: coords.lat, lng: coords.lng, accuracy: 8, observedAt: Date.now() };
   }, []);
 
   const performCheckinSave = useCallback(
@@ -198,6 +236,10 @@ export default function CheckinAuthenticatedScreen() {
       } catch (err) {
         console.error("[checkin] checkIn.mutateAsync failed:", err);
         throw err;
+      }
+
+      if (result.saved === false) {
+        throw new Error("足あとを保存できませんでした。もう一度送ってください");
       }
 
       const locName = result.prefecture
@@ -281,6 +323,7 @@ export default function CheckinAuthenticatedScreen() {
       mapOpacity.value = withTiming(1, { duration: 300 });
 
       if (result.newEncounters > 0) {
+        lastFixRef.current = null;
         setState("success");
         setNewCount(result.newEncounters);
 
@@ -288,6 +331,7 @@ export default function CheckinAuthenticatedScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
       } else {
+        lastFixRef.current = null;
         setState("zero");
       }
     },
@@ -324,16 +368,38 @@ export default function CheckinAuthenticatedScreen() {
         throw new Error("ログインセッションを確認できません。もう一度Xログインしてください");
       }
 
-      const [, pos] = await Promise.all([
-        utils.settings.get.fetch().catch(() => {
-          throw new Error("ログインセッションをAPIで確認できません。もう一度Xログインしてください");
-        }),
-        getCheckinLocation({ preciseAnchors }),
-      ]);
+      const retryFix =
+        state === "error" &&
+        lastFixRef.current &&
+        Date.now() - lastFixRef.current.observedAt >= 0 &&
+        Date.now() - lastFixRef.current.observedAt < RETRY_FIX_MAX_AGE_MS
+          ? lastFixRef.current
+          : null;
 
-      if (pos.accuracy && pos.accuracy > 10000) {
-        throw new Error("位置精度が低すぎます。より精度の良い位置情報が必要です");
-      }
+      activeLocationAbortRef.current?.abort();
+      const controller = new AbortController();
+      activeLocationAbortRef.current = controller;
+
+      const authReady = utils.settings.get.fetch().catch(() => {
+          throw new Error("ログインセッションをAPIで確認できません。もう一度Xログインしてください");
+      });
+
+      const locationResultPromise = retryFix
+        ? Promise.resolve({ kind: "accepted" as const, fix: retryFix })
+        : acquireCheckinLocation({
+            preciseAnchors,
+            prewarmedFix: prewarmedFixRef.current,
+            signal: controller.signal,
+            onProgress: (best) => {
+              setCheckinLatLng({ lat: best.lat, lng: best.lng });
+              setCheckinAccuracyM(best.accuracy ?? null);
+              setFixedMapCenter({ lat: best.lat, lng: best.lng });
+            },
+          });
+
+      const [, locationResult] = await Promise.all([authReady, locationResultPromise]);
+      const pos = locationResult.fix;
+      lastFixRef.current = pos;
 
       setCheckinLatLng({ lat: pos.lat, lng: pos.lng });
       setCheckinAccuracyM(pos.accuracy ?? null);
@@ -342,10 +408,7 @@ export default function CheckinAuthenticatedScreen() {
       mapScale.value = withSpring(1, { damping: 12 });
       mapOpacity.value = withTiming(1, { duration: 300 });
 
-      const needsDesktopConfirm =
-        isDesktopBrowser && (pos.accuracy == null || pos.accuracy > 35);
-
-      if (needsDesktopConfirm) {
+      if (locationResult.kind === "review") {
         pulse.value = withTiming(1);
         setState("adjust");
         return;
@@ -353,6 +416,7 @@ export default function CheckinAuthenticatedScreen() {
 
       await performCheckinSave(pos);
     } catch (err: unknown) {
+      activeLocationAbortRef.current?.abort();
       pulse.value = withTiming(1);
       setState("error");
 
@@ -362,8 +426,8 @@ export default function CheckinAuthenticatedScreen() {
 
       const msg = resolveCheckinErrorMessage(err, "位置情報の取得に失敗しました");
       setErrorMsg(msg);
-
-      setTimeout(() => setState("idle"), 4000);
+    } finally {
+      activeLocationAbortRef.current = null;
     }
   }, [
     performCheckinSave,
@@ -373,7 +437,7 @@ export default function CheckinAuthenticatedScreen() {
     mapScale,
     mapOpacity,
     preciseAnchors,
-    isDesktopBrowser,
+    state,
   ]);
 
   /** adjust 状態で「この場所に足あとを残す」: 確定済み座標でそのまま保存 */
@@ -381,6 +445,12 @@ export default function CheckinAuthenticatedScreen() {
     if (!checkinLatLng) return;
     setState("loading");
     try {
+      lastFixRef.current = {
+        lat: checkinLatLng.lat,
+        lng: checkinLatLng.lng,
+        accuracy: checkinAccuracyM ?? 8,
+        observedAt: Date.now(),
+      };
       await performCheckinSave({
         lat: checkinLatLng.lat,
         lng: checkinLatLng.lng,
@@ -479,15 +549,40 @@ export default function CheckinAuthenticatedScreen() {
   const getButtonLabel = (): string => {
     switch (state) {
       case "loading":
-        return loadingPhase === "saving" ? "記録中…" : getCheckinLocatingLabel();
+        return loadingPhase === "saving"
+          ? "足あとを刻んでいます…"
+          : isDesktopBrowser
+            ? "現在地を探しています…"
+            : "君のいる現在地を探しています…";
       case "adjust":
-        return "この位置で記録";
+        return "この場所に足あとを残す";
       case "success": return `${newCount}件のすれ違い！`;
-      case "error": return "エラー";
+      case "error": return lastFixRef.current ? "もう一度送る" : "もう一度測る";
       case "zero": return "チェックイン完了";
       default: return "現在地を記録する";
     }
   };
+
+  const locatingCopy = isDesktopBrowser
+    ? "現在地を探しています…（PCは数秒かかります）"
+    : "君のいる現在地を探しています…";
+  const locatingAccuracy = formatCheckinAccuracy(checkinAccuracyM);
+  const locatingBannerText =
+    loadingPhase === "saving"
+      ? "足あとを刻んでいます…"
+      : locatingAccuracy
+        ? `${locatingCopy} ${locatingAccuracy}`
+        : locatingCopy;
+  const adjustAccuracyHint =
+    checkinAccuracyM != null && checkinAccuracyM > 10_000
+      ? "この精度では残せません。地図をクリックして位置を指定してください。"
+      : checkinAccuracyM != null && checkinAccuracyM > 80
+        ? isDesktopBrowser
+          ? "PCの測位はズレやすいです。地図をクリックして正しい位置に直せます。"
+          : `精度 ${formatCheckinAccuracy(checkinAccuracyM)}。このまま残すか、もう一度測れます。`
+        : isDesktopBrowser
+          ? "スマホで記録した足あとが近くにあれば自動で寄せています。ズレている場合は地図をクリックして修正してください。"
+          : null;
 
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   /** スマホは地図を小さくし、シェアCTAが常に見える余白を確保 */
@@ -630,9 +725,7 @@ export default function CheckinAuthenticatedScreen() {
             >
               {state === "loading" ? (
                 <View style={styles.encounterBanner}>
-                  <Text style={styles.encounterBannerText}>
-                    {loadingPhase === "saving" ? "記録中…" : getCheckinLocatingLabel()}
-                  </Text>
+                  <Text style={styles.encounterBannerText}>{locatingBannerText}</Text>
                 </View>
               ) : null}
 
@@ -701,14 +794,8 @@ export default function CheckinAuthenticatedScreen() {
 
               {state === "adjust" ? (
                 <View style={styles.bottomSheet}>
-                  {checkinAccuracyM && checkinAccuracyM > 80 ? (
-                    <Text style={styles.accuracyHint}>
-                      PCブラウザはWi-Fi測位のため誤差が出やすいです。地図をクリックして正しい位置に直すか、スマホでチェックインしてください。
-                    </Text>
-                  ) : isDesktopBrowser ? (
-                    <Text style={styles.accuracyHint}>
-                      スマホで記録した足あとが近くにあれば自動で寄せています。ズレている場合は地図をクリックして修正してください。
-                    </Text>
+                  {adjustAccuracyHint ? (
+                    <Text style={styles.accuracyHint}>{adjustAccuracyHint}</Text>
                   ) : null}
                   {settingsBlock}
                 </View>
@@ -742,7 +829,7 @@ export default function CheckinAuthenticatedScreen() {
             showsVerticalScrollIndicator={false}
           >
             <Text style={styles.description}>
-              現在地を記録して、すれ違いを探します
+              会いたい君がいる現在地を、正確な足あととして残します
             </Text>
 
             {pausedBanner}
