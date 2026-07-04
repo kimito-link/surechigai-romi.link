@@ -37,6 +37,7 @@
     "e2e:ui": "playwright test --ui",
     "e2e:report": "playwright show-report",
     "e2e:auth-save": "playwright test --project=save-auth --headed",
+    "soak:auth-home": "node scripts/auth-home-soak.mjs",
     "diff-check": "node scripts/diff-check.mjs",
     "pagespeed": "node scripts/pagespeed-check.mjs --categories=performance",
     "pagespeed:full": "node scripts/pagespeed-check.mjs",
