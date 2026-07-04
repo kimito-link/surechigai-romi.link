@@ -150,7 +150,38 @@ function permissionError(): Error {
 }
 
 function timeoutError(): Error {
-  return new Error("位置情報の取得がタイムアウトしました。地図で位置を確認してください。");
+  return new Error(
+    "位置情報を取得できませんでした。ブラウザの位置情報を許可するか、スマホでお試しください。",
+  );
+}
+
+const ANCHOR_FALLBACK_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * 測位が1件も取れなかった時の最終フォールバック:
+ * 直近の高精度足あと（アンカー）を「レビュー用の仮位置」として返す。
+ * PCで位置情報サービスが使えない環境でも、地図ピン修正から保存へ進めるようにする
+ * （エラー行き止まりにしない。2026-07-04 実走で発覚した欠陥の修正）。
+ */
+export function anchorFallbackFix(anchors: PreciseLocationAnchor[]): CheckinFix | null {
+  const now = Date.now();
+  const valid = anchors.filter((a) => {
+    if (a.accuracyM == null) return false;
+    const age = now - new Date(a.recordedAt).getTime();
+    return Number.isFinite(age) && age >= 0 && age <= ANCHOR_FALLBACK_MAX_AGE_MS;
+  });
+  if (valid.length === 0) return null;
+  const best = [...valid].sort((a, b) => {
+    const accDiff = (a.accuracyM ?? 999) - (b.accuracyM ?? 999);
+    if (accDiff !== 0) return accDiff;
+    return new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime();
+  })[0]!;
+  return {
+    lat: best.lat,
+    lng: best.lng,
+    accuracy: best.accuracyM ?? undefined,
+    observedAt: now,
+  };
 }
 
 function abortError(): Error {
@@ -259,15 +290,22 @@ async function acquireWebCheckinLocation(options: {
       reject(error);
     };
 
+    const settleWithAnchorFallback = (): boolean => {
+      const fallback = anchorFallbackFix(options.preciseAnchors);
+      if (!fallback) return false;
+      settle({ kind: "review", fix: fallback });
+      return true;
+    };
+
     const evaluate = (hardCut = false) => {
       if (!state.best) {
-        if (hardCut) fail(timeoutError());
+        if (hardCut && !settleWithAnchorFallback()) fail(timeoutError());
         return;
       }
       const elapsed = Date.now() - startedAt;
       const result = evaluateCheckinFix(state.best, elapsed, environment, hardCut);
       if (result) settle(result);
-      else if (hardCut) fail(timeoutError());
+      else if (hardCut && !settleWithAnchorFallback()) fail(timeoutError());
     };
 
     const consider = (fix: CheckinFix) => {
@@ -300,8 +338,15 @@ async function acquireWebCheckinLocation(options: {
       signal: options.signal,
       onSample: consider,
       onError: (error) => {
-        if (isPermissionDenied(error) && !state.best) {
+        if (state.best) return;
+        if (isPermissionDenied(error)) {
           fail(permissionError());
+          return;
+        }
+        // PCで位置情報サービス自体が使えない (POSITION_UNAVAILABLE)。
+        // ハードカットまで待たず、直近足あとがあれば即レビューへ降格する。
+        if (environment === "desktop-web" && error.code === 2) {
+          if (!settleWithAnchorFallback()) fail(timeoutError());
         }
       },
     });
@@ -359,15 +404,22 @@ async function acquireNativeCheckinLocation(options: {
       reject(error);
     };
 
+    const settleWithAnchorFallback = (): boolean => {
+      const fallback = anchorFallbackFix(options.preciseAnchors);
+      if (!fallback) return false;
+      settle({ kind: "review", fix: fallback });
+      return true;
+    };
+
     const evaluate = (hardCut = false) => {
       if (!state.best) {
-        if (hardCut) fail(timeoutError());
+        if (hardCut && !settleWithAnchorFallback()) fail(timeoutError());
         return;
       }
       const elapsed = Date.now() - startedAt;
       const result = evaluateCheckinFix(state.best, elapsed, "mobile", hardCut);
       if (result) settle(result);
-      else if (hardCut) fail(timeoutError());
+      else if (hardCut && !settleWithAnchorFallback()) fail(timeoutError());
     };
 
     const consider = (fix: CheckinFix) => {

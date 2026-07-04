@@ -82,9 +82,35 @@ export default function Root({ children }: PropsWithChildren) {
             text-rendering: optimizeSpeed;
           }
           #root { background-color: var(--color-background); min-height: 100%; }
+          /* ログイン済みヒント時のブートベール:
+             プリレンダ済みのゲスト用HTMLを一瞬見せず、アプリ起動までスピナーで繋ぐ
+             （リロードのたびに画面がこまめに切り替わる問題の対策）。
+             解除は app/_layout.tsx のマウント時 effect（保険で6秒後に自動解除）。 */
+          html[data-auth-boot="1"] #root { visibility: hidden; }
+          html[data-auth-boot="1"] body::after {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 34px;
+            height: 34px;
+            margin: -17px 0 0 -17px;
+            border-radius: 50%;
+            border: 3px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            animation: romi-boot-spin 0.8s linear infinite;
+          }
+          @keyframes romi-boot-spin { to { transform: rotate(360deg); } }
         `}} />
       </head>
       <body>
+        {/* ログイン済みヒント判定（lib/clerk-public-routes.ts hasClerkSessionHint と同じ条件）。
+            children より先に同期実行され、プリレンダHTMLの描画前にベールを掛ける。 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var h=false;var ls=window.localStorage;if(ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}if(h){document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
+          }}
+        />
         {children}
         {enableSpeedInsights && (
           <script

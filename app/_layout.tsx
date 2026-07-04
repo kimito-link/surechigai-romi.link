@@ -91,6 +91,13 @@ export default function RootLayout() {
   const useGuestWebShell = Platform.OS === "web" && shouldUseGuestWebShell(pathname);
   const deferNativeWind = useGuestWebShell && shouldDeferTrpcOnGuestWeb(pathname);
 
+  // +html.tsx のブートベール解除（React がマウントした瞬間に本物のUIへ引き継ぐ）
+  useEffect(() => {
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      document.documentElement.removeAttribute("data-auth-boot");
+    }
+  }, []);
+
   useEffect(() => {
     if (Platform.OS === "web") {
       const cancelBootstrap = startDeferredWebBootstrap();

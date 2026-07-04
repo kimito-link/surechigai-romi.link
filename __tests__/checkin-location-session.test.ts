@@ -23,6 +23,7 @@ vi.mock("@/lib/get-current-location", () => ({
 
 import {
   acquireCheckinLocation,
+  anchorFallbackFix,
   evaluateCheckinFix,
   type CheckinFix,
 } from "@/lib/checkin-location-session";
@@ -218,5 +219,85 @@ describe("acquireCheckinLocation on web", () => {
 
     await expect(promise).rejects.toThrow("中断");
     expect(geo.clearWatch).toHaveBeenCalledWith(7);
+  });
+});
+
+describe("anchorFallbackFix — 測位ゼロ時の直近足あとフォールバック", () => {
+  it("有効な直近アンカーからレビュー用の仮位置を返す（精度優先→新しさ優先）", () => {
+    const now = Date.now();
+    const result = anchorFallbackFix([
+      { lat: 36.1, lng: 138.1, accuracyM: 40, recordedAt: new Date(now - 60_000) },
+      { lat: 36.2, lng: 138.2, accuracyM: 12, recordedAt: new Date(now - 120_000) },
+    ]);
+    expect(result).toMatchObject({ lat: 36.2, lng: 138.2, accuracy: 12 });
+  });
+
+  it("24時間より古いアンカー・accuracy不明のアンカーは使わない", () => {
+    const now = Date.now();
+    expect(
+      anchorFallbackFix([
+        { lat: 36, lng: 138, accuracyM: 10, recordedAt: new Date(now - 25 * 60 * 60 * 1000) },
+        { lat: 36, lng: 138, accuracyM: null, recordedAt: new Date(now - 1000) },
+      ]),
+    ).toBeNull();
+  });
+});
+
+describe("acquireCheckinLocation — 測位ゼロでもエラー行き止まりにしない", () => {
+  it("ハードカットまで1件も測位が来なくても、アンカーがあれば review で解決する", async () => {
+    installWebGeolocation();
+    const promise = acquireCheckinLocation({
+      preciseAnchors: [
+        { lat: 36.09, lng: 138.02, accuracyM: 15, recordedAt: new Date(Date.now() - 60_000) },
+      ],
+    });
+
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    await expect(promise).resolves.toMatchObject({
+      kind: "review",
+      fix: { lat: 36.09, lng: 138.02, accuracy: 15 },
+    });
+  });
+
+  it("desktop-web で POSITION_UNAVAILABLE が来たら、ハードカットを待たずアンカーで review へ", async () => {
+    mockRuntime.desktopWeb = true;
+    let errorCb: GeoError | null = null;
+    const getCurrentPosition = vi.fn(
+      (_s: GeoSuccess, error?: GeoError | null) => {
+        if (error) errorCb = error;
+      },
+    );
+    Object.defineProperty(globalThis, "navigator", {
+      configurable: true,
+      value: {
+        geolocation: {
+          getCurrentPosition,
+          watchPosition: vi.fn(() => 9),
+          clearWatch: vi.fn(),
+        },
+      },
+    });
+
+    const promise = acquireCheckinLocation({
+      preciseAnchors: [
+        { lat: 36.09, lng: 138.02, accuracyM: 20, recordedAt: new Date(Date.now() - 30_000) },
+      ],
+    });
+
+    errorCb!({ code: 2, message: "unavailable" } as GeolocationPositionError);
+
+    await expect(promise).resolves.toMatchObject({
+      kind: "review",
+      fix: { lat: 36.09, lng: 138.02, accuracy: 20 },
+    });
+  });
+
+  it("アンカーも無く測位も来ない場合のみタイムアウトエラーになる", async () => {
+    installWebGeolocation();
+    const promise = acquireCheckinLocation({ preciseAnchors: [] });
+    const expectation = expect(promise).rejects.toThrow(/位置情報を取得できませんでした/);
+    await vi.advanceTimersByTimeAsync(10_000);
+    await expectation;
   });
 });
