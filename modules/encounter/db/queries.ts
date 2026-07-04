@@ -602,30 +602,43 @@ export async function getMyEncounters(
     .orderBy(sql`${encounters.occurredAt} DESC`)
     .limit(20);
 
-  const items: EncounterListItem[] = [];
+  // バッチ取得対象のパートナーID（ブロック相手は最初から除外）
+  const partnerIds = [
+    ...new Set(
+      rows
+        .map((row) => (row.userAId === selfUserId ? row.userBId : row.userAId))
+        .filter((id) => !blockedIds.has(id))
+    ),
+  ];
+  if (partnerIds.length === 0) return [];
 
-  for (const row of rows) {
-    const partnerId = row.userAId === selfUserId ? row.userBId : row.userAId;
-    if (blockedIds.has(partnerId)) continue;
+  // パートナー情報を一括取得
+  const partnerRows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      hitokoto: users.hitokoto,
+      hitokotoUpdatedAt: users.hitokotoUpdatedAt,
+      isSuspended: users.isSuspended,
+    })
+    .from(users)
+    .where(inArray(users.id, partnerIds));
+  const partnerById = new Map(partnerRows.map((p) => [p.id, p]));
 
-    // パートナー情報を取得
-    const partnerRows = await db
-      .select({
-        name: users.name,
-        hitokoto: users.hitokoto,
-        hitokotoUpdatedAt: users.hitokotoUpdatedAt,
-        isSuspended: users.isSuspended,
-      })
-      .from(users)
-      .where(eq(users.id, partnerId))
-      .limit(1);
+  // 停止・行なしのパートナーは後続バッチの対象からも外す（従来のループ挙動と同じ）
+  const visiblePartners = partnerRows.filter((p) => !p.isSuspended);
+  if (visiblePartners.length === 0) return [];
+  const visiblePartnerIds = visiblePartners.map((p) => p.id);
 
-    if (partnerRows.length === 0) continue;
-    const partner = partnerRows[0];
-    if (partner.isSuspended) continue;
-
-    const usernameCandidate = (partner.name ?? "").replace(/^@/, "").trim();
-    const cacheRows = usernameCandidate
+  // Twitterキャッシュを一括取得（username 候補があるパートナーのみ）
+  const usernameByPartnerId = new Map<number, string>();
+  for (const p of visiblePartners) {
+    const candidate = (p.name ?? "").replace(/^@/, "").trim();
+    if (candidate) usernameByPartnerId.set(p.id, candidate);
+  }
+  const usernames = [...new Set(usernameByPartnerId.values())];
+  const cacheRows =
+    usernames.length > 0
       ? await db
           .select({
             twitterUsername: twitterUserCache.twitterUsername,
@@ -634,19 +647,61 @@ export async function getMyEncounters(
             followersCount: twitterUserCache.followersCount,
           })
           .from(twitterUserCache)
-          .where(eq(twitterUserCache.twitterUsername, usernameCandidate))
-          .limit(1)
+          .where(inArray(twitterUserCache.twitterUsername, usernames))
       : [];
-    const cachedTwitter = cacheRows[0];
+  const cacheByUsername = new Map(cacheRows.map((c) => [c.twitterUsername, c]));
 
-    // パートナーの累計すれ違い数
-    const countRows = await db
-      .select({ cnt: sql<number>`count(*)` })
+  // パートナーの累計すれ違い数を一括集計。
+  // 従来の `userAId = p OR userBId = p` の count と等価になるよう、
+  // userA側とuserB側を別々に GROUP BY して合算する（userB側は自己ペア行を除外して二重加算を防ぐ）。
+  const [countARows, countBRows] = await Promise.all([
+    db
+      .select({
+        partnerId: encounters.userAId,
+        cnt: sql<number>`count(*)`,
+      })
+      .from(encounters)
+      .where(inArray(encounters.userAId, visiblePartnerIds))
+      .groupBy(encounters.userAId),
+    db
+      .select({
+        partnerId: encounters.userBId,
+        cnt: sql<number>`count(*)`,
+      })
       .from(encounters)
       .where(
-        or(eq(encounters.userAId, partnerId), eq(encounters.userBId, partnerId))
-      );
-    const partnerTotalEncounters = Number(countRows[0]?.cnt ?? 0);
+        and(
+          inArray(encounters.userBId, visiblePartnerIds),
+          ne(encounters.userAId, encounters.userBId)
+        )
+      )
+      .groupBy(encounters.userBId),
+  ]);
+  const totalByPartnerId = new Map<number, number>();
+  for (const row of [...countARows, ...countBRows]) {
+    totalByPartnerId.set(
+      row.partnerId,
+      (totalByPartnerId.get(row.partnerId) ?? 0) + Number(row.cnt)
+    );
+  }
+
+  // 組み立て（返却順は rows の順序を維持、除外条件は従来どおり）
+  const items: EncounterListItem[] = [];
+
+  for (const row of rows) {
+    const partnerId = row.userAId === selfUserId ? row.userBId : row.userAId;
+    if (blockedIds.has(partnerId)) continue;
+
+    const partner = partnerById.get(partnerId);
+    if (!partner) continue;
+    if (partner.isSuspended) continue;
+
+    const usernameCandidate = usernameByPartnerId.get(partnerId) ?? "";
+    const cachedTwitter = usernameCandidate
+      ? cacheByUsername.get(usernameCandidate)
+      : undefined;
+
+    const partnerTotalEncounters = totalByPartnerId.get(partnerId) ?? 0;
 
     const openedByMe =
       row.userAId === selfUserId ? row.openedByA : row.openedByB;

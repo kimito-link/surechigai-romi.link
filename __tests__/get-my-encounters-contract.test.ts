@@ -8,6 +8,15 @@
  * 実DB非依存。drizzle のテーブルオブジェクトをテーブル名で識別し、
  * テーブルごとに用意したキューから呼び出し順にレスポンスを返す
  * 最小限のモックビルダーを使う。
+ *
+ * バッチ化後のクエリ発行順（キューの並び順はこれに対応する）:
+ *   1. blocks        — ブロックセット
+ *   2. encounters #1 — すれ違い一覧（最大20件）
+ *   3. users #1      — パートナー情報の inArray 一括取得
+ *   4. twitter_user_cache #1 — Twitterキャッシュの inArray 一括取得（username 候補がある場合のみ）
+ *   5. encounters #2 — 累計すれ違い数 userA側 GROUP BY
+ *   6. encounters #3 — 累計すれ違い数 userB側 GROUP BY（#2 と合算される）
+ * パートナーIDが空（全員ブロック等）の場合は 3 以降は発行されない。
  */
 import { describe, it, expect } from "vitest";
 import { getMyEncounters } from "../modules/encounter/db/queries.js";
@@ -49,6 +58,7 @@ function createMockDb(queues: QueueMap) {
       where: () => chain,
       orderBy: () => chain,
       limit: () => chain,
+      groupBy: () => chain,
       innerJoin: () => chain,
       then: (resolve: (v: unknown[]) => void) => resolve(rows),
     };
@@ -80,6 +90,7 @@ const BASE_ENCOUNTER_ROW = {
 };
 
 const BASE_PARTNER = {
+  id: 200,
   name: "partner_user",
   hitokoto: "こんにちは",
   hitokotoUpdatedAt: new Date("2026-07-04T09:00:00Z"),
@@ -89,12 +100,13 @@ const BASE_PARTNER = {
 describe("getMyEncounters — 返却契約", () => {
   const selfUserId = 100;
 
-  it("正常系: encounter 1件をそのまま返す（件数・フィールド）", async () => {
+  it("正常系: encounter 1件をそのまま返す（件数・フィールド・累計はA側+B側の合算）", async () => {
     const db = createMockDb({
       blocks: [[]], // ブロックなし
       encounters: [
         [BASE_ENCOUNTER_ROW], // メイン一覧クエリ
-        [{ cnt: 5 }], // パートナーの累計すれ違い数
+        [{ partnerId: 200, cnt: 3 }], // 累計 userA側
+        [{ partnerId: 200, cnt: 2 }], // 累計 userB側 → 合算で5
       ],
       users: [[BASE_PARTNER]],
       twitter_user_cache: [[]],
@@ -123,11 +135,11 @@ describe("getMyEncounters — 返却契約", () => {
       blocks: [[]],
       encounters: [
         [rowA, rowB], // クエリ結果順（新しい方が先）
-        [{ cnt: 1 }],
-        [{ cnt: 1 }],
+        [{ partnerId: 200, cnt: 1 }],
+        [],
       ],
-      users: [[BASE_PARTNER], [BASE_PARTNER]],
-      twitter_user_cache: [[], []],
+      users: [[BASE_PARTNER]],
+      twitter_user_cache: [[]],
     });
 
     const items = await getMyEncounters(db as never, selfUserId);
@@ -146,10 +158,11 @@ describe("getMyEncounters — 返却契約", () => {
       blocks: [[]],
       encounters: [
         rows,
-        ...rows.map(() => [{ cnt: 1 }]),
+        [{ partnerId: 200, cnt: 1 }],
+        [],
       ],
-      users: rows.map(() => [BASE_PARTNER]),
-      twitter_user_cache: rows.map(() => []),
+      users: [[BASE_PARTNER]],
+      twitter_user_cache: [[]],
     });
 
     const items = await getMyEncounters(db as never, selfUserId);
@@ -159,7 +172,11 @@ describe("getMyEncounters — 返却契約", () => {
   it("cursor: 明示的に渡した cursor がそのまま使われても契約上は正常応答する", async () => {
     const db = createMockDb({
       blocks: [[]],
-      encounters: [[BASE_ENCOUNTER_ROW], [{ cnt: 1 }]],
+      encounters: [
+        [BASE_ENCOUNTER_ROW],
+        [{ partnerId: 200, cnt: 1 }],
+        [],
+      ],
       users: [[BASE_PARTNER]],
       twitter_user_cache: [[]],
     });
@@ -197,7 +214,7 @@ describe("getMyEncounters — 返却契約", () => {
   it("停止ユーザー除外: partner.isSuspended が true の場合は除外される", async () => {
     const db = createMockDb({
       blocks: [[]],
-      encounters: [[BASE_ENCOUNTER_ROW]],
+      encounters: [[BASE_ENCOUNTER_ROW]], // 停止のみ→キャッシュ・累計クエリは呼ばれない
       users: [[{ ...BASE_PARTNER, isSuspended: true }]],
       twitter_user_cache: [],
     });
@@ -227,7 +244,11 @@ describe("getMyEncounters — 返却契約", () => {
     };
     const db = createMockDb({
       blocks: [[]],
-      encounters: [[BASE_ENCOUNTER_ROW], [{ cnt: 1 }]],
+      encounters: [
+        [BASE_ENCOUNTER_ROW],
+        [{ partnerId: 200, cnt: 1 }],
+        [],
+      ],
       users: [[oldHitokoto]],
       twitter_user_cache: [[]],
     });
@@ -239,15 +260,21 @@ describe("getMyEncounters — 返却契約", () => {
     expect(items[0].partnerHitokotoUpdatedAt).toEqual(oldHitokoto.hitokotoUpdatedAt);
   });
 
-  it("Twitterキャッシュがある場合、partnerUsername/partnerDisplayName/partnerProfileImage はキャッシュ優先", async () => {
+  it("Twitterキャッシュがある場合、partnerDisplayName/partnerProfileImage/partnerFollowersCount はキャッシュ優先", async () => {
+    // 実DBでは twitterUsername = username候補 の行しかヒットしないため、
+    // fixture の twitterUsername は候補（partner.name から導出される "partner_user"）と一致させる。
     const db = createMockDb({
       blocks: [[]],
-      encounters: [[BASE_ENCOUNTER_ROW], [{ cnt: 1 }]],
+      encounters: [
+        [BASE_ENCOUNTER_ROW],
+        [{ partnerId: 200, cnt: 1 }],
+        [],
+      ],
       users: [[BASE_PARTNER]],
       twitter_user_cache: [
         [
           {
-            twitterUsername: "cached_handle",
+            twitterUsername: "partner_user",
             displayName: "キャッシュ表示名",
             profileImage: "https://example.com/avatar.png",
             followersCount: 42,
@@ -257,7 +284,7 @@ describe("getMyEncounters — 返却契約", () => {
     });
 
     const items = await getMyEncounters(db as never, selfUserId);
-    expect(items[0].partnerUsername).toBe("cached_handle");
+    expect(items[0].partnerUsername).toBe("partner_user");
     expect(items[0].partnerDisplayName).toBe("キャッシュ表示名");
     expect(items[0].partnerProfileImage).toBe("https://example.com/avatar.png");
     expect(items[0].partnerFollowersCount).toBe(42);
@@ -267,13 +294,14 @@ describe("getMyEncounters — 返却契約", () => {
     const row = { ...BASE_ENCOUNTER_ROW, userAId: 300, userBId: 100 };
     const db = createMockDb({
       blocks: [[]],
-      encounters: [[row], [{ cnt: 0 }]],
-      users: [[BASE_PARTNER]],
+      encounters: [[row], [], []], // 累計はGROUP BY行なし→0
+      users: [[{ ...BASE_PARTNER, id: 300 }]],
       twitter_user_cache: [[]],
     });
 
     const items = await getMyEncounters(db as never, selfUserId);
     expect(items[0].partnerId).toBe(300);
+    expect(items[0].partnerTotalEncounters).toBe(0);
   });
 
   it("結果が空の場合は空配列を返す", async () => {
@@ -286,5 +314,81 @@ describe("getMyEncounters — 返却契約", () => {
 
     const items = await getMyEncounters(db as never, selfUserId);
     expect(items).toEqual([]);
+  });
+
+  it("バッチ整合: 複数パートナー混在時も各行に正しいパートナー情報・キャッシュ・累計が対応する", async () => {
+    const row1 = { ...BASE_ENCOUNTER_ROW, id: 1, userAId: 100, userBId: 200 };
+    const row2 = { ...BASE_ENCOUNTER_ROW, id: 2, userAId: 300, userBId: 100 };
+    const partnerA = { ...BASE_PARTNER, id: 200, name: "user_a", hitokoto: "Aのひとこと" };
+    const partnerB = { ...BASE_PARTNER, id: 300, name: "user_b", hitokoto: "Bのひとこと" };
+
+    const db = createMockDb({
+      blocks: [[]],
+      encounters: [
+        [row1, row2],
+        [{ partnerId: 200, cnt: 2 }], // userA側: 200→2
+        [
+          { partnerId: 300, cnt: 4 }, // userB側: 300→4
+          { partnerId: 200, cnt: 1 }, // userB側: 200→1（合算で3）
+        ],
+      ],
+      users: [[partnerA, partnerB]], // 一括取得（1回のクエリで両方返る）
+      twitter_user_cache: [
+        [
+          {
+            twitterUsername: "user_a",
+            displayName: "Aさんの表示名",
+            profileImage: "https://example.com/a.png",
+            followersCount: 10,
+          },
+          // user_b はキャッシュなし
+        ],
+      ],
+    });
+
+    const items = await getMyEncounters(db as never, selfUserId);
+    expect(items).toHaveLength(2);
+
+    expect(items[0]).toMatchObject({
+      id: 1,
+      partnerId: 200,
+      partnerName: "user_a",
+      partnerHitokoto: "Aのひとこと",
+      partnerDisplayName: "Aさんの表示名",
+      partnerProfileImage: "https://example.com/a.png",
+      partnerFollowersCount: 10,
+      partnerTotalEncounters: 3,
+    });
+    expect(items[1]).toMatchObject({
+      id: 2,
+      partnerId: 300,
+      partnerName: "user_b",
+      partnerHitokoto: "Bのひとこと",
+      partnerDisplayName: "user_b", // キャッシュなし→users.name
+      partnerProfileImage: null,
+      partnerFollowersCount: null,
+      partnerTotalEncounters: 4,
+    });
+  });
+
+  it("バッチ整合: ブロック相手と通常相手が混在する場合、ブロック相手の行だけ除外される", async () => {
+    const rowBlocked = { ...BASE_ENCOUNTER_ROW, id: 1, userAId: 100, userBId: 200 };
+    const rowNormal = { ...BASE_ENCOUNTER_ROW, id: 2, userAId: 100, userBId: 300 };
+
+    const db = createMockDb({
+      blocks: [[{ blockerId: 100, blockedId: 200 }]], // 200 のみブロック
+      encounters: [
+        [rowBlocked, rowNormal],
+        [{ partnerId: 300, cnt: 1 }],
+        [],
+      ],
+      users: [[{ ...BASE_PARTNER, id: 300, name: "user_b" }]], // バッチ対象は 300 のみ
+      twitter_user_cache: [[]],
+    });
+
+    const items = await getMyEncounters(db as never, selfUserId);
+    expect(items).toHaveLength(1);
+    expect(items[0].id).toBe(2);
+    expect(items[0].partnerId).toBe(300);
   });
 });
