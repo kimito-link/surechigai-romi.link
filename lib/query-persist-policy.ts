@@ -8,6 +8,10 @@ const NON_PERSIST_ROUTERS = new Set([
   "ogp",
   "safety",
   "dashboard",
+  // presence: リアルタイムデータのため再訪時に古いキャッシュを出す意味がなく、
+  // 定期refetchのたびに localStorage 全量シリアライズが走るのも無駄
+  // （docs/auth-home-oom-diagnosis-v2.md Phase 2 永続化ポリシー）。
+  "presence",
 ]);
 
 function getTrpcRouterName(queryKey: unknown): string | null {

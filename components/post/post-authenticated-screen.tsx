@@ -39,13 +39,8 @@ import { trpc } from "@/lib/trpc";
 import { color, palette } from "@/theme/tokens";
 import {
   type EncounterItem,
-  TIER_COLORS,
-  TIER_LABELS,
-  STAMPS,
   reasonLabel,
-  formatEncounterDate,
 } from "@/lib/post/encounter-shared";
-import { EnvelopeCard } from "@/components/post/envelope-card";
 import { HomeStatusLine } from "@/components/post/home-status-line";
 import { EnvelopeRail } from "@/components/post/envelope-rail";
 import { RadarStageBoundary } from "@/components/post/radar-stage-boundary";
@@ -62,6 +57,7 @@ import { latLngToRadarPercent } from "@/lib/japan-radar-position";
 import { LIVE_PRESENCE_PULSE_INTERVAL_MS } from "@/modules/encounter/core/live-presence";
 import { CheckinCtaButton } from "@/components/molecules/checkin-cta-button";
 import { useTabScrollToTop } from "@/hooks/use-tab-scroll-to-top";
+import { useScreenFocused } from "@/hooks/use-screen-focused";
 
 // docs/auth-home-oom-diagnosis-v2.md: 認証済みホームのOOMが e0cbccf(居場所リアルタイム公開)
 // 導入以前は起きていなかったとの実機報告を受け、原因切り分けのため居場所マーカーの
@@ -107,108 +103,6 @@ function LiteRadarPlaceholder({ style }: { style?: object }) {
   return (
     <View style={[{ backgroundColor: color.bg, alignItems: "center", justifyContent: "center" }, style]}>
       <Text style={{ color: color.textMuted, fontSize: 12 }}>軽量表示中（地図オフ）</Text>
-    </View>
-  );
-}
-
-/** 履歴カード（開封済み） */
-function HistoryCard({
-  item,
-  onSendStamp,
-  onBlock,
-  onReport,
-}: {
-  item: EncounterItem;
-  onSendStamp: (encounterId: number, emoji: string) => void;
-  onBlock: (userId: number) => void;
-  onReport: (item: EncounterItem) => void;
-}) {
-  const tierColor = TIER_COLORS[item.tier] || color.accentPrimary;
-
-  const openXProfile = () => {
-    if (item.partnerName) {
-      Linking.openURL(`https://x.com/${item.partnerName}`);
-    }
-  };
-
-  return (
-    <View style={styles.historyCard}>
-      {/* 相手のアイコン（プレースホルダ） */}
-      <View style={[styles.historyAvatar, { borderColor: tierColor + "66" }]}>
-        <MaterialIcons name="account-circle" size={36} color={color.textMuted} />
-      </View>
-
-      <View style={styles.historyContent}>
-        {/* 名前 + ティア */}
-        <View style={styles.historyRow}>
-          <Text style={styles.historyName} numberOfLines={1}>
-            {item.partnerName || "ロミユーザー"}
-          </Text>
-          <View style={[styles.tierBadgeSmall, { backgroundColor: tierColor + "22" }]}>
-            <Text style={[styles.tierTextSmall, { color: tierColor }]}>
-              {TIER_LABELS[item.tier] || `T${item.tier}`}
-            </Text>
-          </View>
-        </View>
-
-        {/* エリア + 日時 */}
-        <Text style={styles.historyArea} numberOfLines={1}>
-          {item.areaName || item.prefecture || "不明なエリア"} ・ {formatEncounterDate(item.occurredAt)}
-        </Text>
-
-        {/* ひとこと */}
-        {item.partnerHitokoto && (
-          <Text style={styles.historyHitokoto} numberOfLines={2}>
-            {item.partnerHitokoto}
-          </Text>
-        )}
-
-        {/* 累計すれ違い数 */}
-        <Text style={styles.historyTotal}>
-          累計 {item.partnerTotalEncounters} 件のすれ違い
-        </Text>
-
-        {/* アクションボタン */}
-        <View style={styles.historyActions}>
-          {/* スタンプボタン */}
-          {STAMPS.map((emoji) => (
-            <Pressable
-              key={emoji}
-              onPress={() => onSendStamp(item.id, emoji)}
-              style={({ pressed }) => [
-                styles.stampButton,
-                pressed && { opacity: 0.6, transform: [{ scale: 0.9 }] },
-              ]}
-            >
-              <Text style={styles.stampText}>{emoji}</Text>
-            </Pressable>
-          ))}
-
-          {/* Xプロフィールへ */}
-          {item.partnerName && (
-            <Pressable
-              onPress={openXProfile}
-              style={({ pressed }) => [
-                styles.xButton,
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Text style={styles.xButtonText}>X</Text>
-            </Pressable>
-          )}
-
-          {/* ブロック/通報 */}
-          <Pressable
-            onPress={() => onReport(item)}
-            style={({ pressed }) => [
-              styles.reportButton,
-              pressed && { opacity: 0.7 },
-            ]}
-          >
-            <MaterialIcons name="more-horiz" size={18} color={color.textMuted} />
-          </Pressable>
-        </View>
-      </View>
     </View>
   );
 }
@@ -271,6 +165,9 @@ export function PostAuthenticatedScreen() {
   const toast = useToast();
   const tabInset = useTabBarInset();
   const scrollRef = useTabScrollToTop();
+  // タブ切替（expo-router Tabsはアンマウントしない）/ブラウザタブ非アクティブ時に
+  // レーダーの無限アニメを止める（docs/auth-home-oom-diagnosis-v2.md 施策K）。
+  const focused = useScreenFocused();
   const router = useRouter();
   const { height: windowHeight } = useWindowDimensions();
   const mapMobileHeight = Math.min(Math.max(windowHeight * 0.36, 240), 320);
@@ -300,22 +197,26 @@ export function PostAuthenticatedScreen() {
 
   const { data: livePresence } = trpc.presence.list.useQuery(undefined, {
     enabled: isAuthenticated && LIVE_PRESENCE_RADAR_ENABLED,
-    refetchInterval: Math.max(LIVE_PRESENCE_PULSE_INTERVAL_MS, 30_000),
+    // docs/auth-home-oom-diagnosis-v2.md 施策G: モバイルは90秒に延ばしrefetch頻度を下げる。
+    refetchInterval: Math.max(LIVE_PRESENCE_PULSE_INTERVAL_MS, isDesktop ? 60_000 : 90_000),
+    gcTime: 5 * 60_000,
   });
 
   const { data: trailPeek } = trpc.zukan.myTrail.useQuery(
     { limit: 1 },
-    { enabled: isAuthenticated, staleTime: 60_000 },
+    { enabled: isAuthenticated, staleTime: 60_000, gcTime: 10 * 60_000 },
   );
 
   const { data: mySignal } = trpc.dashboard.mySignal.useQuery(undefined, {
     enabled: isAuthenticated,
     staleTime: 60_000,
+    gcTime: 10 * 60_000,
   });
 
   const { data: settingsData } = trpc.settings.get.useQuery(undefined, {
     enabled: isAuthenticated,
     staleTime: 60_000,
+    gcTime: 10 * 60_000,
   });
   const isPausing =
     !!settingsData?.locationPausedUntil &&
@@ -390,7 +291,6 @@ export function PostAuthenticatedScreen() {
 
   // 未開封 / 開封済みに分類
   const unopened = (encounters ?? []).filter((e) => !e.openedByMe);
-  const opened = (encounters ?? []).filter((e) => !!e.openedByMe);
 
   const checkedInRecently = useMemo(() => {
     const latest = trailPeek?.locations[0]?.recordedAt;
@@ -399,25 +299,6 @@ export function PostAuthenticatedScreen() {
   }, [trailPeek?.locations]);
 
   const showCheckinCta = isAuthenticated && unopened.length === 0 && !checkedInRecently;
-
-  const renderItem = useCallback(
-    ({ item }: { item: EncounterItem }) => {
-      if (!item.openedByMe) {
-        return (
-          <EnvelopeCard item={item} onOpen={handleOpen} />
-        );
-      }
-      return (
-        <HistoryCard
-          item={item}
-          onSendStamp={handleSendStamp}
-          onBlock={handleBlock}
-          onReport={handleReport}
-        />
-      );
-    },
-    [handleOpen, handleSendStamp, handleBlock, handleReport],
-  );
 
   // モバイル実機の OOM 対策: 地図に撒くマーカー数と、同時に動く無限アニメの
   // 本数を上限で絞る。あふれた分は「他N件」の集約チップで示し、全件は下部の
@@ -444,7 +325,7 @@ export function PostAuthenticatedScreen() {
     return (
       <RadarStageBoundary style={stageStyle}>
         <Suspense fallback={<DeferredRadarFallback style={stageStyle} />}>
-          <JapanRadarMap>
+          <JapanRadarMap active={focused}>
             {envelopeMarkers.map((item, index) => {
               const randomX = 10 + (Math.sin(item.id * 123) * 0.5 + 0.5) * 80;
               const randomY = 10 + (Math.cos(item.id * 321) * 0.5 + 0.5) * 80;
@@ -454,7 +335,7 @@ export function PostAuthenticatedScreen() {
                   x={randomX}
                   y={randomY}
                   onPress={() => handleOpen(item)}
-                  animate={index < ANIMATE_ENVELOPE_N}
+                  animate={focused && index < ANIMATE_ENVELOPE_N}
                 />
               );
             })}
@@ -462,7 +343,7 @@ export function PostAuthenticatedScreen() {
               const pos = latLngToRadarPercent(marker.lat, marker.lng);
               if (!pos) return null;
               // モバイルは自分＋最新数人だけパルスを動かし、残りは静止。
-              const shouldAnimate = marker.isSelf || index < ANIMATE_PRESENCE_N;
+              const shouldAnimate = focused && (marker.isSelf || index < ANIMATE_PRESENCE_N);
               return (
                 <LazyCharacterHere
                   key={`live-${marker.userId}`}
@@ -776,104 +657,6 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: color.border,
-  },
-  // History card
-  historyCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 10,
-    padding: 14,
-    borderRadius: 14,
-    backgroundColor: color.surfaceEmphasis,
-    borderWidth: 1,
-    borderColor: color.border,
-  },
-  historyAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    backgroundColor: color.surfaceAlt,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  historyContent: {
-    flex: 1,
-  },
-  historyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 2,
-  },
-  historyName: {
-    color: color.textPrimary,
-    fontSize: 14,
-    fontWeight: "600",
-    flex: 1,
-  },
-  tierBadgeSmall: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  tierTextSmall: {
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  historyArea: {
-    color: color.textMuted,
-    fontSize: 11,
-    marginBottom: 4,
-  },
-  historyHitokoto: {
-    color: color.textSecondary,
-    fontSize: 12,
-    fontStyle: "italic",
-    marginBottom: 4,
-  },
-  historyTotal: {
-    color: color.textMuted,
-    fontSize: 11,
-    marginBottom: 8,
-  },
-  historyActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  stampButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: color.surfaceAlt,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stampText: {
-    fontSize: 18,
-  },
-  xButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: color.twitter + "22",
-    borderWidth: 1,
-    borderColor: color.twitter + "55",
-  },
-  xButtonText: {
-    color: color.twitter,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  reportButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: color.surfaceAlt,
   },
   // Modal
   modalOverlay: {
