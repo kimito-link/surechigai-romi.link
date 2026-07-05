@@ -14,6 +14,12 @@ export * from "./audit.js";
 // API Usage Tracking
 export * from "./api-usage.js";
 
+// Self-hosted Ads
+export * from "./ads.js";
+
+// DB Growth Monitoring
+export * from "./db-stats.js";
+
 // 君斗りんくのすれ違ひ通信: Encounter 関連テーブル
 export * from "./encounter.js";
 

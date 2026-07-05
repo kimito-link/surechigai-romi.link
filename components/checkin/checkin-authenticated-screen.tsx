@@ -47,6 +47,7 @@ import { MapErrorBoundary } from "@/components/ui/map-error-boundary";
 import { formatDateTime } from "@/components/organisms/precision-tile-map";
 import type { TrailPoint } from "@/lib/map/tile-geo";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
+import { SponsorCard, type SponsorCardData } from "@/components/molecules/sponsor-card";
 import { CheckinPreviewCard } from "@/components/checkin/checkin-preview-card";
 import { CheckinSuccessPanel } from "@/components/checkin/checkin-success-panel";
 import { navigate } from "@/lib/navigation";
@@ -69,6 +70,47 @@ import {
 type CheckinState = "idle" | "loading" | "adjust" | "success" | "error" | "zero";
 type LoadingPhase = "locating" | "saving";
 const RETRY_FIX_MAX_AGE_MS = 60_000;
+const SPONSOR_CLIENT_CAP = 3;
+const SPONSOR_CLIENT_COUNTER_KEY = "kimito:sponsor-impressions";
+
+type SponsorClientCounter = {
+  date: string;
+  count: number;
+};
+
+function todayKey(date = new Date()): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function readSponsorClientCounter(): SponsorClientCounter {
+  const fallback = { date: todayKey(), count: 0 };
+  if (Platform.OS !== "web" || typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(SPONSOR_CLIENT_COUNTER_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as Partial<SponsorClientCounter>;
+    if (parsed.date !== fallback.date || typeof parsed.count !== "number") return fallback;
+    return { date: parsed.date, count: Math.max(0, parsed.count) };
+  } catch {
+    return fallback;
+  }
+}
+
+function canRequestSponsorCard(): boolean {
+  return readSponsorClientCounter().count < SPONSOR_CLIENT_CAP;
+}
+
+function rememberSponsorCardDisplay(): boolean {
+  if (Platform.OS !== "web" || typeof window === "undefined") return true;
+  try {
+    const current = readSponsorClientCounter();
+    const next = { date: todayKey(), count: Math.min(SPONSOR_CLIENT_CAP, current.count + 1) };
+    window.localStorage.setItem(SPONSOR_CLIENT_COUNTER_KEY, JSON.stringify(next));
+    return next.count < SPONSOR_CLIENT_CAP;
+  } catch {
+    return true;
+  }
+}
 
 function resolveCheckinErrorMessage(err: unknown, fallback: string): string {
   console.error("[checkin] operation failed:", err);
@@ -97,10 +139,12 @@ export default function CheckinAuthenticatedScreen() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isPausing, setIsPausing] = useState(false);
   const [showLocationIntro, setShowLocationIntro] = useState(false);
+  const [canRequestSponsor, setCanRequestSponsor] = useState(canRequestSponsorCard);
   const skipLocationIntroRef = useRef(false);
   const prewarmedFixRef = useRef<CheckinFix | null>(null);
   const lastFixRef = useRef<CheckinFix | null>(null);
   const activeLocationAbortRef = useRef<AbortController | null>(null);
+  const displayedSponsorKeyRef = useRef<string | null>(null);
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
   const [showSettings, setShowSettings] = useState(false);
   const utils = trpc.useUtils();
@@ -158,6 +202,7 @@ export default function CheckinAuthenticatedScreen() {
   const checkIn = trpc.encounter.checkIn.useMutation();
   const pauseLocation = trpc.settings.pauseLocation.useMutation();
   const resumeLocation = trpc.settings.resume.useMutation();
+  const trackSponsor = trpc.ads.track.useMutation();
   const settingsQuery = trpc.settings.get.useQuery(undefined, {
     enabled: isAuthenticated,
   });
@@ -603,6 +648,7 @@ export default function CheckinAuthenticatedScreen() {
     state === "zero" ||
     state === "adjust" ||
     (state === "loading" && checkinLatLng != null);
+  const isCheckinComplete = state === "success" || state === "zero";
 
   const mapInteractive = isDesktopBrowser && (state === "adjust" || state === "zero" || state === "success");
 
@@ -622,6 +668,40 @@ export default function CheckinAuthenticatedScreen() {
       : latestLocation ?? null;
 
   const placeLine = checkinAddress ?? checkinLocationName;
+
+  const sponsorQuery = trpc.ads.getCards.useQuery(
+    {
+      slot: "checkin_complete",
+      prefecture: checkinPrefecture,
+      municipality: checkinMunicipality,
+    },
+    {
+      enabled: isAuthenticated && isCheckinComplete && canRequestSponsor,
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  );
+  const sponsorCard = sponsorQuery.data?.cards[0] ?? null;
+
+  useEffect(() => {
+    if (!sponsorCard) return;
+    const displayKey = [
+      sponsorCard.id,
+      checkinLocationId ?? "no-location-id",
+      checkinLatLng?.lat.toFixed(6) ?? "no-lat",
+      checkinLatLng?.lng.toFixed(6) ?? "no-lng",
+    ].join(":");
+    if (displayedSponsorKeyRef.current === displayKey) return;
+    displayedSponsorKeyRef.current = displayKey;
+    setCanRequestSponsor(rememberSponsorCardDisplay());
+  }, [sponsorCard, checkinLocationId, checkinLatLng]);
+
+  const handleSponsorPress = useCallback(
+    (card: SponsorCardData) => {
+      trackSponsor.mutate({ cardId: card.id, event: "click" });
+    },
+    [trackSponsor],
+  );
 
   const pausedBanner = isPausing ? (
     <View style={styles.pausedBanner}>
@@ -790,6 +870,14 @@ export default function CheckinAuthenticatedScreen() {
 
                   {settingsBlock}
                 </View>
+              ) : null}
+
+              {isCheckinComplete && sponsorCard ? (
+                <SponsorCard
+                  card={sponsorCard}
+                  onPress={handleSponsorPress}
+                  testID="checkin-sponsor-card"
+                />
               ) : null}
 
               {state === "adjust" ? (

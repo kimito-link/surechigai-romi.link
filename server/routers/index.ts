@@ -9,6 +9,7 @@ import { router } from "../_core/trpc.js";
 import { authRouter } from "./auth.js";
 import { ogpRouter } from "./ogp.js";
 import { devRouter } from "./dev.js";
+import { adsRouter } from "./ads.js";
 
 // encounter モジュールルーター
 import { encounterRouter } from "../../modules/encounter/api/encounter.js";
@@ -28,6 +29,7 @@ export const appRouter = router({
   auth: authRouter,
   ogp: ogpRouter,
   dev: devRouter,
+  ads: adsRouter,
   encounter: encounterRouter,
   zukan: zukanRouter,
   safety: safetyRouter,
@@ -46,6 +48,7 @@ export {
   authRouter,
   ogpRouter,
   devRouter,
+  adsRouter,
   encounterRouter,
   zukanRouter,
   safetyRouter,

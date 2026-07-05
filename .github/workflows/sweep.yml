@@ -2,8 +2,8 @@ name: sweep
 
 on:
   schedule:
-    # 15分ごと（GitHub Actions は実際には5〜20分程度の遅延あり）
-    - cron: "*/15 * * * *"
+    # 1日1回（JST正午ごろ）。DB成長監視と日次ヘルスチェック用。
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 jobs:
