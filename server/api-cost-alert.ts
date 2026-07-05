@@ -6,8 +6,8 @@
  * - COST_ALERT_WEBHOOK_URL: 任意。設定するとアラート内容を POST し、Zapier/Make 等でメール転送（例: info@best-trust.biz）できます。
  */
 
-import * as apiUsageDb from "./db/api-usage-db";
-import { notifyOwner } from "./_core/notification";
+import * as apiUsageDb from "./db/api-usage-db.js";
+import { notifyOwner } from "./_core/notification.js";
 
 // アラート送信済みフラグ（メモリ内、サーバー再起動でリセット）
 const alertSentFlags = new Map<string, boolean>();

@@ -168,7 +168,7 @@ export async function twitterApiFetch<T = unknown>(
 ): Promise<{ data: T; rateLimitInfo: RateLimitInfo | null }> {
   // コスト上限チェック（同期的に実行）
   try {
-    const { isApiCallAllowed } = await import("./db/api-usage-db");
+    const { isApiCallAllowed } = await import("./db/api-usage-db.js");
     const isAllowed = await isApiCallAllowed();
     if (!isAllowed) {
       console.warn("[RateLimit] API call blocked due to cost limit exceeded");
@@ -176,7 +176,7 @@ export async function twitterApiFetch<T = unknown>(
     }
 
     // アラートチェック（非同期、エラーは無視）
-    import("./api-cost-alert").then((alert) => {
+    import("./api-cost-alert.js").then((alert) => {
       alert.checkAndSendCostAlert().catch(() => {
         // エラーは無視
       });
@@ -205,7 +205,7 @@ export async function twitterApiFetch<T = unknown>(
   const endpoint = urlObj.pathname;
 
   // API使用量を記録（非同期、エラーは無視）
-  import("./api-usage-tracker").then((tracker) => {
+  import("./api-usage-tracker.js").then((tracker) => {
     tracker.recordApiUsage(
       endpoint,
       result.rateLimitInfo,

@@ -116,7 +116,7 @@ export async function getUserByTwitterId(twitterId: string) {
   const user = result[0];
 
   // twitterUsernameを取得するためにtwitterFollowStatusを確認
-  const { twitterFollowStatus } = await import("../../drizzle/schema");
+  const { twitterFollowStatus } = await import("../../drizzle/schema.js");
   const followStatus = await db
     .select({ twitterUsername: twitterFollowStatus.twitterUsername })
     .from(twitterFollowStatus)

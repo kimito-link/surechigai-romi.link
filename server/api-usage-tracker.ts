@@ -5,9 +5,9 @@
  * データベースにも記録してコスト計算を行う
  */
 
-import { getDb } from "./db";
+import { getDb } from "./db.js";
 import { sql } from "drizzle-orm";
-import * as apiUsageDb from "./db/api-usage-db";
+import * as apiUsageDb from "./db/api-usage-db.js";
 
 // メモリ内キャッシュ（サーバー再起動でリセット）
 interface ApiUsageEntry {
