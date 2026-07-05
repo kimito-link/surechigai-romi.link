@@ -11,6 +11,10 @@ export default defineConfig({
       "node_modules",
       "dist",
       ".expo",
+      // Claude Code のサブエージェント用worktree配下（別ブランチの独立チェックアウト）。
+      // 除外しないと、そこにある node_modules 経由の依存や別ブランチのテストまで
+      // 拾って本体の結果に混ざり、偽陽性の失敗として報告される（2026-07-05発覚）。
+      ".claude/worktrees/**",
       // Expo/RN のネイティブモジュールに強く依存し CI で落ちるため一時除外
       "features/event-detail/hooks/__tests__/useParticipationForm.test.ts",
       "features/home/hooks/__tests__/useHomeData.loading.test.ts",
