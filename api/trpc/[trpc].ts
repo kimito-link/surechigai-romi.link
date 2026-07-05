@@ -52,13 +52,16 @@ function resolveTrpcPath(req: VercelRequest): string {
   return decodeURIComponent(url.pathname.replace(/^\/api\/trpc\/?/, ""));
 }
 
+function firstHeaderValue(value: string | string[] | undefined): string | undefined {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw?.split(",")[0]?.trim() || undefined;
+}
+
 function getClientIp(req: VercelRequest): string {
-  const forwardedFor = req.headers["x-forwarded-for"];
-  const firstForwardedFor = Array.isArray(forwardedFor)
-    ? forwardedFor[0]
-    : forwardedFor;
   return (
-    firstForwardedFor?.split(",")[0]?.trim() ||
+    firstHeaderValue(req.headers["cf-connecting-ip"]) ||
+    firstHeaderValue(req.headers["x-real-ip"]) ||
+    firstHeaderValue(req.headers["x-forwarded-for"]) ||
     req.socket.remoteAddress ||
     "unknown"
   );
