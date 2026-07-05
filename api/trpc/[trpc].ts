@@ -20,6 +20,10 @@ const expensivePathRules: RateLimitRule[] = [
   { pattern: /^encounter\.checkIn$/, windowMs: 15_000, max: 1 },
   { pattern: /^visit\.report$/, windowMs: 20_000, max: 1 },
   { pattern: /^event\.resolveOfflineLocation$/, windowMs: 20_000, max: 1 },
+  { pattern: /^zukan\.activePrefectures$/, windowMs: 5_000, max: 3 },
+  { pattern: /^zukan\.creatorsByPrefecture$/, windowMs: 5_000, max: 3 },
+  { pattern: /^ogp\.getTrailBySlug$/, windowMs: 5_000, max: 5 },
+  { pattern: /^ogp\.getShareBySlug$/, windowMs: 5_000, max: 5 },
 ];
 
 const rateLimitByKey = new Map<string, RateLimitEntry>();
@@ -48,13 +52,16 @@ function resolveTrpcPath(req: VercelRequest): string {
   return decodeURIComponent(url.pathname.replace(/^\/api\/trpc\/?/, ""));
 }
 
+function firstHeaderValue(value: string | string[] | undefined): string | undefined {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return raw?.split(",")[0]?.trim() || undefined;
+}
+
 function getClientIp(req: VercelRequest): string {
-  const forwardedFor = req.headers["x-forwarded-for"];
-  const firstForwardedFor = Array.isArray(forwardedFor)
-    ? forwardedFor[0]
-    : forwardedFor;
   return (
-    firstForwardedFor?.split(",")[0]?.trim() ||
+    firstHeaderValue(req.headers["cf-connecting-ip"]) ||
+    firstHeaderValue(req.headers["x-real-ip"]) ||
+    firstHeaderValue(req.headers["x-forwarded-for"]) ||
     req.socket.remoteAddress ||
     "unknown"
   );

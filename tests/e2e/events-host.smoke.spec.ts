@@ -44,8 +44,8 @@ test.describe("events host — guest", () => {
     await page.goto("/events", { waitUntil: "domcontentloaded" });
     await expect(page.getByText("集まり").first()).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole("tab", { name: "主催" })).toHaveCount(0);
-    await expect(page.getByText(/ログインすると集まりを主催/)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("予定", { exact: true })).toBeVisible();
-    await expect(page.getByText("ライブ中", { exact: true })).toBeVisible();
+    await expect(page.getByText(/表明はログイン|ログインすると自分の集まりをライブ表明/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("tab", { name: "予定" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "ライブ中" })).toBeVisible();
   });
 });
