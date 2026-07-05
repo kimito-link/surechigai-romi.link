@@ -70,7 +70,7 @@ test.describe("tab instant display — guest baseline", () => {
     await page.goto("/events", { waitUntil: "domcontentloaded" });
     await expect(page.getByText(/集まり|予定/).first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole("tab", { name: "主催" })).toHaveCount(0);
-    await expect(page.getByText(/ログインすると集まりを主催/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/表明はログイン|ログインすると自分の集まりをライブ表明/)).toBeVisible({ timeout: 10000 });
   });
 
   test("ゲスト: 6タブ直リンクで見出し表示（各15秒以内）", async ({ page }) => {

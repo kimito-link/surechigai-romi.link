@@ -20,6 +20,10 @@ const expensivePathRules: RateLimitRule[] = [
   { pattern: /^encounter\.checkIn$/, windowMs: 15_000, max: 1 },
   { pattern: /^visit\.report$/, windowMs: 20_000, max: 1 },
   { pattern: /^event\.resolveOfflineLocation$/, windowMs: 20_000, max: 1 },
+  { pattern: /^zukan\.activePrefectures$/, windowMs: 5_000, max: 3 },
+  { pattern: /^zukan\.creatorsByPrefecture$/, windowMs: 5_000, max: 3 },
+  { pattern: /^ogp\.getTrailBySlug$/, windowMs: 5_000, max: 5 },
+  { pattern: /^ogp\.getShareBySlug$/, windowMs: 5_000, max: 5 },
 ];
 
 const rateLimitByKey = new Map<string, RateLimitEntry>();
