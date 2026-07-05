@@ -84,3 +84,6 @@ soak-results/
 
 # 初回ロードOOMプローブ出力 (scripts/first-load-crash.mjs)
 qa-results/
+
+.vercel
+.env*.local
