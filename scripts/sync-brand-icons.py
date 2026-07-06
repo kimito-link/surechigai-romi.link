@@ -84,6 +84,37 @@ def save_android_foreground(out: Path) -> None:
     print(f"wrote {out.relative_to(ROOT)}")
 
 
+# iOS Safari の PWA (ホーム画面追加後の起動時) 向けスプラッシュ画像。
+# apple-touch-startup-image はデバイス毎の画面解像度(width x height, px単位)に
+# 個別の画像+media queryが必要。主要なiPhone/iPad解像度をカバーする。
+# (width, height, device-pixel-ratio) — CSS論理ピクセルではなく実ピクセルで指定
+IOS_STARTUP_SIZES = (
+    (1170, 2532, 3),  # iPhone 12/13/14
+    (1179, 2556, 3),  # iPhone 14 Pro/15/16
+    (1284, 2778, 3),  # iPhone 12/13/14 Pro Max
+    (1290, 2796, 3),  # iPhone 14/15/16 Pro Max
+    (1080, 2340, 3),  # iPhone 12/13 mini系
+    (828, 1792, 2),  # iPhone 11/XR
+    (750, 1334, 2),  # iPhone SE/8/7/6s
+    (1668, 2388, 2),  # iPad Pro 11
+    (2048, 2732, 2),  # iPad Pro 12.9
+)
+
+
+def save_ios_startup_image(width: int, height: int, out: Path) -> None:
+    """単色背景（manifest.background_colorと同色）の中央にロゴを配置したsplash画像。"""
+    bg = (0xE2, 0xED, 0xF7, 255)  # manifest.json background_color と一致させる
+    canvas = Image.new("RGBA", (width, height), bg)
+    icon_size = int(min(width, height) * 0.28)
+    icon = compose_site_icon(icon_size)
+    ox = (width - icon_size) // 2
+    oy = (height - icon_size) // 2
+    canvas.paste(icon, (ox, oy), icon)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    canvas.convert("RGB").save(out, optimize=True)
+    print(f"wrote {out.relative_to(ROOT)}")
+
+
 def main() -> None:
     if not SITE_ICON_SOURCE.is_file():
         raise SystemExit(f"missing: {SITE_ICON_SOURCE}")
@@ -99,6 +130,10 @@ def main() -> None:
 
     save_site_icon(200, ROOT / "assets/images/splash-icon.png")
     save_android_foreground(ROOT / "assets/images/android-icon-foreground.png")
+
+    # iOS Safari PWA向けスプラッシュ（apple-touch-startup-image）
+    for w, h, _dpr in IOS_STARTUP_SIZES:
+        save_ios_startup_image(w, h, ROOT / f"public/splash/ios-{w}x{h}.png")
 
     # レガシー互換パス
     shutil.copy2(ROOT / "public/favicon-48.png", ROOT / "public/favicon.ico")
