@@ -134,6 +134,9 @@ def main() -> None:
     # iOS Safari PWA向けスプラッシュ（apple-touch-startup-image）
     for w, h, _dpr in IOS_STARTUP_SIZES:
         save_ios_startup_image(w, h, ROOT / f"public/splash/ios-{w}x{h}.png")
+    # media属性なしのフォールバック（新機種等でdevice-width/heightが未登録の解像度でも
+    # スプラッシュが真っ黒/無地にならないようにする保険）。
+    save_ios_startup_image(1290, 2796, ROOT / "public/splash/ios-fallback.png")
 
     # レガシー互換パス
     shutil.copy2(ROOT / "public/favicon-48.png", ROOT / "public/favicon.ico")
