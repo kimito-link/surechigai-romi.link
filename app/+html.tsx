@@ -134,41 +134,43 @@ export default function Root({ children }: PropsWithChildren) {
             text-rendering: optimizeSpeed;
           }
           #root { background-color: var(--color-background); min-height: 100%; }
-          /* ログイン済みヒント時のブートベール（ブランドスプラッシュ）:
+          /* ログイン済みヒント / PWA standalone 起動時のブートベール（ブランドスプラッシュ）:
              プリレンダ済みのゲスト用HTMLを一瞬見せず、アプリ起動までロゴ＋スピナーで繋ぐ。
              背景色をブランド色(#E2EDF7、manifest.background_colorと統一)で先に敷くので、
              PWA起動直後にロゴが確実に出る（apple-touch-startup-imageのOS依存に頼らない）。
-             解除は app/_layout.tsx のマウント時 effect（保険で6秒後に自動解除）。 */
+             解除は app/_layout.tsx のマウント時 effect（保険で6秒後に自動解除）。
+
+             ⚠️ 以前は body::before/::after の「擬似要素」でロゴ/スピナーを描いていたが、
+             iOS実機PWA(standalone)では擬似要素が描画されず単色面になる事象を確認(2026-07-06 実機録画)。
+             よって擬似要素をやめ、<body>直下の実DOM要素 #romi-boot-veil で描く方式に変更した。
+             実要素なのでiOS PWAでも確実に描画され、Playwright検証と実機挙動が一致する。 */
           html[data-auth-boot="1"] #root { visibility: hidden; }
           /* html/body 両方に背景色を敷き、初期段階でOS(ダークモード)の黒地が透けないようにする。 */
           html[data-auth-boot="1"], html[data-auth-boot="1"] body {
             background-color: #E2EDF7 !important;
           }
-          /* 画面全体を覆う不透明なブランド面（ロゴ・スピナーの土台）。
-             body::before/::after は position:fixed だが「面」を持たないため、
-             ダークモード時に背後のOS地色が見えていた。全面オーバーレイで確実に覆う。 */
-          html[data-auth-boot="1"] body::before {
-            content: "";
+          /* 実DOMの全面オーバーレイ。既定は非表示、ベール中(data-auth-boot=1)だけ表示。 */
+          #romi-boot-veil {
+            display: none;
             position: fixed;
             inset: 0;
             z-index: 2147483646;
             background-color: #E2EDF7;
-            /* ロゴを中央やや上に、スピナーを想定した余白を下に */
-            background-image: url("/pwa-icon-192.png");
-            background-repeat: no-repeat;
-            background-position: center calc(50% - 40px);
-            background-size: 112px 112px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
           }
-          /* ロゴ下のスピナー（オーバーレイより手前） */
-          html[data-auth-boot="1"] body::after {
-            content: "";
-            position: fixed;
-            top: calc(50% + 44px);
-            left: 50%;
-            z-index: 2147483647;
+          html[data-auth-boot="1"] #romi-boot-veil { display: flex; }
+          #romi-boot-veil .romi-boot-logo {
+            width: 112px;
+            height: 112px;
+            display: block;
+            /* ロゴを中央やや上に見せる（下にスピナー分の余白） */
+            margin-bottom: 32px;
+          }
+          #romi-boot-veil .romi-boot-spinner {
             width: 28px;
             height: 28px;
-            margin-left: -14px;
             border-radius: 50%;
             border: 3px solid rgba(0, 66, 123, 0.2);
             border-top-color: var(--color-primary);
@@ -189,6 +191,14 @@ export default function Root({ children }: PropsWithChildren) {
             __html: `(function(){try{var h=false;var ls=window.localStorage;if(ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
           }}
         />
+        {/* ブートベールの実DOMオーバーレイ（ロゴ＋スピナー）。
+            擬似要素(body::before)はiOS実機PWAで描画されなかったため、本物の要素で描く。
+            既定は display:none。上のスクリプトが data-auth-boot=1 を付けた瞬間に CSS で display:flex になる。
+            children より前に置くので、プリレンダHTMLの描画前に前面へ出る。 */}
+        <div id="romi-boot-veil" aria-hidden="true">
+          <img className="romi-boot-logo" src="/pwa-icon-192.png" alt="" width={112} height={112} />
+          <div className="romi-boot-spinner" />
+        </div>
         {children}
         {enableSpeedInsights && (
           <script
