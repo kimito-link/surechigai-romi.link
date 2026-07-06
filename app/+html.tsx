@@ -140,33 +140,35 @@ export default function Root({ children }: PropsWithChildren) {
              PWA起動直後にロゴが確実に出る（apple-touch-startup-imageのOS依存に頼らない）。
              解除は app/_layout.tsx のマウント時 effect（保険で6秒後に自動解除）。 */
           html[data-auth-boot="1"] #root { visibility: hidden; }
-          html[data-auth-boot="1"] body {
-            background-color: #E2EDF7;
+          /* html/body 両方に背景色を敷き、初期段階でOS(ダークモード)の黒地が透けないようにする。 */
+          html[data-auth-boot="1"], html[data-auth-boot="1"] body {
+            background-color: #E2EDF7 !important;
           }
-          /* 中央のロゴ */
+          /* 画面全体を覆う不透明なブランド面（ロゴ・スピナーの土台）。
+             body::before/::after は position:fixed だが「面」を持たないため、
+             ダークモード時に背後のOS地色が見えていた。全面オーバーレイで確実に覆う。 */
           html[data-auth-boot="1"] body::before {
             content: "";
             position: fixed;
-            top: 50%;
-            left: 50%;
-            width: 112px;
-            height: 112px;
-            margin: -96px 0 0 -56px;
-            border-radius: 26px;
+            inset: 0;
+            z-index: 2147483646;
+            background-color: #E2EDF7;
+            /* ロゴを中央やや上に、スピナーを想定した余白を下に */
             background-image: url("/pwa-icon-192.png");
-            background-size: cover;
-            background-position: center;
-            box-shadow: 0 6px 20px rgba(0, 66, 123, 0.18);
+            background-repeat: no-repeat;
+            background-position: center calc(50% - 40px);
+            background-size: 112px 112px;
           }
-          /* ロゴ下のスピナー */
+          /* ロゴ下のスピナー（オーバーレイより手前） */
           html[data-auth-boot="1"] body::after {
             content: "";
             position: fixed;
-            top: 50%;
+            top: calc(50% + 44px);
             left: 50%;
+            z-index: 2147483647;
             width: 28px;
             height: 28px;
-            margin: 44px 0 0 -14px;
+            margin-left: -14px;
             border-radius: 50%;
             border: 3px solid rgba(0, 66, 123, 0.2);
             border-top-color: var(--color-primary);
