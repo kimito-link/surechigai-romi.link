@@ -1,0 +1,49 @@
+{
+  "appId": "com.surechigairomi.app",
+  "appName": "君斗りんくのすれ違ひ通信",
+  "webDir": "dist/public",
+  "bundledWebRuntime": false,
+  "backgroundColor": "#00427BFF",
+  "ios": {
+    "contentInset": "always",
+    "scheme": "surechigairomi",
+    "limitsNavigationsToAppBoundDomains": false,
+    "backgroundColor": "#00427BFF"
+  },
+  "android": {
+    "backgroundColor": "#00427BFF"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 1500,
+      "launchFadeOutDuration": 300,
+      "backgroundColor": "#00427BFF",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  },
+  "server": {
+    "url": "https://surechigai.kimito.link",
+    "cleartext": false,
+    "hostname": "surechigai.kimito.link",
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "allowNavigation": [
+      "surechigai.kimito.link",
+      "*.kimito.link",
+      "kimito.link",
+      "surechigai-romi.link",
+      "*.clerk.accounts.dev",
+      "*.clerk.com",
+      "clerk.kimito.link",
+      "challenges.cloudflare.com",
+      "api.x.com",
+      "api.twitter.com",
+      "*.twimg.com",
+      "*.openfreemap.org",
+      "tile.openstreetmap.org"
+    ]
+  }
+}
