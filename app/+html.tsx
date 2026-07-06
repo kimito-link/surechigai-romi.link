@@ -134,21 +134,41 @@ export default function Root({ children }: PropsWithChildren) {
             text-rendering: optimizeSpeed;
           }
           #root { background-color: var(--color-background); min-height: 100%; }
-          /* ログイン済みヒント時のブートベール:
-             プリレンダ済みのゲスト用HTMLを一瞬見せず、アプリ起動までスピナーで繋ぐ
-             （リロードのたびに画面がこまめに切り替わる問題の対策）。
+          /* ログイン済みヒント時のブートベール（ブランドスプラッシュ）:
+             プリレンダ済みのゲスト用HTMLを一瞬見せず、アプリ起動までロゴ＋スピナーで繋ぐ。
+             背景色をブランド色(#E2EDF7、manifest.background_colorと統一)で先に敷くので、
+             PWA起動直後にロゴが確実に出る（apple-touch-startup-imageのOS依存に頼らない）。
              解除は app/_layout.tsx のマウント時 effect（保険で6秒後に自動解除）。 */
           html[data-auth-boot="1"] #root { visibility: hidden; }
+          html[data-auth-boot="1"] body {
+            background-color: #E2EDF7;
+          }
+          /* 中央のロゴ */
+          html[data-auth-boot="1"] body::before {
+            content: "";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 112px;
+            height: 112px;
+            margin: -96px 0 0 -56px;
+            border-radius: 26px;
+            background-image: url("/pwa-icon-192.png");
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 6px 20px rgba(0, 66, 123, 0.18);
+          }
+          /* ロゴ下のスピナー */
           html[data-auth-boot="1"] body::after {
             content: "";
             position: fixed;
             top: 50%;
             left: 50%;
-            width: 34px;
-            height: 34px;
-            margin: -17px 0 0 -17px;
+            width: 28px;
+            height: 28px;
+            margin: 44px 0 0 -14px;
             border-radius: 50%;
-            border: 3px solid var(--color-border);
+            border: 3px solid rgba(0, 66, 123, 0.2);
             border-top-color: var(--color-primary);
             animation: romi-boot-spin 0.8s linear infinite;
           }
@@ -156,11 +176,15 @@ export default function Root({ children }: PropsWithChildren) {
         `}} />
       </head>
       <body>
-        {/* ログイン済みヒント判定（lib/clerk-public-routes.ts hasClerkSessionHint と同じ条件）。
-            children より先に同期実行され、プリレンダHTMLの描画前にベールを掛ける。 */}
+        {/* ブートベール判定。children より先に同期実行され、プリレンダHTMLの描画前にベールを掛ける。
+            (1) ログイン済みヒント（lib/clerk-public-routes.ts hasClerkSessionHint と同じ条件）がある、
+                または (2) PWA standalone 起動（ホーム画面から開いた）時に data-auth-boot を付ける。
+            (2) により、未ログインでもPWA起動時はロゴ入りブランドスプラッシュが出る
+            （apple-touch-startup-image のOS/機種依存に頼らず確実にロゴを見せる）。
+            解除は app/_layout.tsx の releaseBootVeil()（React マウント直後）＋保険で6秒後。 */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var h=false;var ls=window.localStorage;if(ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}if(h){document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
+            __html: `(function(){try{var h=false;var ls=window.localStorage;if(ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
           }}
         />
         {children}
