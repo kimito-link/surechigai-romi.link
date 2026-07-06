@@ -347,7 +347,7 @@
     }
     function setOn(on){ soundOn=on; if(otoBtn) otoBtn.classList.toggle('muted', !on); if(master) master.gain.setTargetAtTime(on?0.72:0, actx.currentTime, .05);
       /* HTMLAudio のループ素材は master を通らないので、ミュート時は明示的に止める */
-      if(!on){ Object.keys(sampleAmb).forEach(stopSampleAmb); }
+      if(!on){ Object.keys(sampleAmb).forEach(stopSampleAmb); curBgmKey=null; }
       manageAmbient(body.getAttribute('data-scene'), body.getAttribute('data-sub')); }
     /* 効果音ファイル（本物の素材）。存在すれば合成音より優先して鳴らす。
        sounds/ に置いた mp3 を HTMLAudio でプリロードし、soundOn のときだけ再生。
@@ -357,7 +357,15 @@
                   sozu:'sounds/sozu.mp3', sozuEcho:'sounds/sozu-echo.mp3',
                   river:'sounds/river.mp3', fishSplash:'sounds/fish-splash.mp3', fishCatch:'sounds/fish-catch.mp3',
                   hanabi:'sounds/hanabi.mp3', hanabiFes:'sounds/hanabi-fes.mp3',
-                  furin:'sounds/furin.mp3', furin2:'sounds/furin2.mp3' };
+                  furin:'sounds/furin.mp3', furin2:'sounds/furin2.mp3',
+                  /* 四季BGM（Audiostock 定額制の和風BGMを sounds/bgm/ に配置）。
+                     素材が未配置なら sampleOk が false になり BGM は鳴らない（環境音・効果音はそのまま動く）。
+                     差し替え運用: 同名で mp3 を置くだけ。冬→春→夏→秋→結 の順に data-scene と対応。 */
+                  bgmWinter:'sounds/bgm/winter.mp3',  /* 冬・雪国：尺八の静かな旅立ち */
+                  bgmSpring:'sounds/bgm/spring.mp3',  /* 春・桜：箏のあたたかな道 */
+                  bgmSummer:'sounds/bgm/summer.mp3',  /* 夏・祭：太鼓と篠笛の賑わい */
+                  bgmAutumn:'sounds/bgm/autumn.mp3',  /* 秋・紅葉：篠笛の細道 */
+                  bgmClear:'sounds/bgm/clear.mp3' };  /* 結・夜富士：弦のフィナーレ */
     var sampleCache={}, sampleOk={};
     Object.keys(SAMPLES).forEach(function(k){
       try{ var a=new Audio(); a.preload='auto'; a.src=SAMPLES[k];
@@ -576,6 +584,20 @@
       // 夏（夜）祭り囃子＝屋台のざわめき。夜祭りの場にいる間ずっと流す。
       if(scene==='summer' && sub==='night'){ startSampleAmb('matsuri','hanabiFes',0.4); }
       else { stopSampleAmb('matsuri'); }
+      // 四季BGM（Audiostock）。いま見えている章の data-scene に対応する1曲だけをクロスフェードで流す。
+      // 素材が sounds/bgm/ に無ければ playSample が false を返し、何も鳴らない（環境音・効果音は上記のまま動く）。
+      // 環境音より控えめの音量（0.28）で下敷きにし、汽笛・鹿威し・花火などの効果音を邪魔しない。
+      manageBgm(scene);
+    }
+    /* 現在のシーンに対応するBGMキー。clear（結章・夜富士）はフィナーレの弦。 */
+    var BGM_FOR_SCENE={ winter:'bgmWinter', spring:'bgmSpring', summer:'bgmSummer', autumn:'bgmAutumn', clear:'bgmClear' };
+    var curBgmKey=null;
+    function manageBgm(scene){
+      var want=BGM_FOR_SCENE[scene]||null;
+      if(want===curBgmKey) return;              /* 同じ季節の間は流しっぱなし */
+      if(curBgmKey){ stopSampleAmb('bgm'); }     /* 前の季節のBGMをフェードアウト */
+      curBgmKey=want;
+      if(want && sampleOk[want]!==false){ startSampleAmb('bgm', want, 0.28); }  /* 新しい季節をフェードイン */
     }
 
     function arm(){ if(armed) return; armed=true; ensureCtx(); unlockIOS(); if(actx&&actx.state==='suspended') actx.resume(); setOn(true); if(otoHint) otoHint.classList.remove('show');
