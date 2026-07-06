@@ -10,27 +10,27 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { readBuildInfo } from "./health";
-import { APP_VERSION } from "../../shared/version";
+import { readBuildInfo } from "./health.js";
+import { APP_VERSION } from "../../shared/version.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-import { registerOAuthRoutes } from "./oauth";
-import { registerTwitterRoutes } from "../twitter-routes";
+import { registerOAuthRoutes } from "./oauth.js";
+import { registerTwitterRoutes } from "../twitter-routes.js";
 import { createClerkClient, verifyToken } from "@clerk/backend";
-import { appRouter } from "../routers";
-import { createContext } from "./context";
-import { getDashboardSummary, getApiUsageStats } from "../api-usage-tracker";
-import { getErrorLogs, getErrorStats, resolveError, resolveAllErrors, clearErrorLogs, errorTrackingMiddleware } from "../error-tracker";
-import { checkSchemaIntegrity, notifySchemaIssue, type SchemaCheckResult } from "../schema-check";
-import { getOpenApiSpec } from "../openapi";
+import { appRouter } from "../routers.js";
+import { createContext } from "./context.js";
+import { getDashboardSummary, getApiUsageStats } from "../api-usage-tracker.js";
+import { getErrorLogs, getErrorStats, resolveError, resolveAllErrors, clearErrorLogs, errorTrackingMiddleware } from "../error-tracker.js";
+import { checkSchemaIntegrity, notifySchemaIssue, type SchemaCheckResult } from "../schema-check.js";
+import { getOpenApiSpec } from "../openapi.js";
 import swaggerUi from "swagger-ui-express";
-import { initWebSocketServer } from "../websocket";
-import { initSentry, Sentry } from "./sentry";
-import { rateLimiterMiddleware } from "./rate-limiter";
-import { verifyAdminPassword } from "../admin-password-auth";
-import { getSessionCookieOptions } from "./cookies";
+import { initWebSocketServer } from "../websocket.js";
+import { initSentry, Sentry } from "./sentry.js";
+import { rateLimiterMiddleware } from "./rate-limiter.js";
+import { verifyAdminPassword } from "../admin-password-auth.js";
+import { getSessionCookieOptions } from "./cookies.js";
 import type { Request, Response } from "express";
-import { SESSION_MAX_AGE_MS } from "../../shared/const";
+import { SESSION_MAX_AGE_MS } from "../../shared/const.js";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -51,8 +51,8 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
-import { isAllowedOrigin } from "./cors";
-export { isAllowedOrigin } from "./cors";
+import { isAllowedOrigin } from "./cors.js";
+export { isAllowedOrigin } from "./cors.js";
 
 async function startServer() {
   // Initialize Sentry for error tracking
@@ -158,7 +158,7 @@ async function startServer() {
       let dbStatus: { connected: boolean; latency: number; error: string; challengesCount?: number } = { connected: false, latency: 0, error: "" };
       const DB_CHECK_RETRIES = 2; // 初回のみ DB チェックリトライ（cold start 対策）
       try {
-        const { getDb, sql } = await import("../db");
+        const { getDb, sql } = await import("../db.js");
         const startTime = Date.now();
         const db = await getDb();
         if (db) {
@@ -353,7 +353,7 @@ async function startServer() {
   // 繧ｷ繧ｹ繝・Β迥ｶ諷狗｢ｺ隱喉PI
   app.get("/api/admin/system-status", async (_req, res) => {
     try {
-      const { getDb } = await import("../db");
+      const { getDb } = await import("../db.js");
 
       // DB 接続チェック
       let dbStatus = { connected: false, latency: 0, error: "" };
@@ -526,7 +526,7 @@ async function startServer() {
       const openId = `clerk:${clerkUserId}`;
 
       const clerk = createClerkClient({ secretKey: clerkSecretKey });
-      const dbModule = await import("../db");
+      const dbModule = await import("../db.js");
       const { getDb } = await import("../db/connection.js");
       const {
         syncClerkTwitterProfileToDb,
@@ -592,7 +592,7 @@ async function startServer() {
     }
 
     try {
-      const { getDb } = await import("../db");
+      const { getDb } = await import("../db.js");
       const { recordDbGrowthSnapshot } = await import("../db-growth-alert.js");
 
       const db = await getDb();

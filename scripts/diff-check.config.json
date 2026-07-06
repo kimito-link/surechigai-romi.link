@@ -12,7 +12,11 @@
     "db",
     ".env",
     ".env.production",
-    "railway.json"
+    "railway.json",
+    "lib/icons",
+    "hooks/use-live-presence",
+    "lib/lazy-heavy-components",
+    "guest-web-providers"
   ],
   "forbiddenWords": [
     "成功",

@@ -1,4 +1,9 @@
 /**
+ * 使用禁止（アーカイブ済み・2026-07-06）。
+ * drizzle migration履歴とDB実態の不整合を修復済み（経緯: drizzle/migrations-archive/README.md、
+ * docs/uxux-stability-audit-SPEC.md §1.2）。今後のスキーマ変更は必ず
+ * `pnpm db:push`（drizzle-kit generate→migrate）で行うこと。本番への直接ALTERは禁止。
+ *
  * locations.deletedAt / locations.visibility / user_settings.trailVisibility を冪等適用。
  * drizzle migrate 履歴ずれで 0004/0005 が未適用の本番 DB 向け。
  */

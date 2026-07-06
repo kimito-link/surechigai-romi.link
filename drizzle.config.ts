@@ -16,7 +16,10 @@ if (!connectionString) {
 }
 
 export default defineConfig({
-  schema: "./drizzle/schema/index.ts",
+  // drizzle-kit専用エントリを使う理由: drizzle/schema/index.ts の ".js" 拡張子付きexportを
+  // drizzle-kitの内部ローダーが解決できないため（2026-07-06発見）。
+  // drizzle/schema/index.drizzle-kit.ts 側のコメント参照。
+  schema: "./drizzle/schema/index.drizzle-kit.ts",
   out: "./drizzle/migrations",
   dialect: "postgresql",
   dbCredentials: {

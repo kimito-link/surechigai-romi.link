@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { notifyOwner } from "./notification";
-import { adminProcedure, publicProcedure, router } from "./trpc";
-import { APP_VERSION } from "../../shared/version";
+import { notifyOwner } from "./notification.js";
+import { adminProcedure, publicProcedure, router } from "./trpc.js";
+import { APP_VERSION } from "../../shared/version.js";
 
 export const systemRouter = router({
   // バージョン取得エンドポイント

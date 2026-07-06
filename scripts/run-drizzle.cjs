@@ -6,6 +6,32 @@ const path = require("path");
 const fs = require("fs");
 const { execSync } = require("child_process");
 
+/**
+ * drizzle-kit generate は、schema/index.ts の ".js" 拡張子importをこの環境の
+ * ローダーが解決できず内部でエラーになっても、exit code 0 を返すことがある
+ * （2026-07-06発見。"型チェックは通るがランタイムで壊れる"の別バリエーション）。
+ * stdio:"inherit" だと出力を検査できないため、ここだけ出力をキャプチャして
+ * エラーの痕跡が無いか確認する。
+ */
+function execAndCheckForSilentFailure(command) {
+  // stdio: "pipe" にして stdout・stderr 両方を捕まえる（inherit だと戻り値に乗らない）
+  const result = require("child_process").spawnSync(command, {
+    shell: true,
+    env: process.env,
+    encoding: "utf8",
+  });
+  const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+  process.stdout.write(output);
+  if (/Cannot find module|MODULE_NOT_FOUND/.test(output)) {
+    console.error(
+      `\n[run-drizzle] "${command}" が内部エラーを出しつつ exit code 0 で終了しました。` +
+        "スキーマ変更が反映されていない可能性があります。手動で `npx drizzle-kit generate` を実行し、" +
+        "出力にエラーが無いか確認してください。",
+    );
+    process.exit(1);
+  }
+}
+
 // プロジェクトルート = このスクリプトがあるディレクトリの親（cwd に依存しない）
 const scriptDir = path.resolve(__dirname);
 const projectRoot = path.dirname(scriptDir);
@@ -64,7 +90,11 @@ const args = process.argv.slice(2);
 const command = args[0] || "push"; // push = generate + migrate
 
 if (command === "push" || command === "db:push") {
-  execSync("npx drizzle-kit generate", { stdio: "inherit", env: process.env });
+  execSync(`node ${path.join(scriptDir, "db-journal-doctor.cjs")}`, {
+    stdio: "inherit",
+    env: process.env,
+  });
+  execAndCheckForSilentFailure("npx drizzle-kit generate");
   execSync("npx drizzle-kit migrate", { stdio: "inherit", env: process.env });
 } else if (command === "force-push") {
   execSync("npx drizzle-kit push", { stdio: "inherit", env: process.env });

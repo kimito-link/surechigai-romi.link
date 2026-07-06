@@ -8,8 +8,8 @@
  */
 
 import crypto from "crypto";
-import { getDb } from "./db";
-import { auditLogs } from "../drizzle/schema";
+import { getDb } from "./db.js";
+import { auditLogs } from "../drizzle/schema.js";
 import type { Request } from "express";
 
 // =============================================================================

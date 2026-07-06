@@ -7,8 +7,8 @@
  * 3. 統計データの集計（毎日深夜1時）
  */
 
-import { getDb, lt, sql } from "../db/connection";
-import { oauthPkceData, twitterUserCache } from "../../drizzle/schema";
+import { getDb, lt, sql } from "../db/connection.js";
+import { oauthPkceData, twitterUserCache } from "../../drizzle/schema.js";
 
 /**
  * 古いOAuth PKCEデータを削除
@@ -70,7 +70,7 @@ export async function aggregateStats() {
  */
 export async function sendDailyApiReport() {
   try {
-    const { sendDailyReport } = await import("../../server/api-daily-report");
+    const { sendDailyReport } = await import("../../server/api-daily-report.js");
     await sendDailyReport();
     console.log("[Cron] Daily API report sent");
   } catch (error) {

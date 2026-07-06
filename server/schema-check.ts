@@ -9,7 +9,7 @@
  * - 不一致時の通知
  */
 
-import { getDb, sql } from "./db";
+import { getDb, sql } from "./db.js";
 
 // 期待するスキーマ定義（重要なテーブルとカラムのみ）
 // 新しいマイグレーションを追加したら、ここも更新する

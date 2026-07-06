@@ -34,7 +34,7 @@ export interface ErrorLog {
   aiAnalyzing?: boolean;  // AI分析中フラグ
 }
 
-import { analyzeErrorWithCache, type ErrorAnalysis } from "./ai-error-analyzer";
+import { analyzeErrorWithCache, type ErrorAnalysis } from "./ai-error-analyzer.js";
 
 // エラーログの最大保存件数
 const MAX_ERROR_LOGS = 100;

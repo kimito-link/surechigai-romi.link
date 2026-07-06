@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1781593084001,
-      "tag": "0000_melodic_lord_tyger",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1781594385597,
-      "tag": "0001_safe_squadron_supreme",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1781598222287,
-      "tag": "0002_slim_vision",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1782480624871,
-      "tag": "0003_clever_champions",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1782485000000,
-      "tag": "0004_trail_visibility",
+      "when": 1783306314891,
+      "tag": "0000_baseline_rebase",
       "breakpoints": true
     }
   ]

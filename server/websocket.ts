@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import type { IncomingMessage } from "http";
 import type { Server } from "http";
 import { jwtVerify } from "jose";
-import { ENV } from "./_core/env";
+import { ENV } from "./_core/env.js";
 
 /**
  * WebSocket接続の型定義

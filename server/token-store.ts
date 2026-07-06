@@ -9,8 +9,8 @@
  */
 
 import crypto from "crypto";
-import { getDb } from "./db";
-import { userTwitterTokens } from "../drizzle/schema";
+import { getDb } from "./db.js";
+import { userTwitterTokens } from "../drizzle/schema.js";
 import { eq } from "drizzle-orm";
 
 // =============================================================================
@@ -211,7 +211,7 @@ export async function getValidAccessToken(openId: string): Promise<string | null
 
   // サーバーサイドでリフレッシュ（トークンローテーション）
   try {
-    const { refreshAccessToken, sanitizeToken } = await import("./twitter-oauth2");
+    const { refreshAccessToken, sanitizeToken } = await import("./twitter-oauth2.js");
     const newTokens = await refreshAccessToken(entry.refreshToken);
     
     // 新しいトークンを保存（ローテーション: 新しいrefresh_tokenで上書き → 古いものは無効化）

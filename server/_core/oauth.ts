@@ -11,12 +11,12 @@
  */
 import { COOKIE_NAME, SESSION_MAX_AGE_MS } from "../../shared/const.js";
 import type { Express, Request, Response } from "express";
-import { getUserByOpenId } from "../db";
-import { getSessionCookieOptions } from "./cookies";
-import { sdk } from "./sdk";
-import { revokeToken } from "../twitter-oauth2";
-import { getTokens, deleteTokens } from "../token-store";
-import { clearActivity } from "./sdk";
+import { getUserByOpenId } from "../db.js";
+import { getSessionCookieOptions } from "./cookies.js";
+import { sdk } from "./sdk.js";
+import { revokeToken } from "../twitter-oauth2.js";
+import { getTokens, deleteTokens } from "../token-store.js";
+import { clearActivity } from "./sdk.js";
 
 function buildUserResponse(
   user:

@@ -12,12 +12,12 @@ import {
   getTargetAccountInfo,
   getUserProfileByUsername,
   refreshAccessToken,
-} from "./twitter-oauth2";
-import * as db from "./db";
+} from "./twitter-oauth2.js";
+import * as db from "./db.js";
 import { COOKIE_NAME, SESSION_MAX_AGE_MS } from "../shared/const.js";
 import { getSessionCookieOptions } from "./_core/cookies.js";
 import { sdk } from "./_core/sdk.js";
-import { storeTokens, getValidAccessToken as getStoredAccessToken, deleteTokens } from "./token-store";
+import { storeTokens, getValidAccessToken as getStoredAccessToken, deleteTokens } from "./token-store.js";
 import {
   getClientIp,
   getClientUserAgent,
@@ -27,7 +27,7 @@ import {
   resetLoginFailures,
   setLoginCooldown,
   isInLoginCooldown,
-} from "./login-security";
+} from "./login-security.js";
 
 /**
  * エラーレスポンスを生成（本番環境では詳細情報を除外）

@@ -4,8 +4,8 @@
  * 毎日のAPI使用量とコストを集計し、メール通知を送信
  */
 
-import * as apiUsageDb from "./db/api-usage-db";
-import { notifyOwner } from "./_core/notification";
+import * as apiUsageDb from "./db/api-usage-db.js";
+import { notifyOwner } from "./_core/notification.js";
 
 const COST_ALERT_WEBHOOK_URL = process.env.COST_ALERT_WEBHOOK_URL ?? "";
 
