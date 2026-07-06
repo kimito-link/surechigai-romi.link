@@ -2,6 +2,31 @@
 
 このファイルは、実装担当モデルに `/goal refactor-instructions.md に書かれたことを完遂しろ` と渡すための作業指示書です。
 
+## 2026-07-04 以降の変更（この指示書の前提を更新）
+
+> この指示書は 2026-07-04 に作成された。その後 07-06 までに以下が進んだ。**実装担当モデルは
+> これらを「謎のファイル/退行」と誤認せず、既存の正しい状態として扱うこと。リファクタの対象外**。
+
+- **Capacitor ネイティブ化の下地を追加済み**（本体機能。リファクタで消さない・触らない）:
+  `capacitor.config.json`（server.url = `https://surechigai.kimito.link` の連動型）、
+  `scripts/generate-capacitor-splash.mjs`, `scripts/generate-brand-radar-art.mjs`,
+  `scripts/patch-ios-launch-dark.mjs`, `scripts/verify-ios-splash-not-default.mjs`,
+  `store-assets/appstore/app-icon-1024.png`, `assets/splash*.png`,
+  `.github/workflows/ios-appstore-release.yml` 他。詳細は `docs/handoff-2026-07-06.md`。
+- **ドメインは `https://surechigai.kimito.link` が正規**（実体）。`surechigai-romi.link` は
+  全パスが 308 で正規へリダイレクトされる旧ドメイン。`lib/site-urls.ts` の `APP_ORIGIN`、
+  `lib/share.ts` の `getAppUrl()`（正規化済み）、`vercel.json` の redirects がこれを前提にしている。
+  **シェアURL・og:url・OAuthコールバックのドメインを勝手に変えない**（07-06に統一済み）。
+- **アプリ不具合の総点検 SPEC がある**: `docs/app-audit-2026-07-06-SPEC.md`。シェアの
+  ポップアップブロック回避パターン（クリック直後に同期で `window.open` → slug取得後にURL差し替え）、
+  統計カードの Pressable 化などは **07-06 に実装済み**。この SPEC の §5「却下」項目
+  （twitter.com→x.com を主因とする説、checkin の意図的 disabled ボタン等）は**直さない**。
+- **`pnpm test` の現状（2026-07-06 実測）**: **34 files passed / 304 tests passed、1 file failed**。
+  失敗は `__tests__/get-current-location.test.ts`（Rollup パースエラー・0 test）。これは
+  **セッション跨ぎで存在する他者の未コミット差分（Flow構文でパース不能）**であり、**既知・baseline
+  由来・触らない**。実装担当が自分の変更で壊したと誤解しないこと（下記「確定事項」も同旨）。
+  ※この指示書本文の「pnpm test: 成功、2 files / 81 tests」は 07-04 時点の古い数値。上記が現状。
+
 ## ユーザー確認済みの確定事項（2026-07-04）
 
 以下はユーザーに確認済み。実装担当モデルはこれを前提として作業し、再質問しないこと。
