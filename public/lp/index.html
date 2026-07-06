@@ -503,6 +503,15 @@
   @media(prefers-reduced-motion:reduce){ .chara-row .chara{ animation:none !important } }
   /* ===== 作品クレジット（エンドロール風の大きなセクション） ===== */
   /* 写真や固定背景が透けて文字が読みにくくならないよう、和紙色の無地を全面に敷く（最前面 z:5）。 */
+  /* ===== 触れる水面（結章：湖に映る逆さ月。Canvasでリアルタイム描画） ===== */
+  /* 結章セクションの背景として敷く。既定は不透明度0で、JSが結章可視時に .on で出す。
+     position:sticky で章の間ずっと画面に貼り付き、スクロールしても水面が留まる。 */
+  .mizu-canvas{ position:fixed; left:0; top:0; width:100%; height:100%; z-index:0; pointer-events:auto;
+    opacity:0; transition:opacity 1.6s ease; }
+  .mizu-canvas.on{ opacity:1; }
+  /* 水面が出ている間、その章の写真ステージ(逆さ月の静止画)は隠す（Canvasが主役） */
+  body.mizu-active #photoStage{ opacity:0; transition:opacity 1s ease; }
+
   /* ===== 巻・携（アプリ紹介：結章の余韻からフィナーレの夜空へ橋を架ける） ===== */
   .app-intro{ position:relative; z-index:5; overflow:hidden; padding:clamp(56px,11vw,104px) var(--shell) clamp(48px,9vw,88px);
     display:flex; flex-direction:column; align-items:center; text-align:center;
@@ -953,9 +962,12 @@
 <!-- ════════════════ 結章・扉（富士・月・流れ星・Xへの誘い） ════════════════ -->
 <section class="story lp-defer night photo-bg" data-scene="clear" data-veil="dusk" data-bg="fuji-yoru">
   <div class="veil"></div>
+  <!-- 触れると波紋が広がり、逆さ月が金色に揺れる水面（画像でも動画でもなく、コードがリアルタイムに描く）。
+       結章が画面に入ると app.js が起動し、離れると停止。reduced-motion では起動せず tsuki-mizu.png 静止画にフォールバック。 -->
+  <canvas id="mizuCanvas" class="mizu-canvas" aria-hidden="true"></canvas>
   <div class="ep-head"><span class="ep-no">結 章</span><span class="ep-label">― 晴れて、富士 ―</span></div>
   <p class="ph" data-img="fuji-yoru">雲が晴れ、はじめて、富士が見えた。</p>
-  <p class="ph" data-img="tsuki-mizu">湖に、月が、逆さに浮かんでいる。</p>
+  <p class="ph" data-img="tsuki-mizu" data-mizu="1">湖に、月が、逆さに浮かんでゐる。</p>
   <p class="ph" data-img="hoshizora-michi-a" data-fx="nagareboshi">すうっと、流れ星が、ひとつ。</p>
   <p class="ph" data-img="hoshizora-michi-a" data-fx="nagareboshi">願いを言う間もなく、消えていった。</p>
   <p class="ph key" data-img="hoshizora-michi-b">けれど――願いは、もう、足が叶えている。</p>
@@ -1073,6 +1085,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=26"></script>
+<script src="app.js?v=27"></script>
 </body>
 </html>

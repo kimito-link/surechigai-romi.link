@@ -103,6 +103,7 @@
     var storyEls=[].slice.call(document.querySelectorAll('.story'));
     var sceneEls=[].slice.call(document.querySelectorAll('[data-scene]'));
     var phs=[].slice.call(document.querySelectorAll('.story .ph'));
+    var mizuEl=document.querySelector('[data-mizu]'), mizuOn=false;  /* 結章の逆さ月・水面のトリガー文と状態 */
     var sasoEls=[].slice.call(document.querySelectorAll('.story .saso'));
     var activeScene=null;
 
@@ -172,6 +173,14 @@
         var fallbackBg = (best && best.getAttribute('data-bg')) || null;
         var pick = (imgPick!==null) ? imgPick : fallbackBg;
         if(pick!==null){ setPhoto(pick, curNight); }
+      }
+
+      /* 触れる水面（結章の逆さ月）: data-mizu 文が画面に十分入ったら Canvas を起動、
+         外れたら停止。mizu は末尾で定義されるが DOMContentLoaded 後に代入済みなのでガードのみ。 */
+      if(mizuEl){ var mr=mizuEl.getBoundingClientRect();
+        var visible = (mr.top < vh*0.85 && mr.bottom > vh*0.15);
+        if(visible && !mizuOn){ mizuOn=true; if(mizu&&mizu.start) mizu.start(); }
+        else if(!visible && mizuOn){ mizuOn=false; if(mizu&&mizu.stop) mizu.stop(); }
       }
     }
 
@@ -648,4 +657,64 @@
     (function(){ var c=document.getElementById('chikurin'); if(!c) return; var n=reduce?9:16;
       for(var i=0;i<n;i++){ var t=document.createElement('div'); t.className='take'; var left=(i/(n-1))*100, edge=Math.abs(left-50)/50, h=40+edge*55;
         t.style.left=left+'%'; t.style.height=h+'%'; t.style.opacity=String(0.5+edge*0.45); t.style.transform='translateX(-50%)'; c.appendChild(t); } })();
+
+    /* ===== 結章：触れると波紋が広がり、逆さ月が金色に揺れる水面 =====
+       画像でも動画でもなく、Canvasがリアルタイムに描く。結章が画面に入ると start()、
+       離れると stop()（rAF停止で省電力）。reduced-motion では一切起動せず、
+       既存の tsuki-mizu.png 静止画にフォールバックする。 */
+    var mizu=(function(){
+      var cv=document.getElementById('mizuCanvas'); if(!cv||reduce) return { start:function(){}, stop:function(){} };
+      var ctx=cv.getContext('2d'), W=0,H=0, DPR=Math.min(2,window.devicePixelRatio||1);
+      var moonX,moonY,moonR,horizon, ripples=[], stars=[], t=0, lastMove=0, raf=0, running=false;
+      var reflY;
+      function size(){ W=window.innerWidth; H=window.innerHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+        moonX=W*0.7; moonY=H*0.2; moonR=Math.max(24,Math.min(W,H)*0.07); horizon=H*0.62;
+        reflY=H*0.8; }  /* 逆さ月の中心を画面下部(文の下)に固定配置。水面境界より下。 */
+      if(!stars.length){ for(var i=0;i<80;i++) stars.push({x:Math.random(),y:Math.random()*0.48,s:Math.random()*1.4+0.3,tw:Math.random()*6.28}); }
+      function addRipple(x,y,str){ ripples.push({x:x,y:y,r:5,a:(str||1)}); if(ripples.length>26) ripples.shift(); }
+      function pos(e){ var r=cv.getBoundingClientRect(); var cx=(e.touches?e.touches[0].clientX:e.clientX), cy=(e.touches?e.touches[0].clientY:e.clientY); return { x:cx-r.left, y:cy-r.top }; }
+      cv.addEventListener('pointerdown',function(e){ if(!running) return; var p=pos(e); addRipple(p.x,p.y,1); });
+      cv.addEventListener('pointermove',function(e){ if(!running) return; var p=pos(e); if(t-lastMove>3){ addRipple(p.x,p.y,0.45); lastMove=t; } });
+      function waterMoon(){
+        // 逆さ月：reflY を中心に、月と同じ大きさの円を横スライスで描く。
+        // 波紋＋常時のさざなみで各スライスを横にずらし、水面で月が崩れて揺れる。
+        var refR=moonR*1.06, step=1.3;
+        for(var yy=-refR; yy<refR; yy+=step){ var cy=reflY+yy;
+          var wob=0, bright=1;
+          for(var k=0;k<ripples.length;k++){ var rp=ripples[k]; var dy=cy-rp.y, dx=moonX-rp.x; var dist=Math.sqrt(dx*dx+dy*dy); var ph=dist-rp.r;
+            if(Math.abs(ph)<50){ var e=(1-Math.abs(ph)/50); wob+=Math.sin(ph*0.2)*rp.a*13*e; bright+=Math.cos(ph*0.2)*rp.a*0.6*e; } }
+          wob+=Math.sin(cy*0.08+t*0.045)*2.4; wob+=Math.sin(cy*0.28+t*0.1)*1.1;  /* 常時のさざなみ */
+          var hw=Math.sqrt(Math.max(0,refR*refR-yy*yy)), grad=1-Math.abs(yy)/refR;
+          var a=(0.5*grad+0.08)*Math.max(0.25,bright);
+          var lg=ctx.createLinearGradient(moonX-hw+wob,cy,moonX+hw+wob,cy);
+          lg.addColorStop(0,'rgba(253,246,227,'+(a*0.45)+')'); lg.addColorStop(0.5,'rgba(255,242,205,'+a+')'); lg.addColorStop(1,'rgba(253,246,227,'+(a*0.45)+')');
+          ctx.fillStyle=lg; ctx.fillRect(moonX-hw+wob, cy, hw*2, step+0.7); }
+        // 芯のにじみ（逆さ月の光暈）
+        var cg=ctx.createRadialGradient(moonX,reflY,2,moonX,reflY,refR*1.4);
+        cg.addColorStop(0,'rgba(255,244,210,0.16)'); cg.addColorStop(1,'rgba(255,244,210,0)');
+        ctx.fillStyle=cg; ctx.fillRect(moonX-refR*1.5,reflY-refR*1.5,refR*3,refR*3);
+      }
+      function frame(){
+        if(!running) return; t++;
+        var g=ctx.createLinearGradient(0,0,0,H);
+        g.addColorStop(0,'#0a1730'); g.addColorStop(0.48,'#0c1b34'); g.addColorStop(0.52,'#08152b'); g.addColorStop(1,'#040c1c');
+        ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+        for(var i=0;i<stars.length;i++){ var s=stars[i]; var a=0.5+0.5*Math.sin(t*0.03+s.tw); ctx.fillStyle='rgba(234,243,255,'+(a*0.7)+')'; ctx.fillRect(s.x*W,s.y*H,s.s,s.s); }
+        var mg=ctx.createRadialGradient(moonX-moonR*0.3,moonY-moonR*0.3,moonR*0.2,moonX,moonY,moonR);
+        mg.addColorStop(0,'#fdf6e3'); mg.addColorStop(0.6,'#f0e6c8'); mg.addColorStop(1,'#d9cba0');
+        ctx.save(); ctx.shadowColor='rgba(253,246,227,.5)'; ctx.shadowBlur=30; ctx.beginPath(); ctx.arc(moonX,moonY,moonR,0,6.2832); ctx.fillStyle=mg; ctx.fill(); ctx.restore();
+        ctx.fillStyle='rgba(253,246,227,0.03)'; ctx.fillRect(0,horizon,W,H-horizon);
+        waterMoon();
+        for(var k=ripples.length-1;k>=0;k--){ var rp=ripples[k]; rp.r+=1.6; rp.a*=0.975; if(rp.a<0.03){ ripples.splice(k,1); continue; }
+          if(rp.y>horizon-10){ ctx.beginPath(); ctx.ellipse(rp.x,rp.y,rp.r,rp.r*0.42,0,0,6.2832); ctx.strokeStyle='rgba(180,205,235,'+(rp.a*0.45)+')'; ctx.lineWidth=1.4; ctx.stroke(); } }
+        for(var yl=horizon+12; yl<H; yl+=16){ var off=Math.sin(yl*0.1+t*0.04)*3; ctx.strokeStyle='rgba(120,150,190,0.045)'; ctx.beginPath(); ctx.moveTo(0,yl+off); ctx.lineTo(W,yl+off); ctx.stroke(); }
+        raf=requestAnimationFrame(frame);
+      }
+      window.addEventListener('resize',function(){ if(running) size(); });
+      return {
+        start:function(){ if(running) return; running=true; size(); cv.classList.add('on'); body.classList.add('mizu-active');
+          ripples.length=0; setTimeout(function(){ if(running) addRipple(moonX,horizon+30,0.8); },700); frame(); },
+        stop:function(){ if(!running) return; running=false; cv.classList.remove('on'); body.classList.remove('mizu-active'); if(raf) cancelAnimationFrame(raf); }
+      };
+    })();
   })();
