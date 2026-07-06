@@ -35,7 +35,7 @@ type SponsorCardDto = {
   linkUrl: string;
   prefecture: string | null;
   municipality: string | null;
-  sponsorLabel: "協賛";
+  sponsorLabel: "協賛" | "お知らせ";
 };
 
 function todayKey(date = new Date()): string {
@@ -55,7 +55,9 @@ function toCardDto(card: SponsorCard): SponsorCardDto {
     linkUrl: card.linkUrl,
     prefecture: card.prefecture,
     municipality: card.municipality,
-    sponsorLabel: "協賛",
+    // 自社機能の宣伝に第三者スポンサーの明示ラベル「協賛」を出すのは景表法上不正確なため、
+    // isSelfPromo で出し分ける（自社=お知らせ、第三者スポンサー=協賛）。
+    sponsorLabel: card.isSelfPromo ? "お知らせ" : "協賛",
   };
 }
 

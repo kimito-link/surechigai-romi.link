@@ -1,7 +1,8 @@
 /**
  * Static native sponsor card.
  *
- * No SDK, no animation, no autoplay. The "協賛" label is always visible.
+ * No SDK, no animation, no autoplay. A label ("協賛"/"お知らせ") is always visible;
+ * which one depends on whether the card promotes a third-party sponsor or the app itself.
  */
 
 import { Image, Linking, Platform, Pressable, StyleSheet, Text, View } from "react-native";
@@ -16,7 +17,7 @@ export type SponsorCardData = {
   linkUrl: string;
   prefecture: string | null;
   municipality: string | null;
-  sponsorLabel: "協賛";
+  sponsorLabel: "協賛" | "お知らせ";
 };
 
 type SponsorCardProps = {

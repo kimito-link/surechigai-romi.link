@@ -33,6 +33,7 @@ export const sponsorCards = pgTable(
     linkUrl: text("linkUrl").notNull(),
     prefecture: varchar("prefecture", { length: 32 }),
     municipality: text("municipality"),
+    isSelfPromo: boolean("isSelfPromo").default(false).notNull(),
     weight: integer("weight").default(1).notNull(),
     startsAt: timestamp("startsAt").defaultNow().notNull(),
     endsAt: timestamp("endsAt"),
