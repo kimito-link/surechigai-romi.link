@@ -6,8 +6,10 @@
 
 import { getApiBaseUrl as getApiBaseUrlFromConfig } from "@/lib/api/config";
 
-// Bundle ID / Deep Link scheme（iOS/Androidビルド用）
-const scheme = "surechigairomi";
+// Deep Link scheme（iOS/Androidビルド用）。正は app.config.json identity.iosScheme。
+// ※現状この deepLinkScheme は未使用（実際の scheme 設定は app.config.ts が
+//   app.config.json から読む）。値ズレ混乱を避けるため app.config.json と一致させておく。
+const scheme = "surechigai";
 
 const env = {
   appId: process.env.EXPO_PUBLIC_APP_ID ?? "",

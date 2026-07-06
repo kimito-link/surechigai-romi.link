@@ -57,7 +57,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 90
     env:
-      # ↓�EↁEapp.config.json の値で置揁E↓�EↁE      APP_BUNDLE_ID: com.surechigairomi.app   # identity.bundleId   侁E com.example.app
+      # ↓�EↁEapp.config.json の値で置揁E↓�EↁE      APP_BUNDLE_ID: com.kimito.link.surechigai   # identity.bundleId   侁E com.example.app
       APP_NAME: surechigai             # identity.shortName  侁E NekoDiary
       # ↑�EↁEここまで ↑�EↁE      IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
       IOS_DIST_CERT_CER_BASE64: ${{ secrets.IOS_DIST_CERT_CER_BASE64 }}

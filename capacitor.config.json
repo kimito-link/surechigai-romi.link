@@ -1,12 +1,12 @@
 {
-  "appId": "com.surechigairomi.app",
+  "appId": "com.kimito.link.surechigai",
   "appName": "君斗りんくのすれ違ひ通信",
   "webDir": "dist/public",
   "bundledWebRuntime": false,
   "backgroundColor": "#00427BFF",
   "ios": {
     "contentInset": "always",
-    "scheme": "surechigairomi",
+    "scheme": "surechigai",
     "limitsNavigationsToAppBoundDomains": false,
     "backgroundColor": "#00427BFF"
   },

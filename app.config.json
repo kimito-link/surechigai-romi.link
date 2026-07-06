@@ -4,15 +4,15 @@
     "displayName": "君斗りんくのすれ違ひ通信",
     "displayNameEn": "Surechigai Romi",
     "shortName": "surechigai",
-    "bundleId": "com.surechigairomi.app",
-    "iosScheme": "surechigairomi",
+    "bundleId": "com.kimito.link.surechigai",
+    "iosScheme": "surechigai",
     "productionDomain": "surechigai-romi.link",
     "stagingDomain": null
   },
   "stores": {
     "ascAppId": "",
     "playAppId": "",
-    "playPackageName": "com.surechigairomi.app",
+    "playPackageName": "com.kimito.link.surechigai",
     "appleTeamId": null,
     "playDeveloperId": "",
     "primaryCategory": "LIFESTYLE",
