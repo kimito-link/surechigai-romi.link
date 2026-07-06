@@ -1,24 +1,32 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { useMySignal } from "@/hooks/use-my-signal";
 import { isInitialQueryLoad } from "@/lib/authenticated-query-options";
+import { navigate } from "@/lib/navigation";
 import { color, palette } from "@/theme/tokens";
 
 function StatCell({
   icon,
   label,
   value,
+  onPress,
 }: {
   icon: keyof typeof MaterialIcons.glyphMap;
   label: string;
   value: string;
+  onPress: () => void;
 }) {
   return (
-    <View style={styles.cell}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}を開く`}
+      style={({ pressed }) => [styles.cell, pressed && styles.cellPressed]}
+    >
       <MaterialIcons name={icon} size={18} color={palette.kimitoBlue} />
       <Text style={styles.cellValue}>{value}</Text>
       <Text style={styles.cellLabel}>{label}</Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -46,17 +54,29 @@ export function MySignalSummary() {
         {latest}
       </Text>
       <View style={styles.grid}>
-        <StatCell icon="map" label="足あと" value={statValue(data?.trailCount, initial)} />
-        <StatCell icon="mail" label="未開封" value={statValue(data?.unopenedCount, initial)} />
+        <StatCell
+          icon="map"
+          label="足あと"
+          value={statValue(data?.trailCount, initial)}
+          onPress={() => navigate.toMapTab()}
+        />
+        <StatCell
+          icon="mail"
+          label="未開封"
+          value={statValue(data?.unopenedCount, initial)}
+          onPress={() => navigate.toHome()}
+        />
         <StatCell
           icon="people"
           label="すれ違い"
           value={statValue(data?.encounterPartnerCount, initial)}
+          onPress={() => navigate.toZukanTab()}
         />
         <StatCell
           icon="public"
           label="都道府県"
           value={statValue(data?.visitedPrefectureCount, initial)}
+          onPress={() => navigate.toZukanTab()}
         />
       </View>
     </View>
@@ -99,6 +119,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
     gap: 2,
+  },
+  cellPressed: {
+    opacity: 0.82,
   },
   cellValue: {
     fontSize: 18,

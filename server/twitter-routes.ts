@@ -146,6 +146,9 @@ export function registerTwitterRoutes(app: Express) {
         const protocol = req.get("x-forwarded-proto") || req.protocol;
         const forceHttps = protocol === "https" || host.includes("manus.computer") || host.includes("railway.app");
         
+        // NOTE(2026-07-06): This legacy Express/Railway branch has not been
+        // confirmed to run in the current Vercel + Clerk production auth path.
+        // Keep behavior unchanged until production logs prove this path fires.
         // Production: redirect to surechigai-romi.link
         // Development: redirect to Expo app (port 8081)
         let baseUrl: string;
@@ -312,6 +315,9 @@ export function registerTwitterRoutes(app: Express) {
       const protocol = req.get("x-forwarded-proto") || req.protocol;
       const forceHttps = protocol === "https" || host.includes("manus.computer") || host.includes("railway.app");
       
+      // NOTE(2026-07-06): This legacy Express/Railway branch has not been
+      // confirmed to run in the current Vercel + Clerk production auth path.
+      // Keep behavior unchanged until production logs prove this path fires.
       // Production: redirect to surechigai-romi.link
       // Development: redirect to Expo app (port 8081)
       let baseUrl: string;
@@ -341,6 +347,9 @@ export function registerTwitterRoutes(app: Express) {
       const protocol = req.get("x-forwarded-proto") || req.protocol;
       const forceHttps = protocol === "https" || host.includes("manus.computer") || host.includes("railway.app");
       
+      // NOTE(2026-07-06): This legacy Express/Railway branch has not been
+      // confirmed to run in the current Vercel + Clerk production auth path.
+      // Keep behavior unchanged until production logs prove this path fires.
       // Production: redirect to surechigai-romi.link
       // Development: redirect to Expo app (port 8081)
       let baseUrl: string;

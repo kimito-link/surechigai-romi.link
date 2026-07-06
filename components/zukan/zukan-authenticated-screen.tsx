@@ -201,30 +201,45 @@ export function ZukanAuthenticatedScreen() {
             encounterPartnerCount={data?.encounterPartnerCount ?? 0}
           />
           <View style={styles.summaryRow}>
-            <View style={styles.summaryCard}>
+            <Pressable
+              onPress={() => navigate.toMapTab()}
+              accessibilityRole="button"
+              accessibilityLabel="訪問した都道府県を地図で見る"
+              style={({ pressed }) => [styles.summaryCard, pressed && styles.summaryCardPressed]}
+            >
               <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>
                 {isLoading ? "—" : visitedCount}
               </Text>
               <Text style={styles.summaryLabel} numberOfLines={2}>
                 訪問した都道府県
               </Text>
-            </View>
-            <View style={styles.summaryCard}>
+            </Pressable>
+            <Pressable
+              onPress={() => navigate.toZukanTab()}
+              accessibilityRole="button"
+              accessibilityLabel="すれ違い都道府県を見る"
+              style={({ pressed }) => [styles.summaryCard, pressed && styles.summaryCardPressed]}
+            >
               <Text style={[styles.summaryNum, { color: color.accentAlt }]}>
                 {isLoading ? "—" : encounteredCount}
               </Text>
               <Text style={styles.summaryLabel} numberOfLines={2}>
                 すれ違い都道府県
               </Text>
-            </View>
-            <View style={styles.summaryCard}>
+            </Pressable>
+            <Pressable
+              onPress={() => navigate.toZukanTab()}
+              accessibilityRole="button"
+              accessibilityLabel="すれ違った人を見る"
+              style={({ pressed }) => [styles.summaryCard, pressed && styles.summaryCardPressed]}
+            >
               <Text style={[styles.summaryNum, { color: color.accentPrimary }]}>
                 {isLoading ? "—" : (data?.encounterPartnerCount ?? 0)}
               </Text>
               <Text style={styles.summaryLabel} numberOfLines={2}>
                 すれ違った人
               </Text>
-            </View>
+            </Pressable>
           </View>
 
           {isLoading ? (
@@ -344,6 +359,9 @@ const styles = StyleSheet.create({
     padding: 14,
     alignItems: "center",
     gap: 4,
+  },
+  summaryCardPressed: {
+    opacity: 0.82,
   },
   summaryNum: {
     fontSize: 24,

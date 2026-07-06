@@ -42,7 +42,11 @@ export default function ShareLocationScreen() {
 
   const trailQuery = trpc.ogp.getTrailBySlug.useQuery(
     { slug, limit: 120 },
-    { enabled: /^[A-Za-z0-9]{1,16}$/.test(slug), retry: false },
+    {
+      enabled: /^[A-Za-z0-9]{1,16}$/.test(slug),
+      retry: 1,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000),
+    },
   );
 
   const who = trailQuery.data
@@ -81,6 +85,20 @@ export default function ShareLocationScreen() {
           <Text style={styles.errorText}>
             リンクの有効期限が切れたか、公開が停止されている可能性があります。
           </Text>
+          <Pressable
+            onPress={() => void trailQuery.refetch()}
+            disabled={trailQuery.isFetching}
+            style={({ pressed }) => [
+              styles.secondaryButton,
+              pressed && !trailQuery.isFetching && { opacity: 0.85 },
+              trailQuery.isFetching && { opacity: 0.6 },
+            ]}
+          >
+            <MaterialIcons name="refresh" size={18} color={palette.kimitoBlue} />
+            <Text style={styles.secondaryButtonText}>
+              {trailQuery.isFetching ? "再読み込み中…" : "再読み込み"}
+            </Text>
+          </Pressable>
           <Pressable
             onPress={() => navigateReplace.toZukanTab()}
             style={({ pressed }) => [styles.primaryButton, pressed && { opacity: 0.85 }]}
@@ -177,6 +195,25 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: palette.white,
     fontSize: 15,
+    fontWeight: "800",
+  },
+  secondaryButton: {
+    marginTop: 4,
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: palette.kimitoBlue,
+    backgroundColor: color.surface,
+  },
+  secondaryButtonText: {
+    color: palette.kimitoBlue,
+    fontSize: 14,
     fontWeight: "800",
   },
   profileHeader: {

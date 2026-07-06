@@ -41,7 +41,11 @@ import { useOnboarding } from "@/features/onboarding/hooks/useOnboarding";
 import { trpc } from "@/lib/trpc";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
-import { shareMyLocation } from "@/lib/share";
+import {
+  closePreparedSharePopup,
+  prepareSharePopup,
+  shareMyLocation,
+} from "@/lib/share";
 import {
   TRAIL_VISIBILITY_VALUES,
   trailVisibilityDescription,
@@ -258,13 +262,20 @@ export function MypageAuthenticatedScreen() {
   );
 
   const handleShareLocation = useCallback(async () => {
+    const sharePopup = prepareSharePopup();
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     try {
       const res = await shareSlugMutation.mutateAsync();
-      await shareMyLocation(res.url, res.areaLabel ?? undefined);
+      const shared = await shareMyLocation(res.url, res.areaLabel ?? undefined, {
+        popup: sharePopup,
+      });
+      if (!shared) {
+        Alert.alert("エラー", "Xの投稿画面を開けませんでした。ポップアップ許可を確認してください。");
+      }
     } catch {
+      closePreparedSharePopup(sharePopup);
       Alert.alert("エラー", "共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
     }
   }, [shareSlugMutation]);

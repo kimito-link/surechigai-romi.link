@@ -8,25 +8,25 @@ import { APP_ORIGIN } from "@/lib/site-urls";
 
 const APP_HASHTAG = "#君斗りんくのすれ違ひ通信";
 
+export type PreparedSharePopup = {
+  popup: Window | null;
+};
+
 // 本番URLを取得（環境変数から、またはデフォルト値）
 function getAppUrl(): string {
   // Web環境では現在のURLから取得
   if (Platform.OS === "web" && typeof window !== "undefined" && window.location) {
     const { protocol, hostname, port } = window.location;
     // 開発環境の場合はそのまま使用
-    if (hostname.includes("manus.computer") || hostname.includes("localhost")) {
-      return `${protocol}//${hostname}${port ? ":" + port : ""}`;
-    }
-    // 本番環境（正規ドメインは surechigai.kimito.link に統一。
-    //   旧 surechigai-romi.link でも現オリジンを尊重して共有URLを生成する）
     if (
-      hostname.endsWith(".kimito.link") ||
-      hostname.includes("surechigai-romi.link")
+      hostname.includes("manus.computer") ||
+      hostname.includes("localhost") ||
+      hostname === "127.0.0.1"
     ) {
       return `${protocol}//${hostname}${port ? ":" + port : ""}`;
     }
   }
-  // デフォルトは本番URL（正規ドメイン）
+  // 本番共有URLは旧ドメインからのアクセス時も正規ドメインに統一する。
   return APP_ORIGIN;
 }
 
@@ -35,6 +35,70 @@ export interface ShareContent {
   message: string;
   url?: string;
   hashtags?: string[];
+}
+
+export function prepareSharePopup(): PreparedSharePopup | null {
+  if (Platform.OS !== "web" || typeof window === "undefined") return null;
+
+  const popup = window.open("about:blank", "_blank");
+  if (popup) {
+    try {
+      popup.opener = null;
+      popup.document.title = "Xでシェア";
+      popup.document.body.textContent = "共有画面を準備しています…";
+    } catch {
+      // about:blank の初期化に失敗しても、URL差し替え自体は続行できる。
+    }
+  }
+  return { popup };
+}
+
+export function closePreparedSharePopup(target: PreparedSharePopup | null | undefined): void {
+  try {
+    if (target?.popup && !target.popup.closed) {
+      target.popup.close();
+    }
+  } catch {
+    // すでに閉じられた、またはブラウザが close を拒否した場合は何もしない。
+  }
+}
+
+function buildTwitterIntentUrl(text: string, url?: string, hashtags?: string[]): string {
+  const hashtagString = hashtags?.join(",") || "";
+  const params = new URLSearchParams();
+  params.set("text", text);
+  if (url) params.set("url", url);
+  if (hashtagString) params.set("hashtags", hashtagString);
+  return `https://twitter.com/intent/tweet?${params.toString()}`;
+}
+
+function openWebShareUrl(
+  twitterUrl: string,
+  target?: PreparedSharePopup | null,
+): boolean {
+  if (typeof window === "undefined") return false;
+
+  if (target) {
+    if (target.popup && !target.popup.closed) {
+      target.popup.location.href = twitterUrl;
+      return true;
+    }
+    window.location.assign(twitterUrl);
+    return true;
+  }
+
+  const popup = window.open(twitterUrl, "_blank");
+  if (popup) {
+    try {
+      popup.opener = null;
+    } catch {
+      // noop
+    }
+    return true;
+  }
+
+  window.location.assign(twitterUrl);
+  return true;
 }
 
 /**
@@ -73,7 +137,8 @@ export async function shareContent(content: ShareContent): Promise<boolean> {
 export async function shareToTwitter(
   text: string,
   url?: string,
-  hashtags?: string[]
+  hashtags?: string[],
+  options?: { popup?: PreparedSharePopup | null },
 ): Promise<boolean> {
   try {
     // ハプティックフィードバック
@@ -81,21 +146,11 @@ export async function shareToTwitter(
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
-    const hashtagString = hashtags?.join(",") || "";
-    const params = new URLSearchParams();
-    params.set("text", text);
-    if (url) params.set("url", url);
-    if (hashtagString) params.set("hashtags", hashtagString);
-
-    const twitterUrl = `https://twitter.com/intent/tweet?${params.toString()}`;
+    const twitterUrl = buildTwitterIntentUrl(text, url, hashtags);
 
     // Web環境ではwindow.openを使用
     if (Platform.OS === "web") {
-      if (typeof window !== "undefined") {
-        window.open(twitterUrl, "_blank", "noopener,noreferrer");
-        return true;
-      }
-      return false;
+      return openWebShareUrl(twitterUrl, options?.popup);
     }
 
     // ネイティブ環境ではLinking.openURLを使用
@@ -134,8 +189,9 @@ export async function shareApp(): Promise<boolean> {
 export async function shareMyLocation(
   shareUrl: string,
   areaLabel?: string,
+  options?: { popup?: PreparedSharePopup | null },
 ): Promise<boolean> {
   const where = areaLabel ? `${areaLabel}にいるよ。` : "";
   const text = `${where}会いたい君がいる現在地。`;
-  return shareToTwitter(text, shareUrl, ["君斗りんくのすれ違ひ通信"]);
+  return shareToTwitter(text, shareUrl, ["君斗りんくのすれ違ひ通信"], options);
 }

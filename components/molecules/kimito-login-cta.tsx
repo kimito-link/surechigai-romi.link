@@ -2,7 +2,6 @@
  * Xログイン CTA — kimito.link ライト UI 準拠（Web で背景色が確実に効く）
  */
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { Link, type Href } from "expo-router";
 import { palette } from "@/theme/tokens";
 
 type KimitoLoginCtaProps = {
@@ -39,15 +38,29 @@ export function KimitoLoginCta({
 
   if (Platform.OS === "web") {
     return (
-      <Link
-        href={signInHref as Href}
-        onPress={onPress}
+      <Pressable
+        disabled={isStarting}
+        onPress={() => {
+          if (isStarting) return;
+          if (onPress) {
+            onPress();
+            return;
+          }
+          if (typeof window !== "undefined") {
+            window.location.assign(signInHref);
+          }
+        }}
         accessibilityRole="button"
         accessibilityLabel={`Xで${displayLabel}`}
-        style={[buttonStyle, styles.webLink, isStarting && { opacity: 0.65 }]}
+        style={({ pressed }) => [
+          buttonStyle,
+          styles.webLink,
+          pressed && !isStarting && { opacity: 0.85 },
+          isStarting && { opacity: 0.65 },
+        ]}
       >
         {content}
-      </Link>
+      </Pressable>
     );
   }
 

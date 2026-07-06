@@ -51,7 +51,11 @@ import { SponsorCard, type SponsorCardData } from "@/components/molecules/sponso
 import { CheckinPreviewCard } from "@/components/checkin/checkin-preview-card";
 import { CheckinSuccessPanel } from "@/components/checkin/checkin-success-panel";
 import { navigate } from "@/lib/navigation";
-import { shareMyLocation } from "@/lib/share";
+import {
+  closePreparedSharePopup,
+  prepareSharePopup,
+  shareMyLocation,
+} from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
 import { toUserFriendlyError } from "@/shared/error-messages";
 import { isDesktopWeb } from "@/lib/get-current-location";
@@ -153,6 +157,7 @@ export default function CheckinAuthenticatedScreen() {
   // チェックイン直後にその場で「現在地をXでシェア」できる導線
   const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
   const handleShareLocation = useCallback(async () => {
+    const sharePopup = prepareSharePopup();
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -163,8 +168,14 @@ export default function CheckinAuthenticatedScreen() {
         checkinPrefecture ??
         res.areaLabel ??
         undefined;
-      await shareMyLocation(res.url, areaLabel);
+      const shared = await shareMyLocation(res.url, areaLabel, {
+        popup: sharePopup,
+      });
+      if (!shared) {
+        showError("Xの投稿画面を開けませんでした。ポップアップ許可を確認してください。");
+      }
     } catch {
+      closePreparedSharePopup(sharePopup);
       showError("共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
     }
   }, [shareSlugMutation, showError, checkinMunicipality, checkinPrefecture]);
