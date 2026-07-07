@@ -87,3 +87,7 @@ qa-results/
 
 .vercel
 .env*.local
+
+# LP画像の試作・元写真バックアップ(本番不要・誤コミット防止)
+public/lp/img/_sumi-test/
+public/lp/img/_orig-photo/

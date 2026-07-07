@@ -558,6 +558,40 @@
     opacity:0; transition:opacity 1.6s ease; pointer-events:none; z-index:2; }
   .mizu-hint.show{ opacity:1; }
 
+  /* ===== 願・叶（流れ星に、五つの願ひ：結章の「願ひは足が叶へる」を機能へ橋渡し） ===== */
+  /* 夜空を連続させる。末端色 #0f1f3a を .app-intro 先頭色に合わせ継ぎ目を消す。 */
+  .negai{ position:relative; z-index:5; overflow:hidden; text-align:center; color:#dce6f2;
+    padding:clamp(56px,11vw,104px) var(--shell) clamp(40px,8vw,72px);
+    background:linear-gradient(180deg,#0a1426 0%,#0f1f3a 100%); }
+  /* 薄い星ドット（結章夜空の余韻） */
+  .negai::before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.32;
+    background-image:radial-gradient(1px 1px at 18% 22%, #cfe0f5 50%, transparent),
+      radial-gradient(1px 1px at 72% 15%, #cfe0f5 50%, transparent),
+      radial-gradient(1px 1px at 42% 38%, #b8ccea 50%, transparent),
+      radial-gradient(1px 1px at 88% 46%, #cfe0f5 50%, transparent),
+      radial-gradient(1px 1px at 30% 66%, #b8ccea 50%, transparent),
+      radial-gradient(1px 1px at 63% 78%, #cfe0f5 50%, transparent); }
+  .negai .ng-head{ position:relative; z-index:1; margin-bottom:clamp(24px,6vw,48px); }
+  .negai .ng-no{ font-family:var(--fude); font-size:13px; letter-spacing:.5em; color:var(--kin); text-indent:.5em; display:block; margin-bottom:.7em; }
+  .negai .ng-label{ font-family:var(--fude); font-size:clamp(13px,3.6vw,15px); letter-spacing:.2em; color:#9fc0e6; }
+  .negai .ng-lead{ font-family:var(--mincho); font-size:clamp(16px,4.4vw,20px); line-height:2.2; letter-spacing:.06em; color:#f0ead9; margin:1.4em auto 0; max-width:var(--maxw); }
+  .negai .ng-item{ position:relative; z-index:1; min-height:72vh; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:clamp(22px,5vw,36px); }
+  .negai .ng-wish{ font-family:var(--fude); font-size:clamp(20px,5.6vw,30px); letter-spacing:.14em; line-height:2; color:#e6eefa; text-shadow:0 2px 20px rgba(8,16,30,.7); margin:0; }
+  /* 願ひの前に金の流星線が「すっと流れる」（CSSトランジションのみ・JS不要） */
+  .negai .ng-star{ display:block; margin:0 auto .9em; width:clamp(60px,12vw,110px); height:1px;
+    background:linear-gradient(90deg,transparent,var(--kin),transparent);
+    transform:rotate(-18deg) scaleX(0); transform-origin:left; transition:transform 1.2s ease .3s; }
+  .negai .ng-item.in .ng-star{ transform:rotate(-18deg) scaleX(1); }
+  /* 和紙の短冊札：夜空に吊るした短冊の体。墨絵＋機能名＋説明。 */
+  .negai .ng-fuda{ width:min(80vw,340px); background:var(--washi); border-top:1px solid var(--kin);
+    border-radius:2px; padding:14px 14px 20px; margin:0; box-shadow:0 10px 40px rgba(0,0,0,.45); transform:rotate(-.4deg); }
+  .negai .ng-item:nth-of-type(even) .ng-fuda{ transform:rotate(.4deg); }
+  .negai .ng-fuda img{ width:100%; height:auto; display:block; border-radius:1px; }
+  .negai .ng-name{ font-family:var(--fude); color:var(--sumi); font-size:clamp(17px,4.4vw,20px); letter-spacing:.2em; display:block; margin:14px 0 8px; }
+  .negai .ng-desc{ font-family:var(--mincho); color:var(--sumi-soft); font-size:clamp(13px,3.4vw,15px); line-height:2.1; letter-spacing:.04em; display:block; text-align:left; }
+  .negai .ng-atogaki{ position:relative; z-index:1; font-family:var(--mincho); font-size:clamp(13px,3.6vw,15px); line-height:2.2; letter-spacing:.05em; color:#b8ccea; max-width:var(--maxw); margin:clamp(20px,5vw,40px) auto 0; }
+  .negai .ng-tsugi{ position:relative; z-index:1; font-family:var(--fude); font-size:clamp(16px,4.4vw,19px); letter-spacing:.12em; color:#f0ead9; margin:clamp(28px,6vw,52px) auto 0; }
+
   /* ===== 巻・携（アプリ紹介：結章の余韻からフィナーレの夜空へ橋を架ける） ===== */
   .app-intro{ position:relative; z-index:5; overflow:hidden; padding:clamp(56px,11vw,104px) var(--shell) clamp(48px,9vw,88px);
     display:flex; flex-direction:column; align-items:center; text-align:center;
@@ -1043,10 +1077,75 @@
     </div>
   </div>
 </section>
+<!-- ════════════════ 願・叶（流れ星に、五つの願ひ ＝ アプリの機能紹介） ════════════════ -->
+<section class="negai" data-scene="clear" aria-label="五つの願ひとアプリの機能">
+  <div class="ng-head reveal">
+    <span class="ng-no">願 ・ 叶</span><span class="ng-label">― 流れ星に、五つの願ひ ―</span>
+    <p class="ng-lead">あの夜、言ひそびれた願ひを、ここに書きつけておく。<br />短冊のやうに、五つ。</p>
+  </div>
+
+  <div class="ng-item reveal">
+    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「あの日の場所へ、もう一度。」</p>
+    <figure class="ng-fuda">
+      <img src="img/hitosuji.png?v=2" alt="雪原にのびる一本の足あとの墨絵" loading="lazy" width="768" height="432" />
+      <figcaption>
+        <b class="ng-name">足あとの記</b>
+        <span class="ng-desc">歩けば、正確な足あとが、ひとりでに残る。幾年たっても、思ひ出の辻まで、地図が連れ戻してくれる。</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="ng-item reveal">
+    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「同じ道を行く誰かに、逢ひたい。」</p>
+    <figure class="ng-fuda">
+      <img src="img/futari-ashiato.png?v=2" alt="同じ道を行くふたりの足あとの墨絵" loading="lazy" width="768" height="432" />
+      <figcaption>
+        <b class="ng-name">すれ違ひの封筒</b>
+        <span class="ng-desc">近くを通った人と、そっと、すれ違ふ。言葉の代はりに、封筒がひとつ。返すのは、スタンプただ一つでよい。</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="ng-item reveal">
+    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「あの人の見た景色を、この目で。」</p>
+    <figure class="ng-fuda">
+      <img src="img/oshi-no-michi.png?v=2" alt="慕わしい人の通った道の墨絵" loading="lazy" width="768" height="432" />
+      <figcaption>
+        <b class="ng-name">図鑑と巡礼</b>
+        <span class="ng-desc">訪れた町が、切手帳のやうに貯まってゆく。憧れの人の軌跡をたどれば、旅は、巡礼になる。</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="ng-item reveal">
+    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「時をたがへた君とも、すれ違ひたい。」</p>
+    <figure class="ng-fuda">
+      <img src="img/toki-no-surechigai.png?v=2" alt="橋の上で時を越えてすれ違うふたりの墨絵" loading="lazy" width="768" height="432" />
+      <figcaption>
+        <b class="ng-name">時を越えるすれ違ひ</b>
+        <span class="ng-desc">三十日のうちに、同じ場所を踏んだ人とも、すれ違へる。同じ道は二度とないのに――道は、覚えてゐてくれる。</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="ng-item reveal">
+    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「この旅を、君に知らせたい。」</p>
+    <figure class="ng-fuda">
+      <img src="img/kasanaru-ashiato.png?v=2" alt="重なりゆく足あとの墨絵" loading="lazy" width="768" height="432" />
+      <figcaption>
+        <b class="ng-name">便りは、𝕏へ</b>
+        <span class="ng-desc">道中記は、そのまま 𝕏 で分かち合へる。届くのはただ一行――会いたい君がゐる、現在地。</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <p class="ng-atogaki reveal">なほ――居どころをそっと知らせる灯も、灯を消して隠れる術も、皆で集ふ宴の帳も、この一巻に。</p>
+  <p class="ng-tsugi reveal">さて、この道中記、いづこで手に入る。</p>
+</section>
 <!-- ════════════════ 巻・携（アプリ紹介：この道中記を懐に） ════════════════ -->
 <section class="app-intro reveal" data-scene="clear" aria-label="アプリ紹介">
   <div class="ai-head"><span class="ai-no">巻 ・ 携</span><span class="ai-label">― この道中記を、いつでも懐に ―</span></div>
-  <p class="ai-lead">歩けば、足あとは、ひとりでに。<br />行った場所が、正確な足あととして残り、<br />あとから、その思ひ出の場所を、たどれる。</p>
+  <p class="ai-lead">五つの願ひを、この一冊に。<br />いつでも、懐に。</p>
   <div class="ai-stage">
     <div class="ai-phone" aria-hidden="true">
       <div class="ai-phone-screen">
@@ -1071,9 +1170,11 @@
     </div>
   </div>
   <div class="ai-feats">
-    <span class="ai-feat">足あとが軌跡になる</span>
+    <span class="ai-feat">足あとの記</span>
     <span class="ai-feat">すれ違ひの封筒</span>
-    <span class="ai-feat">図鑑・聖地巡礼</span>
+    <span class="ai-feat">図鑑と巡礼</span>
+    <span class="ai-feat">時を越えるすれ違ひ</span>
+    <span class="ai-feat">便りは 𝕏 へ</span>
   </div>
 </section>
 <!-- ════════════════ フィナーレ（夜空＋大きな日本地図＋アプリ導線） ════════════════ -->
