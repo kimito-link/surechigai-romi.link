@@ -264,24 +264,24 @@
 
     /* 実写背景ステージ：画面固定の2枚(pfA/pfB)を使い、章ごとに写真をクロスフェード差し替えする。 */
     var PHOTOS={ yukiguni:'img/yukiguni.png', kisha:'img/kisha.png', yukinohara:'img/yukinohara.png',
-      yukimichi:'img/yukimichi.png', ashiato:'img/ashiato.png', 'onsen-saru':'img/onsen-saru.png',
+      yukimichi:'img/yukimichi.png?v=2', ashiato:'img/ashiato.png?v=2', 'onsen-saru':'img/onsen-saru.png',
       sakura:'img/sakura.png', rikisha:'img/rikisha.png', chashitsu:'img/chashitsu.png', niwa:'img/niwa.png',
       nyudogumo:'img/nyudogumo.png', kawa:'img/kawa.png', taki:'img/taki.png',
       mugiwara:'img/mugiwara.png',
       tekiya:'img/tekiya.png', takoyaki:'img/takoyaki.png', 'matsuri-hito':'img/matsuri-hito.png',
       hanabi:'img/hanabi.png', senkohanabi:'img/senkohanabi.png',
-      'futari-ashiato':'img/futari-ashiato.png', yoake:'img/yoake.png',
-      momiji:'img/momiji.png', yakiimo:'img/yakiimo.png', hitosuji:'img/hitosuji.png', kiseki:'img/kiseki.png',
-      hosomichi:'img/hosomichi.png', fuji:'img/fuji.png', 'fuji-yoru':'img/fuji-yoru.png', 'tsuki-mizu':'img/tsuki-mizu.png',
+      'futari-ashiato':'img/futari-ashiato.png?v=2', yoake:'img/yoake.png',
+      momiji:'img/momiji.png', yakiimo:'img/yakiimo.png', hitosuji:'img/hitosuji.png?v=2', kiseki:'img/kiseki.png',
+      hosomichi:'img/hosomichi.png?v=2', fuji:'img/fuji.png', 'fuji-yoru':'img/fuji-yoru.png', 'tsuki-mizu':'img/tsuki-mizu.png',
       /* 終盤の固有映像（足跡・道の使い回し解消） */
-      'sanjunichi-michi':'img/sanjunichi-michi.png', 'kasanaru-ashiato':'img/kasanaru-ashiato.png',
-      'oshi-no-michi':'img/oshi-no-michi.png', 'toki-no-surechigai':'img/toki-no-surechigai.png',
-      'kienai-ashiato-aki':'img/kienai-ashiato-aki.png', 'fumidasu-ashi':'img/fumidasu-ashi.png',
+      'sanjunichi-michi':'img/sanjunichi-michi.png?v=2', 'kasanaru-ashiato':'img/kasanaru-ashiato.png?v=2',
+      'oshi-no-michi':'img/oshi-no-michi.png?v=2', 'toki-no-surechigai':'img/toki-no-surechigai.png?v=2',
+      'kienai-ashiato-aki':'img/kienai-ashiato-aki.png?v=2', 'fumidasu-ashi':'img/fumidasu-ashi.png',
       'ichigo-ashiato':'img/ichigo-ashiato.png',
       /* 結章：雪道足跡＋星空夜道（山道で統一） */
-      'yuki-ashiato':'img/yuki-ashiato.png',
-      'hoshizora-michi-a':'img/hoshizora-michi-a.png', 'hoshizora-michi-b':'img/hoshizora-michi-b.png',
-      'hoshizora-michi-c':'img/hoshizora-michi-c.png' };
+      'yuki-ashiato':'img/yuki-ashiato.png?v=2',
+      'hoshizora-michi-a':'img/hoshizora-michi-a.png?v=2', 'hoshizora-michi-b':'img/hoshizora-michi-b.png?v=2',
+      'hoshizora-michi-c':'img/hoshizora-michi-c.png?v=2' };
     var pfStage=document.getElementById('photoStage'), pfA=document.getElementById('pfA'), pfB=document.getElementById('pfB');
     var pfFront=pfA, pfBack=pfB, curBg=null;
     /* 先読み（チラつき防止） */
