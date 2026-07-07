@@ -658,63 +658,360 @@
       for(var i=0;i<n;i++){ var t=document.createElement('div'); t.className='take'; var left=(i/(n-1))*100, edge=Math.abs(left-50)/50, h=40+edge*55;
         t.style.left=left+'%'; t.style.height=h+'%'; t.style.opacity=String(0.5+edge*0.45); t.style.transform='translateX(-50%)'; c.appendChild(t); } })();
 
-    /* ===== 結章：触れると波紋が広がり、逆さ月が金色に揺れる水面 =====
-       画像でも動画でもなく、Canvasがリアルタイムに描く。結章が画面に入ると start()、
-       離れると stop()（rAF停止で省電力）。reduced-motion では一切起動せず、
-       既存の tsuki-mizu.png 静止画にフォールバックする。 */
+    /* ===== KV 胡粉のにじみ（§4.2）: 序・扉に触れると白い指あとがにじむ ===== */
+    (function(){
+      if(reduce) return;
+      var door=document.querySelector('.novel'); if(!door) return;
+      var gofunList=[], maxGofun=5;
+      door.addEventListener('pointerdown',function(e){
+        var r=door.getBoundingClientRect();
+        var x=e.clientX-r.left, y=e.clientY-r.top;
+        var s=document.createElement('span'); s.className='gofun';
+        s.style.left=x+'px'; s.style.top=y+'px';
+        door.appendChild(s);
+        requestAnimationFrame(function(){ s.classList.add('bloom'); });
+        gofunList.push(s);
+        if(gofunList.length>maxGofun){
+          var old=gofunList.shift();
+          old.style.transition='opacity .6s ease'; old.style.opacity='0';
+          setTimeout(function(){ if(old.parentNode) old.remove(); },600);
+        }
+        setTimeout(function(){ if(s.parentNode){ s.style.transition='opacity 1.2s ease'; s.style.opacity='0'; setTimeout(function(){ if(s.parentNode) s.remove(); },1200); } },12000);
+      },{passive:true});
+    })();
+
+    /* ===== 結章：触れる水面 — height-field 2バッファ方式（§2-§3） =====
+       前回失敗（横スライス＋fixed＝柱＋見切れ）を、会議確定の正しい技術解で作り直す。
+       ・月ディスクを完全な円でオフスクリーンに → 勾配ベースの屈折変位でサンプリング（円が崩れない）
+       ・高さ場の離散波動方程式 O(GW×GH) で60fps
+       ・sticky ホルダーでsection内に留まる（fixed禁止）
+       ・touch-action:pan-y + passive リスナー（スクロール殺し禁止） */
     var mizu=(function(){
       var cv=document.getElementById('mizuCanvas'); if(!cv||reduce) return { start:function(){}, stop:function(){} };
       var ctx=cv.getContext('2d'), W=0,H=0, DPR=Math.min(2,window.devicePixelRatio||1);
-      var moonX,moonY,moonR,horizon, ripples=[], stars=[], t=0, lastMove=0, raf=0, running=false;
-      var reflY;
-      function size(){ W=window.innerWidth; H=window.innerHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
-        moonX=W*0.7; moonY=H*0.2; moonR=Math.max(24,Math.min(W,H)*0.07); horizon=H*0.62;
-        reflY=H*0.8; }  /* 逆さ月の中心を画面下部(文の下)に固定配置。水面境界より下。 */
-      if(!stars.length){ for(var i=0;i<80;i++) stars.push({x:Math.random(),y:Math.random()*0.48,s:Math.random()*1.4+0.3,tw:Math.random()*6.28}); }
-      function addRipple(x,y,str){ ripples.push({x:x,y:y,r:5,a:(str||1)}); if(ripples.length>26) ripples.shift(); }
-      function pos(e){ var r=cv.getBoundingClientRect(); var cx=(e.touches?e.touches[0].clientX:e.clientX), cy=(e.touches?e.touches[0].clientY:e.clientY); return { x:cx-r.left, y:cy-r.top }; }
-      cv.addEventListener('pointerdown',function(e){ if(!running) return; var p=pos(e); addRipple(p.x,p.y,1); });
-      cv.addEventListener('pointermove',function(e){ if(!running) return; var p=pos(e); if(t-lastMove>3){ addRipple(p.x,p.y,0.45); lastMove=t; } });
-      function waterMoon(){
-        // 逆さ月：reflY を中心に、月と同じ大きさの円を横スライスで描く。
-        // 波紋＋常時のさざなみで各スライスを横にずらし、水面で月が崩れて揺れる。
-        var refR=moonR*1.06, step=1.3;
-        for(var yy=-refR; yy<refR; yy+=step){ var cy=reflY+yy;
-          var wob=0, bright=1;
-          for(var k=0;k<ripples.length;k++){ var rp=ripples[k]; var dy=cy-rp.y, dx=moonX-rp.x; var dist=Math.sqrt(dx*dx+dy*dy); var ph=dist-rp.r;
-            if(Math.abs(ph)<50){ var e=(1-Math.abs(ph)/50); wob+=Math.sin(ph*0.2)*rp.a*13*e; bright+=Math.cos(ph*0.2)*rp.a*0.6*e; } }
-          wob+=Math.sin(cy*0.08+t*0.045)*2.4; wob+=Math.sin(cy*0.28+t*0.1)*1.1;  /* 常時のさざなみ */
-          var hw=Math.sqrt(Math.max(0,refR*refR-yy*yy)), grad=1-Math.abs(yy)/refR;
-          var a=(0.5*grad+0.08)*Math.max(0.25,bright);
-          var lg=ctx.createLinearGradient(moonX-hw+wob,cy,moonX+hw+wob,cy);
-          lg.addColorStop(0,'rgba(253,246,227,'+(a*0.45)+')'); lg.addColorStop(0.5,'rgba(255,242,205,'+a+')'); lg.addColorStop(1,'rgba(253,246,227,'+(a*0.45)+')');
-          ctx.fillStyle=lg; ctx.fillRect(moonX-hw+wob, cy, hw*2, step+0.7); }
-        // 芯のにじみ（逆さ月の光暈）
-        var cg=ctx.createRadialGradient(moonX,reflY,2,moonX,reflY,refR*1.4);
-        cg.addColorStop(0,'rgba(255,244,210,0.16)'); cg.addColorStop(1,'rgba(255,244,210,0)');
-        ctx.fillStyle=cg; ctx.fillRect(moonX-refR*1.5,reflY-refR*1.5,refR*3,refR*3);
+      var running=false, raf=0, frame=0;
+
+      /* --- 調整パラメータ（§2.10） --- */
+      var GW=176, GH=64, DAMP=0.985, REFRACT=14, SPARK=0.9, SPARK_MAX=0.35;
+      var prev=new Float32Array(GW*GH), cur=new Float32Array(GW*GH);
+
+      /* --- 構図（§2.3） --- */
+      var moonX,moonY,moonR,horizon,reflX,reflY;
+      var stars=[];
+      var fujiPath=null;
+
+      /* --- オフスクリーン月ディスク（§2.5） --- */
+      var moonBuf=null, moonBufCtx=null, moonPix=null, MB=0;
+
+      /* --- 合成バッファ（§2.5） --- */
+      var cv2=null, ctx2=null, CW=0, CH=0, CS=0, waterData=null;
+
+      /* --- 状態 --- */
+      var E=0, isNagi=false, nagiFrames=0, touchCaused=false;
+      var lastShizukuT=0, lastTsukigotoT=0, lastPokeT=0, lastPokeX=0, lastPokeY=0;
+      var hintShown=false, hintEl=document.getElementById('mizuHint');
+      var idleDropTimer=0, welcomeDropDone=false;
+
+      function size(){
+        W=cv.clientWidth; H=cv.clientHeight;
+        cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+        moonR=Math.max(22, Math.min(Math.min(W,H)*0.055, 48));
+        moonX=W*0.68; moonY=H*0.18; horizon=H*0.56;
+        reflX=moonX; reflY=horizon+(horizon-moonY)*0.62;
+        /* 星（§2.3）: horizon上のみ */
+        if(!stars.length){ for(var i=0;i<60;i++) stars.push({x:Math.random(),y:Math.random()*0.54,s:Math.random()*1.2+0.4,tw:Math.random()*6.28}); }
+        /* 富士の稜線シルエット（§2.3）*/
+        fujiPath=new Path2D();
+        fujiPath.moveTo(0,horizon);
+        fujiPath.lineTo(0,horizon-H*0.08);
+        fujiPath.quadraticCurveTo(W*0.375,horizon-H*0.22, W*0.5,horizon-H*0.23);
+        fujiPath.quadraticCurveTo(W*0.625,horizon-H*0.22, W,horizon-H*0.08);
+        fujiPath.lineTo(W,horizon);
+        fujiPath.closePath();
+        /* 月バッファ（§2.5） */
+        MB=Math.ceil(moonR*1.6);
+        moonBuf=document.createElement('canvas'); moonBuf.width=MB*2; moonBuf.height=MB*2;
+        moonBufCtx=moonBuf.getContext('2d');
+        var mg=moonBufCtx.createRadialGradient(MB,MB,0,MB,MB,MB);
+        mg.addColorStop(0,'rgba(253,246,227,1)'); mg.addColorStop(0.6,'rgba(240,230,200,0.85)');
+        mg.addColorStop(1,'rgba(217,203,160,0)');
+        moonBufCtx.fillStyle=mg; moonBufCtx.beginPath(); moonBufCtx.arc(MB,MB,MB,0,6.2832); moonBufCtx.fill();
+        moonPix=moonBufCtx.getImageData(0,0,MB*2,MB*2);
+        /* 合成バッファ（§2.5） */
+        CS=(W<=480)?0.5:(1/3);
+        CW=Math.max(1,(W*CS)|0); CH=Math.max(1,((H-horizon)*CS)|0);
+        cv2=document.createElement('canvas'); cv2.width=CW; cv2.height=CH;
+        ctx2=cv2.getContext('2d');
+        waterData=ctx2.createImageData(CW,CH);
       }
-      function frame(){
-        if(!running) return; t++;
-        var g=ctx.createLinearGradient(0,0,0,H);
-        g.addColorStop(0,'#0a1730'); g.addColorStop(0.48,'#0c1b34'); g.addColorStop(0.52,'#08152b'); g.addColorStop(1,'#040c1c');
-        ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-        for(var i=0;i<stars.length;i++){ var s=stars[i]; var a=0.5+0.5*Math.sin(t*0.03+s.tw); ctx.fillStyle='rgba(234,243,255,'+(a*0.7)+')'; ctx.fillRect(s.x*W,s.y*H,s.s,s.s); }
-        var mg=ctx.createRadialGradient(moonX-moonR*0.3,moonY-moonR*0.3,moonR*0.2,moonX,moonY,moonR);
-        mg.addColorStop(0,'#fdf6e3'); mg.addColorStop(0.6,'#f0e6c8'); mg.addColorStop(1,'#d9cba0');
-        ctx.save(); ctx.shadowColor='rgba(253,246,227,.5)'; ctx.shadowBlur=30; ctx.beginPath(); ctx.arc(moonX,moonY,moonR,0,6.2832); ctx.fillStyle=mg; ctx.fill(); ctx.restore();
-        ctx.fillStyle='rgba(253,246,227,0.03)'; ctx.fillRect(0,horizon,W,H-horizon);
-        waterMoon();
-        for(var k=ripples.length-1;k>=0;k--){ var rp=ripples[k]; rp.r+=1.6; rp.a*=0.975; if(rp.a<0.03){ ripples.splice(k,1); continue; }
-          if(rp.y>horizon-10){ ctx.beginPath(); ctx.ellipse(rp.x,rp.y,rp.r,rp.r*0.42,0,0,6.2832); ctx.strokeStyle='rgba(180,205,235,'+(rp.a*0.45)+')'; ctx.lineWidth=1.4; ctx.stroke(); } }
-        for(var yl=horizon+12; yl<H; yl+=16){ var off=Math.sin(yl*0.1+t*0.04)*3; ctx.strokeStyle='rgba(120,150,190,0.045)'; ctx.beginPath(); ctx.moveTo(0,yl+off); ctx.lineTo(W,yl+off); ctx.stroke(); }
-        raf=requestAnimationFrame(frame);
+
+      /* --- 波動方程式（§2.4） --- */
+      function stepWave(){
+        for(var y=1;y<GH-1;y++){
+          for(var x=1;x<GW-1;x++){
+            var i=y*GW+x;
+            var v=(cur[i-1]+cur[i+1]+cur[i-GW]+cur[i+GW])*0.5-prev[i];
+            prev[i]=v*DAMP;
+          }
+        }
+        var t=prev; prev=cur; cur=t;
       }
-      window.addEventListener('resize',function(){ if(running) size(); });
+
+      /* --- 注入（§2.4） --- */
+      function poke(nx,ny,strength){
+        var gx=(nx*GW)|0, gy=(ny*GH)|0;
+        for(var dy=-2;dy<=2;dy++){
+          for(var dx=-2;dx<=2;dx++){
+            var x2=gx+dx, y2=gy+dy;
+            if(x2<1||x2>=GW-1||y2<1||y2>=GH-1) continue;
+            var d=Math.sqrt(dx*dx+dy*dy); if(d>2.4) continue;
+            cur[y2*GW+x2]+=strength*3.2*(1-d/2.4);
+          }
+        }
+      }
+
+      /* --- 月の道（§2.5b） --- */
+      function glade(wx,wy){
+        if(wy<reflY) return 0;
+        var half=moonR*1.6*(1+(wy-reflY)/(H-reflY)*0.8);
+        var t2=1-Math.min(1,Math.abs(wx-reflX)/half);
+        return t2*t2;
+      }
+
+      /* --- エネルギー計測 --- */
+      function calcEnergy(){
+        var sum=0;
+        for(var i=0;i<GW*GH;i++) sum+=Math.abs(cur[i]);
+        return sum/(GW*GH);
+      }
+
+      /* --- 水面描画（§2.5） --- */
+      function renderWater(){
+        var d=waterData.data;
+        for(var py=0;py<CH;py++){
+          for(var px=0;px<CW;px++){
+            var gx=(px*GW/CW)|0, gy=(py*GH/CH)|0;
+            if(gx<1) gx=1; if(gx>=GW-1) gx=GW-2;
+            if(gy<1) gy=1; if(gy>=GH-1) gy=GH-2;
+            var idx=gy*GW+gx;
+            var ddx=cur[idx+1]-cur[idx-1], ddy=cur[idx+GW]-cur[idx-GW];
+            /* 月の鏡像サンプル */
+            var wx=px/CS, wy=horizon+py/CS;
+            var u=(wx-reflX)+ddx*REFRACT;
+            var v=(reflY-wy)*1.0+ddy*REFRACT;
+            var mu=(MB+u)|0, mv=(MB+v)|0;
+            var moonA=0;
+            if(mu>=0&&mu<MB*2&&mv>=0&&mv<MB*2){
+              moonA=moonPix.data[(mv*MB*2+mu)*4+3]/255;
+            }
+            /* 水の地色 */
+            var depth=py/CH;
+            var r=8+6*(1-depth), g=18+8*(1-depth), b=38+14*(1-depth);
+            r+=moonA*225; g+=moonA*212; b+=moonA*168;
+            /* 月の道（§2.5b） */
+            var sparkVal=Math.max(0,ddy)*SPARK*glade(wx,wy);
+            if(sparkVal>SPARK_MAX) sparkVal=SPARK_MAX;
+            r+=sparkVal*120; g+=sparkVal*118; b+=sparkVal*96;
+            /* クランプ */
+            if(r>255) r=255; if(g>255) g=255; if(b>255) b=255;
+            var o=(py*CW+px)*4;
+            d[o]=r; d[o+1]=g; d[o+2]=b; d[o+3]=255;
+          }
+        }
+        ctx2.putImageData(waterData,0,0);
+        ctx.imageSmoothingEnabled=true;
+        ctx.drawImage(cv2,0,0,CW,CH, 0,horizon, W,H-horizon);
+      }
+
+      /* --- 空＋月（空側）描画 --- */
+      function renderSky(){
+        /* 空グラデ */
+        var sg=ctx.createLinearGradient(0,0,0,H);
+        sg.addColorStop(0,'#0a1730'); sg.addColorStop(0.48,'#0c1b34');
+        sg.addColorStop(0.52,'#08152b'); sg.addColorStop(1,'#040c1c');
+        ctx.fillStyle=sg; ctx.fillRect(0,0,W,H);
+        /* 星 */
+        for(var i=0;i<stars.length;i++){
+          var s=stars[i];
+          if(s.y*H>horizon*0.97) continue;
+          var a=0.4+0.4*Math.sin(frame*0.025+s.tw);
+          ctx.fillStyle='rgba(234,243,255,'+(a*0.7)+')';
+          ctx.fillRect(s.x*W,s.y*H,s.s,s.s);
+        }
+        /* 富士の稜線 */
+        ctx.fillStyle='#0a1626'; ctx.fill(fujiPath);
+        /* 月 */
+        var mg2=ctx.createRadialGradient(moonX-moonR*0.3,moonY-moonR*0.3,moonR*0.2,moonX,moonY,moonR);
+        mg2.addColorStop(0,'#fdf6e3'); mg2.addColorStop(0.6,'#f0e6c8'); mg2.addColorStop(1,'#d9cba0');
+        ctx.save(); ctx.shadowColor='rgba(253,246,227,.5)'; ctx.shadowBlur=30;
+        ctx.beginPath(); ctx.arc(moonX,moonY,moonR,0,6.2832); ctx.fillStyle=mg2; ctx.fill(); ctx.restore();
+      }
+
+      /* --- 雫音（§3.1） --- */
+      function shizuku(strength, vol){
+        if(!soundOn||!actx) return;
+        var now=performance.now(); if(now-lastShizukuT<160) return; lastShizukuT=now;
+        var t=actx.currentTime;
+        var f0=(420+Math.random()*140)*(1.15-0.3*strength);
+        var o=actx.createOscillator(), g=actx.createGain();
+        o.type='sine';
+        o.frequency.setValueAtTime(f0*1.6,t);
+        o.frequency.exponentialRampToValueAtTime(f0*0.55,t+0.28);
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.linearRampToValueAtTime((vol||0.3)*(0.5+strength*0.5),t+0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t+0.55);
+        /* 「ちゃ」: 短い高域ノイズ */
+        var n=actx.createBufferSource(), bf=actx.createBuffer(1,actx.sampleRate*0.03|0||1,actx.sampleRate),
+            ch=bf.getChannelData(0);
+        for(var i=0;i<ch.length;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/ch.length,2);
+        n.buffer=bf;
+        var ff=actx.createBiquadFilter(); ff.type='bandpass'; ff.frequency.value=2600; ff.Q.value=1.2;
+        var ng=actx.createGain(); ng.gain.value=0.08*strength;
+        n.connect(ff); ff.connect(ng); ng.connect(master); n.start(t);
+      }
+
+      /* --- 月の琴（§3.2） --- */
+      function tsukigoto(){
+        if(!soundOn||!actx) return;
+        var t=actx.currentTime;
+        [[293.66,0.09,0],[587.33,0.035,0],[440.0,0.05,0.09]].forEach(function(p){
+          var o=actx.createOscillator(), g=actx.createGain();
+          o.type='triangle'; o.frequency.value=p[0];
+          g.gain.setValueAtTime(0.0001,t+p[2]);
+          g.gain.linearRampToValueAtTime(p[1],t+p[2]+0.015);
+          g.gain.exponentialRampToValueAtTime(0.0001,t+p[2]+1.5);
+          o.connect(g); g.connect(master); o.start(t+p[2]); o.stop(t+p[2]+1.6);
+        });
+      }
+
+      /* --- 凪→月の息（§2.5c） --- */
+      var moonBreathPhase=0, moonBreathActive=false;
+      function moonBreath(){
+        if(!moonBreathActive) return;
+        moonBreathPhase+=0.008;
+        if(moonBreathPhase>1){ moonBreathActive=false; moonBreathPhase=0; return; }
+        /* 月暈を +12% 膨らませて戻す（sin半波） */
+        var extra=Math.sin(moonBreathPhase*Math.PI)*0.12;
+        /* 空の月にほのかな暈 */
+        var hr=moonR*(1+extra)*1.5;
+        var hg=ctx.createRadialGradient(moonX,moonY,moonR*0.8,moonX,moonY,hr);
+        hg.addColorStop(0,'rgba(253,246,227,'+(0.12*extra/0.12)+')');
+        hg.addColorStop(1,'rgba(253,246,227,0)');
+        ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(moonX,moonY,hr,0,6.2832); ctx.fill();
+      }
+
+      /* --- ヒント（§2.8） --- */
+      var hintUsed=false;
+      function showHint(){ if(hintUsed||!hintEl) return; hintEl.classList.add('show'); hintShown=true; setTimeout(function(){ hideHint(); }, 4000); }
+      function hideHint(){ if(!hintShown||!hintEl) return; hintEl.classList.remove('show'); hintShown=false; hintUsed=true; }
+
+      /* --- 入力（§2.7） --- */
+      var swipeLastT=0, swipeLastX=0, swipeLastY=0, swipeSoundT=0;
+      cv.addEventListener('pointerdown',function(e){
+        if(!running) return;
+        hideHint();
+        var r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+        if(y<horizon) return;
+        poke(x/W,(y-horizon)/(H-horizon),1.0);
+        touchCaused=true; nagiFrames=0; isNagi=false;
+        shizuku(1.0,0.3);
+      },{passive:true});
+      cv.addEventListener('pointermove',function(e){
+        if(!running) return;
+        if(!e.pressure&&e.pointerType==='mouse'&&e.buttons===0) return;
+        var now=performance.now();
+        var r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+        if(y<horizon) return;
+        var dx2=x-swipeLastX, dy2=y-swipeLastY, dist=Math.sqrt(dx2*dx2+dy2*dy2);
+        if(now-swipeLastT>90&&dist>24){
+          poke(x/W,(y-horizon)/(H-horizon),0.4);
+          touchCaused=true; nagiFrames=0; isNagi=false;
+          swipeLastT=now; swipeLastX=x; swipeLastY=y;
+          if(now-swipeSoundT>340){ shizuku(0.4,0.3*0.35); swipeSoundT=now; }
+        }
+      },{passive:true});
+
+      /* --- メインループ --- */
+      function tick(){
+        if(!running) return;
+        frame++;
+        stepWave();
+
+        /* 呼吸のさざなみ（§2.5c） */
+        if(frame%30===0) poke(Math.random(),Math.random(),0.02);
+
+        /* エネルギー */
+        if(frame%30===0) E=calcEnergy();
+
+        /* 凪検知（§2.5c） */
+        if(touchCaused){
+          if(E<0.012){ nagiFrames++; if(nagiFrames>=60){ isNagi=true; touchCaused=false; moonBreathActive=true; moonBreathPhase=0; } }
+          else { nagiFrames=0; }
+        }
+
+        /* 月の琴（§3.2）: 逆さ月中心セルの |h| > 0.35 */
+        var reflGx=(reflX/W*GW)|0, reflGy=((reflY-horizon)/(H-horizon)*GH)|0;
+        if(reflGx>=1&&reflGx<GW-1&&reflGy>=1&&reflGy<GH-1){
+          var refCell=Math.abs(cur[reflGy*GW+reflGx]);
+          if(refCell>0.35&&performance.now()-lastTsukigotoT>6000){
+            lastTsukigotoT=performance.now(); tsukigoto();
+          }
+        }
+
+        /* 待機の一滴（§2.1）: 9-15s毎 */
+        idleDropTimer++;
+        var idleInterval=540+Math.random()*360;
+        if(idleDropTimer>idleInterval){ idleDropTimer=0; poke(Math.random(),Math.random(),0.15); shizuku(0.15,0.12); }
+
+        /* 描画 */
+        renderSky();
+        renderWater();
+        moonBreath();
+
+        raf=requestAnimationFrame(tick);
+      }
+
+      /* QAフック（§7）: クロージャ内で直接設定 */
+      window.__mizu={
+        energy:function(){ return E; },
+        poke:function(nx,ny,s){ poke(nx,ny,s); },
+        state:function(){ return { running:running, nagi:isNagi }; }
+      };
+
+      /* ResizeObserver or resize fallback */
+      if(window.ResizeObserver){
+        new ResizeObserver(function(){ if(running) size(); }).observe(cv);
+      } else {
+        window.addEventListener('resize',function(){ if(running) size(); });
+      }
+
       return {
-        start:function(){ if(running) return; running=true; size(); cv.classList.add('on'); body.classList.add('mizu-active');
-          ripples.length=0; setTimeout(function(){ if(running) addRipple(moonX,horizon+30,0.8); },700); frame(); },
-        stop:function(){ if(!running) return; running=false; cv.classList.remove('on'); body.classList.remove('mizu-active'); if(raf) cancelAnimationFrame(raf); }
+        start:function(){
+          if(running) return; running=true; frame=0;
+          size();
+          /* バッファゼロクリア */
+          prev.fill(0); cur.fill(0);
+          E=0; isNagi=false; nagiFrames=0; touchCaused=false; idleDropTimer=0; welcomeDropDone=false;
+          cv.classList.add('on'); body.classList.add('mizu-active');
+          /* 迎えの一滴（§2.1） */
+          setTimeout(function(){
+            if(!running) return;
+            poke(0.72,0.35,0.35); shizuku(0.35,0.25); welcomeDropDone=true;
+          },900);
+          /* ヒント（§2.8） */
+          setTimeout(function(){
+            if(!running||hintUsed) return; showHint();
+          },3000);
+          tick();
+        },
+        stop:function(){
+          if(!running) return; running=false;
+          cv.classList.remove('on'); body.classList.remove('mizu-active');
+          hideHint();
+          if(raf) cancelAnimationFrame(raf);
+        }
       };
     })();
+
   })();
