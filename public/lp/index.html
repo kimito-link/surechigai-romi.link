@@ -641,6 +641,26 @@
   .tomoshibi .tomo-hi{ position:absolute; width:6px; height:6px; border-radius:50%; background:var(--kin); box-shadow:0 0 8px var(--kin); animation:akari 2.4s ease-in-out infinite; }
   .tomoshibi .tb-tsugi{ position:relative; z-index:1; font-family:var(--fude); font-size:clamp(15px,4.2vw,18px); letter-spacing:.1em; color:#f0ead9; margin:clamp(28px,6vw,52px) auto 0; max-width:var(--maxw); line-height:1.9; }
 
+  /* ===== 幻燈（写し絵：実アプリ画面の動画を端末模型に額装。既存.ai-phone意匠を継承） ===== */
+  .gento-phone{ width:clamp(200px,58vw,258px); aspect-ratio:132/270; margin:2px auto 12px;
+    border-radius:26px; border:1.5px solid #33475e; background:linear-gradient(160deg,#0f2138,#0a1826); padding:8px; box-shadow:0 12px 40px rgba(0,0,0,.4); }
+  .gento-screen{ position:relative; height:100%; border-radius:19px; overflow:hidden; background:#0a1826; }
+  .gento-screen video,.gento-screen .gento-poster{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; filter:sepia(.08) saturate(.9) contrast(.97); }
+  .gento-screen .gento-poster{ z-index:1; }
+  .gento.playing .gento-screen .gento-poster{ opacity:0; visibility:hidden; }
+  /* 行灯の光で照らした幻燈の光学感：四隅の暗落ち */
+  .gento-screen::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:2;
+    background:radial-gradient(120% 90% at 50% 45%, transparent 60%, rgba(20,16,10,.3)); }
+  /* 「観る」木札（mukau-fudaと同意匠） */
+  .gento-miru{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:3; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px; padding:9px 18px; background:var(--washi-2); border:1.5px solid var(--sumi-soft);
+    border-radius:3px; box-shadow:2px 3px 0 rgba(35,32,27,.3); font-family:var(--fude); color:var(--sumi); font-size:15px; letter-spacing:.16em; transition:opacity .4s ease; }
+  .gento.playing .gento-miru{ opacity:0; pointer-events:none; }
+  .gento-broken .gento-miru{ display:none; }
+  /* app-intro内の微ループ用（読めれば全面を覆い偽レーダーを隠す。エラー時は非表示で下が見える） */
+  .app-intro .ai-phone .ai-loop{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:19px; filter:sepia(.08) saturate(.9) contrast(.97); z-index:2; }
+  .app-intro .ai-phone.ai-loop-broken .ai-loop{ display:none; }
+
   /* ===== 附・目録（三十一の道具＝全機能索引。details/summaryでJSなし段階開示） ===== */
   .mokuroku{ position:relative; z-index:5; overflow:hidden; text-align:center; color:#dce6f2;
     padding:clamp(44px,9vw,80px) var(--shell) clamp(40px,8vw,72px);
@@ -1441,6 +1461,29 @@
     </ol>
   </div>
 
+  <!-- 幻燈（写し絵）：実アプリ画面の動画。道行きの結びに1つ。タップ再生・無音。 -->
+  <div class="tb-scene">
+    <p class="tb-koujou reveal">「絵空事にあらず。写し絵にて、実の画面をお目にかけよう。」</p>
+    <ol class="michiyuki">
+      <li class="shukuba gento reveal">
+        <span class="sk-no">結の宿</span>
+        <figure class="sk-fuda">
+          <div class="gento-phone"><div class="gento-screen">
+            <img class="gento-poster" src="video/megiri-poster-v1.webp" alt="アプリ画面の写し絵" loading="lazy" width="540" height="1170" />
+            <video class="gento-video" playsinline muted preload="none" width="540" height="1170" poster="video/megiri-poster-v1.webp">
+              <source src="video/megiri-v1.mp4" type="video/mp4" />
+            </video>
+            <button class="gento-miru" type="button" aria-label="幻燈を観る">観る</button>
+          </div></div>
+          <figcaption>
+            <b class="sk-name">幻燈 ― 写し絵にて</b>
+            <span class="sk-desc">絵空事にあらず。いま動いてゐる、実の画面である。現在地から暦、図鑑、そして歩いた道まで。</span>
+          </figcaption>
+        </figure>
+      </li>
+    </ol>
+  </div>
+
   <p class="tb-tsugi reveal">――道具は、これで全部ではない。巻末に、目録を附しておく。</p>
 </section>
 
@@ -1518,6 +1561,10 @@
   <div class="ai-stage">
     <div class="ai-phone" aria-hidden="true">
       <div class="ai-phone-screen">
+        <!-- 微ループ動画（読めれば全面を覆う。エラー/reduced-motion時は下の偽レーダーがフォールバック） -->
+        <video class="ai-loop" playsinline muted loop preload="none" poster="video/zukan-loop-poster-v1.webp">
+          <source src="video/zukan-loop-v1.mp4" type="video/mp4" />
+        </video>
         <span class="ai-ring ai-ring-1"></span>
         <span class="ai-ring ai-ring-2"></span>
         <img class="ai-phone-logo" src="brand/icon-tab.png" alt="" width="72" height="72" />
@@ -1617,6 +1664,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=29"></script>
+<script src="app.js?v=30"></script>
 </body>
 </html>

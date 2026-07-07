@@ -1014,4 +1014,39 @@
       };
     })();
 
+    /* 幻燈（写し絵）：実アプリ画面の動画。タップ再生の本編＋app-intro内の微ループ。無音。 */
+    (function(){
+      var saveData=false; try{ saveData=navigator.connection && navigator.connection.saveData; }catch(e){}
+      /* メイン幻燈：木札「観る」でタップ再生。終わったらposterへ戻る（ループしない）。 */
+      document.querySelectorAll('.gento').forEach(function(g){
+        var v=g.querySelector('.gento-video'), btn=g.querySelector('.gento-miru');
+        if(!v||!btn) return;
+        /* 本当に読めない時だけ壊れ扱い（MEDIA_ERR_SRC_NOT_SUPPORTED/NETWORK）。 */
+        v.addEventListener('error', function(){ if(v.error && (v.error.code===4||v.error.code===2)) g.classList.add('gento-broken'); });
+        btn.addEventListener('click', function(){
+          g.classList.add('playing');
+          /* preload=none なので click(=ユーザージェスチャー)で load してから play。
+             ロード未完なら canplay を一度待つ。play拒否は broken にしない（次タップで再試行可）。 */
+          var tryPlay=function(){ var p=v.play(); if(p&&p.catch) p.catch(function(){ g.classList.remove('playing'); }); };
+          if(v.readyState>=2){ tryPlay(); }
+          else{ v.load(); v.addEventListener('canplay', tryPlay, { once:true }); }
+        });
+        v.addEventListener('ended', function(){ g.classList.remove('playing'); try{ v.currentTime=0; }catch(e){} });
+      });
+      /* app-intro内の微ループ：画面内でのみ再生。reduce/saveDataではposterのみ（動画を隠す）。 */
+      var loops=document.querySelectorAll('.ai-phone .ai-loop');
+      loops.forEach(function(v){
+        var ph=v.closest('.ai-phone');
+        v.addEventListener('error', function(){ if(ph) ph.classList.add('ai-loop-broken'); });
+        if(reduce||saveData){ if(ph) ph.classList.add('ai-loop-broken'); return; }
+        if('IntersectionObserver' in window){
+          var io=new IntersectionObserver(function(es){ es.forEach(function(e){
+            if(e.isIntersecting){ var p=v.play(); if(p&&p.catch) p.catch(function(){}); }
+            else{ v.pause(); }
+          }); }, { threshold:0.4 });
+          io.observe(v);
+        }
+      });
+    })();
+
   })();

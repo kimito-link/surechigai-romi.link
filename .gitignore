@@ -91,3 +91,7 @@ qa-results/
 # LP画像の試作・元写真バックアップ(本番不要・誤コミット防止)
 public/lp/img/_sumi-test/
 public/lp/img/_orig-photo/
+
+# LP幻燈動画の録画中間物(webm/frames・本番不要)
+.tmp-lp-video-raw/
+.tmp-lp-video-frames/

@@ -1,0 +1,27 @@
+{
+  "_comment": "LP幻燈動画の録画プラン。ゲスト画面(認証不要)のみ。auth:true は第二弾(X制限解除後)。",
+  "videos": [
+    {
+      "video": "megiri-v1",
+      "_desc": "V1 道具めぐり(横断ツアー・約30秒): トップ→イベント一覧→図鑑→軌跡",
+      "steps": [
+        { "goto": "/", "wait": 2500 },
+        { "goto": "/events", "wait": 1800 },
+        { "scroll": { "px": 700, "durationMs": 3500 } },
+        { "goto": "/zukan", "wait": 1800 },
+        { "scroll": { "px": 700, "durationMs": 3500 } },
+        { "goto": "/map", "wait": 3000 }
+      ]
+    },
+    {
+      "video": "zukan-loop-v1",
+      "_desc": "V2 図鑑の頁繰り(微ループ・8秒): 図鑑を1画面ゆっくりスクロールして戻る",
+      "steps": [
+        { "goto": "/zukan", "wait": 1500 },
+        { "scroll": { "px": 420, "durationMs": 3200 } },
+        { "wait": 400 },
+        { "scrollBack": true, "scroll": { "px": 420, "durationMs": 3200 } }
+      ]
+    }
+  ]
+}
