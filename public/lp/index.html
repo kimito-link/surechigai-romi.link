@@ -592,6 +592,79 @@
   .negai .ng-atogaki{ position:relative; z-index:1; font-family:var(--mincho); font-size:clamp(13px,3.6vw,15px); line-height:2.2; letter-spacing:.05em; color:#b8ccea; max-width:var(--maxw); margin:clamp(20px,5vw,40px) auto 0; }
   .negai .ng-tsugi{ position:relative; z-index:1; font-family:var(--fude); font-size:clamp(16px,4.4vw,19px); letter-spacing:.12em; color:#f0ead9; margin:clamp(28px,6vw,52px) auto 0; }
 
+  /* ===== 灯・逢（皆で集ふ宴の帳：宴・凸待ち・巡礼の道行き＝使うシーンのフロー） ===== */
+  /* 夜空を連鎖: negai末尾#0f1f3a → tomoshibi → mokuroku → app-intro先頭 で継ぎ目を消す */
+  .tomoshibi{ position:relative; z-index:5; overflow:hidden; text-align:center; color:#dce6f2;
+    padding:clamp(48px,10vw,88px) var(--shell) clamp(32px,7vw,60px);
+    background:linear-gradient(180deg,#0f1f3a 0%,#0c1a33 50%,#0f1f3a 100%); }
+  .tomoshibi::before,.mokuroku::before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.28;
+    background-image:radial-gradient(1px 1px at 20% 18%, #cfe0f5 50%, transparent),
+      radial-gradient(1px 1px at 68% 24%, #cfe0f5 50%, transparent),
+      radial-gradient(1px 1px at 44% 52%, #b8ccea 50%, transparent),
+      radial-gradient(1px 1px at 82% 62%, #cfe0f5 50%, transparent),
+      radial-gradient(1px 1px at 28% 78%, #b8ccea 50%, transparent); }
+  .tomoshibi .tb-head,.mokuroku .mk-head{ position:relative; z-index:1; margin-bottom:clamp(20px,5vw,40px); }
+  .tomoshibi .tb-no,.mokuroku .mk-no{ font-family:var(--fude); font-size:13px; letter-spacing:.5em; color:var(--kin); text-indent:.5em; display:block; margin-bottom:.7em; }
+  .tomoshibi .tb-label,.mokuroku .mk-label{ font-family:var(--fude); font-size:clamp(13px,3.6vw,15px); letter-spacing:.2em; color:#9fc0e6; }
+  .tomoshibi .tb-lead{ font-family:var(--mincho); font-size:clamp(15px,4.2vw,19px); line-height:2.2; letter-spacing:.06em; color:#f0ead9; margin:1.4em auto 0; max-width:var(--maxw); }
+  .tomoshibi .tb-scene{ position:relative; z-index:1; margin:clamp(30px,7vw,56px) auto 0; }
+  .tomoshibi .tb-koujou{ font-family:var(--fude); font-size:clamp(17px,4.8vw,22px); letter-spacing:.1em; line-height:1.9; color:#e6eefa; text-shadow:0 2px 18px rgba(8,16,30,.7); margin:0 auto clamp(24px,6vw,44px); max-width:var(--maxw); }
+  /* 道行き：金の足あと点線が宿場を縦に貫く */
+  .tomoshibi .michiyuki{ list-style:none; margin:0 auto; padding:0; max-width:min(80vw,340px); position:relative; }
+  .tomoshibi .michiyuki::before{ content:""; position:absolute; left:50%; top:6px; bottom:6px; width:1px;
+    background:repeating-linear-gradient(180deg, rgba(176,138,62,.5) 0 4px, transparent 4px 20px); }
+  .tomoshibi .shukuba{ position:relative; margin:clamp(7vh,9vw,10vh) 0; }
+  .tomoshibi .sk-no{ font-family:var(--fude); font-size:12px; letter-spacing:.4em; color:var(--kin); display:block; margin-bottom:.8em; text-shadow:0 1px 10px rgba(8,16,30,.7); }
+  .tomoshibi .sk-fuda{ width:min(80vw,340px); margin:0 auto; background:var(--washi); border-top:1px solid var(--kin);
+    border-radius:2px; padding:14px 14px 18px; box-shadow:0 10px 40px rgba(0,0,0,.45); transform:rotate(-.4deg); }
+  .tomoshibi .shukuba:nth-child(even) .sk-fuda{ transform:rotate(.4deg); }
+  .tomoshibi .shukuba.sk-main .sk-fuda{ border-top:2px solid var(--taisha); }
+  .tomoshibi .sk-art{ width:min(62%,180px); height:auto; display:block; margin:0 auto 10px; }
+  .tomoshibi .sk-name{ font-family:var(--fude); color:var(--sumi); font-size:clamp(16px,4.2vw,19px); letter-spacing:.18em; display:block; margin:4px 0 8px; }
+  .tomoshibi .sk-desc{ font-family:var(--mincho); color:var(--sumi-soft); font-size:clamp(13px,3.4vw,14.5px); line-height:2.05; letter-spacing:.03em; display:block; text-align:left; }
+  .tomoshibi .sk-chip{ display:inline-block; margin-top:.8em; font-size:11.5px; color:var(--muted);
+    border:1px solid rgba(176,138,62,.4); border-radius:2px; padding:2px 10px; letter-spacing:.06em; font-family:var(--mincho); }
+  /* 「ここへ向かふ」木札ボタンの擬似（要石札の中に描く） */
+  .tomoshibi .mukau-fuda{ display:inline-flex; align-items:center; gap:8px; margin:6px auto 2px; padding:8px 14px;
+    background:var(--washi-2); border:1.5px solid var(--sumi-soft); border-radius:3px; box-shadow:2px 3px 0 rgba(35,32,27,.25);
+    font-family:var(--fude); color:var(--sumi); font-size:14px; letter-spacing:.14em; }
+  .tomoshibi .mukau-fuda .mf-needle{ transition:transform 1s ease .3s; transform-origin:center; }
+  .tomoshibi .shukuba.in .mukau-fuda .mf-needle{ transform:rotate(38deg); }
+  /* 朱印（印章エフェクト・fumishimeと同じ「上から押される」文法） */
+  .tomoshibi .inban{ display:inline-grid; place-items:center; width:1.9em; height:1.9em; background:var(--taisha);
+    color:#fff; font-family:var(--fude); font-size:13px; writing-mode:vertical-rl; border-radius:2px; transform:rotate(-2deg); opacity:0; }
+  .tomoshibi .shukuba.in .inban{ animation:oshin .5s ease-out forwards; }
+  @keyframes oshin{ 0%{opacity:0; transform:scale(1.6) rotate(-6deg)} 60%{opacity:.95} 100%{opacity:.88; transform:scale(1) rotate(-2deg)} }
+  /* 在席マップの灯 */
+  .tomoshibi .zaiseki{ position:relative; width:min(72%,220px); margin:2px auto 8px; }
+  .tomoshibi .zaiseki .jp{ width:100%; height:auto; display:block; filter:grayscale(1); opacity:.5; }
+  .tomoshibi .tomo-hi{ position:absolute; width:6px; height:6px; border-radius:50%; background:var(--kin); box-shadow:0 0 8px var(--kin); animation:akari 2.4s ease-in-out infinite; }
+  .tomoshibi .tb-tsugi{ position:relative; z-index:1; font-family:var(--fude); font-size:clamp(15px,4.2vw,18px); letter-spacing:.1em; color:#f0ead9; margin:clamp(28px,6vw,52px) auto 0; max-width:var(--maxw); line-height:1.9; }
+
+  /* ===== 附・目録（三十一の道具＝全機能索引。details/summaryでJSなし段階開示） ===== */
+  .mokuroku{ position:relative; z-index:5; overflow:hidden; text-align:center; color:#dce6f2;
+    padding:clamp(44px,9vw,80px) var(--shell) clamp(40px,8vw,72px);
+    background:linear-gradient(180deg,#0f1f3a 0%,#0d1b34 60%,#0f1f3a 100%); }
+  .mokuroku .mk-lead{ font-family:var(--mincho); font-size:clamp(13px,3.6vw,15px); letter-spacing:.1em; color:#b8ccea; margin:1.2em auto 0; }
+  .mokuroku .mk-bu{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; text-align:left; }
+  .mokuroku .mk-bu summary{ font-family:var(--fude); letter-spacing:.24em; color:#dce6f2; font-size:clamp(15px,4vw,17px);
+    border-bottom:1px solid rgba(176,138,62,.3); padding:14px 4px; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:baseline; }
+  .mokuroku .mk-bu summary::-webkit-details-marker{ display:none; }
+  .mokuroku .mk-bu summary::after{ content:"＋"; color:var(--kin); font-size:14px; }
+  .mokuroku .mk-bu[open] summary::after{ content:"－"; }
+  .mokuroku .mk-kazu{ font-family:var(--mincho); font-size:12px; letter-spacing:.1em; color:var(--kin); }
+  .mokuroku .mk-bu ul{ list-style:none; margin:0; padding:10px 4px 18px; }
+  .mokuroku .mk-bu li{ font-family:var(--mincho); font-size:clamp(13px,3.4vw,14px); line-height:2.1; letter-spacing:.03em; color:#b8ccea; margin-bottom:6px; }
+  .mokuroku .mk-bu li b{ color:#e6eefa; font-weight:400; font-family:var(--fude); letter-spacing:.1em; margin-right:.6em; }
+  .mokuroku .mk-sumi{ display:inline-block; font-size:10px; color:#9fc0e6; border:1px solid rgba(159,192,230,.4); border-radius:2px; padding:0 5px; margin-right:.5em; letter-spacing:.05em; }
+  .mokuroku .mk-tsugi{ position:relative; z-index:1; font-family:var(--fude); font-size:clamp(16px,4.4vw,19px); letter-spacing:.12em; color:#f0ead9; margin:clamp(30px,6vw,52px) auto 0; }
+
+  @media(prefers-reduced-motion:reduce){
+    .tomoshibi .mukau-fuda .mf-needle{ transform:rotate(38deg); transition:none; }
+    .tomoshibi .shukuba .inban{ animation:none; opacity:.88; transform:rotate(-2deg); }
+    .tomoshibi .tomo-hi{ animation:none; }
+  }
+
   /* ===== 巻・携（アプリ紹介：結章の余韻からフィナーレの夜空へ橋を架ける） ===== */
   .app-intro{ position:relative; z-index:5; overflow:hidden; padding:clamp(56px,11vw,104px) var(--shell) clamp(48px,9vw,88px);
     display:flex; flex-direction:column; align-items:center; text-align:center;
@@ -1140,12 +1213,308 @@
   </div>
 
   <p class="ng-atogaki reveal">なほ――居どころをそっと知らせる灯も、灯を消して隠れる術も、皆で集ふ宴の帳も、この一巻に。</p>
-  <p class="ng-tsugi reveal">さて、この道中記、いづこで手に入る。</p>
+  <p class="ng-tsugi reveal">されど旅は、ひとりのものとは限らない。<br />――帳を、開かう。</p>
+</section>
+<!-- ════════════════ 灯・逢（皆で集ふ宴の帳 ＝ 宴・凸待ち・巡礼の道行き） ════════════════ -->
+<section class="tomoshibi lp-defer" data-scene="clear" aria-label="灯と逢瀬 宴・凸待ち・巡礼の道行き">
+  <div class="tb-head reveal">
+    <span class="tb-no">灯 ・ 逢</span><span class="tb-label">― 皆で集ふ宴の帳 ―</span>
+    <p class="tb-lead">ひとりの旅の願ひは、五つ書いた。<br />されど旅は、ひとりのものとは限らない。<br />宴の帳（とばり）を、三つの道行きでお目にかけよう。</p>
+  </div>
+
+  <!-- 場面一：宴に集ふ（カレンダー参加→オフ会→会場へ向かう） -->
+  <div class="tb-scene">
+    <p class="tb-koujou reveal">「逢ひたい人の宴がある。されど、いつ、どこで、誰と行けばよいのか。」</p>
+    <ol class="michiyuki">
+      <li class="shukuba reveal">
+        <span class="sk-no">一の宿</span>
+        <figure class="sk-fuda">
+          <svg class="sk-art" viewBox="0 0 140 96" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+            <rect x="6" y="10" width="128" height="80" rx="2"/>
+            <line x1="6" y1="28" x2="134" y2="28"/>
+            <line x1="27" y1="28" x2="27" y2="90"/><line x1="54" y1="28" x2="54" y2="90"/><line x1="81" y1="28" x2="81" y2="90"/><line x1="108" y1="28" x2="108" y2="90"/>
+            <line x1="6" y1="49" x2="134" y2="49"/><line x1="6" y1="70" x2="134" y2="70"/>
+            <ellipse cx="40" cy="39" rx="8" ry="6" stroke="#a8572f" stroke-width="2"/>
+            <ellipse cx="95" cy="60" rx="8" ry="6" stroke="#a8572f" stroke-width="2"/>
+          </svg>
+          <figcaption>
+            <b class="sk-name">帳を繰る</b>
+            <span class="sk-desc">暦を開けば、諸国の宴が並んでゐる。名乗らずとも、覗くのは自由。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba reveal">
+        <span class="sk-no">二の宿</span>
+        <figure class="sk-fuda">
+          <svg class="sk-art" viewBox="0 0 120 90" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+            <rect x="44" y="8" width="32" height="74" rx="3"/>
+            <line x1="60" y1="16" x2="60" y2="74" stroke-width="1"/>
+            <path d="M30 30 Q22 40 28 52" stroke="#a8572f" stroke-width="2"/>
+          </svg>
+          <figcaption>
+            <b class="sk-name">名乗りを上げる</b>
+            <span class="sk-desc">名と、ひとこと、連れの数、参る国。それだけで席がひとつ、設へられる。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba reveal">
+        <span class="sk-no">三の宿</span>
+        <figure class="sk-fuda">
+          <span class="inban">合</span>
+          <figcaption>
+            <b class="sk-name">合言葉を授かる</b>
+            <span class="sk-desc">内輪の宴は、帳の外に載らない。符牒が合へば、会場の在り処がそっと開かれる。</span>
+            <span class="sk-chip">附・前日に風の便りが一度</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba sk-main reveal">
+        <span class="sk-no">四の宿</span>
+        <figure class="sk-fuda">
+          <span class="mukau-fuda">
+            <svg class="mf-needle" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+              <circle cx="11" cy="11" r="9"/><path d="M11 4 L14 12 L11 10 L8 12 Z" fill="#a8572f" stroke="none"/>
+            </svg>ここへ向かふ
+          </span>
+          <figcaption>
+            <b class="sk-name">道しるべに従ふ</b>
+            <span class="sk-desc">当日は「ここへ向かふ」の札をひとつ押すだけ。道案内（Google と Apple の地図）が、そのまま立ち上がる。迷ふ心配は、もう要らぬ。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba reveal">
+        <span class="sk-no">五の宿</span>
+        <figure class="sk-fuda">
+          <span class="zaiseki"><img class="jp" src="img/japan.svg" alt="" loading="lazy" /><span class="tomo-hi" style="left:62%;top:44%"></span><span class="tomo-hi" style="left:48%;top:60%"></span><span class="tomo-hi" style="left:70%;top:56%"></span></span>
+          <figcaption>
+            <b class="sk-name">灯を数へる</b>
+            <span class="sk-desc">いま誰が着いてゐるか、国々の灯で分かる。宴のあとも、合言葉ひとつで皆の居どころが見える。名乗り要らずで。</span>
+          </figcaption>
+        </figure>
+      </li>
+    </ol>
+  </div>
+
+  <!-- 場面二：灯を掲げて、待つ（配信者の凸待ち） -->
+  <div class="tb-scene">
+    <p class="tb-koujou reveal">「会ひに行くばかりが旅ではない。『いまやってゐる』と、どう報せるか。」</p>
+    <ol class="michiyuki">
+      <li class="shukuba reveal">
+        <span class="sk-no">一の宿</span>
+        <figure class="sk-fuda">
+          <svg class="sk-art" viewBox="0 0 100 96" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+            <line x1="50" y1="6" x2="50" y2="90"/><rect x="24" y="20" width="52" height="34" rx="2"/>
+            <line x1="32" y1="32" x2="68" y2="32" stroke-width="1"/><line x1="32" y1="42" x2="60" y2="42" stroke-width="1"/>
+          </svg>
+          <figcaption>
+            <b class="sk-name">触れを出す</b>
+            <span class="sk-desc">「凸待ち」の触れを、暦に書きつける。</span>
+            <span class="sk-chip">附・配信／凸待ち／オフ会の札分け</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba reveal">
+        <span class="sk-no">二の宿</span>
+        <figure class="sk-fuda">
+          <svg class="sk-art" viewBox="0 0 60 88" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+            <line x1="30" y1="4" x2="30" y2="12"/><line x1="30" y1="76" x2="30" y2="84"/>
+            <ellipse cx="30" cy="44" rx="20" ry="32"/>
+            <line x1="11" y1="34" x2="49" y2="34" stroke-width="1"/><line x1="10" y1="54" x2="50" y2="54" stroke-width="1"/>
+            <circle cx="30" cy="44" r="9" fill="#b08a3e" stroke="none" opacity=".85"/>
+          </svg>
+          <figcaption>
+            <b class="sk-name">灯を点す</b>
+            <span class="sk-desc">はじまったら、ボタンをただ一度。居場所の灯とともに「今、居る」が点る。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba reveal">
+        <span class="sk-no">三の宿</span>
+        <figure class="sk-fuda">
+          <span class="zaiseki"><img class="jp" src="img/japan.svg" alt="" loading="lazy" /><span class="tomo-hi" style="left:58%;top:40%"></span><span class="tomo-hi" style="left:64%;top:58%"></span></span>
+          <figcaption>
+            <b class="sk-name">国に灯が見える</b>
+            <span class="sk-desc">その灯は在席の地図に灯る。どの国に、いくつの灯――遠目にもよく見える。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba sk-main reveal">
+        <span class="sk-no">四の宿</span>
+        <figure class="sk-fuda">
+          <span class="mukau-fuda">
+            <svg class="mf-needle" width="20" height="20" viewBox="0 0 22 22" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+              <circle cx="11" cy="11" r="9"/><path d="M11 4 L14 12 L11 10 L8 12 Z" fill="#a8572f" stroke="none"/>
+            </svg>ここへ向かふ
+          </span>
+          <figcaption>
+            <b class="sk-name">馳せ参ず</b>
+            <span class="sk-desc">見つけた者は「ここへ向かふ」。道案内が立ち上がり、あとは足が叶へる。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba reveal">
+        <span class="sk-no">五の宿</span>
+        <figure class="sk-fuda">
+          <svg class="sk-art" viewBox="0 0 88 60" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+            <rect x="8" y="12" width="72" height="42" rx="2"/><path d="M8 14 L44 38 L80 14"/>
+            <path d="M8 52 Q26 46 44 52 Q62 58 80 52" stroke-width="1"/>
+            <circle cx="44" cy="30" r="4" fill="#b08a3e" stroke="none"/>
+          </svg>
+          <figcaption>
+            <b class="sk-name">封書が残る</b>
+            <span class="sk-desc">近づけば、レーダーが互ひを映し、すれ違ひの封筒が残る。返すのは、スタンプひとつでよい。</span>
+          </figcaption>
+        </figure>
+      </li>
+    </ol>
+  </div>
+
+  <!-- 場面三：聖地を、巡る（推しの軌跡を聖地巡礼） -->
+  <div class="tb-scene">
+    <p class="tb-koujou reveal">「憧れの人の見た景色を、この目で見たい。されど、どの道を歩いたのか。」</p>
+    <ol class="michiyuki">
+      <li class="shukuba reveal">
+        <span class="sk-no">一の宿</span>
+        <figure class="sk-fuda">
+          <svg class="sk-art" viewBox="0 0 110 92" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+            <rect x="10" y="10" width="90" height="74" rx="2"/>
+            <line x1="10" y1="30" x2="100" y2="30" stroke-width="1"/><line x1="10" y1="50" x2="100" y2="50" stroke-width="1"/><line x1="10" y1="70" x2="100" y2="70" stroke-width="1"/>
+            <circle cx="22" cy="20" r="4" fill="#a8572f" stroke="none"/><circle cx="22" cy="40" r="4" stroke="#a8572f" stroke-width="1.5"/>
+          </svg>
+          <figcaption>
+            <b class="sk-name">国から、人を尋ねる</b>
+            <span class="sk-desc">国ごとに、旅人の名が並ぶ。いま賑はふ国も、ひと目で分かる。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba reveal">
+        <span class="sk-no">二の宿</span>
+        <figure class="sk-fuda">
+          <svg class="sk-art" viewBox="0 0 130 84" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+            <path d="M12 66 Q40 30 66 48 Q92 66 118 22" stroke-width="1.6"/>
+            <circle cx="12" cy="66" r="3" fill="#a8572f" stroke="none"/><circle cx="118" cy="22" r="3" fill="#a8572f" stroke="none"/>
+          </svg>
+          <figcaption>
+            <b class="sk-name">軌跡を、開く</b>
+            <span class="sk-desc">その人の頁（𝕏 の名がそのまま頁になる）を開けば、歩いた道が地図に一筋。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba sk-main reveal">
+        <span class="sk-no">三の宿</span>
+        <figure class="sk-fuda">
+          <span class="mukau-fuda">
+            <svg class="mf-needle" width="20" height="20" viewBox="0 0 22 22" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+              <circle cx="11" cy="11" r="9"/><path d="M11 4 L14 12 L11 10 L8 12 Z" fill="#a8572f" stroke="none"/>
+            </svg>ここへ向かふ
+          </span>
+          <figcaption>
+            <b class="sk-name">同じ道を、ゆく</b>
+            <span class="sk-desc">気になる足あとへ「ここへ向かふ」。巡礼の道しるべは、これひとつ。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba reveal">
+        <span class="sk-no">四の宿</span>
+        <figure class="sk-fuda">
+          <svg class="sk-art" viewBox="0 0 84 96" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
+            <rect x="12" y="10" width="60" height="76" rx="2" stroke-dasharray="2 3"/>
+            <path d="M22 62 L38 40 L50 56 L62 34" stroke-width="1"/>
+            <circle cx="42" cy="52" r="12" stroke="#a8572f" stroke-width="1.5"/>
+          </svg>
+          <figcaption>
+            <b class="sk-name">切手が、増える</b>
+            <span class="sk-desc">訪れた国には切手が押される。君の図鑑が、巡礼の証となる。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba reveal">
+        <span class="sk-no">五の宿</span>
+        <figure class="sk-fuda">
+          <img class="sk-art" src="img/kasanaru-ashiato.png?v=2" alt="重なりゆく足あとの墨絵" loading="lazy" width="768" height="432" style="width:100%;border-radius:1px" />
+          <figcaption>
+            <b class="sk-name">便りを、出す</b>
+            <span class="sk-desc">巡り終へたら、その軌跡を 𝕏 へ。次の巡礼者の、道しるべに。</span>
+          </figcaption>
+        </figure>
+      </li>
+    </ol>
+  </div>
+
+  <p class="tb-tsugi reveal">――道具は、これで全部ではない。巻末に、目録を附しておく。</p>
+</section>
+
+<!-- ════════════════ 附・目録（三十一の道具 ＝ 全機能索引） ════════════════ -->
+<section class="mokuroku lp-defer" data-scene="clear" aria-label="全機能の目録">
+  <div class="mk-head reveal">
+    <span class="mk-no">附 ・ 目録</span><span class="mk-label">― 三十一の道具、すべてこの一巻に ―</span>
+    <p class="mk-lead">押せば、開く。</p>
+  </div>
+  <details class="mk-bu reveal"><summary>足あとの部<span class="mk-kazu">二品</span></summary>
+    <ul>
+      <li><b>足あとの記</b><span class="mk-sumi">既出</span>歩けば正確な足あとが残り、消えない。幾年たっても思ひ出の辻へ。</li>
+      <li><b>軌跡の図</b>歩いた道が、地図の上に一筋の線となる。</li>
+    </ul>
+  </details>
+  <details class="mk-bu reveal"><summary>すれ違ひの部<span class="mk-kazu">四品</span></summary>
+    <ul>
+      <li><b>五つの距たり</b><span class="mk-sumi">既出</span>五百歩・三里・十里・五十里、そして時をたがへた三十日。五段の縁（えにし）ですれ違ふ。</li>
+      <li><b>すれ違ひの封筒</b><span class="mk-sumi">既出</span>すれ違へば、封書がひとつ届く。</li>
+      <li><b>一方の便り</b>返すのはスタンプただ一つ。言葉は要らぬ。</li>
+      <li><b>ひとこと</b>百四十字の一言を添へる。荒き言葉は、あらかじめ濾（こ）される。</li>
+    </ul>
+  </details>
+  <details class="mk-bu reveal"><summary>宴の部<span class="mk-kazu">十品</span></summary>
+    <ul>
+      <li><b>宴を催す</b><span class="mk-sumi">既出</span>予定を暦に書きつける。</li>
+      <li><b>暦</b><span class="mk-sumi">既出</span>名乗らずとも、諸国の宴を覗ける。</li>
+      <li><b>在席の地図</b><span class="mk-sumi">既出</span>いま賑はふ宴が、国の灯で見える。</li>
+      <li><b>名乗り</b><span class="mk-sumi">既出</span>名・ひとこと・連れの数・参る国。</li>
+      <li><b>風の便り</b>前日に、そっと催促の報せが一度。</li>
+      <li><b>灯を点す</b><span class="mk-sumi">既出</span>ボタン一つで「今やってゐる」を宣（の）る。</li>
+      <li><b>合言葉の宴</b><span class="mk-sumi">既出</span>符牒が合へば、会場の在り処が開かれる。</li>
+      <li><b>札分け</b>配信・凸待ち・オフ会、触れに印をつける。</li>
+      <li><b>国別の数</b>どの国にいくつの宴か、遠目に分かる。</li>
+      <li><b>連れの地図</b><span class="mk-sumi">既出</span>合言葉ひとつで、名乗らずとも皆の居どころを共に。</li>
+    </ul>
+  </details>
+  <details class="mk-bu reveal"><summary>道しるべの部<span class="mk-kazu">四品</span></summary>
+    <ul>
+      <li><b>ここへ向かふ</b><span class="mk-sumi">既出</span>札を押せば、Google と Apple の道案内がそのまま立ち上がる。</li>
+      <li><b>国の図鑑</b><span class="mk-sumi">既出</span>訪れた国に、切手が押されてゆく。</li>
+      <li><b>国別の人名帳</b><span class="mk-sumi">既出</span>その国に足を運んだ旅人が並ぶ。推しの聖地巡礼に。</li>
+      <li><b>賑はふ国</b><span class="mk-sumi">既出</span>いまどの国が盛んか、ひと目で。</li>
+    </ul>
+  </details>
+  <details class="mk-bu reveal"><summary>灯の部<span class="mk-kazu">三品</span></summary>
+    <ul>
+      <li><b>居場所の灯</b><span class="mk-sumi">既出</span>点せば、近くの人に「ここに居る」が伝はる。</li>
+      <li><b>レーダー</b><span class="mk-sumi">既出</span>盤上に、近くの人の気配が映る。</li>
+      <li><b>灯を消す</b>最長七十二刻（＝72時間）、足あとの記録を休められる。</li>
+    </ul>
+  </details>
+  <details class="mk-bu reveal"><summary>便りの部<span class="mk-kazu">四品</span></summary>
+    <ul>
+      <li><b>頁（公開の書）</b><span class="mk-sumi">既出</span>𝕏 の名がそのまま /u/… の頁になる。推しの最新地点を示す。</li>
+      <li><b>軌跡の便り</b><span class="mk-sumi">既出</span>歩いた道を、そのまま 𝕏 へ。</li>
+      <li><b>便りの緒（を）</b>共有の一筋を、ひと押しで結ぶ。</li>
+      <li><b>見せ方の按配</b>市区町村までか、正確にか。私（わたくし）・縁者・すれ違ひ・諸人（もろびと）、誰まで見せるか。</li>
+    </ul>
+  </details>
+  <details class="mk-bu reveal"><summary>心得の部<span class="mk-kazu">四品</span></summary>
+    <ul>
+      <li><b>宿を隠す</b>おのが寝屋（＝自宅）の在り処は、すれ違ひ相手にも隠せる。</li>
+      <li><b>道中の帳簿</b>足あとの数・すれ違ひ・訪れた国、この身の道行きが見える。</li>
+      <li><b>触れと戒め</b>心なき者は退けられ、三人の触れで自（おの）づと歩みが止まる。</li>
+      <li><b>旅立ちの手引き</b>はじめての方には、道具の使ひ方をひとつずつ。</li>
+    </ul>
+  </details>
+  <p class="mk-tsugi reveal">さて、この道中記、いづこで手に入る。</p>
 </section>
 <!-- ════════════════ 巻・携（アプリ紹介：この道中記を懐に） ════════════════ -->
 <section class="app-intro reveal" data-scene="clear" aria-label="アプリ紹介">
   <div class="ai-head"><span class="ai-no">巻 ・ 携</span><span class="ai-label">― この道中記を、いつでも懐に ―</span></div>
-  <p class="ai-lead">五つの願ひを、この一冊に。<br />いつでも、懐に。</p>
+  <p class="ai-lead">五つの願ひも、宴の帳も、この一冊に。<br />いつでも、懐に。</p>
   <div class="ai-stage">
     <div class="ai-phone" aria-hidden="true">
       <div class="ai-phone-screen">
@@ -1175,6 +1544,9 @@
     <span class="ai-feat">図鑑と巡礼</span>
     <span class="ai-feat">時を越えるすれ違ひ</span>
     <span class="ai-feat">便りは 𝕏 へ</span>
+    <span class="ai-feat">宴の帳</span>
+    <span class="ai-feat">灯の在り処</span>
+    <span class="ai-feat">ここへ向かふ</span>
   </div>
 </section>
 <!-- ════════════════ フィナーレ（夜空＋大きな日本地図＋アプリ導線） ════════════════ -->
