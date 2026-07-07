@@ -1,9 +1,165 @@
 ===========================================================
-すれ違い通信 LP 用 画像生成プロンプト集（Stable Diffusion）
-推奨モデル: beautifulRealistic_v7.safetensors（実写系）
-保存先: このフォルダ public/lp/img/ に PNG で保存してください。
-保存したらファイル名をClaudeに伝えてください→LPに組み込みます。
+すれ違ひ通信 LP 用 画像生成プロンプト集（Stable Diffusion）
+保存先: このフォルダ public/lp/img/ に PNG で保存 → ファイル名をClaudeに伝える → LPに組み込み。
 ===========================================================
+
+★★★ 画風憲法（道・足あと系＝墨絵・和紙で全面統一。実写プロンプト使用禁止）★★★
+
+芭蕉「奥の細道」風のLP。KVは墨書きの桜。道の絵に統一感が無かった（写実写真がバラバラ・
+星空の道は現代アスファルト車道で世界観崩壊）ため、道・足あと系14枚を墨絵・和紙で統一する。
+
+■ 三層合成: [STYLE PREFIX] + [SEASON] + 個別構図。
+  画風は PREFIX 層だけが決める。季節・構図層に画風語を入れない（ブレ防止の要）。
+
+■ 推奨モデル（実写系から乗り換え）:
+  ルートA(推奨): SD1.5 + 墨絵LoRA（MoXin/墨心 系 or sumi-e/ink wash 系, weight 0.7〜0.85）。
+                 LoRAのトリガーワード（例 shuimobysim 等）は配布ページで確認しPREFIX先頭に足す。
+                 768x432 → Hires fix x2(denoise 0.4)=1536x864。
+  ルートB: SDXL + ink wash XL LoRA（ComfyUI）。ネイティブ 1344x768(16:9)。
+  共通: DPM++ 2M Karras / Steps 28-32 / CFG 5.0-6.5(低め。上げると墨が硬く彩度が浮く)。
+        16:9横長で統一。モバイルは中央クロップ→主モチーフ(道/足あと/旅人)は中央1/3に置く。
+
+■ [STYLE PREFIX]（全プロンプトの先頭にそのまま貼る）:
+sumi-e ink wash painting, traditional japanese brush painting on handmade washi paper,
+visible washi paper texture, monochrome black ink with soft tonal gradations,
+subtle gofun white accents, generous negative space, soft ink bleed, dry brush strokes,
+minimal composition, edo period, matsuo basho travel journey, quiet, contemplative,
+muted, masterpiece, best quality
+
+■ [NEGATIVE 共通]（全画像同一。現代要素はここで根絶）:
+photo, photograph, photorealistic, realistic photo, 3d render, cgi,
+asphalt, paved road, road markings, center line, crosswalk, guardrail,
+power lines, utility poles, street lights, traffic sign, car, vehicle, bicycle,
+train, station, modern buildings, concrete, neon, city lights, milky way photo,
+lens flare, bokeh, film grain, vivid colors, oversaturated, colorful,
+anime, manga, cartoon, chibi, text, letters, watermark, signature, frame, border, people crowd
+
+■ 季節差分トークン [SEASON]（PREFIXに足す最小差分。色は季節ごとに1色だけ許可）:
+  冬  : winter, snow as untouched blank washi white, sparse bare branches in light ink,
+        pale grey wash sky, cold stillness, faint gofun white snowfall   （彩色なし＝紙白が雪）
+  春  : spring, ink-painted sakura branches, scattered gofun white petals with the
+        faintest blush pink, hazy pale wash                              （極淡の桜色のみ）
+  夏  : summer, layered ink strokes of tall summer grasses, faint heat haze as pale wash,
+        slightly denser mid-tone ink                                     （彩色なし）
+  夏暁: 夏 + just before dawn, faint first light as warm pale wash on the horizon（地平の淡暖色のみ）
+  秋  : autumn, sparse maple leaves as small ink accents with a hint of pale vermilion
+        wash, falling leaves, drier brush, thin mist                     （淡朱のみ）
+  夜  : night, deep layered ink wash sky with a touch of indigo, stars as fine gofun
+        white dots, moon reserved in blank paper white, silhouetted low hills, still night air
+                                                                          （藍墨のみ・星月は白抜き）
+
+■ 採用判定の唯一の基準: 各画像の「LP文言」と矛盾しないこと（かき氷=イチゴ記述なのに実画像は
+  青ブルーハワイ、で削除した前例の再発防止）。迷ったら「静けさ・余白」優先。
+
+───────────────────────────────────────────────────────────
+【道・足あと系 14枚】 書式 = [STYLE PREFIX] + [SEASON] + 下記構図。Negativeは全て共通。
+───────────────────────────────────────────────────────────
+
+── yukimichi.png（一章・冬）
+LP文言:「駅を出て、雪の一本道を歩く。」※駅は描かない（宿場を発つ体。江戸世界を壊さない）
+[SEASON]=冬  生成: txt2img または既存img2img(denoise0.55-0.7)
+構図: a single narrow path through snow fields toward the far horizon, one tiny traveler
+with sedge hat (kasa) and walking staff seen from behind, the path drawn as one soft
+ink line across blank snow, faint village roofs dissolving in grey wash behind
+
+── ashiato.png（一章・冬）
+LP文言:「ふと前を見ると――足跡が、続いていた。」「私のものではない。誰かが、先に通ったのだ。」
+[SEASON]=冬  生成: txt2img/img2img可
+構図: low close view of a snow path, a line of someone else's fresh footprints pressed into
+the snow continuing ahead and disappearing into pale mist, footprints as soft grey ink
+touches on paper-white snow, no figure anywhere
+
+── sanjunichi-michi.png（七章・夏暁）
+LP文言:「過ぎた三十日の道のりが、人と人を、そっと結ぶ。」
+[SEASON]=夏暁
+構図: a long road winding through low hills into the far distance, the road rendered as one
+continuous flowing brushstroke, small stone waymarkers along it fading toward the horizon,
+sense of many days of travel accumulated in a single line
+
+── futari-ashiato.png（七章・夏暁）※kasanaruと同seed起点で対に
+LP文言:「私が今日たどった道を、昨日、誰かが歩いていた。」
+[SEASON]=夏暁
+構図: two sets of footprints along the same narrow earthen path, one set older and lighter
+in diluted grey ink, one set fresh and darker, both following the same line into morning mist
+
+── kasanaru-ashiato.png（七章・夏暁）
+LP文言:「その人の足あとを、私は、知らずに踏んでいた。」
+[SEASON]=夏暁
+構図: close view of a path surface where a new dark footprint falls exactly upon an older
+pale footprint, layered ink impressions one atop another, quiet overlap of two journeys,
+wide empty space around
+
+── oshi-no-michi.png（七章・夏暁）
+LP文言:「慕わしいあの人の通った道さえ、たどれるという。」
+[SEASON]=夏暁
+構図: a gently curving riverside path with a trail of faint footprints stretching far ahead,
+a distant tiny figure already vanishing over the rise, longing atmosphere, willow branches
+in light ink at the edge
+
+── toki-no-surechigai.png（七章・夏暁・key）
+LP文言:「それは、時を越えた、すれ違い。」
+[SEASON]=夏暁
+構図: two travelers passing each other on a narrow wooden bridge, one painted in solid dark
+ink, the other in faint diluted ink like a lingering memory, passing without meeting,
+mist below the bridge as blank paper
+
+── hosomichi.png（八章・秋・章背景）
+LP文言: 章の背景（秋の細道）
+[SEASON]=秋  生成: 既存img2img可(構図良好)
+構図: a narrow mountain path winding between ink-washed slopes and sparse maple trees,
+worn stone steps suggested with dry brush, valley mist as blank paper, the path
+disappearing upward, oku no hosomichi
+
+── kienai-ashiato-aki.png（八章・秋・key）
+LP文言:「だから私は、歩いた道を、消さずにおく。」（=足あとを残す価値。key）
+[SEASON]=秋
+構図: footprints pressed firmly along an earthen path scattered with fallen maple leaves,
+the prints staying dark and clear while leaves drift, the trail receding into mist without fading
+
+── yuki-ashiato.png（八章→冬を回想・冬）
+LP文言:「ふり返れば、足あとは、ずっと続いていた。」「冬の雪道の、あの足跡まで、ひと続きに。」
+[SEASON]=冬（秋章から冬を回想する絵）
+構図: view looking back from a slight rise, one unbroken line of footprints stretching
+across snow all the way to the far horizon, the line of prints reading as a single
+continuous ink passage from foreground to vanishing point
+
+── hitosuji.png（八章・key・最重要）※現代車道空撮を全面破棄
+LP文言:「旅とは、消えない一本の線を、引くことだった。」
+[SEASON]=秋(薄く)  生成: txt2img必須（既存の空撮車道は捨てる）
+構図: one single unbroken horizontal brushstroke crossing the washi like a road meeting the
+horizon, drawn in a single breath with slight ink bleed and a dry-brush tail, a lone tiny
+traveler at the near end of the line, everything else empty white paper
+
+── hoshizora-michi-a.png（結章・夜）※現代車道+写真天の川を全面破棄・txt2img必須・a/b/c同seed連作
+LP文言:「すうっと、流れ星が、ひとつ。」（流れ星はdata-fx演出と二重→絵では一筆の白刷毛に控えめ）
+[SEASON]=夜
+構図: a narrow earthen night road through fields under a vast dark ink sky, stars as fine
+gofun white speckles, one shooting star as a single swift white brushstroke, a tiny traveler
+with a small paper lantern far down the road
+
+── hoshizora-michi-b.png（結章・夜）※aと同seed
+LP文言:「けれど――願いは、もう、足が叶えている。」
+[SEASON]=夜
+構図: the same night road, closer on the lone traveler walking steadily forward, lantern
+glow reserved as a soft warm halo of blank paper, determined stride, faint pale footprints
+trailing behind on the dark road
+
+── hoshizora-michi-c.png（結章・夜）※aと同seed
+LP文言:「同じ道は、二度とない。だから、足あとは消えない。」「ひとつ分けて、誰かの道しるべに。」
+[SEASON]=夜
+構図: the night road stretching ahead to distant hills, a low full moon reserved in blank
+paper white, a line of faintly glowing gofun white footprints left along the road like
+small guiding lights for someone who comes after
+
+【任意・同族（余力があれば同レシピ・同seed流用）】
+── fumidasu-ashi.png: close view of a straw-sandaled foot (waraji) mid-step pressing onto
+   the earth, ink line and wash only, momentum of the first step  ＋該当季
+── ichigo-ashiato.png: kasanaru-ashiato の変奏（一期一会の一歩）。同seed流用。
+
+═══════════════════════════════════════════════════════════
+【旧・実写系エントリ（今回の墨絵統一の対象外。差し替え時は要トーン検討）】
+  ↓以下は道系ではない背景（茶室・田んぼ・鮎・的屋・蝉・かき氷 等）。実写系プロンプトのまま残置。
+═══════════════════════════════════════════════════════════
 
 ──────────────────────────────────────────
 ① 千利休風の茶室（畳・黒楽茶碗・抹茶・一輪の花）
