@@ -110,21 +110,25 @@ export function LoginSuccessModal({
       ]).start();
 
       // 紙吹雪アニメーション
-      Animated.loop(
+      const confettiLoop = Animated.loop(
         Animated.timing(confettiAnim, {
           toValue: 1,
           duration: 2000,
           easing: Easing.linear,
           useNativeDriver: true,
         })
-      ).start();
+      );
+      confettiLoop.start();
 
       // 3秒後に自動で閉じる
       const timer = setTimeout(() => {
         handleClose();
       }, 3000);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        confettiLoop.stop();
+      };
     }
   }, [confettiAnim, fadeAnim, handleClose, scaleAnim, visible]);
 

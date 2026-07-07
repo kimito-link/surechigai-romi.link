@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
   Easing,
   useReducedMotion,
+  cancelAnimation,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "@/lib/icons/material-icons";
@@ -61,6 +62,8 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
       -1,
       true,
     );
+    // アンマウント時に無限ループを止める（cleanup漏れだと蓄積しOOM要因になる）。
+    return () => cancelAnimation(glow);
   }, [glow, reduceMotion]);
   const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value }));
 

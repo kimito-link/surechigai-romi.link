@@ -33,7 +33,6 @@ export * from "./animated-pressable";
 
 // Image/Avatar系
 export { LazyImage, LazyAvatar } from "./lazy-image";
-export { OptimizedImage, OptimizedAvatar } from "./optimized-image";
 export { ProgressiveImage } from "./progressive-image";
 
 // ListItem系

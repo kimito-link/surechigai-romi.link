@@ -46,7 +46,7 @@ export function LogoutConfirmModal({
       ]).start();
 
       // キャラクターの揺れアニメーション
-      Animated.loop(
+      const bounceLoop = Animated.loop(
         Animated.sequence([
           Animated.timing(characterBounce, {
             toValue: -5,
@@ -59,7 +59,10 @@ export function LogoutConfirmModal({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+      bounceLoop.start();
+      // アンマウント/非表示化で無限ループを止める（cleanup漏れ防止）。
+      return () => bounceLoop.stop();
     } else {
       scaleAnim.setValue(0.9);
       opacityAnim.setValue(0);

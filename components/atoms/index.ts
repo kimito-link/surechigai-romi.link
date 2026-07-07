@@ -87,7 +87,6 @@ export {
   type SkeletonProps,
 } from "./skeleton-loader";
 export { Toast, ToastProvider, useToast } from "./toast";
-export { SyncStatusIndicator } from "./sync-status-indicator";
 
 // Navigation系
 export { HapticTab } from "./haptic-tab";
