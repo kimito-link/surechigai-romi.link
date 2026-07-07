@@ -534,6 +534,10 @@
   /* ===== 作品クレジット（エンドロール風の大きなセクション） ===== */
   /* 写真や固定背景が透けて文字が読みにくくならないよう、和紙色の無地を全面に敷く（最前面 z:5）。 */
   /* ===== 触れる水面（結章）。fixedは使わない: 高さ0のstickyホルダーでsection内に留める ===== */
+  /* 水面専用sectionの下地を濃紺(夜空色)に。canvasが万一カバーしきれない隙間が出ても
+     和紙地(ベージュ)が透けず、逆さ月の情景が保たれる（ベージュ化けの二重防止）。 */
+  .mizu-scene{ background:#0a1730; }
+  .mizu-scene .veil{ background:radial-gradient(ellipse 110% 85% at 50% 42%, rgba(14,16,34,.22), rgba(6,8,22,.55)); }
   .mizu-holder{ position:sticky; top:0; height:0; z-index:1; }
   .mizu-canvas{
     position:absolute; left:0; top:0; width:100%;
@@ -1004,15 +1008,25 @@
 <!-- ════════════════ 結章・扉（富士・月・流れ星・Xへの誘い） ════════════════ -->
 <section class="story lp-defer night photo-bg" data-scene="clear" data-veil="dusk" data-bg="fuji-yoru">
   <div class="veil"></div>
+  <div class="ep-head"><span class="ep-no">結 章</span><span class="ep-label">― 晴れて、富士 ―</span></div>
+  <p class="ph" data-img="fuji-yoru">雲が晴れ、はじめて、富士が見えた。</p>
+</section>
+<!-- 逆さ月の水面だけを専用の短い section に切り出す。
+     こうすると .mizu-holder(sticky) の粘着範囲がちょうどこの section(≒画面1枚)に収まり、
+     canvas がずれて剥がれる/#photoStage 消去で和紙地が透けてベージュ化ける現象を根絶する。
+     section 自体に濃紺の下地(mizu-scene)を敷き、万一 canvas に隙間が出ても夜空色で埋まる。 -->
+<section class="story lp-defer night photo-bg mizu-scene" data-scene="clear" data-veil="dusk" data-bg="tsuki-mizu">
+  <div class="veil"></div>
   <!-- 触れると波紋が広がり、逆さ月が揺れる水面（height-field 2バッファ方式）。
-       結章が画面に入ると app.js が起動し、離れると停止。reduced-motion では起動せず tsuki-mizu.png 静止画にフォールバック。 -->
+       この section が画面に入ると app.js が起動し、離れると停止。reduced-motion では起動せず tsuki-mizu.png 静止画にフォールバック。 -->
   <div class="mizu-holder" aria-hidden="true">
     <canvas id="mizuCanvas" class="mizu-canvas"></canvas>
     <p class="mizu-hint" id="mizuHint">―― そっと、水に触れてみられよ。</p>
   </div>
-  <div class="ep-head"><span class="ep-no">結 章</span><span class="ep-label">― 晴れて、富士 ―</span></div>
-  <p class="ph" data-img="fuji-yoru">雲が晴れ、はじめて、富士が見えた。</p>
   <p class="ph" data-img="tsuki-mizu" data-mizu="1">湖に、月が、逆さに浮かんでゐる。</p>
+</section>
+<section class="story lp-defer night photo-bg" data-scene="clear" data-veil="dusk" data-bg="hoshizora-michi-a">
+  <div class="veil"></div>
   <p class="ph" data-img="hoshizora-michi-a" data-fx="nagareboshi">すうっと、流れ星が、ひとつ。</p>
   <p class="ph" data-img="hoshizora-michi-a" data-fx="nagareboshi">願いを言う間もなく、消えていった。</p>
   <p class="ph key" data-img="hoshizora-michi-b">けれど――願いは、もう、足が叶えている。</p>
