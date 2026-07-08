@@ -37,14 +37,22 @@ async function smoothScroll(page, px, durationMs) {
 }
 
 async function runVideo(browser, v) {
-  const ctx = await browser.newContext({
+  // 認証動画(auth:true)は storageState(.auth/auth-state.json)を注入してログイン済みで録画。
+  const AUTH_STATE = path.join(ROOT, ".auth", "auth-state.json");
+  const ctxOpts = {
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 2,
     isMobile: true,
     hasTouch: true,
     // recordVideo.size は CSS px 基準。viewport と一致させないと画面が左上に寄り余白が出る。
     recordVideo: { dir: OUT_RAW, size: { width: 390, height: 844 } },
-  });
+  };
+  if (v.auth) {
+    if (!fs.existsSync(AUTH_STATE)) { console.error(`[rec] ❌ ${v.video} は auth:true だが ${AUTH_STATE} が無い`); return; }
+    ctxOpts.storageState = AUTH_STATE;
+    console.log(`[rec] ${v.video}: storageState 注入(認証済み録画)`);
+  }
+  const ctx = await browser.newContext(ctxOpts);
   // オンボーディングoverlay抑止 + タップ波紋
   await ctx.addInitScript(
     ({ onboardingKey, ripple }) => {

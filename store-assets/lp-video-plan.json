@@ -42,6 +42,18 @@
         { "scroll": { "px": 600, "durationMs": 4000 } },
         { "goto": "/map", "wait": 3500 }
       ]
+    },
+    {
+      "video": "utage-v1",
+      "auth": true,
+      "_desc": "場面二相当(認証済み): 集まり(イベント/ライブ)→マイページ(活動見える化)。ログイン済みでしか見えない画面",
+      "steps": [
+        { "goto": "/", "wait": 2500 },
+        { "goto": "/events", "wait": 2500 },
+        { "scroll": { "px": 500, "durationMs": 3500 } },
+        { "goto": "/mypage", "wait": 2500 },
+        { "scroll": { "px": 500, "durationMs": 3500 } }
+      ]
     }
   ]
 }
