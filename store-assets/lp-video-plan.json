@@ -22,6 +22,26 @@
         { "wait": 400 },
         { "scrollBack": true, "scroll": { "px": 420, "durationMs": 3200 } }
       ]
+    },
+    {
+      "video": "koyomi-v1",
+      "_desc": "場面一(宴に集ふ)専用: イベント暦=カレンダーをゆっくり見せる(約16秒)",
+      "steps": [
+        { "goto": "/events", "wait": 2500 },
+        { "scroll": { "px": 500, "durationMs": 4000 } },
+        { "wait": 800 },
+        { "scrollBack": true, "scroll": { "px": 500, "durationMs": 3500 } },
+        { "wait": 1200 }
+      ]
+    },
+    {
+      "video": "junrei-v1",
+      "_desc": "場面三(聖地を巡る)専用: 図鑑(都道府県)→軌跡地図の巡礼フロー(約20秒)",
+      "steps": [
+        { "goto": "/zukan", "wait": 2500 },
+        { "scroll": { "px": 600, "durationMs": 4000 } },
+        { "goto": "/map", "wait": 3500 }
+      ]
     }
   ]
 }
