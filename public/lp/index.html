@@ -38,7 +38,10 @@
   html{scroll-behavior:smooth;overflow-x:hidden}
   body{
     margin:0; color:var(--sumi); font-family:var(--mincho);
-    line-height:var(--lh); letter-spacing:.04em; overflow-x:hidden; font-feature-settings:"palt";
+    /* overflow-x は hidden でなく clip：hidden は body をスクロールコンテナ化し、
+       ページ内の position:sticky（kama・mizu-holder・星景ホルダー）を全て殺す。
+       clip なら はみ出しだけ裁って sticky が生きる。旧ブラウザは hidden にフォールバック。 */
+    line-height:var(--lh); letter-spacing:.04em; overflow-x:hidden; overflow-x:clip; font-feature-settings:"palt";
     background:linear-gradient(180deg,var(--sky-top),var(--sky-bottom) 70%);
   }
   body::after{ content:""; position:fixed; inset:0; z-index:0; pointer-events:none; background:var(--season-tint); }
@@ -558,9 +561,23 @@
     opacity:0; transition:opacity 1.6s ease; pointer-events:none; z-index:2; }
   .mizu-hint.show{ opacity:1; }
 
+  /* ===== 星景（結章の流れ星＋願・叶の夜空）：app.jsのhoshizoraが描く実写級Canvas ===== */
+  /* 章の上端色は前のmizu-scene(#0a1730)に、下端は湖と丘の黒に繋がる。JS無効時もこの下地で夜が保たれる */
+  .hoshizora-scene{ background:linear-gradient(180deg,#0a1730 0%,#040918 30%,#0d1d36 82%,#02040a 100%);
+    overflow:clip; padding-top:0; }   /* overflow:clip=スクロール文脈を作らずはみ出しだけ裁つ(hiddenはstickyを殺す) */
+  .hoshizora-scene .ph:first-of-type{ margin-top:14vh; }
+  .hoshizora-holder{ position:sticky; top:0; height:0; z-index:1; }
+  .hoshizora-canvas{ position:absolute; left:0; top:0; width:100%;
+    height:100vh; height:100dvh; pointer-events:none; }
+  /* 願・叶の夜空: 短冊(z-index:1)の背後に敷く。端色は既存グラデと同じで継ぎ目なし */
+  .negai-sky{ position:sticky; top:0; height:0; z-index:0; pointer-events:none; }
+  /* sectionの左右padding内に置かれるので、100vwへ広げて中央合わせ(左右いっぱいの空にする) */
+  .negai-sky canvas{ position:absolute; left:50%; top:0; transform:translateX(-50%); width:100vw;
+    height:100vh; height:100dvh; }
+
   /* ===== 願・叶（流れ星に、五つの願ひ：結章の「願ひは足が叶へる」を機能へ橋渡し） ===== */
   /* 夜空を連続させる。末端色 #0f1f3a を .app-intro 先頭色に合わせ継ぎ目を消す。 */
-  .negai{ position:relative; z-index:5; overflow:hidden; text-align:center; color:#dce6f2;
+  .negai{ position:relative; z-index:5; overflow:clip; text-align:center; color:#dce6f2;
     padding:clamp(56px,11vw,104px) var(--shell) clamp(40px,8vw,72px);
     background:linear-gradient(180deg,#0a1426 0%,#0f1f3a 100%); }
   /* 薄い星ドット（結章夜空の余韻） */
@@ -577,11 +594,7 @@
   .negai .ng-lead{ font-family:var(--mincho); font-size:clamp(16px,4.4vw,20px); line-height:2.2; letter-spacing:.06em; color:#f0ead9; margin:1.4em auto 0; max-width:var(--maxw); }
   .negai .ng-item{ position:relative; z-index:1; min-height:72vh; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:clamp(22px,5vw,36px); }
   .negai .ng-wish{ font-family:var(--fude); font-size:clamp(20px,5.6vw,30px); letter-spacing:.14em; line-height:2; color:#e6eefa; text-shadow:0 2px 20px rgba(8,16,30,.7); margin:0; }
-  /* 願ひの前に金の流星線が「すっと流れる」（CSSトランジションのみ・JS不要） */
-  .negai .ng-star{ display:block; margin:0 auto .9em; width:clamp(60px,12vw,110px); height:1px;
-    background:linear-gradient(90deg,transparent,var(--kin),transparent);
-    transform:rotate(-18deg) scaleX(0); transform-origin:left; transition:transform 1.2s ease .3s; }
-  .negai .ng-item.in .ng-star{ transform:rotate(-18deg) scaleX(1); }
+  /* 願ひが灯ると、背後のCanvas星景に本物の流れ星が流れる(app.js hoshizora)。金線の擬似流星は廃止 */
   /* 和紙の短冊札：夜空に吊るした短冊の体。墨絵＋機能名＋説明。 */
   .negai .ng-fuda{ width:min(80vw,340px); background:var(--washi); border-top:1px solid var(--kin);
     border-radius:2px; padding:14px 14px 20px; margin:0; box-shadow:0 10px 40px rgba(0,0,0,.45); transform:rotate(-.4deg); }
@@ -1152,14 +1165,20 @@
   </div>
   <p class="ph" data-img="tsuki-mizu" data-mizu="1">湖に、月が、逆さに浮かんでゐる。</p>
 </section>
-<section class="story lp-defer night photo-bg" data-scene="clear" data-veil="dusk" data-bg="hoshizora-michi-a">
+<!-- 流れ星の場面：実写級のCanvas星景(天の川・瞬く星・富士と湖・一本道)。
+     墨絵雲PNG(hoshizora-michi)＋3pxのCSS流星は廃止し、app.jsのhoshizoraが空を描く。
+     mizu-scene同様、sticky(高さ0)ホルダー＋100dvhキャンバスで章内に粘着させる。 -->
+<section class="story lp-defer night hoshizora-scene" data-scene="clear">
+  <div class="hoshizora-holder" aria-hidden="true"><canvas id="hoshizoraCanvas" class="hoshizora-canvas"></canvas></div>
+  <p class="ph" data-fx="hoshi-nagare">すうっと、流れ星が、ひとつ。</p>
+  <p class="ph" data-fx="hoshi-nagare">願いを言う間もなく、消えていった。</p>
+  <p class="ph key">けれど――願いは、もう、足が叶えている。</p>
+  <p class="ph">想いが強ければ、足は、自ずと動いているのだから。</p>
+  <p class="ph key">同じ道は、二度とない。だから、足あとは消えない。</p>
+  <p class="ph">その足あとを、まだ消さないで。ひとつ分けて、誰かの道しるべに。</p>
+</section>
+<section class="story lp-defer night photo-bg" data-scene="clear" data-veil="dusk" data-bg="yoake">
   <div class="veil"></div>
-  <p class="ph" data-img="hoshizora-michi-a" data-fx="nagareboshi">すうっと、流れ星が、ひとつ。</p>
-  <p class="ph" data-img="hoshizora-michi-a" data-fx="nagareboshi">願いを言う間もなく、消えていった。</p>
-  <p class="ph key" data-img="hoshizora-michi-b">けれど――願いは、もう、足が叶えている。</p>
-  <p class="ph" data-img="hoshizora-michi-b">想いが強ければ、足は、自ずと動いているのだから。</p>
-  <p class="ph key" data-img="hoshizora-michi-c">同じ道は、二度とない。だから、足あとは消えない。</p>
-  <p class="ph" data-img="hoshizora-michi-c">その足あとを、まだ消さないで。ひとつ分けて、誰かの道しるべに。</p>
   <p class="ph" data-img="yoake">あなたの旅も、ここから、はじまる。</p>
   <div class="saso" id="sasoBtn">
     <p class="saso-copy">キミの思い出を、<br />ここに刻もう。</p>
@@ -1172,13 +1191,14 @@
 </section>
 <!-- ════════════════ 願・叶（流れ星に、五つの願ひ ＝ アプリの機能紹介） ════════════════ -->
 <section class="negai" data-scene="clear" aria-label="五つの願ひとアプリの機能">
+  <div class="negai-sky" aria-hidden="true"><canvas id="negaiCanvas"></canvas></div>
   <div class="ng-head reveal">
     <span class="ng-no">願 ・ 叶</span><span class="ng-label">― 流れ星に、五つの願ひ ―</span>
     <p class="ng-lead">あの夜、言ひそびれた願ひを、ここに書きつけておく。<br />短冊のやうに、五つ。</p>
   </div>
 
   <div class="ng-item reveal">
-    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「あの日の場所へ、もう一度。」</p>
+    <p class="ng-wish">「あの日の場所へ、もう一度。」</p>
     <figure class="ng-fuda">
       <img src="img/hitosuji.png?v=2" alt="雪原にのびる一本の足あとの墨絵" loading="lazy" width="768" height="432" />
       <figcaption>
@@ -1189,7 +1209,7 @@
   </div>
 
   <div class="ng-item reveal">
-    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「同じ道を行く誰かに、逢ひたい。」</p>
+    <p class="ng-wish">「同じ道を行く誰かに、逢ひたい。」</p>
     <figure class="ng-fuda">
       <img src="img/futari-ashiato.png?v=2" alt="同じ道を行くふたりの足あとの墨絵" loading="lazy" width="768" height="432" />
       <figcaption>
@@ -1200,7 +1220,7 @@
   </div>
 
   <div class="ng-item reveal">
-    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「あの人の見た景色を、この目で。」</p>
+    <p class="ng-wish">「あの人の見た景色を、この目で。」</p>
     <figure class="ng-fuda">
       <img src="img/oshi-no-michi.png?v=2" alt="慕わしい人の通った道の墨絵" loading="lazy" width="768" height="432" />
       <figcaption>
@@ -1211,7 +1231,7 @@
   </div>
 
   <div class="ng-item reveal">
-    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「時をたがへた君とも、すれ違ひたい。」</p>
+    <p class="ng-wish">「時をたがへた君とも、すれ違ひたい。」</p>
     <figure class="ng-fuda">
       <img src="img/toki-no-surechigai.png?v=2" alt="橋の上で時を越えてすれ違うふたりの墨絵" loading="lazy" width="768" height="432" />
       <figcaption>
@@ -1222,7 +1242,7 @@
   </div>
 
   <div class="ng-item reveal">
-    <p class="ng-wish"><span class="ng-star" aria-hidden="true"></span>「この旅を、君に知らせたい。」</p>
+    <p class="ng-wish">「この旅を、君に知らせたい。」</p>
     <figure class="ng-fuda">
       <img src="img/kasanaru-ashiato.png?v=2" alt="重なりゆく足あとの墨絵" loading="lazy" width="768" height="432" />
       <figcaption>
@@ -1712,6 +1732,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=30"></script>
+<script src="app.js?v=31"></script>
 </body>
 </html>

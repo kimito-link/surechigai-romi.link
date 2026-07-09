@@ -204,6 +204,7 @@
         case 'boushi': { var b=document.getElementById('boushi'); if(b){ showFxEl(b,4000); b.classList.remove('fly'); void b.offsetWidth; b.classList.add('fly'); } break; }
         case 'yakiimo': showFxEl(els.yakiimo,6000); break;
         case 'nagareboshi': shootStar(); break;
+        case 'hoshi-nagare': if(hoshizora) hoshizora.nagare(); break;   /* 結章のCanvas星景に流れ星 */
       }
     }
 
@@ -278,10 +279,8 @@
       'oshi-no-michi':'img/oshi-no-michi.png?v=2', 'toki-no-surechigai':'img/toki-no-surechigai.png?v=2',
       'kienai-ashiato-aki':'img/kienai-ashiato-aki.png?v=2', 'fumidasu-ashi':'img/fumidasu-ashi.png',
       'ichigo-ashiato':'img/ichigo-ashiato.png',
-      /* 結章：雪道足跡＋星空夜道（山道で統一） */
-      'yuki-ashiato':'img/yuki-ashiato.png?v=2',
-      'hoshizora-michi-a':'img/hoshizora-michi-a.png?v=2', 'hoshizora-michi-b':'img/hoshizora-michi-b.png?v=2',
-      'hoshizora-michi-c':'img/hoshizora-michi-c.png?v=2' };
+      /* 結章：雪道足跡（星空の場面は hoshizora のCanvas星景に置換済み・写真は使わない） */
+      'yuki-ashiato':'img/yuki-ashiato.png?v=2' };
     var pfStage=document.getElementById('photoStage'), pfA=document.getElementById('pfA'), pfB=document.getElementById('pfB');
     var pfFront=pfA, pfBack=pfB, curBg=null;
     /* 先読み（チラつき防止） */
@@ -301,6 +300,9 @@
        序章・雪道・夏夜など暗い章で、ふっと風の刃が走り「かまいたちの夜」の質感を添える。 */
     if(!reduce){
       document.querySelectorAll('.story.night').forEach(function(s){
+        /* 星景の章は除外：kamaは高さ100vhの in-flow 要素で、星空ホルダーを1画面押し下げてしまう。
+           実写級の星空に風の刃も不要。 */
+        if(s.classList.contains('hoshizora-scene')) return;
         if(s.querySelector('.kama')) return;
         var kama=document.createElement('div'); kama.className='kama'; kama.setAttribute('aria-hidden','true');
         kama.innerHTML='<div class="ha"></div><div class="ha"></div><div class="ha"></div><div class="flash"></div>';
@@ -1012,6 +1014,296 @@
           if(raf) cancelAnimationFrame(raf);
         }
       };
+    })();
+
+    /* ===== 星景（結章の流れ星＋願・叶の夜空）＝実写級のCanvas星空 =====
+       墨絵雲(hoshizora-michi)＋3pxのCSS点だった流れ星の場面を「写真のような星景」に置き換える。
+       ・ベース(空のグラデ・天の川・星屑・富士と湖)はオフスクリーンへ一度だけ描く
+       ・毎フレームは明るい星の瞬き(スプライト転写)と流れ星だけ＝軽量
+       ・mizuと同じ流儀: 見えている間だけ回し、離れたら止める
+       ・reduced-motion: 静止した星空を一度だけ描く(瞬き・流星なし) */
+    var hoshizora=(function(){
+      var DPR=Math.min(2,window.devicePixelRatio||1);
+      var PAL=[[200,214,255],[226,234,255],[255,246,228],[255,228,196],[255,208,176]]; /* 色温度: 青白→赤橙 */
+      /* 瞬き用グロースプライト（色ごとに1枚だけ作り、毎フレームは転写のみ） */
+      var sprites=PAL.map(function(c){
+        var s=document.createElement('canvas'); s.width=s.height=32;
+        var g=s.getContext('2d'), gr=g.createRadialGradient(16,16,0,16,16,16);
+        gr.addColorStop(0,'rgba('+c[0]+','+c[1]+','+c[2]+',1)');
+        gr.addColorStop(0.3,'rgba('+c[0]+','+c[1]+','+c[2]+',.35)');
+        gr.addColorStop(1,'rgba('+c[0]+','+c[1]+','+c[2]+',0)');
+        g.fillStyle=gr; g.beginPath(); g.arc(16,16,16,0,7); g.fill();
+        return s;
+      });
+
+      function makeSky(cv, opts){
+        if(!cv) return null;
+        var ctx=cv.getContext('2d');
+        var W=0,H=0, base=document.createElement('canvas');
+        var twinkles=[], meteors=[], seed=0;
+        var running=false, raf=0, t0=0, last=0, nextAuto=2.5, builtOnce=false;
+        function rnd(){ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; }
+        var HILL=opts.ground?0.84:1.0;
+
+        function build(){
+          cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+          base.width=W*DPR; base.height=H*DPR;
+          var b=base.getContext('2d'); b.setTransform(DPR,0,0,DPR,0,0);
+          seed=opts.seed; twinkles=[];
+
+          /* 空のグラデーション（前後の章と溶ける端色は opts.stops で指定） */
+          var g=b.createLinearGradient(0,0,0,H);
+          opts.stops.forEach(function(s){ g.addColorStop(s[0],s[1]); });
+          b.fillStyle=g; b.fillRect(0,0,W,H);
+          if(opts.ground){
+            /* 大気光(airglow)と遠い街のほのかな暖色 */
+            var ag=b.createLinearGradient(0,H*0.62,0,H*HILL);
+            ag.addColorStop(0,'rgba(40,80,80,0)'); ag.addColorStop(0.8,'rgba(52,96,88,.10)'); ag.addColorStop(1,'rgba(64,104,88,.14)');
+            b.fillStyle=ag; b.fillRect(0,H*0.62,W,H*(HILL-0.62));
+            var hg=b.createRadialGradient(W*0.72,H*HILL,0, W*0.72,H*HILL,H*0.30);
+            hg.addColorStop(0,'rgba(120,92,52,.16)'); hg.addColorStop(1,'rgba(0,0,0,0)');
+            b.fillStyle=hg; b.fillRect(0,0,W,H);
+          }
+
+          /* 天の川：無数の星の集合が発光してゐる青白さ＋ダストレーンの黒い裂け目 */
+          var dim=opts.dim||1;
+          b.save();
+          b.translate(W*0.55,H*(opts.mwY||0.40)); b.rotate(opts.mwRot||-0.62);
+          b.globalCompositeOperation='lighter';
+          function band(n,sx,sy,rMin,rMax,alpha,hue){
+            for(var i=0;i<n;i++){
+              var x=(rnd()*2-1)*sx, y=(rnd()*2-1)*sy + Math.sin(x*0.004)*H*0.02;
+              var r=rMin+rnd()*(rMax-rMin);
+              var cg=b.createRadialGradient(x,y,0,x,y,r);
+              cg.addColorStop(0,'rgba('+hue+','+(alpha*dim*(0.55+rnd()*0.45)).toFixed(3)+')');
+              cg.addColorStop(1,'rgba('+hue+',0)');
+              b.fillStyle=cg; b.beginPath(); b.arc(x,y,r,0,7); b.fill();
+            }
+          }
+          band(48, W*0.85, H*0.15, 44, 110, 0.022, '120,150,205');
+          band(70, W*0.80, H*0.085,24,  64, 0.040, '150,178,225');
+          band(60, W*0.72, H*0.050,14,  40, 0.058, '184,204,240');
+          band(30, W*0.58, H*0.032, 9,  24, 0.070, '212,226,248');
+          band(16, W*0.30, H*0.030,10,  26, 0.055, '235,222,200'); /* 銀河中心方向の暖み */
+          for(var i=0;i<1400;i++){ /* 微星の粒子感 */
+            var x=(rnd()*2-1)*W*0.75, y=(rnd()*2-1)*H*0.065*(0.4+rnd()*0.6)+Math.sin(x*0.004)*H*0.02;
+            b.fillStyle='rgba(222,232,250,'+((0.06+Math.pow(rnd(),2)*0.30)*dim).toFixed(3)+')';
+            b.beginPath(); b.arc(x,y,0.3+rnd()*0.6,0,7); b.fill();
+          }
+          b.globalCompositeOperation='source-over';
+          for(var i=0;i<34;i++){ /* ダストレーン */
+            var x=(rnd()*2-1)*W*0.66, y=(rnd()*2-1)*H*0.024+H*0.014+Math.sin(x*0.004)*H*0.02;
+            var r=16+rnd()*38;
+            var dg=b.createRadialGradient(x,y,0,x,y,r);
+            dg.addColorStop(0,'rgba(2,5,12,'+(0.20+rnd()*0.16).toFixed(3)+')');
+            dg.addColorStop(1,'rgba(2,5,12,0)');
+            b.save(); b.scale(1,0.45); b.fillStyle=dg; b.beginPath(); b.arc(x,y/0.45,r,0,7); b.fill(); b.restore();
+          }
+          b.restore();
+
+          /* 星屑：等級分布(暗い星ほど多い)＋色温度。芯はシャープ、滲みは控えめ */
+          var N=Math.round(W*H/620);
+          for(var i=0;i<N;i++){
+            var x=rnd()*W, y=rnd()*H*HILL;
+            var m=Math.pow(rnd(),2.8);
+            var ci=Math.min(4,Math.floor(Math.pow(rnd(),1.6)*5)), c=PAL[ci];
+            var r=0.28+m*1.35, a=(0.16+m*0.84)*dim;
+            var sg=b.createRadialGradient(x,y,0,x,y,r*2.4);
+            sg.addColorStop(0,'rgba('+c[0]+','+c[1]+','+c[2]+','+(a*0.8).toFixed(3)+')');
+            sg.addColorStop(0.4,'rgba('+c[0]+','+c[1]+','+c[2]+','+(a*0.22).toFixed(3)+')');
+            sg.addColorStop(1,'rgba('+c[0]+','+c[1]+','+c[2]+',0)');
+            b.fillStyle=sg; b.beginPath(); b.arc(x,y,r*2.4,0,7); b.fill();
+            b.fillStyle='rgba(255,255,255,'+(a*0.9).toFixed(3)+')';
+            b.beginPath(); b.arc(x,y,Math.max(0.35,r*0.5),0,7); b.fill();
+            if(m>0.6 && twinkles.length<160) twinkles.push({x:x,y:y,r:r,ci:ci,a:a,ph:rnd()*6.28,sp:0.6+rnd()*1.4});
+          }
+          /* 一等星：ごく少数、細いディフラクションの十字 */
+          for(var i=0;i<5;i++){
+            var x=W*(0.08+rnd()*0.84), y=H*(0.06+rnd()*0.60);
+            var ci=Math.floor(rnd()*3), c=PAL[ci], r=1.6+rnd()*0.9;
+            var sg=b.createRadialGradient(x,y,0,x,y,r*4.5);
+            sg.addColorStop(0,'rgba('+c[0]+','+c[1]+','+c[2]+',.95)');
+            sg.addColorStop(0.3,'rgba('+c[0]+','+c[1]+','+c[2]+',.25)');
+            sg.addColorStop(1,'rgba('+c[0]+','+c[1]+','+c[2]+',0)');
+            b.fillStyle=sg; b.beginPath(); b.arc(x,y,r*4.5,0,7); b.fill();
+            b.strokeStyle='rgba('+c[0]+','+c[1]+','+c[2]+',.30)'; b.lineWidth=0.7;
+            b.beginPath(); b.moveTo(x-r*5.5,y); b.lineTo(x+r*5.5,y); b.moveTo(x,y-r*5.5); b.lineTo(x,y+r*5.5); b.stroke();
+            b.fillStyle='rgba(255,255,255,.96)'; b.beginPath(); b.arc(x,y,r*0.7,0,7); b.fill();
+            twinkles.push({x:x,y:y,r:r,ci:ci,a:1,ph:rnd()*6.28,sp:0.5+rnd()*0.8,big:true});
+          }
+
+          if(opts.ground){
+            /* 地上：富士のシルエット＋逆さ富士の湖＋一本道。夜景写真の黒つぶれ */
+            var hy=H*HILL;
+            var fx=W*0.40, fw=W*1.7, fh=H*0.085, ftop=hy-fh;
+            b.fillStyle='#050910';
+            b.beginPath();
+            b.moveTo(fx-fw/2, hy+2);
+            b.bezierCurveTo(fx-fw*0.26,hy-fh*0.12, fx-fw*0.13,hy-fh*0.55, fx-fw*0.040, ftop+fh*0.06);
+            b.lineTo(fx-fw*0.022, ftop);
+            b.lineTo(fx-fw*0.008, ftop+fh*0.06);   /* 火口の切り欠き */
+            b.lineTo(fx+fw*0.007, ftop+fh*0.015);
+            b.lineTo(fx+fw*0.026, ftop+fh*0.07);
+            b.bezierCurveTo(fx+fw*0.13,hy-fh*0.52, fx+fw*0.27,hy-fh*0.10, fx+fw/2, hy+2);
+            b.closePath(); b.fill();
+            var sn=b.createRadialGradient(fx,ftop+fh*0.10,0, fx,ftop+fh*0.10, fw*0.055);
+            sn.addColorStop(0,'rgba(150,170,205,.09)'); sn.addColorStop(1,'rgba(150,170,205,0)');
+            b.fillStyle=sn; b.beginPath(); b.arc(fx,ftop+fh*0.10,fw*0.055,0,7); b.fill();
+            /* 湖と逆さ富士 */
+            var lakeTop=hy+2, lakeBot=hy+H*0.055;
+            var wg=b.createLinearGradient(0,lakeTop,0,lakeBot);
+            wg.addColorStop(0,'#0c1626'); wg.addColorStop(0.5,'#0a1220'); wg.addColorStop(1,'#060b16');
+            b.fillStyle=wg; b.fillRect(0,lakeTop,W,lakeBot-lakeTop);
+            b.save();
+            b.translate(0,lakeTop*2); b.scale(1,-1); b.globalAlpha=0.25;
+            try{ b.filter='blur(2px)'; }catch(e){}
+            b.fillStyle='#04070f';
+            b.beginPath();
+            b.moveTo(fx-fw*0.20, lakeTop);
+            b.lineTo(fx-fw*0.022, lakeTop+(hy-ftop)*0.42);
+            b.lineTo(fx+fw*0.026, lakeTop+(hy-ftop)*0.42);
+            b.lineTo(fx+fw*0.20, lakeTop);
+            b.closePath(); b.fill();
+            try{ b.filter='none'; }catch(e){}
+            b.globalAlpha=1; b.restore();
+            for(var i=0;i<26;i++){ /* 水面に映る星のちらつき */
+              b.fillStyle='rgba(190,205,235,'+(0.05+rnd()*0.10).toFixed(3)+')';
+              b.fillRect(rnd()*W, lakeTop+rnd()*(lakeBot-lakeTop), 2+rnd()*7, 0.8);
+            }
+            /* 手前の丘と一本道 */
+            b.fillStyle='#02040a';
+            b.beginPath(); b.moveTo(0,H); b.lineTo(0,lakeBot);
+            var px=0; while(px<W){ px+=36+rnd()*56; b.lineTo(Math.min(px,W), lakeBot+Math.sin(px*0.006+2)*5+(rnd()*2-1)*3); }
+            b.lineTo(W,H); b.closePath(); b.fill();
+            b.fillStyle='rgba(52,70,98,.30)';
+            b.beginPath();
+            b.moveTo(W*0.42,H+2);
+            b.bezierCurveTo(W*0.55,H*0.975, W*0.46,H*0.94, W*0.492,lakeBot);
+            b.lineTo(W*0.508,lakeBot);
+            b.bezierCurveTo(W*0.52,H*0.945, W*0.60,H*0.98, W*0.56,H+2);
+            b.closePath(); b.fill();
+          }
+          builtOnce=true;
+        }
+
+        function drawStatic(){ ctx.clearRect(0,0,W,H); ctx.drawImage(base,0,0,W,H); }
+
+        function meteor(big){
+          if(reduce||!builtOnce) return;
+          var ang=(122+Math.random()*16)*Math.PI/180, speed=(big?1.5:1.15)+Math.random()*0.5;
+          meteors.push({
+            x:W*(0.30+Math.random()*0.62), y:H*(0.03+Math.random()*0.20),
+            vx:Math.cos(ang)*speed*H, vy:Math.sin(ang)*speed*H,
+            life:0, ttl:(big?0.85:0.6)+Math.random()*0.2,
+            len:((big?0.19:0.12)+Math.random()*0.05)*H,
+            w:(big?2.2:1.5),
+            hue: Math.random()<0.25 ? [190,240,200] : [255,250,238]  /* まれに緑がかる火球色 */
+          });
+        }
+
+        function frame(now){
+          if(!running) return;
+          var t=(now-t0)/1000, dt=Math.min(0.05,(now-last)/1000); last=now;
+          drawStatic();
+          ctx.globalCompositeOperation='lighter';
+          /* 瞬き：明るい星の上に呼吸する滲み（スプライト転写のみ＝軽い） */
+          for(var i=0;i<twinkles.length;i++){
+            var s=twinkles[i];
+            var tw=0.5+0.5*Math.sin(s.ph+t*s.sp*2.0);
+            var a=(s.big?0.30:0.26)*tw*s.a;
+            if(a<=0.02) continue;
+            var r=s.r*(s.big?3.5:2.6)*(0.8+0.4*tw);
+            ctx.globalAlpha=a; ctx.drawImage(sprites[s.ci], s.x-r, s.y-r, r*2, r*2);
+          }
+          ctx.globalAlpha=1;
+          /* 流れ星：白熱の頭＋尾の芯＋外側のグロー */
+          nextAuto-=dt;
+          if(nextAuto<=0){ meteor(Math.random()<0.3); nextAuto=opts.auto[0]+Math.random()*(opts.auto[1]-opts.auto[0]); }
+          for(var i=meteors.length-1;i>=0;i--){
+            var m=meteors[i]; m.life+=dt;
+            var k=m.life/m.ttl;
+            if(k>=1){ meteors.splice(i,1); continue; }
+            m.x+=m.vx*dt; m.y+=m.vy*dt;
+            var bright=k<0.10 ? k/0.10 : Math.pow(1-(k-0.10)/0.90,1.5);
+            var ul=Math.hypot(m.vx,m.vy), ux=m.vx/ul, uy=m.vy/ul;
+            var L=m.len*Math.min(1,k*3+0.3), tx=m.x-ux*L, ty=m.y-uy*L, hu=m.hue;
+            var lg2=ctx.createLinearGradient(m.x,m.y,tx,ty);
+            lg2.addColorStop(0,'rgba('+hu[0]+','+hu[1]+','+hu[2]+','+(0.30*bright).toFixed(3)+')');
+            lg2.addColorStop(1,'rgba('+hu[0]+','+hu[1]+','+hu[2]+',0)');
+            ctx.strokeStyle=lg2; ctx.lineWidth=m.w*2.2; ctx.lineCap='round';
+            ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(tx,ty); ctx.stroke();
+            var lg=ctx.createLinearGradient(m.x,m.y,tx,ty);
+            lg.addColorStop(0,'rgba(255,255,252,'+(0.98*bright).toFixed(3)+')');
+            lg.addColorStop(0.3,'rgba('+hu[0]+','+hu[1]+','+hu[2]+','+(0.5*bright).toFixed(3)+')');
+            lg.addColorStop(1,'rgba('+hu[0]+','+hu[1]+','+hu[2]+',0)');
+            ctx.strokeStyle=lg; ctx.lineWidth=m.w*0.9;
+            ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(tx,ty); ctx.stroke();
+            var hg2=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,m.w*9);
+            hg2.addColorStop(0,'rgba(255,255,252,'+(0.95*bright).toFixed(3)+')');
+            hg2.addColorStop(0.25,'rgba('+hu[0]+','+hu[1]+','+hu[2]+','+(0.40*bright).toFixed(3)+')');
+            hg2.addColorStop(1,'rgba('+hu[0]+','+hu[1]+','+hu[2]+',0)');
+            ctx.fillStyle=hg2; ctx.beginPath(); ctx.arc(m.x,m.y,m.w*9,0,7); ctx.fill();
+          }
+          ctx.globalCompositeOperation='source-over';
+          raf=requestAnimationFrame(frame);
+        }
+
+        /* content-visibility:auto でレイアウト前に呼ばれると寸法0のことがある→サイズが取れるまで待つ */
+        function size(){
+          var w=cv.clientWidth, h=cv.clientHeight;
+          if(!w||!h) return false;
+          /* モバイルURLバーの微変動(dvh)では作り直さない。幅か大きな高さ変化のみ再構築 */
+          if(builtOnce && w===W && Math.abs(h-H)<H*0.12) return true;
+          W=w; H=h; build(); return true;
+        }
+
+        return {
+          el:cv, meteor:meteor,
+          start:function(){
+            if(running) return; running=true;
+            (function boot(now){
+              if(!running) return;
+              if(!size()){ raf=requestAnimationFrame(boot); return; }
+              if(reduce){ drawStatic(); running=false; return; }
+              t0=last=performance.now(); raf=requestAnimationFrame(frame);
+            })();
+          },
+          stop:function(){ if(!running){ return; } running=false; if(raf) cancelAnimationFrame(raf); }
+        };
+      }
+
+      /* 結章の流れ星場面：富士と湖のある星景。願・叶：短冊の背後に星空だけ(端色は前後の章に合わせる) */
+      var A=makeSky(document.getElementById('hoshizoraCanvas'),
+        { seed:20260708, ground:true, auto:[3.5,7.5],
+          /* 上端は前の場面(逆さ月の暗い湖)と溶けるよう深い闇から始める */
+          stops:[[0,'#060d1d'],[0.30,'#040918'],[0.60,'#071226'],[0.80,'#0d1d36'],[1,'#17293f']] });
+      var B=makeSky(document.getElementById('negaiCanvas'),
+        { seed:20260711, ground:false, auto:[6,12], mwY:0.34, mwRot:-0.55, dim:0.92,
+          stops:[[0,'#0a1426'],[0.55,'#0c1830'],[1,'#0f1f3a']] });
+
+      /* 見えている間だけ回す */
+      if('IntersectionObserver' in window){
+        [A,B].forEach(function(sky){
+          if(!sky) return;
+          var host=sky.el.closest('section')||sky.el;
+          var io=new IntersectionObserver(function(es){ es.forEach(function(e){
+            if(e.isIntersecting) sky.start(); else sky.stop();
+          }); },{ rootMargin:'20% 0px' });
+          io.observe(host);
+        });
+        /* 願ひが灯るたび、流れ星がひとつ流れる（離れたら再訪で再発火） */
+        if(B){
+          var wio=new IntersectionObserver(function(es){ es.forEach(function(e){
+            if(e.isIntersecting){ if(!e.target.dataset.boshi){ e.target.dataset.boshi='1'; setTimeout(function(){ B.meteor(true); },500); } }
+            else{ e.target.dataset.boshi=''; }
+          }); },{ threshold:.5 });
+          document.querySelectorAll('.negai .ng-wish').forEach(function(w){ wio.observe(w); });
+        }
+      } else {
+        if(A) A.start(); if(B) B.start();
+      }
+
+      return { nagare:function(){ if(A) A.meteor(true); } };
     })();
 
     /* 幻燈（写し絵）：実アプリ画面の動画。タップ再生の本編＋app-intro内の微ループ。無音。 */
