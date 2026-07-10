@@ -533,6 +533,10 @@
 
   footer{ text-align:center; padding:clamp(40px,8vw,70px) 0 56px; color:var(--faint); font-size:12.5px; line-height:2.2; letter-spacing:.06em; position:relative; z-index:2 }
   footer a{ color:var(--ai); text-decoration:none; border-bottom:1px solid var(--line) }
+  .okuzuke{ display:flex; flex-direction:column; gap:6px; align-items:center; margin:clamp(24px,5vw,40px) auto 0; }
+  .okuzuke .ok-title{ font-family:var(--fude); font-size:12px; letter-spacing:.5em; text-indent:.5em; color:var(--kin); margin-bottom:4px; }
+  .okuzuke .ok-row{ font-family:var(--mincho); font-size:clamp(11.5px,3.2vw,13px); letter-spacing:.06em; color:var(--sumi-soft); }
+  .okuzuke .ok-row b{ font-weight:400; font-family:var(--fude); color:var(--sumi); letter-spacing:.2em; margin-right:.8em; }
   .footnote{ margin-top:14px; font-size:11.5px; color:var(--faint); line-height:2.1 }
   /* エンドロールの登場キャラクター（本物の3キャラ画像）。ふよふよ浮く。 */
   .chara-row{ display:flex; align-items:flex-end; justify-content:center; gap:clamp(6px,2vw,18px); margin:clamp(28px,6vw,46px) auto clamp(20px,5vw,36px); }
@@ -661,6 +665,25 @@
   .tomoshibi .zaiseki .jp{ width:100%; height:auto; display:block; filter:grayscale(1); opacity:.5; }
   .tomoshibi .tomo-hi{ position:absolute; width:6px; height:6px; border-radius:50%; background:var(--kin); box-shadow:0 0 8px var(--kin); animation:akari 2.4s ease-in-out infinite; }
   .tomoshibi .tb-tsugi{ position:relative; z-index:1; font-family:var(--fude); font-size:clamp(15px,4.2vw,18px); letter-spacing:.1em; color:#f0ead9; margin:clamp(28px,6vw,52px) auto 0; max-width:var(--maxw); line-height:1.9; }
+  /* 宛て札(手紙の宛名)と道連れの詞(三キャラの合いの手)。面紋はinline SVGのみ・画像不使用 */
+  .tomoshibi .tb-ate{ font-family:var(--mincho); font-size:clamp(11.5px,3.2vw,13px); letter-spacing:.24em; color:var(--kin); margin:0 auto 12px; max-width:var(--maxw); }
+  .tomoshibi .tsure{ display:flex; align-items:flex-start; gap:10px; width:min(80vw,340px); margin:clamp(18px,4vw,30px) auto 0; text-align:left; }
+  .tomoshibi .tsure-mon{ flex:0 0 34px; width:34px; height:34px; border-radius:50%; background:var(--washi); border:1px solid rgba(176,138,62,.5); display:grid; place-items:center; padding:5px; box-sizing:border-box; }
+  .tomoshibi .tsure-mon svg{ width:100%; height:100%; display:block; }
+  .tomoshibi .tsure-fuki{ font-family:var(--mincho); font-size:clamp(12.5px,3.3vw,14px); line-height:1.95; letter-spacing:.03em; color:#b8ccea; }
+  .tomoshibi .tsure-na{ font-family:var(--fude); font-weight:400; color:var(--kin); letter-spacing:.12em; margin-right:.5em; display:inline-block; }
+  /* 封筒の見本: 届く封書の中身の写し(見立て)。washi地に朱の帯・スタンプ返しまで一望 */
+  .tomoshibi .fuutou-mihon{ display:flex; flex-direction:column; gap:6px; width:min(88%,260px); margin:2px auto 12px; padding:12px 14px 10px; background:var(--washi-2); border:1px solid rgba(58,53,44,.45); border-top:3px solid var(--taisha); border-radius:2px; box-shadow:2px 3px 0 rgba(35,32,27,.18); text-align:left; }
+  .tomoshibi .fm-obi{ font-family:var(--fude); font-size:11px; letter-spacing:.3em; color:var(--taisha); }
+  .tomoshibi .fm-area{ font-family:var(--fude); font-weight:400; font-size:clamp(14.5px,3.9vw,16.5px); letter-spacing:.08em; color:var(--sumi); }
+  .tomoshibi .fm-tier{ font-family:var(--mincho); font-size:12px; letter-spacing:.06em; color:var(--sumi-soft); }
+  .tomoshibi .fm-stamps{ font-family:var(--mincho); font-size:12px; color:var(--sumi-soft); }
+  .tomoshibi .fm-stamps i{ font-style:normal; margin-left:4px; }
+  .tomoshibi .fm-mitate{ font-family:var(--mincho); font-size:10.5px; letter-spacing:.04em; color:var(--muted); border-top:1px dashed rgba(58,53,44,.3); padding-top:6px; margin-top:2px; }
+  .tomoshibi .tb-tegata{ display:inline-flex; align-items:center; gap:10px; margin:clamp(16px,4vw,24px) auto 0; padding:11px 20px;
+    background:var(--washi-2); border:1.5px solid var(--sumi-soft); border-radius:3px; box-shadow:2px 3px 0 rgba(35,32,27,.25);
+    font-family:var(--fude); color:var(--sumi); font-size:clamp(13.5px,3.7vw,15px); letter-spacing:.12em; text-decoration:none; }
+  .tomoshibi .tb-tegata .tg-in{ display:inline-grid; place-items:center; width:1.8em; height:1.8em; background:var(--taisha); color:#fff; font-size:12px; border-radius:2px; transform:rotate(-2deg); }
 
   /* ===== 幻燈（写し絵：実アプリ画面の動画を端末模型に額装。既存.ai-phone意匠を継承） ===== */
   .gento-phone{ width:clamp(200px,58vw,258px); aspect-ratio:132/270; margin:2px auto 12px;
@@ -1391,6 +1414,7 @@
 
   <!-- 場面一：宴に集ふ（カレンダー参加→オフ会→会場へ向かう） -->
   <div class="tb-scene" id="tb-utage">
+    <p class="tb-ate reveal">宛て――はじめて宴に参る君へ</p>
     <p class="tb-koujou reveal">「逢ひたい人の宴がある。されど、いつ、どこで、誰と行けばよいのか。」</p>
     <ol class="michiyuki">
       <li class="shukuba reveal">
@@ -1476,10 +1500,16 @@
         </figure>
       </li>
     </ol>
+    <div class="tsure reveal">
+      <span class="tsure-mon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a352c" stroke-width="1.3"><path d="M4 4 L8 8 Q12 6 16 8 L20 4 Q21 12 12 20 Q3 12 4 4 Z"/><circle cx="9" cy="12" r=".9" fill="#3a352c" stroke="none"/><circle cx="15" cy="12" r=".9" fill="#3a352c" stroke="none"/></svg></span>
+      <span class="tsure-fuki"><b class="tsure-na">道連れ・コンタ</b>「拙者、道にはとんと迷ふ性分。されど『ここへ向かふ』の札ひとつで、地図が立ち上がって連れて行ってくれた。」</span>
+    </div>
+    <a class="tb-tegata reveal" href="https://surechigai.kimito.link/sign-in"><span class="tg-in" aria-hidden="true">通</span>この道行き、けふ試みる ―― 𝕏 で旅をはじめる</a>
   </div>
 
   <!-- 場面二：灯を掲げて、待つ（配信者の凸待ち） -->
   <div class="tb-scene" id="tb-totsu">
+    <p class="tb-ate reveal">宛て――配信して、待つ君へ</p>
     <p class="tb-koujou reveal">「会ひに行くばかりが旅ではない。『いまやってゐる』と、どう報せるか。」</p>
     <ol class="michiyuki">
       <li class="shukuba reveal">
@@ -1538,11 +1568,13 @@
       <li class="shukuba reveal">
         <span class="sk-no">五の宿</span>
         <figure class="sk-fuda">
-          <svg class="sk-art" viewBox="0 0 88 60" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
-            <rect x="8" y="12" width="72" height="42" rx="2"/><path d="M8 14 L44 38 L80 14"/>
-            <path d="M8 52 Q26 46 44 52 Q62 58 80 52" stroke-width="1"/>
-            <circle cx="44" cy="30" r="4" fill="#b08a3e" stroke="none"/>
-          </svg>
+          <div class="fuutou-mihon" aria-label="すれ違ひの封筒(見立ての一葉)">
+            <span class="fm-obi">すれ違ひの封書</span>
+            <b class="fm-area">渋谷区にて、すれ違ひ、ひとつ。</b>
+            <span class="fm-tier">距たり――五百歩のうち</span>
+            <span class="fm-stamps">返しは、スタンプひとつでよい <i>👋</i><i>🌸</i><i>🍵</i></span>
+            <span class="fm-mitate">――見立ての一葉。実の画面は、結の宿の幻燈にて。</span>
+          </div>
           <figcaption>
             <b class="sk-name">封書が残る</b>
             <span class="sk-desc">近づけば、レーダーが互ひを映し、すれ違ひの封筒が残る。返すのは、スタンプひとつでよい。</span>
@@ -1566,10 +1598,16 @@
         </figure>
       </li>
     </ol>
+    <div class="tsure reveal">
+      <span class="tsure-mon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a352c" stroke-width="1.3"><circle cx="7" cy="6" r="2.4"/><circle cx="17" cy="6" r="2.4"/><circle cx="12" cy="13" r="8"/><ellipse cx="8.5" cy="12" rx="2.4" ry="1.7" fill="#3a352c" stroke="none" opacity=".8"/><ellipse cx="15.5" cy="12" rx="2.4" ry="1.7" fill="#3a352c" stroke="none" opacity=".8"/></svg></span>
+      <span class="tsure-fuki"><b class="tsure-na">道連れ・タヌ姉</b>「点すも消すも、ボタンひとつ。あたしは宴のあひだだけ、灯を点けてゐるよ。」</span>
+    </div>
+    <a class="tb-tegata reveal" href="https://surechigai.kimito.link/sign-in"><span class="tg-in" aria-hidden="true">通</span>この道行き、けふ試みる ―― 𝕏 で旅をはじめる</a>
   </div>
 
   <!-- 場面三：聖地を、巡る（推しの軌跡を聖地巡礼） -->
   <div class="tb-scene" id="tb-junrei">
+    <p class="tb-ate reveal">宛て――推しの跡を慕ふ君へ</p>
     <p class="tb-koujou reveal">「憧れの人の見た景色を、この目で見たい。されど、どの道を歩いたのか。」</p>
     <ol class="michiyuki">
       <li class="shukuba reveal">
@@ -1630,7 +1668,7 @@
       <li class="shukuba reveal">
         <span class="sk-no">五の宿</span>
         <figure class="sk-fuda">
-          <img class="sk-art" src="img/kasanaru-ashiato.png?v=2" alt="重なりゆく足あとの墨絵" loading="lazy" width="768" height="432" style="width:100%;border-radius:1px" />
+          <img class="sk-art" src="img/kasanaru-ashiato.png" alt="重なりゆく足あとの墨絵" loading="lazy" width="768" height="432" style="width:100%;border-radius:1px" />
           <figcaption>
             <b class="sk-name">便りを、出す</b>
             <span class="sk-desc">巡り終へたら、その軌跡を 𝕏 へ。次の巡礼者の、道しるべに。</span>
@@ -1641,19 +1679,24 @@
         <span class="sk-no">結の宿</span>
         <figure class="sk-fuda">
           <div class="gento-phone"><div class="gento-screen">
-            <img class="gento-poster" src="video/junrei-poster-v1.webp" alt="図鑑と軌跡の写し絵" loading="lazy" width="540" height="1170" />
-            <video class="gento-video" playsinline muted preload="none" width="540" height="1170" poster="video/junrei-poster-v1.webp">
-              <source src="video/junrei-v1.mp4" type="video/mp4" />
+            <img class="gento-poster" src="video/junrei-poster-v2.webp" alt="図鑑と軌跡の写し絵" loading="lazy" width="540" height="1170" />
+            <video class="gento-video" playsinline muted preload="none" width="540" height="1170" poster="video/junrei-poster-v2.webp">
+              <source src="video/junrei-v2.mp4" type="video/mp4" />
             </video>
             <button class="gento-miru" type="button" aria-label="幻燈を観る">観る</button>
           </div></div>
           <figcaption>
             <b class="sk-name">幻燈 ― 巡礼の写し絵</b>
-            <span class="sk-desc">国の図鑑から、歩いた道の地図まで。推しの軌跡をたどる、その実の画面。</span>
+            <span class="sk-desc">国の図鑑から、推しの頁（公開の書）、歩いた道の地図まで。推しの軌跡をたどる、その実の画面。</span>
           </figcaption>
         </figure>
       </li>
     </ol>
+    <div class="tsure reveal">
+      <span class="tsure-mon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a352c" stroke-width="1.3"><line x1="12" y1="2" x2="12" y2="4"/><ellipse cx="12" cy="12" rx="7" ry="8"/><line x1="5.5" y1="9" x2="18.5" y2="9"/><line x1="5.5" y1="15" x2="18.5" y2="15"/><line x1="12" y1="20" x2="12" y2="22"/><circle cx="12" cy="12" r="2.2" fill="#a8572f" stroke="none"/></svg></span>
+      <span class="tsure-fuki"><b class="tsure-na">道連れ・りんく</b>「わたしの通った道は、頁になってゐる。𝕏の名で、いつでも開ける。同じ景色を、見においで。」</span>
+    </div>
+    <a class="tb-tegata reveal" href="https://surechigai.kimito.link/sign-in"><span class="tg-in" aria-hidden="true">通</span>この道行き、けふ試みる ―― 𝕏 で旅をはじめる</a>
   </div>
 
   <!-- 幻燈（写し絵）：実アプリ画面の動画。道行きの結びに1つ。タップ再生・無音。 -->
@@ -1673,6 +1716,22 @@
           <figcaption>
             <b class="sk-name">幻燈 ― 道具をひと目で</b>
             <span class="sk-desc">絵空事にあらず。いま動いてゐる、実の画面である。現在地から暦、図鑑、そして歩いた道まで、ひと巻きに。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <li class="shukuba gento reveal">
+        <span class="sk-no">結の宿・弐</span>
+        <figure class="sk-fuda">
+          <div class="gento-phone"><div class="gento-screen">
+            <img class="gento-poster" src="video/mamoru-poster-v1.webp" alt="守りの設定画面の写し絵" loading="lazy" width="540" height="1170" />
+            <video class="gento-video" playsinline muted preload="none" width="540" height="1170" poster="video/mamoru-poster-v1.webp">
+              <source src="video/mamoru-v1.mp4" type="video/mp4" />
+            </video>
+            <button class="gento-miru" type="button" aria-label="幻燈を観る">観る</button>
+          </div></div>
+          <figcaption>
+            <b class="sk-name">幻燈 ― 守りの写し絵</b>
+            <span class="sk-desc">見せ方の按配、宿を隠す、灯を消す。名は明かしても寝屋は明かさぬ、その実の画面。</span>
           </figcaption>
         </figure>
       </li>
@@ -1956,6 +2015,14 @@
   </div>
 
   <p class="endroll-site"><a href="https://surechigai.kimito.link/sign-in">surechigai-romi.link</a></p>
+
+  <div class="okuzuke">
+    <span class="ok-title">奥付</span>
+    <span class="ok-row"><b>道具</b>三十一種――絵空事なし、みな今日も動く</span>
+    <span class="ok-row"><b>国</b>四十七州――灯の咲くのを待ってゐる</span>
+    <span class="ok-row"><b>幻燈</b>六巻――すべて実の画面の写し</span>
+    <span class="ok-row"><b>入り口</b>𝕏 ひとつ――ブラウザで今すぐ。ストアは支度中</span>
+  </div>
 
   <p class="footnote">
     ※「すれ違ひ通信」はニンテンドーDSの「すれちがい通信」体験へのオマージュです。任天堂とは関係ありません。<br />
