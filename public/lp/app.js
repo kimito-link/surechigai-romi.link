@@ -1339,6 +1339,38 @@
       window.addEventListener('scroll', shioriTick, { passive:true }); shioriTick();
     })();
 
+    /* お品書き(ハンバーガー): 開閉と、リンク選択・地(背景)タップ・Escで閉じる */
+    (function(){
+      var btn=document.getElementById('menuFuda'), nav=document.getElementById('oshinagaki');
+      if(!btn||!nav) return;
+      function setOpen(open){
+        body.classList.toggle('os-open', open);
+        btn.setAttribute('aria-expanded', open?'true':'false');
+        btn.setAttribute('aria-label', open?'お品書きを閉ぢる':'お品書きを開く');
+      }
+      btn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(!body.classList.contains('os-open')); });
+      nav.addEventListener('click', function(e){ if(e.target.closest('a') || e.target===nav) setOpen(false); });
+      window.addEventListener('keydown', function(e){ if(e.key==='Escape') setOpen(false); });
+    })();
+
+    /* フィナーレ: 夜空に触れると「キミの灯」がともる(参加の見立て・最大12灯) */
+    (function(){
+      var fin=document.getElementById('finale'); if(!fin) return;
+      var layer=fin.querySelector('.fin-hi-layer'); if(!layer) return;
+      var teCount=0;
+      fin.addEventListener('pointerdown', function(e){
+        if(e.target.closest('a,button')) return;
+        if(teCount>=12) return;
+        var r=layer.getBoundingClientRect();
+        if(!r.width) return;
+        var x=(e.clientX-r.left)/r.width*100, y=(e.clientY-r.top)/r.height*100;
+        if(x<0||x>100||y<0||y>100) return;
+        var s=document.createElement('span'); s.className='fin-hi oo te';
+        s.style.left=x+'%'; s.style.top=y+'%'; s.style.setProperty('--d','0s');
+        layer.appendChild(s); teCount++;
+      }, { passive:true });
+    })();
+
     /* 幻燈（写し絵）：実アプリ画面の動画。タップ再生の本編＋app-intro内の微ループ。無音。 */
     (function(){
       var saveData=false; try{ saveData=navigator.connection && navigator.connection.saveData; }catch(e){}

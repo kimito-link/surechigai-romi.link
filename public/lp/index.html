@@ -731,6 +731,34 @@
     text-decoration:none; box-shadow:-2px 2px 8px rgba(0,0,0,.25);
     opacity:0; pointer-events:none; transition:opacity .8s ease; }
   .shiori.on{ opacity:.92; pointer-events:auto; }
+  /* ===== お品書き(ハンバーガー): 章と道具へ跳ぶ常設メニュー ===== */
+  .menu-fuda{ position:fixed; top:clamp(10px,2.4vw,18px); left:clamp(10px,2.4vw,18px); z-index:60;
+    width:40px; height:40px; border-radius:50%; border:1px solid rgba(58,53,44,.5);
+    background:rgba(239,231,214,.92); cursor:pointer; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:5px; box-shadow:0 2px 10px rgba(0,0,0,.18); }
+  .menu-fuda .mf-line{ width:16px; height:1.5px; background:var(--sumi); border-radius:1px;
+    transition:transform .3s ease, opacity .3s ease; }
+  body.os-open .menu-fuda .mf-line:nth-child(1){ transform:translateY(6.5px) rotate(45deg); }
+  body.os-open .menu-fuda .mf-line:nth-child(2){ opacity:0; }
+  body.os-open .menu-fuda .mf-line:nth-child(3){ transform:translateY(-6.5px) rotate(-45deg); }
+  .oshinagaki{ position:fixed; inset:0; z-index:55; background:rgba(4,8,20,.94);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; visibility:hidden; transition:opacity .45s ease, visibility .45s ease; }
+  body.os-open .oshinagaki{ opacity:1; visibility:visible; }
+  .os-uchi{ width:min(86vw,360px); text-align:left; }
+  .os-dai{ font-family:var(--fude); font-size:13px; letter-spacing:.5em; text-indent:.5em; color:var(--kin); margin:0 0 1.6em; text-align:center; }
+  .os-item{ display:flex; align-items:baseline; gap:14px; padding:13px 4px; text-decoration:none;
+    border-bottom:1px solid rgba(176,138,62,.25); }
+  .os-item b{ font-family:var(--fude); font-weight:400; color:#f0ead9; font-size:clamp(17px,4.6vw,20px); letter-spacing:.14em; min-width:4.2em; }
+  .os-item span{ font-family:var(--mincho); color:#9fc0e6; font-size:clamp(11.5px,3.2vw,13px); letter-spacing:.04em; }
+  .os-item:hover b,.os-item:active b{ color:var(--kin); }
+  .os-cta{ display:block; margin-top:26px; text-align:center; font-family:var(--mincho);
+    font-size:clamp(14px,3.8vw,16px); letter-spacing:.08em; color:#fff; text-decoration:none;
+    background:linear-gradient(135deg,#3b6bd8,#6a4fd0); border-radius:26px; padding:13px 18px;
+    box-shadow:0 6px 24px rgba(80,110,220,.4); }
+  /* フィナーレ: 夜空に触れるとキミの灯がともる(参加の見立て) */
+  .finale .fin-te-hint{ display:block; margin-top:.8em; font-family:var(--mincho); font-size:12px; letter-spacing:.14em; color:#9fb4ce; }
+  .finale .fin-hi.te{ box-shadow:0 0 20px 8px rgba(255,223,138,.7); }
   /* 巻・携の総量チップ: 8タグの結び。金の縁で目録へ誘ふ */
   .app-intro .ai-feat-all{ color:var(--kin); border-color:rgba(176,138,62,.55); text-decoration:none; }
 
@@ -944,6 +972,22 @@
 
 <button class="oto muted" id="oto" aria-label="音の入り切り"><span class="on">♪</span><span class="off">♪̸</span></button>
 <div class="oto-hint" id="otoHint">画面にふれると、音が灯ります</div>
+<!-- お品書き: 章と道具へ跳ぶ常設メニュー(リンクは data-mkjump=lp-defer安全なジャンプ) -->
+<button class="menu-fuda" id="menuFuda" aria-label="お品書きを開く" aria-expanded="false" aria-controls="oshinagaki">
+  <span class="mf-line"></span><span class="mf-line"></span><span class="mf-line"></span>
+</button>
+<nav class="oshinagaki" id="oshinagaki" aria-label="お品書き">
+  <div class="os-uchi">
+    <p class="os-dai">お 品 書 き</p>
+    <a class="os-item" href="#hajimari" data-mkjump><b>序</b><span>物語のはじまり</span></a>
+    <a class="os-item" href="#negai" data-mkjump><b>願・叶</b><span>五つの願ひ＝主役の五機能</span></a>
+    <a class="os-item" href="#tomoshibi" data-mkjump><b>灯・逢</b><span>三つの道行きと幻燈(実の画面)</span></a>
+    <a class="os-item" href="#mokuroku" data-mkjump><b>附・目録</b><span>三十一の道具、六つの組</span></a>
+    <a class="os-item" href="#app-intro" data-mkjump><b>巻・携</b><span>アプリを懐に・シェア絵札</span></a>
+    <a class="os-item" href="#finale" data-mkjump><b>結</b><span>会いたい君がゐる現在地</span></a>
+    <a class="os-cta" href="https://surechigai.kimito.link/sign-in">𝕏 で、旅をはじめる</a>
+  </div>
+</nav>
 
 <div class="kisetsu-bar" aria-hidden="true">
   <span class="lbl">四季</span>
@@ -1041,7 +1085,7 @@
 </div>
 
 <!-- ════════════════ 序章・扉（冬の闇に語りが浮かぶ） ════════════════ -->
-<section class="novel reveal" data-scene="winter">
+<section class="novel reveal" id="hajimari" data-scene="winter">
   <div class="amanogawa" aria-hidden="true"></div>
   <svg class="silhouette" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
     <path d="M0 300 L0 180 Q150 120 300 160 T600 150 Q780 110 900 165 T1200 140 L1200 300 Z" fill="#060c18"/>
@@ -1264,7 +1308,7 @@
   </div>
 </section>
 <!-- ════════════════ 願・叶（流れ星に、五つの願ひ ＝ アプリの機能紹介） ════════════════ -->
-<section class="negai" data-scene="clear" aria-label="五つの願ひとアプリの機能">
+<section class="negai" id="negai" data-scene="clear" aria-label="五つの願ひとアプリの機能">
   <div class="negai-sky" aria-hidden="true"><canvas id="negaiCanvas"></canvas></div>
   <div class="ng-head reveal">
     <span class="ng-no">願 ・ 叶</span><span class="ng-label">― 流れ星に、五つの願ひ ―</span>
@@ -1335,7 +1379,7 @@
   <p class="ng-tsugi reveal">されど旅は、ひとりのものとは限らない。<br />――帳を、開かう。</p>
 </section>
 <!-- ════════════════ 灯・逢（皆で集ふ宴の帳 ＝ 宴・凸待ち・巡礼の道行き） ════════════════ -->
-<section class="tomoshibi lp-defer" data-scene="clear" aria-label="灯と逢瀬 宴・凸待ち・巡礼の道行き">
+<section class="tomoshibi lp-defer" id="tomoshibi" data-scene="clear" aria-label="灯と逢瀬 宴・凸待ち・巡礼の道行き">
   <div class="tb-head reveal">
     <span class="tb-no">灯 ・ 逢</span><span class="tb-label">― 皆で集ふ宴の帳 ―</span>
     <p class="tb-lead">ひとりの旅の願ひは、五つ書いた。<br />されど旅は、ひとりのものとは限らない。<br />宴の帳（とばり）を、三つの道行きでお目にかけよう。</p>
@@ -1737,7 +1781,7 @@
   <p class="mk-tsugi reveal">さて、この道中記、いづこで手に入る。</p>
 </section>
 <!-- ════════════════ 巻・携（アプリ紹介：この道中記を懐に） ════════════════ -->
-<section class="app-intro reveal" data-scene="clear" aria-label="アプリ紹介">
+<section class="app-intro reveal" id="app-intro" data-scene="clear" aria-label="アプリ紹介">
   <div class="ai-head"><span class="ai-no">巻 ・ 携</span><span class="ai-label">― この道中記を、いつでも懐に ―</span></div>
   <p class="ai-lead">五つの願ひも、宴の帳も、この一冊に。<br />いつでも、懐に。</p>
   <div class="ai-stage">
@@ -1797,7 +1841,7 @@
   </figure>
 </section>
 <!-- ════════════════ フィナーレ（夜空＋大きな日本地図＋アプリ導線） ════════════════ -->
-<section class="finale reveal">
+<section class="finale reveal" id="finale">
   <div class="fin-amanogawa" aria-hidden="true"></div>
   <div class="fin-stars" aria-hidden="true"></div>
   <!-- 星座（プラネタリウム風・控えめ） -->
@@ -1870,6 +1914,7 @@
     <img class="fin-rinku" src="img/chara/link-full.png" alt="りんく" width="492" height="750" />
     <p class="fin-catch">会いたい君がゐる、<br />現在地。</p>
     <p class="fin-q">― キミは今、どこにゐる？ ―</p>
+    <span class="fin-te-hint">――そっと夜空に触れてみられよ。キミの灯がともる。</span>
     <a class="fin-cta" href="https://surechigai.kimito.link/sign-in">𝕏 で、旅をはじめる</a>
     <span class="fin-sub">この夜空の、どこかですれ違った誰かへ。</span>
     <span class="fin-mitate">――旅人が満ちれば、灯はこの国のすみずみに。いま咲いた灯は、その〈もしも〉の夜。</span>
@@ -1917,6 +1962,6 @@
 
 <!-- 栞: 道中どこからでも目録(案内板)へ。1画面ぶんスクロールしたら淡く現れる(app.jsが.on付与) -->
 <a class="shiori" href="#mokuroku" data-mkjump aria-label="道具の目録へ">目 録</a>
-<script src="app.js?v=32"></script>
+<script src="app.js?v=33"></script>
 </body>
 </html>
