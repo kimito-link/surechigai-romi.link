@@ -720,6 +720,19 @@
   .mokuroku a.mk-sumi{ text-decoration:none; }
   .mokuroku a.mk-sumi:hover{ color:#dce6f2; border-color:#dce6f2; }
   .mokuroku .mk-soe{ font-family:var(--mincho); font-size:clamp(11.5px,3.2vw,12.5px); color:#8fa5c4; letter-spacing:.03em; margin:0 4px 16px; text-align:left; }
+  /* 願ひ札: 願・叶カードの裾から目録の組へ。絵より目立たない控えめな導線 */
+  .negai .ng-fuzoku{ font-family:var(--mincho); font-size:clamp(12px,3.2vw,13px); letter-spacing:.08em;
+    color:#8fa5c4; text-decoration:none; margin-top:-6px; transition:color .3s ease; }
+  .negai .ng-fuzoku:hover,.negai .ng-fuzoku:active{ color:#dce6f2; }
+  /* 栞: 右端固定の縦書き。和書の栞意匠(朱地・白抜き)。1画面スクロール後に淡く出現 */
+  .shiori{ position:fixed; right:0; top:38%; z-index:40; writing-mode:vertical-rl;
+    font-family:var(--fude); font-size:12.5px; letter-spacing:.28em; color:#fff;
+    background:var(--taisha); padding:13px 6px 15px; border-radius:3px 0 0 3px;
+    text-decoration:none; box-shadow:-2px 2px 8px rgba(0,0,0,.25);
+    opacity:0; pointer-events:none; transition:opacity .8s ease; }
+  .shiori.on{ opacity:.92; pointer-events:auto; }
+  /* 巻・携の総量チップ: 8タグの結び。金の縁で目録へ誘ふ */
+  .app-intro .ai-feat-all{ color:var(--kin); border-color:rgba(176,138,62,.55); text-decoration:none; }
 
   @media(prefers-reduced-motion:reduce){
     .tomoshibi .mukau-fuda .mf-needle{ transform:rotate(38deg); transition:none; }
@@ -1235,6 +1248,7 @@
         <span class="ng-desc">歩けば、正確な足あとが、ひとりでに残る。幾年たっても、思ひ出の辻まで、地図が連れ戻してくれる。</span>
       </figcaption>
     </figure>
+    <a class="ng-fuzoku" href="#mk-nokosu" data-mkjump>附・残すの組、三品を目録に ▼</a>
   </div>
 
   <div class="ng-item reveal" id="ng-fuutou">
@@ -1246,6 +1260,7 @@
         <span class="ng-desc">近くを通った人と、そっと、すれ違ふ。言葉の代はりに、封筒がひとつ。返すのは、スタンプただ一つでよい。</span>
       </figcaption>
     </figure>
+    <a class="ng-fuzoku" href="#mk-au" data-mkjump>附・逢ふの組、六品を目録に ▼</a>
   </div>
 
   <div class="ng-item reveal" id="ng-junrei">
@@ -1257,6 +1272,7 @@
         <span class="ng-desc">訪れた町が、切手帳のやうに貯まってゆく。憧れの人の軌跡をたどれば、旅は、巡礼になる。</span>
       </figcaption>
     </figure>
+    <a class="ng-fuzoku" href="#mk-meguru" data-mkjump>附・巡るの組、四品を目録に ▼</a>
   </div>
 
   <div class="ng-item reveal" id="ng-toki">
@@ -1268,6 +1284,7 @@
         <span class="ng-desc">三十日のうちに、同じ場所を踏んだ人とも、すれ違へる。同じ道は二度とないのに――道は、覚えてゐてくれる。</span>
       </figcaption>
     </figure>
+    <a class="ng-fuzoku" href="#mk-au" data-mkjump>附・逢ふの組、六品を目録に ▼</a>
   </div>
 
   <div class="ng-item reveal" id="ng-tayori">
@@ -1279,6 +1296,7 @@
         <span class="ng-desc">道中記は、そのまま 𝕏 で分かち合へる。届くのはただ一行――会いたい君がゐる、現在地。</span>
       </figcaption>
     </figure>
+    <a class="ng-fuzoku" href="#mk-shiraseru" data-mkjump>附・報せるの組、二品を目録に ▼</a>
   </div>
 
   <p class="ng-atogaki reveal">なほ――居どころをそっと知らせる灯も、灯を消して隠れる術も、皆で集ふ宴の帳も、この一巻に。</p>
@@ -1726,6 +1744,7 @@
     <span class="ai-feat">宴の帳</span>
     <span class="ai-feat">灯の在り処</span>
     <span class="ai-feat">ここへ向かふ</span>
+    <a class="ai-feat ai-feat-all" href="#mokuroku" data-mkjump>ほか、三十一の道具すべて ▲</a>
   </div>
 </section>
 <!-- ════════════════ フィナーレ（夜空＋大きな日本地図＋アプリ導線） ════════════════ -->
@@ -1796,6 +1815,8 @@
   </p>
 </footer>
 
+<!-- 栞: 道中どこからでも目録(案内板)へ。1画面ぶんスクロールしたら淡く現れる(app.jsが.on付与) -->
+<a class="shiori" href="#mokuroku" data-mkjump aria-label="道具の目録へ">目 録</a>
 <script src="app.js?v=32"></script>
 </body>
 </html>

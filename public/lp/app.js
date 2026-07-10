@@ -1327,6 +1327,17 @@
         requestAnimationFrame(step);
       })();
     });
+    /* 栞: 1画面ぶんスクロールしたら淡く現れる。目録が見えている間は引っ込む(行き先に居るのに栞は要らない) */
+    (function(){
+      var shiori=document.querySelector('.shiori'); if(!shiori) return;
+      var mkSec=document.getElementById('mokuroku');
+      function shioriTick(){
+        var on = window.scrollY > window.innerHeight;
+        if(on && mkSec){ var r=mkSec.getBoundingClientRect(); if(r.top < window.innerHeight && r.bottom > 0) on=false; }
+        shiori.classList.toggle('on', on);
+      }
+      window.addEventListener('scroll', shioriTick, { passive:true }); shioriTick();
+    })();
 
     /* 幻燈（写し絵）：実アプリ画面の動画。タップ再生の本編＋app-intro内の微ループ。無音。 */
     (function(){
