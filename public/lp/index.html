@@ -533,6 +533,10 @@
 
   footer{ text-align:center; padding:clamp(40px,8vw,70px) 0 56px; color:var(--faint); font-size:12.5px; line-height:2.2; letter-spacing:.06em; position:relative; z-index:2 }
   footer a{ color:var(--ai); text-decoration:none; border-bottom:1px solid var(--line) }
+  .okuzuke{ display:flex; flex-direction:column; gap:6px; align-items:center; margin:clamp(24px,5vw,40px) auto 0; }
+  .okuzuke .ok-title{ font-family:var(--fude); font-size:12px; letter-spacing:.5em; text-indent:.5em; color:var(--kin); margin-bottom:4px; }
+  .okuzuke .ok-row{ font-family:var(--mincho); font-size:clamp(11.5px,3.2vw,13px); letter-spacing:.06em; color:var(--sumi-soft); }
+  .okuzuke .ok-row b{ font-weight:400; font-family:var(--fude); color:var(--sumi); letter-spacing:.2em; margin-right:.8em; }
   .footnote{ margin-top:14px; font-size:11.5px; color:var(--faint); line-height:2.1 }
   /* エンドロールの登場キャラクター（本物の3キャラ画像）。ふよふよ浮く。 */
   .chara-row{ display:flex; align-items:flex-end; justify-content:center; gap:clamp(6px,2vw,18px); margin:clamp(28px,6vw,46px) auto clamp(20px,5vw,36px); }
@@ -676,6 +680,10 @@
   .tomoshibi .fm-stamps{ font-family:var(--mincho); font-size:12px; color:var(--sumi-soft); }
   .tomoshibi .fm-stamps i{ font-style:normal; margin-left:4px; }
   .tomoshibi .fm-mitate{ font-family:var(--mincho); font-size:10.5px; letter-spacing:.04em; color:var(--muted); border-top:1px dashed rgba(58,53,44,.3); padding-top:6px; margin-top:2px; }
+  .tomoshibi .tb-tegata{ display:inline-flex; align-items:center; gap:10px; margin:clamp(16px,4vw,24px) auto 0; padding:11px 20px;
+    background:var(--washi-2); border:1.5px solid var(--sumi-soft); border-radius:3px; box-shadow:2px 3px 0 rgba(35,32,27,.25);
+    font-family:var(--fude); color:var(--sumi); font-size:clamp(13.5px,3.7vw,15px); letter-spacing:.12em; text-decoration:none; }
+  .tomoshibi .tb-tegata .tg-in{ display:inline-grid; place-items:center; width:1.8em; height:1.8em; background:var(--taisha); color:#fff; font-size:12px; border-radius:2px; transform:rotate(-2deg); }
 
   /* ===== 幻燈（写し絵：実アプリ画面の動画を端末模型に額装。既存.ai-phone意匠を継承） ===== */
   .gento-phone{ width:clamp(200px,58vw,258px); aspect-ratio:132/270; margin:2px auto 12px;
@@ -1496,6 +1504,7 @@
       <span class="tsure-mon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a352c" stroke-width="1.3"><path d="M4 4 L8 8 Q12 6 16 8 L20 4 Q21 12 12 20 Q3 12 4 4 Z"/><circle cx="9" cy="12" r=".9" fill="#3a352c" stroke="none"/><circle cx="15" cy="12" r=".9" fill="#3a352c" stroke="none"/></svg></span>
       <span class="tsure-fuki"><b class="tsure-na">道連れ・コンタ</b>「拙者、道にはとんと迷ふ性分。されど『ここへ向かふ』の札ひとつで、地図が立ち上がって連れて行ってくれた。」</span>
     </div>
+    <a class="tb-tegata reveal" href="https://surechigai.kimito.link/sign-in"><span class="tg-in" aria-hidden="true">通</span>この道行き、けふ試みる ―― 𝕏 で旅をはじめる</a>
   </div>
 
   <!-- 場面二：灯を掲げて、待つ（配信者の凸待ち） -->
@@ -1593,6 +1602,7 @@
       <span class="tsure-mon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a352c" stroke-width="1.3"><circle cx="7" cy="6" r="2.4"/><circle cx="17" cy="6" r="2.4"/><circle cx="12" cy="13" r="8"/><ellipse cx="8.5" cy="12" rx="2.4" ry="1.7" fill="#3a352c" stroke="none" opacity=".8"/><ellipse cx="15.5" cy="12" rx="2.4" ry="1.7" fill="#3a352c" stroke="none" opacity=".8"/></svg></span>
       <span class="tsure-fuki"><b class="tsure-na">道連れ・タヌ姉</b>「点すも消すも、ボタンひとつ。あたしは宴のあひだだけ、灯を点けてゐるよ。」</span>
     </div>
+    <a class="tb-tegata reveal" href="https://surechigai.kimito.link/sign-in"><span class="tg-in" aria-hidden="true">通</span>この道行き、けふ試みる ―― 𝕏 で旅をはじめる</a>
   </div>
 
   <!-- 場面三：聖地を、巡る（推しの軌跡を聖地巡礼） -->
@@ -1686,6 +1696,7 @@
       <span class="tsure-mon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a352c" stroke-width="1.3"><line x1="12" y1="2" x2="12" y2="4"/><ellipse cx="12" cy="12" rx="7" ry="8"/><line x1="5.5" y1="9" x2="18.5" y2="9"/><line x1="5.5" y1="15" x2="18.5" y2="15"/><line x1="12" y1="20" x2="12" y2="22"/><circle cx="12" cy="12" r="2.2" fill="#a8572f" stroke="none"/></svg></span>
       <span class="tsure-fuki"><b class="tsure-na">道連れ・りんく</b>「わたしの通った道は、頁になってゐる。𝕏の名で、いつでも開ける。同じ景色を、見においで。」</span>
     </div>
+    <a class="tb-tegata reveal" href="https://surechigai.kimito.link/sign-in"><span class="tg-in" aria-hidden="true">通</span>この道行き、けふ試みる ―― 𝕏 で旅をはじめる</a>
   </div>
 
   <!-- 幻燈（写し絵）：実アプリ画面の動画。道行きの結びに1つ。タップ再生・無音。 -->
@@ -1988,6 +1999,14 @@
   </div>
 
   <p class="endroll-site"><a href="https://surechigai.kimito.link/sign-in">surechigai-romi.link</a></p>
+
+  <div class="okuzuke">
+    <span class="ok-title">奥付</span>
+    <span class="ok-row"><b>道具</b>三十一種――絵空事なし、みな今日も動く</span>
+    <span class="ok-row"><b>国</b>四十七州――灯の咲くのを待ってゐる</span>
+    <span class="ok-row"><b>幻燈</b>五巻――すべて実の画面の写し</span>
+    <span class="ok-row"><b>入り口</b>𝕏 ひとつ――ブラウザで今すぐ。ストアは支度中</span>
+  </div>
 
   <p class="footnote">
     ※「すれ違ひ通信」はニンテンドーDSの「すれちがい通信」体験へのオマージュです。任天堂とは関係ありません。<br />
