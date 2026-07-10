@@ -154,11 +154,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (rateLimit) {
     const retryAfter = Math.max(1, Math.ceil(rateLimit.retryAfterMs / 1000));
     res.setHeader("Retry-After", String(retryAfter));
-    res.status(429).json({
-      error: "rate_limited",
-      path: rateLimit.path,
-      retryAfter,
+    // tRPC(httpBatchLink+superjson)が解釈できるエラーエンベロープで返す(P1-2)。
+    // 素のJSON({error:"rate_limited"})はクライアントのリンク層で解釈できず
+    // 「予期しないエラー」に化けていた。この形なら toUserFriendlyError が
+    // TOO_MANY_REQUESTS/httpStatus:429 を拾って待機メッセージを出す。
+    const errorItem = (p: string) => ({
+      error: {
+        json: {
+          message: "リクエストが多すぎます。しばらく待ってから再度お試しください。",
+          code: -32029, // TRPC_ERROR_CODES_BY_KEY.TOO_MANY_REQUESTS
+          data: {
+            code: "TOO_MANY_REQUESTS",
+            httpStatus: 429,
+            path: p,
+            retryAfter,
+          },
+        },
+      },
     });
+    const isBatch = req.query?.batch === "1";
+    const paths = String(path).split(",");
+    res.status(429).json(isBatch ? paths.map((p) => errorItem(p)) : errorItem(path));
     return;
   }
 

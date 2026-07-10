@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 1;
+export const CDN_CACHE_EPOCH = 2; // 2026-07-10: チェックイン偽成功修正(P0-1)のクライアント判定を確実に配信するため+1
