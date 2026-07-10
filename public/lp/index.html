@@ -661,6 +661,13 @@
   .tomoshibi .zaiseki .jp{ width:100%; height:auto; display:block; filter:grayscale(1); opacity:.5; }
   .tomoshibi .tomo-hi{ position:absolute; width:6px; height:6px; border-radius:50%; background:var(--kin); box-shadow:0 0 8px var(--kin); animation:akari 2.4s ease-in-out infinite; }
   .tomoshibi .tb-tsugi{ position:relative; z-index:1; font-family:var(--fude); font-size:clamp(15px,4.2vw,18px); letter-spacing:.1em; color:#f0ead9; margin:clamp(28px,6vw,52px) auto 0; max-width:var(--maxw); line-height:1.9; }
+  /* 宛て札(手紙の宛名)と道連れの詞(三キャラの合いの手)。面紋はinline SVGのみ・画像不使用 */
+  .tomoshibi .tb-ate{ font-family:var(--mincho); font-size:clamp(11.5px,3.2vw,13px); letter-spacing:.24em; color:var(--kin); margin:0 auto 12px; max-width:var(--maxw); }
+  .tomoshibi .tsure{ display:flex; align-items:flex-start; gap:10px; width:min(80vw,340px); margin:clamp(18px,4vw,30px) auto 0; text-align:left; }
+  .tomoshibi .tsure-mon{ flex:0 0 34px; width:34px; height:34px; border-radius:50%; background:var(--washi); border:1px solid rgba(176,138,62,.5); display:grid; place-items:center; padding:5px; box-sizing:border-box; }
+  .tomoshibi .tsure-mon svg{ width:100%; height:100%; display:block; }
+  .tomoshibi .tsure-fuki{ font-family:var(--mincho); font-size:clamp(12.5px,3.3vw,14px); line-height:1.95; letter-spacing:.03em; color:#b8ccea; }
+  .tomoshibi .tsure-na{ font-family:var(--fude); font-weight:400; color:var(--kin); letter-spacing:.12em; margin-right:.5em; display:inline-block; }
 
   /* ===== 幻燈（写し絵：実アプリ画面の動画を端末模型に額装。既存.ai-phone意匠を継承） ===== */
   .gento-phone{ width:clamp(200px,58vw,258px); aspect-ratio:132/270; margin:2px auto 12px;
@@ -1391,6 +1398,7 @@
 
   <!-- 場面一：宴に集ふ（カレンダー参加→オフ会→会場へ向かう） -->
   <div class="tb-scene" id="tb-utage">
+    <p class="tb-ate reveal">宛て――はじめて宴に参る君へ</p>
     <p class="tb-koujou reveal">「逢ひたい人の宴がある。されど、いつ、どこで、誰と行けばよいのか。」</p>
     <ol class="michiyuki">
       <li class="shukuba reveal">
@@ -1476,10 +1484,15 @@
         </figure>
       </li>
     </ol>
+    <div class="tsure reveal">
+      <span class="tsure-mon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a352c" stroke-width="1.3"><path d="M4 4 L8 8 Q12 6 16 8 L20 4 Q21 12 12 20 Q3 12 4 4 Z"/><circle cx="9" cy="12" r=".9" fill="#3a352c" stroke="none"/><circle cx="15" cy="12" r=".9" fill="#3a352c" stroke="none"/></svg></span>
+      <span class="tsure-fuki"><b class="tsure-na">道連れ・コンタ</b>「拙者、道にはとんと迷ふ性分。されど『ここへ向かふ』の札ひとつで、地図が立ち上がって連れて行ってくれた。」</span>
+    </div>
   </div>
 
   <!-- 場面二：灯を掲げて、待つ（配信者の凸待ち） -->
   <div class="tb-scene" id="tb-totsu">
+    <p class="tb-ate reveal">宛て――配信して、待つ君へ</p>
     <p class="tb-koujou reveal">「会ひに行くばかりが旅ではない。『いまやってゐる』と、どう報せるか。」</p>
     <ol class="michiyuki">
       <li class="shukuba reveal">
@@ -1566,10 +1579,15 @@
         </figure>
       </li>
     </ol>
+    <div class="tsure reveal">
+      <span class="tsure-mon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a352c" stroke-width="1.3"><circle cx="7" cy="6" r="2.4"/><circle cx="17" cy="6" r="2.4"/><circle cx="12" cy="13" r="8"/><ellipse cx="8.5" cy="12" rx="2.4" ry="1.7" fill="#3a352c" stroke="none" opacity=".8"/><ellipse cx="15.5" cy="12" rx="2.4" ry="1.7" fill="#3a352c" stroke="none" opacity=".8"/></svg></span>
+      <span class="tsure-fuki"><b class="tsure-na">道連れ・タヌ姉</b>「点すも消すも、ボタンひとつ。あたしは宴のあひだだけ、灯を点けてゐるよ。」</span>
+    </div>
   </div>
 
   <!-- 場面三：聖地を、巡る（推しの軌跡を聖地巡礼） -->
   <div class="tb-scene" id="tb-junrei">
+    <p class="tb-ate reveal">宛て――推しの跡を慕ふ君へ</p>
     <p class="tb-koujou reveal">「憧れの人の見た景色を、この目で見たい。されど、どの道を歩いたのか。」</p>
     <ol class="michiyuki">
       <li class="shukuba reveal">
@@ -1654,6 +1672,10 @@
         </figure>
       </li>
     </ol>
+    <div class="tsure reveal">
+      <span class="tsure-mon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#3a352c" stroke-width="1.3"><line x1="12" y1="2" x2="12" y2="4"/><ellipse cx="12" cy="12" rx="7" ry="8"/><line x1="5.5" y1="9" x2="18.5" y2="9"/><line x1="5.5" y1="15" x2="18.5" y2="15"/><line x1="12" y1="20" x2="12" y2="22"/><circle cx="12" cy="12" r="2.2" fill="#a8572f" stroke="none"/></svg></span>
+      <span class="tsure-fuki"><b class="tsure-na">道連れ・りんく</b>「わたしの通った道は、頁になってゐる。𝕏の名で、いつでも開ける。同じ景色を、見においで。」</span>
+    </div>
   </div>
 
   <!-- 幻燈（写し絵）：実アプリ画面の動画。道行きの結びに1つ。タップ再生・無音。 -->
