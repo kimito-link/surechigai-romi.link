@@ -65,6 +65,21 @@
         { "goto": "/mypage", "wait": 2500 },
         { "scroll": { "px": 500, "durationMs": 3500 } }
       ]
+    },
+    {
+      "video": "mamoru-v1",
+      "auth": true,
+      "_desc": "守るの組: マイページの見せ方の按配/宿を隠す/灯を消す設定画面(約18秒)",
+      "steps": [
+        { "goto": "/", "wait": 2500 },
+        { "click": "a[href=\"/mypage\"]" },
+        { "wait": 2500 },
+        { "click": "button:has-text(\"設定\")" },
+        { "wait": 1200 },
+        { "scroll": { "px": 600, "durationMs": 4000 } },
+        { "wait": 800 },
+        { "scroll": { "px": 500, "durationMs": 3500 } }
+      ]
     }
   ]
 }
