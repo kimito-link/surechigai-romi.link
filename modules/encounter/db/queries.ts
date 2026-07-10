@@ -6,7 +6,7 @@
  * 純粋関数 (modules/encounter/core/*) とアプリコードとの橋渡しをする。
  */
 
-import { and, desc, eq, gte, inArray, isNull, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../../../drizzle/schema/index.js";
 import {
@@ -596,10 +596,13 @@ export async function getMyEncounters(
     .where(
       and(
         or(eq(encounters.userAId, selfUserId), eq(encounters.userBId, selfUserId)),
-        sql`${encounters.occurredAt} < ${cursorDate}`
+        /* 生sqlテンプレートにDateを直渡しするとdrizzleの型マッピングを迂回し、
+           postgres.jsが ERR_INVALID_ARG_TYPE で落ちる(本番encounter.listが常時500だった真因)。
+           必ず lt() 等の演算子で列の型マッピングを通すこと */
+        lt(encounters.occurredAt, cursorDate)
       )
     )
-    .orderBy(sql`${encounters.occurredAt} DESC`)
+    .orderBy(desc(encounters.occurredAt))
     .limit(20);
 
   // バッチ取得対象のパートナーID（ブロック相手は最初から除外）
