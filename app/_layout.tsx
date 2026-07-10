@@ -1,8 +1,8 @@
 import "@/lib/bootstrap/global-css";
 import "@/lib/bootstrap/reanimated-init";
 // @ts-nocheck
-import { usePathname } from "expo-router";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "expo-router";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppNavigationStack } from "@/components/providers/app-navigation-stack";
 import { Platform, View, Text } from "react-native";
 import { ThemeProvider } from "@/lib/theme-provider";
@@ -74,6 +74,49 @@ function useAuthProviderComponents(): AuthProviderComponents | null {
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
+
+/**
+ * ★ディープリンク自己復元(2026-07-11 実測バグの恒久対策):
+ * 認証プロバイダ(動的import)の解決時にラッパー構成が
+ * 「placeholder → OnboardingGate>ClerkRootProvider」へ切り替わる。Reactは親の型系譜が
+ * 変わった子を必ずアンマウントするため、stack(React Navigation一式)はこの瞬間に
+ * 再マウントされ、ナビゲーション状態が既定(先頭タブ"/")から作り直される。
+ * → 結果、認証済みユーザーの /map 等への直アクセスが例外なく "/" に落ちていた。
+ * Suspense/lazyを外しても「ラッパー差し替え=子の再マウント」は構造的に避けられないため、
+ * モジュール評価時(ルーターが動く前)に元のURLを捕捉し、再マウント後に "/" へ
+ * 戻されていたら一度だけ元のパスへ戻す。
+ */
+const INITIAL_WEB_PATH =
+  Platform.OS === "web" && typeof window !== "undefined"
+    ? `${window.location.pathname}${window.location.search}`
+    : null;
+
+function RestoreDeepLinkAfterAuthBoot() {
+  const router = useRouter();
+  const doneRef = useRef(false);
+  useEffect(() => {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    if (!INITIAL_WEB_PATH || INITIAL_WEB_PATH === "/") return;
+    // 再マウント直後はナビ状態のURL同期(replaceState)と競走になるため、
+    // 少し遅らせて2回だけ確認する。ユーザーが既に別タブへ自分で移動していた場合
+    // (pathnameが"/"でも初期パスでもない)は触らない。
+    const tryRestore = () => {
+      if (typeof window === "undefined") return;
+      const current = window.location.pathname;
+      if (current === "/" && INITIAL_WEB_PATH !== "/") {
+        router.replace(INITIAL_WEB_PATH as never);
+      }
+    };
+    const t1 = setTimeout(tryRestore, 50);
+    const t2 = setTimeout(tryRestore, 600);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [router]);
+  return null;
+}
 
 /** ClerkRootProvider chunk 解決待ちの一瞬だけ配る、安全な「ロード中」AuthState。 */
 const AUTH_LOADING_PLACEHOLDER: AuthState = {
@@ -227,7 +270,10 @@ export default function RootLayout() {
     const { ClerkRootProvider, OnboardingGate } = authProviders;
     appContent = (
       <OnboardingGate>
-        <ClerkRootProvider>{stack}</ClerkRootProvider>
+        <ClerkRootProvider>
+          {stack}
+          <RestoreDeepLinkAfterAuthBoot />
+        </ClerkRootProvider>
       </OnboardingGate>
     );
   } else {
