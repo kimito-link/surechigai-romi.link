@@ -699,6 +699,27 @@
   .mokuroku .mk-bu li b{ color:#e6eefa; font-weight:400; font-family:var(--fude); letter-spacing:.1em; margin-right:.6em; }
   .mokuroku .mk-sumi{ display:inline-block; font-size:10px; color:#9fc0e6; border:1px solid rgba(159,192,230,.4); border-radius:2px; padding:0 5px; margin-right:.5em; letter-spacing:.05em; }
   .mokuroku .mk-tsugi{ position:relative; z-index:1; font-family:var(--fude); font-size:clamp(16px,4.4vw,19px); letter-spacing:.12em; color:#f0ead9; margin:clamp(30px,6vw,52px) auto 0; }
+  /* ===== 道具絵図(案内板の顔)：六組×主役×品数のテキスト木札。画像・sticky・Canvas禁止 ===== */
+  .mokuroku .mk-ezu{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto clamp(24px,5vw,40px); }
+  .mokuroku .ez-koto{ font-family:var(--mincho); font-size:clamp(12px,3.2vw,13.5px); letter-spacing:.2em; color:#9fc0e6; margin:0 0 12px; }
+  .mokuroku .ez-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  @media(min-width:720px){ .mokuroku .ez-grid{ grid-template-columns:repeat(3,1fr); } }
+  .mokuroku .ez-kumi{ display:flex; flex-direction:column; align-items:center; gap:5px; text-decoration:none; text-align:center;
+    background:var(--washi); border:1px solid rgba(58,53,44,.55); border-top:1px solid var(--kin); border-radius:1px;
+    padding:13px 8px 11px; transition:border-color .3s ease; }
+  .mokuroku .ez-kumi:hover,.mokuroku .ez-kumi:active{ border-color:var(--taisha); }
+  .mokuroku .ez-na{ font-family:var(--fude); font-weight:400; color:var(--sumi); font-size:clamp(1.15rem,4vw,1.5rem); letter-spacing:.3em; text-indent:.3em; }
+  .mokuroku .ez-negai{ font-family:var(--mincho); color:var(--sumi-soft); font-size:clamp(10.5px,2.8vw,12px); line-height:1.7; letter-spacing:.02em; min-height:2.6em; display:flex; align-items:center; }
+  .mokuroku .ez-omo{ font-family:var(--fude); color:var(--sumi); font-size:clamp(11px,3vw,12.5px); letter-spacing:.12em; }
+  .mokuroku .ez-kazu{ font-family:var(--mincho); color:#fff; background:var(--taisha); font-size:10.5px; letter-spacing:.15em; padding:1px 9px; border-radius:2px; }
+  .mokuroku .ez-soe{ font-family:var(--mincho); font-size:clamp(12px,3.4vw,14px); line-height:2; letter-spacing:.05em; color:#b8ccea; margin:clamp(16px,4vw,24px) auto 0; }
+  /* 六組の見出し(組名の下に願ひの実文)と主役札・跨り添え書き */
+  .mokuroku .mk-kumi-na{ flex:1; display:flex; flex-direction:column; gap:2px; text-align:left; min-width:0; }
+  .mokuroku .mk-negai{ font-family:var(--mincho); font-size:clamp(10.5px,3vw,12px); letter-spacing:.03em; color:#9fc0e6; }
+  .mokuroku .mk-omo{ display:inline-block; font-size:10px; color:var(--sumi); background:var(--kin); border-radius:2px; padding:0 6px; margin-right:.5em; letter-spacing:.1em; font-family:var(--mincho); }
+  .mokuroku a.mk-sumi{ text-decoration:none; }
+  .mokuroku a.mk-sumi:hover{ color:#dce6f2; border-color:#dce6f2; }
+  .mokuroku .mk-soe{ font-family:var(--mincho); font-size:clamp(11.5px,3.2vw,12.5px); color:#8fa5c4; letter-spacing:.03em; margin:0 4px 16px; text-align:left; }
 
   @media(prefers-reduced-motion:reduce){
     .tomoshibi .mukau-fuda .mf-needle{ transform:rotate(38deg); transition:none; }
@@ -1205,7 +1226,7 @@
     <p class="ng-lead">あの夜、言ひそびれた願ひを、ここに書きつけておく。<br />短冊のやうに、五つ。</p>
   </div>
 
-  <div class="ng-item reveal">
+  <div class="ng-item reveal" id="ng-ashiato">
     <p class="ng-wish">「あの日の場所へ、もう一度。」</p>
     <figure class="ng-fuda">
       <img src="img/hitosuji.png?v=2" alt="雪原にのびる一本の足あとの墨絵" loading="lazy" width="768" height="432" />
@@ -1216,7 +1237,7 @@
     </figure>
   </div>
 
-  <div class="ng-item reveal">
+  <div class="ng-item reveal" id="ng-fuutou">
     <p class="ng-wish">「同じ道を行く誰かに、逢ひたい。」</p>
     <figure class="ng-fuda">
       <img src="img/futari-ashiato.png?v=2" alt="同じ道を行くふたりの足あとの墨絵" loading="lazy" width="768" height="432" />
@@ -1227,7 +1248,7 @@
     </figure>
   </div>
 
-  <div class="ng-item reveal">
+  <div class="ng-item reveal" id="ng-junrei">
     <p class="ng-wish">「あの人の見た景色を、この目で。」</p>
     <figure class="ng-fuda">
       <img src="img/oshi-no-michi.png?v=2" alt="慕わしい人の通った道の墨絵" loading="lazy" width="768" height="432" />
@@ -1238,7 +1259,7 @@
     </figure>
   </div>
 
-  <div class="ng-item reveal">
+  <div class="ng-item reveal" id="ng-toki">
     <p class="ng-wish">「時をたがへた君とも、すれ違ひたい。」</p>
     <figure class="ng-fuda">
       <img src="img/toki-no-surechigai.png?v=2" alt="橋の上で時を越えてすれ違うふたりの墨絵" loading="lazy" width="768" height="432" />
@@ -1249,7 +1270,7 @@
     </figure>
   </div>
 
-  <div class="ng-item reveal">
+  <div class="ng-item reveal" id="ng-tayori">
     <p class="ng-wish">「この旅を、君に知らせたい。」</p>
     <figure class="ng-fuda">
       <img src="img/kasanaru-ashiato.png?v=2" alt="重なりゆく足あとの墨絵" loading="lazy" width="768" height="432" />
@@ -1271,7 +1292,7 @@
   </div>
 
   <!-- 場面一：宴に集ふ（カレンダー参加→オフ会→会場へ向かう） -->
-  <div class="tb-scene">
+  <div class="tb-scene" id="tb-utage">
     <p class="tb-koujou reveal">「逢ひたい人の宴がある。されど、いつ、どこで、誰と行けばよいのか。」</p>
     <ol class="michiyuki">
       <li class="shukuba reveal">
@@ -1360,7 +1381,7 @@
   </div>
 
   <!-- 場面二：灯を掲げて、待つ（配信者の凸待ち） -->
-  <div class="tb-scene">
+  <div class="tb-scene" id="tb-totsu">
     <p class="tb-koujou reveal">「会ひに行くばかりが旅ではない。『いまやってゐる』と、どう報せるか。」</p>
     <ol class="michiyuki">
       <li class="shukuba reveal">
@@ -1450,7 +1471,7 @@
   </div>
 
   <!-- 場面三：聖地を、巡る（推しの軌跡を聖地巡礼） -->
-  <div class="tb-scene">
+  <div class="tb-scene" id="tb-junrei">
     <p class="tb-koujou reveal">「憧れの人の見た景色を、この目で見たい。されど、どの道を歩いたのか。」</p>
     <ol class="michiyuki">
       <li class="shukuba reveal">
@@ -1564,66 +1585,101 @@
 </section>
 
 <!-- ════════════════ 附・目録（三十一の道具 ＝ 全機能索引） ════════════════ -->
-<section class="mokuroku lp-defer" data-scene="clear" aria-label="全機能の目録">
+<!-- 附・目録＝案内板。7部→目的軸6組(docs/lp-feature-appeal-DESIGN.md C-1が割付の正)。
+     冒頭の道具絵図で「三十一の道具」の総量が3秒で見える。品名・説明文は改装前と完全一致(移動のみ)。 -->
+<section class="mokuroku lp-defer" id="mokuroku" data-scene="clear" aria-label="全機能の目録">
   <div class="mk-head reveal">
-    <span class="mk-no">附 ・ 目録</span><span class="mk-label">― 三十一の道具、すべてこの一巻に ―</span>
+    <span class="mk-no">附 ・ 目録</span><span class="mk-label">― 三十一の道具、六つの組に束ねて ―</span>
     <p class="mk-lead">押せば、開く。</p>
   </div>
-  <details class="mk-bu reveal"><summary>足あとの部<span class="mk-kazu">二品</span></summary>
+  <div class="mk-ezu reveal" id="ezu" role="navigation" aria-label="道具の絵図">
+    <p class="ez-koto">五つの願ひに、集ふと守るを添へて。</p>
+    <div class="ez-grid">
+      <a class="ez-kumi" href="#mk-nokosu" data-mkjump>
+        <b class="ez-na">残す</b>
+        <span class="ez-negai">あの日の場所へ、もう一度。</span>
+        <span class="ez-omo">足あとの記</span><span class="ez-kazu">三品</span>
+      </a>
+      <a class="ez-kumi" href="#mk-au" data-mkjump>
+        <b class="ez-na">逢ふ</b>
+        <span class="ez-negai">同じ道を行く誰かに、逢ひたい。</span>
+        <span class="ez-omo">すれ違ひの封筒</span><span class="ez-kazu">六品</span>
+      </a>
+      <a class="ez-kumi" href="#mk-tsudou" data-mkjump>
+        <b class="ez-na">集ふ</b>
+        <span class="ez-negai">逢ひたい人の宴へ、迷はず。</span>
+        <span class="ez-omo">宴の帳</span><span class="ez-kazu">十一品</span>
+      </a>
+      <a class="ez-kumi" href="#mk-meguru" data-mkjump>
+        <b class="ez-na">巡る</b>
+        <span class="ez-negai">あの人の見た景色を、この目で。</span>
+        <span class="ez-omo">図鑑と巡礼</span><span class="ez-kazu">四品</span>
+      </a>
+      <a class="ez-kumi" href="#mk-shiraseru" data-mkjump>
+        <b class="ez-na">報せる</b>
+        <span class="ez-negai">この旅を、君に知らせたい。</span>
+        <span class="ez-omo">便りは𝕏へ</span><span class="ez-kazu">二品</span>
+      </a>
+      <a class="ez-kumi" href="#mk-mamoru" data-mkjump>
+        <b class="ez-na">守る</b>
+        <span class="ez-negai">名は明かしても、寝屋は明かさぬ。</span>
+        <span class="ez-omo">見せ方の按配</span><span class="ez-kazu">五品</span>
+      </a>
+    </div>
+    <p class="ez-soe">絵空事は、一つもない。三十一とも、いま動いてゐる道具である。<br />iPhone も Android もパソコンも、ブラウザひとつで今すぐ。</p>
+  </div>
+  <details class="mk-bu reveal" id="mk-nokosu"><summary><span class="mk-kumi-na">残すの組<span class="mk-negai">「あの日の場所へ、もう一度。」</span></span><span class="mk-kazu">三品</span></summary>
     <ul>
-      <li><b>足あとの記</b><span class="mk-sumi">既出</span>歩けば正確な足あとが残り、消えない。幾年たっても思ひ出の辻へ。</li>
+      <li><b>足あとの記</b><span class="mk-omo">主役</span><a class="mk-sumi" href="#ng-ashiato" data-mkjump>絵↑</a>歩けば正確な足あとが残り、消えない。幾年たっても思ひ出の辻へ。</li>
       <li><b>軌跡の図</b>歩いた道が、地図の上に一筋の線となる。</li>
+      <li><b>道中の帳簿</b>足あとの数・すれ違ひ・訪れた国、この身の道行きが見える。</li>
     </ul>
   </details>
-  <details class="mk-bu reveal"><summary>すれ違ひの部<span class="mk-kazu">四品</span></summary>
+  <details class="mk-bu reveal" id="mk-au"><summary><span class="mk-kumi-na">逢ふの組<span class="mk-negai">「同じ道を行く誰かに、逢ひたい。――時をたがへた君とも。」</span></span><span class="mk-kazu">六品</span></summary>
     <ul>
-      <li><b>五つの距たり</b><span class="mk-sumi">既出</span>五百歩・三里・十里・五十里、そして時をたがへた三十日。五段の縁（えにし）ですれ違ふ。</li>
-      <li><b>すれ違ひの封筒</b><span class="mk-sumi">既出</span>すれ違へば、封書がひとつ届く。</li>
+      <li><b>すれ違ひの封筒</b><span class="mk-omo">主役</span><a class="mk-sumi" href="#ng-fuutou" data-mkjump>絵↑</a>すれ違へば、封書がひとつ届く。</li>
+      <li><b>五つの距たり</b><span class="mk-omo">主役</span><a class="mk-sumi" href="#ng-toki" data-mkjump>絵↑</a>五百歩・三里・十里・五十里、そして時をたがへた三十日。五段の縁（えにし）ですれ違ふ。</li>
       <li><b>一方の便り</b>返すのはスタンプただ一つ。言葉は要らぬ。</li>
       <li><b>ひとこと</b>百四十字の一言を添へる。荒き言葉は、あらかじめ濾（こ）される。</li>
+      <li><b>レーダー</b><a class="mk-sumi" href="#tb-totsu" data-mkjump>絵↑</a>盤上に、近くの人の気配が映る。</li>
+      <li><b>居場所の灯</b><a class="mk-sumi" href="#tb-totsu" data-mkjump>絵↑</a>点せば、近くの人に「ここに居る」が伝はる。</li>
     </ul>
   </details>
-  <details class="mk-bu reveal"><summary>宴の部<span class="mk-kazu">十品</span></summary>
+  <details class="mk-bu reveal" id="mk-tsudou"><summary><span class="mk-kumi-na">集ふの組<span class="mk-negai">「逢ひたい人の宴へ、迷はず行きたい。」</span></span><span class="mk-kazu">十一品</span></summary>
     <ul>
-      <li><b>宴を催す</b><span class="mk-sumi">既出</span>予定を暦に書きつける。</li>
-      <li><b>暦</b><span class="mk-sumi">既出</span>名乗らずとも、諸国の宴を覗ける。</li>
-      <li><b>在席の地図</b><span class="mk-sumi">既出</span>いま賑はふ宴が、国の灯で見える。</li>
-      <li><b>名乗り</b><span class="mk-sumi">既出</span>名・ひとこと・連れの数・参る国。</li>
+      <li><b>宴を催す</b><a class="mk-sumi" href="#tb-totsu" data-mkjump>絵↑</a>予定を暦に書きつける。</li>
+      <li><b>暦</b><a class="mk-sumi" href="#tb-utage" data-mkjump>絵↑</a>名乗らずとも、諸国の宴を覗ける。</li>
+      <li><b>名乗り</b><a class="mk-sumi" href="#tb-utage" data-mkjump>絵↑</a>名・ひとこと・連れの数・参る国。</li>
+      <li><b>合言葉の宴</b><a class="mk-sumi" href="#tb-utage" data-mkjump>絵↑</a>符牒が合へば、会場の在り処が開かれる。</li>
       <li><b>風の便り</b>前日に、そっと催促の報せが一度。</li>
-      <li><b>灯を点す</b><span class="mk-sumi">既出</span>ボタン一つで「今やってゐる」を宣（の）る。</li>
-      <li><b>合言葉の宴</b><span class="mk-sumi">既出</span>符牒が合へば、会場の在り処が開かれる。</li>
       <li><b>札分け</b>配信・凸待ち・オフ会、触れに印をつける。</li>
+      <li><b>灯を点す</b><a class="mk-sumi" href="#tb-totsu" data-mkjump>絵↑</a>ボタン一つで「今やってゐる」を宣（の）る。</li>
+      <li><b>在席の地図</b><a class="mk-sumi" href="#tb-utage" data-mkjump>絵↑</a>いま賑はふ宴が、国の灯で見える。</li>
       <li><b>国別の数</b>どの国にいくつの宴か、遠目に分かる。</li>
-      <li><b>連れの地図</b><span class="mk-sumi">既出</span>合言葉ひとつで、名乗らずとも皆の居どころを共に。</li>
+      <li><b>連れの地図</b><a class="mk-sumi" href="#tb-utage" data-mkjump>絵↑</a>合言葉ひとつで、名乗らずとも皆の居どころを共に。</li>
+      <li><b>ここへ向かふ</b><a class="mk-sumi" href="#tb-utage" data-mkjump>絵↑</a>札を押せば、Google と Apple の道案内がそのまま立ち上がる。</li>
     </ul>
   </details>
-  <details class="mk-bu reveal"><summary>道しるべの部<span class="mk-kazu">四品</span></summary>
+  <details class="mk-bu reveal" id="mk-meguru"><summary><span class="mk-kumi-na">巡るの組<span class="mk-negai">「あの人の見た景色を、この目で。」</span></span><span class="mk-kazu">四品</span></summary>
     <ul>
-      <li><b>ここへ向かふ</b><span class="mk-sumi">既出</span>札を押せば、Google と Apple の道案内がそのまま立ち上がる。</li>
-      <li><b>国の図鑑</b><span class="mk-sumi">既出</span>訪れた国に、切手が押されてゆく。</li>
-      <li><b>国別の人名帳</b><span class="mk-sumi">既出</span>その国に足を運んだ旅人が並ぶ。推しの聖地巡礼に。</li>
-      <li><b>賑はふ国</b><span class="mk-sumi">既出</span>いまどの国が盛んか、ひと目で。</li>
+      <li><b>国の図鑑</b><span class="mk-omo">主役</span><a class="mk-sumi" href="#ng-junrei" data-mkjump>絵↑</a>訪れた国に、切手が押されてゆく。</li>
+      <li><b>国別の人名帳</b><span class="mk-omo">主役</span><a class="mk-sumi" href="#tb-junrei" data-mkjump>絵↑</a>その国に足を運んだ旅人が並ぶ。推しの聖地巡礼に。</li>
+      <li><b>賑はふ国</b><a class="mk-sumi" href="#tb-junrei" data-mkjump>絵↑</a>いまどの国が盛んか、ひと目で。</li>
+      <li><b>頁（公開の書）</b><a class="mk-sumi" href="#tb-junrei" data-mkjump>絵↑</a>𝕏 の名がそのまま /u/… の頁になる。推しの最新地点を示す。</li>
     </ul>
+    <p class="mk-soe">巡礼の道しるべも、同じ「ここへ向かふ」ひとつ（集ふの組に在り）。</p>
   </details>
-  <details class="mk-bu reveal"><summary>灯の部<span class="mk-kazu">三品</span></summary>
+  <details class="mk-bu reveal" id="mk-shiraseru"><summary><span class="mk-kumi-na">報せるの組<span class="mk-negai">「この旅を、君に知らせたい。」</span></span><span class="mk-kazu">二品</span></summary>
     <ul>
-      <li><b>居場所の灯</b><span class="mk-sumi">既出</span>点せば、近くの人に「ここに居る」が伝はる。</li>
-      <li><b>レーダー</b><span class="mk-sumi">既出</span>盤上に、近くの人の気配が映る。</li>
-      <li><b>灯を消す</b>最長七十二刻（＝72時間）、足あとの記録を休められる。</li>
-    </ul>
-  </details>
-  <details class="mk-bu reveal"><summary>便りの部<span class="mk-kazu">四品</span></summary>
-    <ul>
-      <li><b>頁（公開の書）</b><span class="mk-sumi">既出</span>𝕏 の名がそのまま /u/… の頁になる。推しの最新地点を示す。</li>
-      <li><b>軌跡の便り</b><span class="mk-sumi">既出</span>歩いた道を、そのまま 𝕏 へ。</li>
+      <li><b>軌跡の便り</b><span class="mk-omo">主役</span><a class="mk-sumi" href="#ng-tayori" data-mkjump>絵↑</a>歩いた道を、そのまま 𝕏 へ。</li>
       <li><b>便りの緒（を）</b>共有の一筋を、ひと押しで結ぶ。</li>
-      <li><b>見せ方の按配</b>市区町村までか、正確にか。私（わたくし）・縁者・すれ違ひ・諸人（もろびと）、誰まで見せるか。</li>
     </ul>
   </details>
-  <details class="mk-bu reveal"><summary>心得の部<span class="mk-kazu">四品</span></summary>
+  <details class="mk-bu reveal" id="mk-mamoru"><summary><span class="mk-kumi-na">守るの組<span class="mk-negai">「名は明かしても、寝屋は明かさぬ。」</span></span><span class="mk-kazu">五品</span></summary>
     <ul>
+      <li><b>見せ方の按配</b>市区町村までか、正確にか。私（わたくし）・縁者・すれ違ひ・諸人（もろびと）、誰まで見せるか。</li>
       <li><b>宿を隠す</b>おのが寝屋（＝自宅）の在り処は、すれ違ひ相手にも隠せる。</li>
-      <li><b>道中の帳簿</b>足あとの数・すれ違ひ・訪れた国、この身の道行きが見える。</li>
+      <li><b>灯を消す</b>最長七十二刻（＝72時間）、足あとの記録を休められる。</li>
       <li><b>触れと戒め</b>心なき者は退けられ、三人の触れで自（おの）づと歩みが止まる。</li>
       <li><b>旅立ちの手引き</b>はじめての方には、道具の使ひ方をひとつずつ。</li>
     </ul>
@@ -1740,6 +1796,6 @@
   </p>
 </footer>
 
-<script src="app.js?v=31"></script>
+<script src="app.js?v=32"></script>
 </body>
 </html>

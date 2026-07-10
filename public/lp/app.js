@@ -1306,6 +1306,28 @@
       return { nagare:function(){ if(A) A.meteor(true); } };
     })();
 
+    /* ===== 目録(案内板)へのハッシュジャンプ: a[data-mkjump] =====
+       lp-defer(content-visibility)の章は、スクロールで実体化するたび高さが変はり座標がずれる。
+       一発の scrollIntoView では着地しないため、目標が画面上端に収まるまで毎フレーム補正して収束させる。
+       details への着地は開いてから(閉じた summary に着地させない)。 */
+    document.addEventListener('click', function(e){
+      var a = e.target.closest ? e.target.closest('a[data-mkjump]') : null; if(!a) return;
+      var id = (a.getAttribute('href')||'').slice(1);
+      var t = document.getElementById(id); if(!t) return;
+      e.preventDefault();
+      var d = t.closest('.lp-defer') || (t.classList.contains('lp-defer') ? t : null);
+      if(d) d.style.contentVisibility = 'visible';
+      if(t.tagName === 'DETAILS') t.open = true;
+      var tries = 0;
+      (function step(){
+        var r = t.getBoundingClientRect();
+        if(Math.abs(r.top - 16) < 4 || tries++ > 40) return;   /* 上端+16pxに収束 or 40フレームで打切り */
+        /* 'instant'必須: html{scroll-behavior:smooth}下で'auto'はsmooth扱いになり毎フレーム補正と競合する */
+        window.scrollBy({ top: r.top - 16, behavior: 'instant' });
+        requestAnimationFrame(step);
+      })();
+    });
+
     /* 幻燈（写し絵）：実アプリ画面の動画。タップ再生の本編＋app-intro内の微ループ。無音。 */
     (function(){
       var saveData=false; try{ saveData=navigator.connection && navigator.connection.saveData; }catch(e){}
