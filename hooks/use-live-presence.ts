@@ -91,6 +91,14 @@ export function useLivePresenceControls() {
   };
 }
 
+/**
+ * 実効的な居場所公開のON判定。
+ * 仕様(意図的・2026-07-11確認): サーバー設定が未ON(false)でも、位置opt-in済みで
+ * ユーザーが明示OFFにしていなければ true = 既定で灯を点す(「在席の地図」を賑わせる製品判断)。
+ * OFFの正はユーザーの明示操作(readLivePresenceUserOffSync)のみ。
+ * 監査P1-5でバッテリー負荷の指摘があったが、常駐は watch + MIN_PULSE_GAP のスロットルで
+ * 抑制済みのため仕様として維持。変えるときはこの製品判断ごと見直すこと。
+ */
 function useEffectiveLivePresenceEnabled(serverEnabled: boolean): boolean {
   const [optimistic, setOptimistic] = useState(readOptimisticLivePresenceDesired);
 

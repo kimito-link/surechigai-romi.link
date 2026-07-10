@@ -162,17 +162,9 @@ export async function shareToTwitter(
   }
 }
 
-/**
- * すれ違い体験をシェア（市区町村粒度OGP付き）
- */
-export async function shareEncounter(
-  areaName: string,
-  encounterId: string
-): Promise<boolean> {
-  const text = `${areaName}ですれ違いました！ ${APP_HASHTAG}`;
-  const url = `${getAppUrl()}/encounters/${encounterId}`;
-  return shareToTwitter(text, url, ["君斗りんくのすれ違ひ通信"]);
-}
+/* shareEncounter は削除済み(P2-1): 呼び出しゼロのデッドコードで、
+   生成URL /encounters/<id> に対応するルートも存在しなかった。
+   すれ違い共有を作る際は /u/<slug> 系(shareMyLocation)の文法に合わせること。 */
 
 /**
  * アプリをシェア

@@ -148,6 +148,8 @@ export default function CheckinAuthenticatedScreen() {
   const prewarmedFixRef = useRef<CheckinFix | null>(null);
   const lastFixRef = useRef<CheckinFix | null>(null);
   const activeLocationAbortRef = useRef<AbortController | null>(null);
+  /** 二重起動ガード(P2-3): stateの非同期反映を待たず同期で連打を弾く(二重INSERT/429対策) */
+  const checkinInFlightRef = useRef(false);
   const displayedSponsorKeyRef = useRef<string | null>(null);
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
   const [showSettings, setShowSettings] = useState(false);
@@ -398,6 +400,9 @@ export default function CheckinAuthenticatedScreen() {
 
   /** 測位して adjust または success/zero へ進む（state="adjust" の再測位からも呼ばれる） */
   const performLocateAndCheckin = useCallback(async () => {
+    if (checkinInFlightRef.current) return;
+    checkinInFlightRef.current = true;
+
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
@@ -420,6 +425,9 @@ export default function CheckinAuthenticatedScreen() {
       -1,
     );
 
+    /* controllerをtry外で持つ: catchでは「自分のセッション」だけをabortする(P1-6)。
+       refを介したabortだと、旧セッションのcatchが並行開始した新セッションを巻き添えにする */
+    let controller: AbortController | null = null;
     try {
       const authToken = await getAuthToken();
       if (!authToken) {
@@ -435,7 +443,7 @@ export default function CheckinAuthenticatedScreen() {
           : null;
 
       activeLocationAbortRef.current?.abort();
-      const controller = new AbortController();
+      controller = new AbortController();
       activeLocationAbortRef.current = controller;
 
       const locationResultPromise = retryFix
@@ -470,7 +478,7 @@ export default function CheckinAuthenticatedScreen() {
 
       await performCheckinSave(pos);
     } catch (err: unknown) {
-      activeLocationAbortRef.current?.abort();
+      controller?.abort();
       pulse.value = withTiming(1);
       setState("error");
 
@@ -481,7 +489,11 @@ export default function CheckinAuthenticatedScreen() {
       const msg = resolveCheckinErrorMessage(err, "位置情報の取得に失敗しました");
       setErrorMsg(msg);
     } finally {
-      activeLocationAbortRef.current = null;
+      /* 新測位が並行開始してrefを持ち替えていたら触らない(自分のcontrollerの時だけ掃除) */
+      if (activeLocationAbortRef.current === controller) {
+        activeLocationAbortRef.current = null;
+      }
+      checkinInFlightRef.current = false;
     }
   }, [
     performCheckinSave,
@@ -496,6 +508,8 @@ export default function CheckinAuthenticatedScreen() {
   /** adjust 状態で「この場所に足あとを残す」: 確定済み座標でそのまま保存 */
   const confirmAdjustedCheckin = useCallback(async () => {
     if (!checkinLatLng) return;
+    if (checkinInFlightRef.current) return;
+    checkinInFlightRef.current = true;
     setState("loading");
     try {
       lastFixRef.current = {
@@ -517,6 +531,8 @@ export default function CheckinAuthenticatedScreen() {
       }
       const msg = resolveCheckinErrorMessage(err, "チェックインに失敗しました");
       setErrorMsg(msg);
+    } finally {
+      checkinInFlightRef.current = false;
     }
   }, [checkinLatLng, checkinAccuracyM, performCheckinSave, pulse]);
 
