@@ -10,7 +10,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../../../server/_core/trpc.js";
-import { getDb } from "../../../server/db/connection.js";
+import { getDb, requireDb } from "../../../server/db/connection.js";
 import {
   getUserSettings,
   upsertUserSettings,
@@ -56,8 +56,7 @@ export const presenceRouter = router({
   setEnabled: protectedProcedure
     .input(z.object({ enabled: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) return { ok: true, enabled: input.enabled };
+      const db = await requireDb();
 
       if (input.enabled) {
         const settings = await getUserSettings(db, ctx.user.id);

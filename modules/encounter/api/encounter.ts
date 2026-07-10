@@ -12,7 +12,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../../../server/_core/trpc.js";
-import { getDb } from "../../../server/db/connection.js";
+import { getDb, requireDb } from "../../../server/db/connection.js";
 import { toGrid, toH3Cell, toH3R7, assertFiniteLatLng } from "../core/geo.js";
 import { findMatches } from "../core/matching.js";
 import { moderateText } from "../core/moderation.js";
@@ -235,8 +235,7 @@ export const encounterRouter = router({
   open: protectedProcedure
     .input(z.object({ encounterId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) return { ok: true };
+      const db = await requireDb();
       await openEncounter(db, ctx.user.id, input.encounterId);
       return { ok: true };
     }),
@@ -247,8 +246,7 @@ export const encounterRouter = router({
   react: protectedProcedure
     .input(z.object({ encounterId: z.number(), emoji: z.string().max(8) }))
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) return { ok: true };
+      const db = await requireDb();
 
       await db
         .insert(reactions)
@@ -284,8 +282,7 @@ export const encounterRouter = router({
         });
       }
 
-      const db = await getDb();
-      if (!db) return { ok: true };
+      const db = await requireDb();
 
       await db
         .update(users)

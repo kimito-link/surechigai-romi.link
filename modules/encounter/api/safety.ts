@@ -10,7 +10,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../../../server/_core/trpc.js";
-import { getDb } from "../../../server/db/connection.js";
+import { requireDb } from "../../../server/db/connection.js";
 import { blockUser, unblockUser, createReport } from "../db/queries.js";
 
 const REPORT_REASONS = [
@@ -34,8 +34,7 @@ export const safetyRouter = router({
         });
       }
 
-      const db = await getDb();
-      if (!db) return { ok: true };
+      const db = await requireDb();
       await blockUser(db, ctx.user.id, input.userId);
       return { ok: true };
     }),
@@ -46,8 +45,7 @@ export const safetyRouter = router({
   unblock: protectedProcedure
     .input(z.object({ userId: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) return { ok: true };
+      const db = await requireDb();
       await unblockUser(db, ctx.user.id, input.userId);
       return { ok: true };
     }),
@@ -72,8 +70,7 @@ export const safetyRouter = router({
         });
       }
 
-      const db = await getDb();
-      if (!db) return { ok: true };
+      const db = await requireDb();
 
       await createReport(db, {
         reporterId: ctx.user.id,

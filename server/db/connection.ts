@@ -56,6 +56,25 @@ export async function getDb(): Promise<DrizzleDB | null> {
   return _db;
 }
 
+/**
+ * 書き込み系(mutation)用: DB未接続を「成功」と偽装しない(P1-4)。
+ * getDb() が null なら INTERNAL_SERVER_ERROR を投げる。
+ * "Database not available" はクライアント toUserFriendlyError が
+ * DATABASE_NOT_AVAILABLE(再試行可)に写す既知文言。
+ * 読み取り系のフォールバック(空配列/null返し)には使わず、従来どおり getDb() を使う。
+ */
+export async function requireDb(): Promise<DrizzleDB> {
+  const db = await getDb();
+  if (!db) {
+    const { TRPCError } = await import("@trpc/server");
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Database not available",
+    });
+  }
+  return db;
+}
+
 // URL用のスラッグを生成する関数（互換性のため残す）
 export function generateSlug(title: string): string {
   const translations: Record<string, string> = {

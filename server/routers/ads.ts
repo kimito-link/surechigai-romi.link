@@ -8,7 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, count, desc, eq, gte, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc.js";
-import { getDb } from "../db/connection.js";
+import { getDb, requireDb } from "../db/connection.js";
 import {
   adStatsDaily,
   adUserDailyCaps,
@@ -267,8 +267,7 @@ export const adsRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) return { ok: true };
+      const db = await requireDb();
 
       try {
         await incrementCardDailyStat(input.cardId, todayKey(), input.event);

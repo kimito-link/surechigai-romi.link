@@ -9,7 +9,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../../../server/_core/trpc.js";
-import { getDb } from "../../../server/db/connection.js";
+import { getDb, requireDb } from "../../../server/db/connection.js";
 import { getUserSettings, upsertUserSettings } from "../db/queries.js";
 import { TRAIL_VISIBILITY_VALUES } from "../core/trail-visibility.js";
 
@@ -20,8 +20,7 @@ export const settingsRouter = router({
   pauseLocation: protectedProcedure
     .input(z.object({ hours: z.number().min(1).max(72) }))
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) return { ok: true };
+      const db = await requireDb();
 
       const pausedUntil = new Date(Date.now() + input.hours * 60 * 60 * 1000);
       await upsertUserSettings(db, ctx.user.id, {
@@ -35,8 +34,7 @@ export const settingsRouter = router({
    * 位置一時停止解除。
    */
   resume: protectedProcedure.mutation(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return { ok: true };
+    const db = await requireDb();
 
     await upsertUserSettings(db, ctx.user.id, {
       locationPausedUntil: null,
@@ -52,8 +50,7 @@ export const settingsRouter = router({
   setSharePrecision: protectedProcedure
     .input(z.object({ precise: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) return { ok: true, precise: input.precise };
+      const db = await requireDb();
 
       await upsertUserSettings(db, ctx.user.id, {
         shareLocationPrecise: input.precise,
@@ -72,8 +69,7 @@ export const settingsRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) return { ok: true, visibility: input.visibility };
+      const db = await requireDb();
 
       await upsertUserSettings(db, ctx.user.id, {
         trailVisibility: input.visibility,
