@@ -67,12 +67,10 @@ const hasAuth = hasUsableAuthState();
       test.skip(true, "位置情報が一時停止中のためスキップ");
     }
 
-    const checkinBtn = page.getByText("チェックイン", { exact: true });
-    const recheckBtn = page.getByText("もう一度チェックイン");
-    const target = (await checkinBtn.isVisible().catch(() => false))
-      ? checkinBtn
-      : recheckBtn;
-
+    // サイドバーのタブ名も同じ「チェックイン」なので getByText(exact) は誤爆する。
+    // 実際のCTAはボタンのaccessible name「チェックイン — 現在地を記録する」
+    // （初回）/「チェックイン — もう一度チェックイン」（再チェックイン）。
+    const target = page.getByRole("button", { name: /現在地を記録する|もう一度チェックイン/ });
     await target.click();
     await expect(
       page.getByText(/位置を取得中|記録中|取得中/),

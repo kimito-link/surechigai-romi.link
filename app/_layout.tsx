@@ -23,16 +23,47 @@ import { startDeferredWebBootstrap } from "@/lib/bootstrap/web-bootstrap";
 import { prefetchGuestTabChunks, prefetchHeavyTabChunks, prefetchGuestEventsImmediate } from "@/lib/bootstrap/prefetch-tab-chunks";
 import { isGuestAppWebRoute } from "@/lib/clerk-public-routes";
 import { GuestWebProviders } from "@/components/providers/guest-web-providers";
-import { GuestAuthProvider } from "@/lib/auth-context";
+import { GuestAuthProvider, AuthContextProvider, type AuthState } from "@/lib/auth-context";
 import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallback";
 import { GestureRoot } from "@/components/providers/gesture-root";
 import { WebDocumentHead } from "@/components/brand/web-document-head";
 
-const ClerkRootProvider = lazy(() =>
-  import("@/components/providers/clerk-root-provider").then((m) => ({
-    default: m.ClerkRootProvider,
-  })),
-);
+/**
+ * ★重要: ClerkRootProvider は lazy() ではなく手動 import で読み込む。
+ * 理由(2026-07-11 実測で発見した重大バグ): lazy()+Suspense で {stack}(=AppNavigationStack,
+ * React NavigationのStack/Tabs一式)を子として渡すと、chunk解決までの間 stack が
+ * Reactツリーから一度アンマウントされ、解決後に再マウントされる。この再マウント時に
+ * React Navigationが「URLに基づく初期state」ではなく既定のindex(=先頭タブ"index"/"/")
+ * から作り直され、window.history.replaceState('/') を呼ぶ。結果、認証済みユーザーが
+ * /map 等どのタブへ直接アクセス(フルページロード)しても例外なく "/" へ落ちる
+ * (タブクリックでの遷移は再マウントを経ないため無症状=長期間気づかれなかった)。
+ * 対策: chunk自体は動的importのまま(バンドル分割は維持)、Suspenseで stack を
+ * アンマウントさせず、モジュール解決を useState+useEffect で管理する。
+ */
+type ClerkRootProviderComponentType = (props: { children: ReactNode }) => ReactNode;
+let clerkRootProviderModulePromise: Promise<{
+  ClerkRootProvider: ClerkRootProviderComponentType;
+}> | null = null;
+function loadClerkRootProviderModule() {
+  if (!clerkRootProviderModulePromise) {
+    clerkRootProviderModulePromise = import("@/components/providers/clerk-root-provider");
+  }
+  return clerkRootProviderModulePromise;
+}
+function useClerkRootProviderComponent() {
+  const [Component, setComponent] = useState<ClerkRootProviderComponentType | null>(null);
+  useEffect(() => {
+    let canceled = false;
+    void loadClerkRootProviderModule().then((m) => {
+      if (!canceled) setComponent(() => m.ClerkRootProvider);
+    });
+    return () => {
+      canceled = true;
+    };
+  }, []);
+  return Component;
+}
+
 const OnboardingGate = lazy(() =>
   import("@/components/providers/onboarding-gate").then((m) => ({
     default: m.OnboardingGate,
@@ -41,6 +72,19 @@ const OnboardingGate = lazy(() =>
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
+
+/** ClerkRootProvider chunk 解決待ちの一瞬だけ配る、安全な「ロード中」AuthState。 */
+const AUTH_LOADING_PLACEHOLDER: AuthState = {
+  user: null,
+  loading: true,
+  error: null,
+  isAuthenticated: false,
+  isAuthReady: false,
+  isAuthReadyForUI: false,
+  refresh: async () => {},
+  logout: async () => {},
+  login: async () => {},
+};
 
 /**
  * +html.tsx が掛けたブートベール（data-auth-boot）を外す。
@@ -163,7 +207,10 @@ export default function RootLayout() {
   const clerkKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const isMissingClerkKey = !clerkKey;
 
+  // stack は「同一の要素インスタンス」としてどの分岐でも同じ位置に描画する。
+  // ClerkRootProvider の解決待ちを理由に stack ごとアンマウントしない(上のコメント参照)。
   const stack = <AppNavigationStack />;
+  const ClerkRootProviderComponent = useClerkRootProviderComponent();
 
   let shellContent: ReactNode;
   if (isMissingClerkKey) {
@@ -174,11 +221,14 @@ export default function RootLayout() {
         <GuestWebProviders>{stack}</GuestWebProviders>
       </GuestAuthProvider>
     );
+  } else if (ClerkRootProviderComponent) {
+    shellContent = <ClerkRootProviderComponent>{stack}</ClerkRootProviderComponent>;
   } else {
+    // chunk解決待ちの一瞬だけ: useAuth() が「AuthProvider外」で例外を投げないよう、
+    // isAuthReady=false の安全なプレースホルダ値を配る。stack はそのまま描画し続ける
+    // (これが今回の修正の要: stack を絶対にアンマウントしない)。
     shellContent = (
-      <Suspense fallback={<AppBootstrapFallback />}>
-        <ClerkRootProvider>{stack}</ClerkRootProvider>
-      </Suspense>
+      <AuthContextProvider value={AUTH_LOADING_PLACEHOLDER}>{stack}</AuthContextProvider>
     );
   }
 
