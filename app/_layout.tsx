@@ -2,7 +2,7 @@ import "@/lib/bootstrap/global-css";
 import "@/lib/bootstrap/reanimated-init";
 // @ts-nocheck
 import { usePathname } from "expo-router";
-import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AppNavigationStack } from "@/components/providers/app-navigation-stack";
 import { Platform, View, Text } from "react-native";
 import { ThemeProvider } from "@/lib/theme-provider";
@@ -24,7 +24,6 @@ import { prefetchGuestTabChunks, prefetchHeavyTabChunks, prefetchGuestEventsImme
 import { isGuestAppWebRoute } from "@/lib/clerk-public-routes";
 import { GuestWebProviders } from "@/components/providers/guest-web-providers";
 import { GuestAuthProvider, AuthContextProvider, type AuthState } from "@/lib/auth-context";
-import { AppBootstrapFallback } from "@/components/providers/app-bootstrap-fallback";
 import { GestureRoot } from "@/components/providers/gesture-root";
 import { WebDocumentHead } from "@/components/brand/web-document-head";
 
@@ -41,34 +40,37 @@ import { WebDocumentHead } from "@/components/brand/web-document-head";
  * アンマウントさせず、モジュール解決を useState+useEffect で管理する。
  */
 type ClerkRootProviderComponentType = (props: { children: ReactNode }) => ReactNode;
-let clerkRootProviderModulePromise: Promise<{
+type AuthProviderComponents = {
   ClerkRootProvider: ClerkRootProviderComponentType;
-}> | null = null;
-function loadClerkRootProviderModule() {
-  if (!clerkRootProviderModulePromise) {
-    clerkRootProviderModulePromise = import("@/components/providers/clerk-root-provider");
+  OnboardingGate: ClerkRootProviderComponentType;
+};
+let authProvidersPromise: Promise<AuthProviderComponents> | null = null;
+function loadAuthProviders(): Promise<AuthProviderComponents> {
+  if (!authProvidersPromise) {
+    authProvidersPromise = Promise.all([
+      import("@/components/providers/clerk-root-provider"),
+      import("@/components/providers/onboarding-gate"),
+    ]).then(([clerk, gate]) => ({
+      ClerkRootProvider: clerk.ClerkRootProvider,
+      OnboardingGate: gate.OnboardingGate,
+    }));
   }
-  return clerkRootProviderModulePromise;
+  return authProvidersPromise;
 }
-function useClerkRootProviderComponent() {
-  const [Component, setComponent] = useState<ClerkRootProviderComponentType | null>(null);
+/** ClerkRootProvider と OnboardingGate の両chunkが揃ったら一括で返す(揃うまで null)。 */
+function useAuthProviderComponents(): AuthProviderComponents | null {
+  const [components, setComponents] = useState<AuthProviderComponents | null>(null);
   useEffect(() => {
     let canceled = false;
-    void loadClerkRootProviderModule().then((m) => {
-      if (!canceled) setComponent(() => m.ClerkRootProvider);
+    void loadAuthProviders().then((m) => {
+      if (!canceled) setComponents(m);
     });
     return () => {
       canceled = true;
     };
   }, []);
-  return Component;
+  return components;
 }
-
-const OnboardingGate = lazy(() =>
-  import("@/components/providers/onboarding-gate").then((m) => ({
-    default: m.OnboardingGate,
-  })),
-);
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -208,37 +210,35 @@ export default function RootLayout() {
   const isMissingClerkKey = !clerkKey;
 
   // stack は「同一の要素インスタンス」としてどの分岐でも同じ位置に描画する。
-  // ClerkRootProvider の解決待ちを理由に stack ごとアンマウントしない(上のコメント参照)。
+  // 認証プロバイダ chunk の解決待ちを理由に stack ごとアンマウントしない(上のコメント参照)。
   const stack = <AppNavigationStack />;
-  const ClerkRootProviderComponent = useClerkRootProviderComponent();
+  const authProviders = useAuthProviderComponents();
 
-  let shellContent: ReactNode;
+  let appContent: ReactNode;
   if (isMissingClerkKey) {
-    shellContent = <MissingClerkKeyScreen />;
+    appContent = <MissingClerkKeyScreen />;
   } else if (useGuestWebShell) {
-    shellContent = (
+    appContent = (
       <GuestAuthProvider>
         <GuestWebProviders>{stack}</GuestWebProviders>
       </GuestAuthProvider>
     );
-  } else if (ClerkRootProviderComponent) {
-    shellContent = <ClerkRootProviderComponent>{stack}</ClerkRootProviderComponent>;
+  } else if (authProviders) {
+    const { ClerkRootProvider, OnboardingGate } = authProviders;
+    appContent = (
+      <OnboardingGate>
+        <ClerkRootProvider>{stack}</ClerkRootProvider>
+      </OnboardingGate>
+    );
   } else {
-    // chunk解決待ちの一瞬だけ: useAuth() が「AuthProvider外」で例外を投げないよう、
+    // 両chunk解決待ちの一瞬だけ: useAuth() が「AuthProvider外」で例外を投げないよう、
     // isAuthReady=false の安全なプレースホルダ値を配る。stack はそのまま描画し続ける
     // (これが今回の修正の要: stack を絶対にアンマウントしない)。
-    shellContent = (
+    // (tabs)配下の全画面は isAuthReady/isAuthReadyForUI でローディング分岐する既存設計。
+    appContent = (
       <AuthContextProvider value={AUTH_LOADING_PLACEHOLDER}>{stack}</AuthContextProvider>
     );
   }
-
-  const appContent = useGuestWebShell ? (
-    shellContent
-  ) : (
-    <Suspense fallback={<AppBootstrapFallback />}>
-      <OnboardingGate>{shellContent}</OnboardingGate>
-    </Suspense>
-  );
 
   const shouldOverrideSafeArea = Platform.OS === "web";
 
