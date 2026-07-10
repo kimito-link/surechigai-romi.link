@@ -24,6 +24,7 @@ import { prefetchGuestTabChunks, prefetchHeavyTabChunks, prefetchGuestEventsImme
 import { isGuestAppWebRoute } from "@/lib/clerk-public-routes";
 import { GuestWebProviders } from "@/components/providers/guest-web-providers";
 import { GuestAuthProvider, AuthContextProvider, type AuthState } from "@/lib/auth-context";
+import { TrpcReadyProvider } from "@/lib/trpc-ready-context";
 import { GestureRoot } from "@/components/providers/gesture-root";
 import { WebDocumentHead } from "@/components/brand/web-document-head";
 
@@ -297,11 +298,14 @@ export default function RootLayout() {
     );
   } else {
     // 両chunk解決待ちの一瞬だけ: useAuth() が「AuthProvider外」で例外を投げないよう、
-    // isAuthReady=false の安全なプレースホルダ値を配る。stack はそのまま描画し続ける
-    // (これが今回の修正の要: stack を絶対にアンマウントしない)。
+    // isAuthReady=false の安全なプレースホルダ値を配る。stack はそのまま描画し続ける。
     // (tabs)配下の全画面は isAuthReady/isAuthReadyForUI でローディング分岐する既存設計。
+    // TrpcReadyProvider(false)も必須: デフォルトはtrueのため、これが無いと
+    // LivePresenceBadge等のtRPCフック持ちが「Unable to find tRPC Context」で墜落する(実測)。
     appContent = (
-      <AuthContextProvider value={AUTH_LOADING_PLACEHOLDER}>{stack}</AuthContextProvider>
+      <TrpcReadyProvider value={false}>
+        <AuthContextProvider value={AUTH_LOADING_PLACEHOLDER}>{stack}</AuthContextProvider>
+      </TrpcReadyProvider>
     );
   }
 

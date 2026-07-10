@@ -5,6 +5,14 @@ import { hasUsableAuthState } from "./helpers/auth-state";
 // 空ファイル（ログイン未完了の残骸）はゲスト実行になるので「無い」扱いにする
 const hasAuth = hasUsableAuthState();
 
+// チェックイン実測に必須: ヘッドレスでは geolocation が既定で拒否され、
+// 測位失敗→エラー状態になり保存まで到達できない。渋谷駅前の固定座標を注入する
+// (実DBに idolfunch の実チェックインが1件できる=それ自体がP0-1保存経路の本番実測)。
+test.use({
+  permissions: ["geolocation"],
+  geolocation: { latitude: 35.6581, longitude: 139.7017, accuracy: 15 },
+});
+
 /**
  * ログイン済みセッション（.auth/auth-state.json）が必要。
  * 初回: pnpm e2e:auth-save を --headed で実行して X ログイン後に保存。
