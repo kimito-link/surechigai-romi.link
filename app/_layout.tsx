@@ -93,28 +93,47 @@ const INITIAL_WEB_PATH =
 
 function RestoreDeepLinkAfterAuthBoot() {
   const router = useRouter();
+  const pathname = usePathname();
   const doneRef = useRef(false);
+  const userInteractedRef = useRef(false);
+
+  // ユーザーが自分でタブ移動した場合は復元しない(意図の尊重)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mark = () => {
+      userInteractedRef.current = true;
+    };
+    window.addEventListener("pointerdown", mark, true);
+    window.addEventListener("keydown", mark, true);
+    return () => {
+      window.removeEventListener("pointerdown", mark, true);
+      window.removeEventListener("keydown", mark, true);
+    };
+  }, []);
+
+  // 固定タイマーではなく pathname の変化に反応する:
+  // chunk解決が遅い環境では "/" への転落がマウントから1秒以上後に起きるため、
+  // タイマー方式だと競走に負ける(実測)。転落を検知した瞬間に一度だけ復元する。
   useEffect(() => {
     if (doneRef.current) return;
-    doneRef.current = true;
-    if (!INITIAL_WEB_PATH || INITIAL_WEB_PATH === "/") return;
-    // 再マウント直後はナビ状態のURL同期(replaceState)と競走になるため、
-    // 少し遅らせて2回だけ確認する。ユーザーが既に別タブへ自分で移動していた場合
-    // (pathnameが"/"でも初期パスでもない)は触らない。
-    const tryRestore = () => {
-      if (typeof window === "undefined") return;
-      const current = window.location.pathname;
-      if (current === "/" && INITIAL_WEB_PATH !== "/") {
-        router.replace(INITIAL_WEB_PATH as never);
-      }
-    };
-    const t1 = setTimeout(tryRestore, 50);
-    const t2 = setTimeout(tryRestore, 600);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [router]);
+    if (!INITIAL_WEB_PATH || INITIAL_WEB_PATH === "/") {
+      doneRef.current = true;
+      return;
+    }
+    if (userInteractedRef.current) {
+      doneRef.current = true;
+      return;
+    }
+    // ブート起因の転落はページ読込から十数秒以内に起きる。それ以降は関与しない
+    if (typeof performance !== "undefined" && performance.now() > 15000) {
+      doneRef.current = true;
+      return;
+    }
+    if (pathname === "/") {
+      doneRef.current = true;
+      router.replace(INITIAL_WEB_PATH as never);
+    }
+  }, [pathname, router]);
   return null;
 }
 
