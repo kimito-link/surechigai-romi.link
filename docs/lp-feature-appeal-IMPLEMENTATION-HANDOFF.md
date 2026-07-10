@@ -1,5 +1,10 @@
 # 実装ハンドオフ: LP「全機能が伝わる」増強（目録→案内板昇格）
 
+> ✅ **実装完了・本番反映済み（2026-07-10）**: MVP=8e5e713c1、第2コミット（願ひ札/栞/巻・携チップ）=46e74d0fa。
+> 機械的完了判定は全green（li=31・品名集合一致・mkjump31本整合・sticky回帰なし・横はみ出しゼロ・tsc 0）。
+> 追記知見: `html{scroll-behavior:smooth}` 下では `scrollBy({behavior:'auto'})` もsmooth扱いになるため、
+> lp-defer章を跨ぐ毎フレーム補正ジャンプは **behavior:'instant' 必須**（app.jsの data-mkjump ハンドラ参照）。
+
 > この1枚だけで着手できる。設計正本: `docs/lp-feature-appeal-DESIGN.md`（設計=Fable/裏取り=司令塔/2026-07-10）。
 > 実装は別モデル（このハンドオフを読んだ次チャット）が行う。push/デプロイ判断は監督側。
 
