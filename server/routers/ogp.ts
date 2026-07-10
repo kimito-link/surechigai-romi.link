@@ -139,7 +139,7 @@ export const ogpRouter = router({
     let areaLabel: string | null = null;
     let shareUrl = `${APP_ORIGIN}/u/${slug}`;
     try {
-      const info = await getShareInfoBySlug(db, slug, ctx.user.id);
+      const info = await getShareInfoBySlug(db, slug, ctx.user.id, { ogpContext: true });
       areaLabel = resolveShareAreaLabel(
         info
           ? {

@@ -41,8 +41,8 @@ const PATH_CONFIGS: Record<string, RateLimitConfig> = {
     maxRequests: 5,  // 5リクエスト（ログイン保護）
   },
   '/api/trpc': {
-    windowMs: 10 * 1000,  // 10秒
-    maxRequests: 10,  // 10リクエスト
+    windowMs: 60 * 1000,  // 1分
+    maxRequests: 240,  // tRPCは通常操作でもバッチ・再取得が多いため大枠だけを見る
   },
 };
 

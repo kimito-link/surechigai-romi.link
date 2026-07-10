@@ -438,10 +438,6 @@ export default function CheckinAuthenticatedScreen() {
       const controller = new AbortController();
       activeLocationAbortRef.current = controller;
 
-      const authReady = utils.settings.get.fetch().catch(() => {
-          throw new Error("ログインセッションをAPIで確認できません。もう一度Xログインしてください");
-      });
-
       const locationResultPromise = retryFix
         ? Promise.resolve({ kind: "accepted" as const, fix: retryFix })
         : acquireCheckinLocation({
@@ -455,7 +451,7 @@ export default function CheckinAuthenticatedScreen() {
             },
           });
 
-      const [, locationResult] = await Promise.all([authReady, locationResultPromise]);
+      const locationResult = await locationResultPromise;
       const pos = locationResult.fix;
       lastFixRef.current = pos;
 
@@ -489,7 +485,6 @@ export default function CheckinAuthenticatedScreen() {
     }
   }, [
     performCheckinSave,
-    utils,
     scale,
     pulse,
     mapScale,
@@ -820,6 +815,24 @@ export default function CheckinAuthenticatedScreen() {
                 <View style={styles.encounterBanner}>
                   <Text style={styles.encounterBannerText}>{locatingBannerText}</Text>
                 </View>
+              ) : null}
+
+              {state === "loading" && mapPoint ? (
+                <Animated.View style={[styles.mapContainer, mapStyle]}>
+                  <MapErrorBoundary mapType="heatmap" height={mapHeroHeight}>
+                    <LazyPrecisionTileMap
+                      locations={[mapPoint]}
+                      customCenter={fixedMapCenter ?? { lat: mapPoint.lat, lng: mapPoint.lng }}
+                      zoom={17}
+                      showInfoPanel={false}
+                      height={mapHeroHeight}
+                      width={Math.min(windowWidth - 32, contentMaxWidth.standard)}
+                      markerSize={28}
+                      containerStyle={styles.mapInner}
+                      userImageUrl={user?.profileImage ?? undefined}
+                    />
+                  </MapErrorBoundary>
+                </Animated.View>
               ) : null}
 
               {state === "adjust" && mapPoint ? (

@@ -9,7 +9,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
@@ -20,6 +20,10 @@ import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
 import { trpc } from "@/lib/trpc";
 import { hasClerkSessionInStorage } from "@/lib/has-clerk-session";
 import { navigateBack, navigateReplace } from "@/lib/navigation";
+import {
+  featureShareLocationFirst,
+  parseShareLocationFromQuery,
+} from "@/lib/ogp/share-meta";
 import { Platform } from "react-native";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
 
@@ -30,7 +34,16 @@ function displayWho(name: string | null, username: string | null): string {
 }
 
 export default function ShareLocationScreen() {
-  const { slug: slugParam } = useLocalSearchParams<{ slug: string }>();
+  const params = useLocalSearchParams<{
+    slug: string;
+    area?: string;
+    pref?: string;
+    lat?: string;
+    lng?: string;
+    zoom?: string;
+    v?: string;
+  }>();
+  const { slug: slugParam } = params;
   const slug = typeof slugParam === "string" ? slugParam : slugParam?.[0] ?? "";
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -53,6 +66,25 @@ export default function ShareLocationScreen() {
     ? displayWho(trailQuery.data.name, trailQuery.data.username)
     : "";
   const fallbackInitial = (trailQuery.data?.name || trailQuery.data?.username || "?").slice(0, 1);
+  const explicitShareLocation = useMemo(
+    () =>
+      parseShareLocationFromQuery({
+        area: params.area,
+        pref: params.pref,
+        lat: params.lat,
+        lng: params.lng,
+        zoom: params.zoom,
+        v: params.v,
+      }),
+    [params.area, params.pref, params.lat, params.lng, params.zoom, params.v],
+  );
+  const displayedLocations = useMemo(
+    () =>
+      trailQuery.data
+        ? featureShareLocationFirst(trailQuery.data.locations, explicitShareLocation)
+        : [],
+    [trailQuery.data, explicitShareLocation],
+  );
 
   return (
     <ScreenContainer
@@ -111,7 +143,7 @@ export default function ShareLocationScreen() {
       {trailQuery.data && (
         <LazyWebTrailMap
           visited={trailQuery.data.visited}
-          locations={trailQuery.data.locations}
+          locations={displayedLocations}
           userImageUrl={trailQuery.data.profileImage ?? undefined}
           onRefresh={() => void trailQuery.refetch()}
           isFetching={trailQuery.isFetching}

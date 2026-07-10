@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { createHash } from "node:crypto";
 import { isAllowedOrigin } from "../../server/_core/cors.js";
 
 const REQUEST_TIMEOUT_MS = 24_000;
@@ -17,7 +18,7 @@ type RateLimitEntry = {
 
 const expensivePathRules: RateLimitRule[] = [
   { pattern: /^presence\.pulse$/, windowMs: 30_000, max: 1 },
-  { pattern: /^encounter\.checkIn$/, windowMs: 15_000, max: 1 },
+  { pattern: /^encounter\.checkIn$/, windowMs: 30_000, max: 4 },
   { pattern: /^visit\.report$/, windowMs: 20_000, max: 1 },
   { pattern: /^event\.resolveOfflineLocation$/, windowMs: 20_000, max: 1 },
   { pattern: /^zukan\.activePrefectures$/, windowMs: 5_000, max: 3 },
@@ -67,6 +68,16 @@ function getClientIp(req: VercelRequest): string {
   );
 }
 
+function getRateLimitIdentity(req: VercelRequest): string {
+  const auth = firstHeaderValue(req.headers.authorization);
+  const bearer = auth?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+  if (bearer) {
+    const digest = createHash("sha256").update(bearer).digest("hex").slice(0, 16);
+    return `auth:${digest}`;
+  }
+  return `ip:${getClientIp(req)}`;
+}
+
 function splitTrpcPaths(path: string): string[] {
   return path
     .split(",")
@@ -87,12 +98,12 @@ function checkRateLimit(path: string, req: VercelRequest) {
   const now = Date.now();
   cleanupRateLimitCache(now);
 
-  const ip = getClientIp(req);
+  const identity = getRateLimitIdentity(req);
   for (const trpcPath of splitTrpcPaths(path)) {
     const rule = expensivePathRules.find((item) => item.pattern.test(trpcPath));
     if (!rule) continue;
 
-    const key = `${ip}:${trpcPath}`;
+    const key = `${identity}:${trpcPath}`;
     const existing = rateLimitByKey.get(key);
     if (!existing || existing.resetAt <= now) {
       rateLimitByKey.set(key, { count: 1, resetAt: now + rule.windowMs });

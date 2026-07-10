@@ -117,6 +117,32 @@ describe("featureShareLocationFirst", () => {
     });
     expect(ordered[0]?.municipality).toBe("岡谷市");
   });
+
+  it("明示シェア地点が丸め済みDB地点とずれる場合は正確地点を先頭に補う", () => {
+    const rounded = {
+      ...base,
+      id: 30,
+      lat: 36.203,
+      lng: 137.965,
+      latGrid: 36.203,
+      lngGrid: 137.965,
+      municipality: "松本市",
+      prefecture: "長野県",
+      recordedAt: "2026-07-10T10:01:00.000Z",
+    };
+    const ordered = featureShareLocationFirst([rounded], {
+      area: "松本市",
+      prefecture: "長野県",
+      lat: 36.20626,
+      lng: 137.96951,
+      hasLocation: true,
+      zoom: 16,
+      recordedAt: new Date("2026-07-10T10:01:00.000Z"),
+    });
+    expect(ordered[0]?.id).toBe(-1);
+    expect(ordered[0]?.lat).toBe(36.20626);
+    expect(ordered[1]?.id).toBe(30);
+  });
 });
 
 describe("buildOgRedirectMetaUrl", () => {

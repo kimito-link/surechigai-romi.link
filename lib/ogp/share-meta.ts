@@ -51,7 +51,7 @@ export type ShareFeaturedTrailPoint = {
   municipality: string | null;
   prefecture: string | null;
   address: string | null;
-  recordedAt: Date;
+  recordedAt: Date | string;
   visibility: string;
 };
 
