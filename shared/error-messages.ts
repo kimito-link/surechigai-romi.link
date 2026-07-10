@@ -260,6 +260,8 @@ export function toUserFriendlyError(error: unknown): UserFriendlyError {
       "チェックイン",
       "ネットワーク",
       "タイムアウト",
+      "足あと",       // checkIn保存失敗(「足あとを保存できませんでした…」)をUNKNOWNに落とさない(P1-1)
+      "一時停止",     // 位置記録の一時停止中エラー(サーバーPRECONDITION_FAILEDの文言)
     ];
     if (knownUserMessages.some((k) => error.message.includes(k))) {
       return {

@@ -1,4 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// react-native 実体は Flow 構文(import typeof)を含み vitest/rollup が解釈できない。
+// 被験関数は Platform.OS しか見ないためモックで遮断する(これが無いとスイート全体が collect エラー)。
+vi.mock("react-native", () => ({ Platform: { OS: "web" } }));
+
 import { haversineMeters, refineWithPreciseAnchor } from "@/lib/get-current-location";
 
 describe("refineWithPreciseAnchor", () => {

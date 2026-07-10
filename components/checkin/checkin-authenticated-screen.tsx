@@ -294,7 +294,9 @@ export default function CheckinAuthenticatedScreen() {
         throw err;
       }
 
-      if (result.saved === false) {
+      // 肯定形判定: 保存が確定(saved===true)した時だけ成功。
+      // saved欠落レスポンス(DB未接続・一時停止等の旧「無言成功」形)が将来紛れ込んでも完了UIに誤進行しない(P0-1)
+      if (result.saved !== true) {
         throw new Error("足あとを保存できませんでした。もう一度送ってください");
       }
 

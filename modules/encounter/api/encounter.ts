@@ -73,7 +73,15 @@ export const encounterRouter = router({
       }
 
       const db = await getDb();
-      if (!db) return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng, locationId: null };
+      if (!db) {
+        // DB未接続を「成功形(saved欠落)」で返すと足あと未保存のまま完了UIになる(P0-1)。
+        // "Database not available" はクライアント toUserFriendlyError が
+        // DATABASE_NOT_AVAILABLE(再試行可)に写す既知文言。
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Database not available",
+        });
+      }
 
       const { latGrid, lngGrid } = toGrid(latLng.lat, latLng.lng);
       const h3R8 = toH3Cell(latGrid, lngGrid, 8);
@@ -84,7 +92,12 @@ export const encounterRouter = router({
         reverseGeocodeWithTimeout(latLng.lat, latLng.lng, 2_500),
       ]);
       if (isLocationRecordingPaused(settings?.locationPausedUntil)) {
-        return { newEncounters: 0, prefecture: null, municipality: null, areaName: null, address: null, lat: input.lat, lng: input.lng, locationId: null };
+        // 一時停止中の無言成功はキャッシュずれ経由のチェックインを「保存済み」と誤認させる(P1-3)。
+        // 明示エラーで返し、クライアントはこの文言をそのまま表示する。
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "位置記録は一時停止中です。マイページで「灯を消す」を解除してからお試しください",
+        });
       }
 
       let municipality = resolveMunicipality(input.municipality, g.municipality);
@@ -186,7 +199,8 @@ export const encounterRouter = router({
         }
       }
 
-      return { newEncounters, prefecture, municipality, areaName, address, lat: latLng.lat, lng: latLng.lng, locationId };
+      // saved:true は「足あとの永続化が確定した」の明示。クライアントは saved !== true を全て失敗扱いにする(肯定形判定)
+      return { newEncounters, prefecture, municipality, areaName, address, lat: latLng.lat, lng: latLng.lng, locationId, saved: true };
     }),
 
   /**
