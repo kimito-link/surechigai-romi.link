@@ -752,6 +752,9 @@
   .os-item b{ font-family:var(--fude); font-weight:400; color:#f0ead9; font-size:clamp(17px,4.6vw,20px); letter-spacing:.14em; min-width:4.2em; }
   .os-item span{ font-family:var(--mincho); color:#9fc0e6; font-size:clamp(11.5px,3.2vw,13px); letter-spacing:.04em; }
   .os-item:hover b,.os-item:active b{ color:var(--kin); }
+  /* 「アプリでできる機能」: 雅語が読めない人のための平文の入口。金で一段目立たせる */
+  .os-item.os-kinou{ flex-wrap:wrap; border-bottom-color:rgba(176,138,62,.55); }
+  .os-item.os-kinou b{ color:var(--kin); min-width:0; font-size:clamp(16px,4.4vw,19px); }
   .os-cta{ display:block; margin-top:26px; text-align:center; font-family:var(--mincho);
     font-size:clamp(14px,3.8vw,16px); letter-spacing:.08em; color:#fff; text-decoration:none;
     background:linear-gradient(135deg,#3b6bd8,#6a4fd0); border-radius:26px; padding:13px 18px;
@@ -979,6 +982,7 @@
 <nav class="oshinagaki" id="oshinagaki" aria-label="お品書き">
   <div class="os-uchi">
     <p class="os-dai">お 品 書 き</p>
+    <a class="os-item os-kinou" href="#mokuroku" data-mkjump><b>アプリでできる機能</b><span>全機能を一覧で(三十一の道具)</span></a>
     <a class="os-item" href="#hajimari" data-mkjump><b>序</b><span>物語のはじまり</span></a>
     <a class="os-item" href="#negai" data-mkjump><b>願・叶</b><span>五つの願ひ＝主役の五機能</span></a>
     <a class="os-item" href="#tomoshibi" data-mkjump><b>灯・逢</b><span>三つの道行きと幻燈(実の画面)</span></a>
