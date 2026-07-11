@@ -31,7 +31,10 @@ test.use({
     const monitor = await gotoSmokePage(page, "/map", { heading: "軌跡" });
 
     const deleteBtn = page.getByTestId(/^trail-location-delete-/).first();
-    const hasDelete = await deleteBtn.isVisible().catch(() => false);
+    const hasDelete = await deleteBtn
+      .waitFor({ state: "visible", timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
     test.skip(!hasDelete, "削除可能な足あとがありません（チェックイン後に再実行）");
 
     await deleteBtn.click();
@@ -50,7 +53,10 @@ test.use({
     const monitor = await gotoSmokePage(page, "/map", { heading: "軌跡" });
 
     const visibilityBtn = page.getByTestId(/^trail-location-visibility-/).first();
-    const visible = await visibilityBtn.isVisible().catch(() => false);
+    const visible = await visibilityBtn
+      .waitFor({ state: "visible", timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
     test.skip(!visible, "公開切替可能な足あとがありません");
 
     const labelBefore = (await visibilityBtn.textContent())?.trim() ?? "";
@@ -101,7 +107,10 @@ test.use({
     const monitor = await gotoSmokePage(page, "/map", { heading: "軌跡" });
 
     const navBtn = page.getByRole("button", { name: /車で向かう/ }).first();
-    const hasNav = await navBtn.isVisible().catch(() => false);
+    const hasNav = await navBtn
+      .waitFor({ state: "visible", timeout: 8000 })
+      .then(() => true)
+      .catch(() => false);
     test.skip(!hasNav, "ナビ可能な足あとがありません（チェックイン後に再実行）");
 
     await expect(navBtn).toBeVisible();
