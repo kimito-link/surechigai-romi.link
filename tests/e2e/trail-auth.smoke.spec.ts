@@ -30,7 +30,7 @@ test.use({
   test("削除フロー: ゴミ箱 → 確認モーダル → キャンセル", async ({ page }) => {
     const monitor = await gotoSmokePage(page, "/map", { heading: "軌跡" });
 
-    const deleteBtn = page.getByRole("button", { name: "この足あとを削除" }).first();
+    const deleteBtn = page.getByTestId(/^trail-location-delete-/).first();
     const hasDelete = await deleteBtn.isVisible().catch(() => false);
     test.skip(!hasDelete, "削除可能な足あとがありません（チェックイン後に再実行）");
 
@@ -49,9 +49,7 @@ test.use({
   test("公開切替ボタンが存在すればタップ可能", async ({ page }) => {
     const monitor = await gotoSmokePage(page, "/map", { heading: "軌跡" });
 
-    const visibilityBtn = page
-      .getByRole("button", { name: /公開|非公開/ })
-      .first();
+    const visibilityBtn = page.getByTestId(/^trail-location-visibility-/).first();
     const visible = await visibilityBtn.isVisible().catch(() => false);
     test.skip(!visible, "公開切替可能な足あとがありません");
 

@@ -131,7 +131,9 @@ export function TrailHistoryList({
                     busy && { opacity: 0.5 },
                     Platform.OS === "web" && styles.pressableWeb,
                   ]}
+                  accessibilityRole="button"
                   accessibilityLabel={`${locationVisibilityLabel(visibility)}。タップで切り替え`}
+                  testID={`trail-location-visibility-${point.id}`}
                 >
                   {updatingLocationId === point.id ? (
                     <ActivityIndicator size="small" color={color.accentIndigo} />
@@ -159,6 +161,7 @@ export function TrailHistoryList({
                     busy && { opacity: 0.5 },
                     Platform.OS === "web" && styles.pressableWeb,
                   ]}
+                  accessibilityRole="button"
                   accessibilityLabel="この足あとを削除"
                   testID={`trail-location-delete-${point.id}`}
                 >
