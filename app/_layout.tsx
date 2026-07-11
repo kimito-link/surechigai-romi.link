@@ -1,7 +1,7 @@
 import "@/lib/bootstrap/global-css";
 import "@/lib/bootstrap/reanimated-init";
 // @ts-nocheck
-import { usePathname, useRouter } from "expo-router";
+import { usePathname } from "expo-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppNavigationStack } from "@/components/providers/app-navigation-stack";
 import { Platform, View, Text } from "react-native";
@@ -27,6 +27,7 @@ import { GuestAuthProvider, AuthContextProvider, type AuthState } from "@/lib/au
 import { TrpcReadyProvider } from "@/lib/trpc-ready-context";
 import { GestureRoot } from "@/components/providers/gesture-root";
 import { WebDocumentHead } from "@/components/brand/web-document-head";
+import { navigateReplace } from "@/lib/navigation";
 
 /**
  * ★重要: ClerkRootProvider は lazy() ではなく手動 import で読み込む。
@@ -93,7 +94,6 @@ const INITIAL_WEB_PATH =
     : null;
 
 function RestoreDeepLinkAfterAuthBoot() {
-  const router = useRouter();
   const pathname = usePathname();
   const doneRef = useRef(false);
   const userInteractedRef = useRef(false);
@@ -132,9 +132,9 @@ function RestoreDeepLinkAfterAuthBoot() {
     }
     if (pathname === "/") {
       doneRef.current = true;
-      router.replace(INITIAL_WEB_PATH as never);
+      navigateReplace.withUrl(INITIAL_WEB_PATH);
     }
-  }, [pathname, router]);
+  }, [pathname]);
   return null;
 }
 

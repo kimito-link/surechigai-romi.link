@@ -21,6 +21,17 @@ module.exports = defineConfig([
       // TypeScriptプロジェクトではno-undefは不要（TypeScriptが型チェックを行うため）
       // eslint-config-expoが既に設定している可能性があるが、明示的に無効化
       "no-undef": "off",
+      // Metro/Expo が実行環境に応じて .web.ts / .native.ts を解決する入口。
+      // eslint-plugin-import は platform suffix を解決できないため、この2件だけ除外する。
+      "import/no-unresolved": [
+        "error",
+        {
+          ignore: [
+            "^@/lib/bootstrap/global-css$",
+            "^@/lib/bootstrap/reanimated-init$",
+          ],
+        },
+      ],
     },
   },
   {
