@@ -828,7 +828,7 @@ export default function CheckinAuthenticatedScreen() {
               showsVerticalScrollIndicator={false}
             >
               {state === "loading" ? (
-                <View style={styles.encounterBanner}>
+                <View style={styles.encounterBanner} testID="checkin-locating-banner">
                   <Text style={styles.encounterBannerText}>{locatingBannerText}</Text>
                 </View>
               ) : null}
@@ -985,6 +985,9 @@ export default function CheckinAuthenticatedScreen() {
                 <Pressable
                   onPress={handleCheckin}
                   disabled={state === "loading" || isPausing}
+                  accessibilityRole="button"
+                  accessibilityLabel={getButtonLabel()}
+                  testID="checkin-primary-button"
                   style={({ pressed }) => [
                     styles.checkinButton,
                     { backgroundColor: isPausing ? color.border : getButtonColor() },

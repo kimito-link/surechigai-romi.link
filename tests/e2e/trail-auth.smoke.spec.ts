@@ -78,11 +78,10 @@ test.use({
     // サイドバーのタブ名も同じ「チェックイン」なので getByText(exact) は誤爆する。
     // 実際のCTAはボタンのaccessible name「チェックイン — 現在地を記録する」
     // （初回）/「チェックイン — もう一度チェックイン」（再チェックイン）。
-    const target = page.getByRole("button", { name: /現在地を記録する|もう一度チェックイン/ });
+    const target = page.getByTestId("checkin-primary-button");
     await target.click();
-    await expect(
-      page.getByText(/位置を取得中|記録中|取得中/),
-    ).toBeVisible({ timeout: 8000 });
+    // サイドバーの「N人が記録中」に偽マッチしないよう、ローディングバナー自体をtestIDでスコープする
+    await expect(page.getByTestId("checkin-locating-banner")).toBeVisible({ timeout: 8000 });
 
     // チェックイン後は固定シェアボタンが表示される
     await expect(page.getByTestId("checkin-share-button")).toBeVisible({
