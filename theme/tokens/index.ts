@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 6; // 2026-07-11: KimitoLoginCta(Web)をPressableからLink(<a href>)に変更し1タップ導線のDOM構造をE2E期待に一致させるため+1
+export const CDN_CACHE_EPOCH = 7; // 2026-07-12: lint警告削減(不要eslint-disableコメント削除)を確実に配信するため+1

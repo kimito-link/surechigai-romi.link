@@ -62,7 +62,6 @@ function resolveReturnPath(returnUrl?: string): string {
   return normalized.startsWith("/") ? normalized : `/${normalized}`;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function firstString(...values: any[]): string | undefined {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) return value;
@@ -70,7 +69,6 @@ function firstString(...values: any[]): string | undefined {
   return undefined;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function firstNumber(...values: any[]): number | undefined {
   for (const value of values) {
     if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -85,7 +83,6 @@ function firstNumber(...values: any[]): number | undefined {
   return undefined;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function waitForClerkReady(
   clerk: any,
   timeoutMs = 5000,
@@ -110,7 +107,6 @@ function getStoredUserSnapshot(): Partial<Auth.User> | null {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildUserFromClerk(clerkUser: any): Auth.User | null {
   if (!clerkUser) return null;
   const storedUser = getStoredUserSnapshot();

@@ -32,7 +32,6 @@ export function useConfettiItems(): ConfettiItemValues[] {
   const x11 = useSharedValue(0); const y11 = useSharedValue(0); const r11 = useSharedValue(0); const o11 = useSharedValue(0); const s11 = useSharedValue(1);
 
   // SharedValue 自体は安定参照なので deps に含めなくてよい
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo<ConfettiItemValues[]>(() => [
     { x: x0,  y: y0,  rotation: r0,  opacity: o0,  scale: s0  },
     { x: x1,  y: y1,  rotation: r1,  opacity: o1,  scale: s1  },

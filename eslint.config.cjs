@@ -6,7 +6,9 @@ const localRules = require("./eslint-local-rules/index.cjs");
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ["dist/*", "scripts/*"],
+    // public/ は静的配信物（LP の手書きミニJS等）で lint 対象外。
+    // expo lint は元々素通りするが、生の eslint を直接叩くと巻き込まれる事故があったため明示する。
+    ignores: ["dist/*", "scripts/*", "public/*"],
   },
   {
     files: ["tests/e2e/fixtures.ts"],
