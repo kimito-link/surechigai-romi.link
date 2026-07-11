@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Link, type Href } from "expo-router";
-import { APP_HEADER_CHROME_HEIGHT_COMPACT, palette } from "@/theme/tokens";
+import { APP_HEADER_CHROME_HEIGHT_COMPACT, palette, touchTarget } from "@/theme/tokens";
 import { SIGN_IN_AUTO_X_HREF } from "@/lib/clerk-route";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: palette.kimitoBlue,
     paddingHorizontal: 14,
-    height: 40,
+    height: touchTarget.minSize,
     borderRadius: 999,
     justifyContent: "center",
     ...(Platform.OS === "web"
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
       : null),
   },
   loginLinkGlyphOnly: {
-    width: 40,
+    width: touchTarget.minSize,
     paddingHorizontal: 0,
   },
   loginGlyph: {

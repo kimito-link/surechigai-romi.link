@@ -9,7 +9,7 @@ import {
 import { usePathname, type Href } from "expo-router";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { navigate } from "@/lib/navigation";
-import { color, palette } from "@/theme/tokens";
+import { color, palette, touchTarget } from "@/theme/tokens";
 import { NavLivePrefecturePanel } from "@/components/molecules/nav-live-prefecture-panel";
 import { BrandStamp } from "@/components/brand/brand-stamp";
 import { usePrefetchTab } from "@/hooks/use-tab-prefetch";
@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   item: {
+    minHeight: touchTarget.minSize,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,

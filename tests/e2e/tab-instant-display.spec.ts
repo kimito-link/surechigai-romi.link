@@ -41,7 +41,7 @@ const EMPTY_TRAIL_TEXT = "まだ正確な足あとがありません";
       { path: "/", heading: /ポスト|封筒|すれ違い/ },
       { path: "/checkin", heading: "チェックイン" },
       { path: "/events", heading: "集まり" },
-      { path: "/zukan", heading: "図鑑" },
+      { path: "/zukan", heading: "みんなの現在地" },
       { path: "/map", heading: "軌跡" },
       { path: "/mypage", heading: "マイページ" },
     ];

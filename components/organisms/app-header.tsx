@@ -7,7 +7,7 @@
  * 出典: kimitolink-linktree/components/Header.tsx, HeaderCurrentAccount.tsx
  */
 import { useState } from "react";
-import { color, palette, APP_HEADER_CHROME_HEIGHT, APP_HEADER_CHROME_HEIGHT_COMPACT, APP_HEADER_CHROME_HEIGHT_FULL } from "@/theme/tokens";
+import { color, palette, touchTarget, APP_HEADER_CHROME_HEIGHT, APP_HEADER_CHROME_HEIGHT_COMPACT, APP_HEADER_CHROME_HEIGHT_FULL } from "@/theme/tokens";
 import { View, Text, Pressable, Platform, StyleSheet, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
 import MaterialIcons from "@/lib/icons/material-icons";
@@ -402,15 +402,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 40,
-    height: 40,
+    minHeight: touchTarget.minSize,
+    height: touchTarget.minSize,
     paddingHorizontal: 14,
     borderRadius: 999,
     backgroundColor: palette.kimitoBlue,
     gap: 6,
   },
   loginButtonGlyphOnly: {
-    width: 40,
+    width: touchTarget.minSize,
     paddingHorizontal: 0,
   },
   loginGlyph: {
