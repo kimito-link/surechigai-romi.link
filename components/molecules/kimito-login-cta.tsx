@@ -2,6 +2,7 @@
  * Xログイン CTA — kimito.link ライト UI 準拠（Web で背景色が確実に効く）
  */
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Link, type Href } from "expo-router";
 import { palette } from "@/theme/tokens";
 
 type KimitoLoginCtaProps = {
@@ -37,30 +38,25 @@ export function KimitoLoginCta({
   );
 
   if (Platform.OS === "web") {
+    // 実 <a href> を出す: E2E/クローラー/右クリック新規タブなどのブラウザネイティブ機能を保つ。
+    // onPress は preventDefault しない（href への遷移は保ちつつログインガイド機構も併走させる）。
     return (
-      <Pressable
-        disabled={isStarting}
+      <Link
+        href={signInHref as Href}
         onPress={() => {
           if (isStarting) return;
-          if (onPress) {
-            onPress();
-            return;
-          }
-          if (typeof window !== "undefined") {
-            window.location.assign(signInHref);
-          }
+          onPress?.();
         }}
         accessibilityRole="button"
         accessibilityLabel={`Xで${displayLabel}`}
-        style={({ pressed }) => [
+        style={[
           buttonStyle,
           styles.webLink,
-          pressed && !isStarting && { opacity: 0.85 },
           isStarting && { opacity: 0.65 },
         ]}
       >
         {content}
-      </Pressable>
+      </Link>
     );
   }
 
