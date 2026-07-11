@@ -80,6 +80,14 @@ test.use({
     // （初回）/「チェックイン — もう一度チェックイン」（再チェックイン）。
     const target = page.getByTestId("checkin-primary-button");
     await target.click();
+
+    // 初回（またはlocalStorage未保持のセッション）は位置情報イントロダイアログが挟まる。
+    // 出たら許可して続行（本来のチェックインフローに合流させる）。
+    const allowLocationBtn = page.getByRole("button", { name: "位置情報を許可して記録" });
+    if (await allowLocationBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await allowLocationBtn.click();
+    }
+
     // サイドバーの「N人が記録中」に偽マッチしないよう、ローディングバナー自体をtestIDでスコープする
     await expect(page.getByTestId("checkin-locating-banner")).toBeVisible({ timeout: 8000 });
 

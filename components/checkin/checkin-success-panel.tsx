@@ -100,6 +100,7 @@ export function CheckinSuccessPanel({
         <Pressable
           onPress={onViewMap}
           style={({ pressed }) => [styles.exitButtonPrimary, pressed && { opacity: 0.85 }]}
+          accessibilityRole="button"
           accessibilityLabel="地図で見る"
         >
           <MaterialIcons name="map" size={18} color={color.textWhite} />
@@ -113,7 +114,9 @@ export function CheckinSuccessPanel({
             pressed && !isSharing && { opacity: 0.85 },
             isSharing && { opacity: 0.6 },
           ]}
+          accessibilityRole="button"
           accessibilityLabel="Xでシェア"
+          testID="checkin-share-button"
         >
           <MaterialIcons name="ios-share" size={18} color={color.textPrimary} />
           <Text style={styles.exitButtonSecondaryText}>
