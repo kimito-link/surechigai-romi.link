@@ -395,12 +395,8 @@ export function PostAuthenticatedScreen() {
       isDesktop={isDesktop}
       isFetching={isFetching}
       onPressItem={(item) => handleOpen(item as EncounterItem)}
-      layout={isDesktop ? "overlay" : "docked"}
-      style={
-        isDesktop
-          ? [styles.signalPanel, styles.signalPanelDesktop]
-          : styles.signalPanelDocked
-      }
+      layout="docked"
+      style={styles.signalPanelDocked}
     />
   ) : null;
 
@@ -432,16 +428,38 @@ export function PostAuthenticatedScreen() {
         <TabHeaderSpacer variant="full" hasContextBar={postContext.hasBar} />
 
         {isDesktop ? (
-        <View style={styles.mapContainer}>
-          {renderRadarStage(StyleSheet.absoluteFillObject)}
-          {signalGrid}
-          {emptyOverlay}
-          {renderSisterBanners()}
-          {!isAuthenticated && (
-            <Suspense fallback={null}>
-              <RadarHud isAuthenticated={false} />
-            </Suspense>
-          )}
+        <View style={styles.desktopSplit}>
+          <View style={styles.desktopMapColumn}>
+            {renderRadarStage(StyleSheet.absoluteFillObject)}
+            {/* デスクトップは右ペインのSignalAccountGridが空状態を主に担うため、
+                地図上のemptyOverlayは重複回避で出さない(未認証時は従来どおり出す)。 */}
+            {!isAuthenticated && emptyOverlay}
+            {renderSisterBanners()}
+            {!isAuthenticated && (
+              <Suspense fallback={null}>
+                <RadarHud isAuthenticated={false} />
+              </Suspense>
+            )}
+          </View>
+          {isAuthenticated ? (
+            <ScrollView style={styles.desktopRightPane} showsVerticalScrollIndicator={false}>
+              {mySignal ? (
+                <HomeStatusLine
+                  checkedInToday={mySignal.checkedInToday}
+                  latestPlaceLabel={mySignal.latestPlaceLabel}
+                  latestRecordedAt={mySignal.latestRecordedAt}
+                  accuracyM={mySignal.latestLocation?.accuracyM}
+                  isPausing={isPausing}
+                  pausedUntilLabel={pausedUntilLabel}
+                />
+              ) : null}
+              {unopened.length > 0 ? (
+                <EnvelopeRail items={unopened} onOpen={handleOpen} />
+              ) : null}
+              {emptyOverlay}
+              {signalGrid}
+            </ScrollView>
+          ) : null}
         </View>
         ) : (
         <ScrollView
@@ -536,15 +554,22 @@ const styles = StyleSheet.create({
     position: "relative",
     backgroundColor: color.bg,
   },
-  signalPanel: {
-    position: "absolute",
-    zIndex: 30,
+  // デスクトップ2カラム(docs/investigation/dashboard-redesign-2026-07-14.md Step6):
+  // 地図を隠さないため、右ペインのoverlayをやめてflexDirection:"row"で分割する。
+  desktopSplit: {
+    flex: 1,
+    flexDirection: "row",
   },
-  signalPanelDesktop: {
-    top: 18,
-    left: 24,
-    right: 24,
-    maxHeight: 360,
+  desktopMapColumn: {
+    flex: 1,
+    position: "relative",
+    backgroundColor: color.bg,
+  },
+  desktopRightPane: {
+    width: 360,
+    borderLeftWidth: 1,
+    borderLeftColor: color.border,
+    backgroundColor: color.bg,
   },
   signalPanelDocked: {
     marginTop: 12,

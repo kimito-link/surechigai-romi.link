@@ -2,6 +2,7 @@ import MaterialIcons from "@/lib/icons/material-icons";
 import { Image } from "expo-image";
 import { Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { color, palette } from "@/theme/tokens";
+import { formatEncounterDate } from "@/lib/post/encounter-shared";
 
 export type SignalAccountItem = {
   id: number;
@@ -15,6 +16,7 @@ export type SignalAccountItem = {
   tier: number;
   areaName: string | null;
   prefecture: string | null;
+  occurredAt?: Date | string;
   openedByMe: Date | string | null;
 };
 
@@ -100,7 +102,14 @@ function AccountCard({
           </Text>
           {!item.openedByMe && <View style={styles.unreadDot} />}
         </View>
+        {/* どこで・いつすれ違ったかを先に見せる(docs/investigation/dashboard-redesign-2026-07-14.md Step6) */}
         <View style={styles.metaRow}>
+          <Text style={styles.accountPlace} numberOfLines={1}>
+            {labelFor(item)}
+            {item.occurredAt ? ` · ${formatEncounterDate(item.occurredAt)}` : ""}
+          </Text>
+        </View>
+        <View style={styles.subMetaRow}>
           <Text style={styles.accountHandle} numberOfLines={1}>
             {usernameFor(item)}
           </Text>
@@ -111,11 +120,6 @@ function AccountCard({
       </View>
 
       <View style={styles.rightMeta}>
-        <View style={styles.categoryChip}>
-          <Text style={styles.categoryText} numberOfLines={1}>
-            {labelFor(item)}
-          </Text>
-        </View>
         <View style={[styles.gradeBadge, { backgroundColor: grade.color }]}>
           <Text style={styles.gradeText}>{grade.label}</Text>
         </View>
@@ -300,16 +304,27 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginTop: 2,
+  },
+  accountPlace: {
+    color: "#334155",
+    fontSize: 12,
+    fontWeight: "700",
+    flexShrink: 1,
+  },
+  subMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginTop: 2,
   },
   accountHandle: {
-    color: "#64748B",
+    color: "#94A3B8",
     fontSize: 11,
     flexShrink: 1,
   },
   accountCount: {
-    color: "#64748B",
+    color: "#94A3B8",
     fontSize: 11,
     fontWeight: "700",
   },
@@ -318,19 +333,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     marginLeft: 8,
-    maxWidth: "42%",
-  },
-  categoryChip: {
-    maxWidth: 96,
-    backgroundColor: "#F1F5F9",
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  categoryText: {
-    color: "#64748B",
-    fontSize: 10,
-    fontWeight: "700",
   },
   gradeBadge: {
     width: 22,
