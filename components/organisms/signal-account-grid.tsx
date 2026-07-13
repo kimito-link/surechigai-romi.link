@@ -144,7 +144,7 @@ export function SignalAccountGrid({
             <MaterialIcons name="add" size={18} color="#047857" />
           </View>
           <Text style={styles.title}>
-            新着アカウント{unreadCount > 0 ? ` (${unreadCount})` : ""}
+            届いたすれ違い{unreadCount > 0 ? ` (${unreadCount})` : ""}
           </Text>
         </View>
         <Text style={styles.headerHint}>{isFetching ? "更新中" : "すれちがい順"}</Text>
@@ -170,7 +170,7 @@ export function SignalAccountGrid({
       ) : (
         <View style={styles.empty}>
           <MaterialIcons name="travel-explore" size={28} color="#94A3B8" />
-          <Text style={styles.emptyTitle}>まだ新着アカウントはありません</Text>
+          <Text style={styles.emptyTitle}>まだすれ違いは届いていません</Text>
           <Text style={styles.emptyText}>チェックインすると、近くにいた人がここに並びます</Text>
         </View>
       )}

@@ -361,27 +361,24 @@ export function MypageAuthenticatedScreen() {
         <View style={styles.pageBody}>
         {/* プロフィールカード */}
         <View style={styles.profileCard}>
-          {user.profileImage ? (
-            <Image
-              source={{ uri: user.profileImage }}
-              style={styles.avatar}
-              contentFit="cover"
-            />
-          ) : (
-            <View style={[styles.avatarPlaceholder]}>
-              <MaterialIcons name="account-circle" size={64} color={color.textMuted} />
-            </View>
-          )}
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName} numberOfLines={1}>
-              {user.name || user.username || "ロミユーザー"}
-            </Text>
-            {user.username && (
-              <Text style={styles.profileUsername} numberOfLines={1}>@{user.username}</Text>
+          <View style={styles.profileRow}>
+            {user.profileImage ? (
+              <Image
+                source={{ uri: user.profileImage }}
+                style={styles.avatar}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={[styles.avatarPlaceholder]}>
+                <MaterialIcons name="account-circle" size={48} color={color.textMuted} />
+              </View>
             )}
-            <View style={styles.profileMetaRow}>
-              {user.twitterId && (
-                <Text style={styles.profileMetaText}>ID {user.twitterId}</Text>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName} numberOfLines={1}>
+                {user.name || user.username || "ロミユーザー"}
+              </Text>
+              {user.username && (
+                <Text style={styles.profileUsername} numberOfLines={1}>@{user.username}</Text>
               )}
               {typeof user.followersCount === "number" ? (
                 <Text style={styles.profileMetaText}>
@@ -390,25 +387,43 @@ export function MypageAuthenticatedScreen() {
               ) : null}
             </View>
           </View>
+
+          <View style={styles.profileActionsRow}>
+            <Pressable
+              onPress={handleViewPublicPage}
+              disabled={shareSlugMutation.isPending}
+              style={({ pressed }) => [
+                styles.publicPagePreviewLink,
+                pressed && { opacity: 0.7 },
+                shareSlugMutation.isPending && { opacity: 0.6 },
+              ]}
+              accessibilityRole="button"
+            >
+              <MaterialIcons name="visibility" size={16} color={color.accentIndigo} />
+              <Text style={styles.publicPagePreviewText}>
+                {shareSlugMutation.isPending ? "準備中…" : "公開ページを見る"}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handleShareLocation}
+              disabled={shareSlugMutation.isPending}
+              style={({ pressed }) => [
+                styles.publicPagePreviewLink,
+                pressed && { opacity: 0.7 },
+                shareSlugMutation.isPending && { opacity: 0.6 },
+              ]}
+              accessibilityRole="button"
+            >
+              <MaterialIcons name="ios-share" size={16} color={color.accentIndigo} />
+              <Text style={styles.publicPagePreviewText}>
+                {shareSlugMutation.isPending ? "準備中…" : "現在地をXでシェア"}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
-        <Pressable
-          onPress={handleViewPublicPage}
-          disabled={shareSlugMutation.isPending}
-          style={({ pressed }) => [
-            styles.publicPagePreviewLink,
-            pressed && { opacity: 0.7 },
-            shareSlugMutation.isPending && { opacity: 0.6 },
-          ]}
-        >
-          <MaterialIcons name="visibility" size={16} color={color.accentIndigo} />
-          <Text style={styles.publicPagePreviewText}>
-            {shareSlugMutation.isPending ? "準備中…" : "あなたの公開ページを見る"}
-          </Text>
-        </Pressable>
-
-        <MySignalSummary />
         <MypageActionList />
+        <MySignalSummary />
         <HostEventsSummary />
 
         {/* 設定（折りたたみ） */}
@@ -429,27 +444,7 @@ export function MypageAuthenticatedScreen() {
 
           {settingsOpen ? (
             <View style={styles.settingsBody}>
-        {/* 現在地をXでシェア（地図サムネ付きOGP） */}
-        <Pressable
-          onPress={handleShareLocation}
-          disabled={shareSlugMutation.isPending}
-          style={({ pressed }) => [
-            styles.shareLocationButton,
-            pressed && { opacity: 0.85 },
-            shareSlugMutation.isPending && { opacity: 0.6 },
-          ]}
-        >
-          <MaterialIcons name="share-location" size={22} color={color.textWhite} style={{ marginRight: 10 }} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.shareLocationTitle}>
-              {shareSlugMutation.isPending ? "リンクを準備中…" : "現在地をXでシェア"}
-            </Text>
-            <Text style={styles.shareLocationSub}>地図サムネ付きで「いまいる場所」を共有</Text>
-          </View>
-          <MaterialIcons name="open-in-new" size={16} color="rgba(255,255,255,0.85)" />
-        </Pressable>
-
-        {/* 参加表明セクションは MypageActionList に統合済み */}
+        {/* 現在地をXでシェアはプロフィールカードへ移設済み（行動は設定に置かない方針） */}
 
         {/* 共有サムネの粒度設定 */}
         <View style={styles.precisionRow}>
@@ -706,45 +701,35 @@ const styles = StyleSheet.create({
   },
   // Profile card
   profileCard: {
+    backgroundColor: color.surface,
+    borderRadius: 8,
+    padding: 16,
+  },
+  profileRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: color.surface,
-    borderRadius: 20,
-    padding: 20,
-    gap: 16,
+    gap: 12,
+  },
+  profileActionsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: color.border,
   },
   publicPagePreviewLink: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    minHeight: 36,
-    marginTop: 8,
-    marginBottom: 4,
+    minHeight: 44,
   },
   publicPagePreviewText: {
     color: color.accentIndigo,
     fontSize: 13,
     fontWeight: "700",
-  },
-  // 現在地シェアボタン
-  shareLocationButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: palette.black,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-  },
-  shareLocationTitle: {
-    color: color.textWhite,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  shareLocationSub: {
-    color: "rgba(255,255,255,0.85)",
-    fontSize: 12,
-    marginTop: 2,
   },
   precisionRow: {
     flexDirection: "row",
@@ -811,14 +796,14 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
   },
   avatarPlaceholder: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: color.surfaceAlt,
     alignItems: "center",
     justifyContent: "center",
@@ -829,24 +814,18 @@ const styles = StyleSheet.create({
   },
   profileName: {
     color: color.textPrimary,
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 16,
+    fontWeight: "700",
   },
   profileUsername: {
     color: color.textMuted,
-    fontSize: 14,
+    fontSize: 13,
     marginTop: 2,
   },
-  profileMetaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 8,
-  },
   profileMetaText: {
-    color: color.successDark,
-    fontSize: 12,
-    fontWeight: "700",
+    color: color.textMuted,
+    fontSize: 11,
+    marginTop: 2,
   },
   // Section
   section: {

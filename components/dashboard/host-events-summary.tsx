@@ -4,6 +4,7 @@ import MaterialIcons from "@/lib/icons/material-icons";
 import { useMySignal } from "@/hooks/use-my-signal";
 import { formatEventDateTime } from "@/components/events/events-event-card";
 import { EventParticipantsModal } from "@/components/events/event-participants-modal";
+import { navigate } from "@/lib/navigation";
 import { color, palette } from "@/theme/tokens";
 import { useState } from "react";
 
@@ -41,7 +42,12 @@ function AvatarStack({
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.85 }}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => pressed && { opacity: 0.85 }}
+        accessibilityRole="button"
+        accessibilityLabel={`参加者${count}人を見る`}
+      >
         {inner}
       </Pressable>
     );
@@ -62,7 +68,13 @@ export function HostEventsSummary() {
     <View style={styles.card}>
       <Text style={styles.heading}>主催中の集まり</Text>
       {events.map((ev) => (
-        <View key={ev.id} style={styles.eventRow}>
+        <Pressable
+          key={ev.id}
+          onPress={() => navigate.toEventDetail(ev.id)}
+          style={({ pressed }) => [styles.eventRow, pressed && { opacity: 0.7 }]}
+          accessibilityRole="button"
+          accessibilityLabel={`${ev.title}の詳細を見る`}
+        >
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={styles.eventTitle} numberOfLines={1}>
               {ev.title}
@@ -79,7 +91,8 @@ export function HostEventsSummary() {
               setModalTitle(ev.title);
             }}
           />
-        </View>
+          <MaterialIcons name="chevron-right" size={20} color={color.textMuted} />
+        </Pressable>
       ))}
 
       {modalEventId != null ? (
