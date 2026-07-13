@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 10; // 2026-07-14: ダッシュボード再設計Step0-1(マイページ情報順序/プロフィール縮小/主催イベントタップ化/届いたすれ違い改名)を確実に配信するため+1
+export const CDN_CACHE_EPOCH = 11; // 2026-07-14: ダッシュボード再設計Step3(LatestFootprintCard新設+HomeStatusLine精度表示強化)を確実に配信するため+1

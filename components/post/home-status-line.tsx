@@ -1,8 +1,11 @@
 /**
  * ホームのステータスライン（docs/uiux-brushup-SPEC.md §5.2）
  *
- * 「今日、足あとを残したか」を1行で可視化する。新規アニメ0本・新規常時DOM要素は
- * テキスト1〜2行のみ（地雷2の予算に影響しない）。
+ * 「今日、足あとを残したか」を可視化する。地図は足さない(ホームには既に
+ * JapanRadarMapがあり、OOM予算(docs/auth-home-oom-diagnosis-v2.md)と衝突する
+ * ため)。場所名+時刻+精度ピルのテキスト強化版に留める
+ * (docs/investigation/dashboard-redesign-2026-07-14.md Step3)。
+ * 新規アニメ0本・新規常時DOM要素はテキスト2〜3行のみ（地雷2の予算に影響しない）。
  */
 
 import { View, Text, StyleSheet } from "react-native";
@@ -14,24 +17,43 @@ type HomeStatusLineProps = {
   checkedInToday: boolean;
   latestPlaceLabel: string | null;
   latestRecordedAt: Date | string | null;
+  accuracyM?: number | null;
   isPausing?: boolean;
   pausedUntilLabel?: string | null;
 };
+
+function formatAccuracy(accuracyM: number | null | undefined): string | null {
+  if (accuracyM == null || !Number.isFinite(accuracyM)) return null;
+  return `±${Math.round(accuracyM)}m`;
+}
 
 export function HomeStatusLine({
   checkedInToday,
   latestPlaceLabel,
   latestRecordedAt,
+  accuracyM,
   isPausing = false,
   pausedUntilLabel,
 }: HomeStatusLineProps) {
+  const accuracyLabel = formatAccuracy(accuracyM);
+
   return (
     <View style={styles.wrap}>
-      <Text style={styles.text} numberOfLines={1}>
-        {checkedInToday && latestRecordedAt
-          ? `今日の足あと: ${latestPlaceLabel ?? "記録済み"} ${formatDateTime(latestRecordedAt)}`
-          : "今日はまだ足あとがありません"}
-      </Text>
+      {checkedInToday && latestRecordedAt ? (
+        <>
+          <Text style={styles.placeText} numberOfLines={1}>
+            {latestPlaceLabel ?? "記録済み"}
+          </Text>
+          <Text style={styles.metaText} numberOfLines={1}>
+            {formatDateTime(latestRecordedAt)}
+            {accuracyLabel ? ` · ${accuracyLabel}` : ""}
+          </Text>
+        </>
+      ) : (
+        <Text style={styles.text} numberOfLines={1}>
+          今日はまだ足あとがありません
+        </Text>
+      )}
 
       {isPausing ? (
         <View style={styles.pausedPill}>
@@ -55,6 +77,16 @@ const styles = StyleSheet.create({
     color: color.textSecondary,
     fontSize: 13,
     fontWeight: "600",
+  },
+  placeText: {
+    color: color.textPrimary,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  metaText: {
+    color: color.textMuted,
+    fontSize: 12,
+    fontVariant: ["tabular-nums"],
   },
   pausedPill: {
     alignSelf: "flex-start",

@@ -32,6 +32,7 @@ import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { MySignalSummary } from "@/components/dashboard/my-signal-summary";
 import { MypageActionList } from "@/components/dashboard/mypage-action-list";
+import { LatestFootprintCard } from "@/components/dashboard/latest-footprint-card";
 import { HostEventsSummary } from "@/components/dashboard/host-events-summary";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -423,6 +424,7 @@ export function MypageAuthenticatedScreen() {
         </View>
 
         <MypageActionList />
+        <LatestFootprintCard />
         <MySignalSummary />
         <HostEventsSummary />
 

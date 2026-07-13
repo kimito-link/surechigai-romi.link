@@ -52,6 +52,7 @@ import {
   LazyEncounterOpenModal,
 } from "@/lib/lazy-heavy-components";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
+import { useMySignal } from "@/hooks/use-my-signal";
 import appConfig from "@/app.config.json";
 import { latLngToRadarPercent } from "@/lib/japan-radar-position";
 import { LIVE_PRESENCE_PULSE_INTERVAL_MS } from "@/modules/encounter/core/live-presence";
@@ -206,11 +207,7 @@ export function PostAuthenticatedScreen() {
     { enabled: isAuthenticated, staleTime: 60_000, gcTime: 10 * 60_000 },
   );
 
-  const { data: mySignal } = trpc.dashboard.mySignal.useQuery(undefined, {
-    enabled: isAuthenticated,
-    staleTime: 60_000,
-    gcTime: 10 * 60_000,
-  });
+  const { data: mySignal } = useMySignal();
 
   const { data: settingsData } = trpc.settings.get.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -458,6 +455,7 @@ export function PostAuthenticatedScreen() {
               checkedInToday={mySignal.checkedInToday}
               latestPlaceLabel={mySignal.latestPlaceLabel}
               latestRecordedAt={mySignal.latestRecordedAt}
+              accuracyM={mySignal.latestLocation?.accuracyM}
               isPausing={isPausing}
               pausedUntilLabel={pausedUntilLabel}
             />
