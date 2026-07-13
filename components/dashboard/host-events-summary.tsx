@@ -110,7 +110,7 @@ export function HostEventsSummary() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: color.surface,
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 16,
     gap: 10,
     borderWidth: 1,

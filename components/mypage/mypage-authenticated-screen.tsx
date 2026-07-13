@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: color.surface,
-    borderRadius: 16,
+    borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
   },
   visibilitySection: {
     backgroundColor: color.surface,
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 16,
     gap: 8,
   },
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
   // Section
   section: {
     backgroundColor: color.surface,
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 16,
     gap: 10,
   },
