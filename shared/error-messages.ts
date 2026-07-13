@@ -40,6 +40,8 @@ export interface UserFriendlyError {
   message: string;
   details?: string;
   canRetry: boolean;
+  /** 429(TOO_MANY_REQUESTS)時のみ設定。この秒数はリトライを待つべき */
+  retryAfterSec?: number;
 }
 
 /**
@@ -135,7 +137,7 @@ export function toUserFriendlyError(error: unknown): UserFriendlyError {
 
   // tRPC エラーコード
   if (error && typeof error === "object") {
-    const trpcData = (error as { data?: { code?: string; httpStatus?: number; message?: string } }).data;
+    const trpcData = (error as { data?: { code?: string; httpStatus?: number; message?: string; retryAfter?: number } }).data;
     const trpcCode = trpcData?.code;
     const trpcMsg = trpcData?.message?.trim() || errorMessage;
 
@@ -163,10 +165,15 @@ export function toUserFriendlyError(error: unknown): UserFriendlyError {
       };
     }
     if (trpcCode === "TOO_MANY_REQUESTS" || trpcData?.httpStatus === 429) {
+      const retryAfterSec =
+        typeof trpcData?.retryAfter === "number" && trpcData.retryAfter > 0
+          ? trpcData.retryAfter
+          : undefined;
       return {
         code: "TIMEOUT",
         message: "リクエストが多すぎます。しばらく待ってから再度お試しください。",
         canRetry: true,
+        retryAfterSec,
       };
     }
   }

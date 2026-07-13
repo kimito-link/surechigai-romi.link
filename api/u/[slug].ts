@@ -3,7 +3,8 @@
  *
  * 公開共有リンク /u/<slug> のクローラー向けメタHTMLを返す Vercel Function。
  * - slug から「最後の記録地点」を解決し、OGP/Twitter Card メタを生成。
- * - og:image は /api/og?... を直接指す（1ホップ・軽量 PNG）。
+ * - og:image は slug が座標解決できれば /api/og?... を直接指す（1ホップ・軽量 PNG）。
+ *   解決できない場合は静的 /og-default.png にフォールバック（外部fetch依存を排除・2026-07-13）。
  * - 人間のブラウザは Expo SPA の /u/<slug> 地図画面へ（middleware は bot のみ rewrite）。
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
@@ -107,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             versionFromQuery?.getTime() ??
             Date.now(),
         })
-      : `${APP_ORIGIN}/api/og`;
+      : `${APP_ORIGIN}/og-default.png`;
   const pageUrl = slug ? `${APP_ORIGIN}/u/${slug}` : APP_ORIGIN;
   const imageAlt = title.replace(/｜.*$/, "").trim();
 

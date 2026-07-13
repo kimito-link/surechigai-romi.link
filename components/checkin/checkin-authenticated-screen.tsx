@@ -116,12 +116,19 @@ function rememberSponsorCardDisplay(): boolean {
   }
 }
 
-function resolveCheckinErrorMessage(err: unknown, fallback: string): string {
+function resolveCheckinErrorMessage(
+  err: unknown,
+  fallback: string,
+): { message: string; retryAfterSec?: number } {
   console.error("[checkin] operation failed:", err);
   if (err && typeof err === "object" && "data" in err) {
     console.error("[checkin] tRPC error data:", (err as { data?: unknown }).data);
   }
-  return err instanceof Error ? toUserFriendlyError(err).message : fallback;
+  if (err instanceof Error) {
+    const friendly = toUserFriendlyError(err);
+    return { message: friendly.message, retryAfterSec: friendly.retryAfterSec };
+  }
+  return { message: fallback };
 }
 
 export default function CheckinAuthenticatedScreen() {
@@ -141,6 +148,10 @@ export default function CheckinAuthenticatedScreen() {
   const [checkinLocationId, setCheckinLocationId] = useState<number | null>(null);
   const [fixedMapCenter, setFixedMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+  /** 429発生時にサーバーから受け取った待機秒数(初期値、不変)。カウントダウン表示のトリガー */
+  const [retryAfterSec, setRetryAfterSec] = useState<number | null>(null);
+  /** カウントダウン表示用の残り秒数(1秒毎にデクリメント) */
+  const [remainingRetrySec, setRemainingRetrySec] = useState(0);
   const [isPausing, setIsPausing] = useState(false);
   const [showLocationIntro, setShowLocationIntro] = useState(false);
   const [canRequestSponsor, setCanRequestSponsor] = useState(canRequestSponsorCard);
@@ -197,6 +208,19 @@ export default function CheckinAuthenticatedScreen() {
       activeLocationAbortRef.current?.abort();
     };
   }, [pulse]);
+
+  // 429発生時のリトライ待機カウントダウン。state==="error"かつretryAfterSecがある間だけ動く
+  useEffect(() => {
+    if (state !== "error" || retryAfterSec == null) {
+      setRemainingRetrySec(0);
+      return;
+    }
+    setRemainingRetrySec(retryAfterSec);
+    const interval = setInterval(() => {
+      setRemainingRetrySec((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [state, retryAfterSec]);
 
   const buttonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -416,6 +440,7 @@ export default function CheckinAuthenticatedScreen() {
     setState("loading");
     setLoadingPhase("locating");
     setErrorMsg("");
+    setRetryAfterSec(null);
 
     pulse.value = withRepeat(
       withSequence(
@@ -486,8 +511,12 @@ export default function CheckinAuthenticatedScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
 
-      const msg = resolveCheckinErrorMessage(err, "位置情報の取得に失敗しました");
+      const { message: msg, retryAfterSec: newRetryAfterSec } = resolveCheckinErrorMessage(
+        err,
+        "位置情報の取得に失敗しました",
+      );
       setErrorMsg(msg);
+      setRetryAfterSec(newRetryAfterSec ?? null);
     } finally {
       /* 新測位が並行開始してrefを持ち替えていたら触らない(自分のcontrollerの時だけ掃除) */
       if (activeLocationAbortRef.current === controller) {
@@ -511,6 +540,8 @@ export default function CheckinAuthenticatedScreen() {
     if (checkinInFlightRef.current) return;
     checkinInFlightRef.current = true;
     setState("loading");
+    setErrorMsg("");
+    setRetryAfterSec(null);
     try {
       lastFixRef.current = {
         lat: checkinLatLng.lat,
@@ -529,8 +560,12 @@ export default function CheckinAuthenticatedScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-      const msg = resolveCheckinErrorMessage(err, "チェックインに失敗しました");
+      const { message: msg, retryAfterSec: newRetryAfterSec } = resolveCheckinErrorMessage(
+        err,
+        "チェックインに失敗しました",
+      );
       setErrorMsg(msg);
+      setRetryAfterSec(newRetryAfterSec ?? null);
     } finally {
       checkinInFlightRef.current = false;
     }
@@ -595,6 +630,8 @@ export default function CheckinAuthenticatedScreen() {
   }, [isPausing, pauseLocation, resumeLocation, settingsQuery, utils]);
 
   const isPauseBusy = pauseLocation.isPending || resumeLocation.isPending;
+  /** 429のretryAfter待機中。この間はボタンを押させない(サーバーへの追加429を防ぐ) */
+  const isRetryCoolingDown = state === "error" && remainingRetrySec > 0;
 
   const getButtonColor = (): string => {
     switch (state) {
@@ -626,7 +663,9 @@ export default function CheckinAuthenticatedScreen() {
       case "adjust":
         return "この場所に足あとを残す";
       case "success": return `${newCount}件のすれ違い！`;
-      case "error": return lastFixRef.current ? "もう一度送る" : "もう一度測る";
+      case "error":
+        if (isRetryCoolingDown) return `${remainingRetrySec}秒後に再試行できます`;
+        return lastFixRef.current ? "もう一度送る" : "もう一度測る";
       case "zero": return "チェックイン完了";
       default: return "現在地を記録する";
     }
@@ -984,7 +1023,7 @@ export default function CheckinAuthenticatedScreen() {
               <Animated.View style={[buttonStyle, styles.primaryButtonAnimated]}>
                 <Pressable
                   onPress={handleCheckin}
-                  disabled={state === "loading" || isPausing}
+                  disabled={state === "loading" || isPausing || isRetryCoolingDown}
                   accessibilityRole="button"
                   accessibilityLabel={getButtonLabel()}
                   testID="checkin-primary-button"
@@ -992,7 +1031,7 @@ export default function CheckinAuthenticatedScreen() {
                     styles.checkinButton,
                     { backgroundColor: isPausing ? color.border : getButtonColor() },
                     pressed && { opacity: 0.85 },
-                    (state === "loading" || isPausing) && { opacity: 0.8 },
+                    (state === "loading" || isPausing || isRetryCoolingDown) && { opacity: 0.8 },
                   ]}
                 >
                   <MaterialIcons

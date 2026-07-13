@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 8; // 2026-07-12: /sign-inがClerkProvider解決前に<SignIn/>を描画しクラッシュ→"/"へ丸ごと落ちるバグを修正、確実配信のため+1
+export const CDN_CACHE_EPOCH = 9; // 2026-07-13: チェックイン429カウントダウンUI追加を確実に配信するため+1

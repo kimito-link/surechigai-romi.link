@@ -37,7 +37,7 @@ export default function Root({ children }: PropsWithChildren) {
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
         />
         <meta property="og:url" content={`${APP_ORIGIN}/`} />
-        <meta property="og:image" content={`${APP_ORIGIN}/api/og`} />
+        <meta property="og:image" content={`${APP_ORIGIN}/og-default.png`} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -46,7 +46,7 @@ export default function Root({ children }: PropsWithChildren) {
           name="twitter:description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。"
         />
-        <meta name="twitter:image" content={`${APP_ORIGIN}/api/og`} />
+        <meta name="twitter:image" content={`${APP_ORIGIN}/og-default.png`} />
         {/* Preconnect: 自サイトのみ（Clerk は /sign-in 画面だけで preconnect — kimito 準拠） */}
         <link rel="preconnect" href={APP_ORIGIN} />
         <link rel="dns-prefetch" href={APP_ORIGIN} />
