@@ -41,6 +41,25 @@ function ActionRow({
   );
 }
 
+/** 未開封CTA — 統計と同列に見えないよう横長の強調帯にする(docs/investigation/dashboard-redesign-2026-07-14.md Step4) */
+function UnopenedCta({ count, onPress }: { count: number; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.unopenedCta, pressed && { opacity: 0.88 }]}
+      accessibilityRole="button"
+      accessibilityLabel={`未開封のすれ違い${count}件を開く`}
+    >
+      <MaterialIcons name="mail" size={22} color={palette.white} style={{ marginRight: 12 }} />
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={styles.unopenedCtaTitle}>未開封の封筒 {count}件</Text>
+        <Text style={styles.unopenedCtaSub}>封筒を開いて相手を確認</Text>
+      </View>
+      <MaterialIcons name="chevron-right" size={20} color={palette.white} />
+    </Pressable>
+  );
+}
+
 /** マイページ — 「いまやること」 */
 export function MypageActionList() {
   const { data } = useMySignal();
@@ -55,13 +74,7 @@ export function MypageActionList() {
       <Text style={styles.sectionTitle}>いまやること</Text>
 
       {data && data.unopenedCount > 0 ? (
-        <ActionRow
-          icon="mail"
-          title={`未開封のすれ違い ${data.unopenedCount} 件`}
-          subtitle="封筒を開いて相手を確認"
-          tone="accent"
-          onPress={() => navigate.toHome()}
-        />
+        <UnopenedCta count={data.unopenedCount} onPress={() => navigate.toHome()} />
       ) : null}
 
       {data && !data.checkedInToday ? (
@@ -86,7 +99,7 @@ export function MypageActionList() {
 const styles = StyleSheet.create({
   section: {
     backgroundColor: color.surface,
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 16,
     gap: 4,
   },
@@ -117,5 +130,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: color.textMuted,
     paddingVertical: 8,
+  },
+  unopenedCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 56,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: palette.kimitoOrange,
+    marginBottom: 4,
+  },
+  unopenedCtaTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: palette.white,
+  },
+  unopenedCtaSub: {
+    fontSize: 12,
+    color: palette.white + "D9",
+    marginTop: 2,
   },
 });
