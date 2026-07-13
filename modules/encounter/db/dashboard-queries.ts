@@ -22,6 +22,7 @@ export type MySignalSummary = {
   trailCount: number;
   latestPlaceLabel: string | null;
   latestRecordedAt: Date | null;
+  latestLocation: { lat: number; lng: number; accuracyM: number | null } | null;
   encounterPartnerCount: number;
   unopenedCount: number;
   visitedPrefectureCount: number;
@@ -163,6 +164,9 @@ export async function getMySignalSummary(db: DB, selfUserId: number): Promise<My
       ? placeLabel(latest.municipality, latest.prefecture)
       : null,
     latestRecordedAt,
+    latestLocation: latest
+      ? { lat: latest.lat, lng: latest.lng, accuracyM: latest.accuracyM }
+      : null,
     encounterPartnerCount,
     unopenedCount,
     visitedPrefectureCount: visitedStats.prefectureCount,

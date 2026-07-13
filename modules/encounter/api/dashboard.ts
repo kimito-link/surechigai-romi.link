@@ -15,6 +15,7 @@ export const dashboardRouter = router({
         trailCount: 0,
         latestPlaceLabel: null,
         latestRecordedAt: null,
+        latestLocation: null,
         encounterPartnerCount: 0,
         unopenedCount: 0,
         visitedPrefectureCount: 0,
