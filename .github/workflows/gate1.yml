@@ -31,7 +31,7 @@ jobs:
       touch_workflow: ${{ steps.diff-check.outputs.touch_workflow }}
       sensitive: ${{ steps.diff-check.outputs.sensitive }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2  # 前回のコミットも取得
 
@@ -107,7 +107,7 @@ jobs:
     name: Lint / Type check / Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
         with:
           version: 9.12.0
@@ -136,7 +136,7 @@ jobs:
     needs: [diff-check]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && (needs.diff-check.outputs.touch_api == 'true' || needs.diff-check.outputs.touch_db == 'true' || needs.diff-check.outputs.touch_deploy == 'true' || needs.diff-check.outputs.touch_env == 'true' || needs.diff-check.outputs.touch_health == 'true' || needs.diff-check.outputs.touch_routing == 'true')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       
       - name: Wait for deployment
         run: sleep 420  # 7分。Vercel のデプロイ完了を待ってから照合(サイト不整合検知のため)
