@@ -701,6 +701,57 @@
     border-radius:3px; box-shadow:2px 3px 0 rgba(35,32,27,.3); font-family:var(--fude); color:var(--sumi); font-size:15px; letter-spacing:.16em; transition:opacity .4s ease; }
   .gento.playing .gento-miru{ opacity:0; pointer-events:none; }
   .gento-broken .gento-miru{ display:none; }
+
+  /* ===== 賑（にぎわい）：gento-phone枠を流用した「見立ての実画面」。ダミー多数で賑はひを演出 ===== */
+  .nigiwai-phone{ width:clamp(200px,58vw,258px); aspect-ratio:132/270; margin:2px auto 12px;
+    border-radius:26px; border:1.5px solid #33475e; background:linear-gradient(160deg,#0f2138,#0a1826); padding:8px; box-shadow:0 12px 40px rgba(0,0,0,.4); }
+  .nigiwai-screen{ position:relative; height:100%; border-radius:19px; overflow:hidden; background:#0a1826; }
+  .nigiwai-screen::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:5;
+    background:radial-gradient(120% 90% at 50% 45%, transparent 60%, rgba(20,16,10,.3)); }
+  .nigiwai-cap{ position:absolute; left:0; right:0; bottom:0; z-index:4; padding:5px 10px 6px; text-align:left;
+    background:linear-gradient(0deg, rgba(6,12,22,.92), rgba(6,12,22,0)); }
+  .nigiwai-cap b{ display:block; font-family:var(--fude); font-size:11px; letter-spacing:.1em; color:#eaf3ff; }
+  .nigiwai-cap span{ display:block; font-family:var(--mincho); font-size:9.5px; letter-spacing:.03em; color:#9fc0e6; margin-top:1px; }
+  .nigiwai-badge{ position:absolute; left:8px; top:8px; z-index:4; display:inline-flex; align-items:center; gap:4px;
+    padding:2px 8px 2px 6px; background:rgba(6,12,22,.72); border:1px solid rgba(176,138,62,.5); border-radius:99px;
+    font-family:var(--mincho); font-size:9px; letter-spacing:.06em; color:var(--kin); }
+  .nigiwai-badge i{ width:5px; height:5px; border-radius:50%; background:var(--taisha); box-shadow:0 0 6px var(--taisha); animation:akari 2.2s ease-in-out infinite; }
+  /* 在席の地図：全国に灯多数（既存.zaisekiより密） */
+  .nigiwai-zaiseki{ position:absolute; inset:0; display:grid; place-items:center; padding:14% 12% 22%; box-sizing:border-box; }
+  .nigiwai-zaiseki .jp{ width:100%; height:auto; display:block; filter:grayscale(1) brightness(1.6); opacity:.55; }
+  .nigiwai-zaiseki .tomo-hi{ position:absolute; width:5px; height:5px; border-radius:50%; background:var(--kin); box-shadow:0 0 7px var(--kin); animation:akari 2.4s ease-in-out infinite; }
+  .nigiwai-zaiseki .tomo-hi.oo{ width:7px; height:7px; box-shadow:0 0 10px var(--kin); }
+  /* レーダー：中心から気配（ドット）が多数、輪が広がる */
+  .nigiwai-radar{ position:absolute; inset:0; display:grid; place-items:center; }
+  .nigiwai-radar .rd-ring{ position:absolute; border-radius:50%; border:1px solid rgba(159,192,230,.28); }
+  .nigiwai-radar .rd-ring-1{ width:34%; height:34%; }
+  .nigiwai-radar .rd-ring-2{ width:60%; height:60%; }
+  .nigiwai-radar .rd-ring-3{ width:86%; height:86%; }
+  .nigiwai-radar .rd-sweep{ position:absolute; width:86%; height:86%; border-radius:50%;
+    background:conic-gradient(from 0deg, rgba(159,192,230,.32), transparent 26%); animation:rd-spin 4.5s linear infinite; }
+  .nigiwai-radar .rd-me{ position:absolute; width:9px; height:9px; border-radius:50%; background:var(--taisha); box-shadow:0 0 10px var(--taisha); z-index:2; }
+  .nigiwai-radar .rd-dot{ position:absolute; width:5px; height:5px; border-radius:50%; background:#eaf3ff; box-shadow:0 0 6px rgba(234,243,255,.8); animation:akari 2.1s ease-in-out infinite; }
+  @keyframes rd-spin{ to{ transform:rotate(360deg); } }
+  /* 国別人名帳：旅人アイコンがずらっと並ぶ一覧 */
+  .nigiwai-junin{ position:absolute; inset:0; padding:34px 12px 30px; overflow:hidden; box-sizing:border-box; }
+  .nigiwai-junin .jn-head{ font-family:var(--fude); font-size:10.5px; letter-spacing:.12em; color:var(--kin); margin:0 0 6px 2px; }
+  .nigiwai-junin .jn-row{ display:flex; align-items:center; gap:7px; padding:5px 6px; border-radius:5px; margin-bottom:3px; background:rgba(255,255,255,.03); }
+  .nigiwai-junin .jn-ico{ flex:0 0 20px; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:9px; color:#0a1826; font-weight:700; }
+  .nigiwai-junin .jn-name{ font-family:var(--mincho); font-size:10px; color:#dce6f2; letter-spacing:.02em; flex:1; }
+  .nigiwai-junin .jn-tag{ font-family:var(--mincho); font-size:8px; color:var(--kin); letter-spacing:.04em; }
+  /* 宴の一覧：本日開催中の宴カードがらっと並ぶ */
+  .nigiwai-utage{ position:absolute; inset:0; padding:34px 10px 30px; overflow:hidden; box-sizing:border-box; }
+  .nigiwai-utage .uk-head{ font-family:var(--fude); font-size:10.5px; letter-spacing:.12em; color:var(--kin); margin:0 0 7px 2px; }
+  .nigiwai-utage .uk-card{ display:flex; align-items:center; gap:6px; padding:6px 7px; border-radius:5px; margin-bottom:5px;
+    background:rgba(255,255,255,.04); border-left:2px solid var(--taisha); }
+  .nigiwai-utage .uk-dot{ flex:0 0 6px; width:6px; height:6px; border-radius:50%; background:var(--taisha); box-shadow:0 0 6px var(--taisha); animation:akari 2.3s ease-in-out infinite; }
+  .nigiwai-utage .uk-body{ flex:1; min-width:0; }
+  .nigiwai-utage .uk-title{ font-family:var(--mincho); font-size:10px; color:#eaf3ff; letter-spacing:.02em; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nigiwai-utage .uk-meta{ font-family:var(--mincho); font-size:8px; color:#9fc0e6; letter-spacing:.03em; }
+  @media (prefers-reduced-motion:reduce){
+    .nigiwai-zaiseki .tomo-hi, .nigiwai-radar .rd-dot, .nigiwai-utage .uk-dot, .nigiwai-badge i{ animation:none; }
+    .nigiwai-radar .rd-sweep{ animation:none; }
+  }
   /* app-intro内の微ループ用（読めれば全面を覆い偽レーダーを隠す。エラー時は非表示で下が見える） */
   .app-intro .ai-phone .ai-loop{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:19px; filter:sepia(.08) saturate(.9) contrast(.97); z-index:2; }
   .app-intro .ai-phone.ai-loop-broken .ai-loop{ display:none; }
@@ -1420,14 +1471,18 @@
       <li class="shukuba reveal">
         <span class="sk-no">一の宿</span>
         <figure class="sk-fuda">
-          <svg class="sk-art" viewBox="0 0 140 96" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
-            <rect x="6" y="10" width="128" height="80" rx="2"/>
-            <line x1="6" y1="28" x2="134" y2="28"/>
-            <line x1="27" y1="28" x2="27" y2="90"/><line x1="54" y1="28" x2="54" y2="90"/><line x1="81" y1="28" x2="81" y2="90"/><line x1="108" y1="28" x2="108" y2="90"/>
-            <line x1="6" y1="49" x2="134" y2="49"/><line x1="6" y1="70" x2="134" y2="70"/>
-            <ellipse cx="40" cy="39" rx="8" ry="6" stroke="#a8572f" stroke-width="2"/>
-            <ellipse cx="95" cy="60" rx="8" ry="6" stroke="#a8572f" stroke-width="2"/>
-          </svg>
+          <!-- 見立ての画面(ダミー): 実の暦は結の宿の幻燈にて。宴も人数も見立て -->
+          <div class="nigiwai-phone" aria-label="宴の一覧(見立ての一葉。宴も人数もダミー)"><div class="nigiwai-screen">
+            <span class="nigiwai-badge"><i></i>本日、開催中</span>
+            <div class="nigiwai-utage">
+              <p class="uk-head">諸国の宴（暦より）</p>
+              <div class="uk-card"><span class="uk-dot"></span><div class="uk-body"><span class="uk-title">桜坂・花見の宴</span><span class="uk-meta">東京都 ・ 参加 18名</span></div></div>
+              <div class="uk-card"><span class="uk-dot"></span><div class="uk-body"><span class="uk-title">凸待ち・夜灯りの回</span><span class="uk-meta">大阪府 ・ 参加 9名</span></div></div>
+              <div class="uk-card"><span class="uk-dot"></span><div class="uk-body"><span class="uk-title">オフ会・湊町にて</span><span class="uk-meta">福岡県 ・ 参加 14名</span></div></div>
+              <div class="uk-card"><span class="uk-dot"></span><div class="uk-body"><span class="uk-title">配信・凸待ちの宿</span><span class="uk-meta">北海道 ・ 参加 6名</span></div></div>
+              <div class="uk-card"><span class="uk-dot"></span><div class="uk-body"><span class="uk-title">巡礼・聖地めぐり</span><span class="uk-meta">京都府 ・ 参加 22名</span></div></div>
+            </div>
+          </div></div>
           <figcaption>
             <b class="sk-name">帳を繰る</b>
             <span class="sk-desc">暦を開けば、諸国の宴が並んでゐる。名乗らずとも、覗くのは自由。</span>
@@ -1476,7 +1531,18 @@
       <li class="shukuba reveal">
         <span class="sk-no">五の宿</span>
         <figure class="sk-fuda">
-          <span class="zaiseki"><img class="jp" src="img/japan.svg" alt="" loading="lazy" /><span class="tomo-hi" style="left:62%;top:44%"></span><span class="tomo-hi" style="left:48%;top:60%"></span><span class="tomo-hi" style="left:70%;top:56%"></span></span>
+          <!-- 見立ての画面(ダミー): 実の在席地図は結の宿の幻燈にて。ここは賑はひの見立て -->
+          <div class="nigiwai-phone" aria-label="在席の地図(見立ての一葉。灯の数はダミー)"><div class="nigiwai-screen">
+            <span class="nigiwai-badge"><i></i>只今、在席中</span>
+            <span class="nigiwai-zaiseki">
+              <img class="jp" src="img/japan.svg" alt="" loading="lazy" />
+              <span class="tomo-hi oo" style="left:62%;top:44%"></span><span class="tomo-hi" style="left:48%;top:60%"></span><span class="tomo-hi" style="left:70%;top:56%"></span>
+              <span class="tomo-hi" style="left:57%;top:38%"></span><span class="tomo-hi oo" style="left:40%;top:64%"></span><span class="tomo-hi" style="left:75%;top:32%"></span>
+              <span class="tomo-hi" style="left:33%;top:70%"></span><span class="tomo-hi" style="left:66%;top:62%"></span><span class="tomo-hi oo" style="left:52%;top:52%"></span>
+              <span class="tomo-hi" style="left:44%;top:47%"></span><span class="tomo-hi" style="left:80%;top:40%"></span><span class="tomo-hi" style="left:28%;top:58%"></span>
+            </span>
+            <span class="nigiwai-cap"><b>十二の灯、いま点る</b><span>国々に、旅人あまた</span></span>
+          </div></div>
           <figcaption>
             <b class="sk-name">灯を数へる</b>
             <span class="sk-desc">いま誰が着いてゐるか、国々の灯で分かる。宴のあとも、合言葉ひとつで皆の居どころが見える。名乗り要らずで。</span>
@@ -1544,7 +1610,19 @@
       <li class="shukuba reveal">
         <span class="sk-no">三の宿</span>
         <figure class="sk-fuda">
-          <span class="zaiseki"><img class="jp" src="img/japan.svg" alt="" loading="lazy" /><span class="tomo-hi" style="left:58%;top:40%"></span><span class="tomo-hi" style="left:64%;top:58%"></span></span>
+          <!-- 見立ての画面(ダミー): 実のレーダーは結の宿の幻燈にて。ここは気配の賑はひの見立て -->
+          <div class="nigiwai-phone" aria-label="レーダー画面(見立ての一葉。気配の数はダミー)"><div class="nigiwai-screen">
+            <span class="nigiwai-badge"><i></i>近くに、気配</span>
+            <span class="nigiwai-radar">
+              <span class="rd-ring rd-ring-1"></span><span class="rd-ring rd-ring-2"></span><span class="rd-ring rd-ring-3"></span>
+              <span class="rd-sweep"></span>
+              <span class="rd-dot" style="left:58%;top:38%"></span><span class="rd-dot" style="left:34%;top:44%"></span><span class="rd-dot" style="left:66%;top:60%"></span>
+              <span class="rd-dot" style="left:42%;top:62%"></span><span class="rd-dot" style="left:70%;top:36%"></span><span class="rd-dot" style="left:30%;top:60%"></span>
+              <span class="rd-dot" style="left:50%;top:28%"></span><span class="rd-dot" style="left:60%;top:70%"></span>
+              <span class="rd-me"></span>
+            </span>
+            <span class="nigiwai-cap"><b>八つの気配、盤上に</b><span>近くを行く、旅人たち</span></span>
+          </div></div>
           <figcaption>
             <b class="sk-name">国に灯が見える</b>
             <span class="sk-desc">その灯は在席の地図に灯る。どの国に、いくつの灯――遠目にもよく見える。</span>
@@ -1613,11 +1691,19 @@
       <li class="shukuba reveal">
         <span class="sk-no">一の宿</span>
         <figure class="sk-fuda">
-          <svg class="sk-art" viewBox="0 0 110 92" aria-hidden="true" fill="none" stroke="#3a352c" stroke-width="1.3">
-            <rect x="10" y="10" width="90" height="74" rx="2"/>
-            <line x1="10" y1="30" x2="100" y2="30" stroke-width="1"/><line x1="10" y1="50" x2="100" y2="50" stroke-width="1"/><line x1="10" y1="70" x2="100" y2="70" stroke-width="1"/>
-            <circle cx="22" cy="20" r="4" fill="#a8572f" stroke="none"/><circle cx="22" cy="40" r="4" stroke="#a8572f" stroke-width="1.5"/>
-          </svg>
+          <!-- 見立ての画面(ダミー): 実の人名帳は結の宿の幻燈にて。名も並びも見立て -->
+          <div class="nigiwai-phone" aria-label="国別の人名帳(見立ての一葉。名はすべて仮のもの)"><div class="nigiwai-screen">
+            <span class="nigiwai-badge"><i></i>東京都・旅人</span>
+            <div class="nigiwai-junin">
+              <p class="jn-head">この国を訪れた旅人</p>
+              <div class="jn-row"><span class="jn-ico" style="background:#e3c268">旅</span><span class="jn-name">旅人・かえで</span><span class="jn-tag">巡礼中</span></div>
+              <div class="jn-row"><span class="jn-ico" style="background:#9fc0e6">道</span><span class="jn-name">道連れ・しづく</span><span class="jn-tag">昨日</span></div>
+              <div class="jn-row"><span class="jn-ico" style="background:#a8572f">灯</span><span class="jn-name">灯守り・りん</span><span class="jn-tag">3日前</span></div>
+              <div class="jn-row"><span class="jn-ico" style="background:#7fae8e">影</span><span class="jn-name">影踏み・そら</span><span class="jn-tag">3日前</span></div>
+              <div class="jn-row"><span class="jn-ico" style="background:#c3a1cf">霞</span><span class="jn-name">霞ゆき・はる</span><span class="jn-tag">5日前</span></div>
+              <div class="jn-row"><span class="jn-ico" style="background:#e3c268">響</span><span class="jn-name">響き・まほろ</span><span class="jn-tag">7日前</span></div>
+            </div>
+          </div></div>
           <figcaption>
             <b class="sk-name">国から、人を尋ねる</b>
             <span class="sk-desc">国ごとに、旅人の名が並ぶ。いま賑はふ国も、ひと目で分かる。</span>
