@@ -18,6 +18,7 @@ import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
 import { trpc } from "@/lib/trpc";
+import { useTrpcReady } from "@/lib/trpc-ready-context";
 import { hasClerkSessionInStorage } from "@/lib/has-clerk-session";
 import { navigateBack, navigateReplace } from "@/lib/navigation";
 import {
@@ -33,7 +34,29 @@ function displayWho(name: string | null, username: string | null): string {
   return "この人";
 }
 
+/**
+ * 認証プロバイダ chunk の解決待ちの間(app/_layout.tsx のプレースホルダ分岐)は
+ * tRPC Provider が存在しないため、trpc.*.useQuery を呼ぶと
+ * "Unable to find tRPC Context" で落ちる(enabled:false では防げない)。
+ * この画面は未ログインでも見られる公開URLなので、useTrpcReady() が false の間は
+ * 実際に tRPC を叩く ShareLocationScreenInner 自体をマウントしない。
+ */
 export default function ShareLocationScreen() {
+  const trpcReady = useTrpcReady();
+  if (!trpcReady) {
+    return (
+      <ScreenContainer containerClassName="bg-background" showFooter={false}>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={color.accentPrimary} />
+          <Text style={styles.loadingText}>読み込み中…</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
+  return <ShareLocationScreenInner />;
+}
+
+function ShareLocationScreenInner() {
   const params = useLocalSearchParams<{
     slug: string;
     area?: string;
