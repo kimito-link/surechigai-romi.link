@@ -62,7 +62,7 @@ jobs:
       # ↓ app.config.json identity.bundleId で置換
       APP_BUNDLE_ID: com.kimito.link.surechigai
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:
