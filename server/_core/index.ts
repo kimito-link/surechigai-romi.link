@@ -317,9 +317,14 @@ async function startServer() {
     }
   });
 
-  // デバッグ用: 環境変数の確認
+  // デバッグ用: 環境変数の確認(ローカルdev専用。本番Vercel Functionsには存在しないが、
+  // このExpressサーバーを誤って本番相当で動かした場合に備えてガードする)
   app.get("/api/debug/env", (_req, res) => {
-    // 讖溷ｯ・ュ蝣ｱ繧偵・繧ｹ繧ｯ
+    if (process.env.NODE_ENV === "production") {
+      res.status(404).end();
+      return;
+    }
+    // 機密情報をマスク
     const maskSecret = (value: string | undefined) => {
       if (!value) return undefined;
       if (value.length <= 8) return "***";
@@ -350,8 +355,13 @@ async function startServer() {
     customSiteTitle: "どいんチャレンジ API ドキュメント",
   }));
 
-  // 繧ｷ繧ｹ繝・Β迥ｶ諷狗｢ｺ隱喉PI
+  // システム状態確認API(パスワード認証は verify-password 経由の別チェックのみで、
+  // このルート自体は未認証。ローカルdev専用のガードとして本番では404にする)
   app.get("/api/admin/system-status", async (_req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      res.status(404).end();
+      return;
+    }
     try {
       const { getDb } = await import("../db.js");
 
@@ -425,6 +435,10 @@ async function startServer() {
   });
 
   app.get("/api/admin/api-usage", async (_req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      res.status(404).end();
+      return;
+    }
     // TODO: 邂｡逅・・ｪ崎ｨｼ繧定ｿｽ蜉
     try {
       const summary = await getDashboardSummary();
@@ -436,6 +450,10 @@ async function startServer() {
   });
 
   app.get("/api/admin/api-usage/stats", (_req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      res.status(404).end();
+      return;
+    }
     // TODO: 邂｡逅・・ｪ崎ｨｼ繧定ｿｽ蜉
     const stats = getApiUsageStats();
     res.json(stats);
@@ -443,6 +461,10 @@ async function startServer() {
 
   // 繧ｨ繝ｩ繝ｼ繝ｭ繧ｰAPI
   app.get("/api/admin/errors", (req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      res.status(404).end();
+      return;
+    }
     const category = req.query.category as string | undefined;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
     const resolved = req.query.resolved === "true" ? true : req.query.resolved === "false" ? false : undefined;
@@ -459,18 +481,30 @@ async function startServer() {
 
   // 繧ｨ繝ｩ繝ｼ繧定ｧ｣豎ｺ貂医∩縺ｫ繝槭・繧ｯ
   app.post("/api/admin/errors/:id/resolve", (req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      res.status(404).end();
+      return;
+    }
     const success = resolveError(req.params.id);
     res.json({ success });
   });
 
   // 縺吶∋縺ｦ縺ｮ繧ｨ繝ｩ繝ｼ繧定ｧ｣豎ｺ貂医∩縺ｫ繝槭・繧ｯ
   app.post("/api/admin/errors/resolve-all", (_req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      res.status(404).end();
+      return;
+    }
     const count = resolveAllErrors();
     res.json({ success: true, count });
   });
 
   // 繧ｨ繝ｩ繝ｼ繝ｭ繧ｰ繧偵け繝ｪ繧｢
   app.delete("/api/admin/errors", (_req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      res.status(404).end();
+      return;
+    }
     const count = clearErrorLogs();
     res.json({ success: true, count });
   });
