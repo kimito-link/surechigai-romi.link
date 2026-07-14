@@ -795,6 +795,10 @@
     padding:clamp(44px,9vw,80px) var(--shell) clamp(40px,8vw,72px);
     background:linear-gradient(180deg,#0f1f3a 0%,#0d1b34 60%,#0f1f3a 100%); }
   .mokuroku .mk-lead{ font-family:var(--mincho); font-size:clamp(13px,3.6vw,15px); letter-spacing:.1em; color:#b8ccea; margin:1.2em auto 0; }
+  /* りんくの道具帳: DesktopMate公式絵から「持ち物」5品を写した一葉 */
+  .mokuroku .mk-mochi{ position:relative; z-index:1; max-width:min(94vw,420px); margin:clamp(20px,4vw,32px) auto 0; text-align:center; }
+  .mokuroku .mk-mochi img{ width:100%; height:auto; display:block; filter:drop-shadow(0 6px 20px rgba(0,0,0,.35)); }
+  .mokuroku .mk-mochi figcaption{ font-family:var(--mincho); font-size:11px; letter-spacing:.08em; color:#7d90a6; margin-top:.6em; }
   .mokuroku .mk-bu{ position:relative; z-index:1; max-width:var(--maxw); margin:0 auto; text-align:left; }
   .mokuroku .mk-bu summary{ font-family:var(--fude); letter-spacing:.24em; color:#dce6f2; font-size:clamp(15px,4vw,17px);
     border-bottom:1px solid rgba(176,138,62,.3); padding:14px 4px; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:baseline; }
@@ -1894,6 +1898,10 @@
     <span class="mk-no">附 ・ 目録</span><span class="mk-label">― 三十一の道具、六つの組に束ねて ―</span>
     <p class="mk-lead">押せば、開く。</p>
   </div>
+  <figure class="mk-mochi reveal">
+    <img src="img/chara/rinku-mochimono.webp" alt="りんくの道具帳: 旅のかばん・すれ違ひ通信機・地図・旅のノート・ランタン" loading="lazy" width="475" height="105" />
+    <figcaption>りんくの道具帳より</figcaption>
+  </figure>
   <div class="mk-ezu reveal" id="ezu" role="navigation" aria-label="道具の絵図">
     <p class="ez-koto">五つの願ひに、集ふと守るを添へて。</p>
     <div class="ez-grid">
