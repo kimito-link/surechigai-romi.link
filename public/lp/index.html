@@ -748,6 +748,17 @@
   .nigiwai-utage .uk-body{ flex:1; min-width:0; }
   .nigiwai-utage .uk-title{ font-family:var(--mincho); font-size:10px; color:#eaf3ff; letter-spacing:.02em; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .nigiwai-utage .uk-meta{ font-family:var(--mincho); font-size:8px; color:#9fc0e6; letter-spacing:.03em; }
+  /* 守りの見立て: 公開範囲の選び方が一目でわかる4択カード */
+  .nigiwai-mamoru{ position:absolute; inset:0; padding:34px 12px 30px; overflow:hidden; box-sizing:border-box; }
+  .nigiwai-mamoru .mm-head{ font-family:var(--fude); font-size:10.5px; letter-spacing:.12em; color:var(--kin); margin:0 0 7px 2px; }
+  .nigiwai-mamoru .mm-row{ display:flex; align-items:center; gap:7px; padding:6px 7px; border-radius:5px; margin-bottom:4px;
+    background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.05); }
+  .nigiwai-mamoru .mm-row.on{ border-color:rgba(176,138,62,.5); background:rgba(176,138,62,.08); }
+  .nigiwai-mamoru .mm-dot{ flex:0 0 14px; width:14px; height:14px; border-radius:50%; border:1.5px solid #9fc0e6; }
+  .nigiwai-mamoru .mm-row.on .mm-dot{ border-color:var(--kin); background:radial-gradient(circle, var(--kin) 40%, transparent 44%); }
+  .nigiwai-mamoru .mm-body{ flex:1; min-width:0; }
+  .nigiwai-mamoru .mm-title{ font-family:var(--mincho); font-size:10px; color:#eaf3ff; letter-spacing:.02em; display:block; }
+  .nigiwai-mamoru .mm-desc{ font-family:var(--mincho); font-size:8px; color:#9fc0e6; letter-spacing:.02em; display:block; margin-top:1px; }
   @media (prefers-reduced-motion:reduce){
     .nigiwai-zaiseki .tomo-hi, .nigiwai-radar .rd-dot, .nigiwai-utage .uk-dot, .nigiwai-badge i{ animation:none; }
     .nigiwai-radar .rd-sweep{ animation:none; }
@@ -1998,6 +2009,19 @@
     </ul>
   </details>
   <details class="mk-bu reveal" id="mk-mamoru"><summary><span class="mk-kumi-na">守るの組<span class="mk-negai">「名は明かしても、寝屋は明かさぬ。」</span></span><span class="mk-kazu">五品</span></summary>
+    <!-- 見立ての画面(ダミー): 実の守り設定は結の宿・弐の幻燈にて。選び方の一覧のみ見立て -->
+    <div class="nigiwai-phone" aria-label="軌跡の公開範囲(見立ての一葉。選択状態はダミー)" style="margin:2px auto 14px;">
+      <div class="nigiwai-screen">
+        <span class="nigiwai-badge"><i></i>見せ方は選べる</span>
+        <div class="nigiwai-mamoru">
+          <p class="mm-head">軌跡の公開範囲</p>
+          <div class="mm-row"><span class="mm-dot"></span><div class="mm-body"><span class="mm-title">非公開（自分だけ）</span><span class="mm-desc">記録は残るが誰にも見えない</span></div></div>
+          <div class="mm-row"><span class="mm-dot"></span><div class="mm-body"><span class="mm-title">リンクを知っている人</span><span class="mm-desc">/u/リンクを知る人だけ閲覧可</span></div></div>
+          <div class="mm-row on"><span class="mm-dot"></span><div class="mm-body"><span class="mm-title">すれ違った人だけ</span><span class="mm-desc">すれ違いが記録された人のみ</span></div></div>
+          <div class="mm-row"><span class="mm-dot"></span><div class="mm-body"><span class="mm-title">公開（都道府県一覧にも表示）</span><span class="mm-desc">クリエイター一覧にも載る</span></div></div>
+        </div>
+      </div>
+    </div>
     <ul>
       <li><b>見せ方の按配</b>市区町村までか、正確にか。私（わたくし）・縁者・すれ違ひ・諸人（もろびと）、誰まで見せるか。</li>
       <li><b>宿を隠す</b>おのが寝屋（＝自宅）の在り処は、すれ違ひ相手にも隠せる。</li>
