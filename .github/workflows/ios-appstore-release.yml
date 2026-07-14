@@ -1,25 +1,37 @@
-# 【��型テンプレート】iOS App Store 申請用ワークフロー�E�EitHub Actions 版！E#
-# 移植�E: partnership_program_website/.github/workflows/ios-appstore-release.yml
-#         (fujisan-clean からさらに移植された完�E形・認証込みリリースCI)
+# 【定型テンプレート】iOS App Store 申請用ワークフロー(GitHub Actions 版)
 #
-# - macOS-latest ランナ�E上で Capacitor + Xcode で IPA を作�Eし、App Store Connect API で
-#   ビルドを TestFlight にアチE�EローチE+ メタチE�Eタを書き込んで審査提�Eまで自動化する、E# - Mac 不要E��EitHub Actions の macos-latest が代行）。�Eライベ�EチErepo は ~$2-3/release、E#
-# ── こ�EチE��プレの使ぁE�� ──────────────────────────────────────────
-# 1. こ�Eファイルをアプリリポ�E `.github/workflows/ios-appstore-release.yml` にコピ�E、E# 2. 下�E <...> プレースホルダめEapp.config.json の値で置換すめE
-#      com.surechigairomi.app   = identity.bundleId          侁E com.example.app
-#      surechigai        = identity.shortName         侁E NekoDiary (Xcode scheme/archive 吁E
-#      https://surechigai-romi.link  = "https://" + identity.productionDomain  (審査スクショ取得�E)
-# 3. 下�E「忁E��な Secrets」を Repo Settings ↁESecrets and variables ↁEActions に登録、E# 4. リリース実体スクリプト (scripts/appstore-submit.mjs 筁E は partnership からコピ�E、E#    詳細マッピングは templates/README.md / _docs/release-pipeline-playbook.md、E#
-# ── 忁E��な GitHub Secrets ────────────────────────────────────────
-#   APPLE_TEAM_ID                       Apple Developer Team ID (10桁E
+# 移植元: partnership_program_website/.github/workflows/ios-appstore-release.yml
+#         (fujisan-clean からさらに移植された完成形・認証込みリリースCI)
+#
+# - macOS-latest ランナー上で Capacitor + Xcode で IPA を作成し、App Store Connect API で
+#   ビルドを TestFlight にアップロード+ メタデータを書き込んで審査提出まで自動化する。
+# - Mac 不要(GitHub Actions の macos-latest が代行)。プライベートrepo は ~$2-3/release。
+#
+# ── このテンプレの使い方 ──────────────────────────────────────────
+# 1. このファイルをアプリリポの `.github/workflows/ios-appstore-release.yml` にコピー。
+# 2. 下記 <...> プレースホルダを app.config.json の値で置換する:
+#      com.surechigairomi.app   = identity.bundleId          例: com.example.app
+#      surechigai        = identity.shortName         例: NekoDiary (Xcode scheme/archive 名)
+#      https://surechigai.kimito.link  = "https://" + identity.productionDomain  (審査スクショ取得用)
+# 3. 下記「必要な Secrets」を Repo Settings → Secrets and variables → Actions に登録。
+# 4. リリース実体スクリプト (scripts/appstore-submit.mjs 等) は partnership からコピー。
+#    詳細マッピングは templates/README.md / _docs/release-pipeline-playbook.md。
+#
+# ── 必要な GitHub Secrets ────────────────────────────────────────
+#   APPLE_TEAM_ID                       Apple Developer Team ID (10桁)
 #   APPSTORE_CONNECT_KEY_ID             ASC API Key ID
 #   APPSTORE_CONNECT_ISSUER_ID          ASC API Issuer ID (UUID)
-#   APPSTORE_CONNECT_API_KEY_P8_BASE64  ASC API 秘寁E�� .p8 めEbase64 匁E#   IOS_DIST_CERT_PASSWORD              配币E��明書 p12 のパスワーチE#   IOS_DIST_CERT_P12_BASE64            配币E��明書 p12 めEbase64 匁E#     (また�E IOS_DIST_CERT_CER_BASE64 + IOS_DIST_PRIVATE_KEY_PEM_BASE64 の2点)
-#   IOS_APPSTORE_PROFILE_BASE64         App Store provisioning profile めEbase64 匁E#   ── 審査用チE��アカウンチE/ 連絡允E(ログイン忁E��アプリのみ) ──
-#   IOS_REVIEW_DEMO_USERNAME            審査員用チE��アカウンチE(任意�Eログイン忁E��なら忁E��E
-#   IOS_REVIEW_DEMO_PASSWORD            同上パスワーチE#   IOS_REVIEW_CONTACT_PHONE            審査員連絡先電話 (E.164)
-#   IOS_REVIEW_NOTES                    審査員向けメモ (任愁E
-#   CLERK_SECRET_KEY                    チE��アカウント疎通検証用 (Clerk 認証アプリのみ・任愁E
+#   APPSTORE_CONNECT_API_KEY_P8_BASE64  ASC API 秘密鍵 .p8 の base64 版
+#   IOS_DIST_CERT_PASSWORD              配布証明書 p12 のパスワード
+#   IOS_DIST_CERT_P12_BASE64            配布証明書 p12 の base64 版
+#     (または IOS_DIST_CERT_CER_BASE64 + IOS_DIST_PRIVATE_KEY_PEM_BASE64 の2点)
+#   IOS_APPSTORE_PROFILE_BASE64         App Store provisioning profile の base64 版
+#   ── 審査用デモアカウント / 連絡先 (ログイン必須アプリのみ) ──
+#   IOS_REVIEW_DEMO_USERNAME            審査員用デモアカウント (任意。ログイン必須なら必須)
+#   IOS_REVIEW_DEMO_PASSWORD            同上パスワード
+#   IOS_REVIEW_CONTACT_PHONE            審査員連絡先電話 (E.164)
+#   IOS_REVIEW_NOTES                    審査員向けメモ (任意)
+#   CLERK_SECRET_KEY                    デモアカウント疎通検証用 (Clerk 認証アプリのみ・任意)
 name: ios-appstore-release
 
 on:
@@ -28,9 +40,11 @@ on:
     branches:
       - main
     paths:
-      # 方釁E Web は唯一の真実。client/server/vite などの Web 変更は
-      # WebView で自動反映されるため、ネイチE��チEiOS)の再申請�E原則しなぁE��E      # 本当に申請したいとき�E workflow_dispatch(手動)、また�E
-      # バ�Eジョンを上げめEpackage.json 変更で起動する、E      - ".github/workflows/ios-appstore-release.yml"
+      # 方針: Web は唯一の真実。client/server/vite などの Web 変更は
+      # WebView で自動反映されるため、ネイティブ(iOS)の再申請は原則しない。
+      # 本当に申請したいときは workflow_dispatch(手動)、または
+      # バージョンを上げる package.json 変更で起動する。
+      - ".github/workflows/ios-appstore-release.yml"
       - "capacitor.config.json"
       - "package.json"
       - "scripts/appstore-submit.mjs"
@@ -57,9 +71,11 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 90
     env:
-      # ↓�EↁEapp.config.json の値で置揁E↓�EↁE      APP_BUNDLE_ID: com.kimito.link.surechigai   # identity.bundleId   侁E com.example.app
-      APP_NAME: surechigai             # identity.shortName  侁E NekoDiary
-      # ↑�EↁEここまで ↑�EↁE      IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+      # ↓↓ app.config.json の値で置換 ↓↓
+      APP_BUNDLE_ID: com.kimito.link.surechigai   # identity.bundleId   例: com.example.app
+      APP_NAME: surechigai             # identity.shortName  例: NekoDiary
+      # ↑↑ ここまで ↑↑
+      IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
       IOS_DIST_CERT_CER_BASE64: ${{ secrets.IOS_DIST_CERT_CER_BASE64 }}
       IOS_DIST_PRIVATE_KEY_PEM_BASE64: ${{ secrets.IOS_DIST_PRIVATE_KEY_PEM_BASE64 }}
       IOS_APPSTORE_PROFILE_BASE64: ${{ secrets.IOS_APPSTORE_PROFILE_BASE64 }}
@@ -177,7 +193,8 @@ jobs:
           fi
           npx cap copy ios
 
-      # 標溁EHTTPS / OS 提供�E TLS のみなら非免除暗号を使わなぁE��言�E�審査・輸出コンプライアンスの手戻り軽減！E      - name: Info.plist export compliance (ITSAppUsesNonExemptEncryption)
+      # 標準HTTPS / OS 提供の TLS のみなら非免除暗号を使わない宣言(審査・輸出コンプライアンスの手戻り軽減)
+      - name: Info.plist export compliance (ITSAppUsesNonExemptEncryption)
         run: |
           set -euo pipefail
           PLIST="ios/App/App/Info.plist"
@@ -198,7 +215,7 @@ jobs:
             echo "Using committed $MASTER"
             cp "$MASTER" assets/icon-only.png
           else
-            echo "MASTER not committed  Egenerating via icons:generate"
+            echo "MASTER not committed - generating via icons:generate"
             pnpm icons:generate
             if [ ! -f "$MASTER" ]; then
               echo "::error::icons:generate did not produce $MASTER. Check scripts/generate-app-icons.mjs."
@@ -206,13 +223,22 @@ jobs:
             fi
             cp "$MASTER" assets/icon-only.png
           fi
-          # 起動時の「黒い間」にロゴを�EすスプラチE��ュ�E�暗色背景�E�を生�E、E          # launchAutoHide:true�E�Eapacitor.config.json�E��E安�E方式。assets/splash*.png めE          # @capacitor/assets が各サイズへ展開ぁELaunchScreen に焼き込む、E          node scripts/generate-capacitor-splash.mjs
-          # 生�E「前」に、Contents.json が参照する Capacitor チE��ォルト画像�Eハッシュを記録、E          node scripts/verify-ios-splash-not-default.mjs --snapshot
+          # 起動時の「黒い間」にロゴを映すスプラッシュ(暗色背景)を生成。
+          # launchAutoHide:true(capacitor.config.json)前提の方式。assets/splash*.png を
+          # @capacitor/assets が各サイズへ展開しLaunchScreen に焼き込む。
+          node scripts/generate-capacitor-splash.mjs
+          # 生成「前」に、Contents.json が参照する Capacitor デフォルト画像のハッシュを記録。
+          node scripts/verify-ios-splash-not-default.mjs --snapshot
           npx @capacitor/assets generate --ios --iosProject ios/App --assetPath assets --splashBackgroundColor '#00427B' --splashBackgroundColorDark '#00427B'
-          # 生�E「後」に、�E荷される画像が Capacitor チE��ォルト�EままでなぁE��とを確認（事故防止ゲート）、E          node scripts/verify-ios-splash-not-default.mjs --verify
+          # 生成「後」に、出荷される画像が Capacitor デフォルトのままでないことを確認(事故防止ゲート)。
+          node scripts/verify-ios-splash-not-default.mjs --verify
 
-      # 起動時の白フラチE��ュ対筁E LaunchScreen 暗色匁E+ UIUserInterfaceStyle=Dark、E      # @capacitor/assets generate の「後」に当てる！Essets ぁE      # storyboard/カタログを�E生�Eした後に暗色 patch を最終適用するため�E�、E      # ※ patch-ios-launch-dark.mjs は本キチE�� templates/scripts からコピ�Eした
-      #   「作り刁E��なぁE����型版を使ぁE��と�E�独自VC注入は ios-shell-guardrail が赤にする�E�、E      - name: Patch iOS launch screen to brand blue (#00427B)
+      # 起動時の白フラッシュ対策: LaunchScreen 暗色化 + UIUserInterfaceStyle=Dark。
+      # @capacitor/assets generate の「後」に当てる(assets が
+      # storyboard/カタログを再生成した後に暗色 patch を最終適用するため)。
+      # ※ patch-ios-launch-dark.mjs は本キット templates/scripts からコピーした
+      #   「作り分けなし」の定型版を使うこと(独自VC注入は ios-shell-guardrail が赤にする)。
+      - name: Patch iOS launch screen to brand blue (#00427B)
         run: node scripts/patch-ios-launch-dark.mjs
 
       - name: Force iOS deployment target + iPhone-only device family
@@ -567,7 +593,7 @@ jobs:
           GOT="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" /tmp/ipa-Info.plist)"
           echo "IPA CFBundleShortVersionString=$GOT (expected $MARK_VER)"
           if [ "$GOT" != "$MARK_VER" ]; then
-            echo "::error::IPA の Version ぁEpackage.json と一致しません、E
+            echo "::error::IPA の Version が package.json と一致しません"
             exit 1
           fi
 
@@ -618,18 +644,25 @@ jobs:
       - name: Capture App Store screenshot from prod URL (authenticated as reviewer)
         if: ${{ success() }}
         env:
-          # ↁE"https://" + identity.productionDomain で置揁E          SCREENSHOT_URL: https://surechigai-romi.link
+          # ↓ "https://" + identity.productionDomain で置換
+          SCREENSHOT_URL: https://surechigai.kimito.link
           SCREENSHOT_OUT_DIR: ios-screenshots
-          # ログイン忁E��アプリは審査員チE��アカウントでサインインしてから撮影する、E          # 未ログインのログイン画面スクショだけだと Apple 2.3.3 で reject される、E          # capture スクリプトはこ�E env が無ぁE�� hard-fail (exit 1) する設計、E          IOS_REVIEW_DEMO_USERNAME: ${{ secrets.IOS_REVIEW_DEMO_USERNAME }}
+          # ログイン必須アプリは審査員デモアカウントでサインインしてから撮影する。
+          # 未ログインのログイン画面スクショだけだと Apple 2.3.3 で reject される。
+          # capture スクリプトはこの env が無いと hard-fail (exit 1) する設計。
+          IOS_REVIEW_DEMO_USERNAME: ${{ secrets.IOS_REVIEW_DEMO_USERNAME }}
           IOS_REVIEW_DEMO_PASSWORD: ${{ secrets.IOS_REVIEW_DEMO_PASSWORD }}
         run: |
           pnpm exec playwright install --with-deps chromium
           node scripts/capture-appstore-screenshots.mjs
           ls -la ios-screenshots
 
-      # Pre-submit gate: ログイン忁E��アプリは、デモアカウントが実際に
-      # サインインできるかを審査提�E前に確認する。死んだ demo account めE      # 出すと 2.1(a) で即 reject + 24-48h 無駁E��なる。definitive な
-      # bad-credential のときだぁEfail closed、transient/設定不足は warn 継続、E      # ※ Clerk 以外�E認証なめEverify-reviewer-account.mjs を�E前実裁E��差し替える、E      - name: Verify reviewer demo account can sign in (pre-submit gate)
+      # Pre-submit gate: ログイン必須アプリは、デモアカウントが実際に
+      # サインインできるかを審査提出前に確認する。死んだ demo account で
+      # 出すと 2.1(a) で即 reject + 24-48h 無駄になる。definitive な
+      # bad-credential のときだけ fail closed、transient/設定不足は warn 継続。
+      # ※ Clerk 以外の認証なら verify-reviewer-account.mjs を事前実装し差し替える。
+      - name: Verify reviewer demo account can sign in (pre-submit gate)
         if: ${{ success() }}
         env:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}

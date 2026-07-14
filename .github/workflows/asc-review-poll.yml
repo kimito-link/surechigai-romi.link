@@ -1,27 +1,40 @@
-# 【��型テンプレート】App Store Connect 審査スチE�Eタス監要E#
-# 移植�E: partnership_program_website/.github/workflows/asc-review-poll.yml
+# 【定型テンプレート】App Store Connect 審査ステータス監視
 #
-# App Store Connect のアプリ審査状態を 30 刁E��きにポ�Eリングして、E# REJECTED / METADATA_REJECTED / DEVELOPER_REJECTED / INVALID_BINARY めE# 検�Eしたら�E勁EGitHub Issue を立てる、E#
-# 目皁E
-#   Apple からの「却下されました」メールを手で Claude に転送する作業をやめる、E#   リジェクト�E瞬間に Issue が開く�Eで、セチE��ョン開始時に
+# 移植元: partnership_program_website/.github/workflows/asc-review-poll.yml
+#
+# App Store Connect のアプリ審査状態を 30 分間隔でポーリングして、
+# REJECTED / METADATA_REJECTED / DEVELOPER_REJECTED / INVALID_BINARY を
+# 検知したら自動で GitHub Issue を立てる。
+#
+# 目的:
+#   Apple からの「却下されました」メールを手で Claude に転送する作業をやめる。
+#   リジェクトの瞬間に Issue が開くので、セッション開始時に
 #     gh issue list --label ci-failure --label asc-reject --state open
-#   で自動的に拾える、E#
-# 設訁E
-#   - 既存�E secrets (APPSTORE_CONNECT_KEY_ID / ISSUER_ID / P8_BASE64) を�E利用
-#   - 追加 secret 0 倁E#   - ASC アプリレコードがまだ存在しなぁE��間�E no-op で exit
-#   - 重褁EIssue は (bundleId, versionId, state) 単位で de-dupe
-#   - 回復可能な reject (INVALID_BINARY 筁E は ios-appstore-release を�E勁Ere-dispatch
+#   で自動的に拾える。
 #
-# ── こ�EチE��プレの使ぁE�� ──────────────────────────────────────────
-# 1. こ�Eファイルをアプリリポ�E `.github/workflows/asc-review-poll.yml` にコピ�E、E# 2. 下�E com.surechigairomi.app めEapp.config.json identity.bundleId で置換、E# 3. scripts/asc-review-check.mjs めEpartnership からコピ�E、E#
-# ── 忁E��な GitHub Secrets ────────────────────────────────────────
+# 設計:
+#   - 既存の secrets (APPSTORE_CONNECT_KEY_ID / ISSUER_ID / P8_BASE64) を再利用
+#   - 追加 secret 0個
+#   - ASC アプリレコードがまだ存在しない期間は no-op で exit
+#   - 重複Issue は (bundleId, versionId, state) 単位で de-dupe
+#   - 回復可能な reject (INVALID_BINARY 等) は ios-appstore-release を自動re-dispatch
+#
+# ── このテンプレの使い方 ──────────────────────────────────────────
+# 1. このファイルをアプリリポの `.github/workflows/asc-review-poll.yml` にコピー。
+# 2. 下記 com.surechigairomi.app を app.config.json identity.bundleId で置換。
+# 3. scripts/asc-review-check.mjs を partnership からコピー。
+#
+# ── 必要な GitHub Secrets ────────────────────────────────────────
 #   APPSTORE_CONNECT_KEY_ID             ASC API Key ID
 #   APPSTORE_CONNECT_ISSUER_ID          ASC API Issuer ID
-#   APPSTORE_CONNECT_API_KEY_P8_BASE64  ASC API 秘寁E�� .p8 めEbase64 匁E#   �E�Eos-appstore-release と同じ3点を�E利用。追加 secret 不要E��Ename: asc-review-poll
+#   APPSTORE_CONNECT_API_KEY_P8_BASE64  ASC API 秘密鍵 .p8 の base64 版
+#   (ios-appstore-release と同じ3点を再利用。追加 secret 不要)
+name: asc-review-poll
 
 on:
   schedule:
-    # 30 刁E��き。最低でめE5 刁E��位だぁEApple の更新頻度を老E��て 30 刁E��E    - cron: "*/30 * * * *"
+    # 30 分間隔。最低でも 5 分単位だが Apple の更新頻度を考えて 30 分。
+    - cron: "*/30 * * * *"
   workflow_dispatch: {}
   workflow_run:
     workflows:
@@ -32,11 +45,12 @@ on:
 permissions:
   issues: write
   contents: read
-  # actions: write  Eused to auto-dispatch ios-appstore-release.yml
+  # actions: write  used to auto-dispatch ios-appstore-release.yml
   # when the classifier detects a recoverable rejection (e.g. INVALID_BINARY)
   actions: write
 
-# 連続実行を防ぁEconcurrency:
+# 連続実行を防ぐ
+concurrency:
   group: asc-review-poll
   cancel-in-progress: false
 
@@ -45,7 +59,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     env:
-      # ↁEapp.config.json identity.bundleId で置揁E      APP_BUNDLE_ID: com.kimito.link.surechigai
+      # ↓ app.config.json identity.bundleId で置換
+      APP_BUNDLE_ID: com.kimito.link.surechigai
     steps:
       - uses: actions/checkout@v6
 
@@ -95,7 +110,7 @@ jobs:
               const cls = r.classification || { code: 'UNKNOWN', label: 'Unclassified', action: 'manual-review', hint: '' };
               const feedbackBlock = r.feedbackText
                 ? ['### Apple feedback (raw)', '```', r.feedbackText.slice(0, 1500), '```', ''].join('\n')
-                : '_No reviewer feedback text exposed via API yet  Echeck the ASC web UI._\n';
+                : '_No reviewer feedback text exposed via API yet -- check the ASC web UI._\n';
 
               const body = [
                 `**Bundle ID:** \`${report.bundleId}\``,
@@ -109,21 +124,21 @@ jobs:
                 `https://appstoreconnect.apple.com/apps/${report.appId}/distribution/ios/version/${r.versionId}`,
                 ``,
                 `### Auto-classification`,
-                `- **Pattern:** \`${cls.code}\`  E${cls.label}`,
+                `- **Pattern:** \`${cls.code}\` -- ${cls.label}`,
                 `- **Suggested action:** \`${cls.action}\``,
                 `- **Hint:** ${cls.hint}`,
                 ``,
                 feedbackBlock,
                 `### Categories`,
-                `- \`REJECTED\`: 機�E・コンチE��チE�E違反 (Guideline 系)`,
-                `- \`METADATA_REJECTED\`: ストア掲載情報 (説明�Eスクショ・キーワード筁E`,
-                `- \`DEVELOPER_REJECTED\`: 開発老E��人が取り下げた`,
-                `- \`INVALID_BINARY\`: アチE�Eロード時のバイナリ検証エラー`,
+                `- \`REJECTED\`: 機能・コンテンツ違反 (Guideline 系)`,
+                `- \`METADATA_REJECTED\`: ストア掲載情報 (説明・スクショ・キーワード等)`,
+                `- \`DEVELOPER_REJECTED\`: 開発者本人が取り下げた`,
+                `- \`INVALID_BINARY\`: アップロード時のバイナリ検証エラー`,
                 ``,
                 `### Triage`,
-                `1. ASC で reviewer feedback を読む (上訁Elink)`,
-                `2. 申請事前 lint (\`ios-pre-submission-lint\`) で類似パターンが拾えなぁE��確認`,
-                `3. 修正 ↁE\`package.json#version\` めEbump ↁE\`git push main\` で iOS workflow が�E build + 冁Esubmit`,
+                `1. ASC で reviewer feedback を読む (上記link)`,
+                `2. 申請事前 lint (\`ios-pre-submission-lint\`) で類似パターンが拾えないか確認`,
+                `3. 修正 → \`package.json#version\` を bump → \`git push main\` で iOS workflow が再build + 再submit`,
                 ``,
                 `_Auto-created by \`.github/workflows/asc-review-poll.yml\`._`,
                 `_Detected at: ${report.timestamp}._`,
@@ -163,7 +178,7 @@ jobs:
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: created.data.number,
-                    body: `🤁EAuto-triggered \`ios-appstore-release.yml\` to retry submission (classifier action=\`${cls.action}\`).`,
+                    body: `🤖 Auto-triggered \`ios-appstore-release.yml\` to retry submission (classifier action=\`${cls.action}\`).`,
                   });
                 } catch (e) {
                   core.warning(`Could not auto-trigger ios-appstore-release: ${e.message}`);
