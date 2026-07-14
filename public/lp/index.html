@@ -43,6 +43,11 @@
     --light-x:82%; --light-spread:48%; --light-op:.30; --light-color:rgba(214,228,240,.9);
   }
   *{box-sizing:border-box}
+  /* ブラウザ既定のフォーカスリング(環境によって太いオレンジ楕円等になる)を、
+     LPの意匠に合う控えめな金色の角丸に統一。キーボード操作時のみ表示。 */
+  a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--kin); outline-offset:2px; border-radius:2px;
+  }
   html{scroll-behavior:smooth;overflow-x:hidden}
   body{
     margin:0; color:var(--sumi); font-family:var(--mincho);
@@ -908,9 +913,9 @@
   .app-intro .ai-no{ font-family:var(--fude); font-size:13px; letter-spacing:.5em; color:var(--kin); text-indent:.5em; display:block; margin-bottom:.7em; }
   .app-intro .ai-label{ font-family:var(--fude); font-size:clamp(13px,3.6vw,15px); letter-spacing:.2em; color:#9fc0e6; }
   .app-intro .ai-lead{ font-family:var(--mincho); font-size:clamp(17px,4.6vw,21px); line-height:2.1; letter-spacing:.06em; color:#f0ead9; margin:0 0 clamp(30px,6vw,46px); }
-  .app-intro .ai-stage{ display:flex; gap:clamp(20px,5vw,40px); align-items:center; justify-content:center; flex-wrap:wrap; max-width:var(--maxw); }
-  /* 端末モック：完成したレーダー＋りんくのアイコン世界観を、和の夜空に置く */
-  .app-intro .ai-phone{ flex:0 0 auto; width:clamp(128px,34vw,150px); aspect-ratio:132/270; border-radius:26px;
+  .app-intro .ai-stage{ display:flex; flex-direction:column; gap:clamp(20px,4vw,28px); align-items:center; justify-content:center; max-width:var(--maxw); }
+  /* 端末モック：完成したレーダー＋りんくのアイコン世界観を、和の夜空に置く。灯・逢章のgento-phoneとサイズを揃える */
+  .app-intro .ai-phone{ flex:0 0 auto; width:clamp(200px,58vw,258px); aspect-ratio:132/270; border-radius:26px;
     border:1.5px solid #33475e; background:linear-gradient(160deg,#0f2138,#0a1826); padding:9px; box-sizing:border-box; }
   .app-intro .ai-phone-screen{ position:relative; height:100%; border-radius:19px; background:var(--ao,#00427b);
     display:flex; align-items:center; justify-content:center; overflow:hidden; }
@@ -921,7 +926,7 @@
   .app-intro .ai-phone-dot{ position:absolute; width:9px; height:9px; border-radius:50%; background:var(--taisha);
     bottom:29%; box-shadow:0 0 10px var(--taisha); }
   .app-intro .ai-phone-here{ position:absolute; bottom:7%; font-family:var(--fude); font-size:10px; letter-spacing:.2em; color:rgba(255,255,255,.72); }
-  .app-intro .ai-badges{ flex:1 1 220px; min-width:210px; max-width:300px; display:flex; flex-direction:column; gap:10px; }
+  .app-intro .ai-badges{ width:100%; max-width:280px; display:flex; flex-direction:column; gap:10px; }
   /* ストアバッジ：和の夜空に沈む黒石。浮かせず馴染ませる。 */
   .app-intro .store-badge{ display:flex; align-items:center; gap:12px; text-decoration:none;
     background:#05080d; border:1px solid #2b3a4b; border-radius:12px; padding:10px 16px; transition:border-color .3s, transform .3s; }
