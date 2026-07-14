@@ -19,6 +19,10 @@ function parseCookies(cookieHeader: string | undefined): Map<string, string> {
 }
 
 function hasAdminSession(req: CreateExpressContextOptions["req"]): boolean {
+  // admin_session は署名なしの固定文字列Cookieのため、本番では偽造可能。
+  // 発行元(/api/admin/verify-password)もローカルdev用Expressにしかなく、
+  // 本番のパスワード管理画面は実質未提供。悪用経路を断つため本番では無効化する。
+  if (process.env.NODE_ENV === "production") return false;
   const cookies = parseCookies(req.headers.cookie);
   return cookies.get(ADMIN_SESSION_COOKIE) === "authenticated";
 }
