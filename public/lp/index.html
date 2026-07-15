@@ -619,14 +619,6 @@
   .negai .ng-fuda img{ width:100%; height:auto; display:block; border-radius:1px; }
   .negai .ng-name{ font-family:var(--fude); color:var(--sumi); font-size:clamp(17px,4.4vw,20px); letter-spacing:.2em; display:block; margin:14px 0 8px; }
   .negai .ng-desc{ font-family:var(--mincho); color:var(--sumi-soft); font-size:clamp(13px,3.4vw,15px); line-height:2.1; letter-spacing:.04em; display:block; text-align:left; }
-  /* りんく一言：DesktopMate切り出し一葉を小さく添える(見立ての人肌感)。淡(和紙)・濃(夜空)の2版 */
-  .rk-teaser{ display:flex; align-items:center; gap:8px; }
-  .rk-teaser img.rk-teaser-img{ width:56px !important; height:56px !important; border-radius:50%; object-fit:cover; object-position:center 30%;
-    border:1.5px solid rgba(176,138,62,.5); box-shadow:0 3px 10px rgba(0,0,0,.25); flex:0 0 auto; }
-  .rk-teaser span{ font-family:var(--mincho); font-size:11.5px; letter-spacing:.03em; text-align:left; }
-  .negai .ng-rinku{ margin-top:12px; padding-top:12px; border-top:1px dashed rgba(58,53,44,.18); }
-  .negai .ng-rinku span{ color:var(--sumi-soft); }
-  .rk-teaser.rk-dusk span{ color:#b8ccea; }
   .negai .ng-atogaki{ position:relative; z-index:1; font-family:var(--mincho); font-size:clamp(13px,3.6vw,15px); line-height:2.2; letter-spacing:.05em; color:#b8ccea; max-width:var(--maxw); margin:clamp(20px,5vw,40px) auto 0; }
   .negai .ng-tsugi{ position:relative; z-index:1; font-family:var(--fude); font-size:clamp(16px,4.4vw,19px); letter-spacing:.12em; color:#f0ead9; margin:clamp(28px,6vw,52px) auto 0; }
 
@@ -1477,7 +1469,6 @@
       <figcaption>
         <b class="ng-name">足あとの記</b>
         <span class="ng-desc">歩けば、正確な足あとが、ひとりでに残る。幾年たっても、思ひ出の辻まで、地図が連れ戻してくれる。</span>
-        <div class="ng-rinku rk-teaser"><img class="rk-teaser-img" src="img/chara/rinku-scene-02.webp" alt="りんく、地図をひらく" loading="lazy" width="56" height="56" /><span>新しい場所を見つけたよ！</span></div>
       </figcaption>
     </figure>
     <a class="ng-fuzoku" href="#mk-nokosu" data-mkjump>附・残すの組、三品を目録に ▼</a>
@@ -1490,7 +1481,6 @@
       <figcaption>
         <b class="ng-name">すれ違ひの封筒</b>
         <span class="ng-desc">近くを通った人と、そっと、すれ違ふ。言葉の代はりに、封筒がひとつ。返すのは、スタンプただ一つでよい。</span>
-        <div class="ng-rinku rk-teaser"><img class="rk-teaser-img" src="img/chara/rinku-scene-03.webp" alt="りんく、すれ違ひ通信中" loading="lazy" width="56" height="56" /><span>誰かと、すれ違ってるかも…！</span></div>
       </figcaption>
     </figure>
     <a class="ng-fuzoku" href="#mk-au" data-mkjump>附・逢ふの組、六品を目録に ▼</a>
@@ -1503,7 +1493,6 @@
       <figcaption>
         <b class="ng-name">図鑑と巡礼</b>
         <span class="ng-desc">訪れた町が、切手帳のやうに貯まってゆく。憧れの人の軌跡をたどれば、旅は、巡礼になる。</span>
-        <div class="ng-rinku rk-teaser"><img class="rk-teaser-img" src="img/chara/rinku-scene-04.webp" alt="りんく、新しい出会い" loading="lazy" width="56" height="56" /><span>はじめまして！</span></div>
       </figcaption>
     </figure>
     <a class="ng-fuzoku" href="#mk-meguru" data-mkjump>附・巡るの組、四品を目録に ▼</a>
@@ -1516,7 +1505,6 @@
       <figcaption>
         <b class="ng-name">時を越えるすれ違ひ</b>
         <span class="ng-desc">三十日のうちに、同じ場所を踏んだ人とも、すれ違へる。同じ道は二度とないのに――道は、覚えてゐてくれる。</span>
-        <div class="ng-rinku rk-teaser"><img class="rk-teaser-img" src="img/chara/rinku-scene-10.webp" alt="りんく、すれ違いの軌跡" loading="lazy" width="56" height="56" /><span>みんなが通った道が、つながっていく。</span></div>
       </figcaption>
     </figure>
     <a class="ng-fuzoku" href="#mk-au" data-mkjump>附・逢ふの組、六品を目録に ▼</a>
@@ -1529,7 +1517,6 @@
       <figcaption>
         <b class="ng-name">便りは、𝕏へ</b>
         <span class="ng-desc">道中記は、そのまま 𝕏 で分かち合へる。届くのはただ一行――会いたい君がゐる、現在地。</span>
-        <div class="ng-rinku rk-teaser"><img class="rk-teaser-img" src="img/chara/rinku-scene-07.webp" alt="りんく、アイテムを届けるよ" loading="lazy" width="56" height="56" /><span>受け取ってくれるかな？</span></div>
       </figcaption>
     </figure>
     <a class="ng-fuzoku" href="#mk-shiraseru" data-mkjump>附・報せるの組、二品を目録に ▼</a>
@@ -1543,7 +1530,6 @@
   <div class="tb-head reveal">
     <span class="tb-no">灯 ・ 逢</span><span class="tb-label">― 皆で集ふ宴の帳 ―</span>
     <p class="tb-lead">ひとりの旅の願ひは、五つ書いた。<br />されど旅は、ひとりのものとは限らない。<br />宴の帳（とばり）を、三つの道行きでお目にかけよう。</p>
-    <div class="rk-teaser rk-dusk" style="justify-content:center;margin-top:16px;"><img class="rk-teaser-img" src="img/chara/rinku-scene-09.webp" alt="りんく、長い旅の途中" loading="lazy" width="56" height="56" /><span>いろんな景色に出会えるよ。</span></div>
   </div>
 
   <!-- 場・巡: 会場内をすれちがふ見立て(ダミー)。三人の道連れ(りんく・こん太・タヌ姉)が宿場図を巡る -->
@@ -1947,7 +1933,12 @@
     <img src="img/chara/rinku-mochimono.webp" alt="りんくの道具帳: 旅のかばん・すれ違ひ通信機・地図・旅のノート・ランタン" loading="lazy" width="475" height="105" />
     <figcaption>りんくの道具帳より</figcaption>
   </figure>
-  <div class="rk-teaser rk-dusk" style="justify-content:center;margin:14px 0;"><img class="rk-teaser-img" src="img/chara/rinku-scene-01.webp" alt="りんく、旅の準備中" loading="lazy" width="56" height="56" /><span>どこへ行こうかな？</span></div>
+  <figure class="mk-sheet reveal">
+    <div class="mk-sheet-frame">
+      <img src="img/chara/rinku-desktopmate-sheet.webp" alt="君斗りんく DesktopMate すれ違い通信コレクション設定画。旅の準備から流れ星の願ひ、すれ違いの軌跡まで十二の場面と表情差分・持ち物の一覧" loading="lazy" width="1536" height="1024" />
+    </div>
+    <figcaption>君斗りんく DesktopMate ― すれ違い通信コレクション設定画より</figcaption>
+  </figure>
   <div class="mk-ezu reveal" id="ezu" role="navigation" aria-label="道具の絵図">
     <p class="ez-koto">五つの願ひに、集ふと守るを添へて。</p>
     <div class="ez-grid">
@@ -1983,7 +1974,6 @@
       </a>
     </div>
     <p class="ez-soe">絵空事は、一つもない。三十一とも、いま動いてゐる道具である。<br />iPhone も Android もパソコンも、ブラウザひとつで今すぐ。</p>
-    <div class="rk-teaser rk-dusk" style="justify-content:center;margin-top:16px;"><img class="rk-teaser-img" src="img/chara/rinku-scene-06.webp" alt="りんく、旅の記録をつける" loading="lazy" width="56" height="56" /><span>今日の思ひ出、メモしておこっ♪</span></div>
   </div>
   <details class="mk-bu reveal" id="mk-nokosu"><summary><span class="mk-kumi-na">残すの組<span class="mk-negai">「あの日の場所へ、もう一度。」</span></span><span class="mk-kazu">三品</span></summary>
     <ul>
@@ -2060,7 +2050,6 @@
 <section class="app-intro reveal" id="app-intro" data-scene="clear" aria-label="アプリ紹介">
   <div class="ai-head"><span class="ai-no">巻 ・ 携</span><span class="ai-label">― この道中記を、いつでも懐に ―</span></div>
   <p class="ai-lead">五つの願ひも、宴の帳も、この一冊に。<br />いつでも、懐に。</p>
-  <div class="rk-teaser rk-dusk" style="justify-content:center;margin:0 0 20px;"><img class="rk-teaser-img" src="img/chara/rinku-scene-11.webp" alt="りんく、ありがとう" loading="lazy" width="56" height="56" /><span>出会ってくれて、ありがとう！</span></div>
   <div class="ai-stage">
     <div class="ai-phone" aria-hidden="true">
       <div class="ai-phone-screen">
@@ -2115,7 +2104,6 @@
       <span class="of-tag">会いたい君がいる現在地<b>@streamerfunch</b></span>
     </div>
     <figcaption class="of-caption">灯を報せる便りは、この絵札になって 𝕏 のタイムラインへ。<br />受け取った誰かが、キミのいまの現在地を知る。</figcaption>
-    <div class="rk-teaser rk-dusk" style="justify-content:center;margin-top:14px;"><img class="rk-teaser-img" src="img/chara/rinku-scene-08.webp" alt="りんく、風にのせて" loading="lazy" width="56" height="56" /><span>想いはきっと、どこかに届くよね。</span></div>
   </figure>
 </section>
 <!-- ════════════════ フィナーレ（夜空＋大きな日本地図＋アプリ導線） ════════════════ -->
@@ -2196,8 +2184,6 @@
     <a class="fin-cta" href="https://surechigai.kimito.link/sign-in">𝕏 で、旅をはじめる</a>
     <span class="fin-sub">この夜空の、どこかですれ違った誰かへ。</span>
     <span class="fin-mitate">――旅人が満ちれば、灯はこの国のすみずみに。いま咲いた灯は、その〈もしも〉の夜。</span>
-    <div class="rk-teaser rk-dusk" style="justify-content:center;margin-top:20px;"><img class="rk-teaser-img" src="img/chara/rinku-scene-05.webp" alt="りんく、流れ星に祈る" loading="lazy" width="56" height="56" /><span>みんなの願ひ、届きますように…</span></div>
-    <div class="rk-teaser rk-dusk" style="justify-content:center;margin-top:10px;"><img class="rk-teaser-img" src="img/chara/rinku-scene-12.webp" alt="りんく、またきっとどこかで" loading="lazy" width="56" height="56" /><span>またすれ違えたら、うれしいな。</span></div>
   </div>
 </section>
 
