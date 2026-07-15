@@ -1348,7 +1348,7 @@
         btn.setAttribute('aria-expanded', open?'true':'false');
         btn.setAttribute('aria-label', open?'お品書きを閉ぢる':'お品書きを開く');
       }
-      btn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(!body.classList.contains('os-open')); });
+      btn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(!body.classList.contains('os-open')); btn.blur(); });
       nav.addEventListener('click', function(e){ if(e.target.closest('a') || e.target===nav) setOpen(false); });
       window.addEventListener('keydown', function(e){ if(e.key==='Escape') setOpen(false); });
     })();
