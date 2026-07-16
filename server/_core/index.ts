@@ -16,7 +16,6 @@ import { APP_VERSION } from "../../shared/version.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import { registerOAuthRoutes } from "./oauth.js";
 import { registerTwitterRoutes } from "../twitter-routes.js";
-import { createClerkClient, verifyToken } from "@clerk/backend";
 import { appRouter } from "../routers.js";
 import { createContext } from "./context.js";
 import { getDashboardSummary, getApiUsageStats } from "../api-usage-tracker.js";
@@ -155,7 +154,7 @@ async function startServer() {
         timestamp: Date.now(),
       };
 
-      let dbStatus: { connected: boolean; latency: number; error: string; challengesCount?: number } = { connected: false, latency: 0, error: "" };
+      let dbStatus: { connected: boolean; latency: number; error: string } = { connected: false, latency: 0, error: "" };
       const DB_CHECK_RETRIES = 2; // 初回のみ DB チェックリトライ（cold start 対策）
       try {
         const { getDb, sql } = await import("../db.js");
@@ -183,20 +182,10 @@ async function startServer() {
             }
             if (lastErr) throw lastErr;
 
-            let challengesCount = 0;
-            try {
-              const r = await db.execute(sql`SELECT COUNT(*) AS c FROM challenges WHERE "isPublic" = true`);
-              const rows = (r as unknown as { rows?: Array<{ c: string }> })?.rows ?? (Array.isArray(r) ? r : []);
-              challengesCount = rows.length ? Number((rows[0] as { c: string })?.c ?? 0) : 0;
-            } catch (countErr) {
-              console.warn("[health] Failed to count challenges:", countErr);
-            }
-
             dbStatus = {
               connected: true,
               latency: Date.now() - startTime,
               error: "",
-              challengesCount,
             };
           } catch (queryErr) {
             // 繧ｯ繧ｨ繝ｪ螳溯｡後お繝ｩ繝ｼ
@@ -548,67 +537,13 @@ async function startServer() {
 
   // Clerk ユーザー同期エンドポイント
   app.post("/api/auth/sync", async (req, res) => {
-    try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ error: "No token" });
-      }
-      const token = authHeader.slice(7).trim();
-      const clerkSecretKey = process.env.CLERK_SECRET_KEY?.trim();
-      if (!clerkSecretKey) return res.status(500).json({ error: "Clerk not configured" });
-
-      const payload = await verifyToken(token, {
-        secretKey: clerkSecretKey,
-      });
-      const clerkUserId = payload?.sub;
-      if (!clerkUserId) {
-        return res.status(401).json({ error: "Invalid token: missing sub claim" });
-      }
-      const openId = `clerk:${clerkUserId}`;
-
-      const clerk = createClerkClient({ secretKey: clerkSecretKey });
-      const dbModule = await import("../db.js");
-      const { getDb } = await import("../db/connection.js");
-      const {
-        syncClerkTwitterProfileToDb,
-      } = await import("../clerk-profile-sync.js");
-      const { extractTwitterProfileFromClerkUser } = await import(
-        "../../lib/clerk-twitter-profile.js"
-      );
-      const { getOrCreateUserShareSlug } = await import(
-        "../../modules/encounter/db/queries.js"
-      );
-
-      const clerkUser = await clerk.users.getUser(clerkUserId);
-      const twitterProfile = extractTwitterProfileFromClerkUser(clerkUser);
-
-      let user = await dbModule.getUserByOpenId(openId);
-      if (!user) {
-        await dbModule.upsertUser({
-          openId,
-          name:
-            twitterProfile?.displayName ||
-            clerkUser.fullName ||
-            "Unknown",
-          email: clerkUser.primaryEmailAddress?.emailAddress || null,
-          loginMethod: "twitter",
-          lastSignedIn: new Date(),
-        });
-        user = await dbModule.getUserByOpenId(openId);
-      }
-
-      const db = await getDb();
-      if (db && user && twitterProfile) {
-        await syncClerkTwitterProfileToDb(db, user.id, twitterProfile);
-        await getOrCreateUserShareSlug(db, user.id);
-        user = await dbModule.getUserByOpenId(openId);
-      }
-
-      return res.json({ ok: true, user });
-    } catch (err) {
-      console.error("[/api/auth/sync] Error:", err);
-      return res.status(401).json({ error: "Invalid token" });
-    }
+    const { syncClerkAuthFromBearerToken } = await import(
+      "../clerk-auth-sync.js"
+    );
+    const result = await syncClerkAuthFromBearerToken(
+      req.headers.authorization,
+    );
+    res.status(result.status).json(result.body);
   });
 
   app.use(
