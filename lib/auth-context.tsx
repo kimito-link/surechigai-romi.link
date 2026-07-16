@@ -7,6 +7,7 @@ import {
 } from "react";
 import { Platform } from "react-native";
 import { buildSignInAutoXHref } from "@/lib/clerk-route";
+import { stripTabsGroupPrefix } from "@/lib/navigation/normalize-return-url";
 import type { User as AuthUserType } from "@/lib/_core/auth";
 
 export type AuthUser = AuthUserType;
@@ -45,9 +46,7 @@ export function AuthContextProvider({
 
 export function resolveGuestReturnUrl(returnUrl?: string): string {
   if (typeof returnUrl !== "string" || !returnUrl) return "/";
-  const normalized = returnUrl.startsWith("/(tabs)/")
-    ? returnUrl.replace("/(tabs)/", "/")
-    : returnUrl;
+  const normalized = stripTabsGroupPrefix(returnUrl);
   return normalized.startsWith("/") ? normalized : `/${normalized}`;
 }
 

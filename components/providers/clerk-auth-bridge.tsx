@@ -6,6 +6,7 @@ import { USER_INFO_KEY } from "@/constants/oauth";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { clearAllTokenData } from "@/lib/token-manager";
 import { buildSignInAutoXHref } from "@/lib/clerk-route";
+import { stripTabsGroupPrefix } from "@/lib/navigation/normalize-return-url";
 import { AuthContextProvider, type AuthState } from "@/lib/auth-context";
 import {
   useCallback,
@@ -31,9 +32,7 @@ export function resolveReturnUrl(returnUrl?: string): string | undefined {
     return undefined;
   }
   const origin = window.location.origin;
-  const normalized = returnUrl.startsWith("/(tabs)/")
-    ? returnUrl.replace("/(tabs)/", "/")
-    : returnUrl;
+  const normalized = stripTabsGroupPrefix(returnUrl);
   if (/^https?:\/\//i.test(normalized)) {
     return normalized;
   }
@@ -47,9 +46,7 @@ export function resolveReturnPath(returnUrl?: string): string {
   if (typeof window === "undefined") return "/";
   if (typeof returnUrl !== "string" || !returnUrl) return "/";
 
-  const normalized = returnUrl.startsWith("/(tabs)/")
-    ? returnUrl.replace("/(tabs)/", "/")
-    : returnUrl;
+  const normalized = stripTabsGroupPrefix(returnUrl);
   if (/^https?:\/\//i.test(normalized)) {
     try {
       const url = new URL(normalized);

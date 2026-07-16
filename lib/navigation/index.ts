@@ -27,6 +27,8 @@ export {
   type MapsDirectionsParams,
 } from "./open-maps-directions";
 
+export { stripTabsGroupPrefix } from "./normalize-return-url";
+
 // 内部ナビゲーション用
 export {
   // 型安全なナビゲーション関数
