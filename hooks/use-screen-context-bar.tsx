@@ -1,11 +1,11 @@
 import { useMemo } from "react";
-import { useRouter } from "expo-router";
 import {
   ScreenContextBar,
   type ContextBarTone,
 } from "@/components/molecules/screen-context-bar";
 import { useMySignal } from "@/hooks/use-my-signal";
 import { useAuth } from "@/hooks/use-auth";
+import { navigate } from "@/lib/navigation";
 
 export type ScreenContextKey =
   | "post"
@@ -26,7 +26,6 @@ export function useScreenContextBar(screen: ScreenContextKey | undefined): {
   element: React.ReactNode;
   hasBar: boolean;
 } {
-  const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { data, isPending } = useMySignal();
 
@@ -65,7 +64,7 @@ export function useScreenContextBar(screen: ScreenContextKey | undefined): {
             message: `参加表明中の集まりが ${data.upcomingParticipationCount} 件`,
             actionLabel: "確認",
             tone: "accent",
-            onAction: () => router.push("/(tabs)/mypage"),
+            onAction: () => navigate.toMypageTab(),
           };
         }
         return null;
@@ -95,14 +94,16 @@ export function useScreenContextBar(screen: ScreenContextKey | undefined): {
             actionLabel: data.unopenedCount > 0 ? "ポストへ" : "チェックイン",
             tone: "warn",
             onAction: () =>
-              router.push(data.unopenedCount > 0 ? "/(tabs)" : "/(tabs)/checkin"),
+              data.unopenedCount > 0
+                ? navigate.toHome()
+                : navigate.toCheckinTab(),
           };
         }
         return null;
       default:
         return null;
     }
-  }, [screen, isAuthenticated, isPending, data, router]);
+  }, [screen, isAuthenticated, isPending, data]);
 
   if (!config) {
     return { element: null, hasBar: false };

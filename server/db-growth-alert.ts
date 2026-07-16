@@ -29,11 +29,11 @@ export type DbGrowthSnapshot = {
 
 const alertSentFlags = new Map<string, boolean>();
 const COST_ALERT_WEBHOOK_URL = process.env.COST_ALERT_WEBHOOK_URL ?? "";
-const STORAGE_LIMIT_ENV_KEYS = [
-  "DB_STORAGE_LIMIT_BYTES",
-  "DATABASE_STORAGE_LIMIT_BYTES",
-  "RAILWAY_POSTGRES_STORAGE_LIMIT_BYTES",
-] as const;
+const STORAGE_LIMIT_ENV_VALUES = [
+  process.env.DB_STORAGE_LIMIT_BYTES,
+  process.env.DATABASE_STORAGE_LIMIT_BYTES,
+  process.env.RAILWAY_POSTGRES_STORAGE_LIMIT_BYTES,
+];
 
 function rowsFromExecute<T>(result: unknown): T[] {
   if (Array.isArray(result)) {
@@ -55,8 +55,7 @@ function toSafeNumber(value: unknown): number {
 }
 
 function resolveStorageLimitBytes(): number | null {
-  for (const key of STORAGE_LIMIT_ENV_KEYS) {
-    const raw = process.env[key];
+  for (const raw of STORAGE_LIMIT_ENV_VALUES) {
     if (!raw) continue;
     const parsed = Number(raw);
     if (Number.isFinite(parsed) && parsed > 0) return parsed;
