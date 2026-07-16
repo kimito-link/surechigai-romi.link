@@ -57,7 +57,7 @@ import {
   shareMyLocation,
 } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
-import { toUserFriendlyError } from "@/shared/error-messages";
+import { resolveCheckinErrorMessage } from "@/components/checkin/resolve-checkin-error-message";
 import { isDesktopWeb } from "@/lib/get-current-location";
 import {
   acquireCheckinLocation,
@@ -114,21 +114,6 @@ function rememberSponsorCardDisplay(): boolean {
   } catch {
     return true;
   }
-}
-
-function resolveCheckinErrorMessage(
-  err: unknown,
-  fallback: string,
-): { message: string; retryAfterSec?: number } {
-  console.error("[checkin] operation failed:", err);
-  if (err && typeof err === "object" && "data" in err) {
-    console.error("[checkin] tRPC error data:", (err as { data?: unknown }).data);
-  }
-  if (err instanceof Error) {
-    const friendly = toUserFriendlyError(err);
-    return { message: friendly.message, retryAfterSec: friendly.retryAfterSec };
-  }
-  return { message: fallback };
 }
 
 export default function CheckinAuthenticatedScreen() {
