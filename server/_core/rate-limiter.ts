@@ -1,6 +1,13 @@
 /**
  * Rate Limiter Middleware
- * 
+ *
+ * server/_core/index.ts（devローカル用Express）専用のExpress middleware。
+ * 本番はVercel Functionsで動いており、このミドルウェアは通らない。
+ * 本番の実効レートリミットは api/trpc/[trpc].ts のtRPC procedure単位の
+ * 実装（refactor-instructions.md Debt #16参照）。
+ * また server/rate-limit-handler.ts は名前が似ているが全くの別物
+ * （Twitter外部APIのレスポンスヘッダをパースするユーティリティ）。
+ *
  * アプリケーションレベルのRate limiting実装
  * Cloudflareと二重防御し、不正アクセスを自動的にブロック
  */

@@ -5,6 +5,11 @@ import { isAllowedOrigin } from "../../server/_core/cors.js";
 const REQUEST_TIMEOUT_MS = 24_000;
 const RATE_LIMIT_CACHE_MAX = 10_000;
 
+// 以下は本番(Vercel Functions)で実際に効いているtRPC procedure単位の
+// レートリミット実装(refactor-instructions.md Debt #16)。
+// server/_core/rate-limiter.ts (Express middleware、devのみ)と
+// server/rate-limit-handler.ts (Twitter外部API向け)は名前が似ているが
+// 別物で、本番リクエストの制限にはこちらのロジックのみが使われる。
 type RateLimitRule = {
   pattern: RegExp;
   windowMs: number;

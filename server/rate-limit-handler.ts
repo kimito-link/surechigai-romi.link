@@ -1,6 +1,11 @@
 /**
  * Twitter API レート制限対応ユーティリティ
- * 
+ *
+ * server/_core/rate-limiter.ts（自サーバーのExpress middleware）とは
+ * 名前が似ているが全くの別物。こちらは外部(Twitter/X API)からの
+ * レスポンスヘッダーを解析するだけで、自サーバーへのリクエストを
+ * 制限する機能ではない（refactor-instructions.md Debt #16参照）。
+ *
  * 指数バックオフによるリトライ機能を提供
  * ドキュメント参照: Twitter (X) API OAuth 2.0 認証 実装ガイド
  */

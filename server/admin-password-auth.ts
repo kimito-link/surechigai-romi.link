@@ -3,8 +3,6 @@
  * 管理者パスワード認証（サーバー側）
  */
 
-import { ENV } from "./_core/env.js";
-
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 if (!ADMIN_PASSWORD) {
   console.warn("[Admin] ADMIN_PASSWORD env var is not set. Admin panel authentication is disabled.");
