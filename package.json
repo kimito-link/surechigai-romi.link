@@ -24,7 +24,7 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit && node scripts/check-esm-imports.mjs",
     "postinstall": "node scripts/strip-import-meta.cjs",
-    "lint": "expo lint --max-warnings 9999",
+    "lint": "expo lint app components lib hooks modules features server api --max-warnings 9999",
     "format": "prettier --write .",
     "test": "vitest run",
     "db:push": "node scripts/run-drizzle.cjs push",

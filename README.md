@@ -195,7 +195,7 @@ surechigai-romi.link/
 ├── drizzle/
 │   └── schema.ts            # Railway PostgreSQL スキーマ定義
 ├── .github/workflows/
-│   └── sweep.yml            # 15分スイープ: DB keepalive・タイムシフトマッチング回収（48h削除は廃止）
+│   └── sweep.yml            # 日次スイープ: DB keepalive・タイムシフトマッチング回収（48h削除は廃止）
 ├── .env.example             # 環境変数テンプレート
 └── CLAUDE.md                # AIアシスタント向けコア・ディレクティブ
 ```

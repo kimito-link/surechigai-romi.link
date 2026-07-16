@@ -5,7 +5,7 @@
 
 import { formatKimitoLinkLabel } from "../../../lib/kimito-link-urls.js";
 import { isValidShareSlug } from "../../../lib/twitter-username.js";
-import type { CreatorLinkInput } from "./prefecture-creator-types";
+import type { CreatorLinkInput } from "./prefecture-creator-types.js";
 
 export type {
   CreatorLinkInput,
@@ -13,7 +13,7 @@ export type {
   PrefectureCreatorUserInput,
   TwitterCacheInfo,
   TwitterFollowInfo,
-} from "./prefecture-creator-types";
+} from "./prefecture-creator-types.js";
 
 export function formatCreatorAccountId(username: string | null): string {
   if (!username) return "—";

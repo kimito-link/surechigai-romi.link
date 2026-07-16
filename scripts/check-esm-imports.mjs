@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 /**
- * server/・api/配下の相対importに拡張子（.js/.json）が付いているかを検査する。
+ * server/・api/・modules/配下の相対importに拡張子（.js/.json）が付いているかを検査する。
  *
  * TypeScriptのtsc --noEmitは拡張子省略importをTS2835警告として出すだけでビルドは通すが、
  * Vercel FunctionsのNode ESM実行環境では実際にモジュール解決が失敗しランタイムエラーになる
  * （2026-07-06、/api/sweepが本番で全数落ちる障害の原因）。
+ * modules/ は server/ からランタイムでimportされるため対象に含める（2026-07-14追加）。
  */
 import fs from "fs";
 import path from "path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const TARGET_DIRS = ["server", "api"];
+const TARGET_DIRS = ["server", "api", "modules"];
 const IMPORT_RE = /(?:from\s+|import\s*\(\s*)["'](\.[^"']+)["']/g;
 
 function walk(dir, files = []) {
@@ -56,4 +57,4 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log("[check-esm-imports] OK: server/・api/配下に拡張子省略importはありません");
+console.log("[check-esm-imports] OK: server/・api/・modules/配下に拡張子省略importはありません");
