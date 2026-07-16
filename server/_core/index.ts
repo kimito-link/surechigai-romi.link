@@ -511,6 +511,13 @@ async function startServer() {
 
   // 邂｡逅・・ヱ繧ｹ繝ｯ繝ｼ繝芽ｪ崎ｨｼ
   app.post("/api/admin/verify-password", async (req: Request, res: Response) => {
+    // admin_session はローカルdev専用の仕組み(server/_core/context.ts の
+    // hasAdminSession が本番では常にfalseを返す)。発行元のこのエンドポイント自体も
+    // 無駄な攻撃対象面を減らすため本番では404にする。
+    if (process.env.NODE_ENV === "production") {
+      res.status(404).end();
+      return;
+    }
     try {
       const { password } = req.body;
 

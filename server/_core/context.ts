@@ -18,7 +18,7 @@ function parseCookies(cookieHeader: string | undefined): Map<string, string> {
   return cookies;
 }
 
-function hasAdminSession(req: CreateExpressContextOptions["req"]): boolean {
+export function hasAdminSession(req: CreateExpressContextOptions["req"]): boolean {
   // admin_session は署名なしの固定文字列Cookieのため、本番では偽造可能。
   // 発行元(/api/admin/verify-password)もローカルdev用Expressにしかなく、
   // 本番のパスワード管理画面は実質未提供。悪用経路を断つため本番では無効化する。
