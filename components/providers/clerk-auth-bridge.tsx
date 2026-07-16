@@ -23,7 +23,7 @@ import {
   useClerk,
 } from "@clerk/expo";
 
-function resolveReturnUrl(returnUrl?: string): string | undefined {
+export function resolveReturnUrl(returnUrl?: string): string | undefined {
   if (typeof window === "undefined") {
     return undefined;
   }
@@ -43,7 +43,7 @@ function resolveReturnUrl(returnUrl?: string): string | undefined {
   return `${origin}${withLeadingSlash}`;
 }
 
-function resolveReturnPath(returnUrl?: string): string {
+export function resolveReturnPath(returnUrl?: string): string {
   if (typeof window === "undefined") return "/";
   if (typeof returnUrl !== "string" || !returnUrl) return "/";
 

@@ -43,7 +43,7 @@ export function AuthContextProvider({
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-function resolveGuestReturnUrl(returnUrl?: string): string {
+export function resolveGuestReturnUrl(returnUrl?: string): string {
   if (typeof returnUrl !== "string" || !returnUrl) return "/";
   const normalized = returnUrl.startsWith("/(tabs)/")
     ? returnUrl.replace("/(tabs)/", "/")
