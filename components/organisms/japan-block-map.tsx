@@ -1,6 +1,9 @@
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from "react-native";
 import { color, palette } from "@/theme/tokens";
-import { prefectureShortLabel } from "@/modules/encounter/core/prefecture-labels";
+import {
+  prefectureShortLabel,
+  prefectureBaseLabel,
+} from "@/modules/encounter/core/prefecture-labels";
 
 type JapanBlockMapProps = {
   visitedPrefSet: Set<string>;
@@ -9,7 +12,14 @@ type JapanBlockMapProps = {
   activePrefSet?: Set<string>;
   encounterCountMap?: Record<string, number>;
   onPressPrefecture: (prefecture: string) => void;
+  /** 呼び出し側で実測したコンテナ幅（未指定時はウィンドウ幅を使う） */
+  availableWidth?: number;
+  /** 地図の最大幅（デフォルト760px。ゲストヒーロー等で広げたい場合に指定） */
+  maxMapWidth?: number;
 };
+
+/** このサイズ以上ならフルネーム(prefectureBaseLabel、最大3文字)を表示。未満は2文字表記のまま。 */
+const FULL_NAME_MIN_CELL_SIZE = 42;
 
 // 12 rows, 14 cols grid
 // null is empty space
@@ -35,19 +45,26 @@ export function JapanBlockMap({
   activePrefSet,
   encounterCountMap,
   onPressPrefecture,
+  availableWidth,
+  maxMapWidth = 760,
 }: JapanBlockMapProps) {
   const { width } = useWindowDimensions();
-  // 画面幅いっぱい（最大760px）まで使い、14列で割ってセルサイズを決める。
+  // 画面幅いっぱい（最大760px、maxMapWidthで上書き可）まで使い、14列で割ってセルサイズを決める。
   //   どの画面でも大きく読みやすくするため、上限を画面幅に追従させる（旧: 40px固定上限で小さすぎた）。
   const cols = 14;
   const gap = 3;
   const outerPadding = 24;
-  const maxMapWidth = 760;
-  const safeWidth = Math.max(width || 320, 320);
+  const baseW = availableWidth ?? width;
+  const safeWidth = Math.max(baseW || 320, 320);
   const avail = Math.min(safeWidth - outerPadding, maxMapWidth);
   const cellSize = Math.max(20, Math.floor((avail - gap * (cols - 1)) / cols));
-  // フォントはセルに比例（小画面でも下限8px、大画面では大きく）。
-  const fontSize = Math.max(8, Math.round(cellSize * 0.34));
+  // フルネーム(最大3文字)が12px以上で収まるセルサイズになったら短縮をやめる。
+  const showFullName = cellSize >= FULL_NAME_MIN_CELL_SIZE;
+  // フォントはセルに比例（小画面でも下限8px、大画面では大きく）。フルネーム時は3文字が
+  // はみ出さないよう (cellSize-6)/3 でも上限を掛ける。
+  const fontSize = showFullName
+    ? Math.min(Math.round(cellSize * 0.34), Math.floor((cellSize - 6) / 3))
+    : Math.max(8, Math.round(cellSize * 0.34));
   const radius = Math.max(4, Math.round(cellSize * 0.16));
 
   return (
@@ -107,7 +124,7 @@ export function JapanBlockMap({
                   style={[styles.cellText, { color: textColor, fontSize }]}
                   numberOfLines={1}
                 >
-                  {prefectureShortLabel(pref)}
+                  {showFullName ? prefectureBaseLabel(pref) : prefectureShortLabel(pref)}
                 </Text>
                 {encounterCount > 0 && (
                   <View style={styles.badge}>

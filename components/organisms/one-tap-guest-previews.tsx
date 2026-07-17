@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from "react-native";
-import Svg, { Circle, G, Line, Path, Polyline, Rect } from "react-native-svg";
+import Svg, { Circle, Line, Path, Polyline, Rect } from "react-native-svg";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { color, palette } from "@/theme/tokens";
 
@@ -120,48 +120,6 @@ export function RadarGuestPreview() {
   );
 }
 
-export function ZukanGuestPreview() {
-  const cells = [
-    [null, null, null, null, null, null, "北"],
-    [null, null, null, null, null, "青", "岩"],
-    [null, null, null, null, "新", "福", null],
-    [null, null, null, "石", "長", "東", "千"],
-    [null, "山", "島", "兵", "京", "静", null],
-    ["長", "福", null, "愛", "香", null, null],
-    [null, "鹿", "宮", null, null, null, null],
-    ["沖", null, null, null, null, null, null],
-  ];
-  const active = new Set(["東", "福", "京", "北"]);
-
-  return (
-    <PreviewSurface>
-      <View style={styles.japanGrid}>
-        {cells.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.japanRow}>
-            {row.map((cell, colIndex) => (
-              <View
-                key={`${rowIndex}-${colIndex}`}
-                style={[
-                  styles.japanCell,
-                  !cell && styles.japanCellEmpty,
-                  cell && active.has(cell) && styles.japanCellActive,
-                  cell === "東" && styles.japanCellHot,
-                ]}
-              >
-                {cell ? <Text style={styles.japanCellText}>{cell}</Text> : null}
-              </View>
-            ))}
-          </View>
-        ))}
-      </View>
-      <View style={styles.zukanDot} />
-      <View style={styles.zukanChip}>
-        <Text style={styles.zukanChipText}>例: いま 3 人</Text>
-      </View>
-    </PreviewSurface>
-  );
-}
-
 export function MypageGuestPreview() {
   return (
     <PreviewSurface>
@@ -249,68 +207,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
-  },
-  japanGrid: {
-    alignSelf: "center",
-    marginTop: 22,
-    gap: 3,
-  },
-  japanRow: {
-    flexDirection: "row",
-    gap: 3,
-  },
-  japanCell: {
-    width: 26,
-    height: 20,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: palette.kimitoBorderSoft,
-    backgroundColor: palette.kimitoBlueSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  japanCellEmpty: {
-    backgroundColor: "transparent",
-    borderColor: "transparent",
-  },
-  japanCellActive: {
-    backgroundColor: `${palette.kimitoBlue}66`,
-    borderColor: palette.kimitoBlue,
-  },
-  japanCellHot: {
-    backgroundColor: palette.kimitoBlue,
-  },
-  japanCellText: {
-    color: color.textPrimary,
-    fontSize: 9,
-    fontWeight: "800",
-  },
-  zukanDot: {
-    position: "absolute",
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    left: "58%",
-    top: "47%",
-    backgroundColor: palette.kimitoOrange,
-    borderWidth: 2,
-    borderColor: palette.white,
-  },
-  zukanChip: {
-    position: "absolute",
-    right: 24,
-    bottom: 22,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: palette.kimitoBorderSoft,
-    backgroundColor: palette.white,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  zukanChipText: {
-    color: color.textSecondary,
-    fontSize: 12,
-    fontWeight: "800",
   },
   mypagePreviewCenter: {
     flex: 1,

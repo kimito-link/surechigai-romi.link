@@ -54,3 +54,11 @@ const PREF_SHORT: Record<string, string> = {
 export function prefectureShortLabel(prefecture: string): string {
   return PREF_SHORT[prefecture] ?? prefecture.replace(/(都|道|府|県)$/, "");
 }
+
+/**
+ * 接尾辞（都・府・県）を省いた地名本体。「道」は地名の一部なので省かない。
+ * 例: 長野県→長野, 東京都→東京, 京都府→京都, 北海道→北海道（最大3文字）
+ */
+export function prefectureBaseLabel(prefecture: string): string {
+  return prefecture.replace(/(都|府|県)$/, "");
+}
