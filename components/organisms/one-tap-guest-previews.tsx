@@ -12,7 +12,13 @@ function PreviewFrame({ children }: { children: React.ReactNode }) {
   return <View style={styles.frame}>{children}</View>;
 }
 
-function RoadGrid({ children }: { children: React.ReactNode }) {
+function RoadGrid({
+  children,
+  overlay,
+}: {
+  children: React.ReactNode;
+  overlay?: React.ReactNode;
+}) {
   return (
     <PreviewFrame>
       <Svg width="100%" height="100%" viewBox="0 0 328 210">
@@ -25,13 +31,21 @@ function RoadGrid({ children }: { children: React.ReactNode }) {
         <Line x1="0" y1="178" x2="328" y2="156" stroke={ROAD} strokeWidth="1.5" />
         {children}
       </Svg>
+      {overlay}
     </PreviewFrame>
   );
 }
 
 export function CheckinGuestPreview() {
   return (
-    <RoadGrid>
+    <RoadGrid
+      overlay={
+        <>
+          <Text style={[styles.previewChip, styles.checkinTime]}>14:32 記録</Text>
+          <Text style={[styles.previewPlace, styles.checkinPlace]}>渋谷区・東京都</Text>
+        </>
+      }
+    >
       <Circle cx="148" cy="106" r="60" fill={BLUE_10} stroke={BLUE_45} strokeWidth="1.5" />
       <Path
         d="M148 54c-17 0-31 13-31 30 0 22 31 58 31 58s31-36 31-58c0-17-14-30-31-30z"
@@ -39,15 +53,15 @@ export function CheckinGuestPreview() {
       />
       <Circle cx="148" cy="84" r="10" fill={palette.white} />
       <Rect x="166" y="52" width="86" height="30" rx="6" fill={palette.white} stroke={ROAD} strokeWidth="1" />
-      <Text style={[styles.previewChip, styles.checkinTime]}>14:32 記録</Text>
-      <Text style={[styles.previewPlace, styles.checkinPlace]}>渋谷区・東京都</Text>
     </RoadGrid>
   );
 }
 
 export function TrailGuestPreview() {
   return (
-    <RoadGrid>
+    <RoadGrid
+      overlay={<Text style={[styles.previewChip, styles.trailTime]}>09:18</Text>}
+    >
       <Polyline
         points="64,156 118,128 162,88 222,102 270,64"
         fill="none"
@@ -70,7 +84,6 @@ export function TrailGuestPreview() {
       <Circle cx="270" cy="64" r="40" fill={BLUE_10} stroke={BLUE_45} strokeWidth="1.5" />
       <Circle cx="270" cy="64" r="6" fill={palette.kimitoOrange} />
       <Rect x="178" y="30" width="74" height="28" rx="6" fill={palette.white} stroke={ROAD} strokeWidth="1" />
-      <Text style={[styles.previewChip, styles.trailTime]}>09:18</Text>
     </RoadGrid>
   );
 }

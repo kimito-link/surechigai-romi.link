@@ -29,6 +29,10 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
+    infoPlist: {
+      NSLocationWhenInUseUsageDescription:
+        "すれ違った場所を記録し、思い出の場所を後からたどるために使用します",
+    },
   },
   android: {
     adaptiveIcon: {
@@ -88,6 +92,10 @@ const config: ExpoConfig = {
         },
       },
     ],
+    "expo-audio",
+    "expo-font",
+    "expo-video",
+    "expo-web-browser",
   ],
   experiments: {
     typedRoutes: true,
