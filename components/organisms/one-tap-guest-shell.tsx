@@ -1,15 +1,18 @@
 import { usePathname } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { BrandStamp } from "@/components/brand/brand-stamp";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
+import { getTabHeaderSpacerHeight } from "@/components/organisms/tab-header-spacer";
+import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { buildSignInAutoXHref } from "@/lib/clerk-route";
-import { color, contentMaxWidth, palette } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
 
 export type OneTapGuestBenefit = {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -39,6 +42,8 @@ const DEFAULT_BENEFITS: readonly [
 ];
 
 const FOOTER_ESTIMATED_HEIGHT = 104;
+const HERO_MIN_HEIGHT = 320;
+const HERO_DESKTOP_PANEL_WIDTH = 360;
 
 function normalizeReturnTo(pathname: string | null): string {
   if (!pathname || pathname === "/auth/kimito-link") return "/";
@@ -47,11 +52,20 @@ function normalizeReturnTo(pathname: string | null): string {
   return pathname.startsWith("/") ? pathname : `/${pathname}`;
 }
 
-function BenefitRow({ benefits }: { benefits: readonly OneTapGuestBenefit[] }) {
+function BenefitRow({
+  benefits,
+  overlay = false,
+}: {
+  benefits: readonly OneTapGuestBenefit[];
+  overlay?: boolean;
+}) {
   return (
     <View style={styles.benefitRow}>
       {benefits.slice(0, 3).map((benefit) => (
-        <View key={benefit.label} style={styles.benefitItem}>
+        <View
+          key={benefit.label}
+          style={[styles.benefitItem, overlay && styles.benefitItemOverlay]}
+        >
           <MaterialIcons
             name={benefit.icon}
             size={20}
@@ -73,13 +87,35 @@ export function OneTapGuestShell({
   benefits = DEFAULT_BENEFITS,
   children,
 }: OneTapGuestShellProps) {
-  const { isDesktop } = useResponsive();
+  const { width, height, isDesktop } = useResponsive();
   const tabInset = useTabBarInset();
   const pathname = usePathname();
   const openLoginGuide = useLoginGuide();
+  const { user, isAuthReadyForUI } = useAuth();
   const returnTo = normalizeReturnTo(pathname);
   const signInHref = buildSignInAutoXHref(returnTo);
   const handleLogin = () => openLoginGuide({ returnTo });
+  const [footerHeight, setFooterHeight] = useState(FOOTER_ESTIMATED_HEIGHT);
+
+  const isHero = Boolean(preview);
+  const hasLoginButtonRow = Boolean(isAuthReadyForUI && !user);
+  const headerSpacerHeight = getTabHeaderSpacerHeight({
+    variant: "compact",
+    windowWidth: width,
+    hasLoginButtonRow,
+  });
+  const footerBottomInset = Math.max(tabInset - 24, 16);
+  const heroMinHeight = Math.max(
+    HERO_MIN_HEIGHT,
+    height -
+      headerSpacerHeight -
+      (isDesktop ? 0 : footerHeight + footerBottomInset),
+  );
+
+  const handleFooterLayout = (event: LayoutChangeEvent) => {
+    const measured = Math.round(event.nativeEvent.layout.height);
+    if (measured > 0 && measured !== footerHeight) setFooterHeight(measured);
+  };
 
   const cta = (
     <View style={styles.ctaWrap}>
@@ -87,6 +123,14 @@ export function OneTapGuestShell({
       <Text style={styles.ctaNote}>無料・1タップ / 新規登録もこちら</Text>
     </View>
   );
+
+  const headlineNode = (
+    <Text style={isHero ? styles.headlineOverlay : styles.headline}>
+      {headline}
+    </Text>
+  );
+  const benefitsNode = <BenefitRow benefits={benefits} />;
+  const benefitsOverlayNode = <BenefitRow benefits={benefits} overlay />;
 
   return (
     <ScreenContainer containerClassName="bg-background" style={styles.root}>
@@ -101,29 +145,51 @@ export function OneTapGuestShell({
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
-          styles.content,
-          isDesktop && styles.contentDesktop,
+          !isHero && styles.content,
+          !isHero && isDesktop && styles.contentDesktop,
           {
             paddingBottom:
-              tabInset + (isDesktop ? 24 : FOOTER_ESTIMATED_HEIGHT),
+              tabInset + (isDesktop ? 24 : footerHeight),
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.headline}>{headline}</Text>
-        {preview ? <View style={styles.previewWrap}>{preview}</View> : null}
-        <BenefitRow benefits={benefits} />
-        {isDesktop ? cta : null}
-        {children}
-        <BrandStamp variant="hero" />
+        {isHero ? (
+          isDesktop ? (
+            <View style={[styles.heroRow, { minHeight: heroMinHeight }]}>
+              <View style={styles.heroMap}>{preview}</View>
+              <View style={styles.heroPanel}>
+                <Text style={styles.headline}>{headline}</Text>
+                {benefitsNode}
+                {cta}
+              </View>
+            </View>
+          ) : (
+            <View style={[styles.hero, { minHeight: heroMinHeight }]}>
+              {preview}
+              <View style={styles.heroOverlayTop}>
+                <View style={styles.headlinePanel}>{headlineNode}</View>
+              </View>
+              <View style={styles.heroOverlayBottom}>{benefitsOverlayNode}</View>
+            </View>
+          )
+        ) : (
+          <>
+            <Text style={styles.headline}>{headline}</Text>
+            {benefitsNode}
+            {isDesktop ? cta : null}
+          </>
+        )}
+        <View style={isHero ? styles.belowFold : undefined}>
+          {children}
+          <BrandStamp variant="hero" />
+        </View>
       </ScrollView>
 
       {!isDesktop ? (
         <View
-          style={[
-            styles.fixedFooter,
-            { paddingBottom: Math.max(tabInset - 24, 16) },
-          ]}
+          style={[styles.fixedFooter, { paddingBottom: footerBottomInset }]}
+          onLayout={handleFooterLayout}
         >
           {cta}
         </View>
@@ -155,10 +221,58 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     fontWeight: "800",
   },
-  previewWrap: {
+  headlineOverlay: {
+    color: color.textPrimary,
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "800",
+  },
+  hero: {
     width: "100%",
-    maxWidth: contentMaxWidth.narrow,
-    alignSelf: "center",
+    position: "relative",
+    overflow: "hidden",
+  },
+  heroOverlayTop: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    right: 16,
+  },
+  headlinePanel: {
+    backgroundColor: "rgba(255,255,255,0.88)",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignSelf: "flex-start",
+  },
+  heroOverlayBottom: {
+    position: "absolute",
+    bottom: 12,
+    left: 16,
+    right: 16,
+  },
+  heroRow: {
+    flexDirection: "row",
+    width: "100%",
+  },
+  heroMap: {
+    flex: 1,
+    minWidth: 0,
+    position: "relative",
+    overflow: "hidden",
+  },
+  heroPanel: {
+    width: HERO_DESKTOP_PANEL_WIDTH,
+    borderLeftWidth: 1,
+    borderLeftColor: palette.kimitoBorderSoft,
+    padding: 24,
+    gap: 16,
+    justifyContent: "center",
+  },
+  belowFold: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 12,
   },
   benefitRow: {
     flexDirection: "row",
@@ -173,6 +287,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
+  },
+  benefitItemOverlay: {
+    backgroundColor: "rgba(255,255,255,0.88)",
+    borderRadius: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
   },
   benefitLabel: {
     color: color.textSecondary,
