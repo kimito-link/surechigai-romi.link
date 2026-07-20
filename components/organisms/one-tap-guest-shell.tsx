@@ -13,16 +13,25 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { buildSignInAutoXHref } from "@/lib/clerk-route";
 import { color, palette } from "@/theme/tokens";
+import { WEB_SIDE_NAV_WIDTH } from "@/components/organisms/web-side-nav";
 
 export type OneTapGuestBenefit = {
   icon: keyof typeof MaterialIcons.glyphMap;
   label: string;
 };
 
+/**
+ * ヒーロー地図ペインの実測幅。onLayout（ResizeObserverベース）はSuspense境界を
+ * 挟む構成で発火しないことが実機確認で判明したため、preview側で幅追従の描画
+ * （JapanBlockMapのavailableWidth等）が必要な場合はrender prop形式で受け取れるようにする。
+ * 単純な要素(<CheckinGuestPreview />等)を渡す既存の使い方は変更不要。
+ */
+type OneTapGuestPreview = React.ReactNode | ((heroMapWidth: number) => React.ReactNode);
+
 type OneTapGuestShellProps = {
   title: string;
   headline: string;
-  preview?: React.ReactNode;
+  preview?: OneTapGuestPreview;
   benefits?: readonly [
     OneTapGuestBenefit,
     OneTapGuestBenefit,
@@ -30,6 +39,10 @@ type OneTapGuestShellProps = {
   ];
   children?: React.ReactNode;
 };
+
+function renderPreview(preview: OneTapGuestPreview | undefined, heroMapWidth: number) {
+  return typeof preview === "function" ? preview(heroMapWidth) : preview;
+}
 
 const DEFAULT_BENEFITS: readonly [
   OneTapGuestBenefit,
@@ -111,6 +124,11 @@ export function OneTapGuestShell({
       headerSpacerHeight -
       (isDesktop ? 0 : footerHeight + footerBottomInset),
   );
+  // isDesktop(width>=1024)は必ずサイドバー表示条件(width>=900)を満たすため、
+  // サイドバー分は確実に引ける。heroPanelの borderLeftWidth(1px) も差し引く。
+  const heroMapWidth = isDesktop
+    ? Math.max(0, width - WEB_SIDE_NAV_WIDTH - HERO_DESKTOP_PANEL_WIDTH - 1)
+    : width;
 
   const handleFooterLayout = (event: LayoutChangeEvent) => {
     const measured = Math.round(event.nativeEvent.layout.height);
@@ -157,7 +175,7 @@ export function OneTapGuestShell({
         {isHero ? (
           isDesktop ? (
             <View style={[styles.heroRow, { minHeight: heroMinHeight }]}>
-              <View style={styles.heroMap}>{preview}</View>
+              <View style={styles.heroMap}>{renderPreview(preview, heroMapWidth)}</View>
               <View style={styles.heroPanel}>
                 <Text style={styles.headline}>{headline}</Text>
                 {benefitsNode}
@@ -166,7 +184,7 @@ export function OneTapGuestShell({
             </View>
           ) : (
             <View style={[styles.hero, { minHeight: heroMinHeight }]}>
-              {preview}
+              {renderPreview(preview, heroMapWidth)}
               <View style={styles.heroOverlayTop}>
                 <View style={styles.headlinePanel}>{headlineNode}</View>
               </View>

@@ -3,9 +3,14 @@
  * ZukanGuestPreview(架空モック)を廃止し、認証済みと同じ JapanBlockMap + 実データで置き換える。
  * defer境界対策は NavLivePrefecturePanel と完全同型（useTrpcReady ゲート必須。
  * enabled:false では "Unable to find tRPC Context" を防げない）。
+ *
+ * 地図の幅は onLayout（ResizeObserverベース）での自己計測をやめ、呼び出し元
+ * (OneTapGuestShell)がヒーロー地図ペインの実幅を計算で求めて availableWidth として
+ * 渡す設計にしている。Suspense境界を挟む構成で onLayout が一度も発火しないことが
+ * 実機検証で判明したため（2026-07-20、デスクトップで地図がウィンドウ幅基準の
+ * サイズ(≈991px)のまま464px幅のペインからはみ出しoverflow:hiddenで見切れる不具合）。
  */
-import { useState } from "react";
-import { View, Text, StyleSheet, type LayoutChangeEvent } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { trpc } from "@/lib/trpc";
 import { navigate } from "@/lib/navigation";
 import { LazyJapanBlockMap } from "@/lib/lazy-heavy-components";
@@ -17,13 +22,18 @@ const EMPTY_SET: Set<string> = new Set();
 const HERO_MAX_MAP_WIDTH = 1040;
 const TOP_CHIPS_COUNT = 5;
 
-export function ZukanGuestLive() {
+type ZukanGuestLiveProps = {
+  /** ヒーロー地図ペインの実幅（OneTapGuestShellのrender propから渡される） */
+  availableWidth?: number;
+};
+
+export function ZukanGuestLive({ availableWidth }: ZukanGuestLiveProps) {
   const trpcReady = useTrpcReady();
-  if (!trpcReady) return <ZukanGuestLiveShell />;
-  return <ZukanGuestLiveInner />;
+  if (!trpcReady) return <ZukanGuestLiveShell availableWidth={availableWidth} />;
+  return <ZukanGuestLiveInner availableWidth={availableWidth} />;
 }
 
-function ZukanGuestLiveShell() {
+function ZukanGuestLiveShell({ availableWidth }: ZukanGuestLiveProps) {
   return (
     <View style={styles.root}>
       <View style={styles.liveRow}>
@@ -34,6 +44,7 @@ function ZukanGuestLiveShell() {
           visitedPrefSet={EMPTY_SET}
           encounteredPrefSet={EMPTY_SET}
           onPressPrefecture={() => {}}
+          availableWidth={availableWidth}
           maxMapWidth={HERO_MAX_MAP_WIDTH}
         />
       </View>
@@ -41,8 +52,7 @@ function ZukanGuestLiveShell() {
   );
 }
 
-function ZukanGuestLiveInner() {
-  const [mapWidth, setMapWidth] = useState(0);
+function ZukanGuestLiveInner({ availableWidth }: ZukanGuestLiveProps) {
   const { data, isLoading } = trpc.zukan.activePrefectures.useQuery(undefined, {
     retry: 1,
     staleTime: 60_000,
@@ -58,11 +68,6 @@ function ZukanGuestLiveInner() {
     .sort((a, b) => b.peopleCount - a.peopleCount)
     .slice(0, TOP_CHIPS_COUNT);
 
-  const handleMapLayout = (event: LayoutChangeEvent) => {
-    const measured = Math.round(event.nativeEvent.layout.width);
-    if (measured > 0 && measured !== mapWidth) setMapWidth(measured);
-  };
-
   return (
     <View style={styles.root}>
       <View style={styles.liveRow}>
@@ -75,14 +80,14 @@ function ZukanGuestLiveInner() {
         </Text>
       </View>
 
-      <View style={styles.mapWrap} onLayout={handleMapLayout}>
+      <View style={styles.mapWrap}>
         <LazyJapanBlockMap
           visitedPrefSet={EMPTY_SET}
           encounteredPrefSet={EMPTY_SET}
           activePrefSet={activePrefSet}
           encounterCountMap={activeCountMap}
           onPressPrefecture={(pref) => navigate.toZukanPrefecture(pref)}
-          availableWidth={mapWidth || undefined}
+          availableWidth={availableWidth}
           maxMapWidth={HERO_MAX_MAP_WIDTH}
         />
       </View>

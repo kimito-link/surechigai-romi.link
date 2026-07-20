@@ -20,7 +20,7 @@ export default function ZukanScreen() {
       <OneTapGuestShell
         title="現在地"
         headline="会いたい君がいる現在地"
-        preview={<ZukanGuestLive />}
+        preview={(heroMapWidth) => <ZukanGuestLive availableWidth={heroMapWidth} />}
         benefits={[
           { icon: "map", label: "都道府県" },
           { icon: "groups", label: "みんな" },
