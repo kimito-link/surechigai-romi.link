@@ -8,6 +8,10 @@ import { ChunkFallback } from "@/lib/chunk-fallback";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 
+/** 地図ペイン優先のためzukanのみ右パネルを狭める(実測: 見出し・ベネフィット・CTAが
+ * 収まる最小幅として280pxを採用。詳細はdocs/zukan-map-larger-DESIGN.md参照)。 */
+const ZUKAN_HERO_PANEL_WIDTH = 280;
+
 export default function ZukanScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
@@ -26,6 +30,7 @@ export default function ZukanScreen() {
           { icon: "groups", label: "みんな" },
           { icon: "ios-share", label: "Xでシェア" },
         ]}
+        heroPanelWidth={ZUKAN_HERO_PANEL_WIDTH}
       />
     );
   }

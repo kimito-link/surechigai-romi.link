@@ -19,7 +19,15 @@ import { prefectureShortLabel } from "@/modules/encounter/core/prefecture-labels
 import { color, palette } from "@/theme/tokens";
 
 const EMPTY_SET: Set<string> = new Set();
-const HERO_MAX_MAP_WIDTH = 1040;
+/**
+ * 地図の上限キャップ。avail=min(availableWidth-24, HERO_MAX_MAP_WIDTH)の上限側なので、
+ * 「上げれば地図が大きくなる」わけではない(現行のペイン幅ではavailableWidth側が常に
+ * ボトルネックで無関係)。760は「超ワイド画面での間延び防止」と「13行の地図高さ729pxが
+ * 1080pディスプレイの実効ビューポート内に収まる」ことを目的にした縮小方向の調整
+ * (旧1040では1920px幅でcellSize71px・地図高さ989pxとなりCTA等が画面外に押し出されていた)。
+ * 詳細はdocs/zukan-map-larger-DESIGN.md参照。
+ */
+const HERO_MAX_MAP_WIDTH = 760;
 const TOP_CHIPS_COUNT = 5;
 
 type ZukanGuestLiveProps = {

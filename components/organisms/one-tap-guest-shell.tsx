@@ -38,6 +38,11 @@ type OneTapGuestShellProps = {
     OneTapGuestBenefit,
   ];
   children?: React.ReactNode;
+  /**
+   * デスクトップ2ペイン時の右パネル幅（既定 HERO_DESKTOP_PANEL_WIDTH=360）。
+   * 地図ペインを広く取りたい画面（zukan）で上書きする。
+   */
+  heroPanelWidth?: number;
 };
 
 function renderPreview(preview: OneTapGuestPreview | undefined, heroMapWidth: number) {
@@ -99,6 +104,7 @@ export function OneTapGuestShell({
   preview,
   benefits = DEFAULT_BENEFITS,
   children,
+  heroPanelWidth = HERO_DESKTOP_PANEL_WIDTH,
 }: OneTapGuestShellProps) {
   const { width, height, isDesktop } = useResponsive();
   const tabInset = useTabBarInset();
@@ -127,7 +133,7 @@ export function OneTapGuestShell({
   // isDesktop(width>=1024)は必ずサイドバー表示条件(width>=900)を満たすため、
   // サイドバー分は確実に引ける。heroPanelの borderLeftWidth(1px) も差し引く。
   const heroMapWidth = isDesktop
-    ? Math.max(0, width - WEB_SIDE_NAV_WIDTH - HERO_DESKTOP_PANEL_WIDTH - 1)
+    ? Math.max(0, width - WEB_SIDE_NAV_WIDTH - heroPanelWidth - 1)
     : width;
 
   const handleFooterLayout = (event: LayoutChangeEvent) => {
@@ -176,7 +182,7 @@ export function OneTapGuestShell({
           isDesktop ? (
             <View style={[styles.heroRow, { minHeight: heroMinHeight }]}>
               <View style={styles.heroMap}>{renderPreview(preview, heroMapWidth)}</View>
-              <View style={styles.heroPanel}>
+              <View style={[styles.heroPanel, { width: heroPanelWidth }]}>
                 <Text style={styles.headline}>{headline}</Text>
                 {benefitsNode}
                 {cta}
@@ -280,7 +286,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   heroPanel: {
-    width: HERO_DESKTOP_PANEL_WIDTH,
     borderLeftWidth: 1,
     borderLeftColor: palette.kimitoBorderSoft,
     padding: 24,
