@@ -20,7 +20,7 @@ const hasAuth = hasUsableAuthState(authFile);
     await page.getByLabel("集まりのタイトル").fill("E2E smoke test");
     await page.getByRole("button", { name: "予定を作成" }).click();
 
-    await expect(page.getByText(/URL/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/URL/).first()).toBeVisible({ timeout: 5000 });
     monitor.assertClean();
   });
 

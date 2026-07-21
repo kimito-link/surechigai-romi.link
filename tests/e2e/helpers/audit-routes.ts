@@ -37,16 +37,21 @@ export const TAB_ROUTES: AuditRoute[] = [
   {
     path: "/zukan",
     label: "現在地",
-    expectText: /会いたい君がいる都道府県|あなたの記録もこの一覧/,
+    expectText: /会いたい君がいる現在地|あなたの記録/,
     guestOk: true,
   },
   {
     path: "/map",
     label: "軌跡",
-    expectText: /足あとが地図に刻まれ|移動の軌跡/,
+    expectText: /足あとが地図に刻まれ|移動の軌跡|足あと.*件を記録中/,
     guestOk: true,
   },
-  { path: "/mypage", label: "マイページ", expectText: /あなたの足あとと公開範囲|プロフィール/, guestOk: true },
+  {
+    path: "/mypage",
+    label: "マイページ",
+    expectText: /あなたの足あとと公開範囲|プロフィール|いまやること/,
+    guestOk: true,
+  },
 ];
 
 export const EXTRA_ROUTES: AuditRoute[] = [
