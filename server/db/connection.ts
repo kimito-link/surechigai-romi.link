@@ -31,7 +31,10 @@ export async function getDb(): Promise<DrizzleDB | null> {
 
     const client = postgres(databaseUrl, {
       max: 2,                    // Vercel 関数のスパイク時に DB 接続を増やしすぎない
-      idle_timeout: 10,          // アイドル接続タイムアウト（秒）
+      // アイドル接続タイムアウト（秒）。postgres パッケージ公式が Serverless 環境向けに
+      // 推奨する20秒に合わせる（Vercel⇄Railwayレイテンシ調査 2026-07-23、実測でコールド
+      // スタート時481ms・ウォーム時67msの差を確認。連続リクエスト時の再接続頻度を下げる狙い）。
+      idle_timeout: 20,
       connect_timeout: 3,        // 接続詰まりで関数を長く待たせない
       ssl: databaseUrl.includes("sslmode=require") || databaseUrl.includes("supabase.co")
         ? { rejectUnauthorized: false }
