@@ -9,6 +9,7 @@ import { Platform, ScrollView, Text, useWindowDimensions, View } from "react-nat
 import { AuthPageIntro } from "@/components/auth/auth-page-intro";
 import { AuthRedirectNotice } from "@/components/auth/auth-redirect-notice";
 import { AuthSupportNotice } from "@/components/auth/auth-support-notice";
+import { AutoXReturnNotice } from "@/components/auth/auto-x-return-notice";
 import { InAppBrowserNotice } from "@/components/auth/in-app-browser-notice";
 import { SignInAuthHandoffOverlay } from "@/components/auth/sign-in-auth-handoff-overlay";
 import { authProvidersHeadline } from "@/lib/auth-providers";
@@ -139,6 +140,7 @@ export function AuthPageShell({ variant, children }: AuthPageShellProps) {
                   }}
                 >
                   <InAppBrowserNotice />
+                  <AutoXReturnNotice />
                   <AuthClerkCard variant={variant}>{children}</AuthClerkCard>
                   <AuthRedirectNotice mode={variant} />
                   <AuthSupportNotice mode={variant} />
@@ -148,6 +150,7 @@ export function AuthPageShell({ variant, children }: AuthPageShellProps) {
               <>
                 <View style={{ width: "100%", maxWidth: 448, alignSelf: "center", gap: 16 }}>
                   <InAppBrowserNotice />
+                  <AutoXReturnNotice />
                   <AuthClerkCard variant={variant}>{children}</AuthClerkCard>
                   <AuthRedirectNotice mode={variant} />
                   <AuthSupportNotice mode={variant} />
