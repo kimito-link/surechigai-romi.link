@@ -9,6 +9,38 @@ function isHomeRedirect(value: string | undefined): boolean {
   return normalized === "" || normalized === DEFAULT_POST_AUTH_PATH.replace(/\/+$/, "");
 }
 
+export type DbLatencyCheck = {
+  status: "ok" | "error" | "skipped";
+  latencyMs: number | null;
+  error?: string;
+};
+
+/**
+ * DB round-trip 単体のレイテンシ計測（SELECT 1 実行時間）。
+ * Vercel⇄Railway間の往復レイテンシがボトルネックかどうかの一次判断材料として、
+ * api/health.ts から都度計測する（buildHealthStatus とは独立・DB接続を必要とするため
+ * ここだけ非同期・実クエリを投げる）。
+ * DB未接続（DATABASE_URL未設定）の場合は status:"skipped" を返す。
+ */
+export async function measureDbLatency(): Promise<DbLatencyCheck> {
+  try {
+    const { getDb, sql } = await import("../server/db/connection.js");
+    const db = await getDb();
+    if (!db) {
+      return { status: "skipped", latencyMs: null };
+    }
+    const startedAt = Date.now();
+    await db.execute(sql`SELECT 1`);
+    return { status: "ok", latencyMs: Date.now() - startedAt };
+  } catch (error) {
+    return {
+      status: "error",
+      latencyMs: null,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 /** kimito buildHealthStatus を surechigai 向けに移植。 */
 export function buildHealthStatus(env: Record<string, string | undefined> = process.env) {
   const clerkPublishable = hasValue(env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY);

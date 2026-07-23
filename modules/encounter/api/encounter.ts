@@ -40,7 +40,7 @@ import {
   getTimeshiftCandidates,
   getBlockSet,
   getTodayPairSet,
-  insertEncounterIfNew,
+  insertEncountersIfNew,
   upsertVisitedArea,
   getMyEncounters,
   openEncounter,
@@ -215,22 +215,26 @@ export const encounterRouter = router({
         }
       }
 
-      // encounters INSERT（UNIQUE衝突は無視）
+      // encounters INSERT（UNIQUE衝突は無視・1クエリでバルク挿入）
+      // 旧実装はマッチ件数分だけ逐次 await insertEncounterIfNew するN+1ループだった
+      // （Vercel⇄Railwayレイテンシ調査 2026-07-23 で発見）。
       let newEncounters = 0;
-      for (const m of matchResults) {
+      if (matchResults.length > 0) {
         try {
-          const inserted = await insertEncounterIfNew(db, {
-            userAId: m.userAId,
-            userBId: m.userBId,
-            tier: m.tier,
-            h3R7: m.h3R7,
-            areaName,
-            prefecture,
-            occurredAt: m.occurredAt,
-          });
-          if (inserted) newEncounters++;
+          newEncounters = await insertEncountersIfNew(
+            db,
+            matchResults.map((m) => ({
+              userAId: m.userAId,
+              userBId: m.userBId,
+              tier: m.tier,
+              h3R7: m.h3R7,
+              areaName,
+              prefecture,
+              occurredAt: m.occurredAt,
+            })),
+          );
         } catch (insertErr) {
-          console.error("[encounter.checkIn] insertEncounter failed:", insertErr);
+          console.error("[encounter.checkIn] insertEncounters failed:", insertErr);
         }
       }
 

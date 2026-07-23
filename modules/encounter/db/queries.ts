@@ -526,29 +526,38 @@ export type InsertEncounterParams = {
   occurredAt: Date;
 };
 
-export async function insertEncounterIfNew(
+/**
+ * 複数の encounter を1回のクエリでバルク挿入する（UNIQUE(userAId,userBId,dayKey)衝突は無視）。
+ * チェックイン1回あたりのマッチ件数分だけ逐次 INSERT していたN+1ループ
+ * （旧 insertEncounterIfNew を for-await で呼ぶ形。マッチ件数分だけ往復が線形増加していた）
+ * をこちらに置き換える。戻り値は実際に新規挿入された件数（衝突でスキップされた分は含まない）。
+ *
+ * Vercel⇄Railwayレイテンシ調査（2026-07-23）で発見したN+1パターンの解消。
+ */
+export async function insertEncountersIfNew(
   db: DB,
-  params: InsertEncounterParams
-): Promise<boolean> {
-  const dayKey = params.occurredAt.toISOString().slice(0, 10);
+  paramsList: InsertEncounterParams[]
+): Promise<number> {
+  if (paramsList.length === 0) return 0;
 
   const result = await db
     .insert(encounters)
-    .values({
-      userAId: params.userAId,
-      userBId: params.userBId,
-      tier: params.tier,
-      h3R7: params.h3R7,
-      areaName: params.areaName,
-      prefecture: params.prefecture,
-      occurredAt: params.occurredAt,
-      dayKey,
-    })
+    .values(
+      paramsList.map((params) => ({
+        userAId: params.userAId,
+        userBId: params.userBId,
+        tier: params.tier,
+        h3R7: params.h3R7,
+        areaName: params.areaName,
+        prefecture: params.prefecture,
+        occurredAt: params.occurredAt,
+        dayKey: params.occurredAt.toISOString().slice(0, 10),
+      }))
+    )
     .onConflictDoNothing();
 
-  // Drizzle の onConflictDoNothing は rowCount が 0 でも例外を投げない
-  const affected = (result as unknown as { rowCount?: number })?.rowCount ?? 1;
-  return affected > 0;
+  const affected = (result as unknown as { rowCount?: number })?.rowCount ?? paramsList.length;
+  return affected;
 }
 
 // ---------------------------------------------------------------------------
