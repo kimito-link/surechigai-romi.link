@@ -20,7 +20,7 @@ import {
   users,
   twitterUserCache,
 } from "../../../drizzle/schema/index.js";
-import { kRing, toGrid, toH3Cell } from "../core/geo.js";
+import { H3_RES_5, H3_RES_7, kRing, toGrid, toH3Cell, toH3ParentCell } from "../core/geo.js";
 import type { NearbyCandidate, TimeshiftCandidate } from "../core/matching.js";
 import type { PrefectureCreatorListRow } from "../core/prefecture-creator-types.js";
 import { LIVE_WINDOW_MS } from "../core/prefecture-creator-types.js";
@@ -227,6 +227,8 @@ export async function insertLocation(
     .values({
       userId: params.userId,
       h3R8: params.h3R8,
+      h3R7: toH3ParentCell(params.h3R8, H3_RES_7),
+      h3R5: toH3ParentCell(params.h3R8, H3_RES_5),
       latGrid: params.latGrid,
       lngGrid: params.lngGrid,
       lat: params.lat ?? null,
@@ -305,15 +307,19 @@ export async function getMyTrailLocations(
 }
 
 /**
- * 自分の h3R8 の kRing(1) 内にいる直近6時間の他ユーザー位置を取得。
+ * 近距離ステージ（Tier1-2）候補取得。毎回のチェックインで同期実行。
+ * 自分の locations.h3R7（候補絞り込み専用。cellToParent由来。visitedAreas.h3R7とは別物）の
+ * kRing(2)（19セル・保証半径約4.5km）内にいる直近6時間の他ユーザー位置を取得。
  * 自分自身は除く。停止ユーザー除外。
+ *
+ * 移植元設計: docs/matching-tier-redesign-DESIGN.md §2.2
  */
-export async function getNearbyCandidates(
+export async function getNearCandidates(
   db: DB,
   selfUserId: number,
-  selfH3R8: string
+  selfH3R7: string
 ): Promise<NearbyCandidate[]> {
-  const ringCells = kRing(selfH3R8, 1);
+  const ringCells = kRing(selfH3R7, 2);
   const since = new Date(Date.now() - 6 * 60 * 60 * 1000);
 
   const rows = await db
@@ -328,13 +334,62 @@ export async function getNearbyCandidates(
     .innerJoin(users, eq(users.id, locations.userId))
     .where(
       and(
-        inArray(locations.h3R8, ringCells),
+        inArray(locations.h3R7, ringCells),
         gte(locations.recordedAt, since),
         isNull(locations.deletedAt),
         sql`${locations.userId} != ${selfUserId}`,
         eq(users.isSuspended, false)
       )
-    );
+    )
+    .orderBy(desc(locations.recordedAt))
+    .limit(500);
+
+  return rows.map((r) => ({
+    userId: r.userId,
+    latGrid: r.latGrid,
+    lngGrid: r.lngGrid,
+    h3R8: r.h3R8,
+    recordedAt: r.recordedAt,
+  }));
+}
+
+/**
+ * 広域ステージ（Tier3-4）候補取得。近距離ステージがマッチ0件かつ当日未マッチのときのみ実行。
+ * 自分の locations.h3R5 の kRing(4)（61セル・50km地点まで全方位カバー確認済み）内にいる
+ * 直近24時間の他ユーザー位置を、ユーザーごとに最新1件（DISTINCT ON）に絞って取得。
+ *
+ * 移植元設計: docs/matching-tier-redesign-DESIGN.md §2.3
+ * （k値はFableの初期案k=3から、司令塔の全方位実測でk=4に修正済み。50km地点でk=3は42%取りこぼす）
+ */
+export async function getWideCandidates(
+  db: DB,
+  selfUserId: number,
+  selfH3R5: string
+): Promise<NearbyCandidate[]> {
+  const ringCells = kRing(selfH3R5, 4);
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const rows = await db
+    .selectDistinctOn([locations.userId], {
+      userId: locations.userId,
+      latGrid: locations.latGrid,
+      lngGrid: locations.lngGrid,
+      h3R8: locations.h3R8,
+      recordedAt: locations.recordedAt,
+    })
+    .from(locations)
+    .innerJoin(users, eq(users.id, locations.userId))
+    .where(
+      and(
+        inArray(locations.h3R5, ringCells),
+        gte(locations.recordedAt, since),
+        isNull(locations.deletedAt),
+        sql`${locations.userId} != ${selfUserId}`,
+        eq(users.isSuspended, false)
+      )
+    )
+    .orderBy(locations.userId, desc(locations.recordedAt))
+    .limit(500);
 
   return rows.map((r) => ({
     userId: r.userId,

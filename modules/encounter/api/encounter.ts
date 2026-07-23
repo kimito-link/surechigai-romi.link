@@ -13,7 +13,15 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../../../server/_core/trpc.js";
 import { getDb, requireDb } from "../../../server/db/connection.js";
-import { toGrid, toH3Cell, toH3R7, assertFiniteLatLng } from "../core/geo.js";
+import {
+  toGrid,
+  toH3Cell,
+  toH3R7,
+  toH3ParentCell,
+  assertFiniteLatLng,
+  H3_RES_7,
+  H3_RES_5,
+} from "../core/geo.js";
 import { findMatches } from "../core/matching.js";
 import { moderateText } from "../core/moderation.js";
 import { reverseGeocodeWithTimeout } from "../core/geocoding.js";
@@ -27,7 +35,8 @@ import { reactions, users } from "../../../drizzle/schema/index.js";
 import { eq } from "drizzle-orm";
 import {
   insertLocation,
-  getNearbyCandidates,
+  getNearCandidates,
+  getWideCandidates,
   getTimeshiftCandidates,
   getBlockSet,
   getTodayPairSet,
@@ -85,7 +94,11 @@ export const encounterRouter = router({
 
       const { latGrid, lngGrid } = toGrid(latLng.lat, latLng.lng);
       const h3R8 = toH3Cell(latGrid, lngGrid, 8);
+      // visitedAreas.h3R7（タイムシフト・直接計算）専用。候補絞り込み用ではない。
       const h3R7 = toH3R7(latGrid, lngGrid);
+      // locations.h3R7 / h3R5（候補絞り込み専用。h3R8からのcellToParent由来で上記h3R7とは別値）
+      const candidateH3R7 = toH3ParentCell(h3R8, H3_RES_7);
+      const candidateH3R5 = toH3ParentCell(h3R8, H3_RES_5);
 
       const [settings, g] = await Promise.all([
         getUserSettings(db, userId),
@@ -147,13 +160,13 @@ export const encounterRouter = router({
         upsertUserSettings(db, userId, { homeMaskCell: cell }).catch(() => {});
       }).catch(() => {});
 
-      let nearbyCandidates: Awaited<ReturnType<typeof getNearbyCandidates>> = [];
+      let nearCandidates: Awaited<ReturnType<typeof getNearCandidates>> = [];
       let timeshiftCandidates: Awaited<ReturnType<typeof getTimeshiftCandidates>> = [];
       let blockSet = new Set<string>();
       let todayPairSet = new Set<string>();
       try {
-        [nearbyCandidates, timeshiftCandidates, blockSet, todayPairSet] = await Promise.all([
-          getNearbyCandidates(db, userId, h3R8),
+        [nearCandidates, timeshiftCandidates, blockSet, todayPairSet] = await Promise.all([
+          getNearCandidates(db, userId, candidateH3R7),
           getTimeshiftCandidates(db, userId, h3R7),
           getBlockSet(db, userId),
           getTodayPairSet(db, userId),
@@ -170,15 +183,37 @@ export const encounterRouter = router({
         recordedAt: new Date(),
       };
 
-      const matchResults = excludeSelfMatches(
+      const immediateMatches = excludeSelfMatches(
         findMatches({
           self: selfLocation,
-          nearbyCandidates,
+          nearbyCandidates: nearCandidates,
           timeshiftCandidates,
           blockSet,
           todayPairSet,
         }),
       );
+
+      // 過疎地対策ゲート: 近距離(Tier1-2)でマッチ0件 かつ 当日まだ1件もマッチしていない
+      // ユーザーだけ、広域(Tier3-4)ステージを追加実行する。
+      // 移植元設計: docs/matching-tier-redesign-DESIGN.md §3.1（旧surechigai-nicoの
+      // 「直近24hマッチ0件のユーザーだけ範囲拡大」を、追加クエリ最小の同期処理に適合）
+      let matchResults = immediateMatches;
+      if (immediateMatches.length === 0 && todayPairSet.size === 0) {
+        try {
+          const wideCandidates = await getWideCandidates(db, userId, candidateH3R5);
+          matchResults = excludeSelfMatches(
+            findMatches({
+              self: selfLocation,
+              nearbyCandidates: [...nearCandidates, ...wideCandidates],
+              timeshiftCandidates,
+              blockSet,
+              todayPairSet,
+            }),
+          );
+        } catch (wideErr) {
+          console.error("[encounter.checkIn] wide-stage matching query failed:", wideErr);
+        }
+      }
 
       // encounters INSERT（UNIQUE衝突は無視）
       let newEncounters = 0;

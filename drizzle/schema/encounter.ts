@@ -31,6 +31,19 @@ export const locations = pgTable(
     userId: integer("userId").notNull(),
     /** H3 resolution 8 セル (約460m)。すれ違いマッチングに使う粗い粒度。 */
     h3R8: text("h3R8").notNull(),
+    /**
+     * H3 resolution 7 セル。h3R8 の cellToParent(7) から導出（併記）。
+     * Tier2(3km)候補の近距離ステージ検索用。NULL = 未バックフィル（移行期のみ）。
+     * 注意: visitedAreas.h3R7（直接 latLngToCell(lat,lng,7) で計算・タイムシフト専用）とは
+     * 導出方法が異なり、同じ座標でもセルIDが一致しない（h3-jsの階層非整合性による既知の仕様）。
+     * 両者は別テーブル・別用途であり直接比較しないこと。
+     */
+    h3R7: text("h3R7"),
+    /**
+     * H3 resolution 5 セル。h3R8 の cellToParent(5) から導出（併記）。
+     * Tier3-4(10km/50km)候補の広域ステージ検索用。NULL = 未バックフィル（移行期のみ）。
+     */
+    h3R5: text("h3R5"),
     /** 500mグリッド丸め済み緯度（マッチング・互換用） */
     latGrid: real("latGrid").notNull(),
     /** 500mグリッド丸め済み経度（マッチング・互換用） */
@@ -58,6 +71,8 @@ export const locations = pgTable(
     index("locations_h3R8_idx").on(table.h3R8),
     index("locations_userId_idx").on(table.userId),
     index("locations_recordedAt_idx").on(table.recordedAt),
+    index("locations_h3R7_recordedAt_idx").on(table.h3R7, table.recordedAt),
+    index("locations_h3R5_recordedAt_idx").on(table.h3R5, table.recordedAt),
   ]
 );
 

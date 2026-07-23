@@ -7,7 +7,7 @@
  * 移植元: surechigai-nico/server/src/lib/locationGeom.ts
  */
 
-import { latLngToCell, gridDisk } from "h3-js";
+import { latLngToCell, gridDisk, cellToParent } from "h3-js";
 
 // ---------------------------------------------------------------------------
 // グリッド定数
@@ -18,10 +18,12 @@ export const LAT_GRID = 0.0045;
 /** グリッド1セルの経度方向ステップ（日本の緯度35度付近で約 500m 相当） */
 export const LNG_GRID = 0.0055;
 
-/** H3 解像度 8（エッジ長 ~460m）。チェックイン・即時マッチング用 */
+/** H3 解像度 8（エッジ長 ~0.53km 実測）。チェックイン・即時マッチング用 */
 export const H3_RES_8 = 8;
-/** H3 解像度 7（エッジ長 ~1.2km）。visitedAreas・タイムシフト用 */
+/** H3 解像度 7（エッジ長 ~1.41km 実測）。visitedAreas・タイムシフト用 */
 export const H3_RES_7 = 7;
+/** H3 解像度 5（エッジ長 ~9.85km 実測）。Tier3-4 広域候補の locations.h3R5 用 */
+export const H3_RES_5 = 5;
 
 // ---------------------------------------------------------------------------
 // 型
@@ -70,6 +72,19 @@ export function toH3R7(lat: number, lng: number): string {
  */
 export function kRing(cell: string, k: number): string[] {
   return gridDisk(cell, k);
+}
+
+/**
+ * H3 res8 セルから、より粗い解像度の親セルを導出する。
+ * locations.h3R7 / h3R5 の書き込み用（cellToParent は直接 latLngToCell するより
+ * 常に h3R8 セルとの階層一貫性が保たれるため、こちらを使う）。
+ *
+ * 注意: 同じ座標を直接 latLngToCell(lat, lng, res) で計算した値とは、
+ * h3-js の階層非整合性により一致しないことがある（実測確認済み）。
+ * visitedAreas.h3R7（直接計算・タイムシフト専用）とは目的も導出方法も異なる。
+ */
+export function toH3ParentCell(h3R8Cell: string, res: number): string {
+  return cellToParent(h3R8Cell, res);
 }
 
 /**

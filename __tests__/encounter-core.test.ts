@@ -15,10 +15,13 @@ import {
   toGrid,
   toH3Cell,
   toH3R7,
+  toH3ParentCell,
   kRing,
   assertFiniteLatLng,
   LAT_GRID,
   LNG_GRID,
+  H3_RES_5,
+  H3_RES_7,
 } from "../modules/encounter/core/geo.js";
 
 describe("geo: haversineMeters", () => {
@@ -96,6 +99,94 @@ describe("geo: kRing", () => {
     const cell = toH3Cell(35.6580, 139.7016);
     const ring = kRing(cell, 1);
     expect(ring).toHaveLength(7);
+  });
+});
+
+// マッチングティア再設計（docs/matching-tier-redesign-DESIGN.md）の回帰テスト。
+// 近距離/広域ステージの候補取得が使う kRing 構成のセル数とカバー半径を固定し、
+// 意図しない縮小・拡大に気づけるようにする。
+describe("geo: kRing — マッチングティア候補カバレッジ回帰", () => {
+  // 目的地点からの距離・全方位で ring 内にセルが入るかを判定するヘルパー。
+  function destPoint(
+    lat: number,
+    lng: number,
+    bearingDeg: number,
+    distM: number
+  ): { lat: number; lng: number } {
+    const R = 6_371_000;
+    const br = (bearingDeg * Math.PI) / 180;
+    const lat1 = (lat * Math.PI) / 180;
+    const lng1 = (lng * Math.PI) / 180;
+    const lat2 = Math.asin(
+      Math.sin(lat1) * Math.cos(distM / R) +
+        Math.cos(lat1) * Math.sin(distM / R) * Math.cos(br)
+    );
+    const lng2 =
+      lng1 +
+      Math.atan2(
+        Math.sin(br) * Math.sin(distM / R) * Math.cos(lat1),
+        Math.cos(distM / R) - Math.sin(lat1) * Math.sin(lat2)
+      );
+    return { lat: (lat2 * 180) / Math.PI, lng: (lng2 * 180) / Math.PI };
+  }
+
+  function missedBearings(
+    res: number,
+    k: number,
+    testDistM: number,
+    originLat = 35.68,
+    originLng = 139.76
+  ): number {
+    const selfCell = toH3Cell(originLat, originLng, res);
+    const ring = new Set(kRing(selfCell, k));
+    let missed = 0;
+    for (let bearing = 0; bearing < 360; bearing += 10) {
+      const { lat, lng } = destPoint(originLat, originLng, bearing, testDistM);
+      const targetCell = toH3Cell(lat, lng, res);
+      if (!ring.has(targetCell)) missed++;
+    }
+    return missed;
+  }
+
+  it("近距離ステージ(res7 k=2)は3km地点を全方位でカバーする（0/36ミス）", () => {
+    expect(missedBearings(7, 2, 3_000)).toBe(0);
+  });
+
+  it("広域ステージ(res5 k=4)は50km地点を全方位でカバーする（0/36ミス）", () => {
+    expect(missedBearings(5, 4, 50_000)).toBe(0);
+  });
+
+  it("広域ステージをk=3に縮小すると50km地点で取りこぼしが発生する（回帰ガード）", () => {
+    // 司令塔の全方位実測（2026-07-23）で15/36ミスと判明した組み合わせ。
+    // k=3への安易な縮小（コスト削減目的等）を検知するための固定回帰。
+    expect(missedBearings(5, 3, 50_000)).toBeGreaterThan(0);
+  });
+});
+
+describe("geo: toH3ParentCell", () => {
+  it("h3R8セルの親(res7)を返す", () => {
+    const h3R8 = toH3Cell(35.6580, 139.7016, 8);
+    const parent = toH3ParentCell(h3R8, H3_RES_7);
+    expect(typeof parent).toBe("string");
+    expect(parent.length).toBeGreaterThan(0);
+  });
+
+  it("h3R8セルの親(res5)を返す", () => {
+    const h3R8 = toH3Cell(35.6580, 139.7016, 8);
+    const parent = toH3ParentCell(h3R8, H3_RES_5);
+    expect(typeof parent).toBe("string");
+  });
+
+  it("直接 latLngToCell(lat,lng,7) とは一致しないことがある（h3-js階層非整合性の既知仕様）", () => {
+    // visitedAreas.h3R7（toH3R7＝直接計算）と locations.h3R7（cellToParent導出）は
+    // 導出方法が異なり別物であることの回帰確認。誤って「同じはず」という前提で
+    // 統合しないための警告テスト。
+    const lat = 35.68;
+    const lng = 139.76;
+    const h3R8 = toH3Cell(lat, lng, 8);
+    const viaParent = toH3ParentCell(h3R8, H3_RES_7);
+    const viaDirect = toH3R7(lat, lng);
+    expect(viaParent).not.toBe(viaDirect);
   });
 });
 
