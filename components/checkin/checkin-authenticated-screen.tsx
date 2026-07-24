@@ -591,6 +591,9 @@ export default function CheckinAuthenticatedScreen() {
           void settingsQuery.refetch();
           void utils.settings.get.invalidate();
         },
+        onError: () => {
+          showError("再開に失敗しました。時間をおいて再度お試しください。");
+        },
       });
     } else {
       pauseLocation.mutate({ hours: 1 }, {
@@ -599,9 +602,12 @@ export default function CheckinAuthenticatedScreen() {
           void settingsQuery.refetch();
           void utils.settings.get.invalidate();
         },
+        onError: () => {
+          showError("一時停止に失敗しました。時間をおいて再度お試しください。");
+        },
       });
     }
-  }, [isPausing, pauseLocation, resumeLocation, settingsQuery, utils]);
+  }, [isPausing, pauseLocation, resumeLocation, settingsQuery, utils, showError]);
 
   const isPauseBusy = pauseLocation.isPending || resumeLocation.isPending;
   /** 429のretryAfter待機中。この間はボタンを押させない(サーバーへの追加429を防ぐ) */

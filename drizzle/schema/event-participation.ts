@@ -11,6 +11,7 @@ import {
   timestamp,
   serial,
   index,
+  uniqueIndex,
   boolean,
 } from "drizzle-orm/pg-core";
 
@@ -34,7 +35,9 @@ export const eventParticipations = pgTable(
   (table) => [
     index("event_participations_eventId_idx").on(table.eventId),
     index("event_participations_userId_idx").on(table.userId),
-    index("event_participations_event_user_idx").on(table.eventId, table.userId),
+    // 同一ユーザーの同一イベント参加表明は1行に統一（upsertParticipationのTOCTOU対策）。
+    // 旧 event_participations_event_user_idx（非UNIQUE）を UNIQUE 化。
+    uniqueIndex("event_participations_event_user_uidx").on(table.eventId, table.userId),
   ],
 );
 

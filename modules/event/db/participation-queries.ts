@@ -247,21 +247,14 @@ export async function upsertParticipation(
   db: DB,
   values: Omit<InsertEventParticipation, "id" | "createdAt" | "deletedAt">,
 ): Promise<ParticipationPublicView> {
-  const existing = await db
-    .select()
-    .from(eventParticipations)
-    .where(
-      and(
-        eq(eventParticipations.eventId, values.eventId),
-        eq(eventParticipations.userId, values.userId),
-      ),
-    )
-    .limit(1);
-
-  if (existing[0]) {
-    const rows = await db
-      .update(eventParticipations)
-      .set({
+  // SELECT→INSERT/UPDATEのTOCTOU（同時リクエストでの重複行作成）を避けるため
+  // DBレベルのUNIQUE制約(eventId,userId)にonConflictDoUpdateで委ねる。
+  const rows = await db
+    .insert(eventParticipations)
+    .values(values)
+    .onConflictDoUpdate({
+      target: [eventParticipations.eventId, eventParticipations.userId],
+      set: {
         displayName: values.displayName,
         username: values.username ?? null,
         profileImage: values.profileImage ?? null,
@@ -270,13 +263,9 @@ export async function upsertParticipation(
         companionCount: values.companionCount ?? 0,
         reminderEnabled: values.reminderEnabled ?? true,
         deletedAt: null,
-      })
-      .where(eq(eventParticipations.id, existing[0].id))
-      .returning();
-    return toPublicView(rows[0]);
-  }
-
-  const rows = await db.insert(eventParticipations).values(values).returning();
+      },
+    })
+    .returning();
   return toPublicView(rows[0]);
 }
 

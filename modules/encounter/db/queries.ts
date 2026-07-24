@@ -556,7 +556,10 @@ export async function insertEncountersIfNew(
     )
     .onConflictDoNothing();
 
-  const affected = (result as unknown as { rowCount?: number })?.rowCount ?? paramsList.length;
+  // postgres.js(porsager)の insert 結果は `.rowCount` ではなく `.count` に実際の
+  // 影響行数が入る（`.rowCount` は常に undefined。2026-07-23 実DB接続で実測確認済み）。
+  // onConflictDoNothing で衝突スキップされた分はここで正しく除外される。
+  const affected = (result as unknown as { count?: number })?.count ?? 0;
   return affected;
 }
 
@@ -796,22 +799,45 @@ export async function getMyEncounters(
   return items;
 }
 
-// ---------------------------------------------------------------------------
-// encounter.open — 開封
-// ---------------------------------------------------------------------------
-
-export async function openEncounter(
+/**
+ * 指定ユーザーが encounter の当事者（userAId/userBId のいずれか）かどうかを判定。
+ * 存在しないencounterIdは false（react/open の存在確認に共用）。
+ */
+export async function isEncounterParty(
   db: DB,
-  selfUserId: number,
-  encounterId: number
-): Promise<void> {
+  encounterId: number,
+  userId: number
+): Promise<boolean> {
   const rows = await db
     .select({ userAId: encounters.userAId, userBId: encounters.userBId })
     .from(encounters)
     .where(eq(encounters.id, encounterId))
     .limit(1);
 
-  if (rows.length === 0) return;
+  if (rows.length === 0) return false;
+  const row = rows[0];
+  return row.userAId === userId || row.userBId === userId;
+}
+
+// ---------------------------------------------------------------------------
+// encounter.open — 開封
+// ---------------------------------------------------------------------------
+
+/** encounter の開封結果。呼び出し元(tRPC)がNOT_FOUND/FORBIDDENを判別するために使う。 */
+export type OpenEncounterResult = "opened" | "not_found" | "forbidden";
+
+export async function openEncounter(
+  db: DB,
+  selfUserId: number,
+  encounterId: number
+): Promise<OpenEncounterResult> {
+  const rows = await db
+    .select({ userAId: encounters.userAId, userBId: encounters.userBId })
+    .from(encounters)
+    .where(eq(encounters.id, encounterId))
+    .limit(1);
+
+  if (rows.length === 0) return "not_found";
   const row = rows[0];
   const now = new Date();
 
@@ -822,14 +848,18 @@ export async function openEncounter(
       .where(
         and(eq(encounters.id, encounterId), sql`${encounters.openedByA} IS NULL`)
       );
-  } else if (row.userBId === selfUserId) {
+    return "opened";
+  }
+  if (row.userBId === selfUserId) {
     await db
       .update(encounters)
       .set({ openedByB: now })
       .where(
         and(eq(encounters.id, encounterId), sql`${encounters.openedByB} IS NULL`)
       );
+    return "opened";
   }
+  return "forbidden";
 }
 
 // ---------------------------------------------------------------------------

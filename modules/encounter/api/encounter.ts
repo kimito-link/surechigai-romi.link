@@ -44,6 +44,7 @@ import {
   upsertVisitedArea,
   getMyEncounters,
   openEncounter,
+  isEncounterParty,
   getUserSettings,
   upsertUserSettings,
   getMostFrequentNightH3R8,
@@ -275,7 +276,13 @@ export const encounterRouter = router({
     .input(z.object({ encounterId: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = await requireDb();
-      await openEncounter(db, ctx.user.id, input.encounterId);
+      const result = await openEncounter(db, ctx.user.id, input.encounterId);
+      if (result === "not_found") {
+        throw new TRPCError({ code: "NOT_FOUND", message: "すれ違いが見つかりません" });
+      }
+      if (result === "forbidden") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "このすれ違いを開封する権限がありません" });
+      }
       return { ok: true };
     }),
 
@@ -286,6 +293,14 @@ export const encounterRouter = router({
     .input(z.object({ encounterId: z.number(), emoji: z.string().max(8) }))
     .mutation(async ({ ctx, input }) => {
       const db = await requireDb();
+
+      const isParty = await isEncounterParty(db, input.encounterId, ctx.user.id);
+      if (!isParty) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "すれ違いが見つからないか、リアクションする権限がありません",
+        });
+      }
 
       await db
         .insert(reactions)
