@@ -9,6 +9,7 @@ import {
   parseShareLocationFromQuery,
   preferExplicitShareLocation,
 } from "@/lib/ogp/share-meta";
+import { buildWarmTargetUrl } from "@/lib/ogp/warm-og-image";
 import { shouldMaskHomeCellFromShare } from "@/modules/encounter/core/location-visibility";
 
 describe("resolveShareAreaLabel", () => {
@@ -229,5 +230,46 @@ describe("preferExplicitShareLocation", () => {
       recordedAt: new Date("2026-06-30T15:50:00Z"),
     };
     expect(preferExplicitShareLocation(resolved, explicit)?.area).toBe("岡谷市");
+  });
+});
+
+/**
+ * ウォーム対象URLは、クローラーが実際に取りに来るURLと完全一致しなければならない。
+ * 1文字でも違うと別キャッシュキーになり、事前ウォーム(2026-07-30 導入)が黙って
+ * 無意味になる — 症状は「OGP画像が出たり出なかったり」に戻るだけで気づきにくい。
+ */
+describe("buildWarmTargetUrl（OGPキャッシュ事前ウォーム）", () => {
+  const location = {
+    area: "岡谷市",
+    prefecture: "長野県",
+    lat: 36.065296,
+    lng: 138.05211,
+    hasLocation: true,
+    zoom: 14,
+    recordedAt: new Date("2026-07-30T05:45:11.187Z"),
+  };
+
+  it("api/u/[slug].ts が og:image に出すURLと一致する", () => {
+    // シェア側（api/u/[slug].ts・server/routers/ogp.ts）と同じ組み立て
+    const crawlerFetches = buildOgRedirectImageTarget({
+      origin: "https://surechigai.kimito.link",
+      location,
+      username: "streamerfunch",
+      version: location.recordedAt.getTime(),
+    });
+    expect(buildWarmTargetUrl(location, "streamerfunch")).toBe(crawlerFetches);
+  });
+
+  it("recordedAt があれば v= に使う（チェックインごとに別URLになる）", () => {
+    const url = buildWarmTargetUrl(location, "streamerfunch");
+    expect(url).toContain(`v=${location.recordedAt.getTime()}`);
+    expect(url).toContain("area=%E5%B2%A1%E8%B0%B7%E5%B8%82");
+    expect(url).toContain("lat=36.065296");
+  });
+
+  it("位置なしでも生成でき、座標クエリを含まない", () => {
+    const url = buildWarmTargetUrl(null, null);
+    expect(url).toContain("/api/og");
+    expect(url).not.toContain("lat=");
   });
 });
