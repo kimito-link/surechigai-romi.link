@@ -47,7 +47,11 @@ const config: ExpoConfig = {
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    permissions: ["POST_NOTIFICATIONS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "FOREGROUND_SERVICE"],
+    // FOREGROUND_SERVICE は要求しない。バックグラウンド位置取得(TaskManager /
+    // startLocationUpdatesAsync)の実装が 0 件で、位置取得は前景の
+    // requestForegroundPermissionsAsync のみ（hooks/use-live-presence.ts）。
+    // 使わない権限を宣言すると Google Play で用途申告を求められ審査が滞る。
+    permissions: ["POST_NOTIFICATIONS", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
     intentFilters: [
       {
         action: "VIEW",
@@ -96,9 +100,13 @@ const config: ExpoConfig = {
       },
     ],
     "expo-asset",
-    "expo-audio",
+    // expo-audio / expo-video はプラグイン登録から外している。
+    // アプリ本体からの import が 0 件で、登録すると expo-audio が RECORD_AUDIO(マイク)と
+    // MODIFY_AUDIO_SETTINGS を AndroidManifest に自動追加してしまうため
+    // （未使用の権限はストア審査で用途を問われる典型的な却下要因）。
+    // LP の BGM は public/lp/app.js の素の Web Audio で鳴らしており expo-audio を使わない。
+    // ネイティブで音声/動画を使う実装を入れる時に、ここへ戻すこと。
     "expo-font",
-    "expo-video",
     "expo-web-browser",
   ],
   experiments: {
