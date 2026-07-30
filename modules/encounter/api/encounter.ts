@@ -25,6 +25,7 @@ import {
 import { findMatches } from "../core/matching.js";
 import { moderateText } from "../core/moderation.js";
 import { reverseGeocodeWithTimeout } from "../core/geocoding.js";
+import { warmOgImageForUser } from "../core/warm-share-ogp.js";
 import {
   isAcceptableAccuracy,
   isLocationRecordingPaused,
@@ -160,6 +161,12 @@ export const encounterRouter = router({
       getMostFrequentNightH3R8(db, userId).then((cell) => {
         upsertUserSettings(db, userId, { homeMaskCell: cell }).catch(() => {});
       }).catch(() => {});
+
+      // OGP画像の生成は常時5〜6秒かかり X のクローラーは ~2秒で諦めるため、
+      // この地点でシェアされる可能性を見越して先に生成を始めておく。
+      // 以降のマッチング処理(数秒)の裏で進み、シェア時には 0.17 秒で返るようになる。
+      // 詳細と実測値は lib/ogp/warm-og-image.ts を参照。
+      warmOgImageForUser(db, userId).catch(() => {});
 
       let nearCandidates: Awaited<ReturnType<typeof getNearCandidates>> = [];
       let timeshiftCandidates: Awaited<ReturnType<typeof getTimeshiftCandidates>> = [];

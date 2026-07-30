@@ -10,6 +10,7 @@ import { getDb } from "../db/connection.js";
 import { getEventById } from "../../modules/event/db/queries.js";
 import { getOrCreateUserShareSlug, getShareInfoBySlug, getPublicTrailByShareSlug } from "../../modules/encounter/db/queries.js";
 import { resolveShareAreaLabel, buildPublicSharePageUrl, featureShareLocationFirst } from "../../lib/ogp/share-meta.js";
+import { warmOgImage, buildWarmTargetUrl } from "../../lib/ogp/warm-og-image.js";
 import { TRPCError } from "@trpc/server";
 
 const APP_ORIGIN = "https://surechigai.kimito.link";
@@ -138,41 +139,39 @@ export const ogpRouter = router({
     // 共有テキストは OGP と同じ「最新の公開地点」で解決（本人 context で自宅マスクを緩和）
     let areaLabel: string | null = null;
     let shareUrl = `${APP_ORIGIN}/u/${slug}`;
+    // OGP画像は生成に約5秒かかりXは約2秒で諦めるため、シェアリンク発行と同時に
+    // 裏でキャッシュを温めておく（詳細は lib/ogp/warm-og-image.ts）
+    let warming: Promise<void> | null = null;
     try {
       const info = await getShareInfoBySlug(db, slug, ctx.user.id, { ogpContext: true });
-      areaLabel = resolveShareAreaLabel(
-        info
-          ? {
-              area: info.area,
-              prefecture: info.prefecture,
-              lat: info.lat,
-              lng: info.lng,
-              hasLocation: info.hasLocation,
-              zoom: info.zoom,
-              recordedAt: info.recordedAt,
-            }
-          : null,
-      );
+      const shareLocation = info
+        ? {
+            area: info.area,
+            prefecture: info.prefecture,
+            lat: info.lat,
+            lng: info.lng,
+            hasLocation: info.hasLocation,
+            zoom: info.zoom,
+            recordedAt: info.recordedAt,
+          }
+        : null;
+      warming = warmOgImage(buildWarmTargetUrl(shareLocation, info?.username ?? null));
+      areaLabel = resolveShareAreaLabel(shareLocation);
       shareUrl = buildPublicSharePageUrl(
         slug,
         info?.recordedAt ?? null,
         APP_ORIGIN,
-        info
-          ? {
-              area: info.area,
-              prefecture: info.prefecture,
-              lat: info.lat,
-              lng: info.lng,
-              hasLocation: info.hasLocation,
-              zoom: info.zoom,
-              recordedAt: info.recordedAt,
-            }
-          : null,
+        shareLocation,
       );
     } catch {
       // 地名の解決に失敗してもリンク共有自体は続行
       shareUrl = buildPublicSharePageUrl(slug, null, APP_ORIGIN);
     }
+    // ウォームは投機的処理。ここで待つとシェアボタンの応答が約5秒遅くなり、
+    // 先に開いた空白ポップアップをユーザーが見続けることになるため待たない。
+    // Serverless で関数終了時に打ち切られても、その時点まで進んだ生成は
+    // /api/og 側のキャッシュに載るので無駄にはならない。
+    void warming;
     return { slug, url: shareUrl, areaLabel };
   }),
 });
