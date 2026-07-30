@@ -31,6 +31,7 @@ import {
   type TrailVisibility,
 } from "@/modules/encounter/core/trail-visibility";
 import { LocationPauseControl } from "@/components/mypage/location-pause-control";
+import { DeleteAccountControl } from "@/components/mypage/delete-account-control";
 import { HitokotoModal } from "@/components/mypage/hitokoto-modal";
 import type { AuthUser } from "@/lib/auth-context";
 import { styles } from "@/components/mypage/mypage-screen-styles";
@@ -399,22 +400,32 @@ export function MypageScreenView(props: MypageScreenViewProps) {
             <MaterialIcons name="logout" size={20} color={color.danger} style={{ marginRight: 12 }} />
             <Text style={[styles.menuItemText, { color: color.danger }]}>ログアウト</Text>
           </Pressable>
+
+          {/* アカウント削除（App Store Guideline 5.1.1(v) が要求するアプリ内削除導線） */}
+          <DeleteAccountControl onDeleted={handleLogout} />
         </View>
 
         {/* リーガルリンク */}
         <View style={styles.legalSection}>
           <Pressable
-            onPress={() => Linking.openURL("https://surechigai-romi.link/terms")}
+            onPress={() => Linking.openURL("https://surechigai.kimito.link/terms")}
             style={({ pressed }) => [styles.legalLink, pressed && { opacity: 0.7 }]}
           >
             <Text style={styles.legalLinkText}>利用規約</Text>
           </Pressable>
           <Text style={styles.legalSep}>・</Text>
           <Pressable
-            onPress={() => Linking.openURL("https://surechigai-romi.link/privacy")}
+            onPress={() => Linking.openURL("https://surechigai.kimito.link/privacy")}
             style={({ pressed }) => [styles.legalLink, pressed && { opacity: 0.7 }]}
           >
             <Text style={styles.legalLinkText}>プライバシーポリシー</Text>
+          </Pressable>
+          <Text style={styles.legalSep}>・</Text>
+          <Pressable
+            onPress={() => Linking.openURL("https://surechigai.kimito.link/support")}
+            style={({ pressed }) => [styles.legalLink, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={styles.legalLinkText}>サポート</Text>
           </Pressable>
         </View>
 

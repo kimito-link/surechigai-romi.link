@@ -40,11 +40,11 @@
     "phoneE164": "",
     "firstName": "",
     "lastName": "",
-    "supportUrl": "https://surechigai-romi.link/support",
-    "privacyUrl": "https://surechigai-romi.link/privacy",
-    "termsUrl": "https://surechigai-romi.link/terms",
+    "supportUrl": "https://surechigai.kimito.link/support",
+    "privacyUrl": "https://surechigai.kimito.link/privacy",
+    "termsUrl": "https://surechigai.kimito.link/terms",
     "marketingUrl": "https://kimito.link/surechigai/",
-    "dataDeletionUrl": "https://surechigai-romi.link/deletion"
+    "dataDeletionUrl": "https://surechigai.kimito.link/deletion"
   },
   "businessModel": {
     "hasInAppPurchase": false,
