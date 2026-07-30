@@ -30,8 +30,10 @@ const config: ExpoConfig = {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
     infoPlist: {
+      // 「記録」だけでなく「他の利用者に市区町村粒度で共有される」ことまで書く。
+      // 実態より狭い説明は Guideline 5.1.2(目的外利用)の指摘余地になるため。
       NSLocationWhenInUseUsageDescription:
-        "すれ違った場所を記録し、思い出の場所を後からたどるために使用します",
+        "すれ違った場所を記録して思い出の場所を後からたどるため、および近くにいた他の利用者とのすれ違いを市区町村の粒度で表示するために使用します",
       // 標準HTTPS(TLS)以外の独自暗号化を実装していないため輸出コンプライアンス対象外。
       // これが無いとASC提出前に手動設定を求められる（今回のビルドログで検出）。
       ITSAppUsesNonExemptEncryption: false,

@@ -296,9 +296,13 @@ const STORE_MARKETING_URL =
 const STORE_PRIVACY_URL =
   (!isPlaceholder(APP_CONFIG.contact?.privacyUrl) && APP_CONFIG.contact.privacyUrl) ||
   `${PRODUCTION_URL}/privacy`;
+// フォールバックは実在するルート(app/deletion.tsx)を指すこと。
+// 以前は /account/delete-request を指していたが、そのルートは存在せず
+// 404 ページが返る（vercel.json の catch-all rewrite により HTTP 200 で返るため
+// 到達性チェックでは気づけない）。ストアに死んだ URL を登録すると Metadata Rejected になる。
 const STORE_DATA_DELETION_URL =
   (!isPlaceholder(APP_CONFIG.contact?.dataDeletionUrl) && APP_CONFIG.contact.dataDeletionUrl) ||
-  `${PRODUCTION_URL}/account/delete-request`;
+  `${PRODUCTION_URL}/deletion`;
 const APP_INFO_LOCALE = process.env.ASC_APP_INFO_LOCALE || 'ja';
 
 async function ensureLocalization(api, versionId, sourceLocId, whatsNew) {

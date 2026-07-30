@@ -146,6 +146,50 @@ if (appConfig) {
   } else if (/^https:\/\//.test(String(dataDeletion))) {
     ok('account-deletion-url', 'dataDeletionUrl あり');
   }
+
+  // ストアに登録する法務URLに、対応するルートが実在するかを確認する。
+  //
+  // 値の存在チェックだけでは不十分。2026-07-30 に、4本とも app/ にルートが無く
+  // 404 画面が描画される状態のまま lint が全項目 ok を出していた。
+  // vercel.json の catch-all rewrite により未定義パスも HTTP 200 を返すため、
+  // curl による到達性確認でも検出できない。ルートファイルの実在で判定する。
+  const routeChecks = [
+    ['privacyUrl', appConfig.contact?.privacyUrl],
+    ['termsUrl', appConfig.contact?.termsUrl],
+    ['supportUrl', appConfig.contact?.supportUrl],
+    ['dataDeletionUrl', dataDeletion],
+  ];
+  const missingRoutes = [];
+  for (const [key, url] of routeChecks) {
+    if (!url || String(url).startsWith('<')) continue;
+    let pathname;
+    try {
+      pathname = new URL(String(url)).pathname.replace(/^\/+|\/+$/g, '');
+    } catch {
+      continue;
+    }
+    if (!pathname) continue;
+    // 自サイト内のパスのみ検査する（外部ホスティングなら対象外）
+    const candidates = [
+      `app/${pathname}.tsx`,
+      `app/${pathname}/index.tsx`,
+      `public/${pathname}.html`,
+      `public/${pathname}/index.html`,
+    ];
+    if (!candidates.some((rel) => fs.existsSync(path.join(ROOT, rel)))) {
+      missingRoutes.push(`${key}=/${pathname}`);
+    }
+  }
+  if (missingRoutes.length > 0) {
+    fail(
+      'legal-routes-exist',
+      'metadata/5.1.1',
+      `ストアに登録する法務URLに対応するルートが実在しない: ${missingRoutes.join(', ')}。` +
+        `catch-all rewrite があるため HTTP 200 でも中身は 404 画面になる`,
+    );
+  } else {
+    ok('legal-routes-exist', 'privacy/terms/support/deletion のルートが実在');
+  }
 } else {
   skip('app-config-review-urls', 'app.config.json が無い');
 }
