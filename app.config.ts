@@ -32,6 +32,9 @@ const config: ExpoConfig = {
     infoPlist: {
       NSLocationWhenInUseUsageDescription:
         "すれ違った場所を記録し、思い出の場所を後からたどるために使用します",
+      // 標準HTTPS(TLS)以外の独自暗号化を実装していないため輸出コンプライアンス対象外。
+      // これが無いとASC提出前に手動設定を求められる（今回のビルドログで検出）。
+      ITSAppUsesNonExemptEncryption: false,
     },
   },
   android: {
@@ -92,6 +95,7 @@ const config: ExpoConfig = {
         },
       },
     ],
+    "expo-asset",
     "expo-audio",
     "expo-font",
     "expo-video",
@@ -100,6 +104,11 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
+  },
+  extra: {
+    eas: {
+      projectId: "a58f673f-25cd-4713-9d1c-0d1062a68426",
+    },
   },
 };
 
