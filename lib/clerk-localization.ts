@@ -12,7 +12,8 @@ export const kimitoJaJP = {
       ...jaJP.signIn?.start,
       title: "君斗りんくのすれ違ひ通信にログイン",
       subtitle:
-        "X（旧 Twitter）のアカウントで続けます。すれ違いの記録はログイン後に残せます。",
+        // Apple も選べる（Clerk側で有効・Guideline 4.8 対応）。X 固定の案内にしない
+        "X または Apple のアカウントで続けます。すれ違いの記録はログイン後に残せます。",
     },
   },
   signUp: {

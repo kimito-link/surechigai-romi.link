@@ -21,7 +21,8 @@ export type AuthState = {
   isAuthReadyForUI: boolean;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
-  login: (returnUrl?: string, forceSwitch?: boolean) => Promise<void>;
+  /** provider 省略時は X。Apple は Guideline 4.8 対応で追加（Clerk側で有効化済み） */
+  login: (returnUrl?: string, forceSwitch?: boolean, provider?: "x" | "apple") => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
