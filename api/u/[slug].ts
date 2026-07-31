@@ -14,7 +14,7 @@ import {
   buildOgRedirectImageTarget,
   parseShareLocationFromQuery,
   preferExplicitShareLocation,
-  resolveShareAreaLabel,
+  resolveShareDetailedPlace,
   type ShareLocationInfo,
 } from "../../lib/ogp/share-meta.js";
 
@@ -50,38 +50,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const info = await getShareInfoBySlug(db, slug, undefined, { ogpContext: true });
         shareUsername = info?.username ?? null;
         const queryHint = parseShareLocationFromQuery(req.query);
-        resolvedLocation = preferExplicitShareLocation(
-          info
-            ? {
-                area: info.area,
-                prefecture: info.prefecture,
-                lat: info.lat,
-                lng: info.lng,
-                hasLocation: info.hasLocation,
-                zoom: info.zoom,
-                recordedAt: info.recordedAt,
-              }
-            : null,
-          queryHint,
-        );
+        const infoLocation: ShareLocationInfo | null = info
+          ? {
+              area: info.area,
+              prefecture: info.prefecture,
+              address: info.address,
+              lat: info.lat,
+              lng: info.lng,
+              hasLocation: info.hasLocation,
+              zoom: info.zoom,
+              recordedAt: info.recordedAt,
+            }
+          : null;
+        resolvedLocation = preferExplicitShareLocation(infoLocation, queryHint);
 
         if (info || resolvedLocation) {
           const who = info?.username ? `@${info.username}` : info?.name ?? "この人";
+          // 「岡谷市」ではなくチェックイン画面と同じ詳しさで見せる（2026-07-31 の方針）。
+          // address が無ければ市区町村へフォールバックする。
           const place =
-            resolveShareAreaLabel(resolvedLocation) ??
-            resolveShareAreaLabel(
-              info
-                ? {
-                    area: info.area,
-                    prefecture: info.prefecture,
-                    lat: info.lat,
-                    lng: info.lng,
-                    hasLocation: info.hasLocation,
-                    zoom: info.zoom,
-                    recordedAt: info.recordedAt,
-                  }
-                : null,
-            ) ??
+            resolveShareDetailedPlace(resolvedLocation) ??
+            resolveShareDetailedPlace(infoLocation) ??
             "どこか";
           title = `${who} は ${place} にいるよ｜君斗りんくのすれ違ひ通信`;
           description = `${place} で記録された足あと。会いたい君がいる現在地をたどろう。`;

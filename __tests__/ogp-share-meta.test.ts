@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   resolveShareAreaLabel,
+  resolveShareDetailedPlace,
   buildOgImageSearchParams,
   buildPublicSharePageUrl,
   buildOgRedirectMetaUrl,
@@ -271,5 +272,42 @@ describe("buildWarmTargetUrl（OGPキャッシュ事前ウォーム）", () => {
     const url = buildWarmTargetUrl(null, null);
     expect(url).toContain("/api/og");
     expect(url).not.toContain("lat=");
+  });
+});
+
+/**
+ * OGP/シェア文言で「岡谷市」ではなくチェックイン画面と同じ詳しさを出す（2026-07-31 の方針）。
+ * 逆ジオの address は重複を含む冗長な文字列なので、畳んで読める形にする。
+ */
+describe("resolveShareDetailedPlace", () => {
+  const base = {
+    area: "岡谷市",
+    prefecture: "長野県",
+    lat: 36.06,
+    lng: 138.05,
+    hasLocation: true,
+    zoom: 14,
+    recordedAt: new Date("2026-07-31T00:00:00Z"),
+  };
+
+  it("重複と「日本」を畳んで詳細住所を返す", () => {
+    expect(
+      resolveShareDetailedPlace({
+        ...base,
+        address: "川岸, 岡谷街道, 川岸東四丁目, 川岸, 岡谷市, 長野県, 日本",
+      }),
+    ).toBe("川岸 岡谷街道 川岸東四丁目 岡谷市 長野県");
+  });
+
+  it("address が無ければ市区町村へフォールバック", () => {
+    expect(resolveShareDetailedPlace({ ...base, address: null })).toBe("岡谷市");
+  });
+
+  it("address が空文字でもフォールバックする", () => {
+    expect(resolveShareDetailedPlace({ ...base, address: "   " })).toBe("岡谷市");
+  });
+
+  it("null を渡すと null", () => {
+    expect(resolveShareDetailedPlace(null)).toBeNull();
   });
 });

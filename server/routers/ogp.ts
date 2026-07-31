@@ -9,7 +9,7 @@ import { publicProcedure, protectedProcedure, router } from "../_core/trpc.js";
 import { getDb } from "../db/connection.js";
 import { getEventById } from "../../modules/event/db/queries.js";
 import { getOrCreateUserShareSlug, getShareInfoBySlug, getPublicTrailByShareSlug } from "../../modules/encounter/db/queries.js";
-import { resolveShareAreaLabel, buildPublicSharePageUrl, featureShareLocationFirst } from "../../lib/ogp/share-meta.js";
+import { resolveShareDetailedPlace, buildPublicSharePageUrl, featureShareLocationFirst } from "../../lib/ogp/share-meta.js";
 import { TRPCError } from "@trpc/server";
 
 const APP_ORIGIN = "https://surechigai.kimito.link";
@@ -144,6 +144,7 @@ export const ogpRouter = router({
         ? {
             area: info.area,
             prefecture: info.prefecture,
+            address: info.address,
             lat: info.lat,
             lng: info.lng,
             hasLocation: info.hasLocation,
@@ -151,7 +152,8 @@ export const ogpRouter = router({
             recordedAt: info.recordedAt,
           }
         : null;
-      areaLabel = resolveShareAreaLabel(shareLocation);
+      // X の投稿文にも OGP と同じ詳しさの地名を出す（2026-07-31 の方針）
+      areaLabel = resolveShareDetailedPlace(shareLocation);
       shareUrl = buildPublicSharePageUrl(
         slug,
         info?.recordedAt ?? null,

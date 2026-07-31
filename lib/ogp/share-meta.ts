@@ -7,6 +7,8 @@ const APP_ORIGIN = "https://surechigai.kimito.link";
 export type ShareLocationInfo = {
   area: string | null;
   prefecture: string | null;
+  /** 逆ジオコーディングの詳細住所。正確な地点を出すときのみ入る */
+  address?: string | null;
   lat: number | null;
   lng: number | null;
   hasLocation: boolean;
@@ -18,6 +20,36 @@ export type ShareLocationInfo = {
 export function resolveShareAreaLabel(info: ShareLocationInfo | null | undefined): string | null {
   if (!info) return null;
   return info.area ?? info.prefecture ?? null;
+}
+
+/**
+ * OGP の見出し用に、可能なかぎり詳しい地名を返す。
+ *
+ * ユーザーの意図は「どこにいるかを正確に見せる」こと（2026-07-31 の判断）。
+ * 隠す・消す・公開範囲を絞る手段はアプリ側に揃っているので、公開すると決めた足あとは
+ * チェックイン画面と同じ粒度で見せる。address が無いときは市区町村へフォールバック。
+ *
+ * 逆ジオの address は "川岸, 岡谷街道, 川岸東四丁目, 川岸, 岡谷市, 長野県, 日本" のように
+ * 冗長かつ重複を含むので、重複を畳んで読みやすい順（詳細→広域）に整える。
+ */
+export function resolveShareDetailedPlace(
+  info: ShareLocationInfo | null | undefined,
+): string | null {
+  if (!info) return null;
+  const raw = info.address?.trim();
+  if (!raw) return resolveShareAreaLabel(info);
+
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const piece of raw.split(",").map((s) => s.trim())) {
+    if (!piece || piece === "日本") continue;
+    if (seen.has(piece)) continue;
+    seen.add(piece);
+    parts.push(piece);
+  }
+  if (parts.length === 0) return resolveShareAreaLabel(info);
+  // 長くなりすぎるとカードで省略されるので上限を設ける
+  return parts.slice(0, 5).join(" ");
 }
 
 /** X シェア用 URL（?v= で Card キャッシュを bust。地点ヒントも付与） */
@@ -191,7 +223,14 @@ export function preferExplicitShareLocation(
   if (!explicit?.hasLocation || explicit.lat == null || explicit.lng == null) {
     return resolved ?? null;
   }
-  if (!resolved?.recordedAt || !explicit.recordedAt) return explicit;
-  if (explicit.recordedAt.getTime() >= resolved.recordedAt.getTime()) return explicit;
+  // クエリ由来のヒントには address が乗らない（URL長を抑えるため）。
+  // 同じ地点を指しているなら DB 側の詳細住所を引き継ぐ（OGP文面が市区町村に痩せるのを防ぐ）。
+  const withAddress = (loc: ShareLocationInfo): ShareLocationInfo =>
+    loc.address || !resolved?.address ? loc : { ...loc, address: resolved.address };
+
+  if (!resolved?.recordedAt || !explicit.recordedAt) return withAddress(explicit);
+  if (explicit.recordedAt.getTime() >= resolved.recordedAt.getTime()) {
+    return withAddress(explicit);
+  }
   return resolved;
 }

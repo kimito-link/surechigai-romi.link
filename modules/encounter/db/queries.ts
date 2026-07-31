@@ -1405,6 +1405,8 @@ export type ShareInfo = {
   /** 市区町村（粗い粒度。公開サムネ用） */
   area: string | null;
   prefecture: string | null;
+  /** 逆ジオコーディングの詳細住所。OGP文面で「正確な場所」を出すために使う（公開範囲設定に従う） */
+  address: string | null;
   /** 地図ピン座標。precise=false は500m丸め、true は正確座標。地点非公開時は null。 */
   lat: number | null;
   lng: number | null;
@@ -1653,6 +1655,7 @@ export async function getShareInfoBySlug(
     username,
     area: null,
     prefecture: null,
+    address: null,
     lat: null,
     lng: null,
     hasLocation: false,
@@ -1690,6 +1693,7 @@ export async function getShareInfoBySlug(
       lngGrid: locations.lngGrid,
       municipality: locations.municipality,
       prefecture: locations.prefecture,
+      address: locations.address,
       h3R8: locations.h3R8,
       recordedAt: locations.recordedAt,
       visibility: locations.visibility,
@@ -1720,6 +1724,8 @@ export async function getShareInfoBySlug(
       username,
       area: loc.municipality,
       prefecture: loc.prefecture,
+      // 詳細住所は正確な座標を出すときだけ添える（丸め座標のときに番地を出すと不整合になる）
+      address: useExact ? loc.address : null,
       lat: useExact ? loc.lat : loc.latGrid,
       lng: useExact ? loc.lng : loc.lngGrid,
       hasLocation: true,
@@ -1747,6 +1753,7 @@ export async function getShareInfoBySlug(
     username,
     area: va.municipality,
     prefecture: va.prefecture,
+    address: null,
     lat: null,
     lng: null,
     hasLocation: false,
