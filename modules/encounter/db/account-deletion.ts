@@ -33,6 +33,7 @@ import {
   adUserDailyCaps,
   twitterFollowStatus,
   userTwitterTokens,
+  premiumEntitlements,
 } from "../../../drizzle/schema/index.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -98,6 +99,8 @@ export async function deleteUserAccount(
   await db.delete(userSettings).where(eq(userSettings.userId, userId));
   await db.delete(adUserDailyCaps).where(eq(adUserDailyCaps.userId, userId));
   await db.delete(twitterFollowStatus).where(eq(twitterFollowStatus.userId, userId));
+  // プレミアム権利。ストア側のサブスクは別途ユーザーが解約する必要がある点に注意
+  await db.delete(premiumEntitlements).where(eq(premiumEntitlements.userId, userId));
   if (openId) {
     await db.delete(userTwitterTokens).where(eq(userTwitterTokens.openId, openId));
   }

@@ -12,6 +12,7 @@ export * from "./users";
 export * from "./audit";
 export * from "./api-usage";
 export * from "./ads";
+export * from "./premium";
 export * from "./db-stats";
 export * from "./encounter";
 export * from "./event";

@@ -10,6 +10,7 @@ import { authRouter } from "./auth.js";
 import { ogpRouter } from "./ogp.js";
 import { devRouter } from "./dev.js";
 import { adsRouter } from "./ads.js";
+import { premiumRouter } from "./premium.js";
 
 // encounter モジュールルーター
 import { encounterRouter } from "../../modules/encounter/api/encounter.js";
@@ -30,6 +31,7 @@ export const appRouter = router({
   ogp: ogpRouter,
   dev: devRouter,
   ads: adsRouter,
+  premium: premiumRouter,
   encounter: encounterRouter,
   zukan: zukanRouter,
   safety: safetyRouter,
@@ -49,6 +51,7 @@ export {
   ogpRouter,
   devRouter,
   adsRouter,
+  premiumRouter,
   encounterRouter,
   zukanRouter,
   safetyRouter,
