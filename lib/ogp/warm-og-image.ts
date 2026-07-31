@@ -22,8 +22,19 @@ import { buildOgRedirectImageTarget, type ShareLocationInfo } from "./share-meta
 
 const APP_ORIGIN = "https://surechigai.kimito.link";
 
-/** ウォームは投機的処理なので、遅くともこの時間で切り上げる */
-const WARM_TIMEOUT_MS = 15_000;
+/**
+ * ウォームは投機的処理なので短く切り上げる。
+ *
+ * ここを長くしてはいけない（2026-07-31 実機で障害）。Vercel の Serverless は
+ * 未解決の Promise が残っていると関数を終了させないため、投げっぱなしにしたつもりでも
+ * 呼び出し元のレスポンスがこの時間だけ遅延しうる。当初 15 秒にしていたところ、
+ * チェックインとシェアの応答が詰まり、シェアでは about:blank の空タブを
+ * ユーザーが見続ける状態になった。
+ *
+ * 画像生成は 5〜6 秒かかるのでこの時間内には終わらないが、ウォームは
+ * 「途中まで進めておく」だけでも次回以降のキャッシュに効くため短くてよい。
+ */
+const WARM_TIMEOUT_MS = 2_500;
 
 /**
  * OGP画像URLを事前に取得してエッジキャッシュを温める。

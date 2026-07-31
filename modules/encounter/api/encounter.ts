@@ -25,7 +25,6 @@ import {
 import { findMatches } from "../core/matching.js";
 import { moderateText } from "../core/moderation.js";
 import { reverseGeocodeWithTimeout } from "../core/geocoding.js";
-import { warmOgImageForUser } from "../core/warm-share-ogp.js";
 import {
   isAcceptableAccuracy,
   isLocationRecordingPaused,
@@ -162,11 +161,12 @@ export const encounterRouter = router({
         upsertUserSettings(db, userId, { homeMaskCell: cell }).catch(() => {});
       }).catch(() => {});
 
-      // OGP画像の生成は常時5〜6秒かかり X のクローラーは ~2秒で諦めるため、
-      // この地点でシェアされる可能性を見越して先に生成を始めておく。
-      // 以降のマッチング処理(数秒)の裏で進み、シェア時には 0.17 秒で返るようになる。
-      // 詳細と実測値は lib/ogp/warm-og-image.ts を参照。
-      warmOgImageForUser(db, userId).catch(() => {});
+      // ここで OGP 画像のウォームを投げてはいけない（2026-07-31 実機で障害を確認）。
+      // Vercel の Serverless は未解決の Promise が残っていると関数を終了させないため、
+      // .catch() を付けて投げっぱなしにしてもレスポンスがウォーム完了まで遅延する。
+      // 画像生成は 5〜6 秒かかるので、チェックインの応答がそのぶん詰まる。
+      // OGP のキャッシュは別経路（api/og-redirect の事前叩き等）で温めること。
+      // 詳細は docs/investigation/ogp-card-latency-2026-07-30.md を参照。
 
       let nearCandidates: Awaited<ReturnType<typeof getNearCandidates>> = [];
       let timeshiftCandidates: Awaited<ReturnType<typeof getTimeshiftCandidates>> = [];
