@@ -34,7 +34,7 @@ export function ClerkMountFallback({ mode }: ClerkMountFallbackProps) {
     >
       <Text style={{ fontWeight: "800", fontSize: 16, color: palette.gray900 }}>{heading}</Text>
       <Text style={{ fontSize: 14, color: palette.gray500, textAlign: "center" }}>
-        X または Apple のアカウントで続けます。
+        X（旧 Twitter）のアカウントで続けます。
       </Text>
       <View
         accessibilityElementsHidden

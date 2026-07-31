@@ -169,12 +169,10 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
   const { user: clerkUser, isLoaded: clerkIsLoaded } = useUser();
   const { signOut, getToken } = useClerkAuth();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_x" });
-  // Guideline 4.8 対応。Clerk 側で oauth_apple は有効化済み（2026-07-31 確認）
-  const { startOAuthFlow: startAppleOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
   const clerk = useClerk();
 
   const login = useCallback(
-    async (returnUrl?: string, forceSwitch = false, provider: "x" | "apple" = "x") => {
+    async (returnUrl?: string, forceSwitch = false) => {
       try {
         const safeReturnUrl =
           typeof returnUrl === "string" ? returnUrl : undefined;
@@ -220,8 +218,7 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
         }
 
         const redirectUrl = `${getApiBaseUrl()}/oauth/twitter-callback`;
-        const runOAuth = provider === "apple" ? startAppleOAuthFlow : startOAuthFlow;
-        const result = await runOAuth({ redirectUrl });
+        const result = await startOAuthFlow({ redirectUrl });
 
         if (result.createdSessionId && result.setActive) {
           await result.setActive({ session: result.createdSessionId });
@@ -252,7 +249,7 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
         }
       }
     },
-    [startOAuthFlow, startAppleOAuthFlow, getToken, signOut, clerk],
+    [startOAuthFlow, getToken, signOut, clerk],
   );
 
   const logout = useCallback(async () => {
