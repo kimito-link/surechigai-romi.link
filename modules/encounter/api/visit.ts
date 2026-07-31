@@ -14,6 +14,8 @@ import { getDb } from "../../../server/db/connection.js";
 import { assertFiniteLatLng, toGrid, toH3Cell } from "../core/geo.js";
 import { reverseGeocodeWithTimeout } from "../core/geocoding.js";
 import { classifyLocationToPrefectureName } from "../core/prefecture-classify.js";
+import { moderateText } from "../core/moderation.js";
+import { buildModerationTarget, cleanUserText } from "../core/user-text.js";
 import {
   getGroupVisitStats,
   insertGroupVisitReport,
@@ -26,11 +28,6 @@ function normalizeGroupCode(input: string): string {
 
 function groupKeyFromCode(input: string): string {
   return createHash("sha256").update(normalizeGroupCode(input)).digest("hex");
-}
-
-function cleanText(input: string | undefined | null): string | null {
-  const text = input?.normalize("NFKC").trim();
-  return text ? text : null;
 }
 
 function assertValidLatLng(lat: number, lng: number) {
@@ -66,7 +63,7 @@ export const visitRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "グループコードを入力してください" });
       }
 
-      const displayName = cleanText(input.displayName);
+      const displayName = cleanUserText(input.displayName);
       if (!displayName) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "表示名を入力してください" });
       }
@@ -88,6 +85,25 @@ export const visitRouter = router({
         throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続です" });
       }
 
+      // 自由入力欄（表示名・場所名・メモ）は誰でも読める場所に出るためモデレーションを通す。
+      // 2026-07-31 まで一切通しておらず、publicProcedure かつグループコード最短2文字という
+      // 条件で野放しだった。encounter.updateHitokoto と同じ扱いに揃える。
+      const placeName = cleanUserText(input.placeName);
+      const note = cleanUserText(input.note);
+      const moderationTarget = buildModerationTarget(displayName, placeName, note);
+      if (moderationTarget) {
+        const moderation = await moderateText(moderationTarget, {
+          groqApiKey: process.env.GROQ_API_KEY,
+          geminiApiKey: process.env.GEMINI_API_KEY,
+        });
+        if (moderation.rejected) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `不適切な内容が含まれています (${moderation.stage})`,
+          });
+        }
+      }
+
       const geocode = await reverseGeocodeWithTimeout(latLng.lat, latLng.lng, 1_200);
       const prefecture =
         geocode.prefecture ??
@@ -97,10 +113,10 @@ export const visitRouter = router({
       try {
         report = await insertGroupVisitReport(db, {
           groupKey,
-          visitorToken: cleanText(input.visitorToken),
+          visitorToken: cleanUserText(input.visitorToken),
           displayName,
-          placeName: cleanText(input.placeName),
-          note: cleanText(input.note),
+          placeName,
+          note,
           lat: latLng.lat,
           lng: latLng.lng,
           accuracyM: input.accuracy ?? null,
