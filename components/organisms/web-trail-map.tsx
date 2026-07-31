@@ -23,6 +23,7 @@ import { color, contentMaxWidth } from "@/theme/tokens";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
 import { TabMapLoadingFallback, TabQueryShell } from "@/components/molecules/tab-query-shell";
 import { FootprintSheet } from "@/components/map/footprint-sheet";
+import { PlaceNoteModal } from "@/components/map/place-note-modal";
 import type { LocationVisibility } from "@/modules/encounter/core/location-visibility";
 
 export type VisitedAreaSummary = {
@@ -51,6 +52,9 @@ type WebTrailMapProps = {
   onDeleteLocation?: (locationId: number) => void;
   deletingLocationId?: number | null;
   onToggleVisibility?: (locationId: number, next: LocationVisibility) => void;
+  /** 本人のみ。場所メモを保存する（未指定ならメモ編集導線を出さない） */
+  onSaveNote?: (locationId: number, placeName: string, note: string) => void;
+  savingNoteLocationId?: number | null;
   updatingLocationId?: number | null;
   historyLimit?: number;
   /** 公開閲覧向け: 履歴ヘッダーに保存地点の注記 */
@@ -80,6 +84,8 @@ export function WebTrailMap({
   onDeleteLocation,
   deletingLocationId = null,
   onToggleVisibility,
+  onSaveNote,
+  savingNoteLocationId = null,
   updatingLocationId = null,
   historyLimit = 30,
   showSavedLocationHint = false,
@@ -98,6 +104,7 @@ export function WebTrailMap({
 
   const [zoom, setZoom] = useState(18);
   const [selectedPoint, setSelectedPoint] = useState<TrailPoint | null>(null);
+  const [notePoint, setNotePoint] = useState<TrailPoint | null>(null);
   const [focusCenter, setFocusCenter] = useState<{ lat: number; lng: number } | undefined>(undefined);
   const appliedFocusRef = useRef<string | null>(null);
 
@@ -212,9 +219,24 @@ export function WebTrailMap({
             : undefined
         }
         onToggleVisibility={onToggleVisibility}
+        onEditNote={onSaveNote ? (p) => { setNotePoint(p); setSelectedPoint(null); } : undefined}
         isDeleting={selectedPoint != null && deletingLocationId === selectedPoint.id}
         isUpdatingVisibility={selectedPoint != null && updatingLocationId === selectedPoint.id}
       />
+      {onSaveNote ? (
+        <PlaceNoteModal
+          visible={notePoint != null}
+          currentPlaceName={notePoint?.placeName}
+          currentNote={notePoint?.note}
+          isSaving={notePoint != null && savingNoteLocationId === notePoint.id}
+          onClose={() => setNotePoint(null)}
+          onSave={(placeName, note) => {
+            if (!notePoint) return;
+            onSaveNote(notePoint.id, placeName, note);
+            setNotePoint(null);
+          }}
+        />
+      ) : null}
     </ScrollView>
   );
 }

@@ -64,6 +64,8 @@ export function MapAuthenticatedScreen() {
     confirmDeleteId,
     handleDeleteLocation,
     handleToggleVisibility,
+    handleSaveNote,
+    savingNoteLocationId,
     executeDelete,
     cancelDelete,
   } = useTrailLocationActions(onRefreshData);
@@ -128,6 +130,8 @@ export function MapAuthenticatedScreen() {
         canDeleteLocations={isAuthenticated}
         onDeleteLocation={isAuthenticated ? handleDeleteLocation : undefined}
         onToggleVisibility={isAuthenticated ? handleToggleVisibility : undefined}
+        onSaveNote={isAuthenticated ? handleSaveNote : undefined}
+        savingNoteLocationId={savingNoteLocationId}
         deletingLocationId={deletingLocationId}
         updatingLocationId={updatingLocationId}
         historyLimit={30}

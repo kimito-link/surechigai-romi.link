@@ -9,6 +9,7 @@ export function useTrailLocationActions(onChanged?: () => void) {
   const [deletingLocationId, setDeletingLocationId] = useState<number | null>(null);
   const [updatingLocationId, setUpdatingLocationId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [savingNoteLocationId, setSavingNoteLocationId] = useState<number | null>(null);
 
   const deleteMutation = trpc.zukan.deleteLocation.useMutation({
     onSuccess: () => {
@@ -29,6 +30,28 @@ export function useTrailLocationActions(onChanged?: () => void) {
       showAlert("エラー", err.message || "公開設定の更新に失敗しました");
     },
   });
+
+  const noteMutation = trpc.zukan.updateLocationNote.useMutation({
+    onSuccess: () => {
+      void utils.zukan.myTrail.invalidate();
+      onChanged?.();
+    },
+    onError: (err) => {
+      showAlert("エラー", err.message || "メモの保存に失敗しました");
+    },
+  });
+
+  /** 場所メモの保存。空文字を渡すとメモ削除になる（サーバー側で null 化） */
+  const handleSaveNote = useCallback(
+    (locationId: number, placeName: string, note: string) => {
+      setSavingNoteLocationId(locationId);
+      noteMutation.mutate(
+        { locationId, placeName, note },
+        { onSettled: () => setSavingNoteLocationId(null) },
+      );
+    },
+    [noteMutation],
+  );
 
   const handleDeleteLocation = useCallback((locationId: number) => {
     setConfirmDeleteId(locationId);
@@ -66,8 +89,11 @@ export function useTrailLocationActions(onChanged?: () => void) {
     confirmDeleteId,
     handleDeleteLocation,
     handleToggleVisibility,
+    handleSaveNote,
+    savingNoteLocationId,
     executeDelete,
     cancelDelete,
-    isManaging: deleteMutation.isPending || visibilityMutation.isPending,
+    isManaging:
+      deleteMutation.isPending || visibilityMutation.isPending || noteMutation.isPending,
   };
 }

@@ -33,6 +33,8 @@ type FootprintSheetProps = {
   canManage?: boolean;
   onDeleteLocation?: (locationId: number) => void;
   onToggleVisibility?: (locationId: number, next: LocationVisibility) => void;
+  /** 本人のみ。場所メモの編集を開く */
+  onEditNote?: (point: TrailPoint) => void;
   isDeleting?: boolean;
   isUpdatingVisibility?: boolean;
 };
@@ -44,6 +46,7 @@ export function FootprintSheet({
   canManage = false,
   onDeleteLocation,
   onToggleVisibility,
+  onEditNote,
   isDeleting = false,
   isUpdatingVisibility = false,
 }: FootprintSheetProps) {
@@ -108,6 +111,17 @@ export function FootprintSheet({
 
           {canManage ? (
             <View style={styles.manageRow}>
+              {onEditNote ? (
+                <Pressable
+                  onPress={() => onEditNote(point)}
+                  style={({ pressed }) => [styles.manageButton, styles.noteButton, pressed && { opacity: 0.75 }]}
+                  accessibilityLabel={hasPlaceNote(point) ? "メモを編集" : "メモを添える"}
+                >
+                  <Text style={[styles.manageButtonText, styles.noteButtonText]}>
+                    {hasPlaceNote(point) ? "メモを編集" : "メモを添える"}
+                  </Text>
+                </Pressable>
+              ) : null}
               {onToggleVisibility ? (
                 <Pressable
                   onPress={() => onToggleVisibility(point.id, isPublic ? "private" : "public")}
@@ -209,6 +223,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     fontVariant: ["tabular-nums"],
+  },
+  noteButton: {
+    backgroundColor: color.surfaceEmphasis,
+  },
+  noteButtonText: {
+    color: color.accentPrimary,
   },
   noteBlock: {
     marginTop: spacing.md,
