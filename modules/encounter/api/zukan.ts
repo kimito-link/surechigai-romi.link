@@ -9,6 +9,8 @@ import { router, protectedProcedure, publicProcedure } from "../../../server/_co
 import { getDb } from "../../../server/db/connection.js";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { moderateText } from "../core/moderation.js";
+import { buildModerationTarget, cleanUserText } from "../core/user-text.js";
 import {
   getEncounterPrefectures,
   getDistinctEncounterPartnerCount,
@@ -18,6 +20,7 @@ import {
   getCreatorsByPrefecture,
   getActivePrefecturesSummary,
   softDeleteLocation,
+  updateLocationNote,
   setLocationVisibility,
 } from "../db/queries.js";
 
@@ -111,6 +114,60 @@ export const zukanRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "記録が見つかりません" });
       }
       return { ok: true, visibility: input.visibility };
+    }),
+
+  /**
+   * 足あと1件に「その場所のメモ」を保存（本人のみ）。
+   *
+   * 設計は docs/place-info-DESIGN.md。要点:
+   * - encounter.checkIn には絶対に相乗りさせない。モデレーションは最悪10秒かかり、
+   *   チェックイン経路は既にレイテンシ管理が厳しい（encounter.ts の Serverless 警告参照）。
+   * - 両方空で保存＝メモ削除。専用の delete は作らない。
+   */
+  updateLocationNote: protectedProcedure
+    .input(
+      z.object({
+        locationId: z.number().int().positive(),
+        placeName: z.string().max(120).optional(),
+        note: z.string().max(140).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({ code: "SERVICE_UNAVAILABLE", message: "DB未接続" });
+      }
+
+      const placeName = cleanUserText(input.placeName);
+      const note = cleanUserText(input.note);
+
+      // 公開設定によっては他の利用者にも表示されるためモデレーションを通す。
+      // 空欄だけのとき（＝メモ削除）は呼ばない（無料枠の無駄遣いを避ける）。
+      const moderationTarget = buildModerationTarget(placeName, note);
+      if (moderationTarget) {
+        const moderation = await moderateText(moderationTarget, {
+          groqApiKey: process.env.GROQ_API_KEY,
+          geminiApiKey: process.env.GEMINI_API_KEY,
+        });
+        if (moderation.rejected) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "使えない表現が含まれています。言い換えてお試しください",
+          });
+        }
+      }
+
+      const result = await updateLocationNote(
+        db,
+        ctx.user.id,
+        input.locationId,
+        placeName,
+        note,
+      );
+      if (!result.ok) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "記録が見つかりません" });
+      }
+      return { ok: true, placeName, note };
     }),
 
   /**

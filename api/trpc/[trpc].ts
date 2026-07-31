@@ -25,6 +25,8 @@ const expensivePathRules: RateLimitRule[] = [
   { pattern: /^presence\.pulse$/, windowMs: 30_000, max: 1 },
   { pattern: /^encounter\.checkIn$/, windowMs: 30_000, max: 4 },
   { pattern: /^visit\.report$/, windowMs: 20_000, max: 1 },
+  // 場所メモの保存はモデレーション(Groq/Gemini・無料枠は日次)を伴うので visit.report と同格に絞る
+  { pattern: /^zukan\.updateLocationNote$/, windowMs: 20_000, max: 1 },
   { pattern: /^event\.resolveOfflineLocation$/, windowMs: 20_000, max: 1 },
   { pattern: /^zukan\.activePrefectures$/, windowMs: 5_000, max: 3 },
   { pattern: /^zukan\.creatorsByPrefecture$/, windowMs: 5_000, max: 3 },

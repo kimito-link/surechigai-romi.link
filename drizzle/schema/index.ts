@@ -15,7 +15,8 @@ export * from "./audit.js";
 export * from "./api-usage.js";
 
 // Self-hosted Ads
-export * from "./ads.js";
+export * from "./ads.js"
+export * from "./premium.js";
 
 // DB Growth Monitoring
 export * from "./db-stats.js";

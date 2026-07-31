@@ -22,6 +22,20 @@
       "when": 1784874761568,
       "tag": "0002_first_joshua_kane",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785479754246,
+      "tag": "0003_place_note",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785482638504,
+      "tag": "0004_premium_entitlements",
+      "breakpoints": true
     }
   ]
 }

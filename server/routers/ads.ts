@@ -8,6 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, count, desc, eq, gte, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { protectedProcedure, router } from "../_core/trpc.js";
+import { isUserPremium } from "../../modules/encounter/db/premium-queries.js";
 import { getDb, requireDb } from "../db/connection.js";
 import {
   adStatsDaily,
@@ -198,6 +199,12 @@ export const adsRouter = router({
         const dailyCap = Math.max(0, Number(config.dailyCap ?? FALLBACK_DAILY_CAP));
 
         if (!config.enabled || !isSlotEnabled(config.slotFlags, input.slot) || dailyCap <= 0) {
+          return { cards: [] as SponsorCardDto[], dailyCap, remainingToday: 0 };
+        }
+
+        // プレミアム加入者には広告を出さない（docs/ENTITLEMENTS.md の境界線）。
+        // ここで早期 return するのでインプレッション記録自体が発生せず、統計も汚れない。
+        if (await isUserPremium(db, ctx.user.id)) {
           return { cards: [] as SponsorCardDto[], dailyCap, remainingToday: 0 };
         }
 

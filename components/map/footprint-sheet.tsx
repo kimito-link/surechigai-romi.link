@@ -16,6 +16,11 @@ import {
 } from "@/components/organisms/precision-tile-map";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import {
+  hasPlaceNote,
+  isPlaceNoteStale,
+  formatPlaceNoteDate,
+} from "@/modules/encounter/core/place-note";
+import {
   locationVisibilityLabel,
   parseLocationVisibility,
   type LocationVisibility,
@@ -28,6 +33,8 @@ type FootprintSheetProps = {
   canManage?: boolean;
   onDeleteLocation?: (locationId: number) => void;
   onToggleVisibility?: (locationId: number, next: LocationVisibility) => void;
+  /** 本人のみ。場所メモの編集を開く */
+  onEditNote?: (point: TrailPoint) => void;
   isDeleting?: boolean;
   isUpdatingVisibility?: boolean;
 };
@@ -39,6 +46,7 @@ export function FootprintSheet({
   canManage = false,
   onDeleteLocation,
   onToggleVisibility,
+  onEditNote,
   isDeleting = false,
   isUpdatingVisibility = false,
 }: FootprintSheetProps) {
@@ -62,6 +70,34 @@ export function FootprintSheet({
             {point.accuracyM ? `  ±${Math.round(point.accuracyM)}m` : ""}
           </Text>
 
+          {/* 場所メモ。地図の情報パネルには出さず、ここ（地図の外側）にだけ置く。
+              「いつの情報か」を必ず添え、30日超は減光する（docs/place-info-DESIGN.md） */}
+          {hasPlaceNote(point) ? (
+            <View style={styles.noteBlock}>
+              {point.placeName ? (
+                <Text style={styles.notePlaceName} numberOfLines={2}>
+                  {point.placeName}
+                </Text>
+              ) : null}
+              {point.note ? (
+                <Text
+                  style={[
+                    styles.noteBody,
+                    isPlaceNoteStale(point.noteUpdatedAt) && styles.noteStale,
+                  ]}
+                >
+                  {point.note}
+                </Text>
+              ) : null}
+              {formatPlaceNoteDate(point.noteUpdatedAt) ? (
+                <Text style={styles.noteDate}>
+                  {formatPlaceNoteDate(point.noteUpdatedAt)}
+                  {isPlaceNoteStale(point.noteUpdatedAt) ? "・古い情報です" : ""}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
           <View style={styles.actionRow}>
             <NavigateToPlaceButton
               lat={point.lat}
@@ -75,6 +111,17 @@ export function FootprintSheet({
 
           {canManage ? (
             <View style={styles.manageRow}>
+              {onEditNote ? (
+                <Pressable
+                  onPress={() => onEditNote(point)}
+                  style={({ pressed }) => [styles.manageButton, styles.noteButton, pressed && { opacity: 0.75 }]}
+                  accessibilityLabel={hasPlaceNote(point) ? "メモを編集" : "メモを添える"}
+                >
+                  <Text style={[styles.manageButtonText, styles.noteButtonText]}>
+                    {hasPlaceNote(point) ? "メモを編集" : "メモを添える"}
+                  </Text>
+                </Pressable>
+              ) : null}
               {onToggleVisibility ? (
                 <Pressable
                   onPress={() => onToggleVisibility(point.id, isPublic ? "private" : "public")}
@@ -176,6 +223,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     fontVariant: ["tabular-nums"],
+  },
+  noteButton: {
+    backgroundColor: color.surfaceEmphasis,
+  },
+  noteButtonText: {
+    color: color.accentPrimary,
+  },
+  noteBlock: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,66,123,0.12)",
+    gap: 4,
+  },
+  notePlaceName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: color.textPrimary,
+  },
+  noteBody: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: color.textPrimary,
+  },
+  noteStale: {
+    color: color.textMuted,
+  },
+  noteDate: {
+    fontSize: 11,
+    color: color.textMuted,
   },
   actionRow: {
     marginTop: spacing.sm,
