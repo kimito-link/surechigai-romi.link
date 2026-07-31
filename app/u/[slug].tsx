@@ -184,11 +184,16 @@ function ShareLocationScreenInner() {
           topContent={
             <>
               <View style={styles.profileHeader}>
+                {/* twitterHandle を渡さないと Clerk プロキシ(img.clerk.com)の画像しか
+                    候補にならず、それが壊れている場合に「君」等のイニシャル表示に落ちる
+                    （2026-07-31 実機で発生。Clerkは200を返すが実体1KBの空画像だった）。
+                    handle があれば unavatar フォールバックが効く。 */}
                 <CreatorAvatar
                   src={trailQuery.data.profileImage}
                   alt={who}
                   fallbackInitial={fallbackInitial}
                   size={48}
+                  twitterHandle={trailQuery.data.username}
                 />
                 <View style={styles.profileText}>
                   <Text style={styles.kicker}>会いたい君がいる現在地</Text>
@@ -208,6 +213,22 @@ function ShareLocationScreenInner() {
                 </View>
               ) : null}
             </>
+          }
+          bottomContent={
+            /* 足あと一覧を最後まで見た人が、そのまま始められるようにする。
+               上部バナーはスクロールで見えなくなるため、末尾にも導線を置く。 */
+            !isAuthenticated ? (
+              <View style={styles.bannerWrap}>
+                <InlineLoginPrompt
+                  headline={
+                    trailQuery.data.username
+                      ? `@${trailQuery.data.username.replace(/^@/, "")} とすれ違ってみませんか`
+                      : "この人とすれ違ってみませんか"
+                  }
+                  returnTo={`/u/${slug}`}
+                />
+              </View>
+            ) : null
           }
         />
       )}

@@ -42,6 +42,8 @@ type WebTrailMapProps = {
   onRefresh?: () => void;
   userImageUrl?: string;
   topContent?: ReactNode;
+  /** 履歴リストの下（ページ末尾）に差し込む。公開シェア着地でのログイン導線などに使う */
+  bottomContent?: ReactNode;
   contentPaddingBottom?: number;
   emptyTitle?: string;
   emptyText?: string;
@@ -70,6 +72,7 @@ export function WebTrailMap({
   onRefresh,
   userImageUrl,
   topContent,
+  bottomContent,
   contentPaddingBottom,
   emptyTitle = "まだ正確な足あとがありません",
   emptyText = "チェックインすると、道路や建物の位置まで辿れる精度で記録されます",
@@ -192,6 +195,8 @@ export function WebTrailMap({
           updatingLocationId={updatingLocationId}
         />
       ) : null}
+
+      {bottomContent}
 
       <FootprintSheet
         point={selectedPoint}
