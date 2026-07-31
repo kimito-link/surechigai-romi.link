@@ -49,8 +49,8 @@ const PREF_POS: Record<string, [number, number]> = {
 
 /** 夜景フォールバックで常に灯しておく「全国の灯」(見立て・現在地の灯は別途強く光る) */
 const AMBIENT_PREFS = [
-  "北海道", "宮城県", "新潟県", "東京都", "千葉県", "神奈川県", "長野県", "愛知県", "京都府",
-  "大阪府", "兵庫県", "岡山県", "広島県", "愛媛県", "福岡県", "熊本県", "鹿児島県", "沖縄県",
+  // satori の要素数を抑えるため主要8箇所に絞る（旧18箇所。見た目の賑わいはほぼ変わらない）
+  "北海道", "宮城県", "東京都", "愛知県", "大阪府", "広島県", "福岡県", "沖縄県",
 ];
 
 const h = React.createElement;
@@ -281,9 +281,16 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
   // X クローラーは ~2s でタイムアウトしやすい。OSM タイル合成は使わず Static Map か夜景のみ。
   // 日本地図SVGは自オリジン30KBで安価なので常に並列取得(夜景フォールバック時のみ使用)。
   const origin = new URL(req.url).origin;
-  const [fonts, staticMap, japanSvg] = await Promise.all([
+  const [fonts, staticMap, mapTiles, japanSvg] = await Promise.all([
     withTimeout(loadFonts(fontText), FONT_LOAD_TIMEOUT_MS, []),
     hasCoord ? loadStaticMapImage(latRaw, lngRaw, zoom) : Promise.resolve(null),
+    // MAPTILER_KEY が無い環境では Static Map が必ず null になり、座標があっても
+    // 夜景フォールバックにしか行けなかった（2026-07-31 実測。loadMapTilesWithTimeout は
+    // 定義されているだけで呼ばれていないデッドコードだった）。
+    // キー無しでも実際の地図が出るよう OSM タイル合成を併走させる。
+    hasCoord && !process.env.MAPTILER_KEY
+      ? loadMapTilesWithTimeout(latRaw, lngRaw, zoom)
+      : Promise.resolve([] as Tile[]),
     options?.gradientOnly
       ? Promise.resolve(null)
       : withTimeout(loadJapanSvg(origin), 900, null),
@@ -292,7 +299,9 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
   const fontFamily = fonts[0]?.name ?? "sans-serif";
 
   // 夜景フォールバック時の列島レイアウトと現在地の灯の位置
-  const isNightScene = !staticMap && !options?.gradientOnly;
+  // 地図（Static Map か OSM タイル合成）がどちらも取れなかったときだけ夜景にする
+  const hasTiles = mapTiles.length > 0;
+  const isNightScene = !staticMap && !hasTiles && !options?.gradientOnly;
   const JP_SIZE = 560;                              // 列島ボックス(px, 正方形)
   const JP_LEFT = (WIDTH - JP_SIZE) / 2;
   const JP_TOP = (HEIGHT - JP_SIZE) / 2 + 14;
@@ -316,6 +325,37 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
         objectFit: "cover",
       },
     });
+  } else if (hasTiles) {
+    // OSM タイルを敷き詰めて地図背景にする（MAPTILER_KEY 未設定時の実地図経路）
+    background = h(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: WIDTH,
+          height: HEIGHT,
+          display: "flex",
+          backgroundColor: "#E8E0D8",
+        },
+      },
+      ...mapTiles.map((t, i) =>
+        h("img", {
+          key: `tile${i}`,
+          src: t.src,
+          width: TILE,
+          height: TILE,
+          style: {
+            position: "absolute",
+            left: t.left,
+            top: t.top,
+            width: TILE,
+            height: TILE,
+          },
+        }),
+      ),
+    );
   } else if (isNightScene) {
     // 決定的な擬似乱数で星屑を散らす(リクエスト毎に絵が変はらない=キャッシュ的にも安定)
     let seed = 20260710;
@@ -323,8 +363,10 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
       seed = (seed * 1664525 + 1013904223) >>> 0;
       return seed / 4294967296;
     };
+    // 星の数は satori の要素数に直結する。72個 → 28個で見た目はほぼ変わらず、
+    // 描画コストだけ減る（2026-07-31 実測: 夜景経路は StaticMap 経路より 0.7 秒重かった）。
     const stars: React.ReactElement[] = [];
-    for (let i = 0; i < 72; i++) {
+    for (let i = 0; i < 28; i++) {
       const size = 1.5 + rnd() * 2.5;
       stars.push(
         h("div", {
