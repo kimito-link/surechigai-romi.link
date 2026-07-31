@@ -105,8 +105,9 @@ export default function PrivacyScreen() {
           座標を送信します
         </LegalBullet>
         <LegalBullet>
-          Groq（テキスト判定）: 「ひとこと」など投稿文の不適切表現を判定するため、
-          投稿文を送信します
+          Groq および Google（Gemini）（テキスト判定）: 「ひとこと」など投稿文の
+          不適切表現を判定するため、投稿文を送信します。Groq の判定が得られなかった場合に
+          Gemini へ問い合わせます
         </LegalBullet>
         <LegalBullet>
           Railway（データベース）、Vercel（アプリ配信）: データの保管と配信のため
