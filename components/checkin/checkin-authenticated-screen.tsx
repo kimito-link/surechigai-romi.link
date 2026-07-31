@@ -34,6 +34,7 @@ import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
+import { useWarmOgImage } from "@/hooks/use-warm-og-image";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
@@ -711,6 +712,17 @@ export default function CheckinAuthenticatedScreen() {
       : latestLocation ?? null;
 
   const placeLine = checkinAddress ?? checkinLocationName;
+
+  // OGP画像は生成に5〜6秒かかりXは~2秒で諦めるため、結果画面が出た時点で
+  // ブラウザから先に叩いてキャッシュを温める（サーバー応答は遅らせない）。
+  useWarmOgImage({
+    enabled: isCheckinComplete,
+    lat: checkinLatLng?.lat ?? null,
+    lng: checkinLatLng?.lng ?? null,
+    area: checkinMunicipality ?? null,
+    prefecture: checkinPrefecture ?? null,
+    username: user?.username ?? null,
+  });
 
   const sponsorQuery = trpc.ads.getCards.useQuery(
     {
