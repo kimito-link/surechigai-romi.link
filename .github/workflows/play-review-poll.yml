@@ -8,8 +8,13 @@
 #   GOOGLE_PLAY_SA_JSON_BASE64          Service Account JSON 繧・base64 蛹・#   GOOGLE_PLAY_DATA_SAFETY_CSV         Data Safety CSV・育函繝ｻ莉ｻ諢擾ｼ・#   GOOGLE_PLAY_DATA_SAFETY_CSV_BASE64  蜷・CSV 繧・base64 蛹厄ｼ井ｻｻ諢擾ｼ・#   ・・ndroid-play-release 縺ｨ蜷後§ secrets 繧貞・蛻ｩ逕ｨ縲りｿｽ蜉 secret 荳崎ｦ・ｼ・name: play-review-poll
 
 on:
-  schedule:
-    - cron: "*/30 * * * *"
+  # Scheduled polling disabled on 2026-07-31.
+  # Reason: GitHub Actions rounds every run up to a full billable minute, so a
+  #         sub-minute check on a */30 cron still burned ~1,440 min/month and
+  #         helped push Actions past the 3,000-min free tier (~69 USD/month in
+  #         Jun-Jul 2026).
+  # Run it on demand instead: gh workflow run play-review-poll.yml
+  # The workflow_run trigger below still fires it after android-play-release.
   workflow_dispatch: {}
   workflow_run:
     workflows:

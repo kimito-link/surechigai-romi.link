@@ -32,9 +32,13 @@
 name: asc-review-poll
 
 on:
-  schedule:
-    # 30 分間隔。最低でも 5 分単位だが Apple の更新頻度を考えて 30 分。
-    - cron: "*/30 * * * *"
+  # 定期ポーリングは 2026-07-31 に停止した。
+  # 理由: 1 回の実行が十数秒でも GitHub Actions は 1 分に切り上げて課金するため、
+  #       30 分おき (= 月約 1,440 分) が審査に出していない期間もずっと無料枠を食い、
+  #       2026 年 6〜7 月に Actions 従量課金 約 69 USD/月 を発生させていた。
+  # 運用: 審査に出している期間だけ手動で回す。
+  #       gh workflow run asc-review-poll.yml
+  #       あるいは ios-appstore-release の完了で下記 workflow_run が自動で拾う。
   workflow_dispatch: {}
   workflow_run:
     workflows:
