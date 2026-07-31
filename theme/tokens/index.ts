@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 14; // 2026-07-14: ダッシュボード再設計Step6(デスクトップ2カラム化+SignalAccountGrid場所日時優先)を確実に配信するため+1
+export const CDN_CACHE_EPOCH = 15; // 2026-07-31: Sign in with Apple の実装(61cd214d0)が /sign-in を壊し切り戻した。壊れたチャンクを踏んだブラウザに残るため全チャンク強制改名
