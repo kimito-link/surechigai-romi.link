@@ -16,6 +16,11 @@ import {
 } from "@/components/organisms/precision-tile-map";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import {
+  hasPlaceNote,
+  isPlaceNoteStale,
+  formatPlaceNoteDate,
+} from "@/modules/encounter/core/place-note";
+import {
   locationVisibilityLabel,
   parseLocationVisibility,
   type LocationVisibility,
@@ -61,6 +66,34 @@ export function FootprintSheet({
             {formatCoordinate(point)}
             {point.accuracyM ? `  ±${Math.round(point.accuracyM)}m` : ""}
           </Text>
+
+          {/* 場所メモ。地図の情報パネルには出さず、ここ（地図の外側）にだけ置く。
+              「いつの情報か」を必ず添え、30日超は減光する（docs/place-info-DESIGN.md） */}
+          {hasPlaceNote(point) ? (
+            <View style={styles.noteBlock}>
+              {point.placeName ? (
+                <Text style={styles.notePlaceName} numberOfLines={2}>
+                  {point.placeName}
+                </Text>
+              ) : null}
+              {point.note ? (
+                <Text
+                  style={[
+                    styles.noteBody,
+                    isPlaceNoteStale(point.noteUpdatedAt) && styles.noteStale,
+                  ]}
+                >
+                  {point.note}
+                </Text>
+              ) : null}
+              {formatPlaceNoteDate(point.noteUpdatedAt) ? (
+                <Text style={styles.noteDate}>
+                  {formatPlaceNoteDate(point.noteUpdatedAt)}
+                  {isPlaceNoteStale(point.noteUpdatedAt) ? "・古い情報です" : ""}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
 
           <View style={styles.actionRow}>
             <NavigateToPlaceButton
@@ -176,6 +209,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     fontVariant: ["tabular-nums"],
+  },
+  noteBlock: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,66,123,0.12)",
+    gap: 4,
+  },
+  notePlaceName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: color.textPrimary,
+  },
+  noteBody: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: color.textPrimary,
+  },
+  noteStale: {
+    color: color.textMuted,
+  },
+  noteDate: {
+    fontSize: 11,
+    color: color.textMuted,
   },
   actionRow: {
     marginTop: spacing.sm,

@@ -256,6 +256,10 @@ export type TrailLocation = {
   recordedAt: Date;
   address: string | null;
   visibility: string;
+  /** 本人が付けた店名など（主張）。address（事実）とは別物。 */
+  placeName: string | null;
+  note: string | null;
+  noteUpdatedAt: Date | null;
 };
 
 /**
@@ -283,6 +287,9 @@ export async function getMyTrailLocations(
       address: locations.address,
       recordedAt: locations.recordedAt,
       visibility: locations.visibility,
+      placeName: locations.placeName,
+      note: locations.note,
+      noteUpdatedAt: locations.noteUpdatedAt,
     })
     .from(locations)
     .where(
@@ -1075,6 +1082,9 @@ export async function getCreatorsByPrefecture(
       lngGrid: locations.lngGrid,
       recordedAt: locations.recordedAt,
       visibility: locations.visibility,
+      placeName: locations.placeName,
+      note: locations.note,
+      noteUpdatedAt: locations.noteUpdatedAt,
     })
     .from(locations)
     .innerJoin(users, eq(locations.userId, users.id))
@@ -1205,6 +1215,7 @@ export async function createReport(
     reporterId: number;
     targetUserId: number;
     encounterId: number | null;
+    locationId?: number | null;
     reason: string;
     detail: string | null;
   }
@@ -1212,6 +1223,7 @@ export async function createReport(
   await db.insert(reports).values({
     reporterId: params.reporterId,
     targetUserId: params.targetUserId,
+    locationId: params.locationId ?? null,
     encounterId: params.encounterId,
     reason: params.reason,
     detail: params.detail,
@@ -1300,6 +1312,38 @@ export async function softDeleteLocation(
   const updated = await db
     .update(locations)
     .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(locations.id, locationId),
+        eq(locations.userId, userId),
+        isNull(locations.deletedAt),
+      ),
+    )
+    .returning({ id: locations.id });
+  return { ok: updated.length > 0 };
+}
+
+/**
+ * 足あと1件に場所メモを保存（本人のみ）。
+ *
+ * placeName / note の両方が null なら3列とも null に戻す（＝メモ削除）。
+ * 専用の delete は作らない（空にして保存＝削除、が利用者にとって自然なため）。
+ */
+export async function updateLocationNote(
+  db: DB,
+  userId: number,
+  locationId: number,
+  placeName: string | null,
+  note: string | null,
+): Promise<{ ok: boolean }> {
+  const isEmpty = placeName === null && note === null;
+  const updated = await db
+    .update(locations)
+    .set({
+      placeName,
+      note,
+      noteUpdatedAt: isEmpty ? null : new Date(),
+    })
     .where(
       and(
         eq(locations.id, locationId),
@@ -1542,6 +1586,9 @@ export async function getPublicTrailByShareSlug(
       address: locations.address,
       recordedAt: locations.recordedAt,
       visibility: locations.visibility,
+      placeName: locations.placeName,
+      note: locations.note,
+      noteUpdatedAt: locations.noteUpdatedAt,
     })
     .from(locations)
     .where(
@@ -1697,6 +1744,9 @@ export async function getShareInfoBySlug(
       h3R8: locations.h3R8,
       recordedAt: locations.recordedAt,
       visibility: locations.visibility,
+      placeName: locations.placeName,
+      note: locations.note,
+      noteUpdatedAt: locations.noteUpdatedAt,
     })
     .from(locations)
     .where(
@@ -1932,6 +1982,9 @@ export async function getActivePrefecturesSummary(db: DB): Promise<ActivePrefect
       lngGrid: locations.lngGrid,
       recordedAt: locations.recordedAt,
       visibility: locations.visibility,
+      placeName: locations.placeName,
+      note: locations.note,
+      noteUpdatedAt: locations.noteUpdatedAt,
       trailVisibility: userSettings.trailVisibility,
     })
     .from(locations)

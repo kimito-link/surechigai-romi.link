@@ -10,9 +10,18 @@ export type TrailPoint = {
   accuracyM: number | null;
   municipality: string | null;
   prefecture: string | null;
+  /** 逆ジオコーディング由来の住所＝「事実」。ユーザーの自由入力を入れないこと。 */
   address: string | null;
   recordedAt: Date | string;
   visibility?: string | null;
+  /**
+   * 本人が付けた店名など＝「主張」。address と混ぜると地図上で事実と区別できなくなる
+   * （docs/place-info-DESIGN.md 地雷4）。描画してよいのは FootprintSheet だけで、
+   * 地図の情報パネル(precision-tile-map の formatPlace)は address のみを出し続ける。
+   */
+  placeName?: string | null;
+  note?: string | null;
+  noteUpdatedAt?: Date | string | null;
 };
 
 export function clamp(value: number, min: number, max: number): number {

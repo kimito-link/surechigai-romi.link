@@ -339,6 +339,10 @@ export default function CheckinAuthenticatedScreen() {
         address: result.address ?? null,
         recordedAt: optimisticRecordedAt,
         visibility: "public" as const,
+        // チェックイン直後はメモ未入力（あとから FootprintSheet で書ける）
+        placeName: null,
+        note: null,
+        noteUpdatedAt: null,
       };
       for (const limit of [1, 10, 120, 500] as const) {
         utils.zukan.myTrail.setData({ limit }, (old) => ({

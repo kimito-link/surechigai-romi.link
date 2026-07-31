@@ -66,6 +66,16 @@ export const locations = pgTable(
     deletedAt: timestamp("deletedAt"),
     /** この足あと単体の公開設定。public=共有・県別一覧に反映 / private=自分だけ */
     visibility: varchar("visibility", { length: 16 }).default("public").notNull(),
+    /**
+     * 本人が付けた施設・店名（自由入力＝「主張」）。
+     * 逆ジオコーディング由来の address（＝「事実」）とは意図的に別列にしている。
+     * 混ぜると地図上で真実と主張が区別できなくなる（docs/place-info-DESIGN.md 地雷4）。
+     */
+    placeName: varchar("placeName", { length: 120 }),
+    /** 本人のメモ。API側で140字制限（hitokoto と同じ予算）。 */
+    note: text("note"),
+    /** メモの最終更新。鮮度表示（30日超は減光）に使う。NULL = メモなし。 */
+    noteUpdatedAt: timestamp("noteUpdatedAt"),
   },
   (table) => [
     index("locations_h3R8_idx").on(table.h3R8),
@@ -244,8 +254,10 @@ export const reports = pgTable(
     targetUserId: integer("targetUserId").notNull(),
     /** NULL可（特定のすれ違いへの通報でない場合） */
     encounterId: integer("encounterId"),
+    /** NULL可。足あとの場所メモへの通報のとき、対象の locations.id を指す。 */
+    locationId: integer("locationId"),
     /**
-     * reason: inappropriate_hitokoto | spam | harassment | other
+     * reason: inappropriate_hitokoto | inappropriate_place_note | spam | harassment | other
      * CHECK制約はdrizzle-kitのcheck()で定義
      */
     reason: text("reason").notNull(),

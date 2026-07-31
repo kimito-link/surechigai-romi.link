@@ -12,13 +12,9 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../../../server/_core/trpc.js";
 import { requireDb } from "../../../server/db/connection.js";
 import { blockUser, unblockUser, createReport } from "../db/queries.js";
+import { REPORT_REASONS } from "../core/report-reasons.js";
 
-const REPORT_REASONS = [
-  "inappropriate_hitokoto",
-  "spam",
-  "harassment",
-  "other",
-] as const;
+// 通報理由の正本は core/report-reasons.ts（UIと共有し二重管理を防ぐ）
 
 export const safetyRouter = router({
   /**
@@ -58,6 +54,8 @@ export const safetyRouter = router({
       z.object({
         targetUserId: z.number(),
         encounterId: z.number().optional(),
+        /** 足あとの場所メモへの通報のとき、対象の locations.id */
+        locationId: z.number().optional(),
         reason: z.enum(REPORT_REASONS),
         detail: z.string().max(500).optional(),
       })
@@ -76,6 +74,7 @@ export const safetyRouter = router({
         reporterId: ctx.user.id,
         targetUserId: input.targetUserId,
         encounterId: input.encounterId ?? null,
+        locationId: input.locationId ?? null,
         reason: input.reason,
         detail: input.detail ?? null,
       });
