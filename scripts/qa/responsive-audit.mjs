@@ -55,7 +55,14 @@ const DEFAULT_ROUTES = [
   '/install-instructions',
 ];
 
-const ROUTES = values.routes ? values.routes.split(',').map((s) => s.trim()) : DEFAULT_ROUTES;
+// Git Bash は先頭 "/" の引数を Windows パスへ勝手に変換する（"/" → "C:/Program Files/Git/"）。
+// 変換されてしまった値を元のルートへ戻す。
+const ROUTES = (values.routes ? values.routes.split(',').map((s) => s.trim()) : DEFAULT_ROUTES).map(
+  (r) => {
+    if (/^[A-Za-z]:[\\/]/.test(r)) return '/';
+    return r.startsWith('/') ? r : '/' + r;
+  },
+);
 
 /** 実機に実在する幅。360/390/414 は Android/iPhone の主要サイズ */
 const VIEWPORTS = [
@@ -112,18 +119,34 @@ const MEASURE = () => {
   }
 
   // タップ標的が小さすぎる（44x44 未満）
+  //
+  // ★実際に押せる領域は「role が付いた要素」とは限らない。
+  //   RN Web のタブバーは role="tab" が内側のラベル(24px)に付き、
+  //   本当の触れる範囲は親(68px)であることが実測で分かった（2026-08-01）。
+  //   そのため祖先を数段たどって「最も広い押下可能領域」で判定する。
   const smallTargets = [];
   for (const el of document.querySelectorAll(
     'button,a,[role="button"],[role="tab"],input,select',
   )) {
     if (!visible(el)) continue;
     const r = el.getBoundingClientRect();
-    if (r.height < 44 || r.width < 24) {
+    let h = r.height;
+    let w = r.width;
+    // 親が同じ操作の当たり判定を担っているケースを拾う（幅がほぼ同じか内包している親まで）
+    for (let p = el.parentElement, i = 0; p && i < 3; p = p.parentElement, i++) {
+      const pr = p.getBoundingClientRect();
+      if (pr.height >= h && pr.height <= 96 && pr.width >= w) {
+        h = pr.height;
+        w = pr.width;
+      }
+    }
+    if (h < 44 || w < 24) {
       smallTargets.push({
         tag: el.tagName,
+        role: el.getAttribute('role'),
         text: (el.innerText || '').trim().slice(0, 24),
-        w: Math.round(r.width),
-        h: Math.round(r.height),
+        w: Math.round(w),
+        h: Math.round(h),
       });
     }
   }
