@@ -736,13 +736,25 @@ jobs:
       # 出すと 2.1(a) で即 reject + 24-48h 無駄になる。definitive な
       # bad-credential のときだけ fail closed、transient/設定不足は warn 継続。
       # ※ Clerk 以外の認証なら verify-reviewer-account.mjs を事前実装し差し替える。
+      # このアプリはログイン不要で主要画面（図鑑・軌跡・集まり・プレミアム）が
+      # 見えるため、審査用デモアカウントを配らない。よってこのゲートは対象外。
+      # デモアカウントを使う構成に変えたときだけ、スクリプトを実装して有効になる。
       - name: Verify reviewer demo account can sign in (pre-submit gate)
         if: ${{ success() }}
         env:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           IOS_REVIEW_DEMO_USERNAME: ${{ secrets.IOS_REVIEW_DEMO_USERNAME }}
           IOS_REVIEW_DEMO_PASSWORD: ${{ secrets.IOS_REVIEW_DEMO_PASSWORD }}
-        run: node scripts/verify-reviewer-account.mjs
+        run: |
+          if [ -z "${IOS_REVIEW_DEMO_USERNAME:-}" ] && [ -z "${IOS_REVIEW_DEMO_PASSWORD:-}" ]; then
+            echo "デモアカウント未設定のためスキップ（ログイン不要アプリ）。"
+            exit 0
+          fi
+          if [ ! -f scripts/verify-reviewer-account.mjs ]; then
+            echo "::warning::デモアカウントが設定されているが検証スクリプトが無い。死んだ資格情報で出すと 2.1(a) で却下されるため、scripts/verify-reviewer-account.mjs を実装すること。"
+            exit 0
+          fi
+          node scripts/verify-reviewer-account.mjs
 
       - name: Submit App Store version for review
         if: ${{ success() }}
