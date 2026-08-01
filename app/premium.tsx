@@ -27,6 +27,7 @@ import { Link, type Href } from "expo-router";
 import Head from "expo-router/head";
 import { useAuth } from "@/hooks/use-auth";
 import { PREMIUM_FEATURES, useIsPremium } from "@/lib/premium-features";
+import { useTrpcReady } from "@/lib/trpc-ready-context";
 import { color } from "@/theme/tokens";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 
@@ -97,9 +98,39 @@ function LinkText({ label }: { label: string }) {
   );
 }
 
+/**
+ * 「いまのご利用状態」カード。
+ *
+ * ★tRPC フックを呼ぶのはこの中だけ。
+ *   ゲストは tRPC Provider が defer される経路があり（guest-web-providers.tsx）、
+ *   その窓で `trpc.*.useQuery` を呼ぶと "Unable to find tRPC Context" で
+ *   画面全体が ErrorBoundary に落ちる。`enabled: false` では防げないため、
+ *   呼び出しコンポーネント自体をマウントしないことで回避する
+ *   （nav-live-prefecture-panel.tsx と同じ型）。
+ */
+function PremiumStatusCard() {
+  const { isPremium, isLoading } = useIsPremium();
+  return (
+    <Card>
+      <Text style={{ fontSize: 13, fontWeight: "800", color: color.textMuted }}>
+        いまのご利用状態
+      </Text>
+      {isLoading ? (
+        <ActivityIndicator color={color.accentPrimary} />
+      ) : (
+        <Text style={{ fontSize: 16, fontWeight: "800", color: color.textPrimary }}>
+          {isPremium ? "プレミアムをご利用中です" : "無料でご利用中です"}
+        </Text>
+      )}
+    </Card>
+  );
+}
+
 export default function PremiumScreen() {
   const { isAuthenticated, isAuthReady, login } = useAuth();
-  const { isPremium, isLoading } = useIsPremium();
+  const trpcReady = useTrpcReady();
+  // 購入ボタンの活性判定に使う。状態カードを出せないときは常に false（フェイルクローズ）
+  const isPremium = false;
 
   const openManage = useCallback(() => {
     void Linking.openURL(MANAGE_SUBSCRIPTION_URL);
@@ -146,21 +177,8 @@ export default function PremiumScreen() {
           </Text>
         </View>
 
-        {/* 現在の状態 */}
-        {isAuthReady && isAuthenticated ? (
-          <Card>
-            <Text style={{ fontSize: 13, fontWeight: "800", color: color.textMuted }}>
-              いまのご利用状態
-            </Text>
-            {isLoading ? (
-              <ActivityIndicator color={color.accentPrimary} />
-            ) : (
-              <Text style={{ fontSize: 16, fontWeight: "800", color: color.textPrimary }}>
-                {isPremium ? "プレミアムをご利用中です" : "無料でご利用中です"}
-              </Text>
-            )}
-          </Card>
-        ) : null}
+        {/* 現在の状態。tRPC が使える認証済みのときだけ出す */}
+        {isAuthReady && isAuthenticated && trpcReady ? <PremiumStatusCard /> : null}
 
         {/* 特典 */}
         <Card>

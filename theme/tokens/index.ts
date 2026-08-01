@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 19; // 2026-08-01: 課金導線(/premium・webhook・マイページ導線)とsign-upリダイレクトを追加
+export const CDN_CACHE_EPOCH = 20; // 2026-08-01: /premium のゲスト時 tRPC Context クラッシュを修正

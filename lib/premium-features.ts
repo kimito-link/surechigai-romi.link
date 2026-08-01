@@ -52,6 +52,14 @@ export const PREMIUM_FEATURES: Record<
  * **必ずフェイルクローズ**。読み込み中・エラー・未認証・tRPC未準備のいずれも false。
  * 「TrpcReady のデフォルトが true で未準備時に走ってしまう」地雷を踏んだ経緯があるため、
  * ここでは isSuccess を明示的に確認する。
+ *
+ * ★★ このフックは tRPC Provider の内側でしか呼べない。
+ * ゲスト経路では Provider が defer されるため（guest-web-providers.tsx）、
+ * その窓で呼ぶと "Unable to find tRPC Context" で画面全体が
+ * ErrorBoundary に落ちる（2026-08-01 に /premium で実際に発生）。
+ * `enabled: false` では防げない。呼び出し側で `useTrpcReady()` を見て、
+ * false の間はこのフックを**呼ぶコンポーネントごとマウントしない**こと
+ * （components/molecules/nav-live-prefecture-panel.tsx が参考実装）。
  */
 export function useIsPremium(): { isPremium: boolean; isLoading: boolean } {
   const query = trpc.premium.status.useQuery(undefined, {
