@@ -7,7 +7,6 @@
  */
 import { useEffect, useState } from "react";
 import { Platform, Text, View } from "react-native";
-import { useUser } from "@clerk/expo";
 import { Link, type Href } from "expo-router";
 import { SIGN_IN_AUTO_X_HREF } from "@/lib/clerk-route";
 import { palette } from "@/theme/tokens";
@@ -49,12 +48,21 @@ function markShown(): void {
 }
 
 export function AutoXReturnNotice() {
-  const { isLoaded, isSignedIn } = useUser();
+  // ★useUser() を直接呼ばないこと。
+  // ClerkProvider は app/_layout.tsx で動的 import される設計のため、
+  // chunk 解決前にこのコンポーネントが描画されると
+  // 「useUser can only be used within the <ClerkProvider />」でアプリ全体が落ちる。
+  // 2026-07-31 と 2026-08-01 の2度、無関係な変更でチャンク分割がずれた際に本番が壊れた。
+  // この通知は「Xから戻ったのに未ログイン」を案内するだけなので、
+  // window.Clerk を任意参照する形にして Provider への依存を断つ。
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (Platform.OS !== "web") return;
-    if (!isLoaded || isSignedIn) return;
+    // Clerk が読めていればサインイン済みかを見る。読めないうちは「未ログイン」として扱う
+    // （この通知は未ログインの人向けなので、判定できない間に出しても実害がない）。
+    const clerk = (window as unknown as { Clerk?: { loaded?: boolean; user?: unknown } }).Clerk;
+    if (clerk?.loaded && clerk.user) return;
     if (alreadyShown()) return;
 
     const fired = firedAt();
@@ -72,7 +80,7 @@ export function AutoXReturnNotice() {
     const remaining = Math.max(0, RETURN_MIN_ELAPSED_MS - (Date.now() - fired));
     const timer = window.setTimeout(check, remaining + 100);
     return () => window.clearTimeout(timer);
-  }, [isLoaded, isSignedIn]);
+  }, []);
 
   if (!show) return null;
 
