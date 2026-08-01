@@ -221,11 +221,22 @@ jobs:
           # ここで直しておかないと pod が iOS 13.0 向けに構成されてしまう。
           PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
           if [ -f "$PBXPROJ" ]; then
-            sed -i.bak "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]\\+;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g" "$PBXPROJ"
-            if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET" "$PBXPROJ"; then
-              sed -i.bak2 -E 's/(buildSettings = \{)/\1\n\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' "$PBXPROJ"
-            fi
-            echo "pbxproj deployment target 行数: $(grep -c 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' "$PBXPROJ" || true)"
+            # sed の複数行挿入は環境差で当たらないことがあったため node で確実に書き換える。
+            node -e '
+              const fs=require("fs");
+              const p=process.argv[1];
+              let s=fs.readFileSync(p,"utf8");
+              if (/IPHONEOS_DEPLOYMENT_TARGET/.test(s)) {
+                s=s.replace(/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/g,"IPHONEOS_DEPLOYMENT_TARGET = 15.0;");
+              } else {
+                // buildSettings ブロックの先頭に差し込む
+                s=s.replace(/buildSettings = \{/g,"buildSettings = {\n\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 15.0;");
+              }
+              fs.writeFileSync(p,s);
+              const n=(s.match(/IPHONEOS_DEPLOYMENT_TARGET = 15\.0;/g)||[]).length;
+              console.log("pbxproj deployment target 行数:", n);
+              if (n===0) { console.error("::error::pbxproj に deployment target を設定できなかった"); process.exit(1); }
+            ' "$PBXPROJ"
           fi
 
           npx cap copy ios
@@ -594,6 +605,7 @@ jobs:
             -archivePath "build/${APP_NAME}.xcarchive" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             "MARKETING_VERSION=$MARK_VER" \
             "CURRENT_PROJECT_VERSION=$IOS_BUILD_NUMBER" \
             archive
