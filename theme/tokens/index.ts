@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 17; // 2026-08-01: AutoXReturnNotice の useUser 依存を外した(2度の /sign-in 障害の真因)。修正版チャンクを確実に配るため
+export const CDN_CACHE_EPOCH = 18; // 2026-08-01: Sign in with Apple を再投入(3度目)。真因修正済みの土台の上に載せる
