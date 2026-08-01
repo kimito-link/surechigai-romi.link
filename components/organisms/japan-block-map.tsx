@@ -12,10 +12,7 @@ import {
   prefectureShortLabel,
   prefectureBaseLabel,
 } from "@/modules/encounter/core/prefecture-labels";
-import {
-  computeMapLayout,
-  FULL_NAME_MIN_CELL_SIZE,
-} from "@/components/organisms/japan-block-map-layout";
+import { computeMapLayout } from "@/components/organisms/japan-block-map-layout";
 
 type JapanBlockMapProps = {
   visitedPrefSet: Set<string>;
@@ -77,14 +74,24 @@ export function JapanBlockMap({
   // 実測値は既に親の余白が引かれているので、二重に引かないよう alreadyInset を立てる。
   const explicit = availableWidth ?? measuredWidth;
   // レイアウト計算は computeMapLayout に一元化（テストで見切れ再発を検知するため）。
-  const { cellSize, fontSize, gap } = computeMapLayout(
+  const { cellSize, fontSize, gap, maxChars } = computeMapLayout(
     explicit ?? width,
     maxMapWidth,
     explicit != null,
   );
-  // フルネーム(最大3文字)が収まるセルサイズになったら短縮をやめる。
-  const showFullName = cellSize >= FULL_NAME_MIN_CELL_SIZE;
   const radius = Math.max(4, Math.round(cellSize * 0.16));
+
+  /**
+   * セルに表示する県名。
+   * 収まる文字数（maxChars）に合わせて切り詰める。
+   * ★ellipsis に任せない: 「北海」が「北…」になって読めなくなるため
+   *   （2026-08-01、3xスケールのスクショで発覚）。文字数はこちらで決める。
+   */
+  const cellLabel = (pref: string) => {
+    if (maxChars >= 3) return prefectureBaseLabel(pref);
+    const short = prefectureShortLabel(pref);
+    return maxChars === 2 ? short : short.slice(0, 1);
+  };
 
   const grid = (
     <View style={styles.container}>
@@ -145,7 +152,7 @@ export function JapanBlockMap({
                   style={[styles.cellText, { color: textColor, fontSize }]}
                   numberOfLines={1}
                 >
-                  {showFullName ? prefectureBaseLabel(pref) : prefectureShortLabel(pref)}
+                  {cellLabel(pref)}
                 </Text>
                 {encounterCount > 0 && (
                   <View style={styles.badge}>

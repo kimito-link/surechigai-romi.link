@@ -36,9 +36,14 @@ export type MapLayout = {
   mapWidth: number;
   fontSize: number;
   gap: number;
+  /** 何文字まで表示できるか。1 なら「北」だけ、2 なら「北海」、3 なら「北海道」 */
+  maxChars: 1 | 2 | 3;
   /** 利用可能幅に収まっているか。false になったら見切れ事故の再来 */
   fitsWithin: boolean;
 };
+
+/** 読める最小フォント。これを割るくらいなら文字数を減らす */
+const MIN_FONT = 9;
 
 /**
  * 与えられた幅で地図をどう描くかを決める。
@@ -60,12 +65,23 @@ export function computeMapLayout(
   const avail = Math.min(safeWidth - (alreadyInset ? 0 : outerPadding), maxMapWidth);
   const cellSize = Math.max(1, Math.floor((avail - gap * (cols - 1)) / cols));
   const mapWidth = cellSize * cols + gap * (cols - 1);
-  const showFullName = cellSize >= FULL_NAME_MIN_CELL_SIZE;
-  // フルネーム(3文字)時ははみ出さないよう (cellSize-6)/3 で頭打ち。
-  // 2文字表記では 0.34 だと小セルで潰れる（25px → 9px）ため、
-  // 2文字がちょうど収まる (cellSize-2)/2 まで引き上げて読めるようにする。
-  const fontSize = showFullName
-    ? Math.min(Math.round(cellSize * 0.34), Math.floor((cellSize - 6) / 3))
-    : Math.max(9, Math.min(Math.floor((cellSize - 2) / 2), Math.round(cellSize * 0.46)));
-  return { cellSize, mapWidth, fontSize, gap, fitsWithin: mapWidth <= avail };
+  // 日本語は全角＝1文字が font-size とほぼ同じ幅を占める。
+  // セルには padding(1px×2) と border(1px×2) があるので、文字に使えるのは cellSize-4。
+  //
+  // ★ここを 1px でも欲張ると text-overflow:ellipsis が発動し、
+  //   「北海」が「北…」になって県名が読めなくなる（2026-08-01 のスクショで発覚）。
+  //   ライブのブラウザでは出ず、3x スケールの撮影で初めて見えた。
+  //   文字を削るのは許容するが、省略記号だけは出さない。
+  const INNER = cellSize - 4;
+
+  // 収まる文字数を「大きい方から」試す。MIN_FONT を割るなら文字数を減らす。
+  let maxChars: 1 | 2 | 3 = 1;
+  if (cellSize >= FULL_NAME_MIN_CELL_SIZE && Math.floor(INNER / 3) >= MIN_FONT) maxChars = 3;
+  else if (Math.floor(INNER / 2) >= MIN_FONT) maxChars = 2;
+
+  const fontSize = Math.max(
+    MIN_FONT,
+    Math.min(Math.floor(INNER / maxChars), Math.round(cellSize * (maxChars === 3 ? 0.34 : 0.46))),
+  );
+  return { cellSize, mapWidth, fontSize, gap, maxChars, fitsWithin: mapWidth <= avail };
 }

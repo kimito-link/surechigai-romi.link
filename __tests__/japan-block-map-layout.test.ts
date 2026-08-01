@@ -38,10 +38,15 @@ describe("computeMapLayout", () => {
   });
 
   it("代表的なスマホ幅で 2文字が読めるサイズを確保する", () => {
-    // 375px(iPhone) で 11px 以上。ここを割ると「読めない」という報告に戻る
-    expect(computeMapLayout(375).fontSize).toBeGreaterThanOrEqual(11);
-    expect(computeMapLayout(390).fontSize).toBeGreaterThanOrEqual(11);
-    expect(computeMapLayout(414).fontSize).toBeGreaterThanOrEqual(11);
+    // 10px 以上 かつ 2文字表示。
+    // ※以前は 11px 以上を要求していたが、それだと 375px で
+    //   フォント11px × 2文字 + 余白4px = 26px > セル25px となり
+    //   ellipsis が出て「北…」になっていた（省略記号を出さない方を優先する）。
+    for (const w of [375, 390, 414]) {
+      const { fontSize, maxChars } = computeMapLayout(w);
+      expect(fontSize, `width=${w}`).toBeGreaterThanOrEqual(10);
+      expect(maxChars, `width=${w}`).toBe(2);
+    }
   });
 
   it("画面が広いほどセルは大きくなる（単調非減少）", () => {
@@ -73,6 +78,41 @@ describe("computeMapLayout", () => {
 
   it("列数は14（JAPAN_GRID と一致）", () => {
     expect(JAPAN_MAP_COLS).toBe(14);
+  });
+
+  /**
+   * 省略記号(…)を出さないための検算。
+   * 日本語は全角なので「文字数 × fontSize」がセルの内側(cellSize-4)に収まる必要がある。
+   * 1px でも超えると text-overflow:ellipsis が発動し「北海」が「北…」になる
+   * （2026-08-01、App Store 用スクショで発覚）。
+   */
+  it("表示文字数がセルに収まる（… にならない）", () => {
+    for (const w of WIDTHS) {
+      const { cellSize, fontSize, maxChars } = computeMapLayout(w);
+      const needed = fontSize * maxChars + 4; // padding(1x2) + border(1x2)
+      expect(
+        needed,
+        `width=${w}: cell=${cellSize} font=${fontSize} chars=${maxChars} → ${needed}px 必要`,
+      ).toBeLessThanOrEqual(cellSize);
+    }
+  });
+
+  it("実測幅でも … にならない", () => {
+    for (const w of WIDTHS) {
+      const { cellSize, fontSize, maxChars } = computeMapLayout(w, 760, true);
+      expect(fontSize * maxChars + 4, `width=${w} (inset)`).toBeLessThanOrEqual(cellSize);
+    }
+  });
+
+  it("広い画面ではフルネーム3文字を出す", () => {
+    expect(computeMapLayout(768).maxChars).toBe(3);
+    expect(computeMapLayout(1280).maxChars).toBe(3);
+  });
+
+  it("スマホでは最低2文字は出す（1文字だけの県名は分かりにくい）", () => {
+    for (const w of [360, 375, 390, 414]) {
+      expect(computeMapLayout(w).maxChars, `width=${w}`).toBeGreaterThanOrEqual(2);
+    }
   });
 
   it("実測幅を渡すとき(alreadyInset)は余白を二重に引かない", () => {

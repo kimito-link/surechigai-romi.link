@@ -1,0 +1,79 @@
+{
+  "_README": "App Store / Play 用スクショの撮影計画。コードは触らずこの JSON を編集する。capture-appstore-screenshots.mjs / capture-play-screenshots.mjs / frame-appstore-screenshots.mjs が共有。",
+
+  "_STRATEGY": "データ上『最初の3枚に全力 + 計5枚』が最適。Value(何が嬉しいか) → Usage(どう使うか) → Trust(安心)。Apple は 2.3.3 で『ログイン画面だけ』『実機と違う』を却下するため、実際のアプリ画面のみを撮る。authTabs は空（この アプリはログイン不要で主要画面が見えるため、デモ資格情報なしで完結させる）。",
+
+  "signInPath": "/sign-in",
+  "dashboardUrlRegex": "/zukan",
+
+  "_publicPages": "ログイン不要で撮るページ。slot が出力ファイル名の番号になる。",
+  "publicPages": [
+    {
+      "slot": 1,
+      "path": "/",
+      "label": "value",
+      "title": "会いたい君がいる現在地",
+      "subtitle": "移動の足あとを残して、あとからその場所へ",
+      "scrollToSelector": null
+    },
+    {
+      "slot": 2,
+      "path": "/zukan",
+      "label": "map",
+      "title": "日本地図が、あなたの足あとで埋まる",
+      "subtitle": "訪れた都道府県が色づく図鑑",
+      "scrollToSelector": null
+    },
+    {
+      "slot": 3,
+      "path": "/checkin",
+      "label": "usage",
+      "title": "その場でチェックイン",
+      "subtitle": "正確な座標で記録するから、後でたどれる",
+      "scrollToSelector": null
+    },
+    {
+      "slot": 4,
+      "path": "/events",
+      "label": "events",
+      "title": "集まりで、すれ違いを狙う",
+      "subtitle": "予定とライブ中がひと目で分かる",
+      "scrollToSelector": null
+    },
+    {
+      "slot": 5,
+      "path": "/premium",
+      "label": "trust",
+      "title": "記録と再訪は、ずっと無料",
+      "subtitle": "プレミアムは応援したい人のための任意プラン",
+      "scrollToSelector": null
+    }
+  ],
+
+  "_authTabs": "空 = ログイン不要アプリとして扱う。デモ資格情報が不要になる。",
+  "authTabs": [],
+
+  "_framedCaptions": "frame-appstore-screenshots.mjs 用の仕上げキャプション。{波括弧} がアクセント色になる。\\n で改行。",
+  "framedCaptions": {
+    "1": {
+      "headline": "会いたい君がいる\n{現在地}",
+      "sub": "移動の足あとを残して、あとからその場所へ"
+    },
+    "2": {
+      "headline": "日本地図が\nあなたの{足あと}で埋まる",
+      "sub": "訪れた都道府県が色づく図鑑"
+    },
+    "3": {
+      "headline": "その場で{チェックイン}",
+      "sub": "正確な座標で記録するから、後でたどれる"
+    },
+    "4": {
+      "headline": "{集まり}で、すれ違いを狙う",
+      "sub": "予定とライブ中がひと目で分かる"
+    },
+    "5": {
+      "headline": "記録と再訪は\n{ずっと無料}",
+      "sub": "プレミアムは応援のための任意プラン"
+    }
+  }
+}

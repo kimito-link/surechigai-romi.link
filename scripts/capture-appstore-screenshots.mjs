@@ -158,12 +158,28 @@ async function withCaption(page, { title, subtitle }, shoot) {
       ].join(';');
       el.appendChild(bar);
       (document.body || document.documentElement).appendChild(el);
+
+      // ★帯はアプリ画面に「かぶせない」。
+      //   position:fixed のまま重ねると、ヘッダーや地図の上端を隠してしまい
+      //   「実機と違う画面」に見える（2.3.3 の却下リスク）。
+      //   帯の高さぶんコンテンツを押し下げて、アプリ本体を丸ごと見せる。
+      const h2 = el.getBoundingClientRect().height;
+      const spacer = document.createElement('div');
+      spacer.id = '__aso_spacer__';
+      spacer.style.cssText = `height:${Math.round(h2)}px;flex:none;width:100%`;
+      const body = document.body;
+      if (body && body.firstChild) body.insertBefore(spacer, body.firstChild);
+      else body?.appendChild(spacer);
     },
     { title, subtitle, primary: BRAND_PRIMARY, accent: BRAND_ACCENT },
   );
-  await page.waitForTimeout(250);
+  // レイアウトが押し下がるのを待ってから撮る（地図はここで再計算される）
+  await page.waitForTimeout(900);
   await shoot();
-  await page.evaluate(() => document.getElementById('__aso_caption__')?.remove());
+  await page.evaluate(() => {
+    document.getElementById('__aso_caption__')?.remove();
+    document.getElementById('__aso_spacer__')?.remove();
+  });
 }
 
 async function captureDevice(browser, dev) {
@@ -202,7 +218,12 @@ async function captureDevice(browser, dev) {
   for (const { slot, path: pubPath, label, title, subtitle, scrollToSelector } of PLAN.publicPages) {
     try {
       console.log(`Loading ${URL}${pubPath} (${label}) ...`);
-      await page.goto(`${URL}${pubPath}`, { waitUntil: 'networkidle', timeout: 60000 });
+      // ★networkidle にしないこと。
+      //   このアプリは居場所のポーリング等でネットワークが静止しない画面があり、
+      //   ゲストホーム(/)が 60s タイムアウトして「1枚目だけ撮れない」事故が起きた
+      //   （2026-08-01 実測）。domcontentloaded + 明示待機で確実に撮る。
+      await page.goto(`${URL}${pubPath}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.waitForTimeout(3500);
       await page.waitForTimeout(2000);
       // 遅延描画(IntersectionObserver)のセクションを全体スクロールで起こす。
       await page.evaluate(async () => {
