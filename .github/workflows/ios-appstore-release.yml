@@ -756,6 +756,19 @@ jobs:
           fi
           node scripts/verify-reviewer-account.mjs
 
+      # 初回提出は contentRightsDeclaration が未設定だと
+      # 「You must provide a value for the attribute 'contentRightsDeclaration'」
+      # (ENTITY_ERROR.ATTRIBUTE.REQUIRED) で 409 になり提出できない（2026-08-01 実測）。
+      # 冪等なので毎回流してよい。
+      - name: Set contentRightsDeclaration (required for first submission)
+        if: ${{ success() }}
+        env:
+          APPSTORE_CONNECT_KEY_ID: ${{ env.ASC_KEY_ID }}
+          APPSTORE_CONNECT_ISSUER_ID: ${{ env.ASC_ISSUER_ID }}
+          APPSTORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APPSTORE_CONNECT_API_KEY_P8_BASE64 }}
+          APP_BUNDLE_ID: ${{ env.APP_BUNDLE_ID }}
+        run: node scripts/asc-set-content-rights.mjs
+
       - name: Submit App Store version for review
         if: ${{ success() }}
         env:
