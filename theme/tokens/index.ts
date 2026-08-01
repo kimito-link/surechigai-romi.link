@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 23; // 2026-08-01: 県名が「北…」に省略される問題を修正（文字数をこちらで決める）
+export const CDN_CACHE_EPOCH = 24; // 2026-08-01: ゲスト図鑑の見出しと集計テキストの重なりを解消

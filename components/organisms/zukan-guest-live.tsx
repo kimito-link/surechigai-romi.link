@@ -122,6 +122,11 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
     gap: 8,
+    // 親（one-tap-guest-shell）が headlinePanel を position:absolute で
+    // top:16 に浮かせている。その下に潜り込まないよう、見出しの高さぶん空ける。
+    // 空けないと 414px 以下で「会いたい君がいる現在地」と
+    // 「いま N 人が、現在地を公開中」が 8px 重なる（2026-08-01 実測）。
+    paddingTop: 72,
   },
   liveRow: {
     alignSelf: "center",

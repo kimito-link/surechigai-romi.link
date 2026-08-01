@@ -173,11 +173,25 @@ async function withCaption(page, { title, subtitle }, shoot) {
     },
     { title, subtitle, primary: BRAND_PRIMARY, accent: BRAND_ACCENT },
   );
-  // レイアウトが押し下がるのを待ってから撮る（地図はここで再計算される）
-  await page.waitForTimeout(900);
+  // レイアウトが押し下がるのを待ってから撮る（地図はここで再計算される）。
+  // ★アニメーション中に撮ると、フェード/スライド途中の要素が別の要素と
+  //   重なって見える（2026-08-01 の /zukan のスクショで発生）。
+  //   CSS アニメーションを止めてから十分に待つ。
+  await page.evaluate(() => {
+    const id = '__aso_freeze__';
+    if (document.getElementById(id)) return;
+    const s = document.createElement('style');
+    s.id = id;
+    s.textContent =
+      '*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;' +
+      'transition-duration:0s!important;transition-delay:0s!important}';
+    document.head.appendChild(s);
+  });
+  await page.waitForTimeout(1200);
   await shoot();
   await page.evaluate(() => {
     document.getElementById('__aso_caption__')?.remove();
+    document.getElementById('__aso_freeze__')?.remove();
     document.getElementById('__aso_spacer__')?.remove();
   });
 }
