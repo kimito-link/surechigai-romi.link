@@ -12,7 +12,7 @@ export const kimitoJaJP = {
       ...jaJP.signIn?.start,
       title: "君斗りんくのすれ違ひ通信にログイン",
       subtitle:
-        "X（旧 Twitter）のアカウントで続けます。すれ違いの記録はログイン後に残せます。",
+        "X または Apple のアカウントで続けます。すれ違いの記録はログイン後に残せます。",
     },
   },
   signUp: {

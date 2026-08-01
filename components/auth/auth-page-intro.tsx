@@ -9,6 +9,16 @@ import { palette } from "@/theme/tokens";
 
 type AuthPageIntroProps = {
   variant: "sign-in" | "sign-up";
+  /**
+   * Apple ログインを案内するか。呼び出し側（auth-page-shell）が
+   * `isAppleLoginEnabled()` を解決して渡す。
+   *
+   * ★このファイルに lib/auth-providers を import しないこと。
+   * 認証画面のモジュールに import を足すと Metro のチャンク分割がずれ、
+   * 本番の /sign-in が壊れた実績がある（2026-07-31 / 08-01 の2回）。
+   * 判定は必ず props で受け取る（clerk-sign-in.tsx の注意書きと同じ方針）。
+   */
+  appleEnabled?: boolean;
 };
 
 const MASCOTS = [
@@ -55,7 +65,7 @@ function NavLink({ href, label }: { href: Href; label: string }) {
   );
 }
 
-export function AuthPageIntro({ variant }: AuthPageIntroProps) {
+export function AuthPageIntro({ variant, appleEnabled = false }: AuthPageIntroProps) {
   const isSignIn = variant === "sign-in";
 
   return (
@@ -135,12 +145,16 @@ export function AuthPageIntro({ variant }: AuthPageIntroProps) {
         >
           {isSignIn
             ? "移動の足あとを残し、すれ違いの思い出をたどる"
-            : "X アカウントひとつで、足あと記録とすれ違い通信をはじめる"}
+            : appleEnabled
+              ? "アカウントひとつで、足あと記録とすれ違い通信をはじめる"
+              : "X アカウントひとつで、足あと記録とすれ違い通信をはじめる"}
         </Text>
         <Text style={{ marginTop: 12, fontSize: 16, lineHeight: 24, color: palette.gray600 }}>
           会いたい君がいる現在地——正確な場所を残して、あとからたどれる。
           ログインは{" "}
-          <Text style={{ fontWeight: "700", color: palette.gray900 }}>X（旧 Twitter）のアカウントだけ</Text>
+          <Text style={{ fontWeight: "700", color: palette.gray900 }}>
+            {appleEnabled ? "X（旧 Twitter）か Apple のアカウント" : "X（旧 Twitter）のアカウントだけ"}
+          </Text>
           。新しいパスワードはいりません。
         </Text>
 

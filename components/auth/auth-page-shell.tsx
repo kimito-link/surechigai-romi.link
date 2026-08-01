@@ -12,7 +12,7 @@ import { AuthSupportNotice } from "@/components/auth/auth-support-notice";
 import { AutoXReturnNotice } from "@/components/auth/auto-x-return-notice";
 import { InAppBrowserNotice } from "@/components/auth/in-app-browser-notice";
 import { SignInAuthHandoffOverlay } from "@/components/auth/sign-in-auth-handoff-overlay";
-import { authProvidersHeadline } from "@/lib/auth-providers";
+import { authProvidersHeadline, isAppleLoginEnabled } from "@/lib/auth-providers";
 import { palette } from "@/theme/tokens";
 
 type AuthPageShellProps = {
@@ -88,6 +88,9 @@ function AuthClerkCard({ variant, children }: { variant: "sign-in" | "sign-up"; 
 export function AuthPageShell({ variant, children }: AuthPageShellProps) {
   const { width } = useWindowDimensions();
   const isWide = width >= 1024;
+  // Apple の可否はここで解決して AuthPageIntro に props で渡す
+  // （認証画面のモジュールに import を足すとチャンク分割がずれる地雷があるため）。
+  const appleEnabled = isAppleLoginEnabled();
 
   return (
     <View style={{ flex: 1 }}>
@@ -128,7 +131,7 @@ export function AuthPageShell({ variant, children }: AuthPageShellProps) {
             {isWide ? (
               <>
                 <View style={{ width: "100%", flex: 1, maxWidth: 576 }}>
-                  <AuthPageIntro variant={variant} />
+                  <AuthPageIntro variant={variant} appleEnabled={appleEnabled} />
                 </View>
                 <View
                   style={{
@@ -156,7 +159,7 @@ export function AuthPageShell({ variant, children }: AuthPageShellProps) {
                   <AuthSupportNotice mode={variant} />
                 </View>
                 <View style={{ width: "100%", maxWidth: 576, alignSelf: "center" }}>
-                  <AuthPageIntro variant={variant} />
+                  <AuthPageIntro variant={variant} appleEnabled={appleEnabled} />
                 </View>
               </>
             )}
