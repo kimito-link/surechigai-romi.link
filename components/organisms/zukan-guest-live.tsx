@@ -122,11 +122,15 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
     gap: 8,
-    // 親（one-tap-guest-shell）が headlinePanel を position:absolute で
-    // top:16 に浮かせている。その下に潜り込まないよう、見出しの高さぶん空ける。
-    // 空けないと 414px 以下で「会いたい君がいる現在地」と
-    // 「いま N 人が、現在地を公開中」が 8px 重なる（2026-08-01 実測）。
+    // 親（one-tap-guest-shell）は見出しを heroOverlayTop(absolute/top:16)、
+    // ベネフィットを heroOverlayBottom(absolute/bottom:12) で浮かせている。
+    // どちらもヒーロー内容の上に重なるため、上下に逃げ場を作る。
+    // 空けないと 414px で
+    //   上: 「会いたい君がいる現在地」と「いま N 人が…」が 8px 重なる
+    //   下: 「沖縄」とボタン行が 14px 重なる
+    // （いずれも 2026-08-01 に実測で確認）。
     paddingTop: 72,
+    paddingBottom: 76,
   },
   liveRow: {
     alignSelf: "center",

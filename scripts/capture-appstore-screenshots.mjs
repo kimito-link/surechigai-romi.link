@@ -127,7 +127,9 @@ async function withCaption(page, { title, subtitle }, shoot) {
       el.style.cssText = [
         'position:fixed', 'top:0', 'left:0', 'right:0', 'width:100%',
         'box-sizing:border-box', 'z-index:2147483647',
-        'padding:64px 26px 40px', 'pointer-events:none',
+        // 帯を厚くするほどアプリ本体の見える範囲が減り、下端のボタンが切れる。
+        // 上は端末のノッチぶんだけ確保し、下は控えめにする（2026-08-01 調整）。
+        'padding:44px 26px 22px', 'pointer-events:none',
         'background:linear-gradient(180deg, #0A0A0F 0%, #0A0A0F 72%, rgba(10,10,15,0.92) 88%, rgba(10,10,15,0) 100%)',
         'font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif',
         'text-align:center',
@@ -163,7 +165,10 @@ async function withCaption(page, { title, subtitle }, shoot) {
       //   position:fixed のまま重ねると、ヘッダーや地図の上端を隠してしまい
       //   「実機と違う画面」に見える（2.3.3 の却下リスク）。
       //   帯の高さぶんコンテンツを押し下げて、アプリ本体を丸ごと見せる。
-      const h2 = el.getBoundingClientRect().height;
+      // 帯の高さそのままだと、アプリ側の余白と足し算になって
+      // 「上に大きな空白 + 下端のボタンが切れる」になる。
+      // グラデーションで下端は透けるので、8割ぶんだけ押し下げれば足りる。
+      const h2 = el.getBoundingClientRect().height * 0.8;
       const spacer = document.createElement('div');
       spacer.id = '__aso_spacer__';
       spacer.style.cssText = `height:${Math.round(h2)}px;flex:none;width:100%`;
