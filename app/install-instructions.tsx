@@ -147,6 +147,10 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 20,
     alignSelf: "flex-start",
+    // タップ標的は 44px 以上（Apple HIG / WCAG 2.5.5）。
+    // 実測監査で 58x23 しか無かった（2026-08-01）。
+    minHeight: 44,
+    paddingRight: 8,
   },
   backText: {
     color: palette.kimitoBlue,

@@ -216,7 +216,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   link: {
-    paddingVertical: 4,
+    // タップ標的は 44px 以上（Apple HIG / WCAG 2.5.5）。
+    // 実測監査で 52x24 しか無く、指で押しにくい状態だった（2026-08-01）。
+    minHeight: 44,
+    justifyContent: "center",
+    paddingVertical: 8,
   },
   linkText: {
     fontSize: 15,

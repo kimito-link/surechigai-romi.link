@@ -213,6 +213,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
+    // タップ標的は 44px 以上（Apple HIG / WCAG 2.5.5）。実測 42px で僅かに不足していた
+    minHeight: 44,
     paddingVertical: 10,
     borderRadius: 12,
     backgroundColor: color.surface,

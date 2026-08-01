@@ -224,7 +224,12 @@ const styles = StyleSheet.create({
   windowControls: {
     flexDirection: "row",
     alignItems: "center",
-    width: 60, // Fixed width to keep title centered
+    // タイトルを中央に保つための固定幅。ただし 320px 端末では
+    // 固定60px×2 + タイトルが入りきらず右へはみ出していた（2026-08-01 実測）。
+    // 縮んでよい指定にして、狭い画面でも収める。
+    width: 60,
+    flexShrink: 1,
+    minWidth: 0,
   },
   dotRed: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#FF5F56", marginRight: 8 },
   dotYellow: { width: 12, height: 12, borderRadius: 6, backgroundColor: "#FFBD2E", marginRight: 8 },
@@ -239,8 +244,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   closeButton: {
-    width: 60, // Fixed width to keep title centered
+    // windowControls と同じ理由で縮んでよい指定にする（狭い画面でのはみ出し対策）
+    width: 60,
+    flexShrink: 1,
+    minWidth: 0,
     alignItems: "flex-end",
+    // タップ標的を 44px 以上に（Apple HIG / WCAG 2.5.5）
+    minHeight: 44,
+    justifyContent: "center",
   },
   terminalBody: {
     padding: 24,

@@ -91,6 +91,12 @@ function LinkText({ label }: { label: string }) {
         fontSize: 14,
         fontWeight: "700",
         textDecorationLine: "underline",
+        // タップ標的を 44px 以上にする（Apple HIG / WCAG 2.5.5）。
+        // ★<Link> 側に minHeight を書いても web では <a> になって効かず、
+        //   実測で 52x24 しか無かった（2026-08-01 の監査）。
+        //   文字自身に上下パディングを持たせるのが確実。
+        lineHeight: 20,
+        paddingVertical: 12,
       }}
     >
       {label}
