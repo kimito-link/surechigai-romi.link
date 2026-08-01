@@ -386,11 +386,24 @@ jobs:
             else
               openssl x509 -inform DER -in "$CERT_DER_PATH" -out "$CERT_PEM_PATH"
             fi
-            openssl pkcs12 -export \
+            # ★macOS の `security import` は OpenSSL 3 既定の PKCS#12（AES-256 + PBKDF2）を
+            #   読めず、「MAC verification failed during PKCS12 import (wrong password?)」
+            #   という“パスワードが違う”ように見えるエラーで落ちる（2026-08-01 実測。
+            #   パスワード自体は正しいことを openssl で検証済み）。
+            #   キーチェーンが解釈できる旧形式（RC2/3DES + SHA1）で書き出す。
+            if ! openssl pkcs12 -export -legacy \
               -inkey "$KEY_PEM_PATH" \
               -in "$CERT_PEM_PATH" \
               -out "$CERT_PATH" \
-              -passout "pass:$IOS_DIST_CERT_PASSWORD"
+              -passout "pass:$IOS_DIST_CERT_PASSWORD" 2>/dev/null; then
+              # -legacy が無い OpenSSL 1.x では、明示的に旧アルゴリズムを指定する
+              openssl pkcs12 -export \
+                -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 \
+                -inkey "$KEY_PEM_PATH" \
+                -in "$CERT_PEM_PATH" \
+                -out "$CERT_PATH" \
+                -passout "pass:$IOS_DIST_CERT_PASSWORD"
+            fi
           fi
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
