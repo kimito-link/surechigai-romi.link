@@ -195,11 +195,14 @@ jobs:
           #    they required a higher minimum deployment target」で落ちる（2026-08-01 実測）。
           #   後段の「Force iOS deployment target」ステップでは手遅れ。
           #   そこで add は pod install を止めて実行し、Podfile を直してから pod install する。
+          # `cap add ios` の内部 pod install はここでは失敗してよい（Podfile は先に生成される）。
+          # 失敗させたまま Podfile の platform を直し、後段の CocoaPods ステップで入れ直す。
+          # `--no-pod-install` は存在せず、CAPACITOR_SKIP_POD_INSTALL も効かないことを実測で確認済み。
           if [ ! -d ios/App ]; then
-            CAPACITOR_SKIP_POD_INSTALL=true npx cap add ios || npx cap add ios --no-pod-install
+            npx cap add ios || echo "cap add: pod install は後段でやり直すため、ここでの失敗は無視する"
           fi
 
-          # Podfile / pbxproj の deployment target を先に確定させる
+          # Podfile の deployment target をここで確定させる（後段の pod install が通るように）
           PODFILE="ios/App/Podfile"
           if [ -f "$PODFILE" ]; then
             if grep -q "^platform :ios" "$PODFILE"; then
@@ -208,6 +211,9 @@ jobs:
               printf "platform :ios, '15.0'\n%s" "$(cat "$PODFILE")" > "$PODFILE"
             fi
             grep -n "^platform :ios" "$PODFILE" || true
+          else
+            echo "::error::ios/App/Podfile が生成されていない。cap add ios の失敗内容を確認すること。"
+            exit 1
           fi
 
           npx cap copy ios
