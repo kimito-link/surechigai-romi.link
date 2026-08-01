@@ -21,15 +21,7 @@ export type AuthState = {
   isAuthReadyForUI: boolean;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
-  /**
-   * provider 省略時は X。Apple は App Store Guideline 4.8 対応で追加。
-   * Web は Clerk 標準 <SignIn /> が3ボタンを描画するため provider を使うのはネイティブのみ。
-   */
-  login: (
-    returnUrl?: string,
-    forceSwitch?: boolean,
-    provider?: "x" | "apple",
-  ) => Promise<void>;
+  login: (returnUrl?: string, forceSwitch?: boolean) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
