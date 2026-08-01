@@ -129,8 +129,10 @@ const styles = StyleSheet.create({
     //   上: 「会いたい君がいる現在地」と「いま N 人が…」が 8px 重なる
     //   下: 「沖縄」とボタン行が 14px 重なる
     // （いずれも 2026-08-01 に実測で確認）。
+    // 下は「重なりを解く最小限」に留める。大きくするとボタン行が
+    // タブバーに押し込まれて文字が切れる（実測で 76px は行き過ぎだった）。
     paddingTop: 72,
-    paddingBottom: 76,
+    paddingBottom: 40,
   },
   liveRow: {
     alignSelf: "center",
