@@ -216,6 +216,18 @@ jobs:
             exit 1
           fi
 
+          # pbxproj の deployment target もここで確定させる。
+          # 後段の「Force iOS deployment target」は pod install より後に走るため、
+          # ここで直しておかないと pod が iOS 13.0 向けに構成されてしまう。
+          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          if [ -f "$PBXPROJ" ]; then
+            sed -i.bak "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]\\+;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g" "$PBXPROJ"
+            if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET" "$PBXPROJ"; then
+              sed -i.bak2 -E 's/(buildSettings = \{)/\1\n\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' "$PBXPROJ"
+            fi
+            echo "pbxproj deployment target 行数: $(grep -c 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;' "$PBXPROJ" || true)"
+          fi
+
           npx cap copy ios
 
       # 標準HTTPS / OS 提供の TLS のみなら非免除暗号を使わない宣言(審査・輸出コンプライアンスの手戻り軽減)
@@ -280,6 +292,18 @@ jobs:
           fi
           if [ -f "$PBXPROJ" ]; then
             sed -i.bak "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]\\+;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g" "$PBXPROJ"
+            # ★上の sed は「既にある行」しか書き換えない。
+            #   Capacitor 8 の pbxproj には IPHONEOS_DEPLOYMENT_TARGET が
+            #   1行も無いことがあり、その場合 Xcode 既定の iOS 13.0 が使われて
+            #   「compiling for iOS 13.0, but module 'Capacitor' has a minimum
+            #    deployment target of iOS 15.0」でアーカイブが失敗する（2026-08-01 実測）。
+            #   無ければ各 buildSettings に挿入する。
+            if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET" "$PBXPROJ"; then
+              echo "IPHONEOS_DEPLOYMENT_TARGET が無いので挿入する"
+              sed -i.bak3 -E 's/(buildSettings = \{)/\1\n\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' "$PBXPROJ"
+            fi
+            echo "--- deployment target 確認 ---"
+            grep -c "IPHONEOS_DEPLOYMENT_TARGET = 15.0;" "$PBXPROJ" || true
             # Restrict to iPhone (TARGETED_DEVICE_FAMILY = "1") so the App
             # Store does not require iPad-sized screenshots. Phone-first apps
             # only; if your app supports iPad, change this to "1,2".
