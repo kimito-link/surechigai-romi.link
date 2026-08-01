@@ -210,6 +210,16 @@
   },
   "redirects": [
     {
+      "source": "/sign-up",
+      "destination": "/sign-in",
+      "permanent": false
+    },
+    {
+      "source": "/sign-up/",
+      "destination": "/sign-in",
+      "permanent": false
+    },
+    {
       "source": "/icon-192.png",
       "destination": "/pwa-icon-192.png",
       "permanent": false

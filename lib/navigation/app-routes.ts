@@ -30,6 +30,7 @@ export const STATIC_ROUTES = {
   LOGIN_GUIDE: "/auth/kimito-link",
   LOGOUT: "/logout",
   SPECIAL_THANKS: "/special-thanks",
+  PREMIUM: "/premium",
   
   // 設定関連
   SETTINGS: "/settings",
@@ -102,6 +103,7 @@ export type RouteParams = {
   [STATIC_ROUTES.LOGIN_GUIDE]: { returnTo?: string; mode?: "same" | "switch" } | undefined;
   [STATIC_ROUTES.LOGOUT]: undefined;
   [STATIC_ROUTES.SPECIAL_THANKS]: undefined;
+  [STATIC_ROUTES.PREMIUM]: undefined;
   [STATIC_ROUTES.SETTINGS]: undefined;
   [STATIC_ROUTES.NOTIFICATION_SETTINGS]: undefined;
   [STATIC_ROUTES.PROFILE_EDIT]: undefined;
@@ -216,6 +218,11 @@ export const navigate = {
   toSpecialThanks: () => {
     console.log("[Navigation] Navigating to special thanks");
     router.push(STATIC_ROUTES.SPECIAL_THANKS as never);
+  },
+
+  toPremium: () => {
+    console.log("[Navigation] Navigating to premium");
+    router.push(STATIC_ROUTES.PREMIUM as never);
   },
   
   // 設定関連

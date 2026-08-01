@@ -363,6 +363,29 @@ export function MypageScreenView(props: MypageScreenViewProps) {
             <Text style={[styles.menuItemText, { color: color.textPrimary }]}>初回スライドをもう一度</Text>
           </Pressable>
 
+          {/*
+            プレミアム導線（docs/monetization-DESIGN.md B-3）。
+            カード型にせず設定リストの静かな1行に留める（訴求密度ルール:
+            1画面1商業訴求・新しい訴求枠を作らない）。
+          */}
+          <Pressable
+            onPress={navigate.toPremium}
+            style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
+          >
+            <MaterialIcons
+              name="workspace-premium"
+              size={20}
+              color={color.accentOrange}
+              style={{ marginRight: 12 }}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.menuItemText, { color: color.textPrimary }]}>プレミアム</Text>
+              <Text style={{ color: color.textMuted, fontSize: 11, marginTop: 2 }}>
+                記録と再訪はずっと無料。広告非表示と足あとの書き出し
+              </Text>
+            </View>
+          </Pressable>
+
           <Pressable
             onPress={navigate.toSpecialThanks}
             style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
