@@ -188,9 +188,28 @@ jobs:
 
       - name: Add/copy iOS platform
         run: |
+          # ★`npx cap add ios` は内部で pod install まで走る。
+          #   その時点の Podfile は Capacitor 既定の deployment target のままなので、
+          #   Capacitor 8 の pod が要求する下限を満たせず
+          #   「CocoaPods could not find compatible versions for pod "Capacitor" /
+          #    they required a higher minimum deployment target」で落ちる（2026-08-01 実測）。
+          #   後段の「Force iOS deployment target」ステップでは手遅れ。
+          #   そこで add は pod install を止めて実行し、Podfile を直してから pod install する。
           if [ ! -d ios/App ]; then
-            npx cap add ios
+            CAPACITOR_SKIP_POD_INSTALL=true npx cap add ios || npx cap add ios --no-pod-install
           fi
+
+          # Podfile / pbxproj の deployment target を先に確定させる
+          PODFILE="ios/App/Podfile"
+          if [ -f "$PODFILE" ]; then
+            if grep -q "^platform :ios" "$PODFILE"; then
+              sed -i.bak "s/^platform :ios, .*/platform :ios, '15.0'/" "$PODFILE"
+            else
+              printf "platform :ios, '15.0'\n%s" "$(cat "$PODFILE")" > "$PODFILE"
+            fi
+            grep -n "^platform :ios" "$PODFILE" || true
+          fi
+
           npx cap copy ios
 
       # 標準HTTPS / OS 提供の TLS のみなら非免除暗号を使わない宣言(審査・輸出コンプライアンスの手戻り軽減)
