@@ -1,9 +1,21 @@
-import { View, Text, StyleSheet, Pressable, ScrollView, useWindowDimensions } from "react-native";
+import { useCallback, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  useWindowDimensions,
+  type LayoutChangeEvent,
+} from "react-native";
 import { color, palette } from "@/theme/tokens";
 import {
   prefectureShortLabel,
   prefectureBaseLabel,
 } from "@/modules/encounter/core/prefecture-labels";
+import {
+  computeMapLayout,
+  FULL_NAME_MIN_CELL_SIZE,
+} from "@/components/organisms/japan-block-map-layout";
 
 type JapanBlockMapProps = {
   visitedPrefSet: Set<string>;
@@ -18,17 +30,7 @@ type JapanBlockMapProps = {
   maxMapWidth?: number;
 };
 
-/** このサイズ以上ならフルネーム(prefectureBaseLabel、最大3文字)を表示。未満は2文字表記のまま。 */
-const FULL_NAME_MIN_CELL_SIZE = 42;
-
-/**
- * どの画面幅でも下回らないセルサイズ。
- *
- * 14列を画面幅に押し込むと、スマホ(375〜414px)ではセルが23〜25px・フォント8pxまで潰れ、
- * 「北海道」が「北海」に切れて読めなかった（2026-07-31 実測・ユーザー報告）。
- * この下限を割る幅では地図を横スクロールさせ、県名が読める大きさを優先する。
- */
-const MIN_READABLE_CELL_SIZE = 44;
+// レイアウト計算は japan-block-map-layout.ts に一元化（見切れ事故の再発をテストで検知するため）。
 
 // 12 rows, 14 cols grid
 // null is empty space
@@ -58,31 +60,36 @@ export function JapanBlockMap({
   maxMapWidth = 760,
 }: JapanBlockMapProps) {
   const { width } = useWindowDimensions();
-  // 画面幅いっぱい（最大760px、maxMapWidthで上書き可）まで使い、14列で割ってセルサイズを決める。
-  //   どの画面でも大きく読みやすくするため、上限を画面幅に追従させる（旧: 40px固定上限で小さすぎた）。
-  const cols = 14;
-  const gap = 3;
-  const outerPadding = 24;
-  const baseW = availableWidth ?? width;
-  const safeWidth = Math.max(baseW || 320, 320);
-  const avail = Math.min(safeWidth - outerPadding, maxMapWidth);
-  // 画面幅から素直に割った値。スマホでは 23px 程度まで潰れる
-  const fitCellSize = Math.floor((avail - gap * (cols - 1)) / cols);
-  // 読める大きさを優先し、下回る場合は下限に切り上げて横スクロールに逃がす
-  const cellSize = Math.max(MIN_READABLE_CELL_SIZE, fitCellSize);
-  const needsHorizontalScroll = cellSize > fitCellSize;
-  const mapWidth = cellSize * cols + gap * (cols - 1);
-  // フルネーム(最大3文字)が12px以上で収まるセルサイズになったら短縮をやめる。
+  // 実際に置かれたコンテナ幅を測る。ウィンドウ幅だけを見ると、
+  // 親に余白やサイドナビがある画面で幅を過大評価して見切れる。
+  //
+  // ★測るのは中身を持たない専用の View（高さ0の物差し）。
+  //   地図本体を包む View で測ると「測った幅で地図を作る→その地図の幅がまた測られる」の
+  //   自己参照になり、画面を狭めても縮まなくなる（2026-08-01 実測で確認）。
+  const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
+  const onLayout = useCallback((e: LayoutChangeEvent) => {
+    const w = Math.round(e.nativeEvent.layout.width);
+    // 0 は初回レイアウト前などに来る。採用すると最小幅に張り付くので無視する
+    if (w > 0) setMeasuredWidth((prev) => (prev === w ? prev : w));
+  }, []);
+
+  // 優先順位: 明示指定 > 実測 > ウィンドウ幅。
+  // 実測値は既に親の余白が引かれているので、二重に引かないよう alreadyInset を立てる。
+  const explicit = availableWidth ?? measuredWidth;
+  // レイアウト計算は computeMapLayout に一元化（テストで見切れ再発を検知するため）。
+  const { cellSize, fontSize, gap } = computeMapLayout(
+    explicit ?? width,
+    maxMapWidth,
+    explicit != null,
+  );
+  // フルネーム(最大3文字)が収まるセルサイズになったら短縮をやめる。
   const showFullName = cellSize >= FULL_NAME_MIN_CELL_SIZE;
-  // フォントはセルに比例（小画面でも下限8px、大画面では大きく）。フルネーム時は3文字が
-  // はみ出さないよう (cellSize-6)/3 でも上限を掛ける。
-  const fontSize = showFullName
-    ? Math.min(Math.round(cellSize * 0.34), Math.floor((cellSize - 6) / 3))
-    : Math.max(8, Math.round(cellSize * 0.34));
   const radius = Math.max(4, Math.round(cellSize * 0.16));
 
   const grid = (
-    <View style={[styles.container, needsHorizontalScroll ? { width: mapWidth } : null]}>
+    <View style={styles.container}>
+      {/* 幅を測るためだけの物差し（高さ0・中身なし）。地図の幅に影響されない */}
+      <View style={styles.widthProbe} onLayout={onLayout} pointerEvents="none" />
       {JAPAN_GRID.map((row, rIdx) => (
         <View key={rIdx} style={[styles.row, { gap }]}>
           {row.map((pref, cIdx) => {
@@ -153,28 +160,23 @@ export function JapanBlockMap({
     </View>
   );
 
-  // 画面が狭く県名が潰れる場合だけ横スクロールにする。
-  // 収まる幅では従来どおり中央寄せのまま（無用なスクロール領域を作らない）。
-  if (!needsHorizontalScroll) return grid;
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator
-      contentContainerStyle={styles.scrollContent}
-    >
-      {grid}
-    </ScrollView>
-  );
+  // 常に収まるサイズで描画するため、横スクロール経路は持たない。
+  return grid;
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingHorizontal: 4,
-  },
   container: {
+    // 親の幅いっぱいに広がってから中身を中央寄せする。
+    width: "100%",
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 20,
+    // 上下の余白は控えめに。狭い画面ではファーストビューを圧迫するため。
+    marginVertical: 12,
+  },
+  /** 幅を測る専用の物差し。高さ0で見た目に影響しない */
+  widthProbe: {
+    width: "100%",
+    height: 0,
   },
   row: {
     flexDirection: "row",

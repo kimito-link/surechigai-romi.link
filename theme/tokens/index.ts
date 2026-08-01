@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 20; // 2026-08-01: /premium のゲスト時 tRPC Context クラッシュを修正
+export const CDN_CACHE_EPOCH = 21; // 2026-08-01: 日本地図がスマホで見切れる問題を修正（横スクロール廃止・常に収まる設計）
