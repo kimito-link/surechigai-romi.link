@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 26; // 2026-08-01: ゲスト図鑑の下余白を最小限に（ボタン文字の切れを解消）
+export const CDN_CACHE_EPOCH = 27; // 2026-08-01: ゲスト図鑑の下余白を76pxへ戻す（重なり解消の実測値）

@@ -168,7 +168,9 @@ async function withCaption(page, { title, subtitle }, shoot) {
       // 帯の高さそのままだと、アプリ側の余白と足し算になって
       // 「上に大きな空白 + 下端のボタンが切れる」になる。
       // グラデーションで下端は透けるので、8割ぶんだけ押し下げれば足りる。
-      const h2 = el.getBoundingClientRect().height * 0.8;
+      // 押し下げすぎるとページ下端（ボタン行など）が画面外に出て文字が切れる。
+      // 帯はグラデーションで下が透けるので、半分ぶんで十分に読める。
+      const h2 = el.getBoundingClientRect().height * 0.5;
       const spacer = document.createElement('div');
       spacer.id = '__aso_spacer__';
       spacer.style.cssText = `height:${Math.round(h2)}px;flex:none;width:100%`;
