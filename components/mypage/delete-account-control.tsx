@@ -204,7 +204,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
+    // iOS は 16px 未満の入力でページを自動拡大する（画面が壊れて見える）
+    fontSize: 16,
     color: color.textPrimary,
     backgroundColor: color.surfaceAlt,
   },
