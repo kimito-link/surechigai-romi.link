@@ -49,7 +49,11 @@ const sizeStyles = {
   sm: {
     paddingVertical: 10,
     paddingHorizontal: 12,
-    fontSize: 14,
+    // ★16px を下回らないこと。iOS Safari は 16px 未満の入力欄に
+    //   フォーカスすると自動でページを拡大し、以後スワイプで画面が
+    //   ずれる・戻らない挙動になる（2026-08-02 ユーザー報告）。
+    //   見た目を小さくしたい場合も 16 を維持し、余白側で詰める。
+    fontSize: 16,
     minHeight: 44,
     borderRadius: 10,
   },

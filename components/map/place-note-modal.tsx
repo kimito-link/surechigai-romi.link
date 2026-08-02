@@ -212,7 +212,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 15,
+    // ★16px 未満にしないこと。iOS Safari は 16px 未満の入力にフォーカスすると
+    //   ページを自動拡大し、以後スワイプで画面がずれる（2026-08-02 報告）。
+    fontSize: 16,
     color: color.textPrimary,
     backgroundColor: color.surfaceAlt,
   },

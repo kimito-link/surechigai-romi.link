@@ -162,8 +162,26 @@ const MEASURE = () => {
     if (fs && fs < 12) tinyText.push({ text: t.slice(0, 30), fontSize: fs });
   }
 
+  // iOS Safari は 16px 未満の入力にフォーカスするとページを自動拡大する。
+  // 一度拡大すると戻らず「スワイプすると画面が大きくなる/挙動が変」に見える。
+  const zoomingInputs = [];
+  for (const el of document.querySelectorAll('input, textarea, select')) {
+    if (!visible(el)) continue;
+    const fs = parseFloat(getComputedStyle(el).fontSize);
+    if (fs && fs < 16) {
+      zoomingInputs.push({
+        tag: el.tagName,
+        type: el.getAttribute('type') || el.getAttribute('inputmode') || '',
+        placeholder: (el.getAttribute('placeholder') || '').slice(0, 24),
+        fontSize: fs,
+      });
+    }
+  }
+
   return {
     vw,
+    zoomingInputCount: zoomingInputs.length,
+    zoomingInputs: zoomingInputs.slice(0, 6),
     scrollWidth: de.scrollWidth,
     hasHorizontalScroll: de.scrollWidth > vw + 1,
     bodyHeight: Math.round(body.getBoundingClientRect().height),
@@ -228,6 +246,7 @@ for (const vp of VIEWPORTS) {
       if (measured.overflowCount) flags.push(`overflow:${measured.overflowCount}`);
       if (measured.smallTargetCount) flags.push(`tap:${measured.smallTargetCount}`);
       if (measured.tinyTextCount) flags.push(`tiny:${measured.tinyTextCount}`);
+      if (measured.zoomingInputCount) flags.push(`ZOOM-INPUT:${measured.zoomingInputCount}`);
       if (consoleErrors.length) flags.push(`console:${consoleErrors.length}`);
       if (measured.is404) flags.push('404');
       console.log(`${flags.length ? 'WARN' : 'ok  '} ${tag} ${flags.join(' ') || 'clean'}`);
