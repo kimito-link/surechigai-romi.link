@@ -185,9 +185,16 @@ const MEASURE = () => {
 
   // iOS Safari は 16px 未満の入力にフォーカスするとページを自動拡大する。
   // 一度拡大すると戻らず「スワイプすると画面が大きくなる/挙動が変」に見える。
+  // ★2026-08-03: マウス環境(pointer:fine)では自動ズームは起きないため検査しない。
+  //   ここを分けないと desktop 幅で毎回鳴り、本物の実害が埋もれる（kimito 側で実証）。
+  const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
   const zoomingInputs = [];
-  for (const el of document.querySelectorAll('input, textarea, select')) {
+  for (const el of isCoarsePointer ? document.querySelectorAll('input, textarea, select') : []) {
     if (!visible(el)) continue;
+    // checkbox/radio/range 等は文字入力しないのでフォーカスしても拡大しない。
+    // 除外しないと設定画面のチェックボックスが毎回赤く出る（kimito で実際に発生）。
+    const t = (el.getAttribute('type') || '').toLowerCase();
+    if (['checkbox','radio','range','color','file','submit','button','hidden','image','reset'].includes(t)) continue;
     const fs = parseFloat(getComputedStyle(el).fontSize);
     if (fs && fs < 16) {
       zoomingInputs.push({
@@ -221,9 +228,17 @@ const results = [];
 const browser = await chromium.launch();
 
 for (const vp of VIEWPORTS) {
+  // ★2026-08-03: userAgent の偽装だけでは `@media (pointer: coarse)` が成立しない。
+  //   実測すると coarse=false のままで、タッチ端末向けCSSが**当たっていない状態で測って**いた
+  //   （kimitolink-linktree 側で同じ罠を踏み、実機では直っているのに監査だけ赤い/
+  //     あるいは効いていないCSSを見逃す、という誤検知になった）。
+  //   hasTouch/isMobile を立てて実機と同じ条件にする。iPad(768px) もタッチ端末なので含める。
+  const isTouchWidth = vp.width <= 768;
   const ctx = await browser.newContext({
     viewport: { width: vp.width, height: vp.height },
     deviceScaleFactor: 2,
+    hasTouch: isTouchWidth,
+    isMobile: isTouchWidth,
     userAgent:
       vp.width < 768
         ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
