@@ -31,11 +31,26 @@ const { values } = parseArgs({
     routes: { type: 'string' },
     out: { type: 'string' },
     'fail-on': { type: 'string' }, // overflow のみで落とすなど
+    // ログイン後画面を測るための storageState（.auth/auth-state.json）。
+    // ゲスト画面しか測れないと、実際に不具合が出ている認証後の画面を見逃す。
+    auth: { type: 'string' },
   },
   strict: false,
 });
 
 const BASE = (values.base ?? 'https://surechigai.kimito.link').replace(/\/$/, '');
+
+// ログイン後画面を測るための storageState。存在しなければゲストとして測る。
+const AUTH_STATE = (() => {
+  const p = values.auth;
+  if (!p) return null;
+  if (!fs.existsSync(p)) {
+    console.warn(`[auth] ${p} が見つかりません。ゲストとして測定します。`);
+    return null;
+  }
+  console.log(`[auth] storageState を使用: ${p}`);
+  return p;
+})();
 
 /** ゲストで到達できる画面。認証必須の画面はログイン画面に落ちるが、それも実画面として測る価値がある */
 const DEFAULT_ROUTES = [
@@ -97,16 +112,22 @@ const MEASURE = () => {
     if (el.ownerSVGElement) continue;
     const r = el.getBoundingClientRect();
     if (r.right > vw + 1 || r.left < -1) {
-      // 自前で横スクロールできる領域の中身は許容（意図的なカルーセル等）
-      let scrollable = false;
+      // 祖先がクリップ／スクロールを担っている中身は許容する。
+      //   - auto/scroll: 意図的なカルーセル等
+      //   - hidden     : 地図タイル（256px固定）のように、はみ出す前提で
+      //                  親が切り取る設計。画面は破綻しない。
+      //                  ※ hidden を除外し忘れると、OpenStreetMap のタイルが
+      //                    全ルートで大量に誤検知される（2026-08-03 実測で229件）。
+      let clipped = false;
       for (let p = el.parentElement, i = 0; p && i < 6; p = p.parentElement, i++) {
         const cs = getComputedStyle(p);
-        if ((cs.overflowX === 'auto' || cs.overflowX === 'scroll') && p.scrollWidth > p.clientWidth) {
-          scrollable = true;
+        const ovx = cs.overflowX;
+        if (ovx === 'auto' || ovx === 'scroll' || ovx === 'hidden' || ovx === 'clip') {
+          clipped = true;
           break;
         }
       }
-      if (scrollable) continue;
+      if (clipped) continue;
       overflow.push({
         tag: el.tagName,
         cls: (el.className || '').toString().slice(0, 60),
@@ -207,6 +228,7 @@ for (const vp of VIEWPORTS) {
       vp.width < 768
         ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
         : undefined,
+    ...(AUTH_STATE ? { storageState: AUTH_STATE } : {}),
   });
 
   for (const route of ROUTES) {
