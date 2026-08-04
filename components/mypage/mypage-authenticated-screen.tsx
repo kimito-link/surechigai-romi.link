@@ -13,7 +13,7 @@
  */
 
 import { View, Text, Platform, Pressable, Alert } from "react-native";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
@@ -27,6 +27,8 @@ import { navigate } from "@/lib/navigation";
 import {
   closePreparedSharePopup,
   prepareSharePopup,
+  withShareTimeout,
+  ShareTimeoutError,
   shareMyLocation,
 } from "@/lib/share";
 import type { TrailVisibility } from "@/modules/encounter/core/trail-visibility";
@@ -96,6 +98,8 @@ export function MypageAuthenticatedScreen() {
   const setTrailVisibility = trpc.settings.setTrailVisibility.useMutation();
   const [sharePrecise, setSharePrecise] = useState(false);
   const [trailVisibility, setTrailVisibilityState] = useState<TrailVisibility>("public");
+  /** シェア導線の二重起動ガード(2026-08-04): 連打で空タブが増える/429を誘発するのを防ぐ */
+  const shareInFlightRef = useRef(false);
   const { liveEnabled, toggleLivePresence, isPausing, isLoading: livePresenceLoading } =
     useLivePresenceControls();
   const pauseLocationMutation = trpc.settings.pauseLocation.useMutation({
@@ -141,21 +145,33 @@ export function MypageAuthenticatedScreen() {
   );
 
   const handleShareLocation = useCallback(async () => {
+    // 連打ガード: 前回のシェアが飛んでいる間の再タップを弾く（空タブ増殖・429の誘発を防ぐ）
+    if (shareInFlightRef.current) return;
+    shareInFlightRef.current = true;
+
     const sharePopup = prepareSharePopup();
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     try {
-      const res = await shareSlugMutation.mutateAsync();
+      // タイムアウト必須: 「遅い」だけだと catch に来ず空タブが about:blank のまま残る
+      const res = await withShareTimeout(shareSlugMutation.mutateAsync());
       const shared = await shareMyLocation(res.url, res.areaLabel ?? undefined, {
         popup: sharePopup,
       });
       if (!shared) {
         Alert.alert("エラー", "Xの投稿画面を開けませんでした。ポップアップ許可を確認してください。");
       }
-    } catch {
+    } catch (err) {
       closePreparedSharePopup(sharePopup);
-      Alert.alert("エラー", "共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
+      Alert.alert(
+        "エラー",
+        err instanceof ShareTimeoutError
+          ? "共有リンクの作成に時間がかかっています。電波の良い場所で再度お試しください。"
+          : "共有リンクの作成に失敗しました。時間をおいて再度お試しください。",
+      );
+    } finally {
+      shareInFlightRef.current = false;
     }
   }, [shareSlugMutation]);
 

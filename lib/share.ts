@@ -12,6 +12,39 @@ export type PreparedSharePopup = {
   popup: Window | null;
 };
 
+/**
+ * 共有リンクの発行を待つ上限。超えたら空タブを閉じてエラーを出す。
+ *
+ * これが無いと、リンク発行が「失敗」ではなく「遅い／返ってこない」だけのとき
+ * catch に落ちず、開いた about:blank タブが永久に残る（2026-08-04 実機report）。
+ */
+export const SHARE_SLUG_TIMEOUT_MS = 8000;
+
+export class ShareTimeoutError extends Error {
+  constructor() {
+    super("share slug timeout");
+    this.name = "ShareTimeoutError";
+  }
+}
+
+/** 共有リンク発行など「ユーザーが空タブを見ながら待つ処理」に上限を課す */
+export async function withShareTimeout<T>(
+  work: Promise<T>,
+  timeoutMs = SHARE_SLUG_TIMEOUT_MS,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new ShareTimeoutError()), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 // 本番URLを取得（環境変数から、またはデフォルト値）
 function getAppUrl(): string {
   // Web環境では現在のURLから取得
@@ -37,13 +70,20 @@ export interface ShareContent {
   hashtags?: string[];
 }
 
+/**
+ * 名前付きタブで開く。連続シェアで about:blank タブが増殖しないよう、
+ * 前回の準備タブが生きていれば同じタブを再利用する。
+ */
+const SHARE_POPUP_NAME = "surechigai-share";
+
 export function prepareSharePopup(): PreparedSharePopup | null {
   if (Platform.OS !== "web" || typeof window === "undefined") return null;
 
-  const popup = window.open("about:blank", "_blank");
+  const popup = window.open("about:blank", SHARE_POPUP_NAME);
   if (popup) {
     try {
-      popup.opener = null;
+      // ここで opener を切ってはいけない。切ると後段の location.href 差し替えが
+      // できなくなり、空タブが about:blank のまま残る。実際の遮断は遷移直前に行う。
       popup.document.title = "Xでシェア";
       popup.document.body.textContent = "共有画面を準備しています…";
     } catch {
@@ -81,6 +121,12 @@ function openWebShareUrl(
   if (target) {
     if (target.popup && !target.popup.closed) {
       target.popup.location.href = twitterUrl;
+      try {
+        // 遷移させたあとに遮断する（準備中は差し替えのため参照を保持しておく必要がある）
+        target.popup.opener = null;
+      } catch {
+        // noop
+      }
       return true;
     }
     window.location.assign(twitterUrl);

@@ -139,7 +139,12 @@ export const ogpRouter = router({
     let areaLabel: string | null = null;
     let shareUrl = `${APP_ORIGIN}/u/${slug}`;
     try {
-      const info = await getShareInfoBySlug(db, slug, ctx.user.id, { ogpContext: true });
+      // skipUsernameLookup: この経路はタップ直後の空タブを開いたままユーザーを待たせている。
+      // 返すのは地名と URL だけで username は使わないので、Clerk への外部 HTTP を踏ませない。
+      const info = await getShareInfoBySlug(db, slug, ctx.user.id, {
+        ogpContext: true,
+        skipUsernameLookup: true,
+      });
       const shareLocation = info
         ? {
             area: info.area,

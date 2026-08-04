@@ -1643,6 +1643,15 @@ export async function getPublicTrailByShareSlug(
 export type GetShareInfoOptions = {
   /** OGP クローラー向け: 本人が発行した /u/<slug> なので自宅マスクを緩和 */
   ogpContext?: boolean;
+  /**
+   * X ユーザー名の解決（Clerk API への外部 HTTP）を省く。
+   *
+   * ユーザー操作を待たせる経路（ogp.getOrCreateShareSlug = Xでシェアのタップ直後）で使う。
+   * この経路が欲しいのは地名と座標だけで username は使わないのに、Clerk が遅い・429 を返すと
+   * シェア用の空タブが about:blank のまま固まっていた（2026-08-04 実機report）。
+   * 表示名が要る OGP 生成側では従来どおり解決させる。
+   */
+  skipUsernameLookup?: boolean;
 };
 
 export async function getShareInfoBySlug(
@@ -1666,7 +1675,9 @@ export async function getShareInfoBySlug(
   const u = userRows[0];
   let username = usernameFromName(u.name);
 
-  if (!username && u.openId.startsWith("clerk:")) {
+  if (options?.skipUsernameLookup) {
+    // 外部 API も追加クエリも踏まない（呼び出し側がユーザーを待たせている経路）
+  } else if (!username && u.openId.startsWith("clerk:")) {
     const { fetchClerkTwitterProfiles, syncClerkTwitterProfileToDb } = await import(
       "../../../server/clerk-profile-sync.js"
     );

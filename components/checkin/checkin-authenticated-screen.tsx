@@ -47,6 +47,8 @@ import { CheckinScreenView } from "@/components/checkin/checkin-screen-view";
 import {
   closePreparedSharePopup,
   prepareSharePopup,
+  withShareTimeout,
+  ShareTimeoutError,
   shareMyLocation,
 } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
@@ -136,6 +138,8 @@ export default function CheckinAuthenticatedScreen() {
   const activeLocationAbortRef = useRef<AbortController | null>(null);
   /** 二重起動ガード(P2-3): stateの非同期反映を待たず同期で連打を弾く(二重INSERT/429対策) */
   const checkinInFlightRef = useRef(false);
+  /** シェア導線の二重起動ガード(2026-08-04): 連打で空タブが増える/429を誘発するのを防ぐ */
+  const shareInFlightRef = useRef(false);
   const displayedSponsorKeyRef = useRef<string | null>(null);
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
   const [showSettings, setShowSettings] = useState(false);
@@ -145,12 +149,19 @@ export default function CheckinAuthenticatedScreen() {
   // チェックイン直後にその場で「現在地をXでシェア」できる導線
   const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
   const handleShareLocation = useCallback(async () => {
+    // 連打ガード: 前回のシェアが飛んでいる間に再タップされると、空タブが増える上に
+    // 共有リンク発行が重なって 429 を誘発する（連続シェアで固まる報告の一因）。
+    if (shareInFlightRef.current) return;
+    shareInFlightRef.current = true;
+
     const sharePopup = prepareSharePopup();
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     try {
-      const res = await shareSlugMutation.mutateAsync();
+      // タイムアウト必須: 失敗ではなく「遅い」だけだと catch に来ず、
+      // 空タブが about:blank のまま永久に残る。
+      const res = await withShareTimeout(shareSlugMutation.mutateAsync());
       const areaLabel =
         checkinMunicipality ??
         checkinPrefecture ??
@@ -162,9 +173,15 @@ export default function CheckinAuthenticatedScreen() {
       if (!shared) {
         showError("Xの投稿画面を開けませんでした。ポップアップ許可を確認してください。");
       }
-    } catch {
+    } catch (err) {
       closePreparedSharePopup(sharePopup);
-      showError("共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
+      showError(
+        err instanceof ShareTimeoutError
+          ? "共有リンクの作成に時間がかかっています。電波の良い場所で再度お試しください。"
+          : "共有リンクの作成に失敗しました。時間をおいて再度お試しください。",
+      );
+    } finally {
+      shareInFlightRef.current = false;
     }
   }, [shareSlugMutation, showError, checkinMunicipality, checkinPrefecture]);
 
