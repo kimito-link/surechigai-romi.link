@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 29; // 2026-08-02: ログイン後画面の入力欄も16pxへ（iOS自動ズーム対策の総ざらい）
+export const CDN_CACHE_EPOCH = 30; // 2026-08-04: OGPウォームURLの一致修正（チャンク名が変わらず旧コードが配信され続けたため強制改名）
