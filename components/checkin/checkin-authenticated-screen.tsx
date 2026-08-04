@@ -140,6 +140,11 @@ export default function CheckinAuthenticatedScreen() {
   const checkinInFlightRef = useRef(false);
   /** シェア導線の二重起動ガード(2026-08-04): 連打で空タブが増える/429を誘発するのを防ぐ */
   const shareInFlightRef = useRef(false);
+  /**
+   * OGP画像の事前ウォーム対象URL(2026-08-04)。
+   * サーバーが og:image と同じ組み立てで返すので、そのまま useWarmOgImage に渡す。
+   */
+  const [warmImageUrl, setWarmImageUrl] = useState<string | null>(null);
   const displayedSponsorKeyRef = useRef<string | null>(null);
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
   const [showSettings, setShowSettings] = useState(false);
@@ -162,6 +167,8 @@ export default function CheckinAuthenticatedScreen() {
       // タイムアウト必須: 失敗ではなく「遅い」だけだと catch に来ず、
       // 空タブが about:blank のまま永久に残る。
       const res = await withShareTimeout(shareSlugMutation.mutateAsync());
+      // 次のレンダリングでブラウザがこのURLを叩き、クローラーより先にキャッシュを温める
+      setWarmImageUrl(res.warmImageUrl ?? null);
       const areaLabel =
         checkinMunicipality ??
         checkinPrefecture ??
@@ -734,15 +741,21 @@ export default function CheckinAuthenticatedScreen() {
 
   const placeLine = checkinAddress ?? checkinLocationName;
 
-  // OGP画像は生成に5〜6秒かかりXは~2秒で諦めるため、結果画面が出た時点で
+  // チェックイン完了の時点でウォーム対象URLを取り、シェアされる前に温め始める。
+  // シェアのタップを待つとクローラーの到着に間に合わないことがあるため。
+  // URLはサーバーが og:image と同じ組み立てで返したものを使う（自前で組むとキーがズレる）。
+  const warmUrlQuery = trpc.ogp.getShareWarmTarget.useQuery(undefined, {
+    enabled: isAuthenticated && isCheckinComplete,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  // OGP画像はキャッシュミスだと 1.7〜3.1 秒かかり X は ~2 秒で諦めるため、
   // ブラウザから先に叩いてキャッシュを温める（サーバー応答は遅らせない）。
   useWarmOgImage({
     enabled: isCheckinComplete,
-    lat: checkinLatLng?.lat ?? null,
-    lng: checkinLatLng?.lng ?? null,
-    area: checkinMunicipality ?? null,
-    prefecture: checkinPrefecture ?? null,
-    username: user?.username ?? null,
+    // シェア時に得た値があればそちらを優先（最新の記録時刻が反映されているため）
+    url: warmImageUrl ?? warmUrlQuery.data?.warmImageUrl ?? null,
   });
 
   const sponsorQuery = trpc.ads.getCards.useQuery(

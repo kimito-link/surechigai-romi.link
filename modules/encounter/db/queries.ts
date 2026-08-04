@@ -1412,6 +1412,24 @@ function usernameFromName(name: string | null): string | null {
  * 既に設定済みならそれを返す。生成は UNIQUE 衝突時に数回リトライ。
  * I/l 等の紛らわしい文字を含む旧スラッグは次回アクセス時に再生成する。
  */
+/**
+ * 発行済みの共有スラッグを読むだけ（無ければ null）。
+ *
+ * OGP画像の事前ウォーム（読み取り専用の query）から使う。ウォームは投機的処理なので、
+ * 副作用として slug を発行してはいけない。発行が要る場面では
+ * getOrCreateUserShareSlug を使うこと。
+ */
+export async function getUserShareSlug(db: DB, userId: number): Promise<string | null> {
+  const rows = await db
+    .select({ shareSlug: users.shareSlug })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  const slug = rows[0]?.shareSlug;
+  if (!slug || !isValidShareSlug(slug) || hasAmbiguousShareSlugChars(slug)) return null;
+  return slug;
+}
+
 export async function getOrCreateUserShareSlug(
   db: DB,
   userId: number

@@ -41,14 +41,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let description =
     "位置情報で近くにいた人とすれ違える、無料のすれ違い通信。会いたい君がいる現在地をたどろう。";
   let resolvedLocation: ShareLocationInfo | null = null;
-  let shareUsername: string | null = null;
 
   if (slug && /^[A-Za-z0-9]{1,16}$/.test(slug)) {
     try {
       const db = await getDb();
       if (db) {
         const info = await getShareInfoBySlug(db, slug, undefined, { ogpContext: true });
-        shareUsername = info?.username ?? null;
         const queryHint = parseShareLocationFromQuery(req.query);
         const infoLocation: ShareLocationInfo | null = info
           ? {
@@ -91,7 +89,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? buildOgRedirectImageTarget({
           origin: APP_ORIGIN,
           location: resolvedLocation,
-          username: shareUsername,
+          // name は付けない(2026-08-04)。ブラウザ側の事前ウォームは
+          // ogp.getOrCreateShareSlug が返す warmImageUrl を叩くが、そちらは
+          // skipUsernameLookup のため username を解決していない。ここで name を
+          // 付けるとキャッシュキーが分裂してウォームが無効化する。
+          // name は画像下部のハンドル行にしか出ないので、一致を優先する。
+          username: null,
           version:
             resolvedLocation?.recordedAt?.getTime() ??
             versionFromQuery?.getTime() ??

@@ -112,6 +112,23 @@ function buildTwitterIntentUrl(text: string, url?: string, hashtags?: string[]):
   return `https://twitter.com/intent/tweet?${params.toString()}`;
 }
 
+/**
+ * 新しいタブで開く。開けなければ false（現在のタブは奪わない）。
+ *
+ * 現在タブを X に差し替える挙動は、ユーザーがアプリの画面（チェックイン結果など）を
+ * 失うので最後の手段にもしない。開けなかったことを呼び出し側に伝えて案内を出す。
+ */
+function openInNewTab(url: string): boolean {
+  const opened = window.open(url, "_blank");
+  if (!opened) return false;
+  try {
+    opened.opener = null;
+  } catch {
+    // noop
+  }
+  return true;
+}
+
 function openWebShareUrl(
   twitterUrl: string,
   target?: PreparedSharePopup | null,
@@ -129,22 +146,16 @@ function openWebShareUrl(
       }
       return true;
     }
-    window.location.assign(twitterUrl);
-    return true;
+    // 空タブを確保できなかった（ポップアップブロック）、または準備中にユーザーが
+    // そのタブを閉じた場合。ここで window.location.assign してはいけない(2026-08-04)。
+    // 現在のタブごと X に飛ぶとアプリの画面が失われ、しかも true を返すので
+    // 呼び出し側の「ポップアップ許可を確認してください」も出ない。
+    // iOS Safari はポップアップブロックが既定 ON なので日常的に踏まれる。
+    // 開き直しを一度だけ試し、それも塞がれていれば素直に失敗を返す。
+    return openInNewTab(twitterUrl);
   }
 
-  const popup = window.open(twitterUrl, "_blank");
-  if (popup) {
-    try {
-      popup.opener = null;
-    } catch {
-      // noop
-    }
-    return true;
-  }
-
-  window.location.assign(twitterUrl);
-  return true;
+  return openInNewTab(twitterUrl);
 }
 
 /**

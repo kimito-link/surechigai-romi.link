@@ -228,11 +228,23 @@ export function MypageAuthenticatedScreen() {
   }, [resumeLocationMutation]);
 
   const handleViewPublicPage = useCallback(async () => {
+    // シェアと同じ mutation を使うので同じガードを掛ける。ここを素の await にすると
+    // 「失敗ではなく遅い/返らない」ときボタンが「準備中…」のまま永久に固まる
+    // （catch にも来ない）。2026-08-04 にシェア側で直した地雷と同型。
+    if (shareInFlightRef.current) return;
+    shareInFlightRef.current = true;
     try {
-      const res = await shareSlugMutation.mutateAsync();
+      const res = await withShareTimeout(shareSlugMutation.mutateAsync());
       navigate.toPublicTrail(res.slug);
-    } catch {
-      Alert.alert("エラー", "公開ページの取得に失敗しました。時間をおいて再度お試しください。");
+    } catch (err) {
+      Alert.alert(
+        "エラー",
+        err instanceof ShareTimeoutError
+          ? "公開ページの取得に時間がかかっています。電波の良い場所で再度お試しください。"
+          : "公開ページの取得に失敗しました。時間をおいて再度お試しください。",
+      );
+    } finally {
+      shareInFlightRef.current = false;
     }
   }, [shareSlugMutation]);
 
