@@ -215,6 +215,22 @@ async function captureDevice(browser, dev) {
   });
   await ctx.addInitScript(
     ({ css, onboardingKey }) => {
+      // ネイティブアプリとして描画させる（2026-08-05 Guideline 2.3.7 対応）。
+      // スクショはブラウザで撮るので、何もしないと Web 向けの文言
+      // (「無料・1タップ」「𝕏 1タップではじめる」) が写り、価格表現として却下される。
+      // アプリ側は lib/native-app-shell.ts の isNativeAppShell() で出し分けているので、
+      // 撮影スクリプトで文言を消し込むのではなく、実機と同じ条件を与えて
+      // アプリ自身に正しい表示を選ばせる（撮影用の別実装を作らない）。
+      try {
+        if (!window.Capacitor) {
+          Object.defineProperty(window, 'Capacitor', {
+            value: { isNativePlatform: () => true, getPlatform: () => 'ios' },
+            configurable: true,
+          });
+        }
+      } catch {
+        /* ignore */
+      }
       try {
         window.localStorage.setItem(onboardingKey, 'true');
       } catch {
