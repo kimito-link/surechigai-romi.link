@@ -35,7 +35,15 @@
 name: ios-appstore-release
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force_resubmit:
+        description: >-
+          却下後に同じバージョンを再提出する。ASC のバージョン行が WAITING_FOR_REVIEW の
+          ままだと通常はスキップされるため、そのときだけ true にする
+          (IN_REVIEW 以降は審査官が実機を見ているので、この指定でも触らない)。
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -778,6 +786,10 @@ jobs:
           APP_BUNDLE_ID: ${{ env.APP_BUNDLE_ID }}
           IOS_BUILD_NUMBER: ${{ env.IOS_BUILD_NUMBER }}
           IOS_SCREENSHOTS_DIR: ios-screenshots
+          # 却下後に同じバージョンを再提出する場合のみ true。
+          # ASC のバージョン行が WAITING_FOR_REVIEW のまま残ると通常はスキップされ、
+          # 修正した審査ノートもスクショも新ビルドも反映されない（2026-08-05 に発生）。
+          IOS_FORCE_RESUBMIT: ${{ inputs.force_resubmit && '1' || '' }}
           # Reviewer contact info  EApple validates phone format and
           # rejects obviously-fake numbers. Stored as a repo secret.
           IOS_REVIEW_CONTACT_PHONE: ${{ secrets.IOS_REVIEW_CONTACT_PHONE }}

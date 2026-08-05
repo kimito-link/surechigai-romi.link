@@ -1240,10 +1240,38 @@ async function submitForReview(api, appId, versionId) {
     didRepurpose = true;
   }
   if (existingSameVersion && APPLE_TURN_STATES.has(existingSameVersion.appStoreState)) {
-    console.log(
-      `  version ${marketing} is already ${existingSameVersion.appStoreState} (Apple's turn).\n  Nothing to do.`,
-    );
-    return;
+    // 却下後の再提出(2026-08-05 に実際に詰まった経路):
+    // Resolution Center で却下されても、ASC のバージョン行は WAITING_FOR_REVIEW の
+    // ままになることがある。そのままだとここで return し、修正した審査ノートも
+    // 差し替えたスクリーンショットも新ビルドも一切反映されない。
+    //
+    // WAITING_FOR_REVIEW は「Apple のキューに並んでいるだけで、まだ審査官が見ていない」
+    // 状態なので、キャンセルして差し替えても実害がない(SUPERSEDABLE_APPLE_STATES と
+    // 同じ判断)。ただし IN_REVIEW 以降は審査官が実機を触っている最中なので絶対に触らない。
+    //
+    // 誤って審査中の版を巻き戻さないよう、明示のフラグを要求する。
+    const resubmitRequested =
+      /^(1|true|yes)$/i.test(process.env.IOS_FORCE_RESUBMIT || '');
+    if (resubmitRequested && SUPERSEDABLE_APPLE_STATES.has(existingSameVersion.appStoreState)) {
+      console.log(
+        `  version ${marketing} is ${existingSameVersion.appStoreState} (Apple's queue, not yet under review) ` +
+          `and IOS_FORCE_RESUBMIT is set.\n  ` +
+          `Cancelling the open submission so the corrected metadata / screenshots / build can go in...`,
+      );
+      await cancelOpenReviewSubmissions(api, app.id);
+      didRepurpose = true;
+    } else {
+      console.log(
+        `  version ${marketing} is already ${existingSameVersion.appStoreState} (Apple's turn).\n  Nothing to do.`,
+      );
+      if (SUPERSEDABLE_APPLE_STATES.has(existingSameVersion.appStoreState)) {
+        console.log(
+          `  -> If this version was rejected and you want to resubmit the same version, ` +
+            `re-run with IOS_FORCE_RESUBMIT=1.`,
+        );
+      }
+      return;
+    }
   }
 
   let liveVersionAfter = liveVersion;
