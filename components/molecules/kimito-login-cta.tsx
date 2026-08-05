@@ -4,6 +4,7 @@
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Link, type Href } from "expo-router";
 import { palette } from "@/theme/tokens";
+import { isNativeAppShell } from "@/lib/native-app-shell";
 
 type KimitoLoginCtaProps = {
   signInHref: string;
@@ -29,13 +30,23 @@ export function KimitoLoginCta({
   isStarting = false,
   onPress,
 }: KimitoLoginCtaProps) {
+  // ネイティブアプリ(App Store 審査対象)では特定プロバイダを名指ししない。
+  // X の字面と「1タップ」を出すと、実際は Apple も選べるのに
+  // 「X ログインしか無い」と見える（2026-08-05 Guideline 4.8 却下の一因）。
+  const isNative = isNativeAppShell();
+  const nativeLabel = isStarting ? "接続中…" : "はじめる";
   const displayLabel = isStarting ? "接続中…" : label;
-  const content = (
+  const content = isNative ? (
+    <Text style={styles.buttonText}>{nativeLabel}</Text>
+  ) : (
     <>
       <Text style={styles.xGlyph}>𝕏</Text>
       <Text style={styles.buttonText}>{displayLabel}</Text>
     </>
   );
+  const a11yLabel = isNative
+    ? `${nativeLabel}（AppleまたはXでサインイン）`
+    : `Xで${displayLabel}`;
 
   if (Platform.OS === "web") {
     // 実 <a href> を出す: E2E/クローラー/右クリック新規タブなどのブラウザネイティブ機能を保つ。
@@ -48,7 +59,7 @@ export function KimitoLoginCta({
           onPress?.();
         }}
         accessibilityRole="button"
-        accessibilityLabel={`Xで${displayLabel}`}
+        accessibilityLabel={a11yLabel}
         style={[
           buttonStyle,
           styles.webLink,
@@ -65,7 +76,7 @@ export function KimitoLoginCta({
       disabled={isStarting}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Xで${displayLabel}`}
+      accessibilityLabel={a11yLabel}
       style={({ pressed }) => [
         buttonStyle,
         pressed && { opacity: 0.85 },

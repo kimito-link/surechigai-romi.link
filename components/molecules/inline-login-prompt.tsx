@@ -1,6 +1,7 @@
 import { usePathname } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
+import { loginCtaNote } from "@/lib/native-app-shell";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { buildSignInAutoXHref } from "@/lib/clerk-route";
@@ -60,7 +61,7 @@ export function InlineLoginPrompt({
         signInHref={buildSignInAutoXHref(resolvedReturnTo)}
         onPress={() => openLoginGuide({ returnTo: resolvedReturnTo })}
       />
-      <Text style={styles.note}>無料・1タップ / 新規登録もこちら</Text>
+      <Text style={styles.note}>{loginCtaNote()}</Text>
     </View>
   );
 }

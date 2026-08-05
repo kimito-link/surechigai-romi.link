@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { Platform, Text, View } from "react-native";
 import { palette } from "@/theme/tokens";
+import { isNativeAppShell } from "@/lib/native-app-shell";
 
 const AUTO_PARAM = "auto";
 const AUTO_VALUE = "x";
@@ -21,6 +22,11 @@ const X_BUTTON_SELECTOR = [
 
 function hasAutoXParam(): boolean {
   if (Platform.OS !== "web" || typeof window === "undefined") return false;
+  // ネイティブアプリでは自動遷移しない（App Store Guideline 4.8・2026-08-05 の却下対応）。
+  // Sign in with Apple は以前から実装済みだったが、この 1 タップ導線が X を自動クリックして
+  // しまうため、審査員が Apple を選ぶ機会そのものが無く「Xしか無い」と判定された。
+  // Web の 1 タップ UX は維持し、ネイティブだけプロバイダを明示的に選ばせる。
+  if (isNativeAppShell()) return false;
   return (
     new URL(window.location.href).searchParams.get(AUTO_PARAM) === AUTO_VALUE
   );

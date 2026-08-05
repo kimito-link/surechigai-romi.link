@@ -11,6 +11,7 @@ import {
   Pressable,
 } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
+import { loginCtaNote } from "@/lib/native-app-shell";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { MARKETING_URL } from "@/lib/site-urls";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
@@ -73,7 +74,7 @@ export function PostGuestScreen() {
             signInHref={SIGN_IN_AUTO_X_HREF}
             onPress={() => openLoginGuide({ returnTo: "/" })}
           />
-          <Text style={styles.ctaNote}>無料・1タップ / 新規登録もこちら</Text>
+          <Text style={styles.ctaNote}>{loginCtaNote()}</Text>
         </View>
         <Pressable
           accessibilityRole="link"

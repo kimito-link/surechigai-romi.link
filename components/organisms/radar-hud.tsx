@@ -11,6 +11,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "@/lib/icons/material-icons";
+import { loginCtaNote } from "@/lib/native-app-shell";
 import { color, palette } from "@/theme/tokens";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 
@@ -175,7 +176,7 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
                 <Text style={styles.xGlyph}>𝕏</Text>　ではじめる
               </Text>
               <Text style={[styles.heroLoginSub, stylesBySize[heroSize].heroLoginSub]}>
-                無料・1タップ / 新規登録もこちら
+                {loginCtaNote()}
               </Text>
             </Pressable>
           )}

@@ -2,6 +2,7 @@ import { usePathname } from "expo-router";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
+import { loginCtaNote } from "@/lib/native-app-shell";
 import { BrandStamp } from "@/components/brand/brand-stamp";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
 import { ScreenContainer } from "@/components/organisms/screen-container";
@@ -144,7 +145,7 @@ export function OneTapGuestShell({
   const cta = (
     <View style={styles.ctaWrap}>
       <KimitoLoginCta signInHref={signInHref} onPress={handleLogin} />
-      <Text style={styles.ctaNote}>無料・1タップ / 新規登録もこちら</Text>
+      <Text style={styles.ctaNote}>{loginCtaNote()}</Text>
     </View>
   );
 

@@ -489,8 +489,18 @@ function buildDefaultReviewNotes() {
   if (_DEMO_USER) {
     lines.push('Sign in with the demo credentials provided in App Review Information.');
   } else {
+    // デモ資格情報が無いときに「App Review Information に用意してある」と書いてはいけない。
+    // 審査員はそこを見に行き、空欄を見つけて Guideline 2.1(a) で差し戻す
+    // （2026-08-05 に実際に発生。notes と demoAccountName: null が矛盾していた）。
+    // このアプリは username/password 方式を持たない（Clerk が OAuth 専用構成）ため、
+    // 「サインイン不要で評価できること」と「Apple ID でそのまま入れること」を正しく伝える。
     lines.push(
-      'If a sign-in is required to evaluate the app, demo credentials are provided in App Review Information.',
+      'Sign-in is NOT required to evaluate this app. Browse, the nationwide map, the ' +
+        'stamp book, and the meetup list are all viewable without an account, so no demo ' +
+        'credentials are needed. To review the signed-in experience, tap the start button ' +
+        'on the first screen and choose "Sign in with Apple" — your own Apple ID works and ' +
+        'no separate registration is necessary. This app has no username/password login: ' +
+        'the only sign-in methods are Sign in with Apple and X (OAuth).',
     );
   }
   lines.push(
