@@ -110,6 +110,9 @@ const HIDE_SOCIAL_CSS = `
     display: none !important;
   }
   html, body { overflow-x: hidden !important; max-width: 100vw !important; }
+  /* ゲスト用の固定フッターCTA。タブバー直上に固定されるため、撮影すると
+     画面下端で途中から切れて写る（2026-08-05 実画像で確認）。撮影時のみ隠す。 */
+  #guest-fixed-footer { display: none !important; }
 `;
 
 // 撮影直前にキャプション帯を最前面に差し込む(撮影後に外す)。

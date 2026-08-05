@@ -213,6 +213,10 @@ export function OneTapGuestShell({
 
       {!isDesktop ? (
         <View
+          // nativeID: App Store スクショ撮影時に隠すためのフック。
+          // このフッターはタブバー直上に固定表示されるため、撮影すると
+          // 画面下端で途中から切れて写り、見栄えを損なう（2026-08-05 実画像で確認）。
+          nativeID="guest-fixed-footer"
           style={[styles.fixedFooter, { paddingBottom: footerBottomInset }]}
           onLayout={handleFooterLayout}
         >
