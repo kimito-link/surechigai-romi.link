@@ -1,0 +1,148 @@
+# iOS prebuild 実現性プローブ（調査専用・提出しない）
+#
+# 目的（2026-08-06）:
+# App Store 却下（Guideline 4: ログインが外部ブラウザに出る）の根治として、
+# ビルド方式を Capacitor(`cap add ios`) から Expo prebuild へ切り替えたい。
+# 切り替えると Clerk の useOAuth が ASWebAuthenticationSession（アプリ内モーダル・
+# Safari とセッション共有・Apple 推奨）で動くため、Guideline 4 が構造的に解消する。
+#
+# ただし以下が Windows のローカルでは確認できないため、ここで実測する:
+#   1. `npx expo prebuild --platform ios` が通るか
+#   2. 生成される Xcode プロジェクト名（app.config.ts の name が日本語のため予測不能）
+#   3. Podfile / xcworkspace のパス（既存 workflow は Capacitor の ios/App/ 前提で15箇所依存）
+#   4. pod install と xcodebuild -showBuildSettings が通るか
+#
+# 本 workflow は**アーカイブも提出もしない**。生成物の構造を出力するだけ。
+# 既存の ios-appstore-release.yml には一切触らない（退路の確保）。
+name: ios-prebuild-probe
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: ios-prebuild-probe-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Select Xcode (iOS 26 SDK or later)
+        run: |
+          set -euo pipefail
+          chosen=""
+          for app in /Applications/Xcode_26*.app /Applications/Xcode_27*.app /Applications/Xcode_28*.app; do
+            [ -d "$app" ] || continue
+            chosen="$app"
+          done
+          if [ -z "$chosen" ]; then
+            echo "::error::No Xcode 26+ found on this runner."
+            ls -1d /Applications/Xcode*.app 2>/dev/null || true
+            exit 1
+          fi
+          sudo xcode-select -s "$chosen/Contents/Developer"
+          xcodebuild -version
+
+      # 既存 ios-appstore-release.yml と同じ組み合わせに揃える。
+      # pnpm/action-setup@v6 は packageManager から版を推論するので version: を書かない
+      # （両方指定するとエラーになる、と既存 workflow のコメントに実績が残っている）。
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve expo config (prebuild view)
+        run: |
+          set -euo pipefail
+          echo "--- expo config --type prebuild ---"
+          npx expo config --type prebuild --json > /tmp/expo-prebuild.json
+          node -e '
+            const c = require("/tmp/expo-prebuild.json");
+            console.log("name  :", c.name);
+            console.log("slug  :", c.slug);
+            console.log("scheme:", c.scheme);
+            console.log("iosBundleId:", c.ios && c.ios.bundleIdentifier);
+            console.log("plugins:", (c.plugins||[]).map(p=>Array.isArray(p)?p[0]:p).join(", "));
+          '
+
+      - name: Run expo prebuild (iOS)
+        id: prebuild
+        run: |
+          set -euo pipefail
+          # Capacitor が生成した ios/ が残っていると衝突するので消しておく
+          # （ios/ は .gitignore 対象なのでリポジトリには存在しない）
+          rm -rf ios
+          # --no-install: pod install は後段で明示的に行う（失敗の切り分けを分けるため）
+          npx expo prebuild --platform ios --no-install
+          echo "--- generated tree (depth 2) ---"
+          find ios -maxdepth 2 -not -path '*/Pods/*' | sort | head -60
+
+      - name: Report generated project layout
+        run: |
+          set -euo pipefail
+          echo "=== xcodeproj / xcworkspace / Podfile の実パス ==="
+          find ios -maxdepth 2 -name "*.xcodeproj" -o -maxdepth 2 -name "*.xcworkspace" -o -maxdepth 2 -name "Podfile" | sort
+          echo
+          echo "=== xcodebuild -list（scheme 名の確定） ==="
+          PROJ="$(find ios -maxdepth 1 -name '*.xcodeproj' | head -1)"
+          if [ -n "$PROJ" ]; then
+            xcodebuild -list -project "$PROJ" || true
+          else
+            echo "::warning::ios/ 直下に .xcodeproj が見つからない"
+          fi
+          echo
+          echo "=== Info.plist の位置 ==="
+          find ios -maxdepth 3 -name "Info.plist" -not -path '*/Pods/*' | sort
+          echo
+          echo "=== Podfile の platform 行 ==="
+          find ios -maxdepth 2 -name Podfile -exec grep -n "^platform" {} \; || true
+
+      - name: pod install
+        run: |
+          set -euo pipefail
+          PODDIR="$(dirname "$(find ios -maxdepth 2 -name Podfile | head -1)")"
+          echo "Podfile dir: $PODDIR"
+          cd "$PODDIR"
+          pod install --repo-update
+          echo "--- after pod install ---"
+          ls -la | head -20
+
+      - name: xcodebuild -showBuildSettings（ビルド可能性の確認・archiveはしない）
+        run: |
+          set -euo pipefail
+          WS="$(find ios -maxdepth 2 -name '*.xcworkspace' | head -1)"
+          PROJ="$(find ios -maxdepth 1 -name '*.xcodeproj' | head -1)"
+          SCHEME="$(node -e '
+            const c = require("/tmp/expo-prebuild.json");
+            // Expo は slug からプロジェクト名を作ることが多いが、実測値で上書きする前提
+            console.log(c.slug || "app");
+          ')"
+          echo "workspace=$WS project=$PROJ scheme(guess)=$SCHEME"
+          if [ -n "$WS" ]; then
+            xcodebuild -workspace "$WS" -list || true
+            xcodebuild -workspace "$WS" -scheme "$SCHEME" -showBuildSettings 2>/dev/null | grep -E "PRODUCT_BUNDLE_IDENTIFIER|IPHONEOS_DEPLOYMENT_TARGET|PRODUCT_NAME|MARKETING_VERSION" | sort -u | head -20 || echo "::warning::scheme 名の推測が外れた可能性。上の -list 出力を見ること"
+          else
+            echo "::error::xcworkspace が生成されていない"
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### prebuild プローブ結果" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          find ios -maxdepth 2 -name "*.xcodeproj" -o -maxdepth 2 -name "*.xcworkspace" -o -maxdepth 2 -name "Podfile" 2>/dev/null | sort >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
