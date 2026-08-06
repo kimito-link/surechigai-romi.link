@@ -107,10 +107,24 @@ function getStoredUserSnapshot(): Partial<Auth.User> | null {
 function buildUserFromClerk(clerkUser: any): Auth.User | null {
   if (!clerkUser) return null;
   const storedUser = getStoredUserSnapshot();
-  const externalAccount =
-    clerkUser.externalAccounts?.find?.((account: any) =>
-      ["oauth_x", "oauth_twitter", "twitter"].includes(account.provider),
-    ) ?? clerkUser.externalAccounts?.[0];
+  // X 連携だけを探す。`?? externalAccounts[0]` で1つ目に falls back すると、
+  // Sign in with Apple を主導線にした(2026-08-05)以降に現実に存在する
+  // 「Apple/Google だけのユーザー」の Apple アカウントを X として掴んでしまい、
+  // Apple の非公開リレー名が @ハンドルとして画面に出る。他プロバイダには倒さない。
+  // 壊れた連携(verification が verified 以外)も採用しない。
+  const externalAccount = clerkUser.externalAccounts?.find?.((account: any) => {
+    const p = String(account?.provider ?? "").toLowerCase();
+    const isX =
+      p === "x" ||
+      p === "twitter" ||
+      p === "oauth_x" ||
+      p === "oauth_twitter" ||
+      p.endsWith("_x") ||
+      p.endsWith("_twitter");
+    if (!isX) return false;
+    const status = account?.verification?.status;
+    return !status || status === "verified";
+  });
   const publicMetadata = clerkUser.publicMetadata ?? {};
   const unsafeMetadata = clerkUser.unsafeMetadata ?? {};
   const externalPublicMetadata = externalAccount?.publicMetadata ?? {};

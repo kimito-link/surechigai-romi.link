@@ -22,6 +22,7 @@ import { MySignalSummary } from "@/components/dashboard/my-signal-summary";
 import { MypageActionList } from "@/components/dashboard/mypage-action-list";
 import { LatestFootprintCard } from "@/components/dashboard/latest-footprint-card";
 import { HostEventsSummary } from "@/components/dashboard/host-events-summary";
+import { XLinkRescueCard } from "@/components/dashboard/x-link-rescue-card";
 import { color, palette } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
 import {
@@ -184,6 +185,9 @@ export function MypageScreenView(props: MypageScreenViewProps) {
           </View>
         </View>
 
+        {/* X 未連携で公開ページを作れない人への脱出路。該当しなければ何も描かない
+            （2026-08-05 SIWA を主導線にしたことで現実に発生するようになった状態）。 */}
+        <XLinkRescueCard />
         <MypageActionList />
         <LatestFootprintCard />
         <MySignalSummary />
