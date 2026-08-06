@@ -50,13 +50,16 @@ jobs:
           sudo xcode-select -s "$chosen/Contents/Developer"
           xcodebuild -version
 
-      # 既存 ios-appstore-release.yml と同じ組み合わせに揃える。
-      # pnpm/action-setup@v6 は packageManager から版を推論するので version: を書かない
-      # （両方指定するとエラーになる、と既存 workflow のコメントに実績が残っている）。
-      - uses: actions/setup-node@v5
+      # 既存 ios-appstore-release.yml と同一の組み合わせに揃える（実績のある順序・版）。
+      # setup-node は @v6 を使うこと。@v5 だと package-manager-cache が pnpm を探して
+      # 「Unable to locate executable file: pnpm」で落ちる（2026-08-06 実測）。
+      - name: Setup Node
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
 
+      # pnpm/action-setup@v6 は packageManager から版を推論するので version: を書かない
+      # （両方指定するとエラーになる、と既存 workflow のコメントに実績が残っている）。
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
 
