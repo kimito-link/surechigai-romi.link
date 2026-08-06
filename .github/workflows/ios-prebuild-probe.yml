@@ -118,6 +118,29 @@ jobs:
           PODDIR="$(dirname "$(find ios -maxdepth 2 -name Podfile | head -1)")"
           echo "Podfile dir: $PODDIR"
           cd "$PODDIR"
+
+          # AppCheckCore(Swift) が GoogleUtilities / RecaptchaInterop に依存しており、
+          # それらが modulemap を出さないため static library として統合できず落ちる
+          # （2026-08-06 実測で pod install が exit 1）:
+          #   [!] The following Swift pods cannot yet be integrated as static libraries:
+          #   The Swift pod `AppCheckCore` depends upon `GoogleUtilities` and
+          #   `RecaptchaInterop`, which do not define modules.
+          # CocoaPods 自身が案内するとおり use_modular_headers! を全体に効かせる。
+          # platform 行の直後に入れる（Expo の autolinking 定義より前に置く必要がある）。
+          if ! grep -q "use_modular_headers!" Podfile; then
+            node -e '
+              const fs = require("fs");
+              const lines = fs.readFileSync("Podfile", "utf8").split("\n");
+              let at = lines.findIndex((l) => /^\s*platform :ios/.test(l));
+              if (at < 0) at = 0;
+              lines.splice(at + 1, 0, "use_modular_headers!");
+              fs.writeFileSync("Podfile", lines.join("\n"));
+              console.log("inserted use_modular_headers! after line", at + 1);
+            '
+          fi
+          echo "--- Podfile head ---"
+          head -20 Podfile
+
           pod install --repo-update
           echo "--- after pod install ---"
           ls -la | head -20
@@ -127,11 +150,10 @@ jobs:
           set -euo pipefail
           WS="$(find ios -maxdepth 2 -name '*.xcworkspace' | head -1)"
           PROJ="$(find ios -maxdepth 1 -name '*.xcodeproj' | head -1)"
-          SCHEME="$(node -e '
-            const c = require("/tmp/expo-prebuild.json");
-            // Expo は slug からプロジェクト名を作ることが多いが、実測値で上書きする前提
-            console.log(c.slug || "app");
-          ')"
+          # 2026-08-06 実測: prebuild は slug に関係なく project/target/scheme を
+          # すべて "app" で生成する（ios/app.xcodeproj・Targets: app・Schemes: app）。
+          # slug は "surechigai" だが scheme は "app" なので推測してはいけない。
+          SCHEME="app"
           echo "workspace=$WS project=$PROJ scheme(guess)=$SCHEME"
           if [ -n "$WS" ]; then
             xcodebuild -workspace "$WS" -list || true
