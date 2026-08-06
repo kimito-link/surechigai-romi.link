@@ -8,12 +8,26 @@
  * - Guideline 2.3.7: CTA 下の「無料・1タップ」がスクリーンショットに写り込み、
  *   価格への言及（無料・割引を含む）としてメタデータ違反を取られた。
  *
- * このアプリは capacitor.config.json の server.url でリモートWebを読むため、
- * ネイティブアプリの中でも Platform.OS === "web" になる。Platform では判別できず、
- * Capacitor ブリッジの有無で見るしかない — ここを取り違えると両方の却下が再発する。
+ * 判定は2系統ある（2026-08-06 追記）:
+ * - Capacitor（server.url 構成）: ネイティブでも Platform.OS === "web" なので
+ *   window.Capacitor.isNativePlatform() を見る
+ * - Expo prebuild（バンドルJS実行）: Platform.OS === "ios" | "android" になり
+ *   window.Capacitor は存在しない
+ *
+ * 片方だけを見ると却下が再発する。prebuild 後に Capacitor 判定だけを残すと
+ * 常に false になり、auto=x の自動クリックが復活して 4.8 を、
+ * CTA の「無料」が復活して 2.3.7 を再び踏む。両系統をこのテストで固定する。
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { isNativeAppShell, loginCtaNote } from "@/lib/native-app-shell";
+
+// Capacitor 構成を再現する: ネイティブアプリの中でも Platform.OS === "web" になる。
+// lib/native-app-shell.ts が react-native を import するようになった（2026-08-06）ため、
+// 実体を読ませると vitest の変換で解析に失敗する。ここでは必要な形だけスタブする。
+vi.mock("react-native", () => ({
+  Platform: { OS: "web" },
+}));
+
+const { isNativeAppShell, loginCtaNote } = await import("@/lib/native-app-shell");
 
 type CapacitorWindow = Window & typeof globalThis & {
   Capacitor?: { isNativePlatform?: () => boolean };
