@@ -17,6 +17,7 @@ concurrency:
 jobs:
   diff-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write  # PR にコメントするために必要
@@ -106,6 +107,7 @@ jobs:
   quality:
     name: Lint / Type check / Test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -133,6 +135,7 @@ jobs:
 
   health-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [diff-check]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && (needs.diff-check.outputs.touch_api == 'true' || needs.diff-check.outputs.touch_db == 'true' || needs.diff-check.outputs.touch_deploy == 'true' || needs.diff-check.outputs.touch_env == 'true' || needs.diff-check.outputs.touch_health == 'true' || needs.diff-check.outputs.touch_routing == 'true')
     steps:

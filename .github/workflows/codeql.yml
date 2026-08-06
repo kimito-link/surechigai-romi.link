@@ -12,6 +12,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # Code scanning 縺後Μ繝昴ず繝医Μ縺ｧ譛牙柑蛹悶＆繧後※縺・↑縺・ｴ蜷医・螟ｱ謨励ｒ髦ｲ縺・    continue-on-error: true
     permissions:
       actions: read
