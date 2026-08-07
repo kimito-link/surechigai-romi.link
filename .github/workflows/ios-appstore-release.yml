@@ -53,7 +53,9 @@ on:
       # 本当に申請したいときは workflow_dispatch(手動)、または
       # バージョンを上げる package.json 変更で起動する。
       - ".github/workflows/ios-appstore-release.yml"
-      - "capacitor.config.json"
+      # prebuild のネイティブ設定はここ（旧 capacitor.config.json の役割）
+      - "app.config.ts"
+      - "app.config.json"
       - "package.json"
       - "scripts/appstore-submit.mjs"
       # Submit-time helpers that change runtime behaviour of the
@@ -81,7 +83,9 @@ jobs:
     env:
       # ↓↓ app.config.json の値で置換 ↓↓
       APP_BUNDLE_ID: com.kimito.link.surechigai   # identity.bundleId   例: com.example.app
-      APP_NAME: surechigai             # identity.shortName  例: NekoDiary
+      # prebuild が生成する Xcode の project/target/scheme 名。slug(surechigai) ではなく
+      # 常に "app" になる（2026-08-06 実測）。archive 名にも使う。
+      APP_NAME: app
       # ↑↑ ここまで ↑↑
       IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
       IOS_DIST_CERT_CER_BASE64: ${{ secrets.IOS_DIST_CERT_CER_BASE64 }}
@@ -184,76 +188,52 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Capacitor iOS toolchain + assets
-        run: pnpm add --save-dev @capacitor/ios@8 @capacitor/assets@3 @capacitor/splash-screen@8
+      # ★2026-08-07: ビルド方式を Capacitor から Expo prebuild へ移行した。
+      #
+      # 理由（App Store 却下 Guideline 4 の根治）:
+      #   Capacitor の server.url 構成は「リモートWebを WKWebView で読む」ため
+      #   OAuth も WebView で走る。しかし Google は WKWebView の OAuth を
+      #   disallowed_useragent で明示拒否し、Apple も iOS 17 以降 WKWebView での
+      #   Sign in with Apple を塞いだ。allowNavigation にドメインを足しても
+      #   「外部ブラウザには出ないがログインが壊れる」最悪の交換になる。
+      #   prebuild なら @clerk/expo の useOAuth が ASWebAuthenticationSession
+      #   （アプリ内モーダル・Safari とセッション共有・Apple 推奨）で動くため
+      #   Guideline 4 が構造的に解消する。
+      #
+      # prebuild の実測値（2026-08-06 ios-prebuild-probe.yml で確認）:
+      #   ios/Podfile / ios/app.xcodeproj / ios/app/Info.plist
+      #   project = target = scheme = "app"（slug の surechigai ではない）
+      #   pod install は use_modular_headers! 1行で通る（108依存・123pods）
+      #   PRODUCT_BUNDLE_IDENTIFIER = com.kimito.link.surechigai（既存と一致）
+      - name: Install Expo prebuild toolchain
+        run: pnpm add --save-dev @expo/cli@latest
 
-      - name: Prepare webDir (Capacitor uses dist/public; server.url overrides at runtime)
+      - name: Generate native iOS project (expo prebuild)
         run: |
-          mkdir -p dist/public
-          if [ ! -f dist/public/index.html ]; then
-            echo "<!doctype html><html><head><meta charset=\"utf-8\"><title>${APP_NAME}</title></head><body>loading...</body></html>" > dist/public/index.html
-          fi
+          set -euo pipefail
+          # Capacitor が残した ios/ があれば消してから生成する（構造が違うため混在不可）。
+          rm -rf ios
+          # --no-install: pod install は後段の CocoaPods ステップで明示的に行う
+          #   （失敗の切り分けを分けるため。Capacitor 時代も同じ理由で分けていた）。
+          npx expo prebuild --platform ios --no-install
 
-      - name: Add/copy iOS platform
-        run: |
-          # ★`npx cap add ios` は内部で pod install まで走る。
-          #   その時点の Podfile は Capacitor 既定の deployment target のままなので、
-          #   Capacitor 8 の pod が要求する下限を満たせず
-          #   「CocoaPods could not find compatible versions for pod "Capacitor" /
-          #    they required a higher minimum deployment target」で落ちる（2026-08-01 実測）。
-          #   後段の「Force iOS deployment target」ステップでは手遅れ。
-          #   そこで add は pod install を止めて実行し、Podfile を直してから pod install する。
-          # `cap add ios` の内部 pod install はここでは失敗してよい（Podfile は先に生成される）。
-          # 失敗させたまま Podfile の platform を直し、後段の CocoaPods ステップで入れ直す。
-          # `--no-pod-install` は存在せず、CAPACITOR_SKIP_POD_INSTALL も効かないことを実測で確認済み。
-          if [ ! -d ios/App ]; then
-            npx cap add ios || echo "cap add: pod install は後段でやり直すため、ここでの失敗は無視する"
-          fi
+          test -f ios/Podfile || { echo "::error::ios/Podfile が生成されていない"; exit 1; }
+          test -d ios/app.xcodeproj || { echo "::error::ios/app.xcodeproj が生成されていない"; exit 1; }
 
-          # Podfile の deployment target をここで確定させる（後段の pod install が通るように）
-          PODFILE="ios/App/Podfile"
-          if [ -f "$PODFILE" ]; then
-            if grep -q "^platform :ios" "$PODFILE"; then
-              sed -i.bak "s/^platform :ios, .*/platform :ios, '15.0'/" "$PODFILE"
-            else
-              printf "platform :ios, '15.0'\n%s" "$(cat "$PODFILE")" > "$PODFILE"
-            fi
-            grep -n "^platform :ios" "$PODFILE" || true
-          else
-            echo "::error::ios/App/Podfile が生成されていない。cap add ios の失敗内容を確認すること。"
-            exit 1
-          fi
+          # AppCheckCore(Swift) が GoogleUtilities / RecaptchaInterop に依存しており、
+          # それらが modulemap を出さないため static library として統合できず pod install が落ちる。
+          # CocoaPods 自身が案内するとおり use_modular_headers! を入れる
+          # （2026-08-06 プローブで実証: これ1行で 108依存・123pods が通る）。
+          node scripts/patch-ios-podfile-modular-headers.mjs
 
-          # pbxproj の deployment target もここで確定させる。
-          # 後段の「Force iOS deployment target」は pod install より後に走るため、
-          # ここで直しておかないと pod が iOS 13.0 向けに構成されてしまう。
-          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
-          if [ -f "$PBXPROJ" ]; then
-            # sed の複数行挿入は環境差で当たらないことがあったため node で確実に書き換える。
-            node -e '
-              const fs=require("fs");
-              const p=process.argv[1];
-              let s=fs.readFileSync(p,"utf8");
-              if (/IPHONEOS_DEPLOYMENT_TARGET/.test(s)) {
-                s=s.replace(/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/g,"IPHONEOS_DEPLOYMENT_TARGET = 15.0;");
-              } else {
-                // buildSettings ブロックの先頭に差し込む
-                s=s.replace(/buildSettings = \{/g,"buildSettings = {\n\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 15.0;");
-              }
-              fs.writeFileSync(p,s);
-              const n=(s.match(/IPHONEOS_DEPLOYMENT_TARGET = 15\.0;/g)||[]).length;
-              console.log("pbxproj deployment target 行数:", n);
-              if (n===0) { console.error("::error::pbxproj に deployment target を設定できなかった"); process.exit(1); }
-            ' "$PBXPROJ"
-          fi
-
-          npx cap copy ios
+          echo "--- generated layout ---"
+          ls -la ios | head -20
 
       # 標準HTTPS / OS 提供の TLS のみなら非免除暗号を使わない宣言(審査・輸出コンプライアンスの手戻り軽減)
       - name: Info.plist export compliance (ITSAppUsesNonExemptEncryption)
         run: |
           set -euo pipefail
-          PLIST="ios/App/App/Info.plist"
+          PLIST="ios/app/Info.plist"
           test -f "$PLIST"
           if /usr/libexec/PlistBuddy -c "Print :ITSAppUsesNonExemptEncryption" "$PLIST" >/dev/null 2>&1; then
             /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
@@ -279,28 +259,20 @@ jobs:
             fi
             cp "$MASTER" assets/icon-only.png
           fi
-          # 起動時の「黒い間」にロゴを映すスプラッシュ(暗色背景)を生成。
-          # launchAutoHide:true(capacitor.config.json)前提の方式。assets/splash*.png を
-          # @capacitor/assets が各サイズへ展開しLaunchScreen に焼き込む。
-          node scripts/generate-capacitor-splash.mjs
-          # 生成「前」に、Contents.json が参照する Capacitor デフォルト画像のハッシュを記録。
-          node scripts/verify-ios-splash-not-default.mjs --snapshot
-          npx @capacitor/assets generate --ios --iosProject ios/App --assetPath assets --splashBackgroundColor '#00427B' --splashBackgroundColorDark '#00427B'
-          # 生成「後」に、出荷される画像が Capacitor デフォルトのままでないことを確認(事故防止ゲート)。
-          node scripts/verify-ios-splash-not-default.mjs --verify
+          # スプラッシュは expo-splash-screen プラグインが app.config.ts の設定
+          # (image/imageWidth/resizeMode/backgroundColor: #00427B) から prebuild 時に生成する。
+          # よって @capacitor/assets での生成と、Capacitor デフォルト画像の検出ゲート
+          # (verify-ios-splash-not-default.mjs) は不要になった（あのゲートは
+          # `cap add ios` が置く青×ロゴのデフォルトを検出する仕組みで、prebuild には存在しない）。
 
-      # 起動時の白フラッシュ対策: LaunchScreen 暗色化 + UIUserInterfaceStyle=Dark。
-      # @capacitor/assets generate の「後」に当てる(assets が
-      # storyboard/カタログを再生成した後に暗色 patch を最終適用するため)。
-      # ※ patch-ios-launch-dark.mjs は本キット templates/scripts からコピーした
-      #   「作り分けなし」の定型版を使うこと(独自VC注入は ios-shell-guardrail が赤にする)。
-      - name: Patch iOS launch screen to brand blue (#00427B)
-        run: node scripts/patch-ios-launch-dark.mjs
+      # LaunchScreen の暗色化は app.config.ts の userInterfaceStyle: "dark" と
+      # expo-splash-screen の backgroundColor: "#00427B" で prebuild 時に入る。
+      # patch-ios-launch-dark.mjs は Capacitor の storyboard 前提なので使わない。
 
       - name: Force iOS deployment target + iPhone-only device family
         run: |
-          PODFILE="ios/App/Podfile"
-          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          PODFILE="ios/Podfile"
+          PBXPROJ="ios/app.xcodeproj/project.pbxproj"
           if [ -f "$PODFILE" ]; then
             if grep -q "^platform :ios" "$PODFILE"; then
               sed -i.bak "s/^platform :ios, .*/platform :ios, '15.0'/" "$PODFILE"
@@ -332,8 +304,8 @@ jobs:
       - name: Set iOS version (MARKETING) from package.json and build number (CFBundleVersion) from CI
         run: |
           set -euo pipefail
-          PBX="ios/App/App.xcodeproj/project.pbxproj"
-          PLIST="ios/App/App/Info.plist"
+          PBX="ios/app.xcodeproj/project.pbxproj"
+          PLIST="ios/app/Info.plist"
           MARK_VER="$(node -p "require('./package.json').version")"
           sed -i.bak -E "s/MARKETING_VERSION = [^;]+;/MARKETING_VERSION = $MARK_VER;/g" "$PBX"
           if grep -q "INFOPLIST_KEY_CFBundleShortVersionString" "$PBX"; then
@@ -361,12 +333,12 @@ jobs:
           set -euo pipefail
           # Capacitor 8 defaults to Swift Package Manager (no Podfile generated).
           # Run pod install only when a Podfile exists.
-          if [ -f ios/App/Podfile ]; then
-            cd ios/App
+          if [ -f ios/Podfile ]; then
+            cd ios
             pod install --repo-update
           else
-            echo "No Podfile found at ios/App/Podfile -- Capacitor 8 SPM project, skipping pod install."
-            ls -la ios/App | head -20
+            echo "No Podfile found at ios/Podfile -- Capacitor 8 SPM project, skipping pod install."
+            ls -la ios | head -20
           fi
 
       - name: Install signing certificate
@@ -569,8 +541,8 @@ jobs:
       - name: Re-apply marketing version before xcodebuild archive
         run: |
           set -euo pipefail
-          PBX="ios/App/App.xcodeproj/project.pbxproj"
-          PLIST="ios/App/App/Info.plist"
+          PBX="ios/app.xcodeproj/project.pbxproj"
+          PLIST="ios/app/Info.plist"
           set -a
           # shellcheck disable=SC1091
           source build/ci-release-versions.env
@@ -598,16 +570,16 @@ jobs:
           set +a
           # Capacitor 8 SPM: no .xcworkspace generated, use .xcodeproj directly.
           # Capacitor <=7 CocoaPods: .xcworkspace exists alongside .xcodeproj, prefer workspace.
-          if [ -d ios/App/App.xcworkspace ]; then
-            XCODE_FLAG=(-workspace ios/App/App.xcworkspace)
+          if [ -d ios/app.xcworkspace ]; then
+            XCODE_FLAG=(-workspace ios/app.xcworkspace)
             echo "Using workspace (CocoaPods project)"
           else
-            XCODE_FLAG=(-project ios/App/App.xcodeproj)
+            XCODE_FLAG=(-project ios/app.xcodeproj)
             echo "Using project (SPM project, no workspace)"
           fi
           xcodebuild \
             "${XCODE_FLAG[@]}" \
-            -scheme App \
+            -scheme "$APP_NAME" \
             -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath "build/${APP_NAME}.xcarchive" \
