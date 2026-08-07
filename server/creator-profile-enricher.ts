@@ -3,7 +3,7 @@
  * kimito.link / X API / DB キャッシュを統合して同一サムネ・フォロワー数を返す。
  */
 
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../drizzle/schema/index.js";
 import { twitterUserCache } from "../drizzle/schema/index.js";
@@ -106,12 +106,66 @@ export async function fetchTwitterApiProfile(
 }
 
 /** kimito.link（フォロワー等）+ X API（アバター）を統合してキャッシュ保存。 */
+/**
+ * 期限内（expiresAt が未来）のキャッシュ行を返す。無ければ null。
+ *
+ * これは「外部APIを叩くのを省いてよいか」の判定にだけ使う。
+ * **期限切れ行を表示から除外する用途に使ってはいけない** —
+ * 読み取り側で期限を見ると、表示できていたアバターが突然消える
+ * （docs/API_COST_MANAGEMENT.md の方針: 古い値でも出す方がユーザーには良い）。
+ */
+async function findFreshCacheRow(
+  db: DB,
+  cleanUsername: string,
+): Promise<TwitterCacheInfo | null> {
+  try {
+    const rows = await db
+      .select({
+        twitterUsername: twitterUserCache.twitterUsername,
+        twitterId: twitterUserCache.twitterId,
+        displayName: twitterUserCache.displayName,
+        profileImage: twitterUserCache.profileImage,
+        followersCount: twitterUserCache.followersCount,
+      })
+      .from(twitterUserCache)
+      .where(
+        and(
+          eq(twitterUserCache.twitterUsername, cleanUsername),
+          gt(twitterUserCache.expiresAt, new Date()),
+        ),
+      )
+      .limit(1);
+    const row = rows[0];
+    if (!row) return null;
+    // 画像が無い行は「取れていない」ので取り直す価値がある（アバターが出ないままになる）。
+    if (!row.profileImage) return null;
+    return row;
+  } catch {
+    // 判定に失敗したら従来どおり取り直す（fail-open。表示を止めない）。
+    return null;
+  }
+}
+
 export async function enrichTwitterProfile(
   db: DB,
   username: string,
+  options?: {
+    /** キャッシュが新鮮でも強制的に取り直す（既定 false）。 */
+    force?: boolean;
+  },
 ): Promise<TwitterCacheInfo | null> {
   const clean = normalizeTwitterUsername(username);
   if (!clean) return null;
+
+  // ★キャッシュが生きている間は外部APIを叩かない（2026-08-07）。
+  // ここは X API（無料枠は月100件・docs/API_COST_MANAGEMENT.md）と kimito.link を叩く経路で、
+  // server/clerk-auth-sync.ts:70 から**ログイン毎に無条件で**呼ばれていた。
+  // upsertTwitterCacheRow は expiresAt に7日後を入れているのに読み取り側が誰も見ておらず、
+  // 同じユーザーが再ログインするたび無料枠を消費していた。
+  if (!options?.force) {
+    const fresh = await findFreshCacheRow(db, clean);
+    if (fresh) return fresh;
+  }
 
   const [kimito, twitter] = await Promise.all([
     fetchKimitoPublicProfile(clean),

@@ -64,6 +64,29 @@ export async function fetchClerkTwitterProfiles(
     ),
   ];
 
+  // ★getUser を人数分叩かない（2026-08-07）。
+  // getUserList は userId 配列を受けて1リクエストで返せる（上限500件）。
+  // N人で N リクエストだった経路を 1 リクエストに束ねる。
+  // Clerk のレート制限に当たると一覧全体のプロフィールが欠けるため、
+  // 一括が失敗したときだけ従来の個別取得にフォールバックする（表示を止めない）。
+  const CLERK_USER_LIST_LIMIT = 500;
+  try {
+    for (let i = 0; i < uniqueIds.length; i += CLERK_USER_LIST_LIMIT) {
+      const chunk = uniqueIds.slice(i, i + CLERK_USER_LIST_LIMIT);
+      const page = await clerk.users.getUserList({
+        userId: chunk,
+        limit: CLERK_USER_LIST_LIMIT,
+      });
+      for (const clerkUser of page.data) {
+        const profile = extractTwitterProfileFromClerkUser(clerkUser);
+        if (profile) result.set(`clerk:${clerkUser.id}`, profile);
+      }
+    }
+    return result;
+  } catch (err) {
+    console.warn("[ClerkProfileSync] getUserList failed, falling back:", err);
+  }
+
   await Promise.all(
     uniqueIds.map(async (clerkUserId) => {
       try {
