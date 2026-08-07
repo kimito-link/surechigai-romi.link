@@ -27,7 +27,12 @@ const config: ExpoConfig = {
   "userInterfaceStyle": "dark",
   newArchEnabled: true,
   ios: {
-    supportsTablet: true,
+    // iPhone 専用（2026-08-07）。CI は Capacitor 時代から
+    // TARGETED_DEVICE_FAMILY = "1" を強制しており、その意図に合わせる。
+    // App Store は iPad 対応を宣言すると iPad でのスクショと動作を要求する
+    // （Guideline 2.1(a)「iPad で期待どおり動くこと」）。
+    // 位置情報アプリで iPad の需要は薄く、審査変数を増やすだけなので false。
+    supportsTablet: false,
     bundleIdentifier: env.iosBundleId,
     infoPlist: {
       // 「記録」だけでなく「他の利用者に市区町村粒度で共有される」ことまで書く。

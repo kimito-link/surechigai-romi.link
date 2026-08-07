@@ -269,38 +269,14 @@ jobs:
       # expo-splash-screen の backgroundColor: "#00427B" で prebuild 時に入る。
       # patch-ios-launch-dark.mjs は Capacitor の storyboard 前提なので使わない。
 
-      - name: Force iOS deployment target + iPhone-only device family
-        run: |
-          PODFILE="ios/Podfile"
-          PBXPROJ="ios/app.xcodeproj/project.pbxproj"
-          if [ -f "$PODFILE" ]; then
-            if grep -q "^platform :ios" "$PODFILE"; then
-              sed -i.bak "s/^platform :ios, .*/platform :ios, '15.0'/" "$PODFILE"
-            else
-              printf "platform :ios, '15.0'\n%s" "$(cat "$PODFILE")" > "$PODFILE"
-            fi
-            grep -n "^platform :ios" "$PODFILE" || true
-          fi
-          if [ -f "$PBXPROJ" ]; then
-            sed -i.bak "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]\\+;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g" "$PBXPROJ"
-            # ★上の sed は「既にある行」しか書き換えない。
-            #   Capacitor 8 の pbxproj には IPHONEOS_DEPLOYMENT_TARGET が
-            #   1行も無いことがあり、その場合 Xcode 既定の iOS 13.0 が使われて
-            #   「compiling for iOS 13.0, but module 'Capacitor' has a minimum
-            #    deployment target of iOS 15.0」でアーカイブが失敗する（2026-08-01 実測）。
-            #   無ければ各 buildSettings に挿入する。
-            if ! grep -q "IPHONEOS_DEPLOYMENT_TARGET" "$PBXPROJ"; then
-              echo "IPHONEOS_DEPLOYMENT_TARGET が無いので挿入する"
-              sed -i.bak3 -E 's/(buildSettings = \{)/\1\n\t\t\t\tIPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' "$PBXPROJ"
-            fi
-            echo "--- deployment target 確認 ---"
-            grep -c "IPHONEOS_DEPLOYMENT_TARGET = 15.0;" "$PBXPROJ" || true
-            # Restrict to iPhone (TARGETED_DEVICE_FAMILY = "1") so the App
-            # Store does not require iPad-sized screenshots. Phone-first apps
-            # only; if your app supports iPad, change this to "1,2".
-            sed -i.bak2 -E 's/TARGETED_DEVICE_FAMILY = "[^"]+";/TARGETED_DEVICE_FAMILY = "1";/g' "$PBXPROJ"
-          fi
-
+      # deployment target の強制は削除した（2026-08-07・prebuild 移行）。
+      # prebuild は IPHONEOS_DEPLOYMENT_TARGET = 15.1 で生成し、これは
+      # React Native 0.81.5 の pod が要求する下限を満たしている。
+      # Capacitor 時代のステップはこれを 15.0 に書き戻していたため、
+      # 「ReactAppDependencyProvider ... required a higher minimum deployment target」で
+      # pod install が落ちた（run 31141398469 で実測）。
+      # iPhone 専用（TARGETED_DEVICE_FAMILY = "1"）は app.config.ts の
+      # supportsTablet: false が担うのでここでの pbxproj 書き換えも不要。
       - name: Set iOS version (MARKETING) from package.json and build number (CFBundleVersion) from CI
         run: |
           set -euo pipefail
@@ -331,15 +307,19 @@ jobs:
       - name: Install CocoaPods dependencies (skip if SPM-only)
         run: |
           set -euo pipefail
-          # Capacitor 8 defaults to Swift Package Manager (no Podfile generated).
-          # Run pod install only when a Podfile exists.
-          if [ -f ios/Podfile ]; then
-            cd ios
-            pod install --repo-update
-          else
-            echo "No Podfile found at ios/Podfile -- Capacitor 8 SPM project, skipping pod install."
-            ls -la ios | head -20
+          # prebuild は必ず ios/Podfile を作る（use_modular_headers! は
+          # 前段の patch-ios-podfile-modular-headers.mjs で挿入済み）。
+          # deployment target は prebuild が設定した値（15.1）をそのまま使う。
+          # 15.0 に書き戻すと React Native 0.81.5 の pod が要求する下限を割り
+          # 「ReactAppDependencyProvider ... required a higher minimum deployment target」で
+          # 落ちる（run 31141398469 で実測）。
+          if [ ! -f ios/Podfile ]; then
+            echo "::error::ios/Podfile が無い。expo prebuild が失敗している。"
+            ls -la ios || true
+            exit 1
           fi
+          cd ios
+          pod install --repo-update
 
       - name: Install signing certificate
         id: signing
@@ -585,7 +565,6 @@ jobs:
             -archivePath "build/${APP_NAME}.xcarchive" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
             "MARKETING_VERSION=$MARK_VER" \
             "CURRENT_PROJECT_VERSION=$IOS_BUILD_NUMBER" \
             archive
