@@ -1,24 +1,32 @@
-# 【��型テンプレート】Apple 証明書 / プロビジョニングプロファイル 期限監要E#
-# 移植�E: partnership_program_website/.github/workflows/apple-cert-expiry.yml
+# 【金型テンプレート】Apple 証明書 / プロビジョニングプロファイル 期限監視
+#
+# 移植元: partnership_program_website/.github/workflows/apple-cert-expiry.yml
 #
 # Apple Distribution 証明書 + App Store プロビジョニングプロファイルの
-# expiry を週 1 囁E(月曜午前 9 晁EJST) チェチE��し、E0 日以冁E��期限刁E��
-# になるものを�E勁EGitHub Issue 化する、E#
-# 目皁E
-#   1 年でひっそり expire する Apple 証明書を「ビルドが失敗した」と
-#   気づぁE��から慌てて再発行するパターンを撲滁E��E0 日前に Issue が立つので
-#   余裕を持って rotate + secrets 更新できる、E#
-# 設訁E
-#   - 既孁EASC API secrets を�E利用 (追加 secret 0 倁E
-#   - certificate めEprovisioning profile めE1 つの workflow でカバ�E
-#   - 重褁EIssue は cert/profile ID + 警告窓を含む title で de-dupe
+# expiry を週 1 回 (月曜午前 9 時 JST) チェックし、30 日以内に期限切れ
+# になるものを自動 GitHub Issue 化する。
 #
-# ── こ�EチE��プレの使ぁE�� ──────────────────────────────────────────
-# 1. こ�Eファイルをアプリリポ�E `.github/workflows/apple-cert-expiry.yml` にコピ�E、E# 2. アプリ固有値の置換�E不要E��ESC API 秘寁E��から自動�E挙）。無改変で使える、E# 3. scripts/apple-cert-expiry-check.mjs めEpartnership からコピ�E、E#
-# ── 忁E��な GitHub Secrets ────────────────────────────────────────
+# 目的:
+#   1 年でひっそり expire する Apple 証明書を「ビルドが失敗した」と
+#   気づいてから慌てて再発行するパターンを撲滅。30 日前に Issue が立つので
+#   余裕を持って rotate + secrets 更新できる。
+#
+# 設計:
+#   - 既存 ASC API secrets を再利用 (追加 secret 0 個)
+#   - certificate も provisioning profile も 1 つの workflow でカバー
+#   - 重複 Issue は cert/profile ID + 警告窓を含む title で de-dupe
+#
+# ── このテンプレの使い方 ──────────────────────────────────────────
+# 1. このファイルをアプリリポの `.github/workflows/apple-cert-expiry.yml` にコピー。
+# 2. アプリ固有値の置換は不要（ASC API 秘密鍵から自動列挙）。無改変で使える。
+# 3. scripts/apple-cert-expiry-check.mjs を partnership からコピー。
+#
+# ── 必要な GitHub Secrets ────────────────────────────────────────
 #   APPSTORE_CONNECT_KEY_ID             ASC API Key ID
 #   APPSTORE_CONNECT_ISSUER_ID          ASC API Issuer ID
-#   APPSTORE_CONNECT_API_KEY_P8_BASE64  ASC API 秘寁E�� .p8 めEbase64 匁E#   �E�Eos-appstore-release と同じ3点を�E利用。追加 secret 不要E��Ename: apple-cert-expiry
+#   APPSTORE_CONNECT_API_KEY_P8_BASE64  ASC API 秘密鍵 .p8 を base64 化
+#   （ios-appstore-release と同じ3点を再利用。追加 secret 不要）
+name: apple-cert-expiry
 
 on:
   schedule:
@@ -87,17 +95,17 @@ jobs:
                 : 'https://developer.apple.com/account/resources/profiles';
 
               const rotateSteps = w.kind === 'certificate' ? [
-                '1. https://developer.apple.com/account/resources/certificates で expired 前に新要EApple Distribution 証明書を発衁E,
-                '2. CSR + 秘寁E��めEopenssl で生�E�E�手頁E�E _docs/release-pipeline-playbook.md 参�E�E�E,
-                '3. 新 cert + private key めE`gh secret set IOS_DIST_CERT_CER_BASE64` / `IOS_DIST_PRIVATE_KEY_PEM_BASE64` で再投入',
-                '4. ASC API で新 cert ID を取得して provisioning profile を�E生�E',
+                '1. https://developer.apple.com/account/resources/certificates で expired 前に新規 Apple Distribution 証明書を発行',
+                '2. CSR + 秘密鍵を openssl で生成（手順は _docs/release-pipeline-playbook.md 参照）',
+                '3. 新 cert + private key を `gh secret set IOS_DIST_CERT_CER_BASE64` / `IOS_DIST_PRIVATE_KEY_PEM_BASE64` で再投入',
+                '4. ASC API で新 cert ID を取得して provisioning profile を再生成',
                 '5. `gh secret set IOS_APPSTORE_PROFILE_BASE64` で更新',
-                '6. `gh workflow run ios-appstore-release` で動作確誁E,
+                '6. `gh workflow run ios-appstore-release` で動作確認',
               ] : [
-                '1. https://developer.apple.com/account/resources/profiles で expired 前に吁EApp ID の AppStore profile を更新',
-                '2. ダウンローチEↁE`base64 -w0 < new.mobileprovision`',
+                '1. https://developer.apple.com/account/resources/profiles で expired 前に同 App ID の AppStore profile を更新',
+                '2. ダウンロード → `base64 -w0 < new.mobileprovision`',
                 '3. `gh secret set IOS_APPSTORE_PROFILE_BASE64` で更新',
-                '4. `gh workflow run ios-appstore-release` で動作確誁E,
+                '4. `gh workflow run ios-appstore-release` で動作確認',
               ];
 
               const body = [
@@ -107,7 +115,7 @@ jobs:
                 `**Expires:** ${w.expirationDate}`,
                 `**Days remaining:** ${w.daysRemaining}`,
                 ``,
-                `⚠�E�E期限刁E��まで **${w.daysRemaining} 日**。期限�Eに rotate しなぁE�� iOS workflow ぁE"No signing certificate found" 等で fail します。`,
+                `⚠️ 期限切れまで **${w.daysRemaining} 日**。期限内に rotate しないと iOS workflow が "No signing certificate found" 等で fail します。`,
                 ``,
                 `**Apple Developer Portal:** ${portal}`,
                 ``,
