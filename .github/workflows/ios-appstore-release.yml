@@ -737,6 +737,10 @@ jobs:
           APP_BUNDLE_ID: ${{ env.APP_BUNDLE_ID }}
           IOS_BUILD_NUMBER: ${{ env.IOS_BUILD_NUMBER }}
           IOS_SCREENSHOTS_DIR: ios-screenshots
+          # Apple 側の PROCESSING→VALID を待つ上限。既定30分では prebuild の
+          # 初回ビルド（RN 本体込み 19MB）に足りず落ちた（run 31156944385）。
+          # ジョブ全体の timeout-minutes: 90 に収まる範囲で延ばす。
+          IOS_BUILD_POLL_MAX_MIN: "45"
           # 却下後に同じバージョンを再提出する場合のみ true。
           # ASC のバージョン行が WAITING_FOR_REVIEW のまま残ると通常はスキップされ、
           # 修正した審査ノートもスクショも新ビルドも反映されない（2026-08-05 に発生）。

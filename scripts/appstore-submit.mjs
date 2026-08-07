@@ -53,7 +53,14 @@ if (isPlaceholder(BUNDLE_ID)) {
 }
 const PLATFORM = 'IOS';
 const POLL_INTERVAL_MS = 30_000;
-const POLL_MAX_MIN = 30;
+// Apple 側の PROCESSING→VALID を待つ上限（分）。
+// 既定30分では Expo prebuild の初回ビルド（React Native 本体を含む 19MB の IPA）で
+// 足りず「Build did not reach VALID within timeout」で落ちた（2026-08-07 run 31156944385）。
+// IPA のアップロード自体は成功していたので、待ち時間だけの問題。env で延ばせるようにする。
+const POLL_MAX_MIN =
+  Number(process.env.IOS_BUILD_POLL_MAX_MIN) > 0
+    ? Number(process.env.IOS_BUILD_POLL_MAX_MIN)
+    : 30;
 
 function readMarketingVersion() {
   const pkg = JSON.parse(fs.readFileSync(path.join(REPO, 'package.json'), 'utf8'));
