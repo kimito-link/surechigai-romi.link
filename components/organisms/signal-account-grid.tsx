@@ -1,8 +1,9 @@
 import MaterialIcons from "@/lib/icons/material-icons";
-import { Image } from "expo-image";
 import { Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { color, palette } from "@/theme/tokens";
 import { formatEncounterDate } from "@/lib/post/encounter-shared";
+import { CreatorAvatar } from "@/components/molecules/creator-avatar";
+import { normalizeTwitterUsername } from "@/lib/twitter-username";
 
 export type SignalAccountItem = {
   id: number;
@@ -52,13 +53,18 @@ function displayNameFor(item: SignalAccountItem): string {
   return item.partnerDisplayName || item.partnerName || item.partnerUsername || "ロミユーザー";
 }
 
-function isLikelyHandle(value: string): boolean {
-  return /^[A-Za-z0-9_]{1,15}$/.test(value);
-}
-
+/**
+ * @handle 表示。取れないときはカード識別用に ID を出す。
+ *
+ * ★partnerName（表示名）へフォールバックしてはいけない（2026-08-07）。
+ * users.name は表示名（例「君斗りんく@動員ちゃれんじ」）で X ハンドルではないため、
+ * 拾うと「@君斗りんく@動員ちゃれんじ」のような不正な表示になり、
+ * X プロフィールリンクも必ず404になる。検証は normalizeTwitterUsername に一本化する
+ * （ここに正規表現をコピーすると zukan で7回起きた退行の温床になる）。
+ */
 function usernameFor(item: SignalAccountItem): string {
-  const username = (item.partnerUsername || item.partnerName || "").replace(/^@/, "").trim();
-  if (username && isLikelyHandle(username)) return `@${username}`;
+  const handle = normalizeTwitterUsername(item.partnerUsername);
+  if (handle) return `@${handle}`;
   return `ID ${item.partnerId ?? item.id}`;
 }
 
@@ -87,13 +93,18 @@ function AccountCard({
         pressed && { opacity: 0.78, transform: [{ scale: 0.995 }] },
       ]}
     >
-      {item.partnerProfileImage ? (
-        <Image source={{ uri: item.partnerProfileImage }} style={styles.avatar} contentFit="cover" />
-      ) : (
-        <View style={styles.avatarPlaceholder}>
-          <MaterialIcons name="person" size={24} color="#94A3B8" />
-        </View>
-      )}
+      {/* CreatorAvatar は kimito OGP 除外 → X CDN 実画像 → unavatar → イニシャル の順で
+          解決する（zukan と同じ部品）。twitterHandle を必ず渡すこと。渡さないと
+          unavatar フォールバックが効かずイニシャル表示に落ちる。 */}
+      <CreatorAvatar
+        src={item.partnerProfileImage}
+        alt={displayNameFor(item)}
+        fallbackInitial={displayNameFor(item).slice(0, 1)}
+        size={44}
+        twitterHandle={item.partnerUsername}
+        recyclingKey={String(item.partnerId ?? item.id)}
+        style={styles.avatar}
+      />
 
       <View style={styles.accountMain}>
         <View style={styles.nameRow}>
@@ -269,14 +280,6 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 21,
     backgroundColor: "#E2E8F0",
-  },
-  avatarPlaceholder: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "#EDE9FE",
-    alignItems: "center",
-    justifyContent: "center",
   },
   accountMain: {
     flex: 1,

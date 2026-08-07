@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 31; // 2026-08-06: X未連携の救済カード投入（新規チャンクを確実に配信させる）
+export const CDN_CACHE_EPOCH = 32; // 2026-08-07: すれ違い相手のサムネ・ハンドル修正（新規チャンクを確実に配信）

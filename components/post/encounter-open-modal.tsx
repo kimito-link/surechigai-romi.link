@@ -19,7 +19,6 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
-import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import {
   type EncounterItem,
@@ -28,6 +27,8 @@ import {
   STAMPS,
 } from "@/lib/post/encounter-shared";
 import { color, palette } from "@/theme/tokens";
+import { CreatorAvatar } from "@/components/molecules/creator-avatar";
+import { normalizeTwitterUsername } from "@/lib/twitter-username";
 
 function FloatingEmoji({ emoji, offsetX }: { emoji: string; offsetX: number }) {
   const progress = useSharedValue(0);
@@ -124,6 +125,10 @@ export function EncounterOpenModal({
   if (!item) return null;
 
   const tierColor = TIER_COLORS[item.tier] || color.accentPrimary;
+  // 表示名とハンドルを分けて持つ（表示名をハンドルとして使わないため・2026-08-07）
+  const modalDisplayName =
+    item.partnerDisplayName || item.partnerName || "ロミユーザー";
+  const modalHandle = normalizeTwitterUsername(item.partnerUsername);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -155,15 +160,33 @@ export function EncounterOpenModal({
               </Text>
             </View>
 
+            {/* アイコンは CreatorAvatar に委譲する（2026-08-07）。
+                以前は MaterialIcons のプレースホルダーをハードコードしており、
+                item.partnerProfileImage が届いているのに描画していなかった。
+                twitterHandle を必ず渡すこと（渡さないと unavatar フォールバックが消える）。 */}
             <View style={styles.modalAvatarWrap}>
               <View style={[styles.modalAvatar, { borderColor: tierColor }]}>
-                <MaterialIcons name="account-circle" size={64} color={color.textMuted} />
+                <CreatorAvatar
+                  src={item.partnerProfileImage}
+                  alt={modalDisplayName}
+                  fallbackInitial={modalDisplayName.slice(0, 1)}
+                  size={72}
+                  twitterHandle={item.partnerUsername}
+                  recyclingKey={String(item.partnerId ?? item.id)}
+                />
               </View>
             </View>
 
             <Text style={styles.modalName} numberOfLines={2}>
-              {item.partnerName || "ロミユーザー"}
+              {modalDisplayName}
             </Text>
+
+            {/* @ハンドル。取れないときは何も出さない（内部IDを他人に見せる意味はない） */}
+            {modalHandle && (
+              <Text style={styles.modalHandle} numberOfLines={1}>
+                @{modalHandle}
+              </Text>
+            )}
 
             <Text style={styles.modalArea} numberOfLines={2}>
               {item.areaName || item.prefecture || "不明なエリア"}
@@ -207,13 +230,17 @@ export function EncounterOpenModal({
               <Text style={styles.stampConfirm}>{sentEmoji} を送りました ✨</Text>
             )}
 
-            {item.partnerName && (
+            {/* ★表示名から URL を組んではいけない（2026-08-07）。
+                users.name は表示名なので https://x.com/君斗りんく@動員ちゃれんじ のような
+                必ず404になる URL ができていた。検証済みハンドルが無いときはリンクを出さない
+                （壊れたリンクは無価値どころか有害）。 */}
+            {modalHandle && (
               <Pressable
-                onPress={() => Linking.openURL(`https://x.com/${item.partnerName}`)}
+                onPress={() => Linking.openURL(`https://x.com/${modalHandle}`)}
                 style={({ pressed }) => [styles.modalXButton, pressed && { opacity: 0.8 }]}
               >
                 <Text style={styles.modalXButtonText} numberOfLines={1}>
-                  X プロフィールを見る @{item.partnerName}
+                  X プロフィールを見る @{modalHandle}
                 </Text>
               </Pressable>
             )}
@@ -296,6 +323,13 @@ const styles = StyleSheet.create({
     color: color.textPrimary,
     fontSize: 20,
     fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  /** @ハンドル。表示名の下に控えめに置く（主役は表示名・DESIGN.md の階層に従う） */
+  modalHandle: {
+    color: color.textMuted,
+    fontSize: 13,
     textAlign: "center",
     marginBottom: 4,
   },
