@@ -1,5 +1,5 @@
-# Gate 1: PR で危険変更・禁止ワードを検知�E�強制�E�E
-# Branch protection で "Gate1 Diff Check / diff-check" を忁E��にするとマ�Eジ不可になめE
+# Gate 1: PR の差分から危険な変更・禁止ワードを検知する（強制ゲート）
+# Branch protection で "Gate1 Diff Check / diff-check" を必須にすると、検知時はマージ不可になる
 name: Gate1 Diff Check
 
 on:
