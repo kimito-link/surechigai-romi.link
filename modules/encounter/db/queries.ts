@@ -42,6 +42,17 @@ import {
   toPrefectureCreatorListProfile,
 } from "./prefecture-creator-profiles.js";
 import { isValidShareSlug, normalizeTwitterUsername } from "../../../lib/twitter-username.js";
+// すれ違い相手のハンドル解決は zukan と同じ実装に寄せる（自前実装を持たない＝再発防止）。
+// modules/** は Vercel Functions 向けに .js 付き相対パス必須（@/ は使えない）。
+import {
+  extractTwitterIdFromOpenId,
+  resolveTwitterCacheForUser,
+} from "../core/prefecture-creator-row.js";
+import type { TwitterFollowInfo } from "../core/prefecture-creator-types.js";
+import { resolveListProfileImage } from "../../../lib/profile-image.js";
+
+/** encounter 経路では follow 情報を使わない（X API を増やさないため）。毎回生成しないよう固定。 */
+const EMPTY_FOLLOW_MAP: Map<number, TwitterFollowInfo> = new Map();
 import { hasAmbiguousShareSlugChars, randomShareSlug } from "../../../lib/share-slug.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -693,6 +704,9 @@ export async function getMyEncounters(
   const partnerRows = await db
     .select({
       id: users.id,
+      // openId は twitterUserCache.twitterId 経路の引き当てに使う（レガシーの twitter:<id> ユーザー）。
+      // これが無いと表示名しか手がかりが無くなる（2026-08-07 の不具合の一因）。
+      openId: users.openId,
       name: users.name,
       hitokoto: users.hitokoto,
       hitokotoUpdatedAt: users.hitokotoUpdatedAt,
@@ -707,26 +721,75 @@ export async function getMyEncounters(
   if (visiblePartners.length === 0) return [];
   const visiblePartnerIds = visiblePartners.map((p) => p.id);
 
-  // Twitterキャッシュを一括取得（username 候補があるパートナーのみ）
-  const usernameByPartnerId = new Map<number, string>();
-  for (const p of visiblePartners) {
-    const candidate = (p.name ?? "").replace(/^@/, "").trim();
-    if (candidate) usernameByPartnerId.set(p.id, candidate);
-  }
-  const usernames = [...new Set(usernameByPartnerId.values())];
+  // Twitterキャッシュを一括取得。
+  //
+  // ★ここで users.name（表示名）を twitterUsername と照合してはいけない（2026-08-07 修正）。
+  // users.name に入るのは表示名（例「君斗りんく@動員ちゃれんじ」/ server/clerk-auth-sync.ts:59）で、
+  // twitterUsername は X ハンドル（英数字と _ で1〜15文字）。日本語表示名では構造的に永久ヒットせず、
+  //   - partnerProfileImage が null → アイコンが灰色プレースホルダー
+  //   - partnerUsername に表示名が入り UI 側の検証で弾かれて「ID n」表示
+  // になっていた。CLAUDE.md 設計原則4「交流はXに委譲」が成立しなくなる致命的な不具合。
+  //
+  // 引き当ては zukan で実運用中の resolveTwitterCacheForUser に委譲する（表示名は
+  // isValidTwitterUsername を通らないと採用されない）。同じ問題が zukan 側で7回修正されているのに
+  // encounter 側へ反映されなかったのは、解決ロジックが共通化されず各所に自前実装があったため。
+  // 実装を1つに寄せることが再発防止そのもの。
+  //
+  // クエリは1本に保つこと。__tests__/get-my-encounters-contract.test.ts が
+  // 「twitter_user_cache は1回だけ発行」という契約を固定している。
+  const cacheDisplayNames = [
+    ...new Set(visiblePartners.map((p) => p.name).filter((n): n is string => !!n)),
+  ];
+  const cacheHandleCandidates = [
+    ...new Set(
+      visiblePartners
+        .map((p) => normalizeTwitterUsername(p.name))
+        .filter((n): n is string => !!n),
+    ),
+  ];
+  const cacheTwitterIds = [
+    ...new Set(
+      visiblePartners
+        .map((p) => extractTwitterIdFromOpenId(p.openId))
+        .filter((id): id is string => !!id),
+    ),
+  ];
+  const cacheConditions = [
+    cacheTwitterIds.length > 0 ? inArray(twitterUserCache.twitterId, cacheTwitterIds) : null,
+    cacheDisplayNames.length > 0 ? inArray(twitterUserCache.displayName, cacheDisplayNames) : null,
+    cacheHandleCandidates.length > 0
+      ? inArray(twitterUserCache.twitterUsername, cacheHandleCandidates)
+      : null,
+  ].filter((c): c is NonNullable<typeof c> => c !== null);
   const cacheRows =
-    usernames.length > 0
+    cacheConditions.length > 0
       ? await db
           .select({
             twitterUsername: twitterUserCache.twitterUsername,
+            twitterId: twitterUserCache.twitterId,
             displayName: twitterUserCache.displayName,
             profileImage: twitterUserCache.profileImage,
             followersCount: twitterUserCache.followersCount,
           })
           .from(twitterUserCache)
-          .where(inArray(twitterUserCache.twitterUsername, usernames))
+          .where(cacheConditions.length === 1 ? cacheConditions[0] : or(...cacheConditions))
       : [];
-  const cacheByUsername = new Map(cacheRows.map((c) => [c.twitterUsername, c]));
+  // resolveTwitterCacheForUser は小文字キーで引くのでそれに合わせる。
+  const cacheByUsername = new Map(
+    cacheRows
+      .filter((c) => !!c.twitterUsername)
+      .map((c) => [c.twitterUsername.toLowerCase(), c] as const),
+  );
+  const cacheByTwitterId = new Map(
+    cacheRows
+      .filter((c): c is typeof c & { twitterId: string } => !!c.twitterId)
+      .map((c) => [c.twitterId, c] as const),
+  );
+  const cacheByDisplayName = new Map(
+    cacheRows
+      .filter((c): c is typeof c & { displayName: string } => !!c.displayName)
+      .map((c) => [c.displayName, c] as const),
+  );
 
   // パートナーの累計すれ違い数を一括集計。
   // 従来の `userAId = p OR userBId = p` の count と等価になるよう、
@@ -773,10 +836,20 @@ export async function getMyEncounters(
     if (!partner) continue;
     if (partner.isSuspended) continue;
 
-    const usernameCandidate = usernameByPartnerId.get(partnerId) ?? "";
-    const cachedTwitter = usernameCandidate
-      ? cacheByUsername.get(usernameCandidate)
-      : undefined;
+    // 多段解決（twitterUsername ヒント → openId の twitterId → 表示名がハンドル形式なら採用）に
+    // 委譲する。followByUserId は encounter 経路では使わないので空 Map を渡す（X API を増やさない）。
+    // 最後に displayName 一致のキャッシュで補う。
+    const cachedTwitter =
+      resolveTwitterCacheForUser(
+        { id: partner.id, openId: partner.openId, name: partner.name },
+        EMPTY_FOLLOW_MAP,
+        cacheByTwitterId,
+        cacheByUsername,
+      ) ?? (partner.name ? cacheByDisplayName.get(partner.name) : undefined);
+
+    // ハンドルはキャッシュ由来の検証済みの値だけを使う。
+    // partner.name（表示名）へフォールバックしてはいけない ← それが今回の不具合の本体。
+    const resolvedHandle = normalizeTwitterUsername(cachedTwitter?.twitterUsername);
 
     const partnerTotalEncounters = totalByPartnerId.get(partnerId) ?? 0;
 
@@ -796,10 +869,20 @@ export async function getMyEncounters(
       occurredAt: row.occurredAt,
       openedByMe,
       partnerTotalEncounters,
-      partnerUsername: (cachedTwitter?.twitterUsername ?? usernameCandidate) || null,
+      partnerUsername: resolvedHandle,
       partnerDisplayName: cachedTwitter?.displayName ?? partner.name,
-      partnerProfileImage: cachedTwitter?.profileImage ?? null,
-      partnerFollowersCount: cachedTwitter?.followersCount ?? null,
+      // ハンドルが取れれば X CDN 実画像 → unavatar の順で解決する（X API は呼ばない）。
+      // kimito OGP / Clerk プロキシは resolveListProfileImage 側で弾かれる。
+      // ハンドルが無いときは null（他人のハンドルを推測した unavatar URL を作らない）。
+      partnerProfileImage: resolvedHandle
+        ? resolveListProfileImage(resolvedHandle, cachedTwitter?.profileImage)
+        : null,
+      // followersCount は他人については表示しない方針だが、キャッシュにあれば返す。
+      // 0 は「未取得」と区別できないので null にする（syncClerkTwitterProfileToDb は 0 で INSERT する）。
+      partnerFollowersCount:
+        typeof cachedTwitter?.followersCount === "number" && cachedTwitter.followersCount > 0
+          ? cachedTwitter.followersCount
+          : null,
     });
   }
 

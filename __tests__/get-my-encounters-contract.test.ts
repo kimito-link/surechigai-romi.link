@@ -91,6 +91,9 @@ const BASE_ENCOUNTER_ROW = {
 
 const BASE_PARTNER = {
   id: 200,
+  // openId は twitterUserCache.twitterId 経路の引き当てに使う（2026-08-07 追加）。
+  // clerk: 形式は twitterId を持たないので、この fixture は displayName / handle 経路で解決される。
+  openId: "clerk:user_partner",
   name: "partner_user",
   hitokoto: "こんにちは",
   hitokotoUpdatedAt: new Date("2026-07-04T09:00:00Z"),
@@ -275,8 +278,11 @@ describe("getMyEncounters — 返却契約", () => {
         [
           {
             twitterUsername: "partner_user",
+            twitterId: null,
             displayName: "キャッシュ表示名",
-            profileImage: "https://example.com/avatar.png",
+            // X CDN(pbs.twimg.com) の画像だけが採用される。それ以外は unavatar に落とす
+            // （kimito OGP / Clerk プロキシを一覧に出さない既存仕様・lib/profile-image.ts）。
+            profileImage: "https://pbs.twimg.com/profile_images/1/avatar.png",
             followersCount: 42,
           },
         ],
@@ -286,8 +292,55 @@ describe("getMyEncounters — 返却契約", () => {
     const items = await getMyEncounters(db as never, selfUserId);
     expect(items[0].partnerUsername).toBe("partner_user");
     expect(items[0].partnerDisplayName).toBe("キャッシュ表示名");
-    expect(items[0].partnerProfileImage).toBe("https://example.com/avatar.png");
+    expect(items[0].partnerProfileImage).toBe(
+      "https://pbs.twimg.com/profile_images/1/avatar.png",
+    );
     expect(items[0].partnerFollowersCount).toBe(42);
+  });
+
+  it("X CDN 以外の画像は採用せず unavatar にフォールバックする", async () => {
+    const db = createMockDb({
+      blocks: [[]],
+      encounters: [[BASE_ENCOUNTER_ROW], [{ partnerId: 200, cnt: 1 }], []],
+      users: [[BASE_PARTNER]],
+      twitter_user_cache: [
+        [
+          {
+            twitterUsername: "partner_user",
+            twitterId: null,
+            displayName: "キャッシュ表示名",
+            // Clerk プロキシ画像。これを一覧に出すと zukan で7回踏んだ問題が再発する。
+            profileImage: "https://img.clerk.com/proxy/abc",
+            followersCount: 0,
+          },
+        ],
+      ],
+    });
+
+    const items = await getMyEncounters(db as never, selfUserId);
+    expect(items[0].partnerProfileImage).toBe("https://unavatar.io/x/partner_user");
+    // followersCount の 0 は「未取得」と区別できないので null にする契約
+    expect(items[0].partnerFollowersCount).toBeNull();
+  });
+
+  it("★表示名がハンドル形式でないパートナーは partnerUsername に表示名を入れない", async () => {
+    // 2026-08-07 の不具合の本体。users.name は表示名（例「君斗りんく@動員ちゃれんじ」）で
+    // X ハンドルではない。これを partnerUsername に入れると UI が「ID n」表示になり、
+    // X プロフィールリンクも https://x.com/<表示名> で必ず404になる。
+    const jpPartner = { ...BASE_PARTNER, name: "君斗りんく@動員ちゃれんじ" };
+    const db = createMockDb({
+      blocks: [[]],
+      encounters: [[BASE_ENCOUNTER_ROW], [{ partnerId: 200, cnt: 1 }], []],
+      users: [[jpPartner]],
+      twitter_user_cache: [[]], // キャッシュ無し
+    });
+
+    const items = await getMyEncounters(db as never, selfUserId);
+    expect(items[0].partnerUsername).toBeNull();
+    // ハンドルが無いので unavatar URL も作らない（他人のハンドルを推測しない）
+    expect(items[0].partnerProfileImage).toBeNull();
+    // 表示名そのものは partnerName / partnerDisplayName で従来どおり出る
+    expect(items[0].partnerDisplayName).toBe("君斗りんく@動員ちゃれんじ");
   });
 
   it("partnerId: 自分が userBId のときは userAId が相手になる", async () => {
@@ -337,8 +390,9 @@ describe("getMyEncounters — 返却契約", () => {
         [
           {
             twitterUsername: "user_a",
+            twitterId: null,
             displayName: "Aさんの表示名",
-            profileImage: "https://example.com/a.png",
+            profileImage: "https://pbs.twimg.com/profile_images/1/a.png",
             followersCount: 10,
           },
           // user_b はキャッシュなし
@@ -355,7 +409,7 @@ describe("getMyEncounters — 返却契約", () => {
       partnerName: "user_a",
       partnerHitokoto: "Aのひとこと",
       partnerDisplayName: "Aさんの表示名",
-      partnerProfileImage: "https://example.com/a.png",
+      partnerProfileImage: "https://pbs.twimg.com/profile_images/1/a.png",
       partnerFollowersCount: 10,
       partnerTotalEncounters: 3,
     });
