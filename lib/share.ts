@@ -5,6 +5,7 @@
 import { Platform, Share, Linking } from "react-native";
 import * as Haptics from "expo-haptics";
 import { APP_ORIGIN } from "@/lib/site-urls";
+import { renderShareWaitingScreen } from "@/lib/share-waiting-screen";
 
 const APP_HASHTAG = "#君斗りんくのすれ違ひ通信";
 
@@ -84,8 +85,11 @@ export function prepareSharePopup(): PreparedSharePopup | null {
     try {
       // ここで opener を切ってはいけない。切ると後段の location.href 差し替えが
       // できなくなり、空タブが about:blank のまま残る。実際の遮断は遷移直前に行う。
-      popup.document.title = "Xでシェア";
-      popup.document.body.textContent = "共有画面を準備しています…";
+      //
+      // 素のテキストだと実質白画面に見えるので、りんくの待機画面を描画する
+      // (リンク発行は最大 SHARE_SLUG_TIMEOUT_MS = 8秒待つため、その間ずっと白いと
+      //  「壊れた」と受け取られる)。外部リソース非依存の理由は share-waiting-screen.ts 参照。
+      renderShareWaitingScreen(popup);
     } catch {
       // about:blank の初期化に失敗しても、URL差し替え自体は続行できる。
     }
