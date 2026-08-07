@@ -1,26 +1,28 @@
-# 【��型テンプレート】Google Play 申請用ワークフロー�E�EitHub Actions 版！E#
-# 移植�E: partnership_program_website/.github/workflows/android-play-release.yml
+# Template: Google Play release pipeline (GitHub Actions)
+# Origin: partnership_program_website/.github/workflows/android-play-release.yml
 #
-# - `android-twa/` の TWA プロジェクトを `bundleRelease` でビルドし、Service Account 経由で
-#   Play Console に AAB をアチE�Eロードして持E��トラチE��にリリースを作�Eする、E# - 初期トラチE��は `internal`�E��E部チE��ト）が安�E。製品版に上げる準備ができたら下�E
-#   `PLAY_TRACK` めE`production` に変更すると `changesNotSentForReview=false` で
-#   Google レビューに自動送信される、E#
-# ── こ�EチE��プレの使ぁE�� ──────────────────────────────────────────
-# 1. こ�Eファイルをアプリリポ�E `.github/workflows/android-play-release.yml` にコピ�E、E# 2. 下�E <...> プレースホルダめEapp.config.json の値で置換すめE
-#      <PLAY_PACKAGE_NAME>  = stores.playPackageName (無ければ identity.bundleId)
-#      https://surechigai-romi.link     = "https://" + identity.productionDomain  (審査スクショ取得�E)
-# 3. `PLAY_TRACK` を�E回�E internal、本番準備後に production へ、E# 4. 下�E「忁E��な Secrets」を登録。リリース実体スクリプトは partnership からコピ�E、E#
-# ── 忁E��な GitHub Secrets ────────────────────────────────────────
-#   ANDROID_KEYSTORE_BASE64          android-twa の upload-key .jks めEbase64 匁E#                                    Windows PowerShell:
-#                                      [Convert]::ToBase64String([IO.File]::ReadAllBytes('android-twa\android-upload-key.jks'))
-#   ANDROID_KEYSTORE_PROPERTIES      keystore.properties の中身そ�Eも�E�E�褁E��行！E#                                    侁E
-#                                      storePassword=xxx
-#                                      keyPassword=xxx
-#                                      keyAlias=upload
-#   GOOGLE_PLAY_SA_JSON_BASE64       Google Cloud Service Account JSON めEbase64 匁E#                                      [Convert]::ToBase64String([IO.File]::ReadAllBytes('sa.json'))
-#   ── 任意！Eata Safety / 審査スクショ�E�──
-#   GOOGLE_PLAY_DATA_SAFETY_CSV         Data Safety フォーム入劁ECSV�E�生�E�E#   GOOGLE_PLAY_DATA_SAFETY_CSV_BASE64  吁ECSV めEbase64 化（どちらか�E�E#   IOS_REVIEW_DEMO_USERNAME            審査員用チE��アカウント（ログイン忁E��アプリのみ�E�E#   IOS_REVIEW_DEMO_PASSWORD            同上パスワーチE#
-# - リリースノ�Eト�E release-notes/CURRENT-ja.txt�E�E00 斁E��以下）、E# - 一度に走る�Eは 1 リリースのみ�E�Eoncurrency で過去 push の古ぁE��ンは破棁E��、Ename: android-play-release
+# - Builds the TWA in android-twa/ with bundleRelease, then uploads the AAB
+#   to Play Console with a Service Account.
+# - When PLAY_TRACK is production, changesNotSentForReview=false so Google
+#   starts the review automatically.
+#
+# Setup:
+#   1. Copy this file to .github/workflows/android-play-release.yml
+#      <PLAY_PACKAGE_NAME> = stores.playPackageName (or identity.bundleId)
+#      SCREENSHOT_URL      = "https://" + identity.productionDomain
+#   2. Set PLAY_TRACK (internal for testing, production for release)
+#   3. Register the secrets below
+#
+# Required GitHub Secrets:
+#   ANDROID_KEYSTORE_BASE64             upload-key .jks (base64)
+#   ANDROID_KEYSTORE_PROPERTIES         keystore.properties contents
+#   GOOGLE_PLAY_SA_JSON_BASE64          Service Account JSON (base64)
+#   GOOGLE_PLAY_DATA_SAFETY_CSV         Data Safety CSV (raw)
+#   GOOGLE_PLAY_DATA_SAFETY_CSV_BASE64  Data Safety CSV (base64)
+#   IOS_REVIEW_DEMO_USERNAME            demo account for review (optional)
+#   IOS_REVIEW_DEMO_PASSWORD            demo account password (optional)
+#
+# Release notes: release-notes/CURRENT-ja.txt (max 500 chars)
 
 on:
   workflow_dispatch: {}
@@ -56,9 +58,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      # ↓�EↁEapp.config.json の値で置揁E↓�EↁE      PLAY_PACKAGE_NAME: <PLAY_PACKAGE_NAME>   # stores.playPackageName / 無ければ identity.bundleId
-      # ↑�EↁEここまで ↑�EↁE      # production = Google Play 製品版審査キューに入めE(changesNotSentForReview=false)
-      # internal にすると冁E��チE��トトラチE��止まりで審査されなぁE���E回�E internal 推奨、E      PLAY_TRACK: internal
+      # From app.config.json
+      PLAY_PACKAGE_NAME: <PLAY_PACKAGE_NAME>   # stores.playPackageName / identity.bundleId
+      # internal = testing track. production starts Google review automatically.
+      PLAY_TRACK: internal
 
     steps:
       - name: Checkout
@@ -100,7 +103,7 @@ jobs:
       # step further down. The earlier Play scripts (publish, fill-listing,
       # fill-data-safety) use only Node built-ins + scripts/lib/play-api.mjs.
       - name: Setup pnpm
-        # Don't pass `version:`  Epackage.json#packageManager pins the pnpm
+        # Don't pass 'version:' — package.json#packageManager pins the pnpm version
         # version and pnpm/action-setup@v6 errors on multi-version specification.
         uses: pnpm/action-setup@v6
       - name: Install Node dependencies (for Playwright capture)
@@ -116,7 +119,8 @@ jobs:
           printf '%s\n' "$ANDROID_KEYSTORE_PROPERTIES" > android-twa/keystore.properties
           ls -l android-twa/android-upload-key.jks android-twa/keystore.properties
 
-      # 未署吁EAAB 出荷事故ゲーチE bundleRelease の「前」に signingConfig を検証、E      # bubblewrap は signingConfig を生成しなぁE��め、無ぁE�� Play がアチE�Eロードを弾く、E      # android-patch-signing.mjs を流せば注入される（このスチE��プ�Eそ�E検証�E�、E      - name: Verify build.gradle has signingConfig
+      # Fail early if the AAB would be signed with the wrong config.
+      - name: Verify Android signing config
         run: node scripts/verify-android-signing-config.mjs --gradle android-twa/app/build.gradle
 
       - name: Build release AAB
@@ -163,7 +167,8 @@ jobs:
       # are missing for login-required apps.
       - name: Capture Play screenshots from prod URL (authenticated as reviewer)
         env:
-          # ↁE"https://" + identity.productionDomain で置揁E          SCREENSHOT_URL: https://surechigai-romi.link
+          # "https://" + identity.productionDomain
+          SCREENSHOT_URL: https://surechigai-romi.link
           IOS_REVIEW_DEMO_USERNAME: ${{ secrets.IOS_REVIEW_DEMO_USERNAME }}
           IOS_REVIEW_DEMO_PASSWORD: ${{ secrets.IOS_REVIEW_DEMO_PASSWORD }}
         run: |
