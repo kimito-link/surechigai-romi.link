@@ -1,10 +1,15 @@
-# 【��型テンプレート】iOS Capacitor シェル「作り刁E��なぁE��ガードレール
+# 【金型テンプレート】iOS Capacitor シェル「作り分けない」ガードレール
 #
-# server.url リモート読込型アプリは、動く��垁Eリバ�Eスハック / 富士山解決征Eと
-# 同型・最小実裁E��保つ。過去に富士山が独自の VC / UIWindow / AppDelegate 注入で
-# 「作り刁E��」した結果、起動黒画面で紁Eヶ朁E0回失敗しぁE_docs/CAPACITOR-GOLDEN-RULES.md)、E#
-# こ�Eワークフローは patch-ios-launch-dark.mjs に「作り刁E��、E独自ネイチE��ブ注入)ぁE# 再混入してぁE��ぁE��を機械検査する。違反なら赤で止め人間に説明を求める、E# 「気合で守る原則」を「コードで守る原則」に格上げするのが目皁E原則6)、E#
-# キチE��からの移植時: こ�Eファイルをそのまま使える(禁止パターンはアプリ非依存に一般化済み)、Ename: ios-shell-guardrail
+# server.url リモート読込型アプリは、動く金型(リバースハック / 富士山解決後)と
+# 同型・最小実装を保つ。過去に富士山が独自の VC / UIWindow / AppDelegate 注入で
+# 「作り分け」した結果、起動黒画面で約2ヶ月10回失敗した(_docs/CAPACITOR-GOLDEN-RULES.md)。
+#
+# このワークフローは patch-ios-launch-dark.mjs に「作り分け」(独自ネイティブ注入)が
+# 再混入していないかを機械検査する。違反なら赤で止め人間に説明を求める。
+# 「気合で守る原則」を「コードで守る原則」に格上げするのが目的(原則6)。
+#
+# キットからの移植時: このファイルをそのまま使える(禁止パターンはアプリ非依存に一般化済み)。
+name: ios-shell-guardrail
 
 on:
   pull_request:
@@ -34,8 +39,10 @@ jobs:
           PATCH="scripts/patch-ios-launch-dark.mjs"
           test -f "$PATCH" || (echo "::error::$PATCH が見つかりません"; exit 1)
 
-          # コメンチE// と /* */)を除ぁE��実行コードだけを検査する。コメントには過去の
-          # 経緯説明で禁止パターン名を引用することがあるためEPOSTMORTEM 皁E��割)、E          # それを禁止すると教訓が失われる。strip-comments.mjs が無ければ素の grep でも可、E          if [ -f scripts/strip-comments.mjs ]; then
+          # コメント(// と /* */)を除いた実行コードだけを検査する。コメントには過去の
+          # 経緯説明で禁止パターン名を引用することがあるため(POSTMORTEM 的役割)、
+          # それを禁止すると教訓が失われる。strip-comments.mjs が無ければ素の grep でも可。
+          if [ -f scripts/strip-comments.mjs ]; then
             CODE_ONLY=$(node scripts/strip-comments.mjs "$PATCH")
           else
             CODE_ONLY=$(sed -E 's://.*$::' "$PATCH" | sed -E '/\/\*/,/\*\//d')
@@ -45,36 +52,38 @@ jobs:
           check_absent() {
             local pattern="$1"; local reason="$2"
             if echo "$CODE_ONLY" | grep -qE "$pattern"; then
-              echo "::error file=$PATCH::禁止パターン検�E(コメント除く実行コード�E): $pattern  E$reason"
+              echo "::error file=$PATCH::禁止パターン検出(コメント除く実行コード内): $pattern — $reason"
               violations=$((violations + 1))
             fi
           }
 
-          # 起動黒画面の真因となった「独自ネイチE��ブ注入」を一般パターンで検�Eする、E          # 富士山の FujisanBridgeViewController は一例。任意アプリの独自 VC 注入を禁じる、E          check_absent 'BridgeViewController'        '独自 Bridge VC 注入は禁止、Eain.storyboard customClass/customModule 矛盾で WKWebView が生成されなぁE��画面の真因(作り刁E��なぁE��剁E'
-          check_absent 'ViewController.*customClass' '独自 VC めEstoryboard customClass に注入するのは禁止'
+          # 起動黒画面の真因となった「独自ネイティブ注入」を一般パターンで検出する。
+          # 富士山の FujisanBridgeViewController は一例。任意アプリの独自 VC 注入を禁じる。
+          check_absent 'BridgeViewController'        '独自 Bridge VC 注入は禁止。Main.storyboard customClass/customModule 矛盾で WKWebView が生成されない黒画面の真因(作り分けない原則)'
+          check_absent 'ViewController.*customClass' '独自 VC を storyboard customClass に注入するのは禁止'
           check_absent 'addSwiftFileToPbxproj'       'project.pbxproj への Swift 注入は禁止(金型同型に保つ)'
-          check_absent 'patchMainStoryboard'         'Main.storyboard customClass 書換�E禁止(rootViewController 生�E失敗�E原因)'
-          check_absent 'UIWindow\.Level\.alert'      '最前面 UIWindow オーバ�Eレイは禁止(コンチE��チE��要E��黒画面を生む過去事故)'
-          check_absent 'dark-?[Ww]indow|darkCover'   '最前面ダークオーバ�Eレイ注入は禁止(コンチE��チE��E��隠し�E過去事故)'
-          check_absent 'SplashDone.*poll|JS.*解除ポ�Eリング' 'JS 解除ポ�Eリングは禁止(最大20秒黒画面の過去事故)'
+          check_absent 'patchMainStoryboard'         'Main.storyboard customClass 書換は禁止(rootViewController 生成失敗の原因)'
+          check_absent 'UIWindow\.Level\.alert'      '最前面 UIWindow オーバーレイは禁止(コンテンツを覆い黒画面を生む過去事故)'
+          check_absent 'dark-?[Ww]indow|darkCover'   '最前面ダークオーバーレイ注入は禁止(コンテンツ覆い隠しの過去事故)'
+          check_absent 'SplashDone.*poll|JS.*解除ポーリング' 'JS 解除ポーリングは禁止(最大20秒黒画面の過去事故)'
 
-          # patch script が肥大化してぁE��ぁE��(金型は 80 行台)
+          # patch script が肥大化していないか(金型は 80 行台)
           lines=$(wc -l < "$PATCH")
           MAX_LINES=200
           if [ "$lines" -gt "$MAX_LINES" ]; then
-            echo "::error file=$PATCH::patch-ios-launch-dark.mjs ぁE$lines 行に肥大匁E上限 $MAX_LINES 衁E"
-            echo "「最小実裁E��保つ」原剁E��反�E疑い。新機�Eの前に、本当に忁E��か・金型アプリも同じ修正を�Eれるべきかを確認すること、E
+            echo "::error file=$PATCH::patch-ios-launch-dark.mjs が $lines 行に肥大化(上限 $MAX_LINES 行)"
+            echo "「最小実装を保つ」原則違反の疑い。新機能の前に、本当に必要か・金型アプリも同じ修正を入れるべきかを確認すること。"
             violations=$((violations + 1))
           else
-            echo "patch script size: $lines lines (limit $MAX_LINES) ✁E
+            echo "patch script size: $lines lines (limit $MAX_LINES) ✓"
           fi
 
           if [ "$violations" -gt 0 ]; then
             echo ""
-            echo "::error::$violations 件の違反を検�E。詳細は上記ログ参�E、E
-            echo "iOS Capacitor シェルは「��垁Eリバ�Eスハック)同型最小実裁E��を保つ原則です、E
-            echo "本当に忁E��な修正なら、まず��型アプリ側で同じ修正を�Eれ、両老E��揁E��てからこ�Eガードを更新してください、E
+            echo "::error::$violations 件の違反を検出。詳細は上記ログ参照。"
+            echo "iOS Capacitor シェルは「金型(リバースハック)同型最小実装」を保つ原則です。"
+            echo "本当に必要な修正なら、まず金型アプリ側で同じ修正を入れ、両者を揃えてからこのガードを更新してください。"
             exit 1
           fi
           echo ""
-          echo "✁Eios-shell-guardrail: patch script は最小実裁E��保ってぁE��ぁE
+          echo "✓ ios-shell-guardrail: patch script は最小実装を保っています"
