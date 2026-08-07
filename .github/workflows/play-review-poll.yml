@@ -1,26 +1,44 @@
-# 【��型テンプレート】Google Play production readiness 監要E#
-# 移植�E: partnership_program_website/.github/workflows/play-review-poll.yml
+# Google Play production readiness 監視
 #
-# Play メタチE�Eタ / リリース前提条件の欠落めE30 刁E��きにチェチE��し、E# blocker があれ�E 1 件の Issue を作�E/更新、解消したら自動クローズする、E#
-# ── こ�EチE��プレの使ぁE�� ──────────────────────────────────────────
-# 1. こ�Eファイルをアプリリポ�E `.github/workflows/play-review-poll.yml` にコピ�E、E# 2. 下�E <PLAY_PACKAGE_NAME> めEapp.config.json stores.playPackageName で置換、E# 3. `PLAY_TRACK` を監視したいトラチE��に合わせる�E�Endroid-play-release と同じ値�E�、E# 4. scripts/play-review-check.mjs めEpartnership からコピ�E、E#
-# ── 忁E��な GitHub Secrets ────────────────────────────────────────
-#   GOOGLE_PLAY_SA_JSON_BASE64          Service Account JSON めEbase64 匁E#   GOOGLE_PLAY_DATA_SAFETY_CSV         Data Safety CSV�E�生・任意！E#   GOOGLE_PLAY_DATA_SAFETY_CSV_BASE64  吁ECSV めEbase64 化（任意！E#   �E�Endroid-play-release と同じ secrets を�E利用。追加 secret 不要E��Ename: play-review-poll
+# 移植元: web-ios-android/templates/workflows/play-review-poll.yml
+#         (元は partnership_program_website)
+#
+# Play メタデータ / リリース前提条件の欠落をチェックし、blocker があれば
+# 1 件の Issue を作成/更新、解消したら自動クローズする。
+#
+# ── このリポでの調整点(2026-08-08) ──────────────────────────────────
+# 1. cron を外した。キット正本は `*/30 * * * *`(30分おき)だが、このリポは
+#    ed48d8130 "ci: stop 30-minute polling on review workflows" で
+#    **意図的にポーリングを止めている**(Actions 課金の出血対策)。
+#    キットをそのまま入れるとその意思決定を巻き戻すことになる。
+#
+# 2. workflow_run トリガも外し workflow_dispatch のみにした。
+#    GOOGLE_PLAY_SA_JSON_BASE64 等の Play 系 Secrets が**1つも未登録**のため
+#    (gh secret list で確認済み。Apple 系3点は登録済み)、自動起動させると
+#    play-review-check.mjs が FATAL で必ず赤くなる。
+#    「壊れて赤い」を「意図して手動」に変える方針。
+#
+#    → Play 申請を始めるときに Secrets を登録し、下の schedule/workflow_run を
+#      復活させること。cron を戻す場合は課金影響を再検討する。
+#
+# 3. <PLAY_PACKAGE_NAME> を app.config.json stores.playPackageName の実値に置換。
+#
+# ── 必要な GitHub Secrets（現在すべて未登録）────────────────────────
+#   GOOGLE_PLAY_SA_JSON_BASE64          Service Account JSON を base64 化
+#   GOOGLE_PLAY_DATA_SAFETY_CSV         Data Safety CSV（生・任意）
+#   GOOGLE_PLAY_DATA_SAFETY_CSV_BASE64  同 CSV を base64 化（任意）
+name: play-review-poll
 
 on:
-  # Scheduled polling disabled on 2026-07-31.
-  # Reason: GitHub Actions rounds every run up to a full billable minute, so a
-  #         sub-minute check on a */30 cron still burned ~1,440 min/month and
-  #         helped push Actions past the 3,000-min free tier (~69 USD/month in
-  #         Jun-Jul 2026).
-  # Run it on demand instead: gh workflow run play-review-poll.yml
-  # The workflow_run trigger below still fires it after android-play-release.
   workflow_dispatch: {}
-  workflow_run:
-    workflows:
-      - android-play-release
-    types: [completed]
-    branches: [main]
+  # Play 系 Secrets 登録後に復活させる（上のコメント参照）:
+  # schedule:
+  #   - cron: "*/30 * * * *"   # ← 課金影響を再検討してから
+  # workflow_run:
+  #   workflows:
+  #     - android-play-release
+  #   types: [completed]
+  #   branches: [main]
 
 permissions:
   issues: write
@@ -35,8 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     env:
-      # ↁEapp.config.json の値で置換！Endroid-play-release と一致させる！E      PLAY_PACKAGE_NAME: <PLAY_PACKAGE_NAME>   # stores.playPackageName / 無ければ identity.bundleId
-      PLAY_TRACK: production                   # android-play-release の PLAY_TRACK と一致させめE    steps:
+      PLAY_PACKAGE_NAME: com.kimito.link.surechigai
+      PLAY_TRACK: production                   # android-play-release の PLAY_TRACK と一致させる
+    steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
@@ -100,7 +119,7 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: existing.number,
-                  body: `✁EGoogle Play readiness blockers cleared at ${report.timestamp}.`,
+                  body: `✅ Google Play readiness blockers cleared at ${report.timestamp}.`,
                 });
                 await github.rest.issues.update({
                   owner: context.repo.owner,
