@@ -66,7 +66,50 @@ function* walkDir(dir) {
 
 const appConfig = readJson('app.config.json');
 const pkg = readJson('package.json');
-const cap = readJson('capacitor.config.json');
+
+/**
+ * ネイティブ側の appId(bundle identifier)を取り出す。
+ *
+ * ★kimitolink-linktree から逆輸入(2026-08-08)。あちらは実体が `capacitor.config.ts`
+ *   なのに `.json` 決め打ちで読んでいたため cap が常に null になり、
+ *   **CHECK 2 が skip 表示すら出さずに丸ごと消滅**していた(linktree 46b0b66 / 7ffab0d)。
+ *   このリポは現時点で `.json` なので同じ症状は出ていないが、
+ *   (a) Expo prebuild へ移行済みで capacitor.config.json は将来消える可能性がある
+ *   (b) `.ts` 化されたら同じ穴に落ちる
+ *   ため、先に塞いでおく。ゲートは「見ていないこと」が見えなくなるのが最も危険。
+ */
+function readNativeAppId() {
+  const capJson = readJson('capacitor.config.json');
+  if (capJson) return { appId: capJson.appId ?? null, source: 'capacitor.config.json' };
+
+  const capTs = readFile('capacitor.config.ts');
+  if (capTs != null) {
+    // ★コメントを除いてから**トップレベル**の appId だけを拾う(linktree 46b0b66)。
+    //   素朴に match(/appId:.../) すると最初の1件しか見ないため、
+    //   「旧IDをコメントで残す」「plugins の中に appId を持つプラグインがある」という
+    //   ごく普通の編集で誤った値を拾う。誤一致で緑になると出荷ゲートが素通りする。
+    const noComment = capTs
+      .replace(/\/\*[\s\S]*?\*\//g, '')        // ブロックコメント
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');     // 行コメント(URL の // を壊さない)
+    // 行頭インデント2以下＝トップレベル定義に限定(ネストしたプラグイン設定を拾わない)。
+    const m = noComment.match(/^\s{0,2}appId:\s*['"`]([^'"`]+)['"`]/m);
+    return { appId: m ? m[1] : null, source: 'capacitor.config.ts' };
+  }
+
+  // Expo prebuild 構成のフォールバック。app.config.ts は env 経由で
+  // app.config.json の値を読むので、リテラルが取れないこともある(その場合は null)。
+  const expoTs = readFile('app.config.ts');
+  if (expoTs != null) {
+    const noComment = expoTs
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+    const m = noComment.match(/bundleIdentifier:\s*['"`]([^'"`]+)['"`]/);
+    return { appId: m ? m[1] : null, source: 'app.config.ts' };
+  }
+  return null;
+}
+
+const cap = readNativeAppId();
 
 // ----------------------------------------------------------------------------
 // CHECK 1 — version が semver X.Y.Z(meta)
@@ -84,14 +127,19 @@ if (!marketingVersion) {
 // CHECK 2 — Bundle ID 整合(capacitor.config.json appId == app.config bundleId)
 // ----------------------------------------------------------------------------
 const bundleId = appConfig?.identity?.bundleId;
-if (cap && bundleId && !String(bundleId).startsWith('<')) {
-  if (cap.appId !== bundleId) {
-    fail('bundle-id-consistency', 'meta', `capacitor.config.json appId="${cap.appId}" != app.config bundleId="${bundleId}"`);
-  } else {
-    ok('bundle-id-consistency', cap.appId);
-  }
-} else if (cap) {
-  skip('bundle-id-consistency', 'app.config bundleId が未設定 or capacitor.config 無し');
+// どの分岐に落ちても必ず ok/fail/skip のいずれかを出す(沈黙させない)。
+// 以前は `else if (cap)` だったため、cap が null のとき **skip すら出ず
+// チェックが丸ごと消滅**した。これは linktree が実際に踏んだ穴(7ffab0d)。
+if (!cap) {
+  skip('bundle-id-consistency', 'capacitor.config.json / .ts / app.config.ts のいずれも読めない');
+} else if (!cap.appId) {
+  skip('bundle-id-consistency', `${cap.source} から appId を読み取れない`);
+} else if (!bundleId || String(bundleId).startsWith('<')) {
+  skip('bundle-id-consistency', 'app.config identity.bundleId が未設定(プレースホルダのまま)');
+} else if (cap.appId !== bundleId) {
+  fail('bundle-id-consistency', 'meta', `${cap.source} appId="${cap.appId}" != app.config bundleId="${bundleId}"`);
+} else {
+  ok('bundle-id-consistency', cap.appId);
 }
 
 // ----------------------------------------------------------------------------
