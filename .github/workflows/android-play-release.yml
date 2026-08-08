@@ -23,28 +23,45 @@
 #   IOS_REVIEW_DEMO_PASSWORD            demo account password (optional)
 #
 # Release notes: release-notes/CURRENT-ja.txt (max 500 chars)
+#
+# ── このリポでの調整点(2026-08-08) ──────────────────────────────────
+# 1. `name:` を復活させた。ecbaabb98 の文字化けで消えており、f5e7216d8 で UTF-8 は
+#    直ったが name: 行は戻っていなかった。GitHub は name: を読めないとワークフローを
+#    **ファイルパス表示**にする(`gh workflow list` が
+#    ".github/workflows/android-play-release.yml" と出る)ため、
+#    一覧でも Actions の UI でも識別できなくなっていた。
+# 2. PLAY_PACKAGE_NAME がテンプレートの <PLAY_PACKAGE_NAME> のまま放置されていたので
+#    app.config.json stores.playPackageName の実値に置換。
+# 3. push トリガを外した。Play 系 Secrets(GOOGLE_PLAY_SA_JSON_BASE64 等)が
+#    **1つも未登録**(gh secret list で確認。Apple 系3点は登録済み)なので、
+#    自動起動すると "Validate required secrets" で必ず赤くなる。
+#    「壊れて赤い」を「意図して手動」に変える。Play 申請を始めるときに
+#    Secrets を登録し、下の push ブロックを復活させること。
+name: android-play-release
 
 on:
   workflow_dispatch: {}
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/android-play-release.yml"
-      - "android-twa/app/build.gradle"
-      - "release-notes/CURRENT-ja.txt"
-      - "scripts/play-publish.mjs"
-      - "scripts/play-fill-listing.mjs"
-      - "scripts/play-fill-data-safety.mjs"
-      - "scripts/play-review-check.mjs"
-      # Submit-time helpers that change runtime behaviour of the
-      # Play release. Same lesson as the iOS workflow path-filter fix:
-      # any script the workflow actually runs must appear here or
-      # fixes to it can't retrigger a build.
-      - "scripts/capture-play-screenshots.mjs"
-      - "scripts/lib/play-api.mjs"
-      - "store-assets/play/**"
-      - "app.config.json"
+  # Play 系 Secrets 登録後に復活させる（上のコメント3参照）。
+  # paths には「このワークフローが実際に run: で叩くスクリプト」を必ず全部載せる
+  # (iOS 側の path-filter 修正と同じ教訓。載っていないとそのスクリプトを直しても
+  #  ビルドが再トリガされない)。
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - ".github/workflows/android-play-release.yml"
+  #     - "android-twa/app/build.gradle"
+  #     - "release-notes/CURRENT-ja.txt"
+  #     - "scripts/play-publish.mjs"
+  #     - "scripts/play-fill-listing.mjs"
+  #     - "scripts/play-fill-data-safety.mjs"
+  #     - "scripts/play-review-check.mjs"
+  #     - "scripts/generate-release-notes.mjs"
+  #     - "scripts/verify-android-signing-config.mjs"
+  #     - "scripts/capture-play-screenshots.mjs"
+  #     - "scripts/lib/play-api.mjs"
+  #     - "store-assets/play/**"
+  #     - "app.config.json"
 
 concurrency:
   group: android-play-release-${{ github.ref }}
@@ -58,8 +75,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      # From app.config.json
-      PLAY_PACKAGE_NAME: <PLAY_PACKAGE_NAME>   # stores.playPackageName / identity.bundleId
+      # From app.config.json (stores.playPackageName)
+      PLAY_PACKAGE_NAME: com.kimito.link.surechigai
       # internal = testing track. production starts Google review automatically.
       PLAY_TRACK: internal
 
