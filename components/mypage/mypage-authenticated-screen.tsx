@@ -70,6 +70,7 @@ export function MypageAuthenticatedScreen() {
   const [hitokotoModalVisible, setHitokotoModalVisible] = useState(false);
   const [showBlockList, setShowBlockList] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [switchModalVisible, setSwitchModalVisible] = useState(false);
   const [localHitokoto, setLocalHitokoto] = useState("");
   const { resetTutorial } = useTutorial();
   const { resetOnboarding } = useOnboarding();
@@ -264,6 +265,8 @@ export function MypageAuthenticatedScreen() {
       handleViewPublicPage={handleViewPublicPage}
       handleShareLocation={handleShareLocation}
       settingsOpen={settingsOpen}
+      switchModalVisible={switchModalVisible}
+      setSwitchModalVisible={setSwitchModalVisible}
       setSettingsOpen={setSettingsOpen}
       sharePrecise={sharePrecise}
       handleTogglePrecision={handleTogglePrecision}

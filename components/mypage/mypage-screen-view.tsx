@@ -23,6 +23,10 @@ import { MypageActionList } from "@/components/dashboard/mypage-action-list";
 import { LatestFootprintCard } from "@/components/dashboard/latest-footprint-card";
 import { HostEventsSummary } from "@/components/dashboard/host-events-summary";
 import { XLinkRescueCard } from "@/components/dashboard/x-link-rescue-card";
+import {
+  SwitchXAccountModal,
+  SwitchXAccountResultNotice,
+} from "@/components/auth/switch-x-account-modal";
 import { color, palette } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
 import {
@@ -47,6 +51,9 @@ export type MypageScreenViewProps = {
   handleShareLocation: () => void;
   settingsOpen: boolean;
   setSettingsOpen: (value: boolean) => void;
+  /** Xアカウント切り替えモーダルの開閉（状態は呼び出し側が持つ既存の分担に合わせる）。 */
+  switchModalVisible: boolean;
+  setSwitchModalVisible: (value: boolean) => void;
   sharePrecise: boolean;
   handleTogglePrecision: (next: boolean) => void;
   settingsLoading: boolean;
@@ -84,6 +91,8 @@ export function MypageScreenView(props: MypageScreenViewProps) {
     handleShareLocation,
     settingsOpen,
     setSettingsOpen,
+    switchModalVisible,
+    setSwitchModalVisible,
     sharePrecise,
     handleTogglePrecision,
     settingsLoading,
@@ -188,6 +197,9 @@ export function MypageScreenView(props: MypageScreenViewProps) {
         {/* X 未連携で公開ページを作れない人への脱出路。該当しなければ何も描かない
             （2026-08-05 SIWA を主導線にしたことで現実に発生するようになった状態）。 */}
         <XLinkRescueCard />
+        {/* 切り替えを試した直後だけ出る成否バナー。試していなければ何も描かない。
+            X でのログアウト完了は検知できないので、代わりに「結果」を検知して閉じる。 */}
+        <SwitchXAccountResultNotice onRetry={() => setSwitchModalVisible(true)} />
         <MypageActionList />
         <LatestFootprintCard />
         <MySignalSummary />
@@ -418,6 +430,24 @@ export function MypageScreenView(props: MypageScreenViewProps) {
             </Pressable>
           ))}
 
+          {/* 別アカウントへの切り替え。ログアウト（危険操作）とは別枠にして、
+              区切り線より前＝通常操作として置く。 */}
+          <Pressable
+            onPress={() => setSwitchModalVisible(true)}
+            style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+          >
+            <MaterialIcons
+              name="swap-horiz"
+              size={20}
+              color={color.accentPrimary}
+              style={{ marginRight: 12 }}
+            />
+            <Text style={[styles.menuItemText, { color: color.textPrimary }]}>
+              別のXアカウントに切り替える
+            </Text>
+          </Pressable>
+
           <View style={styles.dangerZoneDivider} />
 
           <Pressable
@@ -469,6 +499,13 @@ export function MypageScreenView(props: MypageScreenViewProps) {
         current={localHitokoto}
         onClose={() => setHitokotoModalVisible(false)}
         onSave={handleHitokotoSave}
+      />
+
+      {/* Xアカウント切り替え。X側のログアウトはユーザー操作が要るので案内する。 */}
+      <SwitchXAccountModal
+        visible={switchModalVisible}
+        onClose={() => setSwitchModalVisible(false)}
+        returnTo="/mypage"
       />
     </ScreenContainer>
   );
