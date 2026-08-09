@@ -43,3 +43,24 @@ export function buildSignInAutoXHref(
 ): string {
   return `${buildSignInHref(returnTo)}&auto=x`;
 }
+
+/**
+ * アカウント切り替え用の sign-in URL。**`auto=x` を付けない**のが唯一にして最大の役目。
+ *
+ * なぜ分けるか:
+ *   `auto=x` が付くと AutoAdvanceToX が Clerk の X ボタンを自動クリックする。
+ *   通常ログインでは 1 タップ体験そのものだが、**アカウントを切り替えたいときは有害**。
+ *   X 側のブラウザセッションが生きていると認可画面が素通りし、ユーザーが介入する
+ *   視覚的猶予すら無いまま**同じアカウントで即座に戻ってくる**（＝「切り替えられない」の増幅器）。
+ *
+ *   中身は buildSignInHref と同じだが、`buildSignInHref` を直接呼ぶと将来
+ *   「ここにも auto=x を付けよう」と戻されやすい。**意図を名前に持たせて付け忘れ・付け直しを防ぐ。**
+ *
+ * 注意: X は OAuth 2.0 で prompt/force_login を非対応（X 社が明言・要望スレは close）なので、
+ *   URL パラメータで認可画面を強制する方法は存在しない。X 側のログアウトはユーザー操作が必要。
+ */
+export function buildSignInSwitchHref(
+  returnTo: string = DEFAULT_POST_AUTH_PATH,
+): string {
+  return buildSignInHref(returnTo);
+}

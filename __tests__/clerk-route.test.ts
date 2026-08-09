@@ -5,6 +5,7 @@ import {
   SIGN_UP_HREF,
   buildSignInAutoXHref,
   buildSignInHref,
+  buildSignInSwitchHref,
   isClerkSsoCallback,
   upgradeAuthHref,
 } from "@/lib/clerk-route";
@@ -149,5 +150,33 @@ describe("isGuestAppWebRoute", () => {
   it("タブルートを guest アプリルートと判定", () => {
     expect(isGuestAppWebRoute("/map")).toBe(true);
     expect(isGuestAppWebRoute("/sign-in")).toBe(false);
+  });
+});
+
+/**
+ * アカウント切り替え用 URL は `auto=x` を付けてはいけない。
+ *
+ * なぜテストで固定するか:
+ *   `auto=x` が付くと AutoAdvanceToX が Clerk の X ボタンを自動クリックする。
+ *   通常ログインでは 1 タップ体験そのものなので「揃えよう」と足したくなるが、
+ *   切り替え時に付くと X 側のセッションで認可が素通りし、ユーザーが介入する猶予も無く
+ *   **同じアカウントで即座に戻ってくる**（＝「アカウントを切り替えられない」の増幅器）。
+ *   見た目には何も壊れないので、型チェックでも E2E でも検出できない。ここが唯一の砦。
+ */
+describe("buildSignInSwitchHref（アカウント切り替え）", () => {
+  it("auto=x を付けない", () => {
+    expect(buildSignInSwitchHref("/mypage")).not.toContain("auto=x");
+    expect(buildSignInSwitchHref()).not.toContain("auto=x");
+  });
+
+  it("redirect_url は通常ログインと同じに保つ（戻り先を失わない）", () => {
+    expect(buildSignInSwitchHref("/mypage")).toBe(buildSignInHref("/mypage"));
+  });
+
+  it("通常ログイン用の href とは別物である", () => {
+    // 「同じで良いのでは」と buildSignInAutoXHref に寄せられたら落ちる。
+    expect(buildSignInSwitchHref("/mypage")).not.toBe(
+      buildSignInAutoXHref("/mypage"),
+    );
   });
 });

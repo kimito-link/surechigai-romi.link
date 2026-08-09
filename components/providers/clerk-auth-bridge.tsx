@@ -5,7 +5,7 @@ import * as Auth from "@/lib/_core/auth";
 import { USER_INFO_KEY } from "@/constants/oauth";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { clearAllTokenData } from "@/lib/token-manager";
-import { buildSignInAutoXHref } from "@/lib/clerk-route";
+import { buildSignInAutoXHref, buildSignInSwitchHref } from "@/lib/clerk-route";
 import { stripTabsGroupPrefix } from "@/lib/navigation/normalize-return-url";
 import { AuthContextProvider, type AuthState } from "@/lib/auth-context";
 import {
@@ -57,6 +57,25 @@ export function resolveReturnPath(returnUrl?: string): string {
     }
   }
   return normalized.startsWith("/") ? normalized : `/${normalized}`;
+}
+
+/**
+ * login() が Web で飛ばす sign-in URL を決める。
+ *
+ * 通常ログインは `auto=x`（1タップ導線）、**アカウント切り替えのときは付けない**。
+ * `auto=x` が付いていると AutoAdvanceToX が X ボタンを自動クリックし、X 側の
+ * ブラウザセッションが生きていれば認可画面が素通りして**同じアカウントで即座に戻る**。
+ * 切り替えたい人にとっては介入する猶予すら無くなるので有害（＝症状の増幅器）。
+ *
+ * 純関数として export しているのはテストのため（resolveReturnUrl / resolveReturnPath と同じ流儀）。
+ */
+export function resolveSignInHrefForLogin(
+  returnPath: string,
+  forceSwitch: boolean,
+): string {
+  return forceSwitch
+    ? buildSignInSwitchHref(returnPath)
+    : buildSignInAutoXHref(returnPath);
 }
 
 function firstString(...values: any[]): string | undefined {
@@ -224,12 +243,17 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
               "認証システムの準備中です。数秒おいてもう一度お試しください。",
             );
           }
-          if (clerk.user) {
+          // forceSwitch のときはこのガードを通さない。
+          // 直前の signOut() 後に clerk.user の null 化が遅れることがあり、掛かると
+          // 「別のアカウントに切り替える」を押したのに**元の画面へ戻るだけ**になる。
+          // 切り替え時は必ず sign-in まで進める（未ログイン前提の画面なので fail-open で安全）。
+          if (!forceSwitch && clerk.user) {
             window.location.href = redirectComplete;
             return;
           }
-          window.location.href = buildSignInAutoXHref(
+          window.location.href = resolveSignInHrefForLogin(
             resolveReturnPath(safeReturnUrl),
+            forceSwitch,
           );
           return;
         }

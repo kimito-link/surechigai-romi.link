@@ -23,12 +23,14 @@ vi.mock("@react-native-async-storage/async-storage", () => ({
 }));
 vi.mock("@/lib/_core/auth", () => ({}));
 vi.mock("@/lib/token-manager", () => ({ clearAllTokenData: vi.fn() }));
-vi.mock("@/lib/clerk-route", () => ({ buildSignInAutoXHref: vi.fn() }));
+// ★clerk-route は**モックしない**（実物を使う）。
+//   resolveSignInHrefForLogin の検証対象は「auto=x が付くかどうか」そのものなので、
+//   モックすると常に undefined が返り**何も検証しない偽テスト**になる。
+//   clerk-route.ts は純粋な文字列組み立てだけで副作用も外部依存も無いため実物で安全。
 vi.mock("@/lib/api/config", () => ({ getApiBaseUrl: () => "" }));
 
-const { resolveReturnUrl, resolveReturnPath } = await import(
-  "@/components/providers/clerk-auth-bridge"
-);
+const { resolveReturnUrl, resolveReturnPath, resolveSignInHrefForLogin } =
+  await import("@/components/providers/clerk-auth-bridge");
 
 /**
  * ReturnUrl正規化(/(tabs)/→/置換)は auth-context.tsx / clerk-auth-bridge.tsx に
@@ -81,5 +83,35 @@ describe("resolveReturnPath", () => {
 
   it("先頭スラッシュがなければ付与する", () => {
     expect(resolveReturnPath("checkin")).toBe("/checkin");
+  });
+});
+
+/**
+ * login() が Web で飛ばす sign-in URL の決定ロジック。
+ *
+ * 「アカウントを切り替えられない」の真因は X 側のブラウザセッションが生きていることで、
+ * OAuth パラメータでは解決できない（X は prompt/force_login を非対応）。
+ * そのうえで `auto=x` は**増幅器**として効く: 付いていると AutoAdvanceToX が
+ * X ボタンを自動クリックし、認可が素通りして同じアカウントで即座に戻ってくる。
+ * ユーザーが「別のアカウントにしたい」と気づいて介入する猶予すら無くなる。
+ *
+ * 通常ログインの 1 タップ体験は維持したいので、**切り替えのときだけ外す**。
+ * この非対称は見た目には現れず、型チェックでも E2E でも検出できない。
+ */
+describe("resolveSignInHrefForLogin", () => {
+  it("通常ログインは auto=x を付ける（1タップ導線を維持）", () => {
+    expect(resolveSignInHrefForLogin("/mypage", false)).toContain("auto=x");
+  });
+
+  it("アカウント切り替えでは auto=x を付けない", () => {
+    expect(resolveSignInHrefForLogin("/mypage", true)).not.toContain("auto=x");
+  });
+
+  it("どちらも戻り先(redirect_url)は保持する", () => {
+    for (const forceSwitch of [true, false]) {
+      expect(resolveSignInHrefForLogin("/mypage", forceSwitch)).toContain(
+        `redirect_url=${encodeURIComponent("/mypage")}`,
+      );
+    }
   });
 });
