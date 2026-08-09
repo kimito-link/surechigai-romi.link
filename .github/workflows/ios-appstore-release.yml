@@ -296,6 +296,18 @@ jobs:
             BN="$(date +%s)"
           fi
           sed -i.bak -E "s/CURRENT_PROJECT_VERSION = [^;]+;/CURRENT_PROJECT_VERSION = $BN;/g" "$PBX"
+          # ★Info.plist の CFBundleVersion も必ず書く（2026-08-09 実障害）。
+          #   Expo prebuild が生成する Info.plist は CFBundleVersion にリテラル "1" を
+          #   書き込み、$(CURRENT_PROJECT_VERSION) を参照しない。そのため pbxproj と
+          #   xcodebuild 引数の両方に 485 を渡しても、**IPA は CFBundleVersion=1 のまま**
+          #   になり、Apple に「480 より高くしろ」と拒否され続けた（run #481〜#485 が全滅）。
+          #   CFBundleShortVersionString は下の PlistBuddy で書いていたのに
+          #   CFBundleVersion だけ書いていなかった非対称が原因。
+          if [ -f "$PLIST" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BN" "$PLIST" \
+              || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $BN" "$PLIST"
+            echo "Info.plist CFBundleVersion=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$PLIST")"
+          fi
           echo "CURRENT_PROJECT_VERSION=$BN"
           echo "IOS_BUILD_NUMBER=$BN" >> "$GITHUB_ENV"
           mkdir -p build
@@ -536,6 +548,11 @@ jobs:
             /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $MARK_VER" "$PLIST"
           fi
           sed -i.bak3 -E "s/CURRENT_PROJECT_VERSION = [^;]+;/CURRENT_PROJECT_VERSION = $IOS_BUILD_NUMBER;/g" "$PBX"
+          # CFBundleVersion も再適用（上の設定ステップと対にする。片方だけだと IPA が 1 のままになる）。
+          if [ -f "$PLIST" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $IOS_BUILD_NUMBER" "$PLIST" \
+              || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $IOS_BUILD_NUMBER" "$PLIST"
+          fi
           {
             echo "MARK_VER=$MARK_VER"
             echo "IOS_BUILD_NUMBER=$IOS_BUILD_NUMBER"
@@ -612,7 +629,7 @@ jobs:
           echo "ipa-path=$IPA_PATH" >> "$GITHUB_OUTPUT"
           echo "Generated IPA: $IPA_PATH"
 
-      - name: Verify IPA CFBundleShortVersionString before upload
+      - name: Verify IPA version and build number before upload
         run: |
           set -euo pipefail
           IPA_PATH="${{ steps.export_ipa.outputs.ipa-path }}"
@@ -627,6 +644,18 @@ jobs:
           echo "IPA CFBundleShortVersionString=$GOT (expected $MARK_VER)"
           if [ "$GOT" != "$MARK_VER" ]; then
             echo "::error::IPA の Version が package.json と一致しません"
+            exit 1
+          fi
+          # ★CFBundleVersion も必ず検証する（2026-08-09 追加）。
+          #   ここを見ていなかったため、IPA が CFBundleVersion=1 のままでもこのゲートは緑になり、
+          #   アップロード段階で初めて Apple に弾かれる、という失敗を5回繰り返した
+          #   （run #481〜#485 が全滅）。「緑なのに何も検査していない」の典型例。
+          GOT_BN="$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" /tmp/ipa-Info.plist)"
+          echo "IPA CFBundleVersion=$GOT_BN (expected $IOS_BUILD_NUMBER)"
+          if [ "$GOT_BN" != "$IOS_BUILD_NUMBER" ]; then
+            echo "::error::IPA の CFBundleVersion が $GOT_BN です（期待 $IOS_BUILD_NUMBER）。"
+            echo "Expo prebuild の Info.plist は CFBundleVersion にリテラルを書くため、"
+            echo "pbxproj の CURRENT_PROJECT_VERSION だけを直しても IPA には反映されません。"
             exit 1
           fi
 
