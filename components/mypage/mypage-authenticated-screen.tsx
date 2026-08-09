@@ -30,6 +30,7 @@ import {
   withShareTimeout,
   ShareTimeoutError,
   shareMyLocation,
+  type ShareTarget,
 } from "@/lib/share";
 import type { TrailVisibility } from "@/modules/encounter/core/trail-visibility";
 import { useLivePresenceControls } from "@/hooks/use-live-presence";
@@ -145,7 +146,7 @@ export function MypageAuthenticatedScreen() {
     [unblockMutation],
   );
 
-  const handleShareLocation = useCallback(async () => {
+  const handleShareLocation = useCallback(async (target: ShareTarget = "x") => {
     // 連打ガード: 前回のシェアが飛んでいる間の再タップを弾く（空タブ増殖・429の誘発を防ぐ）
     if (shareInFlightRef.current) return;
     shareInFlightRef.current = true;
@@ -159,9 +160,14 @@ export function MypageAuthenticatedScreen() {
       const res = await withShareTimeout(shareSlugMutation.mutateAsync());
       const shared = await shareMyLocation(res.url, res.areaLabel ?? undefined, {
         popup: sharePopup,
+        target,
       });
       if (!shared) {
-        Alert.alert("エラー", "Xの投稿画面を開けませんでした。ポップアップ許可を確認してください。");
+        const where = target === "threads" ? "Threads" : "X";
+        Alert.alert(
+          "エラー",
+          `${where}の投稿画面を開けませんでした。ポップアップ許可を確認してください。`,
+        );
       }
     } catch (err) {
       closePreparedSharePopup(sharePopup);

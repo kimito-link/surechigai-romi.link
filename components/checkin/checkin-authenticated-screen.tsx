@@ -50,6 +50,7 @@ import {
   withShareTimeout,
   ShareTimeoutError,
   shareMyLocation,
+  type ShareTarget,
 } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
 import { resolveCheckinErrorMessage } from "@/components/checkin/resolve-checkin-error-message";
@@ -151,9 +152,9 @@ export default function CheckinAuthenticatedScreen() {
   const utils = trpc.useUtils();
   const { showError } = useToast();
 
-  // チェックイン直後にその場で「現在地をXでシェア」できる導線
+  // チェックイン直後にその場で現在地をシェアできる導線（X / Threads）
   const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
-  const handleShareLocation = useCallback(async () => {
+  const handleShareLocation = useCallback(async (target: ShareTarget = "x") => {
     // 連打ガード: 前回のシェアが飛んでいる間に再タップされると、空タブが増える上に
     // 共有リンク発行が重なって 429 を誘発する（連続シェアで固まる報告の一因）。
     if (shareInFlightRef.current) return;
@@ -176,9 +177,11 @@ export default function CheckinAuthenticatedScreen() {
         undefined;
       const shared = await shareMyLocation(res.url, areaLabel, {
         popup: sharePopup,
+        target,
       });
       if (!shared) {
-        showError("Xの投稿画面を開けませんでした。ポップアップ許可を確認してください。");
+        const where = target === "threads" ? "Threads" : "X";
+        showError(`${where}の投稿画面を開けませんでした。ポップアップ許可を確認してください。`);
       }
     } catch (err) {
       closePreparedSharePopup(sharePopup);

@@ -27,6 +27,7 @@ import {
   SwitchXAccountModal,
   SwitchXAccountResultNotice,
 } from "@/components/auth/switch-x-account-modal";
+import type { ShareTarget } from "@/lib/share";
 import { color, palette } from "@/theme/tokens";
 import { navigate } from "@/lib/navigation";
 import {
@@ -48,7 +49,8 @@ export type MypageScreenViewProps = {
   hitokotoDisplay: string;
   isSharing: boolean;
   handleViewPublicPage: () => void;
-  handleShareLocation: () => void;
+  /** 共有先を渡す。既定は X。 */
+  handleShareLocation: (target?: ShareTarget) => void;
   settingsOpen: boolean;
   setSettingsOpen: (value: boolean) => void;
   /** Xアカウント切り替えモーダルの開閉（状態は呼び出し側が持つ既存の分担に合わせる）。 */
@@ -177,7 +179,7 @@ export function MypageScreenView(props: MypageScreenViewProps) {
               </Text>
             </Pressable>
             <Pressable
-              onPress={handleShareLocation}
+              onPress={() => handleShareLocation("x")}
               disabled={isSharing}
               style={({ pressed }) => [
                 styles.publicPagePreviewLink,
@@ -189,6 +191,23 @@ export function MypageScreenView(props: MypageScreenViewProps) {
               <MaterialIcons name="ios-share" size={16} color={color.accentIndigo} />
               <Text style={styles.publicPagePreviewText}>
                 {isSharing ? "準備中…" : "現在地をXでシェア"}
+              </Text>
+            </Pressable>
+            {/* X だけでは届かない層（Instagram / Threads しか使っていない人）向け。
+                Threads は X と同じく公式の Web Intent があるので同じ導線で出せる。 */}
+            <Pressable
+              onPress={() => handleShareLocation("threads")}
+              disabled={isSharing}
+              style={({ pressed }) => [
+                styles.publicPagePreviewLink,
+                pressed && { opacity: 0.7 },
+                isSharing && { opacity: 0.6 },
+              ]}
+              accessibilityRole="button"
+            >
+              <MaterialIcons name="ios-share" size={16} color={color.accentIndigo} />
+              <Text style={styles.publicPagePreviewText}>
+                {isSharing ? "準備中…" : "現在地をThreadsでシェア"}
               </Text>
             </Pressable>
           </View>

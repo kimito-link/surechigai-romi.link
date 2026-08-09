@@ -117,6 +117,27 @@ function buildTwitterIntentUrl(text: string, url?: string, hashtags?: string[]):
 }
 
 /**
+ * Threads の Web Intent。X の intent/tweet と同じ思想で、公式にドキュメント化されている。
+ * https://developers.facebook.com/docs/threads/threads-web-intents/
+ *
+ * X との違い:
+ *   - アプリ登録・App ID・OAuth はいずれも不要（X の intent と同じ）
+ *   - ハッシュタグは `hashtags` ではなく `tag`（**1つだけ**。50文字以内、
+ *     改行・タブ・ピリオド・アンパサンドは不可）。複数タグは渡せないので本文に含める
+ *   - モバイルでは Threads アプリがインストール済みなら公式にアプリが開く
+ *   - ドメインは threads.com（threads.net から移行済み）
+ */
+function buildThreadsIntentUrl(text: string, url?: string, hashtags?: string[]): string {
+  const params = new URLSearchParams();
+  params.set("text", text);
+  if (url) params.set("url", url);
+  // tag は1つだけ。仕様上使えない文字を含むものは落とす（付けられなくても投稿は成立する）。
+  const tag = hashtags?.find((h) => h && !/[\n\t.&]/.test(h));
+  if (tag) params.set("tag", tag);
+  return `https://www.threads.com/intent/post?${params.toString()}`;
+}
+
+/**
  * 新しいタブで開く。開けなければ false（現在のタブは奪わない）。
  *
  * 現在タブを X に差し替える挙動は、ユーザーがアプリの画面（チェックイン結果など）を
@@ -223,6 +244,49 @@ export async function shareToTwitter(
   }
 }
 
+/**
+ * Threads の Web Intent でシェア。
+ *
+ * なぜ Threads を足したか:
+ *   実地で人に聞いたところ「Instagram と Threads しかやっていない」層が相当数いた。
+ *   X だけでは届かない。Threads は X と同じく**アプリ登録も認証も不要**の
+ *   公式 Web Intent があるので、実質ゼロコストで届く範囲を広げられる。
+ *
+ * Instagram を足さない（足せない）理由:
+ *   Instagram には intent 相当が存在せず、Meta が意図的に塞いでいる。
+ *   フィード投稿のキャプション事前入力は公式に提供されておらず、Stories 共有は
+ *   ネイティブアプリ限定（Web 不可）＋ Facebook App ID 必須 ＋ 9:16 画像の別途生成が必要で、
+ *   しかも**本文にリンクを埋められない**（このアプリは OGP 付き URL を配る設計なので噛み合わない）。
+ *   Graph API は個人アカウント非対応（ビジネス/クリエイター必須・審査2〜4週間）。
+ *   Buffer ですら個人 Instagram には自動投稿できず「通知して手動完了」方式にしている。
+ *   → Instagram は将来 Web Share API（OS のシェアシート）経由で拾う方が筋が良い。
+ */
+export async function shareToThreads(
+  text: string,
+  url?: string,
+  hashtags?: string[],
+  options?: { popup?: PreparedSharePopup | null },
+): Promise<boolean> {
+  try {
+    if (Platform.OS !== "web") {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    const threadsUrl = buildThreadsIntentUrl(text, url, hashtags);
+
+    if (Platform.OS === "web") {
+      return openWebShareUrl(threadsUrl, options?.popup);
+    }
+
+    // ネイティブでは Threads アプリがインストール済みならアプリが開く（公式仕様）。
+    await Linking.openURL(threadsUrl);
+    return true;
+  } catch (error) {
+    console.error("[Share] Error sharing to Threads:", error);
+    return false;
+  }
+}
+
 /* shareEncounter は削除済み(P2-1): 呼び出しゼロのデッドコードで、
    生成URL /encounters/<id> に対応するルートも存在しなかった。
    すれ違い共有を作る際は /u/<slug> 系(shareMyLocation)の文法に合わせること。 */
@@ -235,16 +299,24 @@ export async function shareApp(): Promise<boolean> {
   return shareToTwitter(text, getAppUrl(), ["君斗りんくのすれ違ひ通信"]);
 }
 
+/** 共有先。既定は X（既存の導線を変えないため）。 */
+export type ShareTarget = "x" | "threads";
+
 /**
- * 自分の現在地（最後の記録地点）を X でシェア。
+ * 自分の現在地（最後の記録地点）をシェア。
  * shareUrl は /u/<shareSlug>。共有先のカードに地図サムネ（OGP）が表示される。
+ *
+ * target で X / Threads を選べる。文面とURLは共通なので、
+ * どちらで共有しても同じ OGP カードが出る。
  */
 export async function shareMyLocation(
   shareUrl: string,
   areaLabel?: string,
-  options?: { popup?: PreparedSharePopup | null },
+  options?: { popup?: PreparedSharePopup | null; target?: ShareTarget },
 ): Promise<boolean> {
   const where = areaLabel ? `${areaLabel}にいるよ。` : "";
   const text = `${where}会いたい君がいる現在地。`;
-  return shareToTwitter(text, shareUrl, ["君斗りんくのすれ違ひ通信"], options);
+  const hashtags = ["君斗りんくのすれ違ひ通信"];
+  const share = options?.target === "threads" ? shareToThreads : shareToTwitter;
+  return share(text, shareUrl, hashtags, { popup: options?.popup });
 }

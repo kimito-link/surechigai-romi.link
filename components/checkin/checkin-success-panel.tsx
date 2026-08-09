@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { color, contentMaxWidth, borderRadius, spacing } from "@/theme/tokens";
 import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
+import type { ShareTarget } from "@/lib/share";
 import { MapErrorBoundary } from "@/components/ui/map-error-boundary";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import type { TrailPoint } from "@/lib/map/tile-geo";
@@ -27,7 +28,8 @@ type CheckinSuccessPanelProps = {
   newEncounterCount: number;
   userImageUrl?: string;
   onViewMap: () => void;
-  onShare: () => void;
+  /** 共有先を渡す。既定は X（省略時の互換のため）。 */
+  onShare: (target?: ShareTarget) => void;
   isSharing: boolean;
 };
 
@@ -107,7 +109,7 @@ export function CheckinSuccessPanel({
           <Text style={styles.exitButtonPrimaryText}>地図で見る</Text>
         </Pressable>
         <Pressable
-          onPress={onShare}
+          onPress={() => onShare("x")}
           disabled={isSharing}
           style={({ pressed }) => [
             styles.exitButtonSecondary,
@@ -124,6 +126,25 @@ export function CheckinSuccessPanel({
           </Text>
         </Pressable>
       </View>
+
+      {/* Threads にも同じ足あとを流せる。横に3つ並べるとモバイルで文字が潰れるため下段に置く
+          （DESIGN.md「文字がボタンからはみ出さないことを最優先」）。 */}
+      <Pressable
+        onPress={() => onShare("threads")}
+        disabled={isSharing}
+        style={({ pressed }) => [
+          styles.threadsButton,
+          pressed && !isSharing && { opacity: 0.85 },
+          isSharing && { opacity: 0.6 },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel="Threadsでシェア"
+        testID="checkin-share-threads-button"
+      >
+        <Text style={styles.threadsButtonText}>
+          {isSharing ? "準備中…" : "Threadsでシェア"}
+        </Text>
+      </Pressable>
 
       <NavigateToPlaceButton
         lat={mapPoint.lat}
@@ -201,6 +222,21 @@ const styles = StyleSheet.create({
     color: color.textWhite,
     fontSize: 15,
     fontWeight: "800",
+  },
+  // Threads 用。X ボタン（枠線）より一段控えめにして主従を保つ。
+  threadsButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: color.border,
+    marginTop: spacing.xs,
+  },
+  threadsButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: color.textSecondary,
   },
   exitButtonSecondary: {
     flex: 1,
