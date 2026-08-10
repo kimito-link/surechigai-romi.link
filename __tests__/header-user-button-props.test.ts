@@ -17,9 +17,10 @@ describe("HEADER_USER_BUTTON_PROPS", () => {
     expect(HEADER_USER_BUTTON_PROPS.afterSignOutUrl).toBe("/logout");
   });
 
-  it("アカウント管理は自オリジン /mypage（satellite から破壊的書き込みを開放しない）", () => {
-    expect(HEADER_USER_BUTTON_PROPS.userProfileMode).toBe("navigation");
-    expect(HEADER_USER_BUTTON_PROPS.userProfileUrl).toBe("/mypage");
+  it("アカウント管理は Clerk 標準モーダル（既定・kimito.link と同じ体験）", () => {
+    // userProfileMode / userProfileUrl を持たない＝既定のモーダル表示に委ねる。
+    expect("userProfileMode" in HEADER_USER_BUTTON_PROPS).toBe(false);
+    expect("userProfileUrl" in HEADER_USER_BUTTON_PROPS).toBe(false);
   });
 
   it("multi-session の追加/全サインアウトを UI から隠す防御（X 制約の同一垢ループ回避）", () => {
