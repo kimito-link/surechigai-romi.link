@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Platform, Text, View } from "react-native";
 import { palette } from "@/theme/tokens";
 import { isNativeAppShell } from "@/lib/native-app-shell";
+import { useAuth } from "@/hooks/use-auth";
+import { shouldAutoAdvanceToX } from "@/lib/auto-advance-to-x-guard";
 
 const AUTO_PARAM = "auto";
 const AUTO_VALUE = "x";
@@ -111,9 +113,17 @@ function findClickableXButton(): HTMLElement | null {
 /** kimito.link と同じ 1 タップ導線。Clerk 標準 SignIn を壊さず、X ボタンへ click を送る。 */
 export function AutoAdvanceToX() {
   const [showOverlay, setShowOverlay] = useState(false);
+  const { user, isAuthReady } = useAuth();
 
   useEffect(() => {
-    if (!hasAutoXParam() || isSsoCallback()) {
+    const hasParam = hasAutoXParam();
+    // ログイン済み（UserButton 経由の再訪など）では発火させず、param だけ消して終了。
+    if (hasParam && isAuthReady && user) {
+      removeAutoXParam();
+      setShowOverlay(false);
+      return;
+    }
+    if (!shouldAutoAdvanceToX({ hasParam, isSso: isSsoCallback(), isAuthReady, hasUser: !!user })) {
       setShowOverlay(false);
       return;
     }
@@ -167,7 +177,7 @@ export function AutoAdvanceToX() {
       didClick = true;
       cleanupTimers();
     };
-  }, []);
+  }, [isAuthReady, user]);
 
   if (!showOverlay) return null;
 

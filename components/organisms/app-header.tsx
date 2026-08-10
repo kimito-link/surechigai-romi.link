@@ -14,6 +14,7 @@ import MaterialIcons from "@/lib/icons/material-icons";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { LazyGlobalMenu } from "@/lib/lazy-heavy-components";
+import { HeaderUserButton } from "@/components/organisms/header-user-button";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { BrandHomeLink, BrandHomeTaglineLink } from "@/components/brand/brand-home-link";
 import { navigate } from "@/lib/navigation";
@@ -190,6 +191,11 @@ export function AppHeader({
                 ) : null}
               </Pressable>
             ) : null}
+
+            {/* Clerk 標準 UserButton（Web のみ・ログイン済みのみ描画）。自前ピルの隣に置き、
+                kimito.link と同じアカウント管理/サインアウトのドロップダウンを出す。
+                native と未ログイン・ゲストシェルでは null（header-user-button 側でガード）。 */}
+            <HeaderUserButton />
 
             {showMenu && (
               <Pressable
