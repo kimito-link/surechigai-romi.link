@@ -72,6 +72,17 @@ jobs:
         with:
           node-version: "22"
 
+      # 却下検知の前に「今どの状態か」をログに出す。
+      # asc-review-check.mjs は却下4状態しか見ないので、
+      # "No rejected versions found" だけでは
+      # 「審査中」と「審査通過」を区別できない（2026-08-10 に実際に詰まった）。
+      - name: Show current App Store review status
+        run: node scripts/asc-review-status.mjs
+        env:
+          APPSTORE_CONNECT_KEY_ID: ${{ secrets.APPSTORE_CONNECT_KEY_ID }}
+          APPSTORE_CONNECT_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_ISSUER_ID }}
+          APPSTORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APPSTORE_CONNECT_API_KEY_P8_BASE64 }}
+
       - name: Poll ASC API for rejected versions
         id: poll
         run: node scripts/asc-review-check.mjs > rejection-report.json
