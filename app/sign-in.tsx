@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
 import { AutoAdvanceToX } from "@/components/auth/auto-advance-to-x";
+import { AddXAccountNotice } from "@/components/auth/add-x-account-notice";
 import { AuthCallbackShell } from "@/components/auth/auth-callback-shell";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { ClerkMountFallback } from "@/components/auth/clerk-mount-fallback";
@@ -27,7 +28,7 @@ export default function SignInScreen() {
   const [isCallback, setIsCallback] = useState(() =>
     Platform.OS === "web" ? isClerkHashSsoCallback() : false,
   );
-  const { isAuthReady } = useAuth();
+  const { isAuthReady, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") return;
@@ -58,7 +59,12 @@ export default function SignInScreen() {
   return (
     <>
       <AutoAdvanceToX />
-      <AuthPageShell variant="sign-in">{signInBody}</AuthPageShell>
+      <AuthPageShell variant="sign-in">
+        {/* ログイン済みで /sign-in が開かれた＝「アカウントを追加」導線。X 側セッションが残ると
+            同じ垢に戻るため、先にXを切り替える案内を <SignIn/> の上に出す（設計 A/C）。 */}
+        {isAuthenticated ? <AddXAccountNotice /> : null}
+        {signInBody}
+      </AuthPageShell>
     </>
   );
 }

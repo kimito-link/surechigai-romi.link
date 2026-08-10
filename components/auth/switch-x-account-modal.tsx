@@ -44,7 +44,9 @@ import { borderRadius, color, palette, spacing } from "@/theme/tokens";
 /** 笑顔（別れではなく切り替えなので、寂しい顔にしない）。 */
 const characterImage = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 
-const X_LOGOUT_URL = "https://x.com/logout";
+/** X のログアウト画面。別垢を「追加」する前に踏ませて、X 側セッションを一度切ってもらう。
+ *  AddXAccountNotice（/sign-in の追加モード）でも同じ導線を使うため export（コピーを作らない）。 */
+export const X_LOGOUT_URL = "https://x.com/logout";
 
 /**
  * 切り替え開始時のスナップショット。
