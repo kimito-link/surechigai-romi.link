@@ -113,6 +113,10 @@ describe("switch-x-account-modal の安全性", () => {
    * それを避けるため clerk-provider-props.ts は satellite 有効時でも signInUrl を自オリジン
    * `/sign-in` に固定している。ここが「うっかり別オリジンへ委譲する」形に戻ると、
    * この導線が静かに壊れる。だから回帰を防ぐためにその不変条件を固定する。
+   *
+   * （履歴メモ・2026-08-10 解決済み: 以前ここには「sessionStorage を使い続けているなら
+   *   警告も残す」という対応関係を固定するテストがあった。satellite でも自オリジンに
+   *   固定する方式へ切り替えたため、警告そのものが不要になり、下記の不変条件テストに置換した。）
    */
   describe("satellite でも sign-in は自オリジンに固定（別オリジンへ委譲しない）", () => {
     const providerSrc = readFileSync(
