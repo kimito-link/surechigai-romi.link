@@ -67,7 +67,7 @@ function SpinnerRing() {
 }
 
 export default function LogoutScreen() {
-  const { logout, isAuthenticated, isAuthReady } = useAuth();
+  const { logout, isAuthReady } = useAuth();
   const openLoginGuide = useLoginGuide();
   const [status, setStatus] = useState<LogoutStatus>("working");
   const startedRef = useRef(false);
@@ -89,17 +89,19 @@ export default function LogoutScreen() {
     }
   }, [logout]);
 
-  // 認証状態が確定したら自動でログアウトを開始（既にログアウト済みなら完了表示へ）
+  // 認証状態が確定したら自動でログアウトを開始する。
+  // ⚠️ 「既にログアウト済みなら完了表示へ」の早期 return は置かない（設計 B-6）。
+  // ヘッダーの <UserButton> は afterSignOutUrl="/logout" で、Clerk の signOut 完了後に
+  // ここへ着地する＝その時点で isAuthenticated は既に false。早期 return するとローカル掃除
+  // （removeSessionToken / clearUserInfo / clearAllTokenData）が走らず残渣が残る。
+  // logout()（clerk-auth-bridge）は signOut 失敗を握り潰して finally で掃除まで走らせるので、
+  // セッションが無くても安全に再実行できる。
   useEffect(() => {
     if (!isAuthReady) return;
     if (startedRef.current) return;
     startedRef.current = true;
-    if (!isAuthenticated) {
-      setStatus("success");
-      return;
-    }
     void runLogout();
-  }, [isAuthReady, isAuthenticated, runLogout]);
+  }, [isAuthReady, runLogout]);
 
   const handleRetry = () => {
     if (startedRef.current) return;
