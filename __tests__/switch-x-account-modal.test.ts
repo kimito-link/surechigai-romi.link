@@ -106,40 +106,27 @@ describe("switch-x-account-modal の安全性", () => {
   });
 
   /**
-   * Clerk satellite 有効化時の既知の不整合が、忘れられないようにする。
+   * satellite 有効時に sign-in が別オリジンへ飛ばないことを固定する（2026-08-10 「30年後楽」設計）。
    *
-   * satellite を有効化すると signInUrl が別オリジン（kimito.link）に変わり、
-   * sessionStorage（オリジン単位）に置いたスナップショットが帰還時に読めなくなる。
-   * 切り替え自体は動くが結果表示が出なくなる ＝ ユーザーは失敗に気づけない。
-   *
-   * ここで固定するのは「警告文があること」ではなく
-   * **「sessionStorage を使い続けているなら、警告も必ず残っている」という対応関係**。
-   * オリジン非依存の実装に作り直せば sessionStorage 参照が消えるので、
-   * そのときこの2件は自動でスキップされる（警告の役目が終わる）。
+   * この切り替え導線は sessionStorage（オリジン単位）で成否を判定するので、遷移列が
+   * 別オリジン（kimito.link）を跨ぐと帰還時に読めず結果バナーが出なくなる。
+   * それを避けるため clerk-provider-props.ts は satellite 有効時でも signInUrl を自オリジン
+   * `/sign-in` に固定している。ここが「うっかり別オリジンへ委譲する」形に戻ると、
+   * この導線が静かに壊れる。だから回帰を防ぐためにその不変条件を固定する。
    */
-  describe("satellite 有効化前に直す必要がある箇所の警告", () => {
-    const rawSrc = readFileSync(
-      join(__dirname, "..", "components", "auth", "switch-x-account-modal.tsx"),
-      "utf8",
-    );
+  describe("satellite でも sign-in は自オリジンに固定（別オリジンへ委譲しない）", () => {
     const providerSrc = readFileSync(
       join(__dirname, "..", "lib", "clerk-provider-props.ts"),
       "utf8",
     );
-    // 実装がまだ sessionStorage に依存しているか（依存しているなら警告が要る）。
-    const stillUsesSessionStorage = /sessionStorage/.test(src);
 
-    it("モーダル側に satellite の警告が残っている", () => {
-      if (!stillUsesSessionStorage) return; // 作り直し済みなら不要
-      expect(rawSrc).toContain("satellite");
-      expect(rawSrc).toMatch(/オリジン/);
+    it("provider の signInUrl は自オリジン /sign-in を返す", () => {
+      expect(providerSrc).toMatch(/signInUrl:\s*["']\/sign-in["']/);
     });
 
-    it("satellite を有効化する側にも対の警告が残っている", () => {
-      // 有効化する人が最初に触るのは clerk-provider-props.ts なので、
-      // そちらにも「先にモーダルを直せ」と書いておく必要がある。
-      if (!stillUsesSessionStorage) return;
-      expect(providerSrc).toContain("switch-x-account-modal");
+    it("satellite でも別オリジンの kimito.link/sign-in を signInUrl に使わない", () => {
+      // kimito.link への言及はコメント（説明）に留め、signInUrl 値として使っていないこと。
+      expect(providerSrc).not.toMatch(/signInUrl:[^\n]*kimito\.link\/sign-in/);
     });
   });
 

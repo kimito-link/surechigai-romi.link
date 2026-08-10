@@ -30,28 +30,25 @@ const DEVELOPMENT_REDIRECT_ORIGINS = [
  *   env が無い/開発時は satellite を切り、従来どおり単独インスタンスで動く（安全側）。
  */
 /**
- * ⚠️ satellite を有効化する（`EXPO_PUBLIC_CLERK_DOMAIN` を設定する）前に、
- *    `components/auth/switch-x-account-modal.tsx` の sessionStorage 判定を直すこと。
+ * sign-in は satellite でも「自オリジンの /sign-in」に保つ（2026-08-10 「30年後楽」設計）。
  *
- *    有効化すると下の `signInUrl` が別オリジン（kimito.link）に変わるため、
- *    アカウント切り替えの遷移列に別オリジンが挟まり、sessionStorage（オリジン単位）に
- *    置いたスナップショットが帰還時に読めなくなる。
- *    切り替え自体は動くが「切り替わったか」の結果表示が出なくなる
- *    ＝ ユーザーは失敗に気づけず同じ操作を繰り返す。
- *    詳細と作り直しの方向は同ファイルの SNAPSHOT_KEY 上のコメント。
+ * 以前は satellite 有効時に primary の `https://kimito.link/sign-in/`（別オリジン）へ委譲していた。
+ * だが surechigai の実ログイン遷移は自前 `buildSignInAutoXHref()`＝自オリジン `/sign-in` であり、
+ * primary の sign-in 画面まで飛ばす必要がない（satellite の本体はセッション cookie 共有）。
+ * 別オリジンへ飛ばすと、アカウント切り替えの遷移列（/sign-in → x.com → callback → 帰還）が
+ * オリジンを跨ぎ、`switch-x-account-modal.tsx` の sessionStorage スナップショットが帰還時に
+ * 読めなくなる（結果バナーが出ない）。
+ *
+ * 自オリジンに保てば **その導線を作り直さずに済む＝保守コードを増やさない**。
+ * よって satellite は `isSatellite` + `domain`（セッション共有）だけ有効化し、signInUrl は委譲しない。
+ * `EXPO_PUBLIC_CLERK_SIGN_IN_URL` env は廃止（設定しても使わない）。
  */
 function resolveSatellite() {
   const isSatellite = process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE === "true";
   const domain = process.env.EXPO_PUBLIC_CLERK_DOMAIN;
-  const signInUrl = process.env.EXPO_PUBLIC_CLERK_SIGN_IN_URL;
   // satellite は「フラグ ON かつ domain 指定あり」のときだけ有効化する（不完全設定で壊さない）。
   if (isSatellite && domain) {
-    return {
-      isSatellite: true as const,
-      domain,
-      // primary の sign-in に委譲。未指定なら kimito.link を既定にする。
-      signInUrl: signInUrl || "https://kimito.link/sign-in/",
-    };
+    return { isSatellite: true as const, domain };
   }
   return null;
 }
@@ -61,9 +58,9 @@ export function getClerkProviderProps() {
   const postAuth = DEFAULT_POST_AUTH_PATH;
   const satellite = resolveSatellite();
   return {
-    // satellite 有効時は primary(kimito.link)の sign-in へ委譲。無効時は自サイトの /sign-in。
-    signInUrl: satellite?.signInUrl ?? "/sign-in",
-    signUpUrl: satellite?.signInUrl ?? "/sign-in",
+    // sign-in は satellite でも常に自オリジンの /sign-in（別オリジンへ飛ばさない・上の resolveSatellite 参照）。
+    signInUrl: "/sign-in",
+    signUpUrl: "/sign-in",
     signInForceRedirectUrl: postAuth,
     signUpForceRedirectUrl: postAuth,
     signInFallbackRedirectUrl: postAuth,
