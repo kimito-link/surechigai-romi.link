@@ -56,6 +56,23 @@ Expo Router + tRPC + Drizzle (Railway PostgreSQL) + Clerk (X OAuth)。
 
 ---
 
+## ディレクティブ 0.5: Clerk は kimito.link アプリを共有する（2026-08 統合）
+
+**重要な訂正**: 以前は surechigai 独自の Clerk アプリ(`surechigai-nico.link`)を使っていたが、
+真の fc2id（1ログインで全 `*.kimito.link` サービス）にするため、**kimito.link の Clerk アプリを
+primary（王冠）として共有**し、surechigai はその **satellite** として動く方針に統合した。
+
+- Vercel の `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` は **kimito.link アプリの
+  本番鍵(pk_live_/sk_live_)**。surechigai 独自アプリの鍵ではない。
+- satellite は `lib/clerk-provider-props.ts` が env(`EXPO_PUBLIC_CLERK_IS_SATELLITE` /
+  `EXPO_PUBLIC_CLERK_DOMAIN` / `EXPO_PUBLIC_CLERK_SIGN_IN_URL`)を読んで自動有効化する。
+- 手順・Dashboard 操作・ロールバックは **リポ直上 `../KIMITO-CLERK-UNIFICATION-PLAN.md`**。
+- 鉄則: primary の `<SignIn/>` を書き換えない・自前 OAuth 化しない（`CLERK_X_LOGIN_PLAYBOOK.md` §1）。
+- コードに `clerk.kimito.link` 文字列があっても「共有が稼働中」と即断しない。Clerk Dashboard の
+  実アプリ構成で裏取りすること（過去にコードの文字列だけで共有と誤認した）。
+
+---
+
 ## ディレクティブ 1: tsc エラー 0 の維持
 
 すべてのコード変更後に `pnpm check` を実行し、エラー 0 を確認すること。
