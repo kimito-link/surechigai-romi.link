@@ -50,6 +50,28 @@ const X_LOGOUT_URL = "https://x.com/logout";
  * 切り替え開始時のスナップショット。
  * sessionStorage を使うのは、切り替えの遷移列（/sign-in → x.com 認可 → callback → 帰還）が
  * **同一タブ内のページ遷移**なので生き残り、別タブや翌日には漏れないため。
+ *
+ * ⚠️ Clerk satellite を有効化する前に、この判定を作り直すこと（2026-08-10 時点で未対応）
+ *
+ *   `sessionStorage` は**オリジン単位**で分離される。現在は sign-in が自オリジン
+ *   （`/sign-in`）なので遷移列を通しても読めるが、satellite を有効化すると
+ *   `lib/clerk-provider-props.ts` が `signInUrl` を `https://kimito.link/sign-in/`
+ *   （**別オリジン**）に差し替えるため、遷移列に別オリジンが挟まって帰還時に読めなくなる。
+ *
+ *   有効化条件は `EXPO_PUBLIC_CLERK_IS_SATELLITE=true` **かつ**
+ *   `EXPO_PUBLIC_CLERK_DOMAIN` が設定されていること。2026-08-10 時点では
+ *   DOMAIN が未設定のため satellite は休眠しており、**今は壊れていない**。
+ *
+ *   影響の程度（過大評価しないこと）: 切り替え自体は動く。writeSnapshot が失敗しても
+ *   続行する設計なので、**壊れるのは帰還後の結果表示だけ**
+ *   （「ようこそ」／「切り替わっていないようです」が出なくなる）。
+ *   機能停止ではなくフィードバックの欠落。ただし「切り替わっていない」ことに
+ *   気づけなくなるため、ユーザーは同じ操作を繰り返すことになる。
+ *
+ *   作り直す方向: オリジンに依存しない手段に寄せる。候補は
+ *   (a) 旧 twitterId をサーバー側（userSettings 等）に一時保存する ← 推奨
+ *   (b) 帰還先 URL のクエリに載せる（ハンドルは公開情報だが、URL に個人識別子を
+ *       置くのは避けたいので (a) を推す）
  */
 const SNAPSHOT_KEY = "switch_x_prev";
 /** 古い試行の残骸で誤ったバナーを出さないための期限。 */

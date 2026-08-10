@@ -105,6 +105,44 @@ describe("switch-x-account-modal の安全性", () => {
     });
   });
 
+  /**
+   * Clerk satellite 有効化時の既知の不整合が、忘れられないようにする。
+   *
+   * satellite を有効化すると signInUrl が別オリジン（kimito.link）に変わり、
+   * sessionStorage（オリジン単位）に置いたスナップショットが帰還時に読めなくなる。
+   * 切り替え自体は動くが結果表示が出なくなる ＝ ユーザーは失敗に気づけない。
+   *
+   * ここで固定するのは「警告文があること」ではなく
+   * **「sessionStorage を使い続けているなら、警告も必ず残っている」という対応関係**。
+   * オリジン非依存の実装に作り直せば sessionStorage 参照が消えるので、
+   * そのときこの2件は自動でスキップされる（警告の役目が終わる）。
+   */
+  describe("satellite 有効化前に直す必要がある箇所の警告", () => {
+    const rawSrc = readFileSync(
+      join(__dirname, "..", "components", "auth", "switch-x-account-modal.tsx"),
+      "utf8",
+    );
+    const providerSrc = readFileSync(
+      join(__dirname, "..", "lib", "clerk-provider-props.ts"),
+      "utf8",
+    );
+    // 実装がまだ sessionStorage に依存しているか（依存しているなら警告が要る）。
+    const stillUsesSessionStorage = /sessionStorage/.test(src);
+
+    it("モーダル側に satellite の警告が残っている", () => {
+      if (!stillUsesSessionStorage) return; // 作り直し済みなら不要
+      expect(rawSrc).toContain("satellite");
+      expect(rawSrc).toMatch(/オリジン/);
+    });
+
+    it("satellite を有効化する側にも対の警告が残っている", () => {
+      // 有効化する人が最初に触るのは clerk-provider-props.ts なので、
+      // そちらにも「先にモーダルを直せ」と書いておく必要がある。
+      if (!stillUsesSessionStorage) return;
+      expect(providerSrc).toContain("switch-x-account-modal");
+    });
+  });
+
   describe("誤った結果表示を出さない", () => {
     it("スナップショットは読んだら消す（ワンショット）", () => {
       expect(src).toContain("removeItem");

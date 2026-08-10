@@ -29,6 +29,17 @@ const DEVELOPMENT_REDIRECT_ORIGINS = [
  *
  *   env が無い/開発時は satellite を切り、従来どおり単独インスタンスで動く（安全側）。
  */
+/**
+ * ⚠️ satellite を有効化する（`EXPO_PUBLIC_CLERK_DOMAIN` を設定する）前に、
+ *    `components/auth/switch-x-account-modal.tsx` の sessionStorage 判定を直すこと。
+ *
+ *    有効化すると下の `signInUrl` が別オリジン（kimito.link）に変わるため、
+ *    アカウント切り替えの遷移列に別オリジンが挟まり、sessionStorage（オリジン単位）に
+ *    置いたスナップショットが帰還時に読めなくなる。
+ *    切り替え自体は動くが「切り替わったか」の結果表示が出なくなる
+ *    ＝ ユーザーは失敗に気づけず同じ操作を繰り返す。
+ *    詳細と作り直しの方向は同ファイルの SNAPSHOT_KEY 上のコメント。
+ */
 function resolveSatellite() {
   const isSatellite = process.env.EXPO_PUBLIC_CLERK_IS_SATELLITE === "true";
   const domain = process.env.EXPO_PUBLIC_CLERK_DOMAIN;
