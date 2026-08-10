@@ -11,6 +11,29 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Tokyo"
+    # ★Expo SDK と連動するパッケージは Dependabot に触らせない（2026-08-10）。
+    #
+    #   Expo SDK は react-native / react のバージョンと**一体で**動く。
+    #   SDK を据え置いたまま RN だけ上げると成立しない組み合わせになる。
+    #   実際に PR #20 が react-native を 0.81.5 → 0.86.2（5世代飛び）に上げようとし、
+    #   expo は ~54.0.36 のままだったため StyleSheet.absoluteFillObject が
+    #   型定義から消えて18箇所が型エラーになった。
+    #
+    #   RN は 0.x 系なので semver 上は「minor」に見えるが、実質メジャー相当の
+    #   破壊的変更が入る。update-types に minor を許すだけでは防げないため名前で除外する。
+    #
+    #   SDK 移行は `npx expo install --fix` を伴う人手の作業として別途行う
+    #   （1世代ずつ・各段で型チェック / テスト / プレビュー確認）。
+    #   ここを外すと「毎週必ず赤いPRが来る」状態に戻り、赤が常態化して
+    #   本物の退行を隠すようになる（Gate 1 が178回連続failureだった件と同じ病理）。
+    ignore:
+      - dependency-name: "expo"
+      - dependency-name: "expo-*"
+      - dependency-name: "@expo/*"
+      - dependency-name: "react-native"
+      - dependency-name: "react-native-*"
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
     # Group all non-major updates together
     groups:
       production-dependencies:
