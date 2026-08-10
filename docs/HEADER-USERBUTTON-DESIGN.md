@@ -4,6 +4,12 @@
 > 3段構えワークフロー(会議→Fable設計→実装引き継ぎ)の手順2の産物。実装は別モデル/次チャットで行う。
 > 実装着手は [HEADER-USERBUTTON-IMPLEMENTATION-HANDOFF.md](./HEADER-USERBUTTON-IMPLEMENTATION-HANDOFF.md) を読む。
 
+> **2026-08-11 改訂**: C-2 の `userProfileMode:"navigation"` / `userProfileUrl:"/mypage"` は**撤回**。
+> オーナーの理想「全 *.kimito.link で kimito.link と同じ Clerk 標準アカウント管理モーダルを出す」を
+> 優先し、props から両者を外して**既定のモーダル方式**にした（PR#30）。satellite 側からの X 連携
+> 追加/解除も許容（共有 Clerk アプリなので操作先は primary と同一）。F-4/F-5 の「モーダル封印・
+> primary集約」判断は不採用。
+
 ## 検証済みの前提(司令塔が実コードで裏取り)
 - auto=x を生成するのは `lib/clerk-route.ts` の `SIGN_IN_AUTO_X_HREF`(:9) と `buildSignInAutoXHref`(:44) **だけ**。他は import して使うのみ→UserButton から auto=x は湧かない(SafeUserButton 却下が正しい)。
 - `app/logout.tsx` に `if (!isAuthenticated) { setStatus("success"); return; }` の早期return が実在(ローカル掃除スキップの穴)。

@@ -5,9 +5,11 @@
  * 恒久的に守る流儀は lib/clerk-route.ts と同じ。satellite でも sign-in を自オリジンに
  * 保つ設計（lib/clerk-provider-props.ts）と対で、この定数には auto=x を一切混ぜない。
  *
- * 設計: docs/HEADER-USERBUTTON-DESIGN.md C-2。
- * - userProfileMode "navigation": UserProfile モーダルを封印し、破壊的な書き込み
- *   （X 連携の追加/解除等）を satellite 側から開放しない。管理は自オリジン /mypage に集約。
+ * 設計: docs/HEADER-USERBUTTON-DESIGN.md C-2（2026-08-11 改訂: モーダル方式に変更）。
+ * - userProfileMode は既定（"modal"）: 「アカウントの管理」で kimito.link と同じ Clerk 標準
+ *   UserProfile モーダル（プロフィール / セキュリティ / 連携アカウント）をその場で開く。
+ *   オーナーの理想＝全 *.kimito.link で同じアカウント体験、を優先。satellite 側からの
+ *   X 連携追加/解除も許容する（共有 Clerk アプリなので操作先は primary と同一）。
  * - afterSignOutUrl "/logout": 既存のログアウト演出＋ローカル掃除（app/logout.tsx）へ合流。
  * - appearance: primary(kimito.link) 側で将来 multi-session が ON にされても
  *   「アカウントを追加 / 全てからサインアウト」を出さない防御（X は prompt/force_login
@@ -15,8 +17,6 @@
  *   ClerkProvider から自動継承されるので、ここでは寸法と防御だけ足す。
  */
 export const HEADER_USER_BUTTON_PROPS = {
-  userProfileMode: "navigation" as const,
-  userProfileUrl: "/mypage",
   afterSignOutUrl: "/logout",
   appearance: {
     elements: {
