@@ -328,7 +328,11 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
         });
       });
     }
-  }, [isAuthenticated, getToken]);
+    // multi-session: 別Xアカウントへ切り替えるとアクティブユーザーが変わる。isAuthenticated は
+    // true のままなので clerkUser?.id（文字列）を依存に入れて、切替後に DB 同期を再走させる。
+    // オブジェクト（clerkUser）を入れると毎レンダー再発火するため id だけにする（設計 B-5）。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, getToken, clerkUser?.id]);
 
   const [authReadyTimeout, setAuthReadyTimeout] = useState(false);
   useEffect(() => {
