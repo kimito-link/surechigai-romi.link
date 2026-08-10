@@ -31,6 +31,11 @@ const ALLOWED_EXTERNAL_DOMAINS = [
   "ticket.co.jp",
   "ticketcamp.net",
   "tiget.net",
+  // アプリストア（共有リンクからのDL導線で使う。
+  // ここに無いと openExternalUrl が無言で false を返し、
+  // ボタンを押しても何も起きない状態になる）
+  "apps.apple.com",
+  "play.google.com",
   // その他
   "line.me",
   "discord.gg",

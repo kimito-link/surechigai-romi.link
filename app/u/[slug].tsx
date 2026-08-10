@@ -17,6 +17,7 @@ import { PublicShareHeader } from "@/components/organisms/public-share-header";
 import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
+import { AppDownloadCta } from "@/components/molecules/app-download-cta";
 import { trpc } from "@/lib/trpc";
 import { useTrpcReady } from "@/lib/trpc-ready-context";
 import { hasClerkSessionInStorage } from "@/lib/has-clerk-session";
@@ -216,19 +217,36 @@ function ShareLocationScreenInner() {
           }
           bottomContent={
             /* 足あと一覧を最後まで見た人が、そのまま始められるようにする。
-               上部バナーはスクロールで見えなくなるため、末尾にも導線を置く。 */
-            !isAuthenticated ? (
+               上部バナーはスクロールで見えなくなるため、末尾にも導線を置く。
+
+               ログイン導線とDL導線は出す条件が違う:
+               - ログイン導線 … 未ログインの人にだけ必要
+               - DL導線     … ログイン済みでもブラウザで見ているなら必要
+                              （むしろその人が最も獲得に近い）
+               AppDownloadCta 側でアプリ内・ストア未配信なら自動で消える。 */
+            <>
+              {!isAuthenticated ? (
+                <View style={styles.bannerWrap}>
+                  <InlineLoginPrompt
+                    headline={
+                      trailQuery.data.username
+                        ? `@${trailQuery.data.username.replace(/^@/, "")} とすれ違ってみませんか`
+                        : "この人とすれ違ってみませんか"
+                    }
+                    returnTo={`/u/${slug}`}
+                  />
+                </View>
+              ) : null}
               <View style={styles.bannerWrap}>
-                <InlineLoginPrompt
+                <AppDownloadCta
                   headline={
                     trailQuery.data.username
-                      ? `@${trailQuery.data.username.replace(/^@/, "")} とすれ違ってみませんか`
-                      : "この人とすれ違ってみませんか"
+                      ? `@${trailQuery.data.username.replace(/^@/, "")} の足あとを、あなたの現在地からたどる`
+                      : "この足あとを、あなたの現在地からたどる"
                   }
-                  returnTo={`/u/${slug}`}
                 />
               </View>
-            ) : null
+            </>
           }
         />
       )}
