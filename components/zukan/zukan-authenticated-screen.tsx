@@ -28,6 +28,7 @@ import { DeleteTrailConfirmModal } from "@/components/molecules/delete-trail-con
 import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
 import { ZukanCompleteHeader } from "@/components/zukan/zukan-complete-header";
 import { MunicipalityStampCard } from "@/components/zukan/municipality-stamp-card";
+import { SponsorSlot } from "@/components/molecules/sponsor-slot";
 
 export function ZukanAuthenticatedScreen() {
   const { isDesktop } = useResponsive();
@@ -138,6 +139,18 @@ export function ZukanAuthenticatedScreen() {
       }
     }
     return Array.from(map.values()).sort((a, b) => b.visitCount - a.visitCount);
+  }, [data]);
+
+  /** 直近に訪れた都道府県。協賛カードの地域ターゲティングに使う（無ければ全国配信） */
+  const latestPrefecture = useMemo(() => {
+    let latest: { prefecture: string | null; at: number } | null = null;
+    for (const v of data?.visited ?? []) {
+      if (!v.prefecture) continue;
+      const at = new Date(v.lastVisitedAt).getTime();
+      if (!Number.isFinite(at)) continue;
+      if (!latest || at > latest.at) latest = { prefecture: v.prefecture, at };
+    }
+    return latest?.prefecture ?? null;
   }, [data]);
 
   return (
@@ -319,6 +332,14 @@ export function ZukanAuthenticatedScreen() {
                 チェックインすると{"\n"}訪問地図が埋まります
               </Text>
             </View>
+          )}
+
+          {/* 協賛枠。図鑑を見終えた末尾に置く。
+              まだ記録が無い人（空状態）には出さない——最初の体験を邪魔しないため。
+              在庫が無い/今日の上限に達していれば SponsorSlot 側が null を返す。
+              最後に訪れた都道府県を渡し、地域のカードがあればそれを優先させる。 */}
+          {!isLoading && (data?.visited?.length ?? 0) > 0 && (
+            <SponsorSlot slot="zukan_feed" prefecture={latestPrefecture} />
           )}
         </View>
       </ScrollView>

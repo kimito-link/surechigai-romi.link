@@ -19,6 +19,7 @@ import appConfig from "@/app.config.json";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { MySignalSummary } from "@/components/dashboard/my-signal-summary";
+import { SponsorSlot } from "@/components/molecules/sponsor-slot";
 import { MypageActionList } from "@/components/dashboard/mypage-action-list";
 import { LatestFootprintCard } from "@/components/dashboard/latest-footprint-card";
 import { HostEventsSummary } from "@/components/dashboard/host-events-summary";
@@ -222,6 +223,9 @@ export function MypageScreenView(props: MypageScreenViewProps) {
         <MypageActionList />
         <LatestFootprintCard />
         <MySignalSummary />
+        {/* 協賛枠。在庫が無い/今日の上限に達している場合は何も描かない。
+            統計の直後＝「自分の記録を見終えた」区切りに置く。 */}
+        <SponsorSlot slot="mypage_stats" />
         <HostEventsSummary />
 
         {/* 設定（折りたたみ） */}
