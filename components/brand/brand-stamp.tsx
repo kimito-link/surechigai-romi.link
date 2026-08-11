@@ -45,6 +45,7 @@ export function BrandStamp({ variant }: BrandStampProps) {
   if (variant === "sideNav") {
     return (
       <Pressable
+        testID="brand-stamp-side-nav"
         onPress={goHome}
         accessibilityRole="link"
         accessibilityLabel={`${PRODUCT_NAME} — ホーム`}
@@ -105,7 +106,7 @@ export function BrandStamp({ variant }: BrandStampProps) {
 
   // hero — ゲストトップ等、タグライン直下
   return (
-    <View style={styles.hero} accessibilityLabel={PRODUCT_NAME}>
+    <View testID="brand-stamp-hero" style={styles.hero} accessibilityLabel={PRODUCT_NAME}>
       <Image source={KIMITO_LINK_LOGO} style={styles.heroLogo} contentFit="contain" />
       <Text style={styles.heroProduct}>{PRODUCT_NAME}</Text>
       <Text style={styles.heroParent}>

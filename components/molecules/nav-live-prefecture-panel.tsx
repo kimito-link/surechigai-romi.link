@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   title: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "800",
     color: palette.kimitoBlue,
   },

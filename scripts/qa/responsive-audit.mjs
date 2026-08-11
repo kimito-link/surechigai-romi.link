@@ -229,8 +229,8 @@ const MEASURE = () => {
     let exclusionReason = null;
     if (el.closest('[role="tab"]')) exclusionReason = 'tab-label';
     else if (el.closest('[data-testid="web-app-footer"]')) exclusionReason = 'footer';
-    else if (el.closest('[data-testid="brand-stamp-side-nav-foot"]')) {
-      exclusionReason = 'side-nav-footer';
+    else if (el.closest('[data-testid^="brand-stamp-"]')) {
+      exclusionReason = 'brand';
     } else if (el.closest('[data-testid="special-thanks-credit-brand"]')) {
       exclusionReason = 'credit-brand';
     } else if (/\bv\d+\.\d+\.\d+\b/i.test(t)) exclusionReason = 'version';
