@@ -10,6 +10,7 @@ import {
   LegalParagraph,
   LegalBullet,
   LegalCallout,
+  LegalContact,
   LegalLink,
 } from "@/components/legal/legal-page";
 
@@ -101,10 +102,7 @@ export default function TermsScreen() {
       </LegalSection>
 
       <LegalSection title="10. お問い合わせ">
-        <LegalLink
-          url="mailto:info@surechigai-romi.link"
-          label="info@surechigai-romi.link"
-        />
+        <LegalContact />
       </LegalSection>
     </LegalPage>
   );

@@ -16,6 +16,7 @@ import {
   LegalParagraph,
   LegalBullet,
   LegalCallout,
+  LegalContact,
   LegalLink,
 } from "@/components/legal/legal-page";
 
@@ -152,10 +153,7 @@ export default function PrivacyScreen() {
         <LegalParagraph>
           本ポリシーに関するお問い合わせ、データの開示・削除のご依頼は、以下までご連絡ください。
         </LegalParagraph>
-        <LegalLink
-          url="mailto:info@surechigai-romi.link"
-          label="info@surechigai-romi.link"
-        />
+        <LegalContact />
       </LegalSection>
 
       <LegalSection title="9. 本ポリシーの変更">

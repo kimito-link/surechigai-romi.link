@@ -37,7 +37,7 @@
     "featureGraphicSource": "assets/images/feature-graphic-source.png"
   },
   "contact": {
-    "email": "info@surechigai-romi.link",
+    "email": "admin@kimito-link.com",
     "phoneE164": "+819041803041",
     "firstName": "takashi",
     "lastName": "kobayashi",
@@ -45,7 +45,9 @@
     "privacyUrl": "https://surechigai.kimito.link/privacy",
     "termsUrl": "https://surechigai.kimito.link/terms",
     "marketingUrl": "https://kimito.link/surechigai/",
-    "dataDeletionUrl": "https://surechigai.kimito.link/deletion"
+    "dataDeletionUrl": "https://surechigai.kimito.link/deletion",
+    "lineUrl": "https://lin.ee/ssukM6S",
+    "lineId": "@kimitolink"
   },
   "businessModel": {
     "hasInAppPurchase": false,

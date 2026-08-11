@@ -16,6 +16,7 @@ import { color } from "@/theme/tokens";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { navigateBack } from "@/lib/navigation";
+import appConfig from "@/app.config.json";
 
 /** 見出し + 本文のひとかたまり */
 export function LegalSection({
@@ -67,6 +68,32 @@ export function LegalLink({ url, label }: { url: string; label: string }) {
     >
       <Text style={styles.linkText}>{label}</Text>
     </Pressable>
+  );
+}
+
+/**
+ * 問い合わせ先。LINE を主、メールを従として並べる。
+ *
+ * 連絡先は app.config.json の contact を **唯一の正本**にする。
+ * 4つの法務ページ（privacy / terms / deletion / support）に同じ値を
+ * ハードコードしていたため、変更漏れが起きる状態だった。
+ *
+ * メールは残す。両ストアのデベロッパー連絡先として必須なうえ、
+ * データの開示・削除の請求は記録に残る手段を用意しておくのが安全なため。
+ */
+export function LegalContact() {
+  const line = appConfig.contact.lineUrl;
+  const lineId = appConfig.contact.lineId;
+  const email = appConfig.contact.email;
+
+  return (
+    <>
+      <LegalParagraph>
+        公式LINEからお気軽にご連絡ください。メールでも受け付けています。
+      </LegalParagraph>
+      {line ? <LegalLink url={line} label={`公式LINE（${lineId}）`} /> : null}
+      <LegalLink url={`mailto:${email}`} label={email} />
+    </>
   );
 }
 

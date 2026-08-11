@@ -14,6 +14,7 @@ import {
   LegalParagraph,
   LegalBullet,
   LegalCallout,
+  LegalContact,
   LegalLink,
 } from "@/components/legal/legal-page";
 
@@ -72,10 +73,7 @@ export default function DeletionScreen() {
           端末の紛失などでアプリを操作できない場合は、ご登録のXアカウント名を添えて
           下記までご連絡ください。ご本人確認のうえ削除します。
         </LegalParagraph>
-        <LegalLink
-          url="mailto:info@surechigai-romi.link"
-          label="info@surechigai-romi.link"
-        />
+        <LegalContact />
       </LegalSection>
 
       <LegalSection title="4. 位置情報の記録だけを止める">

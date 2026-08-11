@@ -38,6 +38,9 @@ const ALLOWED_EXTERNAL_DOMAINS = [
   "play.google.com",
   // その他
   "line.me",
+  // lin.ee は LINE 公式アカウントの短縮URL（友だち追加の流入経路つき）。
+  // line.me とは別ドメインなので、こちらも明示しないと弾かれる。
+  "lin.ee",
   "discord.gg",
   "discord.com",
 ] as const;

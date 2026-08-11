@@ -10,6 +10,7 @@ import {
   LegalSection,
   LegalParagraph,
   LegalBullet,
+  LegalContact,
   LegalLink,
 } from "@/components/legal/legal-page";
 
@@ -31,10 +32,7 @@ export default function SupportScreen() {
           お使いの端末（iPhone / Android / パソコン）と、どの画面で何が起きたかを
           添えていただけると調査が早くなります。
         </LegalParagraph>
-        <LegalLink
-          url="mailto:info@surechigai-romi.link"
-          label="info@surechigai-romi.link"
-        />
+        <LegalContact />
       </LegalSection>
 
       <LegalSection title="よくあるご質問">
