@@ -149,11 +149,11 @@ export function registerTwitterRoutes(app: Express) {
         // NOTE(2026-07-06): This legacy Express/Railway branch has not been
         // confirmed to run in the current Vercel + Clerk production auth path.
         // Keep behavior unchanged until production logs prove this path fires.
-        // Production: redirect to surechigai-romi.link
+        // Production: redirect to the canonical app origin
         // Development: redirect to Expo app (port 8081)
         let baseUrl: string;
         if (host.includes("railway.app")) {
-          baseUrl = "https://surechigai-romi.link";
+          baseUrl = "https://surechigai.kimito.link";
         } else {
           const expoHost = host.replace("3000-", "8081-");
           baseUrl = `${forceHttps ? "https" : protocol}://${expoHost}`;
@@ -318,11 +318,11 @@ export function registerTwitterRoutes(app: Express) {
       // NOTE(2026-07-06): This legacy Express/Railway branch has not been
       // confirmed to run in the current Vercel + Clerk production auth path.
       // Keep behavior unchanged until production logs prove this path fires.
-      // Production: redirect to surechigai-romi.link
+      // Production: redirect to the canonical app origin
       // Development: redirect to Expo app (port 8081)
       let baseUrl: string;
       if (host.includes("railway.app")) {
-        baseUrl = "https://surechigai-romi.link";
+        baseUrl = "https://surechigai.kimito.link";
       } else {
         const expoHost = host.replace("3000-", "8081-");
         baseUrl = `${forceHttps ? "https" : protocol}://${expoHost}`;
@@ -350,11 +350,11 @@ export function registerTwitterRoutes(app: Express) {
       // NOTE(2026-07-06): This legacy Express/Railway branch has not been
       // confirmed to run in the current Vercel + Clerk production auth path.
       // Keep behavior unchanged until production logs prove this path fires.
-      // Production: redirect to surechigai-romi.link
+      // Production: redirect to the canonical app origin
       // Development: redirect to Expo app (port 8081)
       let baseUrl: string;
       if (host.includes("railway.app")) {
-        baseUrl = "https://surechigai-romi.link";
+        baseUrl = "https://surechigai.kimito.link";
       } else {
         const expoHost = host.replace("3000-", "8081-");
         baseUrl = `${forceHttps ? "https" : protocol}://${expoHost}`;

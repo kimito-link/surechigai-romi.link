@@ -123,10 +123,10 @@ const styles = StyleSheet.create({
     color: palette.kimitoBlue,
   },
   meta: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: "600",
     color: color.textMuted,
-    lineHeight: 14,
+    lineHeight: 17,
   },
   chips: {
     flexDirection: "row",

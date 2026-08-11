@@ -9,18 +9,21 @@ export function WebAppFooter() {
   if (Platform.OS !== "web") return null;
 
   return (
-    <View style={[styles.footer, { left: sideNav ? WEB_SIDE_NAV_WIDTH : 0 }]}>
+    <View
+      testID="web-app-footer"
+      style={[styles.footer, { left: sideNav ? WEB_SIDE_NAV_WIDTH : 0 }]}
+    >
       <BrandStamp variant="footer" />
       <View style={styles.links}>
         <Pressable
-          onPress={() => Linking.openURL("https://surechigai-romi.link/terms")}
+          onPress={() => Linking.openURL("https://surechigai.kimito.link/terms")}
           style={({ pressed }) => [styles.link, pressed && { opacity: 0.7 }]}
         >
           <Text style={styles.linkText}>利用規約</Text>
         </Pressable>
         <Text style={styles.sep}>·</Text>
         <Pressable
-          onPress={() => Linking.openURL("https://surechigai-romi.link/privacy")}
+          onPress={() => Linking.openURL("https://surechigai.kimito.link/privacy")}
           style={({ pressed }) => [styles.link, pressed && { opacity: 0.7 }]}
         >
           <Text style={styles.linkText}>プライバシー</Text>

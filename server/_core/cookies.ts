@@ -45,7 +45,7 @@ function getParentDomain(hostname: string): string | undefined {
 }
 
 /**
- * プロキシ経由のときはクライアントのホストを使う（Vercel Functions で surechigai-romi.link に Cookie を送るため）
+ * プロキシ経由のときはクライアントのホストを使う（Vercel Functions で正規ドメインに Cookie を送るため）
  */
 function getEffectiveHostname(req: Request): string {
   const forwarded = req.headers["x-forwarded-host"];
@@ -75,7 +75,7 @@ function getEffectiveHostname(req: Request): string {
 function getCookieDomain(req: Request, hostname: string): string | undefined {
   const forwarded = req.headers["x-forwarded-host"] ?? req.headers.origin;
   
-  // プロキシ経由の場合、domain 指定しない → surechigai-romi.link に保存される
+  // プロキシ経由の場合、domain 指定しない → リクエスト元の正規ドメインに保存される
   // 注意: 本番環境では信頼できるプロキシからのみ受け入れるべき
   if (forwarded) {
     // TODO: 本番環境では信頼できるプロキシリストを検証する

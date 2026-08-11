@@ -63,7 +63,7 @@ export function BrandStamp({ variant }: BrandStampProps) {
 
   if (variant === "sideNavFoot") {
     return (
-      <View style={styles.sideNavFoot}>
+      <View testID="brand-stamp-side-nav-foot" style={styles.sideNavFoot}>
         <View style={styles.charRow} pointerEvents="none">
           {BRAND_CHARACTERS.map((src, i) => (
             <Image key={i} source={src} style={styles.charIcon} contentFit="contain" />

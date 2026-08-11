@@ -6,7 +6,7 @@
     "shortName": "surechigai",
     "bundleId": "com.kimito.link.surechigai",
     "iosScheme": "surechigai",
-    "productionDomain": "surechigai-romi.link",
+    "productionDomain": "surechigai.kimito.link",
     "stagingDomain": null
   },
   "stores": {

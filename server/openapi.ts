@@ -45,7 +45,7 @@ APIには以下のレート制限があります：
     version: "1.0.0",
     contact: {
       name: "君斗りんくのすれ違ひ通信 サポート",
-      url: "https://surechigai-romi.link",
+      url: "https://surechigai.kimito.link",
     },
     license: {
       name: "MIT",

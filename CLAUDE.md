@@ -6,11 +6,11 @@
 
 ## プロジェクト概要
 
-**君斗りんくのすれ違ひ通信 (surechigai-romi.link)**
+**君斗りんくのすれ違ひ通信**（GitHub リポジトリ: `surechigai-romi.link`）
 
 DSのすれ違い通信を現代的に再現する位置情報マッチングアプリ。
 Expo Router + tRPC + Drizzle (Railway PostgreSQL) + Clerk (X OAuth)。
-本番ドメイン: https://surechigai-romi.link
+本番ドメイン: https://surechigai.kimito.link
 
 ### 設計原則
 

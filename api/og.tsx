@@ -111,7 +111,7 @@ function toBase64(buf: ArrayBuffer): string {
 
 const TILE = 256;
 const TILE_UA =
-  "surechigai-romi-og/1.0 (+https://surechigai-romi.link; contact@surechigai-romi.link)";
+  "surechigai-romi-og/1.0 (+https://surechigai.kimito.link; contact@surechigai-romi.link)";
 const TILE_LOAD_TIMEOUT_MS = 1500;
 const OGP_MAX_ZOOM = 14;
 const FONT_LOAD_TIMEOUT_MS = 1800;

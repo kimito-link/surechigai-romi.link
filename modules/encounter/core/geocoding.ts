@@ -8,7 +8,7 @@
  * 移植元: surechigai-nico/server/src/lib/geocoding.ts
  */
 
-const USER_AGENT = "surechigai-romi/0.1.0 (https://surechigai-romi.link)";
+const USER_AGENT = "surechigai-romi/0.1.0 (https://surechigai.kimito.link)";
 const THROTTLE_MS = 1_100;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const ERROR_COOLDOWN_MS = 5 * 60 * 1000;

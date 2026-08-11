@@ -68,7 +68,7 @@ export async function fetchKimitoPublicProfile(
 
   try {
     const res = await fetch(`https://kimito.link/${encodeURIComponent(clean)}/`, {
-      headers: { Accept: "text/html", "User-Agent": "surechigai-romi.link/1.0" },
+      headers: { Accept: "text/html", "User-Agent": "surechigai.kimito.link/1.0" },
       signal: AbortSignal.timeout(KIMITO_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) return null;

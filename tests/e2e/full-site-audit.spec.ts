@@ -111,6 +111,16 @@ test.describe("API health (no auth)", () => {
 (hasAuth ? test.describe : test.describe.skip)("full site audit — authenticated tabs", () => {
   test.use({ storageState: authFile });
 
+  test.beforeEach(async ({ page }) => {
+    // Cookieファイルが存在してもサーバー側セッションが失効していればゲスト表示になる。
+    // 認証済みプロフィール固有の操作を実画面で確認し、偽の緑を防ぐ。
+    await page.goto("/mypage", { waitUntil: "domcontentloaded", timeout: 45_000 });
+    await expect(
+      page.getByText("公開ページを見る", { exact: true }),
+      "auth-state が失効しています。pnpm e2e:auth-save で更新してください",
+    ).toBeVisible({ timeout: 30_000 });
+  });
+
   test("6タブ監査（認証済み）", async ({ page }, testInfo) => {
     test.skip(!testInfo.project.name.startsWith("audit-auth"), "authenticated audit project only");
     const prefix = `auth-${testInfo.project.name}`;

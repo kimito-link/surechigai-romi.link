@@ -20,6 +20,7 @@
  * 使い方:
  *   node scripts/qa/responsive-audit.mjs --base https://surechigai.kimito.link
  *   node scripts/qa/responsive-audit.mjs --base http://localhost:4610 --routes /,/sign-in
+ *   node scripts/qa/responsive-audit.mjs --fail-on overflow,tap,tiny,console,error
  */
 import { chromium } from 'playwright';
 import { parseArgs } from 'node:util';
@@ -39,6 +40,21 @@ const { values } = parseArgs({
 });
 
 const BASE = (values.base ?? 'https://surechigai.kimito.link').replace(/\/$/, '');
+const ALLOWED_FAIL_ON = new Set(['overflow', 'tap', 'tiny', 'zoom', 'console', 'error', '404']);
+const FAIL_ON = new Set(
+  (values['fail-on'] ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
+);
+const unknownFailOn = [...FAIL_ON].filter((value) => !ALLOWED_FAIL_ON.has(value));
+if (unknownFailOn.length > 0) {
+  console.error(
+    `[fail-on] 不明な判定: ${unknownFailOn.join(', ')} ` +
+      `(使用可能: ${[...ALLOWED_FAIL_ON].join(', ')})`,
+  );
+  process.exit(2);
+}
 
 // ログイン後画面を測るための storageState。存在しなければゲストとして測る。
 const AUTH_STATE = (() => {
@@ -103,6 +119,16 @@ const MEASURE = () => {
     return r.width > 0 && r.height > 0;
   };
 
+  const hasClassPrefix = (el, prefix) =>
+    Array.from(el.classList ?? []).some((className) => className.startsWith(prefix));
+
+  const closestWithClassPrefix = (el, prefix) => {
+    for (let current = el; current; current = current.parentElement) {
+      if (hasClassPrefix(current, prefix)) return current;
+    }
+    return null;
+  };
+
   // 横にはみ出す要素。position:fixed の装飾やスクロール専用領域は除く
   const overflow = [];
   for (const el of document.querySelectorAll('*')) {
@@ -146,10 +172,12 @@ const MEASURE = () => {
   //   本当の触れる範囲は親(68px)であることが実測で分かった（2026-08-01）。
   //   そのため祖先を数段たどって「最も広い押下可能領域」で判定する。
   const smallTargets = [];
+  const excludedSmallTargets = [];
   for (const el of document.querySelectorAll(
     'button,a,[role="button"],[role="tab"],input,select',
   )) {
     if (!visible(el)) continue;
+
     const r = el.getBoundingClientRect();
     let h = r.height;
     let w = r.width;
@@ -162,6 +190,19 @@ const MEASURE = () => {
       }
     }
     if (h < 44 || w < 24) {
+      // Clerk の <SignIn /> が内部生成するリンクはアプリ側でDOMを管理できない。
+      // primary の認証UIを書き換えず、cl-* クラスを持つ要素だけ監査対象外として
+      // 明示的に数える（2026-08-11、/sign-in 全viewportで実体を確認）。
+      if (closestWithClassPrefix(el, 'cl-')) {
+        excludedSmallTargets.push({
+          reason: 'clerk-managed',
+          tag: el.tagName,
+          w: Math.round(w),
+          h: Math.round(h),
+        });
+        continue;
+      }
+
       smallTargets.push({
         tag: el.tagName,
         role: el.getAttribute('role'),
@@ -174,13 +215,36 @@ const MEASURE = () => {
 
   // 小さすぎる本文（12px 未満）。アイコン用の擬似要素は拾わない
   const tinyText = [];
+  const excludedTinyText = [];
   for (const el of document.querySelectorAll('p,span,div,li,td,label')) {
     if (!visible(el)) continue;
     if (el.children.length > 0) continue; // 末端のみ
     const t = (el.innerText || '').trim();
     if (t.length < 4) continue;
     const fs = parseFloat(getComputedStyle(el).fontSize);
-    if (fs && fs < 12) tinyText.push({ text: t.slice(0, 30), fontSize: fs });
+    if (!fs || fs >= 12) continue;
+
+    // いずれも本文ではなく、補助的なブランド／ナビゲーション表記。
+    // 閾値自体は12pxのまま保ち、DOM上の役割で限定的に除外する。
+    let exclusionReason = null;
+    if (el.closest('[role="tab"]')) exclusionReason = 'tab-label';
+    else if (el.closest('[data-testid="web-app-footer"]')) exclusionReason = 'footer';
+    else if (el.closest('[data-testid="brand-stamp-side-nav-foot"]')) {
+      exclusionReason = 'side-nav-footer';
+    } else if (el.closest('[data-testid="special-thanks-credit-brand"]')) {
+      exclusionReason = 'credit-brand';
+    } else if (/\bv\d+\.\d+\.\d+\b/i.test(t)) exclusionReason = 'version';
+
+    if (exclusionReason) {
+      excludedTinyText.push({
+        reason: exclusionReason,
+        text: t.slice(0, 30),
+        fontSize: fs,
+      });
+      continue;
+    }
+
+    tinyText.push({ text: t.slice(0, 30), fontSize: fs });
   }
 
   // iOS Safari は 16px 未満の入力にフォーカスするとページを自動拡大する。
@@ -217,8 +281,12 @@ const MEASURE = () => {
     overflow: overflow.slice(0, 8),
     smallTargetCount: smallTargets.length,
     smallTargets: smallTargets.slice(0, 6),
+    excludedSmallTargetCount: excludedSmallTargets.length,
+    excludedSmallTargets: excludedSmallTargets.slice(0, 6),
     tinyTextCount: tinyText.length,
     tinyText: tinyText.slice(0, 6),
+    excludedTinyTextCount: excludedTinyText.length,
+    excludedTinyText: excludedTinyText.slice(0, 6),
     textLength: (body.innerText || '').length,
     is404: (body.innerText || '').includes('ページが見つかりません'),
   };
@@ -226,6 +294,40 @@ const MEASURE = () => {
 
 const results = [];
 const browser = await chromium.launch();
+
+// storageState はCookieが残っていても、サーバー側セッション失効でゲスト表示になる。
+// 認証後を測ったつもりの偽の緑を作らないよう、専用UIを実画面で確認してから始める。
+if (AUTH_STATE) {
+  const authProbeContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    hasTouch: true,
+    isMobile: true,
+    storageState: AUTH_STATE,
+  });
+  const authProbePage = await authProbeContext.newPage();
+  let authenticated = false;
+  try {
+    await authProbePage.goto(BASE + '/mypage', {
+      waitUntil: 'domcontentloaded',
+      timeout: 45000,
+    });
+    await authProbePage.waitForTimeout(3500);
+    authenticated = (await authProbePage.locator('body').innerText()).includes('公開ページを見る');
+  } catch {
+    authenticated = false;
+  }
+  await authProbeContext.close();
+
+  if (!authenticated) {
+    await browser.close();
+    console.error(
+      `[auth] ${AUTH_STATE} のセッションを本番画面で確認できません。` +
+        '認証後UIを測ったことにはせず終了します。pnpm e2e:auth-save で更新してください。',
+    );
+    process.exit(2);
+  }
+}
 
 for (const vp of VIEWPORTS) {
   // ★2026-08-03: userAgent の偽装だけでは `@media (pointer: coarse)` が成立しない。
@@ -301,10 +403,25 @@ fs.writeFileSync(outPath, JSON.stringify(results, null, 2));
 // ---- サマリ ----
 const overflowRows = results.filter((r) => r.overflowCount > 0 || r.hasHorizontalScroll);
 const consoleRows = results.filter((r) => (r.consoleErrors ?? []).length > 0);
+const tapRows = results.filter((r) => (r.smallTargetCount ?? 0) > 0);
+const tinyRows = results.filter((r) => (r.tinyTextCount ?? 0) > 0);
+const zoomRows = results.filter((r) => (r.zoomingInputCount ?? 0) > 0);
+const errorRows = results.filter((r) => Boolean(r.error));
+const notFoundRows = results.filter((r) => r.is404);
+const excludedSmallTargetCount = results.reduce(
+  (sum, r) => sum + (r.excludedSmallTargetCount ?? 0),
+  0,
+);
+const excludedTinyTextCount = results.reduce(
+  (sum, r) => sum + (r.excludedTinyTextCount ?? 0),
+  0,
+);
 console.log('\n=== SUMMARY ===');
 console.log(`checked        : ${results.length} (routes=${ROUTES.length} x viewports=${VIEWPORTS.length})`);
 console.log(`overflow issues: ${overflowRows.length}`);
 console.log(`console errors : ${consoleRows.length}`);
+console.log(`excluded taps  : ${excludedSmallTargetCount} (Clerk-managed)`);
+console.log(`excluded tiny  : ${excludedTinyTextCount} (footer/tab/version/brand)`);
 console.log(`report         : ${outPath}`);
 
 if (overflowRows.length) {
@@ -315,6 +432,24 @@ if (overflowRows.length) {
       console.log(`    ${o.tag} w=${o.w} left=${o.left} right=${o.right} "${o.text}" ${o.cls}`);
     }
   }
+}
+
+const failCounts = {
+  overflow: overflowRows.length,
+  tap: tapRows.length,
+  tiny: tinyRows.length,
+  zoom: zoomRows.length,
+  console: consoleRows.length,
+  error: errorRows.length,
+  404: notFoundRows.length,
+};
+const triggeredFailures = [...FAIL_ON]
+  .filter((kind) => failCounts[kind] > 0)
+  .map((kind) => `${kind}:${failCounts[kind]}`);
+
+if (triggeredFailures.length > 0) {
+  console.error(`\nFAIL (--fail-on): ${triggeredFailures.join(' ')}`);
+  process.exit(1);
 }
 
 process.exit(0);

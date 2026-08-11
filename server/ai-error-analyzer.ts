@@ -167,7 +167,7 @@ export async function analyzeError(error: {
           headers: {
             "Authorization": `Bearer ${apiKey}`,
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://surechigai-romi.link",
+            "HTTP-Referer": "https://surechigai.kimito.link",
             "X-Title": "Surechigai Romi Error Analyzer",
           },
           timeout: 30000,

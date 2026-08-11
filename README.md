@@ -1,4 +1,7 @@
-# 君斗りんくのすれ違ひ通信 (surechigai-romi.link)
+# 君斗りんくのすれ違ひ通信
+
+本番: https://surechigai.kimito.link
+GitHub リポジトリ: `kimito-link/surechigai-romi.link`
 
 移動の副産物として封筒（すれ違い）が溜まり、帰宅後にまとめて開封する受動体験アプリ。
 DSすれちがい通信の本質「開いた時に既に何かが起きている」をコアに据え、Xログインのみ・アプリ内DM禁止で運営する。
@@ -80,7 +83,7 @@ pnpm db:push
 
 1. [developer.twitter.com](https://developer.twitter.com) でアプリを作成
 2. OAuth 2.0 の Callback URL を設定:
-   - 本番: `https://surechigai-romi.link/oauth/twitter-callback`
+   - 本番: `https://clerk.kimito.link/v1/oauth_callback`
    - 開発: `http://localhost:8081/oauth/twitter-callback`
 3. `TWITTER_CLIENT_ID` と `TWITTER_CLIENT_SECRET` を取得
 
@@ -146,7 +149,7 @@ pnpm e2e:auth-save
 
 | 設定項目 | 値 |
 |---------|-----|
-| ドメイン | `surechigai-romi.link` |
+| ドメイン | `surechigai.kimito.link` |
 | Framework Preset | Other |
 | Build Command | `pnpm expo export -p web` |
 | Output Directory | `dist` |
@@ -165,7 +168,7 @@ Vercel の Environment Variables に上記の「環境変数一覧」を全て�
 |-----------|------|
 | `DATABASE_URL` | Railway PostgreSQL 接続文字列 |
 | `SWEEP_SECRET` | スイープ Webhook 認証トークン (`.env.local` の値と一致させる) |
-| `API_BASE_URL` | 本番 API URL (例: `https://surechigai-romi.link`) |
+| `API_BASE_URL` | 本番 API URL (例: `https://surechigai.kimito.link`) |
 
 ---
 

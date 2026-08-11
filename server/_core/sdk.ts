@@ -52,7 +52,7 @@ class SDKServer {
       forwardedHost ||
       this.getHeader(req, "host") ||
       process.env.VERCEL_URL ||
-      "surechigai-romi.link";
+      "surechigai.kimito.link";
     const path = req.originalUrl || req.url || "/";
     return new URL(path, `${proto}://${host}`).toString();
   }

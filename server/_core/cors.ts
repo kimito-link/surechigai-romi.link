@@ -47,11 +47,12 @@ export function isAllowedOrigin(origin: string | undefined): boolean {
     });
   }
 
-  // ALLOWED_ORIGINS が未設定の場合、surechigai-romi.link のサブドメインを許可
+  // ALLOWED_ORIGINS が未設定の場合、正規ドメインと旧ドメインだけを許可する。
+  // 旧ドメインは正規ドメインへの恒久リダイレクト期間中の互換用。
   try {
     const url = new URL(origin);
     const hostname = url.hostname;
-    return hostname === "surechigai-romi.link" || hostname.endsWith(".surechigai-romi.link");
+    return hostname === "surechigai.kimito.link" || hostname === "surechigai-romi.link";
   } catch {
     // URLパース失敗時は安全側に倒して拒否
     return false;

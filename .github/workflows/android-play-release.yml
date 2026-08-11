@@ -185,7 +185,7 @@ jobs:
       - name: Capture Play screenshots from prod URL (authenticated as reviewer)
         env:
           # "https://" + identity.productionDomain
-          SCREENSHOT_URL: https://surechigai-romi.link
+          SCREENSHOT_URL: https://surechigai.kimito.link
           IOS_REVIEW_DEMO_USERNAME: ${{ secrets.IOS_REVIEW_DEMO_USERNAME }}
           IOS_REVIEW_DEMO_PASSWORD: ${{ secrets.IOS_REVIEW_DEMO_PASSWORD }}
         run: |
