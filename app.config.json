@@ -7,7 +7,8 @@
     "bundleId": "com.kimito.link.surechigai",
     "iosScheme": "surechigai",
     "productionDomain": "surechigai.kimito.link",
-    "stagingDomain": null
+    "stagingDomain": null,
+    "shortDescription": "会いたい君がいる現在地。足あとを残して、あとからその場所へ。"
   },
   "stores": {
     "ascAppId": "6796909175",

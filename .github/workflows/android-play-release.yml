@@ -140,6 +140,43 @@ jobs:
           test -f android/gradlew || { echo "::error::android/gradlew が生成されていない"; exit 1; }
           test -f android/app/build.gradle || { echo "::error::android/app/build.gradle が生成されていない"; exit 1; }
 
+      # versionCode / versionName を採番して build.gradle に焼き込む。
+      #
+      # ⚠️ prebuild は毎回 `versionCode 1` を書く（上で rm -rf android しているので
+      #    手で直しても消える）。放置すると初回は通るが **2回目で Play が
+      #    「versionCode 1 は既に使用済み」で拒否**する。
+      #
+      # ⚠️ iOS で同型の事故がある（ios-appstore-release.yml L298-305）:
+      #    「注入したはず」の値が生成物に入らず 5 連続で審査提出に失敗した。
+      #    そのため **書き込んだ後に必ず読み返して検証**し、違えば exit 1 にする。
+      - name: Set Android versionCode / versionName
+        run: |
+          set -euo pipefail
+          GRADLE=android/app/build.gradle
+
+          # run_number は同一ワークフローで単調増加する。1 以下なら時刻で代替
+          VC="${GITHUB_RUN_NUMBER:-0}"
+          if [ "$VC" -le 1 ]; then
+            VC="$(date +%s)"
+          fi
+          VN="$(node -p "require('./package.json').version")"
+
+          sed -i -E "s/versionCode [0-9]+/versionCode ${VC}/" "$GRADLE"
+          sed -i -E "s/versionName \"[^\"]*\"/versionName \"${VN}\"/" "$GRADLE"
+
+          GOT_VC="$(grep -oE 'versionCode [0-9]+' "$GRADLE" | head -1 | awk '{print $2}')"
+          GOT_VN="$(grep -oE 'versionName "[^"]*"' "$GRADLE" | head -1 | sed -E 's/versionName "(.*)"/\1/')"
+          echo "versionCode=${GOT_VC} versionName=${GOT_VN}"
+
+          if [ "$GOT_VC" != "$VC" ]; then
+            echo "::error::versionCode の書き込みに失敗（期待 ${VC} / 実際 ${GOT_VC}）"
+            exit 1
+          fi
+          if [ "$GOT_VN" != "$VN" ]; then
+            echo "::error::versionName の書き込みに失敗（期待 ${VN} / 実際 ${GOT_VN}）"
+            exit 1
+          fi
+
       - name: Restore signing material
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -188,13 +225,30 @@ jobs:
       # commit messages since the last v* tag. No-op if nothing
       # user-facing changed since the last release.
       - name: Regenerate ja release notes from commit messages
+        env:
+          PLAY_KEEP_RELEASE_NOTES: ${{ vars.PLAY_KEEP_RELEASE_NOTES }}
         run: |
-          # Need full history for `git describe --tags`; checkout was shallow
-          git fetch --tags --depth=0 origin || git fetch --tags --depth=100 origin || true
-          node scripts/generate-release-notes.mjs --write || true
+          # ⚠️ v* タグが無いと HEAD~30..HEAD の feat:/fix: コミットから箇条書きを生成し、
+          #    **手書きのリリースノートを上書きする**。初回リリースの「はじめまして。…」は
+          #    これで消える。保持したいときは repo variable PLAY_KEEP_RELEASE_NOTES=1。
+          if [ "${PLAY_KEEP_RELEASE_NOTES:-}" = "1" ]; then
+            echo "PLAY_KEEP_RELEASE_NOTES=1 のため、手書きのリリースノートを保持します"
+          else
+            # Need full history for `git describe --tags`; checkout was shallow
+            git fetch --tags --depth=0 origin || git fetch --tags --depth=100 origin || true
+            node scripts/generate-release-notes.mjs --write || true
+          fi
           echo '--- current release notes ---'
           cat release-notes/CURRENT-ja.txt
           echo '--- end ---'
+          # Play は 500 文字上限。超えると publish で落ちるので、ここで先に検知する
+          node -e "
+            const t=require('fs').readFileSync('release-notes/CURRENT-ja.txt','utf8').trim();
+            const n=[...t].length;
+            console.log('release notes: '+n+' 文字');
+            if(n>500){console.error('::error::リリースノートが500文字を超えています ('+n+')');process.exit(1);}
+            if(n===0){console.error('::error::リリースノートが空です');process.exit(1);}
+          "
 
       # Capture authenticated dashboard screenshots before the listing
       # upload step picks them up. Mirrors the iOS authenticated-capture
@@ -208,9 +262,30 @@ jobs:
           IOS_REVIEW_DEMO_USERNAME: ${{ secrets.IOS_REVIEW_DEMO_USERNAME }}
           IOS_REVIEW_DEMO_PASSWORD: ${{ secrets.IOS_REVIEW_DEMO_PASSWORD }}
         run: |
+          set -euo pipefail
           pnpm exec playwright install --with-deps chromium || npx --yes playwright@1.49 install --with-deps chromium
           node scripts/capture-play-screenshots.mjs
           ls -la store-assets/play/screenshots
+
+          # ⚠️ capture-play-screenshots.mjs は各ページの失敗を catch で warn 止まりにする。
+          #    全ページ失敗しても 0 枚のまま exit 0 で通り、play-fill-listing.mjs 側は
+          #    「no local files; skipping」で**無言でスクショ無し**のまま公開まで進む。
+          #    ここで枚数を数えて止める。
+          N=$(find store-assets/play/screenshots -name '*.png' -type f | wc -l)
+          echo "screenshots: ${N} 枚"
+          if [ "$N" -lt 2 ]; then
+            echo "::error::スクリーンショットが ${N} 枚しか撮れていません（本番URLが落ちている可能性）"
+            exit 1
+          fi
+
+      # アイコン512とフィーチャーグラフィックを生成する。
+      # どちらも Play の必須項目で、無いと審査に出せない。
+      # sharp は未導入なので、E2E で既に入っている Playwright で描画する。
+      - name: Generate Play store graphics (icon-512 / feature-graphic)
+        run: |
+          set -euo pipefail
+          node scripts/generate-play-graphics.mjs
+          node scripts/generate-play-graphics.mjs --check
 
       # Push store listing, developer contact, and store graphics into Play
       # Console via Android Publisher API. This is idempotent and runs before
@@ -234,12 +309,15 @@ jobs:
       - name: Publish to Play Console (uses $PLAY_TRACK)
         env:
           GOOGLE_PLAY_SA_JSON_PATH: .secrets/google-play-sa.json
-          PLAY_AAB_PATH: android-twa/app/build/outputs/bundle/release/app-release.aab
+          # ⚠️ Expo prebuild の出力先。旧 TWA の android-twa/ ではない。
+          #    ここだけ旧パスのまま残っていて、ビルドとメタデータ投入を
+          #    やり切った最後の1歩で "AAB not found" で落ちる状態だった。
+          PLAY_AAB_PATH: android/app/build/outputs/bundle/release/app-release.aab
         run: node scripts/play-publish.mjs
 
       - name: Cleanup secrets
         if: always()
         run: |
           rm -f .secrets/google-play-sa.json
-          rm -f android-twa/android-upload-key.jks
-          rm -f android-twa/keystore.properties
+          rm -f android/android-upload-key.jks
+          rm -f android/keystore.properties

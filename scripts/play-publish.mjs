@@ -30,7 +30,15 @@ const APP_CONFIG = loadAppConfig();
 
 const PACKAGE = process.env.PLAY_PACKAGE_NAME || APP_CONFIG.stores.playPackageName;
 const TRACK = process.env.PLAY_TRACK || 'internal';
-const AAB_PATH = process.env.PLAY_AAB_PATH || path.join(REPO, 'android-twa', 'app', 'build', 'outputs', 'bundle', 'release', 'app-release.aab');
+// 既定は Expo prebuild の出力先。TWA 構成のリポでも動くよう、
+// android/ が無ければ android-twa/ にフォールバックする。
+const AAB_PATH = process.env.PLAY_AAB_PATH || (() => {
+  for (const dir of ['android', 'android-twa']) {
+    const p = path.join(REPO, dir, 'app', 'build', 'outputs', 'bundle', 'release', 'app-release.aab');
+    if (fs.existsSync(p)) return p;
+  }
+  return path.join(REPO, 'android', 'app', 'build', 'outputs', 'bundle', 'release', 'app-release.aab');
+})();
 
 if (!PACKAGE) {
   throw new Error(
@@ -54,11 +62,22 @@ function readReleaseNotes() {
   return text;
 }
 
+/**
+ * ビルドした AAB の versionCode を読む。
+ *
+ * ⚠️ 参照先は Expo prebuild の android/（旧 TWA の android-twa/ ではない）。
+ *    ここが null を返すと、下の「already been used」リトライが
+ *    `expectedVc` 無しで効かなくなり、2回目以降のアップロードが
+ *    そのまま throw して落ちる。
+ */
 function readVersionCode() {
-  const p = path.join(REPO, 'android-twa', 'app', 'build.gradle');
-  if (!fs.existsSync(p)) return null;
-  const m = fs.readFileSync(p, 'utf8').match(/versionCode\s+(\d+)/);
-  return m ? Number(m[1]) : null;
+  for (const dir of ['android', 'android-twa']) {
+    const p = path.join(REPO, dir, 'app', 'build.gradle');
+    if (!fs.existsSync(p)) continue;
+    const m = fs.readFileSync(p, 'utf8').match(/versionCode\s+(\d+)/);
+    if (m) return Number(m[1]);
+  }
+  return null;
 }
 
 const ARGS = new Set(process.argv.slice(2));
