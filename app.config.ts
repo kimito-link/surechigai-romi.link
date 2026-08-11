@@ -107,12 +107,21 @@ const config: ExpoConfig = {
       },
     ],
     "expo-asset",
-    // expo-audio / expo-video はプラグイン登録から外している。
-    // アプリ本体からの import が 0 件で、登録すると expo-audio が RECORD_AUDIO(マイク)と
-    // MODIFY_AUDIO_SETTINGS を AndroidManifest に自動追加してしまうため
-    // （未使用の権限はストア審査で用途を問われる典型的な却下要因）。
+    // expo-audio / expo-video は **依存ごと削除した**（2026-08-12）。
+    //
+    // ⚠️ プラグイン登録から外すだけでは足りない。
+    //    以前は「plugins に載せない」対応だけしていたが、
+    //    パッケージが node_modules にある限り Android のマニフェストマージが働き、
+    //    expo-audio が宣言する FOREGROUND_SERVICE_MEDIA_PLAYBACK が
+    //    アプリ本体の AndroidManifest に入ってしまう。
+    //    その結果 Play Console に「フォアグラウンドサービスの権限」の申告が要求され、
+    //    しかも「その他」を選ぶと**用途を示す動画の提出**まで求められた（実際に詰まった）。
+    //    使っていない権限のために動画を作るのは本末転倒なので、依存を消すのが正解。
+    //
+    // 実測: app/ components/ lib/ hooks/ modules/ features/ からの import は 0 件、
+    //       他パッケージからの依存も 0 件。
     // LP の BGM は public/lp/app.js の素の Web Audio で鳴らしており expo-audio を使わない。
-    // ネイティブで音声/動画を使う実装を入れる時に、ここへ戻すこと。
+    // ネイティブで音声/動画を使う実装を入れる時に、pnpm add で戻すこと。
     "expo-font",
     "expo-web-browser",
   ],
