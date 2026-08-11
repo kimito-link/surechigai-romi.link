@@ -81,62 +81,124 @@ const SIGNING_CONFIGS = `\
     }
 `;
 
-// ⚠️ Expo prebuild が生成する build.gradle は **すでに** `signingConfigs { debug {...} }` を
-//    持っている。`!src.includes('signingConfigs')` で判定すると false になり、
-//    release 用ブロックが入らないまま「done」と出てしまう（実際に踏んだ）。
-//    そのため「release ブロックがあるか」で判定する。
-if (!/signingConfigs\s*\{[\s\S]*?\brelease\s*\{/.test(src)) {
-  if (/signingConfigs\s*\{/.test(src)) {
-    // 既存の signingConfigs に release だけ足す
-    src = src.replace(
-      /(signingConfigs\s*\{)/,
-      `$1
+/**
+ * `名前 {` の直後から対応する `}` までを、波括弧を数えて切り出す。
+ *
+ * ⚠️ 正規表現でブロックを取ろうとすると入れ子で破綻する。
+ *    `/signingConfigs\s*\{[\s\S]*?\brelease\s*\{/` は signingConfigs を
+ *    **飛び越えて** buildTypes 内の `release {` にマッチしてしまい、
+ *    「release はもうある」と誤判定して追加をスキップした。
+ *    その結果 buildTypes だけ signingConfigs.release を参照する gradle ができ、
+ *    `Could not get unknown property 'release'` でビルドが落ちた（2026-08-11 実障害）。
+ *
+ * @returns {{start:number,bodyStart:number,bodyEnd:number,end:number}|null}
+ */
+function findBlock(text, name, fromIndex = 0) {
+  const re = new RegExp(`\\b${name}\\s*\\{`, 'g');
+  re.lastIndex = fromIndex;
+  const m = re.exec(text);
+  if (!m) return null;
+  const bodyStart = m.index + m[0].length;
+  let depth = 1;
+  for (let i = bodyStart; i < text.length; i++) {
+    const c = text[i];
+    if (c === '{') depth++;
+    else if (c === '}') {
+      depth--;
+      if (depth === 0) {
+        return { start: m.index, bodyStart, bodyEnd: i, end: i + 1 };
+      }
+    }
+  }
+  return null;
+}
+
+const RELEASE_SIGNING = `
         release {
             storeFile file("../android-upload-key.jks")
             storePassword keystoreProperties['storePassword']
             keyAlias keystoreProperties['keyAlias']
             keyPassword keystoreProperties['keyPassword']
-        }`,
-    );
-    console.log('android-patch-signing: added release to existing signingConfigs.');
-  } else {
+        }`;
+
+// --- 3'. signingConfigs に release を用意する ---
+{
+  const sc = findBlock(src, 'signingConfigs');
+  if (!sc) {
+    // そもそも signingConfigs が無い（TWA/bubblewrap 生成物）
     src = src.replace(/^(android\s*\{)/m, `$1\n${SIGNING_CONFIGS}`);
     console.log('android-patch-signing: injected signingConfigs block.');
+  } else {
+    // ★ signingConfigs の**中だけ**を見る。ここを間違えると誤検知する
+    const body = src.slice(sc.bodyStart, sc.bodyEnd);
+    if (/\brelease\s*\{/.test(body)) {
+      console.log('android-patch-signing: signingConfigs.release already present.');
+    } else {
+      src = src.slice(0, sc.bodyStart) + RELEASE_SIGNING + src.slice(sc.bodyStart);
+      console.log('android-patch-signing: added release to existing signingConfigs.');
+    }
   }
+}
+
+/** buildTypes の中の release ブロックを、入れ子を数えて取り出す */
+function findBuildTypesRelease(text) {
+  const bt = findBlock(text, 'buildTypes');
+  if (!bt) return null;
+  const rel = findBlock(text, 'release', bt.bodyStart);
+  // buildTypes の外側にある release（signingConfigs 内など）を掴まないこと
+  if (!rel || rel.end > bt.bodyEnd) return null;
+  return rel;
 }
 
 // --- 4. buildTypes.release を release 署名に向ける ---
 // Expo 生成物は release ブロック内が `signingConfig signingConfigs.debug` になっている。
 // **追記ではなく置換**しないと debug 署名が残り、本番AABがデバッグ鍵で署名されてしまう。
-const releaseBlock = /(buildTypes\s*\{[\s\S]*?\brelease\s*\{)([\s\S]*?)(\n\s*\})/;
-const m = src.match(releaseBlock);
-if (m) {
-  let body = m[2];
-  if (/signingConfig\s+signingConfigs\.debug/.test(body)) {
-    body = body.replace(/signingConfig\s+signingConfigs\.debug/g, 'signingConfig signingConfigs.release');
-    console.log('android-patch-signing: switched release buildType from debug to release signing.');
-  } else if (!/signingConfig\s+signingConfigs\.release/.test(body)) {
-    body = `\n            signingConfig signingConfigs.release${body}`;
-    console.log('android-patch-signing: added signingConfig reference to buildTypes.release.');
+{
+  const rel = findBuildTypesRelease(src);
+  if (rel) {
+    const body = src.slice(rel.bodyStart, rel.bodyEnd);
+    let next = body;
+    if (/signingConfig\s+signingConfigs\.debug/.test(body)) {
+      next = body.replace(/signingConfig\s+signingConfigs\.debug/g, 'signingConfig signingConfigs.release');
+      console.log('android-patch-signing: switched release buildType from debug to release signing.');
+    } else if (!/signingConfig\s+signingConfigs\.release/.test(body)) {
+      next = `\n            signingConfig signingConfigs.release${body}`;
+      console.log('android-patch-signing: added signingConfig reference to buildTypes.release.');
+    }
+    if (next !== body) {
+      src = src.slice(0, rel.bodyStart) + next + src.slice(rel.bodyEnd);
+    }
+  } else {
+    console.error('::error::android-patch-signing: buildTypes.release ブロックが見つからない');
+    process.exit(1);
   }
-  src = src.replace(releaseBlock, `$1${body}$3`);
 }
 
 // --- 5. 書き込む前に、狙った状態になったか自分で検証する ---
-// 「パッチした」と言いながら実際は当たっていない、を防ぐ（一度これで騙された）。
+// 「パッチした」と言いながら実際は当たっていない、を防ぐ。
+// ★ ここも必ずブロックを切り出して中だけを見る。
+//   正規表現で横断的に探すと、signingConfigs を飛び越えて buildTypes の
+//   release にマッチし、緑のまま壊れた gradle を出荷する（2026-08-11 実障害）。
 const problems = [];
-if (!/signingConfigs\s*\{[\s\S]*?\brelease\s*\{/.test(src)) {
-  problems.push('signingConfigs に release ブロックが無い');
-}
-const after = src.match(releaseBlock);
-if (!after) {
-  problems.push('buildTypes.release ブロックを特定できない');
-} else {
-  if (!/signingConfig\s+signingConfigs\.release/.test(after[2])) {
-    problems.push('buildTypes.release が signingConfigs.release を参照していない');
+{
+  const sc = findBlock(src, 'signingConfigs');
+  if (!sc) {
+    problems.push('signingConfigs ブロックが無い');
+  } else if (!/\brelease\s*\{/.test(src.slice(sc.bodyStart, sc.bodyEnd))) {
+    problems.push('signingConfigs の中に release ブロックが無い（Gradle が unknown property "release" で落ちる）');
   }
-  if (/signingConfig\s+signingConfigs\.debug/.test(after[2])) {
-    problems.push('buildTypes.release に debug 署名が残っている（本番がデバッグ鍵で署名される）');
+
+  const rel = findBuildTypesRelease(src);
+  if (!rel) {
+    problems.push('buildTypes.release ブロックを特定できない');
+  } else {
+    const body = src.slice(rel.bodyStart, rel.bodyEnd);
+    if (!/signingConfig\s+signingConfigs\.release/.test(body)) {
+      problems.push('buildTypes.release が signingConfigs.release を参照していない');
+    }
+    if (/signingConfig\s+signingConfigs\.debug/.test(body)) {
+      problems.push('buildTypes.release に debug 署名が残っている（本番がデバッグ鍵で署名される）');
+    }
   }
 }
 if (problems.length) {
