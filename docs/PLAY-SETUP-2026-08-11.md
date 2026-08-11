@@ -2,15 +2,26 @@
 
 すれ違ひ通信を Play に出すまでの手順。**Play Console に未登録の状態から始める**。
 
+## 確定した ID（2026-08-11）
+
+| 項目 | 値 |
+|---|---|
+| Play アプリ ID | `4974108202924371469` |
+| デベロッパー ID | `6880871170619890401` |
+| パッケージ名 | `com.kimito.link.surechigai` |
+| ダッシュボード | https://play.google.com/console/u/0/developers/6880871170619890401/app/4974108202924371469/app-dashboard |
+
+`playDeveloperId` は反映済み。**`playAppId` はまだ空のまま**にしてある（下の「順序について」参照）。
+
 ## 現状（2026-08-11 実測）
 
 | 項目 | 状態 |
 |---|---|
-| Play Console のアプリ | **未登録**（9件の中に `com.kimito.link.surechigai` は無い） |
-| パッケージ名 | `com.kimito.link.surechigai`（`app.config.json` に設定済み） |
-| `stores.playAppId` | **空**（ここが空の間、`/u/{slug}` に Google Play ボタンは出ない） |
+| Play Console のアプリ | ✅ **作成済み**（無料 / アプリ / ja-JP） |
+| パッケージ名 | `com.kimito.link.surechigai`（`app.config.json` と一致） |
+| `stores.playAppId` | **意図的に空**（配信開始まで入れない） |
 | リリースCI | `android-play-release.yml` **完備**（手動トリガのみ） |
-| Android の Secrets | **3つとも未登録** |
+| Android の Secrets | **3つとも未登録** ← 次の関門 |
 | iOS の Secrets | 登録済み（Apple 系は完了している） |
 
 CI が要求する Secrets:
