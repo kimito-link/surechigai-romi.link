@@ -126,22 +126,41 @@ jobs:
       - name: Install Node dependencies (for Playwright capture)
         run: pnpm install --frozen-lockfile
 
+      # iOS と同じく Expo prebuild でネイティブ側を生成する。
+      # ⚠️ 旧構成(TWA / bubblewrap の android-twa/)は**もう存在しない**。
+      #    2026-08 に Expo prebuild へ移行済みで、android/ は .gitignore 済みの生成物。
+      #    このステップを消すとビルド対象が無くなる。
+      - name: Generate native Android project (expo prebuild)
+        run: |
+          set -euo pipefail
+          # 既存の生成物が残っていると構成が混ざるので作り直す
+          rm -rf android
+          npx expo prebuild --platform android --no-install
+
+          test -f android/gradlew || { echo "::error::android/gradlew が生成されていない"; exit 1; }
+          test -f android/app/build.gradle || { echo "::error::android/app/build.gradle が生成されていない"; exit 1; }
+
       - name: Restore signing material
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PROPERTIES: ${{ secrets.ANDROID_KEYSTORE_PROPERTIES }}
         run: |
           set -euo pipefail
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > android-twa/android-upload-key.jks
-          printf '%s\n' "$ANDROID_KEYSTORE_PROPERTIES" > android-twa/keystore.properties
-          ls -l android-twa/android-upload-key.jks android-twa/keystore.properties
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/android-upload-key.jks
+          printf '%s\n' "$ANDROID_KEYSTORE_PROPERTIES" > android/keystore.properties
+          ls -l android/android-upload-key.jks android/keystore.properties
+
+      # prebuild が生成する build.gradle は debug 署名のままなので、
+      # release に upload key の signingConfig を差し込む。
+      - name: Patch release signing config
+        run: node scripts/android-patch-signing.mjs --gradle android/app/build.gradle
 
       # Fail early if the AAB would be signed with the wrong config.
       - name: Verify Android signing config
-        run: node scripts/verify-android-signing-config.mjs --gradle android-twa/app/build.gradle
+        run: node scripts/verify-android-signing-config.mjs --gradle android/app/build.gradle
 
       - name: Build release AAB
-        working-directory: android-twa
+        working-directory: android
         run: |
           set -euo pipefail
           chmod +x ./gradlew
@@ -152,7 +171,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: android-aab
-          path: android-twa/app/build/outputs/bundle/release/app-release.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
       - name: Restore Service Account JSON
