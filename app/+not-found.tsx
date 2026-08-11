@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { navigateBack, navigateReplace } from "@/lib/navigation/app-routes";
 
 // 画像アセット
-const APP_LOGO = require("@/assets/images/logos/kimitolink-logo.jpg");
+// ⚠️ .jpg ではなく .webp を使う。Android の release ビルドは拡張子を落として
+//    リソース名にするため、同名の .jpg と .webp が両方あると
+//    `Duplicate resources` で mergeReleaseResources が落ちる（2026-08-11 実障害）。
+//    他画面も全て .webp を参照しているのでこちらに統一する（157KB → 25KB）。
+const APP_LOGO = require("@/assets/images/logos/kimitolink-logo.webp");
 const CHARACTER_CONFUSED = require("@/assets/images/characters/link/link-yukkuri-half-eyes-mouth-open.png");
 
 export default function NotFoundScreen() {
