@@ -352,6 +352,39 @@ if (!playCapture) {
 }
 
 // ----------------------------------------------------------------------------
+// CHECK 9 — 開発専用パッケージが dependencies に無い
+// 2026-08-13 実障害(build 495 / Guideline 2.1(a) 却下): expo-dev-client が
+// dependencies にあったため、リリース IPA に EXDevMenu / DevMenuManager が
+// 焼き込まれ、起動直後の TurboModule 初期化で uncaught ObjC 例外 → abort()。
+// 審査は iPad Air(iPhone 互換モード)で起動即クラッシュとして観測された。
+//
+// ★ dependencies と devDependencies の区別だけが唯一の防波堤である点に注意。
+//   ソースからの import が 0 件でも、dependencies にあれば
+//   expo の autolinking がネイティブモジュールを勝手に取り込む。
+//   「使っていないから安全」は成立しない(expo-audio の権限混入と同じ型)。
+// ----------------------------------------------------------------------------
+const DEV_ONLY_PACKAGES = [
+  'expo-dev-client',
+  'expo-dev-menu',
+  'expo-dev-launcher',
+  'react-native-flipper',
+];
+const prodDeps = Object.keys(pkg?.dependencies || {});
+const leakedDevPkgs = DEV_ONLY_PACKAGES.filter((p) => prodDeps.includes(p));
+if (!pkg) {
+  skip('dev-only-deps', 'package.json が読めない');
+} else if (leakedDevPkgs.length > 0) {
+  fail(
+    'dev-only-deps',
+    '2.1(a)',
+    `開発専用パッケージが dependencies にある: ${leakedDevPkgs.join(', ')}。` +
+      'autolinking でリリースビルドに焼き込まれ起動クラッシュの原因になる。devDependencies へ移すこと',
+  );
+} else {
+  ok('dev-only-deps', `開発専用 ${DEV_ONLY_PACKAGES.length} 件はいずれも dependencies に無い`);
+}
+
+// ----------------------------------------------------------------------------
 // Output
 // ----------------------------------------------------------------------------
 console.log('');
