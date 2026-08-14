@@ -8,7 +8,9 @@
  *    （openExternalUrl は許可外ドメインを黙って false で返す）
  *
  * Platform.OS === "web" = ブラウザで共有リンクを見ている状態。
- * ここが最大の獲得経路なので、導線は必ず出ていなければならない。
+ * ここが最大の獲得経路だが、「必ず出す」ことが正しいわけではない。
+ * 配信前に出すと 404 に着地させてしまい、最初の一撃を無駄にする。
+ * 出す/出さないは app.config.json の stores（iosPublished / playAppId）が唯一の根拠。
  */
 import { describe, expect, it, vi } from "vitest";
 import appConfig from "@/app.config.json";
@@ -25,16 +27,42 @@ describe("web で共有リンクを見ているとき", () => {
     expect(isInsideNativeApp()).toBe(false);
   });
 
-  it("App Store のリンクを出す（ascAppId は審査前から確定している）", () => {
+  it("iOS 未公開の間は App Store を出さない（押すと404になるため）", () => {
+    // ★ascAppId は審査を出す前から採番される。「IDがある＝公開済み」ではない。
+    //   以前ここは「ascAppId があれば出す」を守るテストだったが、その仕様自体が
+    //   未公開のまま押せるボタンを生んでいた（2026-08-14 修正）。
+    const published = appConfig.stores.iosPublished === true;
     const url = iosStoreUrl();
-    expect(url).toBeTruthy();
-    expect(url).toContain("apps.apple.com");
-    // URL は app.config.json の値から組む。ハードコードを禁じる
-    expect(url).toContain(appConfig.stores.ascAppId);
+    if (published) {
+      expect(url).toContain("apps.apple.com");
+      // URL は app.config.json の値から組む。ハードコードを禁じる
+      expect(url).toContain(appConfig.stores.ascAppId);
+    } else {
+      expect(url).toBeNull();
+      expect(availableStoreLinks().some((l) => l.kind === "ios")).toBe(false);
+    }
   });
 
-  it("配信中のストアが1つ以上ある", () => {
-    expect(availableStoreLinks().length).toBeGreaterThan(0);
+  it("どのストアも未公開なら導線は空（＝コンポーネントが何も描画しない）", () => {
+    const iosLive = appConfig.stores.iosPublished === true;
+    const playLive = Boolean((appConfig.stores.playAppId || "").trim());
+    expect(availableStoreLinks().length).toBe(Number(iosLive) + Number(playLive));
+  });
+
+  // ★ここから下は「設定に追随するだけのテスト」にしないための実値ロック。
+  //   上のテストは config を読んで期待値を作るので、iosPublished を誤って
+  //   true にしても緑のまま通ってしまう（実際に反転させて緑を確認した）。
+  //   「いま出荷してよい状態か」は事実として固定し、公開時に人が明示的に
+  //   書き換える。書き換え忘れれば落ちるので、リリース手順の栞にもなる。
+  it("【出荷ゲート】iOS は未公開なので App Store 導線を出してはいけない", () => {
+    // 公開したらこの2行を true / 期待値ありに書き換える（同時に app.config.json も）
+    expect(appConfig.stores.iosPublished).toBe(false);
+    expect(iosStoreUrl()).toBeNull();
+  });
+
+  it("【出荷ゲート】Play も未公開なので導線は0件", () => {
+    expect((appConfig.stores.playAppId || "").trim()).toBe("");
+    expect(availableStoreLinks()).toHaveLength(0);
   });
 
   it("Play 未登録の間は Google Play を出さない（押すと404になるため）", () => {

@@ -6,14 +6,23 @@
  *
  * 重要: まだ配信していないストアのリンクは出さない。
  * 押しても「ページが見つかりません」になる導線は、無いより悪い。
- * - iOS:     ascAppId があれば出す（審査通過前でもURL自体は確定している）
+ * - iOS:     iosPublished が true になるまで出さない
  * - Android: playAppId が空の間は出さない（Play Console 未登録）
+ *
+ * ★「IDがある＝公開済み」ではない（2026-08-14 修正）。
+ *   ascAppId は審査を出す前から採番されるため、以前は「ascAppId があれば出す」
+ *   にしていたが、その結果 App Store ボタンが未公開のまま表示され、
+ *   押すと 404 に着地していた。共有リンクを踏んだ人が最初に触る導線がこれで、
+ *   「無いより悪い導線」を自分で作っていた。
+ *   公開の事実は ID の有無から推測せず、iosPublished で明示する。
  */
 import { Platform } from "react-native";
 import appConfig from "@/app.config.json";
 
 const stores = appConfig.stores as {
   ascAppId?: string;
+  /** App Store で実際に配信が始まったら true にする（採番済みでは true にしない） */
+  iosPublished?: boolean;
   playAppId?: string;
   playPackageName?: string;
 };
@@ -26,8 +35,13 @@ export type StoreLink = {
   url: string;
 };
 
-/** App Store の作品ページ。ascAppId は審査前から確定している */
+/**
+ * App Store の作品ページ。
+ * ascAppId は審査前から確定しているが、URL が確定していることと
+ * 「押して見られる」ことは別。配信開始の印（iosPublished）が立つまで出さない。
+ */
 export function iosStoreUrl(): string | null {
+  if (stores.iosPublished !== true) return null;
   const id = (stores.ascAppId || "").trim();
   if (!id) return null;
   return `https://apps.apple.com/jp/app/id${id}`;
