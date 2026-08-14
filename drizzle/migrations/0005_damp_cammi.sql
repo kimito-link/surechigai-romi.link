@@ -1,0 +1,1 @@
+ALTER TABLE "locations" ADD COLUMN "source" varchar(16) DEFAULT 'checkin' NOT NULL;
