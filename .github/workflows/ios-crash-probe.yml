@@ -196,12 +196,16 @@ jobs:
                    "$LOGFILE" 2>/dev/null; then
               # プローブ自身の不具合。成功と区別する（黙って緑にしない）
               echo "VERDICT[$NAME]: PROBE_BROKEN (起動を試せていない)"
-            elif [ ! -s "$LOGFILE" ]; then
-              echo "VERDICT[$NAME]: INCONCLUSIVE (ログが空。起動した証拠が無い)"
             elif [ "$RC" = "stayed_up" ] || grep -qiE "_setUpFeatureFlags|UIApplicationDelegate|$BUNDLE_ID" \
                    "$LOGFILE" 2>/dev/null; then
-              # アプリが実際に立ち上がった痕跡があり、かつクラッシュ文言が無い
+              # アプリが実際に立ち上がった痕跡があり、かつクラッシュ文言が無い。
+              # ★stayed_up の判定は「ログが空か」より先に置くこと（run #7 で誤判定した）。
+              #   --console-pty はアプリが stdout に何も書かなければログが空のままになる。
+              #   つまり「ログが空」は失敗ではなく、静かに動いている正常な姿でもある。
+              #   45秒生きて kill された（=Terminated: 15）なら、それはクラッシュしなかった証拠。
               echo "VERDICT[$NAME]: OK (起動してクラッシュしなかった)"
+            elif [ ! -s "$LOGFILE" ]; then
+              echo "VERDICT[$NAME]: INCONCLUSIVE (ログが空。起動した証拠が無い)"
             else
               echo "VERDICT[$NAME]: INCONCLUSIVE (起動の痕跡を確認できない)"
             fi
