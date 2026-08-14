@@ -6,7 +6,7 @@
     "node": "24.x"
   },
   "type": "module",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "sideEffects": [
     "app/_layout.tsx",
     "lib/bootstrap/**",
