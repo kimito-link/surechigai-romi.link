@@ -67,6 +67,19 @@ export const locations = pgTable(
     /** この足あと単体の公開設定。public=共有・県別一覧に反映 / private=自分だけ */
     visibility: varchar("visibility", { length: 16 }).default("public").notNull(),
     /**
+     * 足あとの由来（2026-08-14 追加）。
+     *   checkin = その場でのチェックイン（従来からの唯一の作られ方。既定値）
+     *   photo   = 写真の EXIF から取り込んだ過去の足あと
+     *   manual  = EXIF が無い写真を地図タップで指定したもの
+     *
+     * ★写真由来（photo/manual）は手続き側で visibility:"private" を明示的に渡す。
+     *   スキーマ既定（public）は変えない。既定を反転すると既存の全足あとの意味が
+     *   変わってしまうため（docs/photo-import-and-viral-DESIGN.md F-2）。
+     * ★写真由来はすれ違いマッチングに参加させない。過去日付の在圏を遡って
+     *   マッチさせると意味論が壊れ、他人の写真で偽の在圏を作れてしまう。
+     */
+    source: varchar("source", { length: 16 }).default("checkin").notNull(),
+    /**
      * 本人が付けた施設・店名（自由入力＝「主張」）。
      * 逆ジオコーディング由来の address（＝「事実」）とは意図的に別列にしている。
      * 混ぜると地図上で真実と主張が区別できなくなる（docs/place-info-DESIGN.md 地雷4）。

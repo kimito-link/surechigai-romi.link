@@ -35,6 +35,8 @@ import { reactions, users } from "../../../drizzle/schema/index.js";
 import { eq } from "drizzle-orm";
 import {
   insertLocation,
+  insertImportedLocation,
+  hasNearbyLocationAt,
   getNearCandidates,
   getWideCandidates,
   getTimeshiftCandidates,
@@ -49,6 +51,22 @@ import {
   upsertUserSettings,
   getMostFrequentNightH3R8,
 } from "../db/queries.js";
+
+/** 写真とりこみ: 1回で受ける最大枚数。クライアント側でも同じ数で止める。 */
+const IMPORT_MAX_ITEMS = 20;
+/**
+ * 写真とりこみ: これより古い撮影時刻は壊れた EXIF とみなして弾く。
+ * 2004-01-01。GPS 付きデジカメが一般化する前の日付は実質ありえない。
+ */
+const IMPORT_MIN_RECORDED_AT_MS = Date.UTC(2004, 0, 1);
+/**
+ * 写真とりこみ: 逆ジオコーディング全体の予算。
+ * 1件2.5秒 × ユニークセル数だけ待つと関数のタイムアウトに当たるので、
+ * ここで打ち切って「地名なしの足あと」として保存を続ける（保存自体は成立する）。
+ */
+const IMPORT_GEOCODE_BUDGET_MS = 6_000;
+/** 写真とりこみ: 同じセルでこの分数以内に既存の足あとがあれば重複とみなす */
+const IMPORT_DUPLICATE_WINDOW_MIN = 60;
 
 export const encounterRouter = router({
   /**
@@ -248,6 +266,183 @@ export const encounterRouter = router({
 
       // saved:true は「足あとの永続化が確定した」の明示。クライアントは saved !== true を全て失敗扱いにする(肯定形判定)
       return { newEncounters, prefecture, municipality, areaName, address, lat: latLng.lat, lng: latLng.lng, locationId, saved: true };
+    }),
+
+  /**
+   * 写真の EXIF から取り込んだ「過去の足あと」をまとめて保存する（2026-08-14）。
+   * 設計: docs/photo-import-and-viral-DESIGN.md C-3。
+   *
+   * checkIn と決定的に違う点（意図的な差。真似して揃えないこと）:
+   *   1. **すれ違いマッチングを実行しない**。過去日付の在圏を遡ってマッチさせると
+   *      タイムシフトマッチの意味論が壊れ、他人の写真で偽の在圏を作れてしまう。
+   *   2. **visibility は private 固定**。勝手に公開しない（公開は本人が1件ずつ）。
+   *   3. **recordedAt は撮影時刻**（now ではない）。epoch ms で受け取る
+   *      （Date を直接受けると生SQL経路で事故った実績があるため数値で受ける）。
+   *   4. accuracy を要求しない。写真の EXIF は水平精度を持たない。
+   *
+   * 返り値は肯定形のフィールドで返す（「保存されたはず」の誤認を作らない）。
+   */
+  importFootprints: protectedProcedure
+    .input(
+      z.object({
+        items: z
+          .array(
+            z.object({
+              lat: z.number(),
+              lng: z.number(),
+              /** 撮影時刻（epoch ms） */
+              recordedAt: z.number(),
+              /** EXIF 由来か、地図タップでの手動指定か */
+              source: z.enum(["photo", "manual"]).default("photo"),
+            })
+          )
+          .min(1)
+          .max(IMPORT_MAX_ITEMS),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id;
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Database not available",
+        });
+      }
+
+      const settings = await getUserSettings(db, userId);
+      if (isLocationRecordingPaused(settings?.locationPausedUntil)) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message:
+            "位置記録は一時停止中です。マイページで「灯を消す」を解除してからお試しください",
+        });
+      }
+
+      // 1) 検証（座標・日時）。壊れた EXIF はここで落とす。
+      type Prepared = {
+        lat: number;
+        lng: number;
+        recordedAt: Date;
+        source: "photo" | "manual";
+        latGrid: number;
+        lngGrid: number;
+        h3R8: string;
+        h3R7: string;
+      };
+      const prepared: Prepared[] = [];
+      let rejected = 0;
+      const now = Date.now();
+      for (const item of input.items) {
+        const latLng = assertFiniteLatLng(item.lat, item.lng);
+        if (!latLng) {
+          rejected += 1;
+          continue;
+        }
+        if (
+          !Number.isFinite(item.recordedAt) ||
+          item.recordedAt < IMPORT_MIN_RECORDED_AT_MS ||
+          item.recordedAt > now
+        ) {
+          // 未来日付・1970年など明らかに壊れた EXIF を弾く
+          rejected += 1;
+          continue;
+        }
+        const { latGrid, lngGrid } = toGrid(latLng.lat, latLng.lng);
+        const h3R8 = toH3Cell(latGrid, lngGrid, 8);
+        prepared.push({
+          lat: latLng.lat,
+          lng: latLng.lng,
+          recordedAt: new Date(item.recordedAt),
+          source: item.source,
+          latGrid,
+          lngGrid,
+          h3R8,
+          // visitedAreas 用の h3R7（直接計算）。locations.h3R7 とは別系統なので混ぜない
+          h3R7: toH3R7(latGrid, lngGrid),
+        });
+      }
+
+      if (prepared.length === 0) {
+        return { imported: 0, skippedDuplicates: 0, rejected, newAreas: [] as string[] };
+      }
+
+      // 2) 逆ジオコーディングはユニークなグリッドセルごとに1回だけ。
+      //    20枚が同じ街なら1回で済む。総予算を切って関数のタイムアウトを守る。
+      const geoByCell = new Map<
+        string,
+        { municipality: string | null; prefecture: string | null; address: string | null }
+      >();
+      const uniqueCells = [...new Set(prepared.map((p) => `${p.latGrid},${p.lngGrid}`))];
+      const geoDeadline = now + IMPORT_GEOCODE_BUDGET_MS;
+      for (const cellKey of uniqueCells) {
+        if (Date.now() > geoDeadline) break; // 予算切れ。残りは地名なしで保存する
+        const target = prepared.find((p) => `${p.latGrid},${p.lngGrid}` === cellKey);
+        if (!target) continue;
+        try {
+          const g = await reverseGeocodeWithTimeout(target.lat, target.lng, 2_500);
+          geoByCell.set(cellKey, {
+            municipality: g.municipality ?? null,
+            prefecture: g.prefecture ?? null,
+            address: g.address ?? null,
+          });
+        } catch {
+          // 取れなくても足あと自体は成立する（海外の写真もここに落ちる）
+        }
+      }
+
+      // 3) 保存。重複は skip。1件の失敗が他を巻き込まないよう件ごとに隔離する。
+      let imported = 0;
+      let skippedDuplicates = 0;
+      const newAreas = new Set<string>();
+      for (const p of prepared) {
+        try {
+          if (
+            await hasNearbyLocationAt(db, {
+              userId,
+              h3R8: p.h3R8,
+              recordedAt: p.recordedAt,
+              windowMinutes: IMPORT_DUPLICATE_WINDOW_MIN,
+            })
+          ) {
+            skippedDuplicates += 1;
+            continue;
+          }
+          const geo = geoByCell.get(`${p.latGrid},${p.lngGrid}`) ?? {
+            municipality: null,
+            prefecture: null,
+            address: null,
+          };
+          await insertImportedLocation(db, {
+            userId,
+            h3R8: p.h3R8,
+            latGrid: p.latGrid,
+            lngGrid: p.lngGrid,
+            lat: p.lat,
+            lng: p.lng,
+            municipality: geo.municipality,
+            prefecture: geo.prefecture,
+            address: geo.address,
+            recordedAt: p.recordedAt,
+            source: p.source,
+          });
+          imported += 1;
+          // 図鑑を埋める（過去の旅のぶんだけ街が増える＝取り込みの内発的な報酬）
+          await upsertVisitedArea(db, {
+            userId,
+            h3R7: p.h3R7,
+            municipality: geo.municipality,
+            prefecture: geo.prefecture,
+          });
+          if (geo.municipality) newAreas.add(geo.municipality);
+        } catch (err) {
+          console.error("[encounter.importFootprints] insert failed:", err);
+          rejected += 1;
+        }
+      }
+
+      // ★マッチングは実行しない（上のコメント1参照）
+      return { imported, skippedDuplicates, rejected, newAreas: [...newAreas] };
     }),
 
   /**

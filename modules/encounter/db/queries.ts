@@ -6,7 +6,7 @@
  * 純粋関数 (modules/encounter/core/*) とアプリコードとの橋渡しをする。
  */
 
-import { and, desc, eq, gte, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import * as schema from "../../../drizzle/schema/index.js";
 import {
@@ -252,6 +252,89 @@ export async function insertLocation(
     })
     .returning({ id: locations.id });
   return row.id;
+}
+
+/**
+ * 写真から取り込んだ足あとを1件保存する（2026-08-14）。
+ *
+ * insertLocation との違いは3点だけ。混ぜずに別関数にしてあるのは、
+ * この3点が「取り違えると事故る」性質のものだから:
+ *   1. recordedAt を呼び出し側が決める（撮影時刻。now ではない）
+ *   2. visibility を明示的に "private" にする（勝手に公開しない）
+ *   3. source に由来を残す（photo / manual）
+ *
+ * 設計: docs/photo-import-and-viral-DESIGN.md C-3。
+ */
+export async function insertImportedLocation(
+  db: DB,
+  params: {
+    userId: number;
+    h3R8: string;
+    latGrid: number;
+    lngGrid: number;
+    lat: number;
+    lng: number;
+    municipality: string | null;
+    prefecture: string | null;
+    address?: string | null;
+    /** 撮影時刻。Date は呼び出し側で epoch ms から作る（生SQLに埋めない） */
+    recordedAt: Date;
+    source: "photo" | "manual";
+  }
+): Promise<number> {
+  const [row] = await db
+    .insert(locations)
+    .values({
+      userId: params.userId,
+      h3R8: params.h3R8,
+      h3R7: toH3ParentCell(params.h3R8, H3_RES_7),
+      h3R5: toH3ParentCell(params.h3R8, H3_RES_5),
+      latGrid: params.latGrid,
+      lngGrid: params.lngGrid,
+      lat: params.lat,
+      lng: params.lng,
+      // 写真の EXIF は水平精度を持たないので不明として残す（0 と書くと「超高精度」に見える）
+      accuracyM: null,
+      municipality: params.municipality ?? null,
+      prefecture: params.prefecture ?? null,
+      address: params.address ?? null,
+      recordedAt: params.recordedAt,
+      // ★勝手に公開しない。公開は本人が足あとシートで1件ずつ行う
+      visibility: "private",
+      source: params.source,
+    })
+    .returning({ id: locations.id });
+  return row.id;
+}
+
+/**
+ * 同じ足あとが既にあるか（写真の二度取り込み・連写対策）。
+ * 判定: 同じユーザー・同じ H3 res8 セル・撮影時刻が ±60 分以内・削除されていない。
+ *
+ * ★Date は Drizzle のビルダー経由で渡す。生 sql テンプレートに Date を埋めない
+ *   （encounter.list が常時 500 になった実績がある）。
+ */
+export async function hasNearbyLocationAt(
+  db: DB,
+  params: { userId: number; h3R8: string; recordedAt: Date; windowMinutes?: number }
+): Promise<boolean> {
+  const windowMs = (params.windowMinutes ?? 60) * 60 * 1000;
+  const from = new Date(params.recordedAt.getTime() - windowMs);
+  const to = new Date(params.recordedAt.getTime() + windowMs);
+  const rows = await db
+    .select({ id: locations.id })
+    .from(locations)
+    .where(
+      and(
+        eq(locations.userId, params.userId),
+        eq(locations.h3R8, params.h3R8),
+        isNull(locations.deletedAt),
+        gte(locations.recordedAt, from),
+        lte(locations.recordedAt, to)
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
 }
 
 export type TrailLocation = {
