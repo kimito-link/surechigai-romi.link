@@ -36,7 +36,9 @@ permissions:
 jobs:
   probe:
     runs-on: macos-latest
-    timeout-minutes: 60
+    # 60分では足りなかった（run #4 がちょうど60分で cancelled。
+    # Release ビルドが重く、シミュレータ起動まで到達できていない）。
+    timeout-minutes: 110
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -144,15 +146,34 @@ jobs:
             local LOGPID=$!
             sleep 3
 
+            # ★--console-pty をタイムアウト無しで使ってはいけない（run #4 で実際に詰まった）。
+            #   これはアプリの stdout に張り付き、**アプリが終了するまで戻らない**。
+            #   クラッシュする版では自然に終わるので #2/#3 は完走したが、
+            #   起動が成功する版（＝直った版）では永久に返らず、
+            #   ジョブが 60 分でタイムアウトして cancelled になった。
+            #   「直ったときだけ詰まる」ので、直る直前まで気づけない罠。
             set +e
-            xcrun simctl launch --console-pty "$UDID" "$BUNDLE_ID" \
+            timeout 45 xcrun simctl launch --console-pty "$UDID" "$BUNDLE_ID" \
               > "/tmp/probe-out/launch-$NAME.log" 2>&1
             local RC=$?
             set -e
-            sleep 12
+            # rc=124 は timeout による打ち切り＝45秒間クラッシュしなかったということ。
+            # このプローブでは**それが成功のしるし**なので明示する。
+            if [ "$RC" = "124" ]; then
+              echo "LAUNCH_RESULT: STAYED_UP (45s 生存。クラッシュせず)"
+            fi
+            sleep 5
             kill $LOGPID 2>/dev/null || true
 
             echo "--- launch rc=$RC ---"
+            # ★判定を機械的に出す（ログを読んで人が推測しない）。
+            #   起動クラッシュの決定的な痕跡は launch ログに出る文言そのもの。
+            if grep -qiE "uncaught exception|terminating due to|RangeError|Unhandled JS Exception" \
+                 "/tmp/probe-out/launch-$NAME.log" 2>/dev/null; then
+              echo "VERDICT[$NAME]: CRASHED"
+            else
+              echo "VERDICT[$NAME]: OK (起動クラッシュの痕跡なし)"
+            fi
             echo "--- launch output (tail) ---"
             tail -60 "/tmp/probe-out/launch-$NAME.log" || true
             echo "--- console errors (filtered) ---"
