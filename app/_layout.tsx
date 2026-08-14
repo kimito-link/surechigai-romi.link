@@ -1,3 +1,7 @@
+// ★これが最初。h3-js がトップレベルで new TextDecoder("utf-16le") を実行し、
+//   Hermes はそれを投げるため、後回しにすると起動即クラッシュに戻る
+//   （App Store build 495 / 499 が Guideline 2.1(a) で却下された真因）。
+import "@/lib/bootstrap/text-decoder-init";
 import "@/lib/bootstrap/global-css";
 import "@/lib/bootstrap/reanimated-init";
 // @ts-nocheck
