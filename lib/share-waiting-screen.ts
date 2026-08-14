@@ -11,7 +11,8 @@
  * 設計上の制約(ここを外すと白画面に戻る):
  *   1. **外部リソースを一切参照しない。** 書き込み先は about:blank であり、
  *      画像・フォント・CSS を外部から読むと CSP や読み込み遅延で崩れる。
- *      絵柄は絵文字と CSS だけで作る。
+ *      絵柄は絵文字と CSS、および data URI で埋め込んだロゴだけで作る
+ *      （ロゴは lib/share-waiting-logo.ts。画像URLを書いてはいけない）。
  *   2. **document.write を使わず innerHTML で入れる。** about:blank に対する
  *      document.write は一部ブラウザで後続の location 差し替えを妨げる。
  *   3. **JS を埋め込まない。** インラインスクリプトはポップアップの CSP で
@@ -19,6 +20,8 @@
  *   4. `prefers-reduced-motion` を尊重する(CharacterHere が useReducedMotion を
  *      見ているのと同じ配慮)。
  */
+
+import { SHARE_WAITING_LOGO_DATA_URI } from "./share-waiting-logo.js";
 
 /** 待機画面に出す文言。テストから参照するので export する。 */
 export const SHARE_WAITING_TITLE = "Xでシェア";
@@ -36,6 +39,7 @@ export function buildShareWaitingHtml(): string {
   return `
 <div class="wrap">
   <div class="card">
+    <img class="logo" src="${SHARE_WAITING_LOGO_DATA_URI}" alt="君斗りんく" />
     <div class="trail" aria-hidden="true">
       <span class="step s1">🐾</span>
       <span class="step s2">🐾</span>
@@ -61,23 +65,31 @@ export function buildShareWaitingHtml(): string {
   }
   .wrap { padding: 24px; width: 100%; box-sizing: border-box; }
   .card {
-    max-width: 380px;
+    max-width: 440px;
     margin: 0 auto;
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-radius: 16px;
-    padding: 28px 24px;
+    border-radius: 20px;
+    padding: 32px 24px 30px;
     text-align: center;
     box-shadow: 0 6px 24px rgba(0, 66, 123, 0.08);
+  }
+  /* ロゴは data URI（外部参照禁止の制約のため）。
+     幅で決めて高さは auto。読み込み失敗しても alt が出るだけで崩れない。 */
+  .logo {
+    display: block;
+    width: min(132px, 42vw);
+    height: auto;
+    margin: 0 auto 18px;
   }
   .trail {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    font-size: 22px;
+    gap: 12px;
+    font-size: clamp(26px, 7vw, 32px);
     line-height: 1;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
   }
   /* 足あとが順に濃くなり、最後にピンが跳ねる = 「位置を知らせに向かっている」 */
   .step { opacity: 0.25; animation: paw 1.5s ease-in-out infinite; }
@@ -93,14 +105,25 @@ export function buildShareWaitingHtml(): string {
     0%, 60%, 100% { transform: translateY(0); }
     30% { transform: translateY(-5px); }
   }
+  /* ★文字は大きく（2026-08-14）。
+     この画面はスマホで数秒だけ見えるもので、以前は 15px / 13px と小さく
+     「何が起きているのか読み取れない」状態だった。
+     視距離の近いスマホで一目で読める大きさに上げ、上限も付けて
+     デスクトップで間延びしないようにする。 */
   .msg {
-    margin: 0 0 8px;
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.6;
+    margin: 0 0 10px;
+    font-size: clamp(20px, 5.4vw, 26px);
+    font-weight: 800;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
     color: #00427B;
   }
-  .sub { margin: 0; font-size: 13px; line-height: 1.6; color: #475569; }
+  .sub {
+    margin: 0;
+    font-size: clamp(15px, 3.9vw, 18px);
+    line-height: 1.6;
+    color: #475569;
+  }
   @media (prefers-reduced-motion: reduce) {
     .step, .pin { animation: none; opacity: 1; }
   }

@@ -38,11 +38,39 @@ describe("シェア待機画面", () => {
     it("外部リソースを一切参照しない", () => {
       // 画像・CSS・フォントを外部から読むと、about:blank では CSP や
       // 読み込み遅延で「何も出ないまま X へ飛ぶ」ことになる。
-      expect(html).not.toMatch(/<img\b/i);
+      //
+      // ★<img> 自体は禁止していない（2026-08-14）。ロゴを data URI で
+      //   埋め込むのは「外部から取りに行かない」ので制約に反しない。
+      //   禁じたいのは *ネットワークを叩くこと* であって img タグではない。
+      //   そのため src は data: 以外を許さない、という形で縛る。
       expect(html).not.toMatch(/<link\b/i);
       expect(html).not.toMatch(/url\(\s*['"]?https?:/i);
       expect(html).not.toMatch(/@import/i);
       expect(html).not.toMatch(/https?:\/\//);
+
+      // img があるなら、その src はすべて data: であること
+      const srcs = [...html.matchAll(/<img\b[^>]*\bsrc\s*=\s*"([^"]*)"/gi)].map((m) => m[1]);
+      for (const src of srcs) {
+        expect(src.startsWith("data:image/")).toBe(true);
+      }
+    });
+
+    it("ロゴを data URI で埋め込んでいる（ブランドを見せる）", () => {
+      // 待機画面は数秒とはいえユーザーが必ず見る面。
+      // 以前は絵文字だけで、誰のアプリか分からなかった。
+      expect(html).toMatch(/<img\b[^>]*class="logo"/i);
+      expect(html).toMatch(/src="data:image\/png;base64,/);
+    });
+
+    it("文字がスマホで読める大きさである", () => {
+      // 以前は 15px / 13px で「小さくて読めない」状態だった（実機で指摘）。
+      // clamp の下限＝スマホでの実効値が十分大きいことを固定する。
+      const msg = html.match(/\.msg\s*\{[^}]*font-size:\s*clamp\(\s*([\d.]+)px/);
+      const sub = html.match(/\.sub\s*\{[^}]*font-size:\s*clamp\(\s*([\d.]+)px/);
+      expect(msg).not.toBeNull();
+      expect(sub).not.toBeNull();
+      expect(Number(msg![1])).toBeGreaterThanOrEqual(20);
+      expect(Number(sub![1])).toBeGreaterThanOrEqual(15);
     });
 
     it("スクリプトを埋め込まない", () => {
