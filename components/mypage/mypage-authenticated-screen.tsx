@@ -32,6 +32,7 @@ import {
   shareMyLocation,
   type ShareTarget,
 } from "@/lib/share";
+import { warmOgImageNow } from "@/hooks/use-warm-og-image";
 import type { TrailVisibility } from "@/modules/encounter/core/trail-visibility";
 import { useLivePresenceControls } from "@/hooks/use-live-presence";
 import { MypageScreenView } from "@/components/mypage/mypage-screen-view";
@@ -158,6 +159,9 @@ export function MypageAuthenticatedScreen() {
     try {
       // タイムアウト必須: 「遅い」だけだと catch に来ず空タブが about:blank のまま残る
       const res = await withShareTimeout(shareSlugMutation.mutateAsync());
+      // OGP画像を温めてから開く（checkin 側と同じ理由。2026-08-14）。
+      // 温まる前にクローラーが来ると画像なしカードになる。上限で必ず打ち切る。
+      await warmOgImageNow(res.warmImageUrl);
       const shared = await shareMyLocation(res.url, res.areaLabel ?? undefined, {
         popup: sharePopup,
         target,

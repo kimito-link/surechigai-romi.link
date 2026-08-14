@@ -74,6 +74,12 @@ jobs:
           rm -rf ios
           npx expo prebuild --platform ios --no-install
 
+      # リリース workflow と同じ細工を必ず通すこと。これが無いと
+      # 「AppCheckCore ... cannot yet be integrated as static libraries」で
+      # pod install が落ちる（このプローブの初回実行で実際に踏んだ）。
+      - name: Patch Podfile (use_modular_headers!)
+        run: node scripts/patch-ios-podfile-modular-headers.mjs
+
       - name: pod install
         run: |
           set -euo pipefail

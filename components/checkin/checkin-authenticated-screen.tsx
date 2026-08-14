@@ -34,7 +34,7 @@ import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
-import { useWarmOgImage } from "@/hooks/use-warm-og-image";
+import { useWarmOgImage, warmOgImageNow } from "@/hooks/use-warm-og-image";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
 import { trpc } from "@/lib/trpc";
@@ -168,8 +168,12 @@ export default function CheckinAuthenticatedScreen() {
       // タイムアウト必須: 失敗ではなく「遅い」だけだと catch に来ず、
       // 空タブが about:blank のまま永久に残る。
       const res = await withShareTimeout(shareSlugMutation.mutateAsync());
-      // 次のレンダリングでブラウザがこのURLを叩き、クローラーより先にキャッシュを温める
       setWarmImageUrl(res.warmImageUrl ?? null);
+      // ★ここで待つ（2026-08-14）。state 更新は次のレンダリングまで効かないため、
+      //   以前はウォームが始まる前に X を開いてしまい、クローラーが未生成の画像を
+      //   取りに行っていた＝「OGPが出たり出なかったりする」の真因。
+      //   温まるまで待ってから開く。上限で必ず打ち切るのでシェアは止まらない。
+      await warmOgImageNow(res.warmImageUrl);
       const areaLabel =
         checkinMunicipality ??
         checkinPrefecture ??

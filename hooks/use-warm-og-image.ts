@@ -50,6 +50,44 @@ export function useWarmOgImage({ enabled, url }: WarmArgs): void {
     warmedRef.current = url;
 
     // 画像として取得する。失敗しても何もしない（クローラー側で生成されるだけ）
-    void fetch(url, { mode: "no-cors", cache: "force-cache" }).catch(() => {});
+    void warmOgImageNow(url);
   }, [enabled, url]);
+}
+
+/**
+ * シェアを開く直前に「待てる」ウォーム。
+ *
+ * ★なぜフックと別に必要か（2026-08-14 実測で判明した OGP 不発の真因）:
+ *   従来はシェア押下時に setWarmImageUrl() で state を更新し、**次のレンダリング**で
+ *   上のフックが温める作りだった。しかしシェアは同じ関数の中でそのまま X を開くため、
+ *   ウォームが始まる前にクローラーが取りに来る。生成は 1.6〜2.9 秒かかるので、
+ *   温まる前に間に合わず「画像が出たり出なかったりする」状態になっていた。
+ *   （本番実測: 未ウォームだとクローラーは x-vercel-cache: MISS で 2.0 秒、
+ *     ウォーム済みなら HIT で 0.19 秒。実ブラウザでも HIT を確認済み）
+ *
+ * ★待つが、待ちすぎない:
+ *   ここで長く待つと、ユーザーは about:blank の待機画面を見続けることになる
+ *   （シェアはクリックと同じティックで空タブを開く必要があるため）。
+ *   生成の実測上限 2.9 秒に少しだけ余裕を足した値で必ず打ち切る。
+ *   打ち切っても fetch 自体は継続するので、温まりかけは無駄にならない。
+ *
+ * ★戻り値は「温まったか」ではなく「もう待たなくてよいか」。
+ *   失敗・タイムアウトでもシェアは必ず続行させる（画像が出ないだけで、
+ *   シェアが止まる方がはるかに悪い）。
+ */
+export const WARM_BEFORE_SHARE_TIMEOUT_MS = 3_200;
+
+export async function warmOgImageNow(
+  url: string | null | undefined,
+  timeoutMs: number = WARM_BEFORE_SHARE_TIMEOUT_MS,
+): Promise<void> {
+  if (!url) return;
+  if (Platform.OS !== "web" || typeof fetch !== "function") return;
+
+  // fetch は打ち切らず（バックグラウンドで温まり続けてよい）、待つ側だけを切る。
+  const warming = fetch(url, { mode: "no-cors", cache: "force-cache" }).catch(() => {});
+  await Promise.race([
+    warming,
+    new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+  ]);
 }
