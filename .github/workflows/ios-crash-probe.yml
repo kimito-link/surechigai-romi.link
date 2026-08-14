@@ -1,0 +1,188 @@
+# iOS 起動クラッシュ再現プローブ（調査専用・提出しない）
+#
+# 目的（2026-08-14）:
+# App Store build 495 / 499 が Guideline 2.1(a) で連続却下された。
+# どちらも iPad Air (M3) / iPadOS 26.6 で「起動即クラッシュ」。
+# 添付 .ips は TurboModule 初期化中の uncaught ObjC 例外 (SIGABRT) と、
+# Hermes の setNativeState 内 SEGV を示すが、**どのモジュールが投げたかは
+# .ips からは特定できない**（リリースバイナリがストリップ済みでシンボル化不能）。
+#
+# ★このプローブの存在理由:
+#   ローカル(Windows)では iOS シミュレータを一切動かせないため、
+#   「実際に起動して落ちるところを見る」ことが今までできなかった。
+#   その結果、静的な読みだけで仮説を3つ立てて3つとも外している
+#   (expo-dev-client / babel の import-meta プラグイン / GoogleSignIn の GIDClientID)。
+#   推測を止めて、実際のクラッシュ出力を取りに行くのがこの workflow。
+#
+# やること:
+#   1. Release 構成でシミュレータ向けにビルド（審査と同じ最適化・同じ HBC バンドル）
+#   2. **iPad** シミュレータで起動（審査と同じ機種クラスで再現させる）
+#   3. 落ちたら .ips とコンソールログを artifact に上げる
+#   4. iPhone でも同じことをして、iPad 固有かどうかを切り分ける
+#
+# 提出はしない。アーカイブも署名もしない。
+name: ios-crash-probe
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: ios-crash-probe-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Select Xcode (iOS 26 SDK or later)
+        run: |
+          set -euo pipefail
+          chosen=""
+          for app in /Applications/Xcode_26*.app /Applications/Xcode_27*.app /Applications/Xcode_28*.app; do
+            [ -d "$app" ] || continue
+            chosen="$app"
+          done
+          if [ -z "$chosen" ]; then
+            echo "::error::No Xcode 26+ found on this runner."
+            ls -1d /Applications/Xcode*.app 2>/dev/null || true
+            exit 1
+          fi
+          sudo xcode-select -s "$chosen/Contents/Developer"
+          xcodebuild -version
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run expo prebuild (iOS)
+        run: |
+          set -euo pipefail
+          rm -rf ios
+          npx expo prebuild --platform ios --no-install
+
+      - name: pod install
+        run: |
+          set -euo pipefail
+          PODDIR="$(dirname "$(find ios -maxdepth 2 -name Podfile | head -1)")"
+          cd "$PODDIR"
+          pod install --repo-update
+
+      # ★Release 構成でビルドする。Debug では再現しない可能性が高い:
+      #   react-native-worklets は release でのみ worklet を eval() で復元し
+      #   (valueUnpacker.js の「in release we use the regular eval」)、
+      #   バンドルも HBC 化されるため、Debug とは実行経路が別物になる。
+      - name: Build for simulator (Release)
+        run: |
+          set -euo pipefail
+          if [ -d ios/app.xcworkspace ]; then
+            XCODE_FLAG=(-workspace ios/app.xcworkspace)
+          else
+            XCODE_FLAG=(-project ios/app.xcodeproj)
+          fi
+          xcodebuild \
+            "${XCODE_FLAG[@]}" \
+            -scheme app \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build/dd \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+          echo "--- built .app ---"
+          find build/dd/Build/Products -maxdepth 2 -name "*.app" | sort
+
+      - name: Launch on simulators and capture crash
+        id: launch
+        run: |
+          set -euo pipefail
+          APP="$(find build/dd/Build/Products -maxdepth 2 -name '*.app' | head -1)"
+          BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")"
+          echo "app=$APP bundle=$BUNDLE_ID"
+          mkdir -p /tmp/probe-out
+          rm -rf ~/Library/Logs/DiagnosticReports/* 2>/dev/null || true
+
+          # 審査は iPad。iPhone と両方試して iPad 固有かを切り分ける。
+          probe_device() {
+            local NAME="$1"
+            echo ""
+            echo "=============================================="
+            echo "=== DEVICE: $NAME"
+            echo "=============================================="
+            local UDID
+            UDID="$(xcrun simctl create "probe-$NAME" "$NAME" 2>/dev/null || true)"
+            if [ -z "$UDID" ]; then
+              echo "::warning::could not create simulator '$NAME' — skipping"
+              return 0
+            fi
+            xcrun simctl boot "$UDID" || true
+            sleep 20
+            xcrun simctl install "$UDID" "$APP"
+
+            # コンソールログを拾いながら起動する
+            xcrun simctl spawn "$UDID" log stream --level debug \
+              --predicate "processImagePath CONTAINS 'app'" \
+              > "/tmp/probe-out/console-$NAME.log" 2>&1 &
+            local LOGPID=$!
+            sleep 3
+
+            set +e
+            xcrun simctl launch --console-pty "$UDID" "$BUNDLE_ID" \
+              > "/tmp/probe-out/launch-$NAME.log" 2>&1
+            local RC=$?
+            set -e
+            sleep 12
+            kill $LOGPID 2>/dev/null || true
+
+            echo "--- launch rc=$RC ---"
+            echo "--- launch output (tail) ---"
+            tail -60 "/tmp/probe-out/launch-$NAME.log" || true
+            echo "--- console errors (filtered) ---"
+            grep -iE "crash|exception|fatal|abort|assert|terminating|SIGABRT|uncaught|NSInvalidArgument|Unhandled" \
+              "/tmp/probe-out/console-$NAME.log" | head -60 || echo "(none)"
+
+            # シミュレータのクラッシュレポートを回収
+            local CRASHDIR="$HOME/Library/Logs/DiagnosticReports"
+            if ls "$CRASHDIR"/*.ips >/dev/null 2>&1; then
+              echo "--- CRASH REPORTS FOUND ---"
+              for f in "$CRASHDIR"/*.ips; do
+                echo "=== $f ==="
+                head -c 6000 "$f"
+                cp "$f" "/tmp/probe-out/crash-$NAME-$(basename "$f")" || true
+                echo ""
+              done
+            else
+              echo "--- no .ips crash report (app may have stayed up) ---"
+            fi
+
+            xcrun simctl shutdown "$UDID" || true
+            xcrun simctl delete "$UDID" || true
+          }
+
+          # 審査機と同クラスの iPad を最優先。名前は runner の在庫に依存するので候補を順に試す。
+          IPAD_NAME="$(xcrun simctl list devicetypes | grep -oE 'iPad Air 11-inch \(M3\)|iPad Air 13-inch \(M3\)|iPad Air \(5th generation\)|iPad Pro 11-inch \(M4\)|iPad \(10th generation\)' | head -1)"
+          IPHONE_NAME="$(xcrun simctl list devicetypes | grep -oE 'iPhone 17 Pro|iPhone 17|iPhone 16 Pro|iPhone 16|iPhone 15' | head -1)"
+          echo "picked iPad='$IPAD_NAME' iPhone='$IPHONE_NAME'"
+
+          [ -n "$IPAD_NAME" ] && probe_device "$IPAD_NAME" || echo "::warning::no iPad device type available"
+          [ -n "$IPHONE_NAME" ] && probe_device "$IPHONE_NAME" || echo "::warning::no iPhone device type available"
+
+      - name: Upload probe output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-crash-probe-output
+          path: /tmp/probe-out
+          if-no-files-found: warn
