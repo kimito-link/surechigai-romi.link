@@ -33,12 +33,12 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.resetModules();
-  vi.doUnmock("exifr");
+  vi.doUnmock("exifr/dist/lite.esm.js");
 });
 
 /** exifr をモックしてから import する（動的 import を差し替えるため） */
 async function loadWithExifr(parseImpl: (file: unknown) => Promise<unknown>) {
-  vi.doMock("exifr", () => ({ default: { parse: parseImpl }, parse: parseImpl }));
+  vi.doMock("exifr/dist/lite.esm.js", () => ({ default: { parse: parseImpl }, parse: parseImpl }));
   return await import("@/lib/photo-exif");
 }
 

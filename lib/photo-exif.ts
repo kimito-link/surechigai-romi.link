@@ -76,7 +76,17 @@ export async function extractPhotoExif(file: File): Promise<PhotoExifResult> {
 
   try {
     // ★ここで動的 import。トップレベルに置かない（上のコメント参照）
-    const exifr = await import("exifr");
+    //
+    // ★★"exifr" ではなく "exifr/dist/lite.esm.js" を指すこと（2026-08-14 実障害）。
+    //    既定の full ビルドは Node 用のフォールバックとして
+    //      import(/* webpackIgnore: true */ e).then(t)
+    //    を含んでおり、これを Hermes のバイトコード変換が受け付けない:
+    //      main.jsbundle: error: Invalid expression encountered
+    //    → iOS の Release ビルドが "Bundle React Native code and images" で失敗する。
+    //    Web ビルドは通るので、**ネイティブをビルドするまで気づけない**種類の罠。
+    //    lite は動的 import も require も持たず、GPS と DateTimeOriginal を含むので
+    //    この用途には十分（44KB）。
+    const exifr = await import("exifr/dist/lite.esm.js");
     // parse は「GPS と日時だけ」を要求する。全部読むと HEIC で重くなる。
     const parsed = (await exifr.parse(file, {
       gps: true,
