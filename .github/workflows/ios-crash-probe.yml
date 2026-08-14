@@ -152,27 +152,58 @@ jobs:
             #   起動が成功する版（＝直った版）では永久に返らず、
             #   ジョブが 60 分でタイムアウトして cancelled になった。
             #   「直ったときだけ詰まる」ので、直る直前まで気づけない罠。
+            # ★macOS には GNU coreutils の `timeout` が無い（run #6 で実際に踏んだ）。
+            #   `timeout 45 ...` は "command not found"(rc=127) で即死し、
+            #   アプリを一度も起動しないままログが空になる。
+            #   それを VERDICT が「OK(痕跡なし)」と報告してしまい、
+            #   **起動していないのに成功に見える**という最悪の偽陽性が出た。
+            #   coreutils に依存せず、バックグラウンド起動＋待ち＋kill で打ち切る。
             set +e
-            timeout 45 xcrun simctl launch --console-pty "$UDID" "$BUNDLE_ID" \
-              > "/tmp/probe-out/launch-$NAME.log" 2>&1
-            local RC=$?
-            set -e
-            # rc=124 は timeout による打ち切り＝45秒間クラッシュしなかったということ。
-            # このプローブでは**それが成功のしるし**なので明示する。
-            if [ "$RC" = "124" ]; then
+            xcrun simctl launch --console-pty "$UDID" "$BUNDLE_ID" \
+              > "/tmp/probe-out/launch-$NAME.log" 2>&1 &
+            local LAUNCHPID=$!
+            local WAITED=0
+            local RC=""
+            while [ "$WAITED" -lt 45 ]; do
+              if ! kill -0 "$LAUNCHPID" 2>/dev/null; then
+                wait "$LAUNCHPID"; RC=$?
+                break
+              fi
+              sleep 3
+              WAITED=$((WAITED + 3))
+            done
+            if [ -z "$RC" ]; then
+              # 45秒たっても launch が張り付いたまま = アプリが生きている
+              kill "$LAUNCHPID" 2>/dev/null || true
+              RC="stayed_up"
               echo "LAUNCH_RESULT: STAYED_UP (45s 生存。クラッシュせず)"
             fi
+            set -e
             sleep 5
             kill $LOGPID 2>/dev/null || true
 
             echo "--- launch rc=$RC ---"
-            # ★判定を機械的に出す（ログを読んで人が推測しない）。
-            #   起動クラッシュの決定的な痕跡は launch ログに出る文言そのもの。
+            # ★判定は fail-closed にすること（run #6 の教訓）。
+            #   以前は「クラッシュ文言が無ければ OK」にしていたが、
+            #   `timeout` が無くて起動すらできずログが空のとき、それを
+            #   「OK(痕跡なし)」と報告してしまった＝**起動していないのに成功に見えた**。
+            #   よって「アプリが動いた証拠がある」ことを先に要求する。
+            LOGFILE="/tmp/probe-out/launch-$NAME.log"
             if grep -qiE "uncaught exception|terminating due to|RangeError|Unhandled JS Exception" \
-                 "/tmp/probe-out/launch-$NAME.log" 2>/dev/null; then
+                 "$LOGFILE" 2>/dev/null; then
               echo "VERDICT[$NAME]: CRASHED"
+            elif grep -qiE "command not found|No such file|Unable to boot|Invalid device" \
+                   "$LOGFILE" 2>/dev/null; then
+              # プローブ自身の不具合。成功と区別する（黙って緑にしない）
+              echo "VERDICT[$NAME]: PROBE_BROKEN (起動を試せていない)"
+            elif [ ! -s "$LOGFILE" ]; then
+              echo "VERDICT[$NAME]: INCONCLUSIVE (ログが空。起動した証拠が無い)"
+            elif [ "$RC" = "stayed_up" ] || grep -qiE "_setUpFeatureFlags|UIApplicationDelegate|$BUNDLE_ID" \
+                   "$LOGFILE" 2>/dev/null; then
+              # アプリが実際に立ち上がった痕跡があり、かつクラッシュ文言が無い
+              echo "VERDICT[$NAME]: OK (起動してクラッシュしなかった)"
             else
-              echo "VERDICT[$NAME]: OK (起動クラッシュの痕跡なし)"
+              echo "VERDICT[$NAME]: INCONCLUSIVE (起動の痕跡を確認できない)"
             fi
             echo "--- launch output (tail) ---"
             tail -60 "/tmp/probe-out/launch-$NAME.log" || true
