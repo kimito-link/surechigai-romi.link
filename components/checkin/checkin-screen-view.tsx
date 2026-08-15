@@ -72,6 +72,8 @@ export type CheckinScreenViewProps = {
   handleRetryLocation: () => void;
   handleCheckin: () => void;
   handleShareLocation: () => void;
+  /** Instagram 用にリンクをコピー（未指定なら導線を出さない） */
+  handleCopyInstagramLink?: () => void;
   handleSponsorPress: (card: SponsorCardData) => void;
   handleLocationIntroAllow: () => void;
   handleLocationIntroLater: () => void;
@@ -118,6 +120,7 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
     handleRetryLocation,
     handleCheckin,
     handleShareLocation,
+    handleCopyInstagramLink,
     handleSponsorPress,
     handleLocationIntroAllow,
     handleLocationIntroLater,
@@ -208,6 +211,7 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
                   )
                 }
                 onShare={handleShareLocation}
+                onCopyInstagram={handleCopyInstagramLink}
                 isSharing={isSharing}
               />
             ) : null}

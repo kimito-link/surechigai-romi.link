@@ -50,6 +50,7 @@ import {
   withShareTimeout,
   ShareTimeoutError,
   shareMyLocation,
+  copyShareLinkForInstagram,
   type ShareTarget,
 } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
@@ -150,7 +151,7 @@ export default function CheckinAuthenticatedScreen() {
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
   const [showSettings, setShowSettings] = useState(false);
   const utils = trpc.useUtils();
-  const { showError } = useToast();
+  const { showError, showToast } = useToast();
 
   // チェックイン直後にその場で現在地をシェアできる導線（X / Threads）
   const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
@@ -198,6 +199,36 @@ export default function CheckinAuthenticatedScreen() {
       shareInFlightRef.current = false;
     }
   }, [shareSlugMutation, showError, checkinMunicipality, checkinPrefecture]);
+
+  /**
+   * Instagram 用にリンクをコピーする。
+   *
+   * Instagram には Web Intent が無く、フィード本文のURLはリンクにならない仕様なので
+   * X/Threads のような「投稿画面を開く」導線は作れない。手貼りしてもらう。
+   */
+  const handleCopyInstagramLink = useCallback(async () => {
+    if (shareInFlightRef.current) return;
+    shareInFlightRef.current = true;
+    try {
+      const res = await withShareTimeout(shareSlugMutation.mutateAsync());
+      const areaLabel =
+        checkinMunicipality ?? checkinPrefecture ?? res.areaLabel ?? undefined;
+      const copied = await copyShareLinkForInstagram(res.url, areaLabel);
+      if (copied) {
+        showToast(
+          "リンクをコピーしました。Instagramに貼り付けてください",
+          "success",
+          4000,
+        );
+      } else {
+        showError("コピーできませんでした。もう一度お試しください。");
+      }
+    } catch {
+      showError("共有リンクの作成に失敗しました。時間をおいて再度お試しください。");
+    } finally {
+      shareInFlightRef.current = false;
+    }
+  }, [shareSlugMutation, showError, showToast, checkinMunicipality, checkinPrefecture]);
 
   // アニメーション
   const scale = useSharedValue(1);
@@ -916,6 +947,7 @@ export default function CheckinAuthenticatedScreen() {
       handleRetryLocation={handleRetryLocation}
       handleCheckin={handleCheckin}
       handleShareLocation={handleShareLocation}
+      handleCopyInstagramLink={handleCopyInstagramLink}
       handleSponsorPress={handleSponsorPress}
       handleLocationIntroAllow={handleLocationIntroAllow}
       handleLocationIntroLater={handleLocationIntroLater}

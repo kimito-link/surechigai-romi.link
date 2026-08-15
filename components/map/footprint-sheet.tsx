@@ -15,6 +15,7 @@ import {
   type TrailPoint,
 } from "@/components/organisms/precision-tile-map";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
+import { usePrefWeather, formatWeatherLine } from "@/hooks/use-pref-weather";
 import {
   hasPlaceNote,
   isPlaceNoteStale,
@@ -50,6 +51,10 @@ export function FootprintSheet({
   isDeleting = false,
   isUpdatingVisibility = false,
 }: FootprintSheetProps) {
+  // フックは早期 return より前に呼ぶ（point が null でも呼び出し回数を変えない）
+  const { weather } = usePrefWeather(point?.prefecture, point?.municipality);
+  const weatherLine = formatWeatherLine(point?.prefecture, weather);
+
   if (!point) return null;
 
   const visibility = parseLocationVisibility(point.visibility);
@@ -69,6 +74,10 @@ export function FootprintSheet({
             {formatCoordinate(point)}
             {point.accuracyM ? `  ±${Math.round(point.accuracyM)}m` : ""}
           </Text>
+
+          {/* その場所のきょうの天気。取れないときは行ごと出さない（気象庁JSONは無保証）。
+              常設せずタップした人にだけ見せることで、着地ページの情報過多を避ける */}
+          {weatherLine ? <Text style={styles.weather}>{weatherLine}</Text> : null}
 
           {/* 場所メモ。地図の情報パネルには出さず、ここ（地図の外側）にだけ置く。
               「いつの情報か」を必ず添え、30日超は減光する（docs/place-info-DESIGN.md） */}
@@ -223,6 +232,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     fontVariant: ["tabular-nums"],
+  },
+  // 天気は文章なので tabular-nums を付けない（数値・座標系の書体は座標行だけに使う）
+  weather: {
+    color: color.textMuted,
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 2,
   },
   noteButton: {
     backgroundColor: color.surfaceEmphasis,

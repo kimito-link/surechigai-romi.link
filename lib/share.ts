@@ -4,6 +4,7 @@
  */
 import { Platform, Share, Linking } from "react-native";
 import * as Haptics from "expo-haptics";
+import { setStringAsync } from "expo-clipboard";
 import { APP_ORIGIN } from "@/lib/site-urls";
 import { renderShareWaitingScreen } from "@/lib/share-waiting-screen";
 
@@ -314,9 +315,48 @@ export async function shareMyLocation(
   areaLabel?: string,
   options?: { popup?: PreparedSharePopup | null; target?: ShareTarget },
 ): Promise<boolean> {
-  const where = areaLabel ? `${areaLabel}にいるよ。` : "";
-  const text = `${where}会いたい君がいる現在地。`;
-  const hashtags = ["君斗りんくのすれ違ひ通信"];
+  const { text, hashtags } = buildMyLocationShareText(areaLabel);
   const share = options?.target === "threads" ? shareToThreads : shareToTwitter;
   return share(text, shareUrl, hashtags, { popup: options?.popup });
+}
+
+/**
+ * 共有の本文とハッシュタグ。X / Threads / Instagram 用コピーで共通に使う
+ * （文言を変えるときに1箇所で済むようにする）。
+ */
+export function buildMyLocationShareText(areaLabel?: string): {
+  text: string;
+  hashtags: string[];
+} {
+  const where = areaLabel ? `${areaLabel}にいるよ。` : "";
+  return {
+    text: `${where}会いたい君がいる現在地。`,
+    hashtags: ["君斗りんくのすれ違ひ通信"],
+  };
+}
+
+/**
+ * Instagram 用に共有リンクをクリップボードへコピーする。
+ *
+ * ★X/Threads と同じ「ワンタップで投稿画面」は Instagram では作れない:
+ *   Web Intent が存在せず、フィード投稿の本文に貼ったURLはリンクにならない
+ *   （プロフィール欄かストーリーズでしか機能しない）。Graph API での投稿も
+ *   個人アカウントには開放されていない。
+ *   よってユーザーの指示どおり「アドレスを貼る程度」に留め、手貼りしてもらう。
+ */
+export async function copyShareLinkForInstagram(
+  shareUrl: string,
+  areaLabel?: string,
+): Promise<boolean> {
+  const { text } = buildMyLocationShareText(areaLabel);
+  const body = `${text}\n${shareUrl}`;
+
+  try {
+    // 静的 import にする: 動的 import は Hermes の Release ビルドでだけ落ちた
+    // 前科がある（exifr の件）。tsc もテストも Web ビルドも通過してしまう類の事故。
+    await setStringAsync(body);
+    return true;
+  } catch {
+    return false;
+  }
 }

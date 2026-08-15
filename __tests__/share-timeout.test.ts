@@ -19,6 +19,9 @@ vi.mock("expo-haptics", () => ({
   impactAsync: vi.fn(),
   ImpactFeedbackStyle: { Light: "light" },
 }));
+// lib/share.ts が Instagram 用コピーで expo-clipboard を静的 import しているため、
+// ネイティブモジュールの読み込みを避けるモックが要る（2026-08-15 追加）
+vi.mock("expo-clipboard", () => ({ setStringAsync: vi.fn() }));
 
 const { withShareTimeout, ShareTimeoutError, SHARE_SLUG_TIMEOUT_MS } = await import(
   "@/lib/share"

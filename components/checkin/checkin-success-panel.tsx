@@ -30,6 +30,8 @@ type CheckinSuccessPanelProps = {
   onViewMap: () => void;
   /** 共有先を渡す。既定は X（省略時の互換のため）。 */
   onShare: (target?: ShareTarget) => void;
+  /** Instagram 用にリンクをコピー（未指定なら導線を出さない） */
+  onCopyInstagram?: () => void;
   isSharing: boolean;
 };
 
@@ -45,6 +47,7 @@ export function CheckinSuccessPanel({
   userImageUrl,
   onViewMap,
   onShare,
+  onCopyInstagram,
   isSharing,
 }: CheckinSuccessPanelProps) {
   const focusScale = useSharedValue(0.9);
@@ -146,6 +149,26 @@ export function CheckinSuccessPanel({
         </Text>
       </Pressable>
 
+      {/* Instagram は Web Intent が無く、本文のURLもリンクにならない仕様なので
+          ワンタップ投稿は作れない。リンクをコピーして手貼りしてもらう。
+          主従を保つため X > Threads より更に控えめな見た目にする。 */}
+      {onCopyInstagram ? (
+        <Pressable
+          onPress={onCopyInstagram}
+          disabled={isSharing}
+          style={({ pressed }) => [
+            styles.instagramCopy,
+            pressed && !isSharing && { opacity: 0.7 },
+            isSharing && { opacity: 0.5 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Instagram用にリンクをコピー"
+          testID="checkin-copy-instagram-button"
+        >
+          <Text style={styles.instagramCopyText}>Instagram用にリンクをコピー</Text>
+        </Pressable>
+      ) : null}
+
       <NavigateToPlaceButton
         lat={mapPoint.lat}
         lng={mapPoint.lng}
@@ -237,6 +260,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: color.textSecondary,
+  },
+  // X > Threads > Instagram の主従。枠線を持たせずテキストリンク風に留める
+  instagramCopy: {
+    alignSelf: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  instagramCopyText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: color.textMuted,
   },
   exitButtonSecondary: {
     flex: 1,
