@@ -16,6 +16,7 @@ import {
   upsertUserSettings,
   updateLivePresencePosition,
   listLivePresenceForViewer,
+  getUnopenedEncounterSummary,
 } from "../db/queries.js";
 import { assertFiniteLatLng } from "../core/geo.js";
 import { LIVE_PRESENCE_MIN_PULSE_GAP_MS } from "../core/live-presence.js";
@@ -24,6 +25,41 @@ const RECENT_PULSE_CACHE_MAX = 5_000;
 const RECENT_PULSE_CACHE_TTL_MS = 10 * 60 * 1000;
 
 const recentPulseAtByUserId = new Map<number, number>();
+
+/**
+ * 未開封サマリの計算間隔。pulse 自体は60秒ごとに来るが、
+ * 毎回 DB を引くとレーダーON のユーザー数だけクエリが増える。
+ * ユーザーの許容遅延は「数十分〜数時間」なので10分で十分に速い。
+ */
+const UNOPENED_SUMMARY_MIN_GAP_MS = 10 * 60 * 1000;
+const recentUnopenedSummaryAtByUserId = new Map<number, number>();
+
+/**
+ * このユーザーについて未開封サマリを計算してよいか（10分に1回に間引く）。
+ *
+ * canAcceptPulse と同型の in-memory Map。Vercel の serverless はインスタンス毎に
+ * この Map を持つので、worst case では pulse 毎に計算が走りうる。
+ * それでも1クエリ・インデックス済みカラムのみに抑えてあるので許容する
+ * （既存の recentPulseAtByUserId と同じ既知の限界）。
+ */
+export function shouldComputeUnopenedSummary(
+  userId: number,
+  now = Date.now(),
+): boolean {
+  const lastAt = recentUnopenedSummaryAtByUserId.get(userId);
+  if (lastAt !== undefined && now - lastAt < UNOPENED_SUMMARY_MIN_GAP_MS) {
+    return false;
+  }
+
+  recentUnopenedSummaryAtByUserId.set(userId, now);
+  if (recentUnopenedSummaryAtByUserId.size > RECENT_PULSE_CACHE_MAX) {
+    const cutoff = now - RECENT_PULSE_CACHE_TTL_MS;
+    for (const [cachedUserId, at] of recentUnopenedSummaryAtByUserId) {
+      if (at < cutoff) recentUnopenedSummaryAtByUserId.delete(cachedUserId);
+    }
+  }
+  return true;
+}
 
 function normalizePlace(value: string | undefined): string | null {
   const trimmed = value?.trim();
@@ -111,22 +147,38 @@ export const presenceRouter = router({
       }
 
       if (!canAcceptPulse(ctx.user.id)) {
-        return { ok: true, masked: false };
+        return { ok: true, masked: false, unopened: null };
       }
 
       const db = await getDb();
-      if (!db) return { ok: false, masked: false };
+      if (!db) return { ok: false, masked: false, unopened: null };
 
       try {
-        return await updateLivePresencePosition(db, ctx.user.id, {
+        const result = await updateLivePresencePosition(db, ctx.user.id, {
           lat: latLng.lat,
           lng: latLng.lng,
           municipality: normalizePlace(input.municipality),
           prefecture: normalizePlace(input.prefecture),
         });
+
+        // 未開封サマリを相乗りさせる（アプリ内通知の種）。
+        // ここで失敗しても pulse 本来の責務（位置更新）を巻き込まない。
+        let unopened: { count: number; latestId: number } | null = null;
+        if (shouldComputeUnopenedSummary(ctx.user.id)) {
+          try {
+            const summary = await getUnopenedEncounterSummary(db, ctx.user.id);
+            if (summary.latestId != null) {
+              unopened = { count: summary.count, latestId: summary.latestId };
+            }
+          } catch (error) {
+            console.error("[presence.pulse] unopened summary failed:", error);
+          }
+        }
+
+        return { ...result, unopened };
       } catch (error) {
         console.error("[presence.pulse] DB update failed:", error);
-        return { ok: false, masked: false };
+        return { ok: false, masked: false, unopened: null };
       }
     }),
 

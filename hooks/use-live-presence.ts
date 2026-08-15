@@ -12,6 +12,7 @@ import {
 import type { CurrentLocation } from "@/lib/get-current-location";
 import { startWebLiveLocationSession, type LiveLocationSession } from "@/lib/live-location-session";
 import { readLocationOptInSync } from "@/lib/location-opt-in";
+import { publishUnopenedSummary } from "@/lib/encounter-notice";
 import {
   readLivePresenceUserOffSync,
   readOptimisticLivePresenceDesired,
@@ -153,11 +154,17 @@ export function useLivePresenceSync(options?: { enabled?: boolean }) {
       allowImmediatePulseRef.current = false;
       lastPulseAtRef.current = now;
       try {
-        await pulseMutateAsync({
+        const result = await pulseMutateAsync({
           lat: loc.lat,
           lng: loc.lng,
           accuracy: loc.accuracy,
         });
+        // 未開封のすれちがいが載っていたら表示側へ渡すだけ（新しい取得はしない）。
+        // ここで await や state 更新をしない＝この hook の依存配列を増やさない
+        // （pulseMutation オブジェクトを依存に入れて 429 の嵐を起こした前科がある）
+        if (result?.unopened) {
+          publishUnopenedSummary(result.unopened);
+        }
         utils.presence.list.invalidate();
       } catch {
         // 次回 pulse に任せる（lastPulseAtRef は送信前に更新済みなので

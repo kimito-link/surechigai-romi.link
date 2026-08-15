@@ -33,6 +33,7 @@ import {
   type ShareTarget,
 } from "@/lib/share";
 import { warmOgImageNow } from "@/hooks/use-warm-og-image";
+import { readNoticeEnabled, writeNoticeEnabled } from "@/lib/encounter-notice";
 import type { TrailVisibility } from "@/modules/encounter/core/trail-visibility";
 import { useLivePresenceControls } from "@/hooks/use-live-presence";
 import { MypageScreenView } from "@/components/mypage/mypage-screen-view";
@@ -73,6 +74,18 @@ export function MypageAuthenticatedScreen() {
   const [showBlockList, setShowBlockList] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [switchModalVisible, setSwitchModalVisible] = useState(false);
+  // すれちがい到着のお知らせ（端末ローカル設定。既定 ON）
+  const [noticeEnabled, setNoticeEnabled] = useState(true);
+
+  useEffect(() => {
+    void readNoticeEnabled().then(setNoticeEnabled);
+  }, []);
+
+  const handleToggleEncounterNotice = useCallback((next: boolean) => {
+    // 先に画面へ反映する（保存失敗でスイッチが固まって見えるのを避ける）
+    setNoticeEnabled(next);
+    void writeNoticeEnabled(next);
+  }, []);
   const [localHitokoto, setLocalHitokoto] = useState("");
   const { resetTutorial } = useTutorial();
   const { resetOnboarding } = useOnboarding();
@@ -283,6 +296,8 @@ export function MypageAuthenticatedScreen() {
       settingsLoading={settingsQuery.isLoading}
       isSetSharePrecisionPending={setSharePrecision.isPending}
       isPausing={isPausing}
+      noticeEnabled={noticeEnabled}
+      onToggleEncounterNotice={handleToggleEncounterNotice}
       liveEnabled={liveEnabled}
       toggleLivePresence={toggleLivePresence}
       livePresenceLoading={livePresenceLoading}

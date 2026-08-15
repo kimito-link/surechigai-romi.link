@@ -2362,3 +2362,53 @@ export async function listLivePresenceForViewer(
 
   return out;
 }
+
+/**
+ * 未開封のすれ違い件数と、その中で最新の encounter id を1クエリで取る。
+ *
+ * アプリ内通知（lib/encounter-notice.ts）の種。presence.pulse に相乗りして
+ * 呼ばれるため、**必ず1クエリ・インデックス済みカラムのみ**で完結させること
+ * （pulse は60秒ごとに来る。重いクエリを置くと電池とDB負荷の両方に効く）。
+ *
+ * 未開封の定義は getMyEncounters と揃える:
+ * 自分が userA 側なら openedByA、userB 側なら openedByB が NULL。
+ * ブロック相手は除外する（getMyEncounters は取得後に JS 側で弾いているが、
+ * ここは件数だけなので SQL 内で NOT EXISTS にして1クエリに収める）。
+ */
+export async function getUnopenedEncounterSummary(
+  db: DB,
+  selfUserId: number
+): Promise<{ count: number; latestId: number | null }> {
+  const rows = await db
+    .select({
+      cnt: sql<number>`count(*)`,
+      latestId: sql<number | null>`max(${encounters.id})`,
+    })
+    .from(encounters)
+    .where(
+      and(
+        or(
+          and(
+            eq(encounters.userAId, selfUserId),
+            isNull(encounters.openedByA)
+          ),
+          and(
+            eq(encounters.userBId, selfUserId),
+            isNull(encounters.openedByB)
+          )
+        ),
+        // ブロック関係にある相手のすれ違いは数えない
+        sql`not exists (
+          select 1 from ${blocks}
+          where (${blocks.blockerId} = ${selfUserId} and ${blocks.blockedId} = case when ${encounters.userAId} = ${selfUserId} then ${encounters.userBId} else ${encounters.userAId} end)
+             or (${blocks.blockedId} = ${selfUserId} and ${blocks.blockerId} = case when ${encounters.userAId} = ${selfUserId} then ${encounters.userBId} else ${encounters.userAId} end)
+        )`
+      )
+    );
+
+  const row = rows[0];
+  return {
+    count: Number(row?.cnt ?? 0),
+    latestId: row?.latestId != null ? Number(row.latestId) : null,
+  };
+}

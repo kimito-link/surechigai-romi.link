@@ -65,6 +65,9 @@ export type MypageScreenViewProps = {
   liveEnabled: boolean;
   toggleLivePresence: (value: boolean) => void;
   livePresenceLoading: boolean;
+  /** すれちがい到着のアプリ内お知らせ（端末ローカル設定。サーバー同期しない） */
+  noticeEnabled: boolean;
+  onToggleEncounterNotice: (value: boolean) => void;
   trailVisibility: TrailVisibility;
   handleSelectTrailVisibility: (value: TrailVisibility) => void;
   isSetTrailVisibilityPending: boolean;
@@ -104,6 +107,8 @@ export function MypageScreenView(props: MypageScreenViewProps) {
     liveEnabled,
     toggleLivePresence,
     livePresenceLoading,
+    noticeEnabled,
+    onToggleEncounterNotice,
     trailVisibility,
     handleSelectTrailVisibility,
     isSetTrailVisibilityPending,
@@ -283,6 +288,24 @@ export function MypageScreenView(props: MypageScreenViewProps) {
             value={liveEnabled}
             onValueChange={toggleLivePresence}
             disabled={settingsLoading || livePresenceLoading || isPausing}
+            trackColor={{ false: palette.gray400, true: palette.kimitoBlue }}
+            thumbColor={palette.white}
+          />
+        </View>
+
+        {/* すれちがいのお知らせ（アプリ内表示のみ・端末ローカル設定） */}
+        <View style={styles.precisionRow}>
+          <View style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+            <Text style={styles.precisionTitle}>すれちがいのお知らせ</Text>
+            <Text style={styles.precisionSub}>
+              {noticeEnabled
+                ? "アプリを開いている間、新しいすれちがいが届いたらお知らせします"
+                : "お知らせを表示しません（封筒はホームでいつでも開けます）"}
+            </Text>
+          </View>
+          <Switch
+            value={noticeEnabled}
+            onValueChange={onToggleEncounterNotice}
             trackColor={{ false: palette.gray400, true: palette.kimitoBlue }}
             thumbColor={palette.white}
           />
