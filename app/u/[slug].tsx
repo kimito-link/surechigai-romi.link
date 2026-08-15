@@ -22,6 +22,7 @@ import { trpc } from "@/lib/trpc";
 import { useTrpcReady } from "@/lib/trpc-ready-context";
 import { hasClerkSessionInStorage } from "@/lib/has-clerk-session";
 import { navigateBack, navigateReplace } from "@/lib/navigation";
+import { openTwitterProfile } from "@/lib/navigation/external-links";
 import {
   featureShareLocationFirst,
   parseShareLocationFromQuery,
@@ -70,12 +71,26 @@ function ShareLocationScreenInner() {
   const { slug: slugParam } = params;
   const slug = typeof slugParam === "string" ? slugParam : slugParam?.[0] ?? "";
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // X を開けなかったことをユーザーに伝えるため（無言 false にしない）
+  const [xLinkFailed, setXLinkFailed] = useState(false);
 
   useEffect(() => {
     if (Platform.OS === "web") {
       setIsAuthenticated(hasClerkSessionInStorage());
     }
   }, []);
+
+  /**
+   * 投稿者の X プロフィールを開く。
+   *
+   * 現在タブを X に差し替える fallback は書かない（着地ページが失われるうえ、
+   * 成功扱いになって案内も出ない。lib/share.ts:174-179 の 2026-08-04 実障害）。
+   * openTwitterProfile は新規タブ／ネイティブは Linking で開く。
+   */
+  const handleOpenX = async (username: string) => {
+    const opened = await openTwitterProfile(username);
+    setXLinkFailed(!opened);
+  };
 
   const trailQuery = trpc.ogp.getTrailBySlug.useQuery(
     { slug, limit: 120 },
@@ -202,9 +217,27 @@ function ShareLocationScreenInner() {
                     {who}
                   </Text>
                   {trailQuery.data.username ? (
-                    <Text style={styles.handle}>
-                      @{trailQuery.data.username.replace(/^@/, "")}
-                    </Text>
+                    <>
+                      {/* X から来た人が X に戻れるようにする（交流は X に委譲する設計原則4）。
+                          新しい UI 要素は足さず、既存の handle 表示そのものを押せるようにする。 */}
+                      <Pressable
+                        onPress={() => handleOpenX(trailQuery.data!.username!)}
+                        accessibilityRole="link"
+                        accessibilityLabel={`@${trailQuery.data.username.replace(/^@/, "")} を X で開く`}
+                        style={({ pressed }) => pressed && styles.handlePressed}
+                      >
+                        <Text style={[styles.handle, styles.handleLink]}>
+                          @{trailQuery.data.username.replace(/^@/, "")}
+                        </Text>
+                      </Pressable>
+                      {/* 無言 false を出さない（ホワイトリスト漏れ・ポップアップブロックで
+                          「押しても何も起きない」状態にした前科がある） */}
+                      {xLinkFailed ? (
+                        <Text style={styles.handleError}>
+                          X を開けませんでした。もう一度お試しください。
+                        </Text>
+                      ) : null}
+                    </>
                   ) : null}
                 </View>
               </View>
@@ -338,6 +371,18 @@ const styles = StyleSheet.create({
     color: "#1D9BF0",
     fontSize: 13,
     fontWeight: "700",
+  },
+  // 押せることを示す（Web ではカーソルも変える）
+  handleLink: {
+    textDecorationLine: "underline",
+  },
+  handlePressed: {
+    opacity: 0.7,
+  },
+  handleError: {
+    color: color.textMuted,
+    fontSize: 12,
+    marginTop: 2,
   },
   bannerWrap: {
     width: "100%",

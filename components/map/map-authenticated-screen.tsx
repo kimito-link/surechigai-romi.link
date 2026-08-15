@@ -22,6 +22,7 @@ import { palette, contentMaxWidth } from "@/theme/tokens";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
 import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
+import { navigate } from "@/lib/navigation/app-routes";
 
 export function MapAuthenticatedScreen() {
   const { isDesktop } = useResponsive();
@@ -127,6 +128,14 @@ export function MapAuthenticatedScreen() {
         onRefresh={onRefresh}
         userImageUrl={user?.profileImage ?? undefined}
         contentPaddingBottom={tabInset}
+        // 統計カードのタップ先。ここで渡すことで「自分の軌跡タブでだけ押せる」状態になる。
+        // 公開ページ /u/<slug> は渡さない＝非対話のまま（他人の統計から自分の図鑑へ
+        // 飛ぶと文脈が壊れるため。docs/place-context-and-sns-SPEC.md Q6）
+        onStatsPress={{
+          encounters: () => navigate.toHome(),
+          checkins: () => navigate.toZukanTab(),
+          municipalities: () => navigate.toZukanTab(),
+        }}
         canDeleteLocations={isAuthenticated}
         onDeleteLocation={isAuthenticated ? handleDeleteLocation : undefined}
         onToggleVisibility={isAuthenticated ? handleToggleVisibility : undefined}

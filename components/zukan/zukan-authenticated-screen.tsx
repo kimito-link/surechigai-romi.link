@@ -10,7 +10,7 @@ import {
   Pressable,
   useWindowDimensions,
 } from "react-native";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
@@ -30,10 +30,31 @@ import { ZukanCompleteHeader } from "@/components/zukan/zukan-complete-header";
 import { MunicipalityStampCard } from "@/components/zukan/municipality-stamp-card";
 import { SponsorSlot } from "@/components/molecules/sponsor-slot";
 
+/** 図鑑タブ内でスクロール移動できるセクション */
+type ZukanSection = "encounterOrigins" | "visitedMunicipalities";
+
 export function ZukanAuthenticatedScreen() {
   const { isDesktop } = useResponsive();
   const tabInset = useTabBarInset();
   const { width: windowWidth } = useWindowDimensions();
+
+  /**
+   * 統計カードから該当セクションへスクロールする。
+   *
+   * ★以前はここが navigate.toZukanTab() だった。既に図鑑タブにいるので
+   *   押しても何も起きず、「押せるのに反応しない」体験になっていた（2026-08-15 修正）。
+   *
+   * ★onLayout はセクション**見出しの View** で測る。地図を包む View を測ると
+   *   自己参照で縮んで戻らなくなる既知の罠がある（日本地図レスポンシブの前科）。
+   */
+  const scrollRef = useRef<ScrollView>(null);
+  const sectionYRef = useRef<Partial<Record<ZukanSection, number>>>({});
+
+  const scrollToSection = useCallback((section: ZukanSection) => {
+    // onLayout 未発火などで未収集なら先頭へ（無反応にはしない）
+    const y = sectionYRef.current[section] ?? 0;
+    scrollRef.current?.scrollTo({ y, animated: true });
+  }, []);
 
   const { data, refetch, isFetching, isLoading: isLoadingAreas } = trpc.zukan.myAreas.useQuery(undefined, {
     ...AUTHENTICATED_QUERY_OPTIONS,
@@ -164,6 +185,7 @@ export function ZukanAuthenticatedScreen() {
       />
 
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         refreshControl={
           <RefreshControl
@@ -212,6 +234,8 @@ export function ZukanAuthenticatedScreen() {
             visitedPrefectureCount={visitedCount}
             municipalityCount={municipalitySummary.length}
             encounterPartnerCount={data?.encounterPartnerCount ?? 0}
+            onScrollToVisited={() => scrollToSection("visitedMunicipalities")}
+            onScrollToEncounterOrigins={() => scrollToSection("encounterOrigins")}
           />
           <View style={styles.summaryRow}>
             <Pressable
@@ -228,7 +252,7 @@ export function ZukanAuthenticatedScreen() {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => navigate.toZukanTab()}
+              onPress={() => scrollToSection("encounterOrigins")}
               accessibilityRole="button"
               accessibilityLabel="すれ違い都道府県を見る"
               style={({ pressed }) => [styles.summaryCard, pressed && styles.summaryCardPressed]}
@@ -241,7 +265,7 @@ export function ZukanAuthenticatedScreen() {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => navigate.toZukanTab()}
+              onPress={() => scrollToSection("encounterOrigins")}
               accessibilityRole="button"
               accessibilityLabel="すれ違った人を見る"
               style={({ pressed }) => [styles.summaryCard, pressed && styles.summaryCardPressed]}
@@ -287,7 +311,14 @@ export function ZukanAuthenticatedScreen() {
 
           {municipalitySummary.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>訪問した市区町村（切手帳）</Text>
+              {/* ヘッダーの「n / 47 都道府県」からのスクロール先（見出しの View で測る） */}
+              <View
+                onLayout={(e) => {
+                  sectionYRef.current.visitedMunicipalities = e.nativeEvent.layout.y;
+                }}
+              >
+                <Text style={styles.sectionTitle}>訪問した市区町村（切手帳）</Text>
+              </View>
               <View style={styles.stampGrid}>
                 {municipalitySummary.map((m, i) => (
                   <MunicipalityStampCard
@@ -307,7 +338,14 @@ export function ZukanAuthenticatedScreen() {
 
           {data?.encounterPrefectures && data.encounterPrefectures.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>すれ違い相手の出身地</Text>
+              {/* 統計カードのスクロール先。見出しの View で測る（地図を包む View は測らない） */}
+              <View
+                onLayout={(e) => {
+                  sectionYRef.current.encounterOrigins = e.nativeEvent.layout.y;
+                }}
+              >
+                <Text style={styles.sectionTitle}>すれ違い相手の出身地</Text>
+              </View>
               <View style={styles.municipalityList}>
                 {data.encounterPrefectures
                   .filter((e) => e.prefecture)

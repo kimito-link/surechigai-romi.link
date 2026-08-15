@@ -14,26 +14,44 @@ type ZukanCompleteHeaderProps = {
   visitedPrefectureCount: number;
   municipalityCount: number;
   encounterPartnerCount: number;
+  /**
+   * 図鑑タブ内のセクションへスクロールする。
+   *
+   * ★以前は navigate.toZukanTab() を呼んでいたが、このヘッダーは図鑑タブの中にあるため
+   *   押しても何も起きなかった（2026-08-15 修正）。未指定なら押せないまま出す。
+   */
+  onScrollToEncounterOrigins?: () => void;
+  /** 訪問セクションへスクロール（未指定なら押せない） */
+  onScrollToVisited?: () => void;
 };
 
 export function ZukanCompleteHeader({
   visitedPrefectureCount,
   municipalityCount,
   encounterPartnerCount,
+  onScrollToEncounterOrigins,
+  onScrollToVisited,
 }: ZukanCompleteHeaderProps) {
   const progress = Math.min(1, visitedPrefectureCount / TOTAL_PREFECTURES);
 
   return (
     <View style={styles.wrap}>
-      <Pressable
-        onPress={() => navigate.toZukanTab()}
-        accessibilityRole="button"
-        accessibilityLabel="訪問した都道府県を見る"
-        style={({ pressed }) => [styles.heroRow, pressed && styles.pressed]}
-      >
-        <Text style={styles.heroNumber}>{visitedPrefectureCount}</Text>
-        <Text style={styles.heroTotal}>{" "}/ {TOTAL_PREFECTURES} 都道府県</Text>
-      </Pressable>
+      {onScrollToVisited ? (
+        <Pressable
+          onPress={onScrollToVisited}
+          accessibilityRole="button"
+          accessibilityLabel="訪問した都道府県を見る"
+          style={({ pressed }) => [styles.heroRow, pressed && styles.pressed]}
+        >
+          <Text style={styles.heroNumber}>{visitedPrefectureCount}</Text>
+          <Text style={styles.heroTotal}>{" "}/ {TOTAL_PREFECTURES} 都道府県</Text>
+        </Pressable>
+      ) : (
+        <View style={styles.heroRow}>
+          <Text style={styles.heroNumber}>{visitedPrefectureCount}</Text>
+          <Text style={styles.heroTotal}>{" "}/ {TOTAL_PREFECTURES} 都道府県</Text>
+        </View>
+      )}
 
       <View style={styles.progressTrack}>
         <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
@@ -49,14 +67,18 @@ export function ZukanCompleteHeader({
           <Text style={styles.summaryLine}>{municipalityCount} 市区町村</Text>
         </Pressable>
         <Text style={styles.summarySep}>·</Text>
-        <Pressable
-          onPress={() => navigate.toZukanTab()}
-          accessibilityRole="button"
-          accessibilityLabel="すれ違い人数を見る"
-          style={({ pressed }) => pressed && styles.pressed}
-        >
+        {onScrollToEncounterOrigins ? (
+          <Pressable
+            onPress={onScrollToEncounterOrigins}
+            accessibilityRole="button"
+            accessibilityLabel="すれ違い人数を見る"
+            style={({ pressed }) => pressed && styles.pressed}
+          >
+            <Text style={styles.summaryLine}>すれ違い {encounterPartnerCount} 人</Text>
+          </Pressable>
+        ) : (
           <Text style={styles.summaryLine}>すれ違い {encounterPartnerCount} 人</Text>
-        </Pressable>
+        )}
       </View>
     </View>
   );

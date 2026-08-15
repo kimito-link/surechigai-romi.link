@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
+  Pressable,
   ScrollView,
   StyleSheet,
   RefreshControl,
@@ -24,6 +25,7 @@ import { TrailHistoryList } from "@/components/molecules/trail-history-list";
 import { TabMapLoadingFallback, TabQueryShell } from "@/components/molecules/tab-query-shell";
 import { FootprintSheet } from "@/components/map/footprint-sheet";
 import { PlaceNoteModal } from "@/components/map/place-note-modal";
+import { isStatCardInteractive } from "@/components/organisms/web-trail-map-stats";
 import type { LocationVisibility } from "@/modules/encounter/core/location-visibility";
 
 export type VisitedAreaSummary = {
@@ -63,8 +65,59 @@ type WebTrailMapProps = {
   focusMunicipality?: string;
   /** Check-in成功パネルから遷移: この location にフォーカスしシートを開く（docs/uiux-brushup-SPEC.md §3.2 P0） */
   focusLocationId?: number;
+  /**
+   * 統計カード（すれ違った人 / 図鑑 / 市区町村）のタップ先。
+   *
+   * ★渡されたカードだけが押せるようになる（opt-in）。
+   *   この部品は自分の地図タブと公開ページ /u/<slug> の両方で使う（app/u/[slug].tsx）。
+   *   他人のページで押せると閲覧者本人の図鑑へ飛んで文脈が壊れるため、
+   *   着地ページ側は**渡さない**ことで非対話のまま保つ。
+   */
+  onStatsPress?: {
+    encounters?: () => void;
+    checkins?: () => void;
+    municipalities?: () => void;
+  };
   style?: StyleProp<ViewStyle>;
 };
+
+/** 統計カード1枚。押せるときだけ Pressable になり、押下フィードバックも付く。 */
+function SummaryStatCard({
+  value,
+  valueColor,
+  label,
+  onPress,
+  isLoading,
+}: {
+  value: ReactNode;
+  valueColor: string;
+  label: string;
+  onPress?: () => void;
+  isLoading: boolean;
+}) {
+  const interactive = isStatCardInteractive(onPress, isLoading);
+  const body = (
+    <>
+      <Text style={[styles.summaryNum, { color: valueColor }]}>{value}</Text>
+      <Text style={styles.summaryLabel}>{label}</Text>
+    </>
+  );
+
+  if (!interactive) {
+    return <View style={styles.summaryCard}>{body}</View>;
+  }
+
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.summaryCard, pressed && styles.summaryCardPressed]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}の一覧を見る`}
+    >
+      {body}
+    </Pressable>
+  );
+}
 
 export function WebTrailMap({
   visited,
@@ -91,6 +144,7 @@ export function WebTrailMap({
   showSavedLocationHint = false,
   focusMunicipality,
   focusLocationId,
+  onStatsPress,
   style,
 }: WebTrailMapProps) {
   const total = visited.reduce((s, v) => s + v.visitCount, 0);
@@ -170,24 +224,27 @@ export function WebTrailMap({
       </TabQueryShell>
 
       <View style={styles.summaryRow}>
-        <View style={styles.summaryCard}>
-          <Text style={[styles.summaryNum, { color: color.accentIndigo }]}>
-            {isLoading ? "—" : encounterCount}
-          </Text>
-          <Text style={styles.summaryLabel}>すれ違った人</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={[styles.summaryNum, { color: color.accentAlt }]}>
-            {isLoading ? "—" : total}
-          </Text>
-          <Text style={styles.summaryLabel}>図鑑（チェックイン）</Text>
-        </View>
-        <View style={styles.summaryCard}>
-          <Text style={[styles.summaryNum, { color: color.success }]}>
-            {isLoading ? "—" : municipalityTotal}
-          </Text>
-          <Text style={styles.summaryLabel}>市区町村</Text>
-        </View>
+        <SummaryStatCard
+          value={isLoading ? "—" : encounterCount}
+          valueColor={color.accentIndigo}
+          label="すれ違った人"
+          onPress={onStatsPress?.encounters}
+          isLoading={Boolean(isLoading)}
+        />
+        <SummaryStatCard
+          value={isLoading ? "—" : total}
+          valueColor={color.accentAlt}
+          label="図鑑（チェックイン）"
+          onPress={onStatsPress?.checkins}
+          isLoading={Boolean(isLoading)}
+        />
+        <SummaryStatCard
+          value={isLoading ? "—" : municipalityTotal}
+          valueColor={color.success}
+          label="市区町村"
+          onPress={onStatsPress?.municipalities}
+          isLoading={Boolean(isLoading)}
+        />
       </View>
 
       {!isLoading && locations.length > 0 ? (
@@ -288,6 +345,11 @@ const styles = StyleSheet.create({
     gap: 4,
     borderWidth: 1,
     borderColor: color.border,
+  },
+  // 押せるカードだけに付く押下フィードバック（公開ページでは付かない）
+  summaryCardPressed: {
+    opacity: 0.7,
+    borderColor: color.accentIndigo,
   },
   summaryNum: {
     fontSize: 24,

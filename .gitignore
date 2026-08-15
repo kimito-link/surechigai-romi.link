@@ -98,3 +98,9 @@ public/lp/img/_orig-photo/
 
 # ストア申請用の鍵置き場（絶対にコミットしない）
 .secrets-local/
+
+# パッケージマネージャのローカルキャッシュ。
+# 未登録だと `git add -A` が数万ファイルを巻き込み、commit が数分かかって
+# タイムアウトする（2026-08-15 に実際に踏んだ）。
+.npm-cache/
+.pnpm-store/

@@ -5,6 +5,7 @@
  * 新規の無限アニメは追加しない（静的カード + NEW バッジのみ。地雷2の予算を増やさない）。
  */
 
+import { useState } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet, Platform } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
@@ -16,7 +17,7 @@ import {
   formatEncounterDate,
 } from "@/lib/post/encounter-shared";
 
-const RAIL_LIMIT = 5;
+import { visibleEnvelopes } from "@/components/post/envelope-rail-visible";
 
 type EnvelopeRailProps = {
   items: EncounterItem[];
@@ -56,6 +57,9 @@ function EnvelopeRailCard({ item, onOpen }: { item: EncounterItem; onOpen: (item
 }
 
 export function EnvelopeRail({ items, onOpen }: EnvelopeRailProps) {
+  // 「ほかN通」を押すとその場で全件出す。閉じる導線は付けない（画面遷移でリセットされる）
+  const [expanded, setExpanded] = useState(false);
+
   if (items.length === 0) {
     return (
       <View style={styles.emptyWrap}>
@@ -64,8 +68,14 @@ export function EnvelopeRail({ items, onOpen }: EnvelopeRailProps) {
     );
   }
 
-  const shown = items.slice(0, RAIL_LIMIT);
-  const hiddenCount = items.length - shown.length;
+  const { shown, hiddenCount } = visibleEnvelopes(items, expanded);
+
+  const handleExpand = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setExpanded(true);
+  };
 
   return (
     <View style={styles.wrap}>
@@ -79,9 +89,15 @@ export function EnvelopeRail({ items, onOpen }: EnvelopeRailProps) {
         renderItem={({ item }) => <EnvelopeRailCard item={item} onOpen={onOpen} />}
         ListFooterComponent={
           hiddenCount > 0 ? (
-            <View style={styles.moreCard}>
+            // 隣のカードは押せるのにここだけ押せない、が最も紛らわしいので Pressable にする
+            <Pressable
+              onPress={handleExpand}
+              style={({ pressed }) => [styles.moreCard, pressed && { opacity: 0.85 }]}
+              accessibilityRole="button"
+              accessibilityLabel={`残り${hiddenCount}通を表示`}
+            >
               <Text style={styles.moreCardText}>ほか{hiddenCount}通</Text>
-            </View>
+            </Pressable>
           ) : null
         }
       />
