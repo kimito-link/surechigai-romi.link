@@ -45,7 +45,8 @@ export function useWarmOgImage({ enabled, url }: WarmArgs): void {
 
   useEffect(() => {
     if (!enabled || !url) return;
-    if (Platform.OS !== "web" || typeof fetch !== "function") return;
+    // Web 限定にしない（ネイティブこそ温める必要がある。理由は warmOgImageNow 参照）
+    if (typeof fetch !== "function") return;
     if (warmedRef.current === url) return;
     warmedRef.current = url;
 
@@ -82,10 +83,25 @@ export async function warmOgImageNow(
   timeoutMs: number = WARM_BEFORE_SHARE_TIMEOUT_MS,
 ): Promise<void> {
   if (!url) return;
-  if (Platform.OS !== "web" || typeof fetch !== "function") return;
+  if (typeof fetch !== "function") return;
+
+  // ★ネイティブでも必ず温める（2026-08-15 実測で判明した OGP 不発の真因）:
+  //   以前はここが `Platform.OS !== "web"` で即 return しており、iOS/Android の
+  //   アプリからシェアするとウォームが**一度も走らなかった**。クローラーは常に
+  //   未ウォームのURLに来るため生成2.9秒に間に合わず、Xのカードが灰色の
+  //   プレースホルダになる。Webから投稿した分だけ画像が出ていたのはこのため。
+  //   （本番実測: 未ウォーム = x-vercel-cache: MISS 2.86秒 / ウォーム済み = HIT 0.12秒）
+  //   RN の fetch はそのまま使えるので、Web 専用にする理由はもう無い。
+  //
+  //   mode/cache は Web の fetch にしか無いオプションで、RN では無視されるどころか
+  //   実装によっては例外になりうる。プラットフォームごとに渡し分ける。
+  const init: RequestInit =
+    Platform.OS === "web"
+      ? { mode: "no-cors", cache: "force-cache" }
+      : { headers: { Accept: "image/png,image/*" } };
 
   // fetch は打ち切らず（バックグラウンドで温まり続けてよい）、待つ側だけを切る。
-  const warming = fetch(url, { mode: "no-cors", cache: "force-cache" }).catch(() => {});
+  const warming = fetch(url, init).catch(() => {});
   await Promise.race([
     warming,
     new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
