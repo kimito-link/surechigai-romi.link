@@ -4,7 +4,6 @@ import MaterialIcons from "@/lib/icons/material-icons";
 import { useMySignal } from "@/hooks/use-my-signal";
 import { formatEventDateTime } from "@/components/events/events-event-card";
 import { EventParticipantsModal } from "@/components/events/event-participants-modal";
-import { navigate } from "@/lib/navigation";
 import { color, palette } from "@/theme/tokens";
 import { useState } from "react";
 
@@ -70,10 +69,17 @@ export function HostEventsSummary() {
       {events.map((ev) => (
         <Pressable
           key={ev.id}
-          onPress={() => navigate.toEventDetail(ev.id)}
+          // ★2026-08-15 修正: ここは navigate.toEventDetail(ev.id) だった。
+          //   その遷移先 /event/[id] に対応する画面ファイルが存在せず、
+          //   押すと not-found に落ちていた（旧テンプレート由来のルート定数の残骸）。
+          //   すぐ下のアバターが開くのと同じ参加者モーダルに繋ぐ。
+          onPress={() => {
+            setModalEventId(ev.id);
+            setModalTitle(ev.title);
+          }}
           style={({ pressed }) => [styles.eventRow, pressed && { opacity: 0.7 }]}
           accessibilityRole="button"
-          accessibilityLabel={`${ev.title}の詳細を見る`}
+          accessibilityLabel={`${ev.title}の参加者を見る`}
         >
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={styles.eventTitle} numberOfLines={1}>

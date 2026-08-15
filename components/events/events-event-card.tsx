@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TextInput, Pressable } from "react-native";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { setStringAsync } from "expo-clipboard";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { trpc } from "@/lib/trpc";
 import { color } from "@/theme/tokens";
@@ -7,6 +8,14 @@ import { openExternalUrl } from "@/lib/navigation/external-links";
 import { EventParticipationPanel } from "@/components/events/event-participation-panel";
 import { EventCreatorLink } from "@/components/events/event-creator-link";
 import { TYPE_TAG_LABELS } from "@/lib/events/type-tag-labels";
+import {
+  buildEventInviteText,
+  buildEventInviteMessage,
+  eventInviteUrl,
+  shareEventInvite,
+  EVENT_INVITE_HASHTAGS,
+} from "@/lib/events/event-invite";
+import { useAuth } from "@/hooks/use-auth";
 
 export { TYPE_TAG_LABELS };
 
@@ -64,6 +73,8 @@ export function EventCard({
   );
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [code, setCode] = useState("");
+  /** 誘い文をコピーしたことを一時的に見せる */
+  const [inviteCopied, setInviteCopied] = useState(false);
   const [revealError, setRevealError] = useState("");
   const revealMut = trpc.event.reveal.useMutation();
 
@@ -84,19 +95,66 @@ export function EventCard({
     if (effectiveUrl) void openExternalUrl(effectiveUrl);
   }, [effectiveUrl]);
 
+  const { user } = useAuth();
+  const inviteInput = useMemo(
+    () => ({
+      title,
+      startAt,
+      locationType,
+      prefecture,
+      venueName,
+      // 「〇〇さんからお誘いです」にする（差出人が見えると受け取り方が変わる）
+      inviterName: user?.name ?? null,
+    }),
+    [title, startAt, locationType, prefecture, venueName, user?.name],
+  );
+
+  /**
+   * X で誘う。
+   * ★以前はテキストだけを渡していて**URLが無かった**ため、見た人がアプリへ
+   *   来る導線が無かった（2026-08-15 修正）。誘われた側が辿り着けないものは
+   *   「誘い」にならないので、実在する集まり一覧のURLを必ず添える。
+   */
   const shareOnX = useCallback(() => {
-    const d = typeof startAt === "string" ? new Date(startAt) : startAt;
-    const mm = d.getMonth() + 1;
-    const dd = d.getDate();
-    const hh = String(d.getHours()).padStart(2, "0");
-    const mi = String(d.getMinutes()).padStart(2, "0");
-    const placeStr =
-      locationType === "online"
-        ? "オンライン"
-        : [prefecture, venueName].filter(Boolean).join(" ") || "場所未定";
-    const text = `【集まり】${title}\n${mm}/${dd} ${hh}:${mi}〜 ${placeStr}\n#君斗りんくのすれ違ひ通信`;
-    void openExternalUrl(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`);
-  }, [title, startAt, locationType, prefecture, venueName]);
+    const params = new URLSearchParams({
+      text: buildEventInviteText(inviteInput),
+      url: eventInviteUrl(),
+      hashtags: EVENT_INVITE_HASHTAGS.join(","),
+    });
+    void openExternalUrl(`https://twitter.com/intent/tweet?${params.toString()}`);
+  }, [inviteInput]);
+
+  /** Threads で誘う（X と同じ文面・同じ着地先） */
+  const inviteViaThreads = useCallback(() => {
+    const params = new URLSearchParams({
+      text: buildEventInviteText(inviteInput),
+      url: eventInviteUrl(),
+    });
+    void openExternalUrl(`https://www.threads.com/intent/post?${params.toString()}`);
+  }, [inviteInput]);
+
+  /**
+   * 誘い文をコピー（LINE など任意のアプリへ手貼りしてもらう）。
+   * アプリ内DMを持たない方針なので、誘う手段も外部に委譲する。
+   */
+  const copyInvite = useCallback(async () => {
+    try {
+      await setStringAsync(buildEventInviteMessage(inviteInput));
+      setInviteCopied(true);
+      setTimeout(() => setInviteCopied(false), 2000);
+    } catch {
+      setInviteCopied(false);
+    }
+  }, [inviteInput]);
+
+  /**
+   * OS の共有シートで誘う（LINE 等）。
+   * 閉じられた・非対応だった場合はコピーへ倒す（無言で終わらせない）。
+   */
+  const inviteViaShareSheet = useCallback(async () => {
+    const shared = await shareEventInvite(inviteInput);
+    if (!shared) await copyInvite();
+  }, [inviteInput, copyInvite]);
 
   const handleReveal = useCallback(() => {
     setRevealError("");
@@ -222,14 +280,44 @@ export function EventCard({
       )}
 
       {visibility === "public" && (
-        <Pressable
-          onPress={shareOnX}
-          accessibilityRole="link"
-          accessibilityLabel="Xでシェア"
-          style={({ pressed }) => [styles.xShareBtn, pressed && { opacity: 0.7 }]}
-        >
-          <Text style={styles.xShareText}>𝕏でシェア</Text>
-        </Pressable>
+        <View style={styles.inviteRow}>
+          <Pressable
+            onPress={shareOnX}
+            accessibilityRole="link"
+            accessibilityLabel="Xで友達を誘う"
+            style={({ pressed }) => [styles.xShareBtn, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={styles.xShareText}>𝕏で誘う</Text>
+          </Pressable>
+          <Pressable
+            onPress={inviteViaThreads}
+            accessibilityRole="link"
+            accessibilityLabel="Threadsで友達を誘う"
+            style={({ pressed }) => [styles.inviteBtn, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={styles.inviteBtnText}>Threadsで誘う</Text>
+          </Pressable>
+          {/* LINE など任意のアプリへ送れる。doin-challenge の招待画面から採用。
+              X/Threads だけでは「LINEで送りたい」に応えられない */}
+          <Pressable
+            onPress={() => void inviteViaShareSheet()}
+            accessibilityRole="button"
+            accessibilityLabel="ほかのアプリで友達を誘う"
+            style={({ pressed }) => [styles.inviteBtn, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={styles.inviteBtnText}>ほかのアプリで誘う</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => void copyInvite()}
+            accessibilityRole="button"
+            accessibilityLabel="誘い文をコピー"
+            style={({ pressed }) => [styles.inviteBtn, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={styles.inviteBtnText}>
+              {inviteCopied ? "コピーしました" : "誘い文をコピー"}
+            </Text>
+          </Pressable>
+        </View>
       )}
 
       <EventParticipationPanel
@@ -424,6 +512,14 @@ const styles = StyleSheet.create({
     color: color.danger,
     fontSize: 12,
   },
+  // 誘う導線をまとめる行。狭い画面で折り返す（文字がボタンからはみ出さない）
+  inviteRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
   xShareBtn: {
     alignSelf: "flex-start",
     flexDirection: "row",
@@ -432,7 +528,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    marginTop: 2,
+  },
+  // X より控えめ（主従: X > Threads = コピー）
+  inviteBtn: {
+    alignSelf: "flex-start",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.surfaceAlt,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  inviteBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: color.textSecondary,
   },
   xShareText: {
     color: color.textWhite,

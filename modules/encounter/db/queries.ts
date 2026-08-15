@@ -2412,3 +2412,30 @@ export async function getUnopenedEncounterSummary(
     latestId: row?.latestId != null ? Number(row.latestId) : null,
   };
 }
+
+/**
+ * 自分とブロック関係にある相手の userId 一覧。
+ *
+ * getBlockSet がペアのキー集合を返すのに対し、こちらは「相手のID」だけを返す。
+ * イベント一覧のフィルタ（modules/event/core/block-filter.ts）のように、
+ * 相手IDで弾きたい場面で使う。
+ *
+ * ブロックは相互に効く: 自分がブロックした相手も、自分をブロックした相手も含む。
+ */
+export async function getBlockedUserIds(
+  db: DB,
+  selfUserId: number
+): Promise<Set<number>> {
+  const rows = await db
+    .select({ blockerId: blocks.blockerId, blockedId: blocks.blockedId })
+    .from(blocks)
+    .where(
+      or(eq(blocks.blockerId, selfUserId), eq(blocks.blockedId, selfUserId))
+    );
+
+  const out = new Set<number>();
+  for (const r of rows) {
+    out.add(r.blockerId === selfUserId ? r.blockedId : r.blockerId);
+  }
+  return out;
+}

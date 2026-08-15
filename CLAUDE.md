@@ -147,9 +147,23 @@ UI、画面文言、レイアウト、配色、余白、モーション、地図
 以下は君斗りんくのすれ違ひ通信で削除済み。インポートしないこと:
 
 - features/home, features/mypage, features/events etc. → 削除済み
-- server/routers/events, server/routers/participations etc. → 削除済み
+- server/routers/events, server/routers/participations etc. → 削除済み（**下記の注意を読むこと**）
 - drizzle/schema/challenges, drizzle/schema/gamification etc. → 削除済み
 - components/molecules/doin-animation, colorful-challenge-card etc. → 削除済み
+
+> ⚠️ **「イベント機能が死んでいる」と誤読しないこと（2026-08-15 追記）**
+> 上の一覧は**旧テンプレートのパス**が消えたという意味で、集まり（イベント）機能自体は
+> **生きている**。実体は `modules/event/` に移設済み:
+> - API: `modules/event/api/event.ts`（`eventRouter`）/ `modules/event/api/participation.ts`
+> - スキーマ: `drizzle/schema/event.ts`（`events`）/ `event-participation.ts`（本番DBに実在）
+> - 画面: `app/(tabs)/events.tsx` の1画面に集約（**イベント詳細ページは存在しない**）
+> - カレンダーも生きている（`components/molecules/event-calendar.tsx`）
+>
+> **`lib/navigation/app-routes.ts` には実在しないルート定数が28件残っている**
+> （`/event/[id]`, `/invite/[id]`, `/join/[code]`, `/settings` 等。旧テンプレートの名残）。
+> ここの `navigate.toXxx` を新しく使うときは、**必ず `app/` 配下に実ファイルがあるか
+> 確認してから**にすること。無いルートへ push すると not-found に落ちる
+> （実際 `host-events-summary.tsx` が `toEventDetail` でこれを踏んでいた）。
 
 ### Vercel Functions について
 

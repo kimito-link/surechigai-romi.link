@@ -19,15 +19,28 @@ import {
   upsertParticipation,
 } from "../db/participation-queries.js";
 import { resolveUserParticipationProfile } from "../core/participation-profile.js";
+import { getBlockedUserIds } from "../../encounter/db/queries.js";
 
 export const eventParticipationRouter = router({
   /** イベントの参加表明一覧。未ログインでも閲覧可。 */
   listByEvent: publicProcedure
     .input(z.object({ eventId: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
-      return listParticipationsByEvent(db, input.eventId);
+      const rows = await listParticipationsByEvent(db, input.eventId);
+
+      // ブロック関係の相手は参加者一覧にも出さない（2026-08-15 追加）。
+      // ここが素通しだと、ブロックした相手の名前とアイコンが目の前に並ぶ。
+      if (!ctx.user?.id) return rows;
+      try {
+        const blocked = await getBlockedUserIds(db, ctx.user.id);
+        if (blocked.size === 0) return rows;
+        return rows.filter((r) => !blocked.has(r.userId));
+      } catch (error) {
+        console.error("[eventParticipation] blocked lookup failed:", error);
+        return rows;
+      }
     }),
 
   /** 自分の参加表明（ログイン時のみ）。 */

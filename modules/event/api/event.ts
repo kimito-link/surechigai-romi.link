@@ -26,6 +26,8 @@ import { isValidPrefecture } from "../core/prefectures.js";
 import { serializeTypeTags, parseTypeTags } from "../core/status.js";
 import { hashAccessCode, verifyAccessCode } from "../core/access.js";
 import { venueLabelFromGeocode } from "../core/venue-label.js";
+import { excludeBlockedCreators } from "../core/block-filter.js";
+import { getBlockedUserIds } from "../../encounter/db/queries.js";
 import { reverseGeocodeWithTimeout } from "../../encounter/core/geocoding.js";
 import { classifyLocationToPrefectureName } from "../../encounter/core/prefecture-classify.js";
 import { parseCoordinateInput } from "../../../lib/parse-coordinate-input.js";
@@ -111,6 +113,25 @@ async function enrichEventsForPublicView(db: NonNullable<Awaited<ReturnType<type
       participantAvatars: summary?.avatars ?? [],
     });
   });
+}
+
+/**
+ * ブロック相手のID集合。未ログイン（userId なし）なら null＝絞り込まない。
+ *
+ * ブロックの取得に失敗しても一覧表示自体は止めない（見えすぎるより見えない方が
+ * 安全ではあるが、DB障害で集まりが全部消える方が体験としては悪い）。
+ */
+async function resolveBlockedUserIds(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  userId: number | undefined,
+): Promise<Set<number> | null> {
+  if (!userId) return null;
+  try {
+    return await getBlockedUserIds(db, userId);
+  } catch (error) {
+    console.error("[event] blocked user lookup failed:", error);
+    return null;
+  }
 }
 
 export const eventRouter = router({
@@ -259,21 +280,29 @@ export const eventRouter = router({
   /** 公開イベントの予定一覧（カレンダー）。未ログインでも閲覧可。 */
   listUpcoming: publicProcedure
     .input(z.object({ limit: z.number().min(1).max(100).optional() }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
       const rows = await listUpcomingPublic(db, new Date(), input?.limit ?? 50);
-      return enrichEventsForPublicView(db, rows);
+      const visible = excludeBlockedCreators(
+        rows,
+        await resolveBlockedUserIds(db, ctx.user?.id),
+      );
+      return enrichEventsForPublicView(db, visible);
     }),
 
   /** 今ライブ中の公開イベント（在席マップ）。県で絞り込み可。未ログインでも閲覧可。 */
   listLive: publicProcedure
     .input(z.object({ prefecture: z.string().max(32).optional() }).optional())
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
       const rows = await listLivePublic(db, new Date(), input?.prefecture);
-      return enrichEventsForPublicView(db, rows);
+      const visible = excludeBlockedCreators(
+        rows,
+        await resolveBlockedUserIds(db, ctx.user?.id),
+      );
+      return enrichEventsForPublicView(db, visible);
     }),
 
   /** 県ごとの公開イベント件数（在席マップのグリッド）。 */
