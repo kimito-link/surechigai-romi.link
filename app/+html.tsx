@@ -161,12 +161,21 @@ export default function Root({ children }: PropsWithChildren) {
             justify-content: center;
           }
           html[data-auth-boot="1"] #romi-boot-veil { display: flex; }
-          #romi-boot-veil .romi-boot-logo {
-            width: 112px;
-            height: 112px;
+          /* ★2026-08-15: 112px では「小さすぎて何か分からない」との指摘。
+             起動直後の数秒はブランドを伝える唯一の場面なので、画面幅に追従させて
+             大きく見せる（狭い端末でも潰れないよう min/max で挟む）。 */
+          #romi-boot-veil .romi-boot-chara {
+            width: clamp(160px, 44vw, 260px);
+            height: auto;
             display: block;
-            /* ロゴを中央やや上に見せる（下にスピナー分の余白） */
-            margin-bottom: 32px;
+            margin-bottom: 20px;
+          }
+          #romi-boot-veil .romi-boot-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #00427B;
+            letter-spacing: 0.04em;
+            margin-bottom: 24px;
           }
           #romi-boot-veil .romi-boot-spinner {
             width: 28px;
@@ -196,7 +205,11 @@ export default function Root({ children }: PropsWithChildren) {
             既定は display:none。上のスクリプトが data-auth-boot=1 を付けた瞬間に CSS で display:flex になる。
             children より前に置くので、プリレンダHTMLの描画前に前面へ出る。 */}
         <div id="romi-boot-veil" aria-hidden="true">
-          <img className="romi-boot-logo" src="/pwa-icon-192.png" alt="" width={112} height={112} />
+          {/* ★アプリアイコン(pwa-icon-192.png)ではなくキャラクター本人を出す。
+              アイコンだと「ゆっくりりんくのキャラが入っていない」状態になり、
+              起動直後にブランドが伝わらない（2026-08-15 指摘）。 */}
+          <img className="romi-boot-chara" src="/lp/img/chara/link.png" alt="" width={260} height={260} />
+          <div className="romi-boot-title">君斗りんくのすれ違ひ通信</div>
           <div className="romi-boot-spinner" />
         </div>
         {children}
