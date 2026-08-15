@@ -36,6 +36,10 @@ const ALLOWED_EXTERNAL_DOMAINS = [
   // ボタンを押しても何も起きない状態になる）
   "apps.apple.com",
   "play.google.com",
+  // 公的機関のライブカメラ（足あとの場所の「いまの様子」を見に行く導線）。
+  // 画像APIは有償なので取り込まず、公式の一覧ページへリンクするだけ。
+  // ここに無いと openExternalUrl が無言で false を返し、押しても何も起きない。
+  "mlit.go.jp",
   // その他
   "line.me",
   // lin.ee は LINE 公式アカウントの短縮URL（友だち追加の流入経路つき）。

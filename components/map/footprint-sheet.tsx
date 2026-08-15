@@ -5,6 +5,7 @@
  * ネストカード禁止のため、シート自体が唯一のカード。
  */
 
+import { useState } from "react";
 import { View, Text, Pressable, StyleSheet, ActivityIndicator, Modal } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { color, contentMaxWidth, borderRadius, spacing } from "@/theme/tokens";
@@ -16,6 +17,11 @@ import {
 } from "@/components/organisms/precision-tile-map";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import { usePrefWeather, formatWeatherLine } from "@/hooks/use-pref-weather";
+import {
+  liveCameraLinkFor,
+  youtubeLiveSearchUrl,
+} from "@/lib/live-camera/live-camera-links";
+import { openExternalUrl } from "@/lib/navigation/external-links";
 import {
   hasPlaceNote,
   isPlaceNoteStale,
@@ -54,6 +60,18 @@ export function FootprintSheet({
   // フックは早期 return より前に呼ぶ（point が null でも呼び出し回数を変えない）
   const { weather } = usePrefWeather(point?.prefecture, point?.municipality);
   const weatherLine = formatWeatherLine(point?.prefecture, weather);
+
+  const [liveOpenFailed, setLiveOpenFailed] = useState(false);
+  const cameraLink = liveCameraLinkFor(point?.prefecture);
+  const youtubeUrl = youtubeLiveSearchUrl(
+    point?.municipality ?? point?.prefecture ?? null,
+  );
+
+  /** 外部リンクを開く。false を握り潰さず画面で伝える（無反応を作らない） */
+  const handleOpenLive = async (url: string) => {
+    const opened = await openExternalUrl(url);
+    setLiveOpenFailed(!opened);
+  };
 
   if (!point) return null;
 
@@ -117,6 +135,40 @@ export function FootprintSheet({
               testID="footprint-sheet-navigate"
             />
           </View>
+
+          {/* いまの様子を見に行く導線。
+              国交省の公式一覧は無料で見られるが対応していない県があるので、
+              その場合も YouTube のライブ検索なら必ず開ける（穴を作らない）。
+              画像APIは有償・埋め込みは規約グレーなので、どちらもリンクで開くだけ。 */}
+          <View style={styles.liveRow}>
+            {cameraLink ? (
+              <Pressable
+                onPress={() => void handleOpenLive(cameraLink.url)}
+                style={({ pressed }) => [styles.liveButton, pressed && { opacity: 0.75 }]}
+                accessibilityRole="link"
+                accessibilityLabel={cameraLink.label}
+                testID="footprint-sheet-live-camera"
+              >
+                <MaterialIcons name="videocam" size={16} color={color.textSecondary} />
+                <Text style={styles.liveButtonText}>ライブカメラ（国交省）</Text>
+              </Pressable>
+            ) : null}
+            {youtubeUrl ? (
+              <Pressable
+                onPress={() => void handleOpenLive(youtubeUrl)}
+                style={({ pressed }) => [styles.liveButton, pressed && { opacity: 0.75 }]}
+                accessibilityRole="link"
+                accessibilityLabel={`${formatPlace(point)}のライブ配信を探す`}
+                testID="footprint-sheet-live-youtube"
+              >
+                <MaterialIcons name="live-tv" size={16} color={color.textSecondary} />
+                <Text style={styles.liveButtonText}>ライブ配信を探す</Text>
+              </Pressable>
+            ) : null}
+          </View>
+          {liveOpenFailed ? (
+            <Text style={styles.liveError}>開けませんでした。もう一度お試しください。</Text>
+          ) : null}
 
           {canManage ? (
             <View style={styles.manageRow}>
@@ -272,6 +324,36 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     marginTop: spacing.sm,
+  },
+  // 「ここへ向かう」より控えめ。主役はあくまで足あとの場所
+  liveRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  liveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: color.border,
+    backgroundColor: color.surfaceAlt,
+  },
+  liveButtonText: {
+    color: color.textSecondary,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  liveError: {
+    color: color.textMuted,
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 4,
   },
   manageRow: {
     flexDirection: "row",
