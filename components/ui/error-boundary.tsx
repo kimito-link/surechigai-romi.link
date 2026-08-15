@@ -17,6 +17,7 @@ import { View, Text, StyleSheet } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { color, typography } from "@/theme/tokens";
 import { RetryButton } from "./retry-button";
+import { tryRecoverFromChunkError } from "@/lib/chunk-load-recovery";
 
 // エラーバウンダリのProps型
 export interface ErrorBoundaryProps {
@@ -69,6 +70,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     console.error(prefix, "Caught error:", error);
     console.error(prefix, "Component stack:", errorInfo.componentStack);
     this.props.onError?.(error, errorInfo);
+
+    // 遅延読み込みチャンクの取得失敗はページを読み込み直せば直ることが多い
+    // （古い親チャンクが既に無い子チャンク名を指している。2026-08-15 実機で発生）。
+    // 1セッション1回だけ自動リロードする（無限ループにしない）。
+    tryRecoverFromChunkError(error);
   }
 
   resetErrorBoundary = (): void => {

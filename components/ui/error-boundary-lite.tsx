@@ -1,6 +1,10 @@
 import React, { Component, type ReactNode, type ErrorInfo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { color } from "@/theme/tokens";
+import {
+  isChunkLoadError,
+  tryRecoverFromChunkError,
+} from "@/lib/chunk-load-recovery";
 
 type Props = {
   screenName?: string;
@@ -23,21 +27,42 @@ export class ErrorBoundaryLite extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     const prefix = this.props.screenName ? `[ErrorBoundaryLite][${this.props.screenName}]` : "[ErrorBoundaryLite]";
     console.error(prefix, error, errorInfo.componentStack);
+
+    // 遅延読み込みチャンクの取得失敗は、ページを読み込み直せば直ることが多い
+    // （古い親チャンクが既に無い子チャンク名を指している状態。2026-08-15 実機で発生）。
+    // 「再試行」ボタンは同じ古い親を使い続けるので押しても直らない。
+    // 1セッション1回だけ自動リロードする（無限ループにしない）。
+    tryRecoverFromChunkError(error);
   }
 
   render(): ReactNode {
     if (this.state.hasError && this.state.error) {
+      const chunkFailed = isChunkLoadError(this.state.error);
       return (
         <View style={styles.container}>
-          <Text style={styles.title}>エラーが発生しました</Text>
+          <Text style={styles.title}>
+            {chunkFailed ? "読み込みに失敗しました" : "エラーが発生しました"}
+          </Text>
           <Text style={styles.message} numberOfLines={3}>
-            {this.state.error.message}
+            {chunkFailed
+              ? "通信状況が不安定か、アプリが更新された可能性があります。"
+              : this.state.error.message}
           </Text>
           <Pressable
-            onPress={() => this.setState({ hasError: false, error: null })}
+            onPress={() => {
+              // チャンク落ちは state を戻しても同じ古い子チャンクを取りに行くだけ。
+              // ページごと読み込み直す（自動リロード済みで直らなかった場合の手動導線）。
+              if (chunkFailed && typeof window !== "undefined") {
+                window.location.reload();
+                return;
+              }
+              this.setState({ hasError: false, error: null });
+            }}
             style={styles.button}
           >
-            <Text style={styles.buttonText}>再試行</Text>
+            <Text style={styles.buttonText}>
+              {chunkFailed ? "再読み込み" : "再試行"}
+            </Text>
           </Pressable>
         </View>
       );
