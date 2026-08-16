@@ -2,6 +2,20 @@
 // ここに書いても間に合わない＝ルート走査で先に h3-js が読まれるため。
 import "@/lib/bootstrap/global-css";
 import "@/lib/bootstrap/reanimated-init";
+/**
+ * ★2026-08-16: この _layout チャンクが CDN_CACHE_EPOCH を（間接にも）参照して
+ * いなかったため、エポックを上げても _layout だけ内容が変わらず**改名されず**、
+ * 古い _layout が残って子チャンクの旧URLを指し続けていた
+ * （実測: __common は新 web-trail-map を指すのに _layout は旧を指していた）。
+ * エポックを直接参照して、汚染払いが必ず _layout まで届くようにする。
+ */
+import { CDN_CACHE_EPOCH } from "@/theme/tokens";
+
+/* エポックを実際に「使う」。import しただけだと最適化で落ちて改名に効かない。
+   モジュール読み込み時に1度だけ実行し、描画には一切関与しない。 */
+if (typeof document !== "undefined") {
+  document.documentElement.dataset.cdnEpoch = String(CDN_CACHE_EPOCH);
+}
 // @ts-nocheck
 import { usePathname } from "expo-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
