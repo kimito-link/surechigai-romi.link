@@ -22,6 +22,7 @@ import {
 } from "@/components/organisms/precision-tile-map";
 import { color, contentMaxWidth } from "@/theme/tokens";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
+import { PlaceContextBar } from "@/components/molecules/place-context-bar";
 import { TabMapLoadingFallback, TabQueryShell } from "@/components/molecules/tab-query-shell";
 import { FootprintSheet } from "@/components/map/footprint-sheet";
 import { PlaceNoteModal } from "@/components/map/place-note-modal";
@@ -222,6 +223,18 @@ export function WebTrailMap({
           onPointPress={setSelectedPoint}
         />
       </TabQueryShell>
+
+      {/* ★2026-08-16: 天気とライブカメラを足あと一覧の中に置いたところ、
+          画面の 136% 地点（初期表示の外）になり「スクロールしないと気づかれない」
+          状態になっていた。押さないと気づかれない → スクロールしないと気づかれない
+          と失敗が横滑りしていたので、地図の直後に上げる。
+          地図でその場所を見た流れのまま「いまどうなっているか」が目に入る位置。 */}
+      {!isLoading && locations.length > 0 ? (
+        <PlaceContextBar
+          prefecture={locations[0]?.prefecture}
+          municipality={locations[0]?.municipality}
+        />
+      ) : null}
 
       <View style={styles.summaryRow}>
         <SummaryStatCard

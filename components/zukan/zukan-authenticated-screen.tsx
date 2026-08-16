@@ -24,6 +24,7 @@ import { navigate } from "@/lib/navigation";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
 import { TabMapLoadingFallback } from "@/components/molecules/tab-query-shell";
 import { TrailHistoryList } from "@/components/molecules/trail-history-list";
+import { PlaceContextBar } from "@/components/molecules/place-context-bar";
 import { DeleteTrailConfirmModal } from "@/components/molecules/delete-trail-confirm-modal";
 import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
 import { ZukanCompleteHeader } from "@/components/zukan/zukan-complete-header";
@@ -295,6 +296,12 @@ export function ZukanAuthenticatedScreen() {
               <Text style={styles.trailMapCaption}>
                 {trailLocations.length} 件の正確な足あと・思い出の場所をあとからたどれます
               </Text>
+              {/* その場所の「いま」（天気・ライブカメラ）。地図の直後に置く
+                  — 一覧の中に入れるとスクロールしないと気づけない（2026-08-16）。 */}
+              <PlaceContextBar
+                prefecture={trailLocations[0]?.prefecture}
+                municipality={trailLocations[0]?.municipality}
+              />
               <View style={styles.trailHistoryWrap}>
                 <TrailHistoryList
                   locations={trailLocations}

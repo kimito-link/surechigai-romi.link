@@ -37,17 +37,33 @@ export function BrandLoadingScreen({
 }: BrandLoadingScreenProps) {
   const { width, height } = useWindowDimensions();
 
+  /* ★2026-08-16: useWindowDimensions が初回に 0 を返すことがあり、
+     min() に 0 が混ざって width/height が 0px になり、
+     **ロゴもキャラも描画されない**状態になっていた（本番実測で判明。
+     img は complete=true なのに rect が 0x0）。
+     0 のときは画面基準の計算をやめ、既定値で描く。 */
+  const hasViewport = width > 0 && height > 0;
+
   /* キャラは画面幅の 46%。狭い端末で潰れず、大画面で巨大になりすぎない範囲に挟む。
-     さらに縦が短い端末（横向き等）では高さ基準でも抑え、はみ出しを防ぐ
-     （高さ基準がないと、横向きで画面からはみ出す）。 */
-  const charaSize = Math.min(Math.max(width * 0.46, 150), 320, height * 0.38);
+     さらに縦が短い端末（横向き等）では高さ基準でも抑え、はみ出しを防ぐ。 */
+  const charaSize = hasViewport
+    ? Math.min(Math.max(width * 0.46, 150), 320, height * 0.38)
+    : 200;
   /* ロゴはキャラより控えめ。上に置いて「何のアプリか」を先に伝える。
      素材は 800x600（縦横比 0.75）なので、幅を出しすぎると縦を食う。 */
-  const logoWidth = Math.min(Math.max(width * 0.34, 120), 240, height * 0.18);
+  const logoWidth = hasViewport
+    ? Math.min(Math.max(width * 0.34, 120), 240, height * 0.18)
+    : 150;
 
   return (
     <View
-      style={[styles.container, fullscreen && styles.fullscreen]}
+      style={[
+        styles.container,
+        fullscreen && styles.fullscreen,
+        /* 親が高さを渡さない構成でも画面を埋めるための下支え。
+           ヘッダー(約56)とタブバー(約68)を引いた分を最低高さにする。 */
+        fullscreen && hasViewport ? { minHeight: Math.max(height - 124, 320) } : null,
+      ]}
       accessibilityRole="progressbar"
       accessibilityLabel={message}
     >
@@ -84,9 +100,14 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     gap: 12,
   },
-  /* ファーストビューを使い切る。親が ScreenContainer でも flex:1 で最大まで伸びる。 */
+  /* ファーストビューを使い切る。
+     ★2026-08-16: flex:1 だけだと、親が高さを渡さない構成のときに
+     中身の高さまでしか広がらず「ファーストビューいっぱいにならない」状態になる。
+     alignSelf:stretch で横も必ず広げ、最低高さはコンポーネント側で
+     ビューポートから算出して渡す（ヘッダー・タブバーがあるので 100dvh は使わない）。 */
   fullscreen: {
     flex: 1,
+    alignSelf: "stretch",
   },
   title: {
     color: palette.kimitoBlue,

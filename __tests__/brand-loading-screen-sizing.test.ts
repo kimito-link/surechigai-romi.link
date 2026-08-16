@@ -8,11 +8,24 @@
  */
 import { describe, it, expect } from "vitest";
 
-/** 実装 (brand-loading-screen.tsx) と同じ式。変更時は両方を揃える。 */
+/**
+ * 実装 (brand-loading-screen.tsx) と同じ式。変更時は両方を揃える。
+ *
+ * ★2026-08-16: useWindowDimensions が初回に 0 を返すことがあり、min() に 0 が
+ * 混ざって width/height が 0px になり、**ロゴもキャラも描画されない**状態が
+ * 本番で起きていた（img は complete=true なのに rect が 0x0）。
+ * 0 のときは画面基準の計算をやめて既定値で描く、という分岐を実装に入れたので
+ * ここでも同じ扱いにする。
+ */
+function hasViewport(width: number, height: number): boolean {
+  return width > 0 && height > 0;
+}
 function charaSize(width: number, height: number): number {
+  if (!hasViewport(width, height)) return 200;
   return Math.min(Math.max(width * 0.46, 150), 320, height * 0.38);
 }
 function logoWidth(width: number, height: number): number {
+  if (!hasViewport(width, height)) return 150;
   return Math.min(Math.max(width * 0.34, 120), 240, height * 0.18);
 }
 /** ロゴ素材は 800x600 = 縦横比 0.75。 */
@@ -48,6 +61,21 @@ describe("ブランド読み込み画面の寸法", () => {
     // 750px 幅で 173px のままだった実測不具合の再発防止。
     expect(charaSize(768, 1024)).toBeGreaterThanOrEqual(280);
     expect(charaSize(1280, 800)).toBeGreaterThanOrEqual(280);
+  });
+
+  it("ビューポートが 0 でもロゴ・キャラが消えない（本番で実際に消えた）", () => {
+    // useWindowDimensions が初回 0 を返すケース。min() に 0 が混ざると
+    // width:0px になり画像が描画されない。0 は「未確定」であって「幅0」ではない。
+    for (const [w, h] of [
+      [0, 0],
+      [0, 812],
+      [375, 0],
+    ]) {
+      expect(charaSize(w, h)).toBeGreaterThan(0);
+      expect(logoWidth(w, h)).toBeGreaterThan(0);
+      // 「小さすぎて何か分からない」も防ぐ
+      expect(charaSize(w, h)).toBeGreaterThanOrEqual(120);
+    }
   });
 
   it("巨大画面でも上限で頭打ちになる（間延びしない）", () => {
