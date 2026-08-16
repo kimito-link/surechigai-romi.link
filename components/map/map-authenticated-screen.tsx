@@ -6,10 +6,11 @@
  * Web / Native 共通（PrecisionTileMap は RN コンポーネント）。
  */
 
-import { View, StyleSheet, Pressable, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { useCallback, useMemo } from "react";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
+import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";
 import { InlineLoginPrompt } from "@/components/molecules/inline-login-prompt";
@@ -18,7 +19,7 @@ import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { palette, contentMaxWidth } from "@/theme/tokens";
+import { contentMaxWidth } from "@/theme/tokens";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { AUTHENTICATED_QUERY_OPTIONS } from "@/lib/authenticated-query-options";
 import { useTrailLocationActions } from "@/hooks/use-trail-location-actions";
@@ -101,9 +102,7 @@ export function MapAuthenticatedScreen() {
           isDesktop={isDesktop}
           showMenu
         />
-        <View style={styles.authLoading}>
-          <ActivityIndicator size="large" color={palette.kimitoBlue} />
-        </View>
+        <BrandLoadingScreen />
       </ScreenContainer>
     );
   }
@@ -176,11 +175,6 @@ export function MapAuthenticatedScreen() {
 }
 
 const styles = StyleSheet.create({
-  authLoading: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   trailMap: {
     flex: 1,
     width: "100%",

@@ -3,16 +3,11 @@
  * 未ログイン時は reanimated / 地図 chunk を読まない。
  */
 
-import {
-  View,
-  StyleSheet,
-  ActivityIndicator,
-} from "react-native";
 import { ScreenContainer } from "@/components/organisms/screen-container";
+import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
-import { palette } from "@/theme/tokens";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { CheckinGuestPreview } from "@/components/organisms/one-tap-guest-previews";
@@ -32,9 +27,7 @@ export default function CheckinScreen() {
           showMenu
           showLoginButton={!isAuthenticated}
         />
-        <View style={styles.authLoading}>
-          <ActivityIndicator size="large" color={palette.kimitoBlue} />
-        </View>
+        <BrandLoadingScreen />
       </ScreenContainer>
     );
   }
@@ -60,12 +53,3 @@ export default function CheckinScreen() {
     </TabAuthenticatedShell>
   );
 }
-
-const styles = StyleSheet.create({
-  authLoading: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-  },
-});

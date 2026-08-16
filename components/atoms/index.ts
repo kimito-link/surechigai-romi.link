@@ -93,6 +93,7 @@ export { HapticTab } from "./haptic-tab";
 
 // Utility系
 export { LazyLoadingFallback } from "./lazy-loading-fallback";
+export { BrandLoadingScreen } from "./brand-loading-screen";
 
 // View系
 export { ThemedView } from "./themed-view";

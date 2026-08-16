@@ -1,14 +1,11 @@
-import { View, Text, ActivityIndicator } from "react-native";
-import { color } from "@/theme/tokens";
+import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 
 /**
- * ログインローディング画面
+ * ログインローディング画面。
+ *
+ * ★2026-08-16: ブランド読み込み画面（ロゴ＋ゆっくりりんく）に統一。
+ * 実体は components/atoms/brand-loading-screen.tsx。
  */
 export function LoginLoadingScreen() {
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 16, backgroundColor: color.bg }}>
-      <ActivityIndicator size="large" color={color.accentPrimary} />
-      <Text style={{ color: color.textMuted, fontSize: 14 }}>Twitter認証中...</Text>
-    </View>
-  );
+  return <BrandLoadingScreen message="X で認証中…" />;
 }

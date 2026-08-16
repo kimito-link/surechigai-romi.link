@@ -2,17 +2,12 @@
  * 公開共有リンク /u/<slug>
  * 都道府県クリエイター一覧からタップすると、この人の軌跡（地図 + 最近の記録）を表示する。
  */
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
+import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 import { PublicShareHeader } from "@/components/organisms/public-share-header";
 import { LazyWebTrailMap } from "@/lib/lazy-heavy-components";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
@@ -27,7 +22,6 @@ import {
   featureShareLocationFirst,
   parseShareLocationFromQuery,
 } from "@/lib/ogp/share-meta";
-import { Platform } from "react-native";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
 
 function displayWho(name: string | null, username: string | null): string {
@@ -48,14 +42,67 @@ export default function ShareLocationScreen() {
   if (!trpcReady) {
     return (
       <ScreenContainer containerClassName="bg-background" showFooter={false}>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={color.accentPrimary} />
-          <Text style={styles.loadingText}>読み込み中…</Text>
-        </View>
+        <BrandLoadingScreen />
       </ScreenContainer>
     );
   }
   return <ShareLocationScreenInner />;
+}
+
+/**
+ * プロフィール行の中身（アイコン＋肩書き＋名前＋handle）。
+ * 押下領域は呼び出し側の Pressable が持つので、ここは描画だけを担当する
+ * （Pressable の中に Pressable を入れると、内側が押下を食って外側が無反応になる）。
+ */
+function ProfileHeaderContent({
+  profileImage,
+  who,
+  fallbackInitial,
+  username,
+  xLinkFailed,
+}: {
+  profileImage: string | null;
+  who: string;
+  fallbackInitial: string;
+  username: string | null;
+  xLinkFailed: boolean;
+}) {
+  return (
+    <>
+      {/* twitterHandle を渡さないと Clerk プロキシ(img.clerk.com)の画像しか
+          候補にならず、それが壊れている場合に「君」等のイニシャル表示に落ちる
+          （2026-07-31 実機で発生。Clerkは200を返すが実体1KBの空画像だった）。
+          handle があれば unavatar フォールバックが効く。 */}
+      <CreatorAvatar
+        src={profileImage}
+        alt={who}
+        fallbackInitial={fallbackInitial}
+        size={48}
+        twitterHandle={username}
+      />
+      <View style={styles.profileText}>
+        <Text style={styles.kicker}>会いたい君がいる現在地</Text>
+        <Text style={styles.whoLine} numberOfLines={2}>
+          {who}
+        </Text>
+        {username ? (
+          <>
+            {/* X から来た人が X に戻れるようにする（交流は X に委譲する設計原則4）。 */}
+            <Text style={[styles.handle, styles.handleLink]}>
+              @{username.replace(/^@/, "")}
+            </Text>
+            {/* 無言 false を出さない（ホワイトリスト漏れ・ポップアップブロックで
+                「押しても何も起きない」状態にした前科がある） */}
+            {xLinkFailed ? (
+              <Text style={styles.handleError}>
+                X を開けませんでした。もう一度お試しください。
+              </Text>
+            ) : null}
+          </>
+        ) : null}
+      </View>
+    </>
+  );
 }
 
 function ShareLocationScreenInner() {
@@ -142,12 +189,7 @@ function ShareLocationScreenInner() {
         />
       }
     >
-      {trailQuery.isLoading && (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={color.accentPrimary} />
-          <Text style={styles.loadingText}>軌跡を読み込み中…</Text>
-        </View>
-      )}
+      {trailQuery.isLoading && <BrandLoadingScreen message="軌跡を読み込み中…" />}
 
       {trailQuery.isError && (
         <View style={styles.center}>
@@ -199,48 +241,36 @@ function ShareLocationScreenInner() {
           showSavedLocationHint
           topContent={
             <>
-              <View style={styles.profileHeader}>
-                {/* twitterHandle を渡さないと Clerk プロキシ(img.clerk.com)の画像しか
-                    候補にならず、それが壊れている場合に「君」等のイニシャル表示に落ちる
-                    （2026-07-31 実機で発生。Clerkは200を返すが実体1KBの空画像だった）。
-                    handle があれば unavatar フォールバックが効く。 */}
-                <CreatorAvatar
-                  src={trailQuery.data.profileImage}
-                  alt={who}
-                  fallbackInitial={fallbackInitial}
-                  size={48}
-                  twitterHandle={trailQuery.data.username}
-                />
-                <View style={styles.profileText}>
-                  <Text style={styles.kicker}>会いたい君がいる現在地</Text>
-                  <Text style={styles.whoLine} numberOfLines={2}>
-                    {who}
-                  </Text>
-                  {trailQuery.data.username ? (
-                    <>
-                      {/* X から来た人が X に戻れるようにする（交流は X に委譲する設計原則4）。
-                          新しい UI 要素は足さず、既存の handle 表示そのものを押せるようにする。 */}
-                      <Pressable
-                        onPress={() => handleOpenX(trailQuery.data!.username!)}
-                        accessibilityRole="link"
-                        accessibilityLabel={`@${trailQuery.data.username.replace(/^@/, "")} を X で開く`}
-                        style={({ pressed }) => pressed && styles.handlePressed}
-                      >
-                        <Text style={[styles.handle, styles.handleLink]}>
-                          @{trailQuery.data.username.replace(/^@/, "")}
-                        </Text>
-                      </Pressable>
-                      {/* 無言 false を出さない（ホワイトリスト漏れ・ポップアップブロックで
-                          「押しても何も起きない」状態にした前科がある） */}
-                      {xLinkFailed ? (
-                        <Text style={styles.handleError}>
-                          X を開けませんでした。もう一度お試しください。
-                        </Text>
-                      ) : null}
-                    </>
-                  ) : null}
+              {/* ★2026-08-16: 押せるのが @handle だけで、共有から来た人が最初に触る
+                  アイコンと名前が無反応だった（「クリックできる箇所が全部でなかった」）。
+                  プロフィール行ごと1つの押下領域にして、顔・名前・handle のどこを押しても
+                  X が開くようにする。押せる範囲を広げるだけで、新しい UI 要素は足さない。 */}
+              {trailQuery.data.username ? (
+                <Pressable
+                  onPress={() => handleOpenX(trailQuery.data!.username!)}
+                  accessibilityRole="link"
+                  accessibilityLabel={`${who}（@${trailQuery.data.username.replace(/^@/, "")}）を X で開く`}
+                  style={({ pressed }) => [styles.profileHeader, pressed && styles.handlePressed]}
+                >
+                  <ProfileHeaderContent
+                    profileImage={trailQuery.data.profileImage}
+                    who={who}
+                    fallbackInitial={fallbackInitial}
+                    username={trailQuery.data.username}
+                    xLinkFailed={xLinkFailed}
+                  />
+                </Pressable>
+              ) : (
+                <View style={[styles.profileHeader, styles.profileHeaderStatic]}>
+                  <ProfileHeaderContent
+                    profileImage={trailQuery.data.profileImage}
+                    who={who}
+                    fallbackInitial={fallbackInitial}
+                    username={null}
+                    xLinkFailed={false}
+                  />
                 </View>
-              </View>
+              )}
               {!isAuthenticated ? (
                 <View style={styles.bannerWrap}>
                   <InlineLoginPrompt headline="あなたの足あとも、地図に刻めます" />
@@ -295,10 +325,6 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 12,
   },
-  loadingText: {
-    color: color.textMuted,
-    fontSize: 14,
-  },
   errorTitle: {
     color: color.textPrimary,
     fontSize: 18,
@@ -351,6 +377,16 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 12,
     flexWrap: "wrap",
+    /* 行ごと押せるようにしたので、指で押せる高さと余白を確保する。 */
+    minHeight: 44,
+    paddingVertical: 4,
+    /* Web では押せることをカーソルでも示す（RN Web は cursor を透過する）。 */
+    ...(Platform.OS === "web" ? { cursor: "pointer" as const } : null),
+  },
+  /* handle が無く押せない場合は、押せそうな見た目にしない
+     （RN の CursorValue は "auto" | "pointer" のみ。"default" は型が許さない）。 */
+  profileHeaderStatic: {
+    ...(Platform.OS === "web" ? { cursor: "auto" as const } : null),
   },
   profileText: {
     flex: 1,

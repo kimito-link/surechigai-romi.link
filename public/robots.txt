@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+
+# 認証・コールバック（クロール不要）
+Disallow: /sign-in
+Disallow: /sso-callback
+Disallow: /logout
+Disallow: /auth/
+Disallow: /oauth/
+
+# 個人の足あとページ（本人が共有した先だけ見られればよい）
+Disallow: /u/
+Disallow: /visit
+
+# アプリ内部の画面（ログイン前提でクロールしても中身が無い）
+Disallow: /checkin
+Disallow: /map
+Disallow: /mypage
+Disallow: /photo-import
+
+Sitemap: https://surechigai.kimito.link/sitemap.xml
