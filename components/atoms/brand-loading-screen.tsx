@@ -38,11 +38,12 @@ export function BrandLoadingScreen({
   const { width, height } = useWindowDimensions();
 
   /* キャラは画面幅の 46%。狭い端末で潰れず、大画面で巨大になりすぎない範囲に挟む。
-     さらに縦が短い端末（横向き等）では高さ基準でも抑え、はみ出しを防ぐ。 */
-  const charaSize = Math.min(Math.max(width * 0.46, 150), 280, height * 0.38);
+     さらに縦が短い端末（横向き等）では高さ基準でも抑え、はみ出しを防ぐ
+     （高さ基準がないと、横向きで画面からはみ出す）。 */
+  const charaSize = Math.min(Math.max(width * 0.46, 150), 320, height * 0.38);
   /* ロゴはキャラより控えめ。上に置いて「何のアプリか」を先に伝える。
      素材は 800x600（縦横比 0.75）なので、幅を出しすぎると縦を食う。 */
-  const logoWidth = Math.min(Math.max(width * 0.34, 120), 200);
+  const logoWidth = Math.min(Math.max(width * 0.34, 120), 240, height * 0.18);
 
   return (
     <View
