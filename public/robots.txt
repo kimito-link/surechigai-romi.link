@@ -1,21 +1,40 @@
-User-agent: *
-Allow: /
+# ⚠️ Cloudflare が配信時にこのファイルの「前」へ Managed robots.txt を自動注入する。
+# その中に `User-agent: *` グループが既にあるため、ここでも `User-agent: *` を書くと
+# 「同一 User-agent の2つ目のグループ」となり、robots.txt の仕様上まるごと無視される
+# （実測: 2026-08-16。Disallow が1件も効かず Sitemap も読まれない状態だった）。
+# よって検索エンジンは実名グループで指定する。ここに `User-agent: *` を書き足さないこと。
 
-# 認証・コールバック（クロール不要）
+User-agent: Googlebot
+Allow: /
 Disallow: /sign-in
 Disallow: /sso-callback
 Disallow: /logout
 Disallow: /auth/
 Disallow: /oauth/
-
-# 個人の足あとページ（本人が共有した先だけ見られればよい）
 Disallow: /u/
 Disallow: /visit
-
-# アプリ内部の画面（ログイン前提でクロールしても中身が無い）
 Disallow: /checkin
 Disallow: /map
 Disallow: /mypage
 Disallow: /photo-import
+
+User-agent: bingbot
+Allow: /
+Disallow: /sign-in
+Disallow: /sso-callback
+Disallow: /logout
+Disallow: /auth/
+Disallow: /oauth/
+Disallow: /u/
+Disallow: /visit
+Disallow: /checkin
+Disallow: /map
+Disallow: /mypage
+Disallow: /photo-import
+
+# Disallow の意図:
+#   /sign-in, /sso-callback, /logout, /auth/, /oauth/ … 認証・コールバック（クロール不要）
+#   /u/, /visit                                        … 個人の足あと（本人が共有した先だけ見られればよい）
+#   /checkin, /map, /mypage, /photo-import             … ログイン前提の画面（クロールしても中身が無い）
 
 Sitemap: https://surechigai.kimito.link/sitemap.xml
