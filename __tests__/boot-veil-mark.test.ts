@@ -42,11 +42,23 @@ describe("ブートベールのマーク画像", () => {
     expect(HTML_SRC).not.toMatch(/(?:src|href)="\/lp\/img\/chara\/link\.png"/);
   });
 
-  it("head で preload している（Reactマウント前に取り始める）", () => {
-    expect(HTML_SRC).toMatch(/rel="preload"[^>]*href="\/boot-mark\.png"/);
+  it("preload は「ベールを出すと決めたとき」だけ動的に挿す", () => {
+    /* ★2026-08-17: 静的な <link rel="preload"> にしていたため、ベールが出ない
+       未ログインの通常訪問でも 27KB を最優先で取りに行っていた
+       （Lighthouse: offscreen-images 27KB / uses-responsive-images 6KB）。
+       判定スクリプト内（h||pwa が真のとき）で挿すようにした。 */
+    expect(HTML_SRC).not.toMatch(/<link\s+rel="preload"[^>]*boot-mark\.png/);
+
+    const script = HTML_SRC.slice(
+      HTML_SRC.indexOf("var pwa=false"),
+      HTML_SRC.indexOf("data-auth-boot", HTML_SRC.indexOf("var pwa=false")),
+    );
+    // 条件が真になった側のブロックで preload を挿していること
+    expect(script).toContain('pl.rel="preload"');
+    expect(script).toContain('/boot-mark.png');
   });
 
   it("最優先で取りに行く指定がある", () => {
-    expect(HTML_SRC).toContain('fetchpriority="high"');
+    expect(HTML_SRC).toContain('fetchpriority');
   });
 });

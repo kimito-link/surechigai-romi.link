@@ -15,10 +15,13 @@ export default function Root({ children }: PropsWithChildren) {
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        {/* ブートベールのマークを最優先で取りに行く。ここに置かないと、
-            Reactマウント（＝ベール解除）までに読み終わらず絵が出ないまま消える
-            （2026-08-16 iOS実機PWAの録画で実際にそうなっていた）。 */}
-        <link rel="preload" as="image" href="/boot-mark.png" fetchPriority="high" />
+        {/* ★ブートベールのマークの preload は「ベールを出すと決めたときだけ」動的に挿す。
+            （下の判定スクリプト内で実行）
+
+            静的な <link rel="preload"> にしていたところ、ベールが出ない未ログインの
+            通常訪問でも 27KB を最優先で取りに行っていた
+            （Lighthouse: offscreen-images 27KB + uses-responsive-images 6KB の指摘）。
+            ベールが出るのは「ログイン済みヒントあり」か「PWA standalone 起動」のときだけ。 */}
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
@@ -282,7 +285,7 @@ export default function Root({ children }: PropsWithChildren) {
             解除は app/_layout.tsx の releaseBootVeil()（React マウント直後）＋保険で6秒後。 */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var h=false;var ls=window.localStorage;if(ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
+            __html: `(function(){try{var h=false;var ls=window.localStorage;if(ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="/boot-mark.png";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
           }}
         />
         {/* ブートベールの実DOMオーバーレイ（ロゴ＋スピナー）。
