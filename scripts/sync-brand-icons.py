@@ -89,10 +89,15 @@ def save_android_foreground(out: Path) -> None:
 # 個別の画像+media queryが必要。主要なiPhone/iPad解像度をカバーする。
 # (width, height, device-pixel-ratio) — CSS論理ピクセルではなく実ピクセルで指定
 IOS_STARTUP_SIZES = (
+    # ★2026-08-16: 1320x2868 / 1206x2622 が抜けており、iPhone 16 Pro Max の実機PWAで
+    # スプラッシュが一度も出ていなかった（実機録画で確認）。iOS は解像度が一致しない
+    # apple-touch-startup-image を無視するため、機種が増えたらここに足すこと。
+    (1206, 2622, 3),  # iPhone 16 Pro (論理 402x874)
+    (1320, 2868, 3),  # iPhone 16 Pro Max (論理 440x956)
     (1170, 2532, 3),  # iPhone 12/13/14
     (1179, 2556, 3),  # iPhone 14 Pro/15/16
     (1284, 2778, 3),  # iPhone 12/13/14 Pro Max
-    (1290, 2796, 3),  # iPhone 14/15/16 Pro Max
+    (1290, 2796, 3),  # iPhone 14/15 Pro Max
     (1080, 2340, 3),  # iPhone 12/13 mini系
     (828, 1792, 2),  # iPhone 11/XR
     (750, 1334, 2),  # iPhone SE/8/7/6s

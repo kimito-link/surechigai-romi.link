@@ -62,6 +62,20 @@ export default function Root({ children }: PropsWithChildren) {
         {/* iOS Safari PWA（ホーム画面追加後）の起動スプラッシュ。
             manifest.json だけでは iOS はロゴ入りスプラッシュを生成しないため、
             デバイス解像度ごとに個別画像+media queryが必要（pnpm brand:icons で生成）。 */}
+        {/* ★2026-08-16: iPhone 16 Pro / Pro Max の定義が無く、実機PWAで
+            スプラッシュが一度も出ていなかった（実機録画で確認）。iOS は解像度が
+            一致しない apple-touch-startup-image を無視するので、機種が増えたら
+            scripts/sync-brand-icons.py の IOS_STARTUP_SIZES と両方に足すこと。 */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1206x2622.png"
+          media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 402px) and (device-height: 874px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1320x2868.png"
+          media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 440px) and (device-height: 956px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
         <link
           rel="apple-touch-startup-image"
           href="/splash/ios-1170x2532.png"
