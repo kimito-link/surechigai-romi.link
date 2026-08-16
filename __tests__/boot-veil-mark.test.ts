@@ -32,8 +32,14 @@ describe("ブートベールのマーク画像", () => {
     expect(kb).toBeLessThanOrEqual(MAX_MARK_KB);
   });
 
-  it("ベールは /boot-mark.png を参照している", () => {
-    expect(HTML_SRC).toContain('src="/boot-mark.png"');
+  it("ベールは /boot-mark.png を背景画像として参照している", () => {
+    /* ★2026-08-17: <img> をやめて CSS 背景画像にした。
+       <img> だと React が全ページの <head> に preload を自動生成し、
+       ベールが display:none の通常訪問でも 27KB を取りに行っていたため
+       （Lighthouse: offscreen-images）。背景画像は表示時にだけ読まれる。 */
+    expect(HTML_SRC).toContain('background-image: url("/boot-mark.png")');
+    // img に戻すと preload が復活するので、src 属性では持たないこと
+    expect(HTML_SRC).not.toContain('src="/boot-mark.png"');
   });
 
   it("巨大な元画像(/lp/img/chara/link.png)をベールで使っていない", () => {
@@ -47,7 +53,12 @@ describe("ブートベールのマーク画像", () => {
        未ログインの通常訪問でも 27KB を最優先で取りに行っていた
        （Lighthouse: offscreen-images 27KB / uses-responsive-images 6KB）。
        判定スクリプト内（h||pwa が真のとき）で挿すようにした。 */
-    expect(HTML_SRC).not.toMatch(/<link\s+rel="preload"[^>]*boot-mark\.png/);
+    /* JSX として静的な <link rel="preload" ... /> を書いていないこと。
+       経緯を説明するコメント内には文字列として出てくるので、
+       JSX 要素の形（末尾が /> で閉じる link タグ）だけを見る。 */
+    expect(HTML_SRC).not.toMatch(
+      /<link\s+rel="preload"\s+as="image"\s+href="\/boot-mark\.png"[^>]*\/>/,
+    );
 
     const script = HTML_SRC.slice(
       HTML_SRC.indexOf("var pwa=false"),

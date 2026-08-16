@@ -252,11 +252,20 @@ export default function Root({ children }: PropsWithChildren) {
           /* ★2026-08-15: 112px では「小さすぎて何か分からない」との指摘。
              起動直後の数秒はブランドを伝える唯一の場面なので、画面幅に追従させて
              大きく見せる（狭い端末でも潰れないよう min/max で挟む）。 */
+          /* ★2026-08-17: <img> から背景画像に変更。
+             <img> だと React が全ページの <head> に preload を自動生成し、
+             ベールが出ない通常訪問でも 27KB を取りに行っていた。
+             背景画像は「その要素が表示されるときだけ」読まれる（display:none の間は読まない）。
+             正方形の素材なので width/height を同値にして比率を保つ。 */
           #romi-boot-veil .romi-boot-chara {
             width: clamp(160px, 44vw, 260px);
-            height: auto;
+            height: clamp(160px, 44vw, 260px);
             display: block;
             margin-bottom: 20px;
+            background-image: url("/boot-mark.png");
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
           }
           #romi-boot-veil .romi-boot-title {
             font-size: 15px;
@@ -303,17 +312,14 @@ export default function Root({ children }: PropsWithChildren) {
               **アプリのマーク**（ホーム画面のアイコンと同じ絵柄・角丸付き）。
               裸のキャラではなくマークにするのは、起動画面とホーム画面の
               アイコンが一致していないと「別のアプリが開いた」ように見えるため。
-              fetchpriority=high と <head> の preload で最優先で取りに行く。 */}
-          <img
-            className="romi-boot-chara"
-            src="/boot-mark.png"
-            alt=""
-            width={260}
-            height={260}
-            // @ts-expect-error fetchpriority は React の型にまだ無い（DOM属性としては有効）
-            fetchpriority="high"
-            decoding="sync"
-          />
+
+              ★2026-08-17: ここを <img> にしていたため、React が全ページの <head> に
+              `<link rel="preload" as="image" href="/boot-mark.png">` を自動生成し、
+              ベールが display:none の通常訪問でも 27KB を取りに行っていた
+              （Lighthouse: offscreen-images 27KB / uses-responsive-images 6KB）。
+              背景画像にすると preload は生成されず、**表示されるときだけ**読まれる。
+              ベールを出す場面では判定スクリプトが動的 preload を挿すので速度は落ちない。 */}
+          <div className="romi-boot-chara" role="presentation" />
           <div className="romi-boot-title">君斗りんくのすれ違ひ通信</div>
           <div className="romi-boot-spinner" />
         </div>
