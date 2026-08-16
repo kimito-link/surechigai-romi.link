@@ -44,7 +44,12 @@ export const LIVE_CAMERA_LINKS: Record<string, LiveCameraLink> = (() => {
     label: "中部地方整備局のライブカメラ",
   };
   const kinki: LiveCameraLink = {
-    url: "https://www.kkr.mlit.go.jp/road/odekakejouhou/camera.html",
+    /* ★2026-08-16: 旧URL /road/odekakejouhou/camera.html は
+       /err/index.html へ302リダイレクトされており、押すとエラーページが開いていた
+       （近畿7府県=福井/滋賀/京都/大阪/兵庫/奈良/和歌山に影響）。
+       「押しても無反応にしない」以前に、エラーページを見せるのが最悪なので差し替え。
+       新URLは 200・リダイレクトなしを実測済み。 */
+    url: "https://www.kkr.mlit.go.jp/road/strategy/camera.html",
     label: "近畿地方整備局のライブカメラ",
   };
   const shikoku: LiveCameraLink = {
