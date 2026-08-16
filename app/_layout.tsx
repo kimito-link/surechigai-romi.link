@@ -75,10 +75,19 @@ function loadAuthProviders(): Promise<AuthProviderComponents> {
   }
   return authProvidersPromise;
 }
-/** ClerkRootProvider と OnboardingGate の両chunkが揃ったら一括で返す(揃うまで null)。 */
-function useAuthProviderComponents(): AuthProviderComponents | null {
+/**
+ * ClerkRootProvider と OnboardingGate の両chunkが揃ったら一括で返す(揃うまで null)。
+ *
+ * ★2026-08-17: `enabled` を追加した。それまで無条件に読み込んでいたため、
+ * **未ログインのゲストでも clerk-root-provider chunk 762KB を取得**していた
+ * （実測: ゲストのトップページで読まれるJS 2126KB のうち最大がこれ）。
+ * ゲストWebシェルでは ClerkRootProvider を描画しないので、chunk も要らない。
+ * TBT 1,780ms の主因（Script Evaluation 2,127ms）に効く。
+ */
+function useAuthProviderComponents(enabled: boolean): AuthProviderComponents | null {
   const [components, setComponents] = useState<AuthProviderComponents | null>(null);
   useEffect(() => {
+    if (!enabled) return;
     let canceled = false;
     void loadAuthProviders().then((m) => {
       if (!canceled) setComponents(m);
@@ -86,7 +95,7 @@ function useAuthProviderComponents(): AuthProviderComponents | null {
     return () => {
       canceled = true;
     };
-  }, []);
+  }, [enabled]);
   return components;
 }
 
@@ -304,7 +313,9 @@ export default function RootLayout() {
   // stack は「同一の要素インスタンス」としてどの分岐でも同じ位置に描画する。
   // 認証プロバイダ chunk の解決待ちを理由に stack ごとアンマウントしない(上のコメント参照)。
   const stack = <AppNavigationStack />;
-  const authProviders = useAuthProviderComponents();
+  /* ゲストWebシェルでは ClerkRootProvider を描画しないので chunk も読まない
+     （読むと 762KB が無駄になり TBT を押し上げる。2026-08-17 実測）。 */
+  const authProviders = useAuthProviderComponents(!useGuestWebShell);
 
   let appContent: ReactNode;
   if (isMissingClerkKey) {
