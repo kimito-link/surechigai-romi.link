@@ -18,6 +18,7 @@ import {
   type TrailPoint,
 } from "@/components/organisms/precision-tile-map";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
+import { PlaceContextBar } from "@/components/molecules/place-context-bar";
 import { color, contentMaxWidth } from "@/theme/tokens";
 import { useResponsive } from "@/hooks/use-responsive";
 import { isNarrowTrailRow } from "@/lib/layout/responsive-layout";
@@ -67,6 +68,14 @@ export function TrailHistoryList({
           <Text style={styles.hint}>保存された足あとの地点</Text>
         ) : null}
       </View>
+
+      {/* ★2026-08-16: 天気とライブカメラは実装済みだったが「地図のピンを押して開く
+          シートの中」にしかなく、触らないと気づけなかった。最新地点の分だけ
+          ここに常時出して、押さなくても目に入るようにする。 */}
+      <PlaceContextBar
+        prefecture={shown[0]?.prefecture}
+        municipality={shown[0]?.municipality}
+      />
 
       {shown.map((point, index) => {
         const visibility = parseLocationVisibility(point.visibility);
