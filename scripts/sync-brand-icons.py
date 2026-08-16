@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -86,24 +87,20 @@ def save_android_foreground(out: Path) -> None:
 
 # iOS Safari の PWA (ホーム画面追加後の起動時) 向けスプラッシュ画像。
 # apple-touch-startup-image はデバイス毎の画面解像度(width x height, px単位)に
-# 個別の画像+media queryが必要。主要なiPhone/iPad解像度をカバーする。
-# (width, height, device-pixel-ratio) — CSS論理ピクセルではなく実ピクセルで指定
-IOS_STARTUP_SIZES = (
-    # ★2026-08-16: 1320x2868 / 1206x2622 が抜けており、iPhone 16 Pro Max の実機PWAで
-    # スプラッシュが一度も出ていなかった（実機録画で確認）。iOS は解像度が一致しない
-    # apple-touch-startup-image を無視するため、機種が増えたらここに足すこと。
-    (1206, 2622, 3),  # iPhone 16 Pro (論理 402x874)
-    (1320, 2868, 3),  # iPhone 16 Pro Max (論理 440x956)
-    (1170, 2532, 3),  # iPhone 12/13/14
-    (1179, 2556, 3),  # iPhone 14 Pro/15/16
-    (1284, 2778, 3),  # iPhone 12/13/14 Pro Max
-    (1290, 2796, 3),  # iPhone 14/15 Pro Max
-    (1080, 2340, 3),  # iPhone 12/13 mini系
-    (828, 1792, 2),  # iPhone 11/XR
-    (750, 1334, 2),  # iPhone SE/8/7/6s
-    (1668, 2388, 2),  # iPad Pro 11
-    (2048, 2732, 2),  # iPad Pro 12.9
-)
+# 個別の画像+media queryが必要で、**解像度が一致しないものは iOS に無視される**。
+#
+# ★2026-08-16: この表を手で維持していたため公式20解像度のうち9件しか無く、
+# iPhone 16/17 Pro Max (1320x2868) 等でスプラッシュが一度も出ていなかった（実機録画で確認）。
+# 機種が出るたびに穴が空く構造だったので、**手書きをやめて公式仕様データ駆動**にした。
+#   正本: scripts/data/ios-launch-sizes.json（手で編集しない）
+#   由来: pwa-asset-generator (elegantapp) が Apple Human Interface Guidelines から
+#         収集している apple-fallback-data.json（同ツールは毎日仕様変更を監視している）
+#   更新: pnpm splash:sync（新機種が出たらこれを実行するだけ）
+# 横向きを持たないのは manifest.json の orientation が portrait 固定のため。
+def load_ios_startup_sizes() -> list:
+    """公式仕様データ(縦向き)を読む。各要素は px / logical / dpr / device を持つ。"""
+    raw = (ROOT / "scripts/data/ios-launch-sizes.json").read_text(encoding="utf-8")
+    return json.loads(raw)["portrait"]
 
 
 def save_ios_startup_image(width: int, height: int, out: Path) -> None:
@@ -137,7 +134,8 @@ def main() -> None:
     save_android_foreground(ROOT / "assets/images/android-icon-foreground.png")
 
     # iOS Safari PWA向けスプラッシュ（apple-touch-startup-image）
-    for w, h, _dpr in IOS_STARTUP_SIZES:
+    for spec in load_ios_startup_sizes():
+        w, h = spec["px"]
         save_ios_startup_image(w, h, ROOT / f"public/splash/ios-{w}x{h}.png")
     # media属性なしのフォールバック（新機種等でdevice-width/heightが未登録の解像度でも
     # スプラッシュが真っ黒/無地にならないようにする保険）。

@@ -1,0 +1,247 @@
+{
+  "_source": "pwa-asset-generator (elegantapp) apple-fallback-data.json — Apple Human Interface Guidelines 由来",
+  "_note": "縦向きのみ（manifest.orientation=portrait）。手で編集しない。更新は pnpm splash:sync。",
+  "_syncedAt": "2026-08-16",
+  "portrait": [
+    {
+      "px": [
+        640,
+        1136
+      ],
+      "logical": [
+        320,
+        568
+      ],
+      "dpr": 2,
+      "device": "iPhone SE 4-inch"
+    },
+    {
+      "px": [
+        750,
+        1334
+      ],
+      "logical": [
+        375,
+        667
+      ],
+      "dpr": 2,
+      "device": "iPhone 8"
+    },
+    {
+      "px": [
+        828,
+        1792
+      ],
+      "logical": [
+        414,
+        896
+      ],
+      "dpr": 2,
+      "device": "iPhone 11"
+    },
+    {
+      "px": [
+        1125,
+        2436
+      ],
+      "logical": [
+        375,
+        812
+      ],
+      "dpr": 3,
+      "device": "iPhone 13 mini"
+    },
+    {
+      "px": [
+        1170,
+        2532
+      ],
+      "logical": [
+        390,
+        844
+      ],
+      "dpr": 3,
+      "device": "iPhone 16e"
+    },
+    {
+      "px": [
+        1179,
+        2556
+      ],
+      "logical": [
+        393,
+        852
+      ],
+      "dpr": 3,
+      "device": "iPhone 16"
+    },
+    {
+      "px": [
+        1206,
+        2622
+      ],
+      "logical": [
+        402,
+        874
+      ],
+      "dpr": 3,
+      "device": "iPhone 17 Pro"
+    },
+    {
+      "px": [
+        1242,
+        2208
+      ],
+      "logical": [
+        414,
+        736
+      ],
+      "dpr": 3,
+      "device": "iPhone 8 Plus"
+    },
+    {
+      "px": [
+        1242,
+        2688
+      ],
+      "logical": [
+        414,
+        896
+      ],
+      "dpr": 3,
+      "device": "iPhone 11 Pro Max"
+    },
+    {
+      "px": [
+        1260,
+        2736
+      ],
+      "logical": [
+        420,
+        912
+      ],
+      "dpr": 3,
+      "device": "iPhone Air"
+    },
+    {
+      "px": [
+        1284,
+        2778
+      ],
+      "logical": [
+        428,
+        926
+      ],
+      "dpr": 3,
+      "device": "iPhone 14 Plus"
+    },
+    {
+      "px": [
+        1290,
+        2796
+      ],
+      "logical": [
+        430,
+        932
+      ],
+      "dpr": 3,
+      "device": "iPhone 16 Plus"
+    },
+    {
+      "px": [
+        1320,
+        2868
+      ],
+      "logical": [
+        440,
+        956
+      ],
+      "dpr": 3,
+      "device": "iPhone 17 Pro Max"
+    },
+    {
+      "px": [
+        1488,
+        2266
+      ],
+      "logical": [
+        744,
+        1133
+      ],
+      "dpr": 2,
+      "device": "iPad mini 8.3-inch"
+    },
+    {
+      "px": [
+        1536,
+        2048
+      ],
+      "logical": [
+        768,
+        1024
+      ],
+      "dpr": 2,
+      "device": "iPad Pro 9.7-inch"
+    },
+    {
+      "px": [
+        1620,
+        2160
+      ],
+      "logical": [
+        810,
+        1080
+      ],
+      "dpr": 2,
+      "device": "iPad 10.2-inch"
+    },
+    {
+      "px": [
+        1640,
+        2360
+      ],
+      "logical": [
+        820,
+        1180
+      ],
+      "dpr": 2,
+      "device": "iPad Air 11-inch"
+    },
+    {
+      "px": [
+        1668,
+        2224
+      ],
+      "logical": [
+        834,
+        1112
+      ],
+      "dpr": 2,
+      "device": "iPad Air 10.5-inch"
+    },
+    {
+      "px": [
+        1668,
+        2388
+      ],
+      "logical": [
+        834,
+        1194
+      ],
+      "dpr": 2,
+      "device": "iPad Pro 11-inch"
+    },
+    {
+      "px": [
+        2048,
+        2732
+      ],
+      "logical": [
+        1024,
+        1366
+      ],
+      "dpr": 2,
+      "device": "iPad Pro 12.9-inch"
+    }
+  ]
+}

@@ -66,61 +66,128 @@ export default function Root({ children }: PropsWithChildren) {
             スプラッシュが一度も出ていなかった（実機録画で確認）。iOS は解像度が
             一致しない apple-touch-startup-image を無視するので、機種が増えたら
             scripts/sync-brand-icons.py の IOS_STARTUP_SIZES と両方に足すこと。 */}
+        {/* SPLASH-LINKS:BEGIN — 自動生成。手で編集しない（pnpm splash:sync で再生成） */}
+        {/* iPhone SE 4-inch */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1206x2622.png"
-          media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 402px) and (device-height: 874px) and (resolution: 3dppx) and (orientation: portrait)"
+          href="/splash/ios-640x1136.png"
+          media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 320px) and (device-height: 568px) and (resolution: 2dppx) and (orientation: portrait)"
         />
-        <link
-          rel="apple-touch-startup-image"
-          href="/splash/ios-1320x2868.png"
-          media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 440px) and (device-height: 956px) and (resolution: 3dppx) and (orientation: portrait)"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          href="/splash/ios-1170x2532.png"
-          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 390px) and (device-height: 844px) and (resolution: 3dppx) and (orientation: portrait)"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          href="/splash/ios-1179x2556.png"
-          media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 393px) and (device-height: 852px) and (resolution: 3dppx) and (orientation: portrait)"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          href="/splash/ios-1284x2778.png"
-          media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 428px) and (device-height: 926px) and (resolution: 3dppx) and (orientation: portrait)"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          href="/splash/ios-1290x2796.png"
-          media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 430px) and (device-height: 932px) and (resolution: 3dppx) and (orientation: portrait)"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          href="/splash/ios-1080x2340.png"
-          media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 360px) and (device-height: 780px) and (resolution: 3dppx) and (orientation: portrait)"
-        />
-        <link
-          rel="apple-touch-startup-image"
-          href="/splash/ios-828x1792.png"
-          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 414px) and (device-height: 896px) and (resolution: 2dppx) and (orientation: portrait)"
-        />
+        {/* iPhone 8 */}
         <link
           rel="apple-touch-startup-image"
           href="/splash/ios-750x1334.png"
           media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 375px) and (device-height: 667px) and (resolution: 2dppx) and (orientation: portrait)"
         />
+        {/* iPhone 11 */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-828x1792.png"
+          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 414px) and (device-height: 896px) and (resolution: 2dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 13 mini */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1125x2436.png"
+          media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 375px) and (device-height: 812px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 16e */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1170x2532.png"
+          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 390px) and (device-height: 844px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 16 */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1179x2556.png"
+          media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 393px) and (device-height: 852px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 17 Pro */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1206x2622.png"
+          media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 402px) and (device-height: 874px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 8 Plus */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1242x2208.png"
+          media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 414px) and (device-height: 736px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 11 Pro Max */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1242x2688.png"
+          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 414px) and (device-height: 896px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone Air */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1260x2736.png"
+          media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 420px) and (device-height: 912px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 14 Plus */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1284x2778.png"
+          media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 428px) and (device-height: 926px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 16 Plus */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1290x2796.png"
+          media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 430px) and (device-height: 932px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 17 Pro Max */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1320x2868.png"
+          media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 440px) and (device-height: 956px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPad mini 8.3-inch */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1488x2266.png"
+          media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 744px) and (device-height: 1133px) and (resolution: 2dppx) and (orientation: portrait)"
+        />
+        {/* iPad Pro 9.7-inch */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1536x2048.png"
+          media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 768px) and (device-height: 1024px) and (resolution: 2dppx) and (orientation: portrait)"
+        />
+        {/* iPad 10.2-inch */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1620x2160.png"
+          media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 810px) and (device-height: 1080px) and (resolution: 2dppx) and (orientation: portrait)"
+        />
+        {/* iPad Air 11-inch */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1640x2360.png"
+          media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 820px) and (device-height: 1180px) and (resolution: 2dppx) and (orientation: portrait)"
+        />
+        {/* iPad Air 10.5-inch */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1668x2224.png"
+          media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 834px) and (device-height: 1112px) and (resolution: 2dppx) and (orientation: portrait)"
+        />
+        {/* iPad Pro 11-inch */}
         <link
           rel="apple-touch-startup-image"
           href="/splash/ios-1668x2388.png"
           media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 834px) and (device-height: 1194px) and (resolution: 2dppx) and (orientation: portrait)"
         />
+        {/* iPad Pro 12.9-inch */}
         <link
           rel="apple-touch-startup-image"
           href="/splash/ios-2048x2732.png"
           media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 1024px) and (device-height: 1366px) and (resolution: 2dppx) and (orientation: portrait)"
         />
+{/* SPLASH-LINKS:END */}
         {/* フォールバック（media省略）: 新機種等で上記のどのdevice-width/heightにも
             一致しない場合に備える。iOS Safariはmedia無しのapple-touch-startup-imageを
             「どれにも一致しなかった時の既定」として扱う実装がある。 */}
