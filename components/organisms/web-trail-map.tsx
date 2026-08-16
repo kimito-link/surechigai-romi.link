@@ -201,6 +201,20 @@ export function WebTrailMap({
       ]}
     >
       {topContent}
+
+      {/* ★2026-08-16: 天気とライブカメラの置き場所を2回外している。
+          (1)足あと一覧の中 → ページの137%地点でスクロールしないと気づけない
+          (2)地図の直後     → 地図コンテナが画面高いっぱい(720px)を占めるので
+                              その直後もやはり画面外（実測 985px / ビューポート 720px）
+          地図の「前」に置くのが唯一ファーストビューに入る位置。
+          場所の名前を見た直後に「そこは今どうなっているか」が続く並びでもある。 */}
+      {!isLoading && locations.length > 0 ? (
+        <PlaceContextBar
+          prefecture={locations[0]?.prefecture}
+          municipality={locations[0]?.municipality}
+        />
+      ) : null}
+
       <TabQueryShell
         isLoading={isLoading}
         isEmpty={locations.length === 0}
@@ -223,18 +237,6 @@ export function WebTrailMap({
           onPointPress={setSelectedPoint}
         />
       </TabQueryShell>
-
-      {/* ★2026-08-16: 天気とライブカメラを足あと一覧の中に置いたところ、
-          画面の 136% 地点（初期表示の外）になり「スクロールしないと気づかれない」
-          状態になっていた。押さないと気づかれない → スクロールしないと気づかれない
-          と失敗が横滑りしていたので、地図の直後に上げる。
-          地図でその場所を見た流れのまま「いまどうなっているか」が目に入る位置。 */}
-      {!isLoading && locations.length > 0 ? (
-        <PlaceContextBar
-          prefecture={locations[0]?.prefecture}
-          municipality={locations[0]?.municipality}
-        />
-      ) : null}
 
       <View style={styles.summaryRow}>
         <SummaryStatCard
