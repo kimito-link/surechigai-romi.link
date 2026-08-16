@@ -21,6 +21,7 @@ import {
   youtubeLiveSearchUrl,
 } from "@/lib/live-camera/live-camera-links";
 import { openExternalUrl } from "@/lib/navigation/external-links";
+import { resolvePlaceContext } from "@/lib/place-context/resolve-place-context";
 import { color, contentMaxWidth } from "@/theme/tokens";
 
 type PlaceContextBarProps = {
@@ -48,12 +49,13 @@ export function PlaceContextBar({
   // 外部リンクが開けなかったことを黙って捨てない（無反応が最悪の体験）
   const [openFailed, setOpenFailed] = useState(false);
 
-  const fallbackPref = prefecture ? null : fallbackPrefecture;
-
-  /** 実際に見せる場所。自分の足あと優先、無ければ「いま人がいる県」。 */
-  const shownPref = prefecture ?? fallbackPref;
-  const shownMuni = prefecture ? municipality : null;
-  const isFallback = !prefecture && !!fallbackPref;
+  /* どの場所を見せるかの判断は純粋関数に切り出してある
+     （JSX の中に書いていたため「足あと0件で機能ごと消える」に気づけなかった）。 */
+  const {
+    prefecture: shownPref,
+    municipality: shownMuni,
+    isFallback,
+  } = resolvePlaceContext({ prefecture, municipality, fallbackPrefecture });
 
   const { weather } = usePrefWeather(shownPref, shownMuni);
   const weatherLine = formatWeatherLine(shownPref, weather);
