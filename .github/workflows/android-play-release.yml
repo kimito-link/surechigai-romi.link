@@ -78,7 +78,10 @@ jobs:
       # From app.config.json (stores.playPackageName)
       PLAY_PACKAGE_NAME: com.kimito.link.surechigai
       # internal = testing track. production starts Google review automatically.
-      PLAY_TRACK: internal
+      # ★2026-08-16: 一般公開のため production に変更。
+      # これまで internal 固定だったため、production には 589 が残ったまま
+      # 590/591 が内部テストにしか届いていなかった。
+      PLAY_TRACK: production
 
     steps:
       - name: Checkout
