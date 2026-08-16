@@ -34,10 +34,14 @@ export type GridValues = {
   lngGrid: number;
 };
 
-export type LatLng = {
-  lat: number;
-  lng: number;
-};
+/* 座標の型と検証は依存ゼロの ./lat-lng.ts に移した（2026-08-16）。
+   クライアントが assertFiniteLatLng だけのために geo.ts を import すると
+   h3-js 全体がWebバンドルに載ってしまうため。
+   既存の import を壊さないよう、ここから再エクスポートしておく。
+   ★新しくクライアントから使うときは "./lat-lng" を直接 import すること。 */
+import type { LatLng } from "./lat-lng.js";
+export type { LatLng } from "./lat-lng.js";
+export { assertFiniteLatLng } from "./lat-lng.js";
 
 // ---------------------------------------------------------------------------
 // 関数
@@ -103,21 +107,4 @@ export function haversineMeters(a: LatLng, b: LatLng): number {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/**
- * lat/lng が有限な実数かどうかを検証して返す。
- * NaN / Infinity / 非 number の場合は null。
- */
-export function assertFiniteLatLng(
-  lat: unknown,
-  lng: unknown
-): LatLng | null {
-  if (
-    typeof lat === "number" &&
-    typeof lng === "number" &&
-    Number.isFinite(lat) &&
-    Number.isFinite(lng)
-  ) {
-    return { lat, lng };
-  }
-  return null;
-}
+/* assertFiniteLatLng は ./lat-lng.ts へ移動（上部で再エクスポート済み）。 */

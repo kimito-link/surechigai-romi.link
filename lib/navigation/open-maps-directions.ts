@@ -4,7 +4,10 @@
  */
 
 import { Linking, Platform } from "react-native";
-import { assertFiniteLatLng, type LatLng } from "@/modules/encounter/core/geo";
+/* ★geo.ts ではなく lat-lng.ts から取る（2026-08-16）。
+   geo.ts は h3-js を import しているため、ここ経由で h3-js 全体が
+   Webバンドルに載っていた（ゲストのトップページは地理計算をしないのに）。 */
+import { assertFiniteLatLng, type LatLng } from "@/modules/encounter/core/lat-lng";
 
 export type MapsTravelMode = "driving" | "walking" | "transit";
 
