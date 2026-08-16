@@ -157,10 +157,23 @@ const AUTH_LOADING_PLACEHOLDER: AuthState = {
  * +html.tsx が掛けたブートベール（data-auth-boot）を外す。
  * このモジュールの実コードを変えると _layout チャンクが改名される点も利用している
  * （CDNキャッシュ地雷の汚染払い。docs/investigation 参照）。
+ *
+ * ★2026-08-16: マウント直後に同期で外していたため、iOS実機PWAで
+ * 「ベール → 無地＋タブバーだけ → 本体」と、中身が描けていない空白が露出していた
+ * （実機録画で確認）。React のマウントは「描画が終わった」ことを意味しないので、
+ * 2フレーム待ってから外す。1フレームだとレイアウト直後・ペイント前で足りない。
+ * 保険の6秒タイマーは +html.tsx 側にあるので、ここで失敗しても永久に残ることはない。
  */
 function releaseBootVeil(): void {
   if (Platform.OS !== "web" || typeof document === "undefined") return;
-  document.documentElement.removeAttribute("data-auth-boot");
+
+  const remove = () => document.documentElement.removeAttribute("data-auth-boot");
+
+  if (typeof requestAnimationFrame !== "function") {
+    remove();
+    return;
+  }
+  requestAnimationFrame(() => requestAnimationFrame(remove));
 }
 
 function MissingClerkKeyScreen() {

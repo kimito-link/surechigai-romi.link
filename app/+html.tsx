@@ -15,6 +15,10 @@ export default function Root({ children }: PropsWithChildren) {
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+        {/* ブートベールのマークを最優先で取りに行く。ここに置かないと、
+            Reactマウント（＝ベール解除）までに読み終わらず絵が出ないまま消える
+            （2026-08-16 iOS実機PWAの録画で実際にそうなっていた）。 */}
+        <link rel="preload" as="image" href="/boot-mark.png" fetchPriority="high" />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
@@ -205,10 +209,27 @@ export default function Root({ children }: PropsWithChildren) {
             既定は display:none。上のスクリプトが data-auth-boot=1 を付けた瞬間に CSS で display:flex になる。
             children より前に置くので、プリレンダHTMLの描画前に前面へ出る。 */}
         <div id="romi-boot-veil" aria-hidden="true">
-          {/* ★アプリアイコン(pwa-icon-192.png)ではなくキャラクター本人を出す。
-              アイコンだと「ゆっくりりんくのキャラが入っていない」状態になり、
-              起動直後にブランドが伝わらない（2026-08-15 指摘）。 */}
-          <img className="romi-boot-chara" src="/lp/img/chara/link.png" alt="" width={260} height={260} />
+          {/* ★2026-08-16: iOS実機PWAの録画で「灰色→無地＋タブバー→本体」と流れ、
+              起動画面の絵が一度も出ていなかった。原因は参照先が
+              /lp/img/chara/link.png = 1500x1500 / 500KB で、表示は最大260pxなのに
+              6倍の解像度を起動直後に読ませていたこと。読み終わる前に
+              releaseBootVeil()（Reactマウント直後）でベールが外れて絵が出ない。
+
+              /boot-mark.png は pwa-icon-512 から起こした 520px / 27KB の
+              **アプリのマーク**（ホーム画面のアイコンと同じ絵柄・角丸付き）。
+              裸のキャラではなくマークにするのは、起動画面とホーム画面の
+              アイコンが一致していないと「別のアプリが開いた」ように見えるため。
+              fetchpriority=high と <head> の preload で最優先で取りに行く。 */}
+          <img
+            className="romi-boot-chara"
+            src="/boot-mark.png"
+            alt=""
+            width={260}
+            height={260}
+            // @ts-expect-error fetchpriority は React の型にまだ無い（DOM属性としては有効）
+            fetchpriority="high"
+            decoding="sync"
+          />
           <div className="romi-boot-title">君斗りんくのすれ違ひ通信</div>
           <div className="romi-boot-spinner" />
         </div>
