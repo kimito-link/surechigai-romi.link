@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 33; // 2026-08-15: 実機で events-host-panel の子チャンクが Loading module 失敗（古い親チャンクが旧チャンク名を指していた）
+export const CDN_CACHE_EPOCH = 34; // 2026-08-16: 天気バーを地図直後へ移したのに旧チャンクが配信され続けた（SW/caches を消しても 137% 地点のまま）
