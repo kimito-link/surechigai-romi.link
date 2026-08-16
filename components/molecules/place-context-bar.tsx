@@ -26,16 +26,39 @@ import { color, contentMaxWidth } from "@/theme/tokens";
 type PlaceContextBarProps = {
   prefecture: string | null | undefined;
   municipality?: string | null;
+  /**
+   * 自分の足あとがまだ無いときに代わりに見せる県（例: いま一番人がいる県）。
+   *
+   * ★2026-08-16: 足あとが1件も無いとこの機能ごと画面から消えていた。
+   * 「データが無いと機能が存在しない」のはユーザーから見れば無いのと同じなので、
+   * 始めたばかりの人にも「誰かがいる場所の今」が見えるようにする。
+   *
+   * 取得は呼び出し側の責任にしてある。ここで trpc.useQuery を呼ぶと
+   * tRPC Provider 解決前に "Unable to find tRPC Context" で画面ごと落ちるため
+   * （enabled:false では防げない。2026-07 に実障害あり）。
+   */
+  fallbackPrefecture?: string | null;
 };
 
-export function PlaceContextBar({ prefecture, municipality }: PlaceContextBarProps) {
+export function PlaceContextBar({
+  prefecture,
+  municipality,
+  fallbackPrefecture = null,
+}: PlaceContextBarProps) {
   // 外部リンクが開けなかったことを黙って捨てない（無反応が最悪の体験）
   const [openFailed, setOpenFailed] = useState(false);
 
-  const { weather } = usePrefWeather(prefecture, municipality);
-  const weatherLine = formatWeatherLine(prefecture, weather);
-  const cameraLink = liveCameraLinkFor(prefecture);
-  const youtubeUrl = youtubeLiveSearchUrl(municipality ?? prefecture ?? null);
+  const fallbackPref = prefecture ? null : fallbackPrefecture;
+
+  /** 実際に見せる場所。自分の足あと優先、無ければ「いま人がいる県」。 */
+  const shownPref = prefecture ?? fallbackPref;
+  const shownMuni = prefecture ? municipality : null;
+  const isFallback = !prefecture && !!fallbackPref;
+
+  const { weather } = usePrefWeather(shownPref, shownMuni);
+  const weatherLine = formatWeatherLine(shownPref, weather);
+  const cameraLink = liveCameraLinkFor(shownPref);
+  const youtubeUrl = youtubeLiveSearchUrl(shownMuni ?? shownPref ?? null);
 
   const handleOpen = async (url: string) => {
     const opened = await openExternalUrl(url);
@@ -47,6 +70,14 @@ export function PlaceContextBar({ prefecture, municipality }: PlaceContextBarPro
 
   return (
     <View style={styles.wrap}>
+      {/* 自分の足あとではなく「いま人がいる県」を出しているときは、
+          それが誰の場所なのかを必ず明示する（自分の現在地だと誤解させない）。 */}
+      {isFallback ? (
+        <Text style={styles.fallbackNote}>
+          いま人がいるのは {shownPref}。チェックインすると、ここがあなたの場所になります
+        </Text>
+      ) : null}
+
       {weatherLine ? (
         <View style={styles.weatherRow}>
           <MaterialIcons name="wb-sunny" size={14} color={color.textSecondary} />
@@ -115,6 +146,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 8,
     gap: 8,
+  },
+  /* 足あとが無い人に「いま人がいる県」を見せているときの注記。
+     自分の現在地だと誤解させないために必ず出す。 */
+  fallbackNote: {
+    color: color.textMuted,
+    fontSize: 11,
+    fontWeight: "700",
+    lineHeight: 16,
   },
   weatherRow: {
     flexDirection: "row",

@@ -62,6 +62,23 @@ describe("いまの様子バーの出し分け", () => {
     expect(barIsEmpty(null, null, null)).toBe(true);
   });
 
+  it("足あとが無くてもフォールバック県があればバーは出る（機能ごと消さない）", () => {
+    // ★2026-08-16: 「データが無いと機能が存在しない」のは無いのと同じ、という指摘。
+    // 自分の足あとが0件でも「いま人がいる県」で天気とライブカメラを出す。
+    const shown = (mine: string | null, fallback: string | null) => mine ?? fallback;
+    for (const fb of ["長野県", "北海道", "東京都"]) {
+      const pref = shown(null, fb);
+      expect(barIsEmpty(pref, null, null)).toBe(false);
+      // 国交省が非対応の県でも YouTube 導線は残るので空にならない
+      expect(youtubeLiveSearchUrl(pref)).not.toBeNull();
+    }
+  });
+
+  it("自分の足あとがあるときはフォールバックを使わない", () => {
+    const shown = (mine: string | null, fallback: string | null) => mine ?? fallback;
+    expect(shown("長野県", "北海道")).toBe("長野県");
+  });
+
   it("市区町村があれば YouTube 検索は市区町村名で引く（県より具体的）", () => {
     const url = youtubeLiveSearchUrl("岡谷市");
     expect(url).toContain(encodeURIComponent("岡谷市"));

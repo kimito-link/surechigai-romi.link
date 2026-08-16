@@ -56,6 +56,16 @@ export function MapAuthenticatedScreen() {
     },
   );
 
+  /* 足あとがまだ無い人に見せる代わりの県（いま一番人がいる県）。
+     「データが無いと天気もライブカメラも消える＝機能が無いのと同じ」を避ける。
+     位置情報は新しく取らない（既存の公開クエリに相乗り）。 */
+  const { data: activeData } = trpc.zukan.activePrefectures.useQuery(undefined, {
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+  const fallbackPrefecture = activeData?.prefectures?.[0]?.prefecture ?? null;
+
   const onRefreshData = useCallback(() => {
     void Promise.all([refetchAreas(), refetchTrail()]);
   }, [refetchAreas, refetchTrail]);
@@ -120,6 +130,7 @@ export function MapAuthenticatedScreen() {
       <LazyWebTrailMap
         visited={visited}
         locations={locations}
+        fallbackPrefecture={fallbackPrefecture}
         municipalityCount={municipalityCount}
         encounterCount={encounterCount}
         isLoading={isLoading}

@@ -52,6 +52,20 @@ describe("いまの様子バーの配置", () => {
     expect(bar).toBeLessThan(list);
   });
 
+  it("軌跡タブ: 足あと0件でも描画する（locations.length > 0 で閉じない）", () => {
+    // ★2026-08-16: 足あとが無いと機能ごと消えていた。「データが無いと存在しない」は
+    // ユーザーから見れば無いのと同じなので、0件でもフォールバック県で出す。
+    const bar = TRAIL_MAP.indexOf("<PlaceContextBar");
+    // バー直前の条件式に locations.length > 0 が含まれていないこと
+    const before = TRAIL_MAP.slice(Math.max(0, bar - 400), bar);
+    const lastCondition = before.slice(before.lastIndexOf("{"));
+    expect(lastCondition).not.toContain("locations.length > 0");
+  });
+
+  it("軌跡タブ: フォールバック県を受け取って渡している", () => {
+    expect(TRAIL_MAP).toContain("fallbackPrefecture");
+  });
+
   it("履歴一覧コンポーネントの中には置かない（一覧の中はスクロールの先）", () => {
     const listSrc = readFileSync(
       resolve(ROOT, "components/molecules/trail-history-list.tsx"),

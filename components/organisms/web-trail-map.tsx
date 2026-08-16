@@ -39,6 +39,8 @@ export type VisitedAreaSummary = {
 type WebTrailMapProps = {
   visited: VisitedAreaSummary[];
   locations: TrailPoint[];
+  /** 足あとがまだ無いときに「いまの様子」で代わりに見せる県（いま人がいる県） */
+  fallbackPrefecture?: string | null;
   municipalityCount?: number;
   encounterCount?: number;
   isLoading?: boolean;
@@ -123,6 +125,7 @@ function SummaryStatCard({
 export function WebTrailMap({
   visited,
   locations,
+  fallbackPrefecture = null,
   municipalityCount,
   encounterCount = 0,
   isLoading = false,
@@ -202,16 +205,22 @@ export function WebTrailMap({
     >
       {topContent}
 
-      {/* ★2026-08-16: 天気とライブカメラの置き場所を2回外している。
+      {/* その場所の「いま」（天気・ライブカメラ）。
+          ★2026-08-16: 置き場所を2回外している。
           (1)足あと一覧の中 → ページの137%地点でスクロールしないと気づけない
           (2)地図の直後     → 地図コンテナが画面高いっぱい(720px)を占めるので
                               その直後もやはり画面外（実測 985px / ビューポート 720px）
-          地図の「前」に置くのが唯一ファーストビューに入る位置。
-          場所の名前を見た直後に「そこは今どうなっているか」が続く並びでもある。 */}
-      {!isLoading && locations.length > 0 ? (
+          地図の「前」が唯一ファーストビューに入る位置。場所の名前を見た直後に
+          「そこは今どうなっているか」が続く並びでもある。
+
+          足あとが0件でも出す。バー側が「いま人がいる県」にフォールバックするので、
+          始めたばかりの人にも意味のある情報が見える
+          （データが無いと機能ごと消える＝無いのと同じ、を避ける）。 */}
+      {!isLoading ? (
         <PlaceContextBar
           prefecture={locations[0]?.prefecture}
           municipality={locations[0]?.municipality}
+          fallbackPrefecture={fallbackPrefecture}
         />
       ) : null}
 
