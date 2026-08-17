@@ -18,7 +18,14 @@ const versionBase =
   process.env.GITHUB_SHA ||
   process.env.COMMIT_SHA ||
   "local";
-const version = `${versionBase}-${Date.now()}`.replace(/[^0-9a-zA-Z._-]/g, "-");
+// 2026-08-17 障害: `<sha>-<Date.now()>` の形式（ハイフン以降にタイムスタンプ）を
+// 付けた URL に対し、Vercel が静的ファイルとして解決できず SPA の HTML を返し、
+// それを Cloudflare が cf-cache-status: HIT でキャッシュして全ページが白画面になった
+// （ブラウザは text/html を JS として実行できず "Requiring unknown module" で停止）。
+// SHA のみの形式は正しく application/javascript が返ることを実測済み。
+// ビルド毎に変わる値としては SHA だけで足りる（同一 SHA の再デプロイでは
+// 中身も同じなので、キャッシュを割る必要がない）。
+const version = String(versionBase).replace(/[^0-9a-zA-Z._]/g, "");
 
 function listHtml(dir, acc) {
   let entries;
