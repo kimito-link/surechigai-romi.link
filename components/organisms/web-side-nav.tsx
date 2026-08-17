@@ -93,7 +93,8 @@ export function WebSideNav() {
     <View style={styles.nav}>
       <BrandStamp variant="sideNav" />
       <NavLivePrefecturePanel />
-      <View style={styles.navItems}>
+      {/* role="tab" は tablist の中に無いと ARIA 違反（axe: aria-required-parent）。 */}
+      <View accessibilityRole="tablist" style={styles.navItems}>
         {NAV_ITEMS.map((item) => {
           const active = isActive(pathname, item);
           return (

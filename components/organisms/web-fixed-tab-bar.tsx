@@ -81,6 +81,8 @@ export function WebFixedTabBar() {
 
   return (
     <View
+      // role="tab" は tablist の中に無いと ARIA 違反（axe: aria-required-parent）。
+      accessibilityRole="tablist"
       style={[
         styles.bar,
         {
@@ -99,6 +101,9 @@ export function WebFixedTabBar() {
             onPressIn={() => prefetchTab(tab.prefetchKey)}
             style={styles.item}
             accessibilityRole="tab"
+            // compact ではラベルを描かないので、名前がアイコンだけになり
+            // アクセシブル名が消える（axe: aria-tab-name）。常に明示する。
+            accessibilityLabel={tab.label}
             accessibilityState={{ selected: active }}
           >
             <MaterialIcons name={tab.icon} size={24} color={tint} />

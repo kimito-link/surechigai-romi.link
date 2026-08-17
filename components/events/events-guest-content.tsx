@@ -359,7 +359,8 @@ export function EventsGuestContent() {
           { icon: "login", label: "表明はログイン" },
         ]}
       >
-      <View style={styles.segmentBar}>
+      {/* role="tab" は tablist の中に無いと ARIA 違反（axe: aria-required-parent）。 */}
+      <View accessibilityRole="tablist" style={styles.segmentBar}>
         {(
           [
             { key: "calendar", label: "予定", icon: "calendar-today" },
