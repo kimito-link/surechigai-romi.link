@@ -1,0 +1,58 @@
+/**
+ * PWA（standalone 起動）で X シェアが about:blank のまま止まらないことを守る。
+ *
+ * ★2026-08-17 実機report:
+ * ホーム画能から起動した PWA で X シェアを押すと、アプリ内ブラウザが
+ * **about:blank のまま固まる**（待機画面すら出ない）。
+ *
+ * 原因: standalone では `window.open("about:blank")` が別プロセスのアプリ内ブラウザを
+ * 開くため、あとから `popup.location.href` を差し替えても反映されない。
+ * 通常のブラウザタブ前提の「空タブを先に確保しておく」方式が成立しない。
+ *
+ * 対策: PWA では空タブを用意せず（popup: null）、遷移時に目的URLで一度だけ開く。
+ */
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const SRC = readFileSync(resolve(__dirname, "../lib/share.ts"), "utf8");
+
+describe("PWA でのシェア", () => {
+  it("standalone 判定を持っている", () => {
+    expect(SRC).toContain("function isStandalonePwa");
+    // display-mode と navigator.standalone の両方を見る（iOS は後者）
+    expect(SRC).toContain("(display-mode: standalone)");
+    expect(SRC).toMatch(/navigator[\s\S]{0,60}standalone/);
+  });
+
+  it("PWA では about:blank の空タブを開かない", () => {
+    const start = SRC.indexOf("export function prepareSharePopup");
+    const body = SRC.slice(start, SRC.indexOf("\n}", start));
+    const guard = body.indexOf("isStandalonePwa()");
+    const open = body.indexOf('window.open("about:blank"');
+    expect(guard).toBeGreaterThan(-1);
+    expect(open).toBeGreaterThan(-1);
+    // 空タブを開くより前で PWA を弾いていること
+    expect(guard).toBeLessThan(open);
+    expect(body).toMatch(/isStandalonePwa\(\)\)\s*return\s*\{\s*popup:\s*null\s*\}/);
+  });
+
+  it("popup が無いときは目的URLで新規タブを開く（現在タブを奪わない）", () => {
+    const start = SRC.indexOf("function openWebShareUrl");
+    const body = SRC.slice(start, SRC.indexOf("\n}", start));
+    expect(body).toContain("openInNewTab(twitterUrl)");
+    /* 現在のタブを差し替えるとアプリの画面が失われる（2026-08-04 の実障害）。
+       「してはいけない」と書いたコメントにも語が出るので、コメント行を除いて判定する。 */
+    const code = body
+      .split("\n")
+      .filter((l) => !/^\s*(\/\/|\/\*|\*)/.test(l))
+      .join("\n");
+    expect(code).not.toContain("window.location.assign");
+    expect(code).not.toMatch(/window\.location\.href\s*=/);
+  });
+
+  it("リンク発行には必ず上限がある（空タブが残り続けない）", () => {
+    expect(SRC).toContain("SHARE_SLUG_TIMEOUT_MS");
+    expect(SRC).toContain("ShareTimeoutError");
+  });
+});

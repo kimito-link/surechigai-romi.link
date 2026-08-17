@@ -78,8 +78,32 @@ export interface ShareContent {
  */
 const SHARE_POPUP_NAME = "surechigai-share";
 
+/**
+ * PWA（ホーム画面から起動した standalone）かどうか。
+ *
+ * ★2026-08-17 実機report: PWA で X シェアを押すと **about:blank のまま止まる**。
+ * standalone では `window.open("about:blank")` がアプリ内ブラウザ（SFSafariViewController 等）を
+ * 開き、その窓は別プロセス扱いになるため、あとから `popup.location.href` を差し替えても
+ * 反映されない。結果、待機画面すら出ない空タブが残る。
+ * → PWA では空タブを用意せず、目的URLで一度だけ開く。
+ */
+function isStandalonePwa(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (window.matchMedia?.("(display-mode: standalone)")?.matches) return true;
+    // iOS Safari の PWA は navigator.standalone（非標準）で判定する
+    return (window.navigator as { standalone?: boolean }).standalone === true;
+  } catch {
+    return false;
+  }
+}
+
 export function prepareSharePopup(): PreparedSharePopup | null {
   if (Platform.OS !== "web" || typeof window === "undefined") return null;
+
+  // PWA では空タブ方式が機能しない（about:blank のまま固まる）。
+  // popup を持たずに進み、遷移時に目的URLで直接開く。
+  if (isStandalonePwa()) return { popup: null };
 
   const popup = window.open("about:blank", SHARE_POPUP_NAME);
   if (popup) {
