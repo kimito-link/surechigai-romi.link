@@ -116,7 +116,15 @@ export function AuthPageIntro({ variant, appleEnabled = false }: AuthPageIntroPr
           }}
         >
           {MASCOTS.map((m) => (
-            <Image key={m.name} source={m.source} style={{ width: 96, height: 96 }} contentFit="contain" />
+            // expo-image の Web 実装は accessibilityLabel を <img alt> に出す
+            // （alt prop は通常表示の経路では効かない）。axe: image-alt
+            <Image
+              key={m.name}
+              source={m.source}
+              accessibilityLabel={m.name}
+              style={{ width: 96, height: 96 }}
+              contentFit="contain"
+            />
           ))}
         </View>
       </LinearGradient>

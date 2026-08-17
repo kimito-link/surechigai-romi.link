@@ -30,9 +30,17 @@ const ROUTES = [
   { path: "/map", name: "軌跡タブ(ゲスト)" },
   { path: "/zukan", name: "図鑑タブ(ゲスト)" },
   { path: "/sign-in", name: "ログイン" },
-  { path: "/legal/privacy", name: "プライバシーポリシー" },
-  { path: "/legal/terms", name: "利用規約" },
+  { path: "/privacy", name: "プライバシーポリシー" },
+  { path: "/terms", name: "利用規約" },
 ];
+
+/**
+ * 404 に落ちていないことを本文で確かめる。
+ * SPA は存在しないパスでも HTTP 200 を返すため、ステータスだけでは
+ * 「ルートが実在するか」を判定できない（実際 /legal/terms を検査対象に
+ * していて、404 画面に対して axe を回していた）。
+ */
+const NOT_FOUND_MARKER = "ページが見つかりません";
 
 /** これ未満の深刻度は報告するが失敗にはしない。 */
 const FAIL_IMPACTS = new Set(["serious", "critical"]);
@@ -63,6 +71,16 @@ async function analyzeRoute(page, base, route) {
   await page
     .waitForLoadState("networkidle", { timeout: 30000 })
     .catch(() => {});
+
+  // 404 画面を検査しても意味がない。存在しないパスを対象に書いていても
+  // SPA は 200 を返すので、本文を見て気づけるようにする。
+  const body = await page.evaluate(() => document.body.innerText);
+  if (body.includes(NOT_FOUND_MARKER)) {
+    throw new Error(`404 画面が表示された（ルートを確認: ${route.path}）`);
+  }
+  if (body.trim().length < 30) {
+    throw new Error(`本文がほぼ空（描画に失敗した可能性: ${route.path}）`);
+  }
 
   let builder = new AxeBuilder({ page }).withTags([
     "wcag2a",
