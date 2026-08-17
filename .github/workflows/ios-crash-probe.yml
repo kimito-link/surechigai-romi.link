@@ -234,8 +234,31 @@ jobs:
           }
 
           # 審査機と同クラスの iPad を最優先。名前は runner の在庫に依存するので候補を順に試す。
-          IPAD_NAME="$(xcrun simctl list devicetypes | grep -oE 'iPad Air 11-inch \(M3\)|iPad Air 13-inch \(M3\)|iPad Air \(5th generation\)|iPad Pro 11-inch \(M4\)|iPad \(10th generation\)' | head -1)"
-          IPHONE_NAME="$(xcrun simctl list devicetypes | grep -oE 'iPhone 17 Pro|iPhone 17|iPhone 16 Pro|iPhone 16|iPhone 15' | head -1)"
+          #
+          # ★ `grep -oE 'A|B|C' | head -1` は「候補の優先順」では選べない（2026-08-17 に踏んだ）。
+          #   grep は入力（devicetypes の一覧）の出現順に出すので、head -1 が拾うのは
+          #   「一覧で先に現れた機種」でしかない。実際、審査機と同じ iPad Air 11-inch (M3) が
+          #   在庫にあったのに iPad Pro 11-inch (M4) が選ばれ、**審査と違う機種で緑を出していた**。
+          #   候補を1つずつ順に問い合わせて、最初に見つかったものを採用する。
+          DEVICE_TYPES="$(xcrun simctl list devicetypes)"
+          pick_device() {
+            for cand in "$@"; do
+              if printf '%s\n' "$DEVICE_TYPES" | grep -qF "$cand"; then
+                printf '%s' "$cand"
+                return 0
+              fi
+            done
+            return 0
+          }
+          IPAD_NAME="$(pick_device \
+            'iPad Air 11-inch (M3)' \
+            'iPad Air 13-inch (M3)' \
+            'iPad Air 11-inch (M4)' \
+            'iPad Air (5th generation)' \
+            'iPad Pro 11-inch (M4)' \
+            'iPad (10th generation)')"
+          IPHONE_NAME="$(pick_device \
+            'iPhone 17 Pro' 'iPhone 17' 'iPhone 16 Pro' 'iPhone 16' 'iPhone 15')"
           echo "picked iPad='$IPAD_NAME' iPhone='$IPHONE_NAME'"
 
           [ -n "$IPAD_NAME" ] && probe_device "$IPAD_NAME" || echo "::warning::no iPad device type available"
