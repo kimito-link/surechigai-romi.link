@@ -18,13 +18,25 @@ const versionBase =
   process.env.GITHUB_SHA ||
   process.env.COMMIT_SHA ||
   "local";
-// 2026-08-17 障害: `<sha>-<Date.now()>` の形式（ハイフン以降にタイムスタンプ）を
-// 付けた URL に対し、Vercel が静的ファイルとして解決できず SPA の HTML を返し、
-// それを Cloudflare が cf-cache-status: HIT でキャッシュして全ページが白画面になった
-// （ブラウザは text/html を JS として実行できず "Requiring unknown module" で停止）。
-// SHA のみの形式は正しく application/javascript が返ることを実測済み。
-// ビルド毎に変わる値としては SHA だけで足りる（同一 SHA の再デプロイでは
-// 中身も同じなので、キャッシュを割る必要がない）。
+// 2026-08-17 障害: 本番の全ページが白画面になった。
+// ある1つのチャンクURL（?v=<sha>-<Date.now()> 付き）に対して
+// Cloudflare が SPA の HTML を cf-cache-status: HIT で配信し続けており、
+// ブラウザは text/html を JS として実行できず
+// "Refused to execute script" → "Requiring unknown module" で停止していた。
+//
+// 注意: 「タイムスタンプ付きの形式なら必ず壊れる」わけではない。
+// 事後に同形式の別URLを叩くと正しく application/javascript が返る。
+// この仕組み自体は 2026-06-27 から 566 コミット分稼働している。
+// 壊れたのは特定URLに対する Cloudflare のキャッシュ内容であり、
+// 根本原因は CDN 側の挙動。ここでの対処は再発確率を下げるもので、
+// 同じことが SHA のみの URL でも起こりうる。
+//
+// Date.now() を外す理由: デプロイの度に新しいURLが生まれると、
+// 「まだ誰も踏んでいない＝CDNが何を掴むか分からないURL」を毎回作ることになる。
+// SHA だけなら同一ビルドで同じURLに収束する（中身も同じなので割る必要がない）。
+//
+// 白画面を見たら version.json やデプロイ成功ではなく、
+// 実ブラウザで chunk の content-type を見ること（curl では両方 JS に見える）。
 const version = String(versionBase).replace(/[^0-9a-zA-Z._]/g, "");
 
 function listHtml(dir, acc) {

@@ -53,12 +53,13 @@ export function BrandHomeLink({
         pressed && styles.hitAreaPressed,
       ]}
     >
-      {/* expo-image の alt は accessibilityLabel のエイリアスで、空文字だと
-          falsy 扱いされ <img> に alt 属性が出ない（＝axe の image-alt に落ちる）。
-          装飾に空 alt を与えられないので、意味のある短い文字列を渡す。 */}
+      {/* expo-image の Web 実装では、通常表示の経路が accessibilityLabel しか
+          見ておらず（ExpoImage.web.tsx の ImageWrapper 呼び出し）、alt prop は
+          プレースホルダー経路にしか効かない。alt を渡しても <img> に出ないので
+          accessibilityLabel を使う（axe: image-alt）。空文字も falsy で消える。 */}
       <Image
         source={APP_BRAND_ICON}
-        alt={PRODUCT_NAME}
+        accessibilityLabel={PRODUCT_NAME}
         style={[styles.icon, { width: iconSize, height: iconSize, borderRadius: iconSize / 2 }]}
         contentFit="cover"
       />
@@ -66,7 +67,7 @@ export function BrandHomeLink({
         {!compact ? (
           <Image
             source={KIMITO_LINK_LOGO}
-            alt={PARENT_BRAND}
+            accessibilityLabel={PARENT_BRAND}
             style={styles.wordmark}
             contentFit="contain"
           />

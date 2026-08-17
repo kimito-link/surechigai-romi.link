@@ -20,8 +20,7 @@ export const BRAND_CHARACTERS = [
 
 /**
  * BRAND_CHARACTERS と同じ並びのキャラ名。
- * expo-image の alt は accessibilityLabel のエイリアスで、空文字だと
- * falsy 扱いされ <img> に alt 属性が出ない（axe: image-alt）。
- * 装飾に空 alt を与えられないため、名前を渡す。
+ * expo-image の Web 実装は通常表示で accessibilityLabel しか見ないため、
+ * これを渡して <img alt> を出す（axe: image-alt）。空文字は falsy で消える。
  */
 export const BRAND_CHARACTER_NAMES = ["こんた", "りんく", "たぬね"] as const;

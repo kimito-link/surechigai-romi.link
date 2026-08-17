@@ -56,9 +56,10 @@ export function BrandStamp({ variant }: BrandStampProps) {
           pressed && styles.pressed,
         ]}
       >
-        {/* expo-image の alt は accessibilityLabel のエイリアス。空文字は falsy 扱いで
-            <img> に alt が出ない（axe: image-alt）ため、空 alt ではなく名前を渡す。 */}
-        <Image source={KIMITO_LINK_LOGO} alt={PARENT_BRAND} style={styles.sideNavLogo} contentFit="contain" />
+        {/* expo-image の Web 実装は通常表示の経路で accessibilityLabel しか見ない
+            （alt prop はプレースホルダー経路専用）。alt では <img> に出ないので
+            accessibilityLabel を使う（axe: image-alt）。空文字も falsy で消える。 */}
+        <Image source={KIMITO_LINK_LOGO} accessibilityLabel={PARENT_BRAND} style={styles.sideNavLogo} contentFit="contain" />
         <Text style={styles.sideNavTitle}>{PRODUCT_NAME_SHORT}</Text>
         <Text style={styles.sideNavSubtitle}>{PRODUCT_SUBTITLE}</Text>
       </Pressable>
@@ -73,7 +74,7 @@ export function BrandStamp({ variant }: BrandStampProps) {
             <Image
               key={i}
               source={src}
-              alt={BRAND_CHARACTER_NAMES[i] ?? PARENT_BRAND}
+              accessibilityLabel={BRAND_CHARACTER_NAMES[i] ?? PARENT_BRAND}
               style={styles.charIcon}
               contentFit="contain"
             />
@@ -89,7 +90,7 @@ export function BrandStamp({ variant }: BrandStampProps) {
             pressed && styles.pressed,
           ]}
         >
-          <Image source={KIMITO_LINK_LOGO} alt={PARENT_BRAND} style={styles.sideNavFootLogo} contentFit="contain" />
+          <Image source={KIMITO_LINK_LOGO} accessibilityLabel={PARENT_BRAND} style={styles.sideNavFootLogo} contentFit="contain" />
           <Text style={styles.sideNavFootBrand}>{PARENT_BRAND}</Text>
           <Text style={styles.sideNavFootProject}>{PARENT_PROJECT}</Text>
         </Pressable>
@@ -105,7 +106,7 @@ export function BrandStamp({ variant }: BrandStampProps) {
         accessibilityLabel={PRODUCT_NAME}
         style={({ pressed }) => [styles.footer, pressed && styles.pressed]}
       >
-        <Image source={KIMITO_LINK_LOGO} alt={PARENT_BRAND} style={styles.footerLogo} contentFit="contain" />
+        <Image source={KIMITO_LINK_LOGO} accessibilityLabel={PARENT_BRAND} style={styles.footerLogo} contentFit="contain" />
         <Text style={styles.footerText} numberOfLines={1}>
           {PRODUCT_NAME}
         </Text>
@@ -116,7 +117,7 @@ export function BrandStamp({ variant }: BrandStampProps) {
   // hero — ゲストトップ等、タグライン直下
   return (
     <View testID="brand-stamp-hero" style={styles.hero} accessibilityLabel={PRODUCT_NAME}>
-      <Image source={KIMITO_LINK_LOGO} alt={PARENT_BRAND} style={styles.heroLogo} contentFit="contain" />
+      <Image source={KIMITO_LINK_LOGO} accessibilityLabel={PARENT_BRAND} style={styles.heroLogo} contentFit="contain" />
       <Text style={styles.heroProduct}>{PRODUCT_NAME}</Text>
       <Text style={styles.heroParent}>
         {PARENT_BRAND_JA} · {PARENT_PROJECT}
