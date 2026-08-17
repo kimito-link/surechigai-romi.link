@@ -17,3 +17,11 @@ export const BRAND_CHARACTERS = [
   require("@/assets/images/characters/rinku.png"),
   require("@/assets/images/characters/tanune.png"),
 ] as const;
+
+/**
+ * BRAND_CHARACTERS と同じ並びのキャラ名。
+ * expo-image の alt は accessibilityLabel のエイリアスで、空文字だと
+ * falsy 扱いされ <img> に alt 属性が出ない（axe: image-alt）。
+ * 装飾に空 alt を与えられないため、名前を渡す。
+ */
+export const BRAND_CHARACTER_NAMES = ["こんた", "りんく", "たぬね"] as const;

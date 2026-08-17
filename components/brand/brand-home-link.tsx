@@ -8,7 +8,7 @@ import { Image } from "expo-image";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
 import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
-import { KIMITO_LINK_LOGO } from "@/components/brand/brand-constants";
+import { KIMITO_LINK_LOGO, PRODUCT_NAME, PARENT_BRAND } from "@/components/brand/brand-constants";
 import { navigate } from "@/lib/navigation";
 import { triggerHomeScroll } from "@/lib/home-scroll";
 import { palette } from "@/theme/tokens";
@@ -53,17 +53,23 @@ export function BrandHomeLink({
         pressed && styles.hitAreaPressed,
       ]}
     >
-      {/* 親 Pressable が accessibilityLabel を持つので画像は装飾扱い（alt=""）。
-          alt を省くと Web で <img> に alt が付かず axe の image-alt に落ちる。 */}
+      {/* expo-image の alt は accessibilityLabel のエイリアスで、空文字だと
+          falsy 扱いされ <img> に alt 属性が出ない（＝axe の image-alt に落ちる）。
+          装飾に空 alt を与えられないので、意味のある短い文字列を渡す。 */}
       <Image
         source={APP_BRAND_ICON}
-        alt=""
+        alt={PRODUCT_NAME}
         style={[styles.icon, { width: iconSize, height: iconSize, borderRadius: iconSize / 2 }]}
         contentFit="cover"
       />
       <View style={styles.textBlock}>
         {!compact ? (
-          <Image source={KIMITO_LINK_LOGO} alt="" style={styles.wordmark} contentFit="contain" />
+          <Image
+            source={KIMITO_LINK_LOGO}
+            alt={PARENT_BRAND}
+            style={styles.wordmark}
+            contentFit="contain"
+          />
         ) : null}
         <View style={compact || isNarrow ? styles.titleCol : styles.titleRow}>
           <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={compact ? 1 : isNarrow ? 2 : 1}>
