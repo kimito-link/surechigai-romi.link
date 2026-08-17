@@ -7,6 +7,7 @@ import { ZukanGuestLive } from "@/components/organisms/zukan-guest-live";
 import { ChunkFallback } from "@/lib/chunk-fallback";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
+import { GuestPlaceContext } from "@/components/molecules/guest-place-context";
 
 /** 地図ペイン優先のためzukanのみ右パネルを狭める(実測: 見出し・ベネフィット・CTAが
  * 収まる最小幅として280pxを採用。詳細はdocs/zukan-map-larger-DESIGN.md参照)。 */
@@ -31,7 +32,11 @@ export default function ZukanScreen() {
           { icon: "ios-share", label: "Xでシェア" },
         ]}
         heroPanelWidth={ZUKAN_HERO_PANEL_WIDTH}
-      />
+      >
+        {/* ★2026-08-17: 天気とライブカメラがログイン後にしか無く、
+            未ログインでは存在ごと見えなかった。 */}
+        <GuestPlaceContext />
+      </OneTapGuestShell>
     );
   }
 

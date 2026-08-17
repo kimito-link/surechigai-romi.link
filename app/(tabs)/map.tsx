@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { TrailGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 import { ChunkFallback } from "@/lib/chunk-fallback";
+import { GuestPlaceContext } from "@/components/molecules/guest-place-context";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 
@@ -26,7 +27,12 @@ export default function MapScreen() {
           { icon: "navigation", label: "ここへ向かう" },
           { icon: "place", label: "聖地巡礼" },
         ]}
-      />
+      >
+        {/* ★2026-08-17: 天気とライブカメラがログイン後にしか無く、
+            未ログインでは存在ごと見えなかった。ログイン前でも
+            「いま人がいる県の今」が見えるようにする。 */}
+        <GuestPlaceContext />
+      </OneTapGuestShell>
     );
   }
 
