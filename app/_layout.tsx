@@ -16,7 +16,6 @@ import { CDN_CACHE_EPOCH } from "@/theme/tokens";
 if (typeof document !== "undefined") {
   document.documentElement.dataset.cdnEpoch = String(CDN_CACHE_EPOCH);
 }
-// @ts-nocheck
 import { usePathname } from "expo-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppNavigationStack } from "@/components/providers/app-navigation-stack";

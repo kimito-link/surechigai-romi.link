@@ -2,7 +2,6 @@
  * Clerk + 認証付き tRPC Provider（dynamic import 専用 chunk）。
  * _layout.tsx から @clerk/expo の静的 import を除去するため分離。
  */
-// @ts-nocheck
 import { ClerkProvider, getClerkInstance, useAuth as useClerkAuth } from "@clerk/expo";
 import * as SecureStore from "expo-secure-store";
 import { QueryClient } from "@tanstack/react-query";
