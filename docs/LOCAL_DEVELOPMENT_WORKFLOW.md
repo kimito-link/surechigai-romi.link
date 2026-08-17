@@ -290,7 +290,6 @@ ssh -T git@github.com
 
 - [README.md](../README.md) - プロジェクト概要とデプロイ方法
 - [docs/DEPLOY.md](./DEPLOY.md) - デプロイ手順の詳細
-- [docs/deployment-guide.md](./deployment-guide.md) - デプロイガイド
 - [GitHub Actions](https://github.com/kimito-link/doin-challenge.com/actions) - ワークフロー実行履歴
 - [Vercel Dashboard](https://vercel.com/kimito-link/doin-challenge-com) - デプロイ状況
 

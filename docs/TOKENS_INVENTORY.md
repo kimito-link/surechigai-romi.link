@@ -9,14 +9,14 @@
 | [palette.ts](../theme/tokens/palette.ts) | 唯一の #RRGGBB 定義。gray100–900, primary/accent, status 等 |
 | [semantic.ts](../theme/tokens/semantic.ts) | 意味づけカラー。textPrimary/textSecondary/textHint/textMuted, surface, accent 等 |
 
-### フィーチャー固有
+### フィーチャー固有（すべて削除済み）
 
-| ファイル | 主なトークン | 備考 |
-|----------|--------------|------|
-| [home/ui/theme/tokens.ts](../features/home/ui/theme/tokens.ts) | homeText, homeUI, homeFont, homeGradient, homeColor | secondary/hint は視認性で明るめに調整済み |
-| [create/ui/theme/tokens.ts](../features/create/ui/theme/tokens.ts) | createUI, createText | placeholder/muted は #A3A3A3 で統一 |
-| [mypage/ui/theme/tokens.ts](../features/mypage/ui/theme/tokens.ts) | mypageUI, mypageText, mypageGradient, mypageAccent | グラデ・キャラ色は維持 |
-| [events/ui/theme/tokens.ts](../features/events/ui/theme/tokens.ts) | eventText, eventFont, eventUI | hint/secondary が暗め（#6B7280/#9CA3AF）→ 要正規化 |
+`features/home` `features/create` `features/mypage` `features/events` は
+旧テンプレートの遺産で、いずれも削除済み（`features/` に残るのは `onboarding` のみ）。
+フィーチャー固有トークンという層は現在存在せず、`theme/tokens/` に一本化されている。
+
+> 集まり（イベント）機能自体は生きていて、実体は `modules/event/` にある。
+> 「features/events が無い＝イベントが死んでいる」ではない（CLAUDE.md 参照）。
 
 ## 2. 重複・乖離の整理
 

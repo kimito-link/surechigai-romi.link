@@ -51,6 +51,7 @@
     "brand:icons": "python scripts/sync-brand-icons.py",
     "splash:sync": "node scripts/sync-splash-spec.mjs",
     "check:live-cameras": "node scripts/qa/check-live-camera-links.mjs",
+    "check:doc-links": "node scripts/check-doc-links.mjs",
     "contrast:audit": "node scripts/contrast-audit.mjs",
     "pagespeed:a11y": "node scripts/pagespeed-a11y-routes.mjs"
   },

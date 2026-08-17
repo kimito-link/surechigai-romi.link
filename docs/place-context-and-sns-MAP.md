@@ -106,7 +106,7 @@ app/u/[slug].tsx:168            → LazyWebTrailMap（同じ部品を公開ペ�
 
 | 判断 | 根拠 | 効く依頼 |
 |---|---|---|
-| **バックグラウンド位置は MVP に入れない** | [docs/native-ios-app-DESIGN.md:200](native-ios-app-DESIGN.md) 「審査難度が段違い（Always許可の正当化）。フォアグラウンドチェックインで価値は成立している」 | ① |
+| **バックグラウンド位置は MVP に入れない** | 旧 `native-ios-app-DESIGN.md`（現存せず）より「審査難度が段違い（Always許可の正当化）。フォアグラウンドチェックインで価値は成立している」 | ① |
 | **cron・ジョブキュー・別リクエスト分割の導入禁止** | [docs/matching-tier-redesign-DESIGN.md:216](matching-tier-redesign-DESIGN.md) 制約3 | ① |
 | **非同期二段階検索＋通知は不採用** | 同 `:205`「通知チャネル不在: プッシュ通知が未実装のため『後から見つかったら知らせる』のUXが成立しない」← **今回ここを解こうとしている** | ① |
 | **FOREGROUND_SERVICE は要求しない** | [app.config.ts:57-60](../app.config.ts)。使わない権限の宣言は実害があった（下記） | ① |

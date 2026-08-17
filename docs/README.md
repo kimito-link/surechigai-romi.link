@@ -41,17 +41,6 @@
 
 ---
 
-## 🔧 セットアップ
-
-### [setup-instructions-20260130.md](./setup-instructions-20260130.md) - 環境変数設定とUptimeRobot設定の手順書
-
-**内容**:
-- Sentryの有効化手順
-- UptimeRobotの監視設定手順
-- サムネイル画像の表示確認手順
-
----
-
 ## 🏗️ アーキテクチャ
 
 ### [ARCHITECTURE.md](./ARCHITECTURE.md) - アーキテクチャ設計書
@@ -62,18 +51,6 @@
 - バックエンド（tRPC、Drizzle ORM、PostgreSQL）
 - 認証（Twitter OAuth 2.0）
 - デプロイ（Vercel）
-
----
-
-## 📚 開発ガイド
-
-### [development-guide.md](./development-guide.md) - 開発環境のセットアップガイド
-
-**内容**:
-- 開発環境のセットアップ手順
-- ローカル開発サーバーの起動方法
-- データベースのマイグレーション方法
-- テストの実行方法
 
 ---
 
@@ -90,12 +67,6 @@
 
 ## 🐛 問題分析
 
-### [problem-analysis-20260130.md](./problem-analysis-20260130.md) - 問題分析と改善策の提案
-
-**内容**:
-- 「何回もやった作業をやらせる」「どこかなおしたらどこか崩れる」という問題の根本原因
-- 改善策（status.md、checklist.md、test-all.sh、README.md）
-
 ### [visibility-issues.md](./visibility-issues.md) - 視認性の問題
 
 **内容**:
@@ -103,36 +74,6 @@
 - コントラスト比の確認結果（WCAG 2.1基準）
 
 ---
-
-## 🔍 調査結果
-
-### [investigation-summary-20260130.md](./investigation-summary-20260130.md) - 調査結果のサマリー
-
-**内容**:
-- カスタムログイン画面（クッションページ）の実装状況
-- サムネイル画像の表示問題の調査結果
-- 視認性の問題の確認結果
-- UptimeRobotの監視設定の確認結果
-
-### [md-full-audit-20260130-v2.md](./md-full-audit-20260130-v2.md) - md全体監査結果
-
-**内容**:
-- すべてのmdファイル（96ファイル）の監査結果
-- critical-features-checklist.mdの要件の実装状況
-- 環境変数の設定が必要な項目
-- 本番環境での確認が必要な項目
-
----
-
-## 📝 作業ログ
-
-### [chatlog-20260130.md](./chatlog-20260130.md) - 今回のセッションの作業ログ
-
-**内容**:
-- 2026-01-30のセッションで実施した作業の記録
-- ドキュメント整理（README.md、development-guide.md、architecture.md）
-- md未実装項目の洗い出し
-- ホーム画面にログインボタンを追加
 
 ---
 

@@ -228,7 +228,7 @@ reserved → canceled
 
 - [docs/LOCAL_DEVELOPMENT_WORKFLOW.md](./LOCAL_DEVELOPMENT_WORKFLOW.md) - ローカル開発ワークフロー
 - [docs/ARCHITECTURE.md](./ARCHITECTURE.md) - アーキテクチャ設計
-- [DESIGN_PRINCIPLES.md](../DESIGN_PRINCIPLES.md) - デザイン原則
+- [DESIGN.md](../DESIGN.md) - デザイン原則
 
 ---
 

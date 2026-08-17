@@ -48,7 +48,6 @@
 |-------------|------|
 | [deploy/DEPLOYMENT.md](./deploy/DEPLOYMENT.md) | デプロイ環境詳細 |
 | [deploy/RAILWAY_DEPLOY_SETUP.md](./deploy/RAILWAY_DEPLOY_SETUP.md) | Railwayへのデプロイ設定 |
-| [CI-CD-WORKFLOW.md](./CI-CD-WORKFLOW.md) | CI/CDワークフローの詳細 |
 | [sentry-integration-guide.md](./sentry-integration-guide.md) | Sentryエラー監視の統合 |
 
 ---

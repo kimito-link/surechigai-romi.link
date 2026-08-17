@@ -116,7 +116,7 @@ TODOに従ってTDD実装してください。テストに通らない場合は�
 
 ### 本プロジェクトでの運用
 
-- **タスク一覧**: ルートの [todo.md](../todo.md) でタスク・進捗を管理している。REQUIREMENTS.md / PROGRESS.md は TDD サイクルを新規に始める場合に docs に作成する想定で、既存の進行中タスクは todo.md を主に参照する。
+- **タスク一覧**: `todo.md` は廃止済み。現在の進捗は [CLAUDE.md](../CLAUDE.md) の開発ロードマップと、`docs/HANDOFF-YYYY-MM-DD.md`（最新の引き継ぎ資料）で管理している。
 - 1タスク完了ごとに `git commit` する運用と整合する。
 
 ---

@@ -193,5 +193,5 @@ const isLoadingMore = isFetchingNextPage;
 ## 参考資料
 
 - [performance-monitoring.md](./performance-monitoring.md) - パフォーマンス計測の詳細
-- [useHomeData.ts](../features/home/hooks/useHomeData.ts) - 標準実装の参考例
-- [useEventDetail.ts](../features/event/hooks/useEventDetail.ts) - 詳細画面の参考例
+- ~~useHomeData.ts / useEventDetail.ts~~ — どちらも `features/` 配下にあったが削除済み。
+  現在の参考実装は `modules/event/` 配下のフックを見ること。

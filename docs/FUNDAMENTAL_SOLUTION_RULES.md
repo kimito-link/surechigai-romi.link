@@ -210,7 +210,7 @@ function selectMessage(): LoginMessage {
 
 ## 関連ドキュメント
 
-- [DESIGN_PRINCIPLES.md](../DESIGN_PRINCIPLES.md) - 設計原則
+- [DESIGN.md](../DESIGN.md) - 設計原則
 - [docs/AI_INSTRUCTIONS.md](./AI_INSTRUCTIONS.md) - AI開発ガイドライン
 - [docs/COMMON_MISTAKES.md](./COMMON_MISTAKES.md) - よくある間違い
 

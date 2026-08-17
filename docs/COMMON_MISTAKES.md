@@ -281,6 +281,6 @@
 
 ## 参考資料
 
-- [DESIGN_PRINCIPLES.md](../DESIGN_PRINCIPLES.md): 設計原則
+- [DESIGN.md](../DESIGN.md): 設計原則
 - [COMPONENT_REGISTRY.md](./COMPONENT_REGISTRY.md): コンポーネント一覧
 - [AI_INSTRUCTIONS.md](./AI_INSTRUCTIONS.md): AI実装ガイドライン

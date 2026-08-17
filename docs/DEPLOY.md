@@ -15,7 +15,7 @@
 | バックエンド | Manus Publish → Railway | **GitHub Actions経由** |
 | トリガー | 手動コピー＆push | **`git push production main`** |
 
-**現在の手順は [DEPLOY_WORKFLOW.md](./DEPLOY_WORKFLOW.md) を参照してください。**
+**現在の手順は [CLAUDE.md](../CLAUDE.md) のディレクティブ4を参照してください。**
 
 ---
 
@@ -140,7 +140,7 @@ Railwayの環境変数は、Railway管理画面の「Variables」タブで設定
    - CI → Backend(Railway) → Migrate → Health Check → Frontend(Vercel) → E2E
 5. **本番サイトで動作確認**
 
-詳細は **[DEPLOY_WORKFLOW.md](./DEPLOY_WORKFLOW.md)** を参照。
+詳細は **[CLAUDE.md](../CLAUDE.md)** のディレクティブ4を参照。
 
 ### 重要な注意事項
 
