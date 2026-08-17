@@ -53,14 +53,17 @@ export function BrandHomeLink({
         pressed && styles.hitAreaPressed,
       ]}
     >
+      {/* 親 Pressable が accessibilityLabel を持つので画像は装飾扱い（alt=""）。
+          alt を省くと Web で <img> に alt が付かず axe の image-alt に落ちる。 */}
       <Image
         source={APP_BRAND_ICON}
+        alt=""
         style={[styles.icon, { width: iconSize, height: iconSize, borderRadius: iconSize / 2 }]}
         contentFit="cover"
       />
       <View style={styles.textBlock}>
         {!compact ? (
-          <Image source={KIMITO_LINK_LOGO} style={styles.wordmark} contentFit="contain" />
+          <Image source={KIMITO_LINK_LOGO} alt="" style={styles.wordmark} contentFit="contain" />
         ) : null}
         <View style={compact || isNarrow ? styles.titleCol : styles.titleRow}>
           <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={compact ? 1 : isNarrow ? 2 : 1}>
