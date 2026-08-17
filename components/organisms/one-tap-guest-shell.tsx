@@ -40,6 +40,13 @@ type OneTapGuestShellProps = {
   ];
   children?: React.ReactNode;
   /**
+   * ファーストビュー（ヒーロー領域）の中に出す追加要素。
+   *
+   * ★2026-08-17: children は belowFold に置かれるため、実測で 783px＝画面外だった。
+   * 「機能はあるが気づかれない」を繰り返さないよう、見出しの直下に出す口を分けた。
+   */
+  heroExtra?: React.ReactNode;
+  /**
    * デスクトップ2ペイン時の右パネル幅（既定 HERO_DESKTOP_PANEL_WIDTH=360）。
    * 地図ペインを広く取りたい画面（zukan）で上書きする。
    */
@@ -105,6 +112,7 @@ export function OneTapGuestShell({
   preview,
   benefits = DEFAULT_BENEFITS,
   children,
+  heroExtra,
   heroPanelWidth = HERO_DESKTOP_PANEL_WIDTH,
 }: OneTapGuestShellProps) {
   const { width, height, isDesktop } = useResponsive();
@@ -186,6 +194,7 @@ export function OneTapGuestShell({
               <View style={[styles.heroPanel, { width: heroPanelWidth }]}>
                 <Text style={styles.headline}>{headline}</Text>
                 {benefitsNode}
+                {heroExtra ? <View style={styles.heroExtra}>{heroExtra}</View> : null}
                 {cta}
               </View>
             </View>
@@ -194,6 +203,10 @@ export function OneTapGuestShell({
               {renderPreview(preview, heroMapWidth)}
               <View style={styles.heroOverlayTop}>
                 <View style={styles.headlinePanel}>{headlineNode}</View>
+                {/* ★2026-08-17: 見出しの直下＝ファーストビュー内に出す枠。
+                    children(belowFold) に置くと 783px の画面外になり
+                    「どこにあるか分からない」が繰り返し起きた。 */}
+                {heroExtra ? <View style={styles.heroExtra}>{heroExtra}</View> : null}
               </View>
               <View style={styles.heroOverlayBottom}>{benefitsOverlayNode}</View>
             </View>
@@ -266,6 +279,13 @@ const styles = StyleSheet.create({
     top: 16,
     left: 16,
     right: 16,
+  },
+  /* ファーストビュー内に出す追加要素の枠（天気・ライブカメラなど）。
+     見出しの直下に置くので、スクロールしなくても目に入る。 */
+  heroExtra: {
+    width: "100%",
+    marginTop: 10,
+    alignItems: "center",
   },
   headlinePanel: {
     backgroundColor: "rgba(255,255,255,0.88)",

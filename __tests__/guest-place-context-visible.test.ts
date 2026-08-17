@@ -30,6 +30,26 @@ describe("ゲスト画面のいまの様子", () => {
     expect(src).toContain('from "@/components/molecules/guest-place-context"');
   });
 
+  it.each(GUEST_TABS)("%s はファーストビュー(heroExtra)に出す", (_name, file) => {
+    /* ★2026-08-17: children に渡すと belowFold に置かれ、実測 783px＝画面外だった。
+       「機能はあるが気づかれない」を繰り返さないよう heroExtra を使う。 */
+    expect(read(file)).toContain("heroExtra={<GuestPlaceContext />}");
+  });
+
+  it("heroExtra はファーストビュー(ヒーロー内)に描画される", () => {
+    const shell = read("components/organisms/one-tap-guest-shell.tsx");
+    /* デスクトップ(heroPanel)とモバイル(heroOverlayTop)の両方に出すので2箇所ある。
+       いずれも belowFold（折り返しの下＝画面外）より前にあること。 */
+    const occurrences = [...shell.matchAll(/styles\.heroExtra/g)].map((m) => m.index ?? -1);
+    const belowFold = shell.indexOf("styles.belowFold");
+    expect(occurrences.length).toBeGreaterThanOrEqual(2);
+    for (const at of occurrences) {
+      expect(at).toBeLessThan(belowFold);
+    }
+    // children は従来どおり belowFold 側に残っていること（役割を分けた意味が消えない）
+    expect(shell).toMatch(/styles\.belowFold[\s\S]{0,80}\{children\}/);
+  });
+
   it("tRPC Provider 未解決の間は何も描かない（画面ごと落とさない）", () => {
     const src = read("components/molecules/guest-place-context.tsx");
     // useTrpcReady のゲートを通してから useQuery を呼ぶ構造であること

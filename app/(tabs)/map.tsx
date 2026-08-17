@@ -27,12 +27,8 @@ export default function MapScreen() {
           { icon: "navigation", label: "ここへ向かう" },
           { icon: "place", label: "聖地巡礼" },
         ]}
-      >
-        {/* ★2026-08-17: 天気とライブカメラがログイン後にしか無く、
-            未ログインでは存在ごと見えなかった。ログイン前でも
-            「いま人がいる県の今」が見えるようにする。 */}
-        <GuestPlaceContext />
-      </OneTapGuestShell>
+        heroExtra={<GuestPlaceContext />}
+      />
     );
   }
 

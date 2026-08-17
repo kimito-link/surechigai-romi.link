@@ -32,11 +32,8 @@ export default function ZukanScreen() {
           { icon: "ios-share", label: "Xでシェア" },
         ]}
         heroPanelWidth={ZUKAN_HERO_PANEL_WIDTH}
-      >
-        {/* ★2026-08-17: 天気とライブカメラがログイン後にしか無く、
-            未ログインでは存在ごと見えなかった。 */}
-        <GuestPlaceContext />
-      </OneTapGuestShell>
+        heroExtra={<GuestPlaceContext />}
+      />
     );
   }
 
