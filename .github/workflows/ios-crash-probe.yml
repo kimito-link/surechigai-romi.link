@@ -177,6 +177,12 @@ jobs:
               fi
               sleep 3
               WAITED=$((WAITED + 3))
+              # ★アプリが前面にいるうちに撮る。kill 後に撮ると必ずホーム画面が写り、
+              #   壁紙の色数を「描画されている」と誤判定する（2026-08-17 に2回踏んだ）。
+              #   15秒あればスプラッシュを抜けて最初の画面が出ている。
+              if [ "$WAITED" = "15" ]; then
+                xcrun simctl io "$UDID" screenshot "/tmp/probe-out/screen-$NAME.png" 2>/dev/null || true
+              fi
             done
             if [ -z "$RC" ]; then
               # 45秒たっても launch が張り付いたまま = アプリが生きている
@@ -193,18 +199,26 @@ jobs:
             #   アプリが一度も立ち上がっていないのに stayed_up=OK と判定していた
             #   （launch ログ 0 バイト・スクリーンショットはホーム画面）。
             #   simctl の外側のプロセスではなく、シミュレータ内のプロセスを見る。
+            # `simctl launch` は成功時に "<bundle id>: <pid>" を出す。これが唯一
+            # 確実な「起動した」証跡。launchctl list は簿記上のエントリしか返さず、
+            # 実際に前面で動いていても none になることがある（2026-08-17 に誤検出した）。
             local APP_PID
-            APP_PID="$(xcrun simctl spawn "$UDID" launchctl list 2>/dev/null \
-              | grep -F "$BUNDLE_ID" | awk '{print $1}' | head -1)"
+            APP_PID="$(grep -oE "$BUNDLE_ID: [0-9]+" "/tmp/probe-out/launch-$NAME.log" 2>/dev/null \
+              | tail -1 | awk '{print $2}')"
             echo "APP_PID[$NAME]: '${APP_PID:-none}'"
-            if [ -z "$APP_PID" ] || [ "$APP_PID" = "-" ]; then
-              echo "VERDICT[$NAME]: NOT_RUNNING (プロセスが存在しない＝起動できていない)"
+            if [ -z "$APP_PID" ]; then
+              echo "VERDICT[$NAME]: NOT_RUNNING (起動した証跡が無い)"
               echo "NOT_RUNNING" >> "/tmp/probe-out/verdicts-$NAME.txt"
+            elif xcrun simctl spawn "$UDID" launchctl procinfo "$APP_PID" >/dev/null 2>&1; then
+              echo "APP_STILL_ALIVE[$NAME]: yes (pid $APP_PID)"
+            else
+              # 起動はしたが 45 秒後には消えている＝審査の "Error on launch" と同じ姿
+              echo "VERDICT[$NAME]: DIED_AFTER_LAUNCH (起動後に落ちた pid=$APP_PID)"
+              echo "DIED_AFTER_LAUNCH" >> "/tmp/probe-out/verdicts-$NAME.txt"
             fi
 
             # 画面が出ているうちにスクリーンショットを撮る（kill 後だとホーム画面が写る）
             local SHOT="/tmp/probe-out/screen-$NAME.png"
-            xcrun simctl io "$UDID" screenshot "$SHOT" 2>/dev/null || true
 
             sleep 5
             kill $LOGPID 2>/dev/null || true
@@ -332,7 +346,7 @@ jobs:
               continue
             fi
             # 1台につき複数行出ることがある（起動判定＋画面判定）。厳しい方を採る。
-            if grep -qE "CRASHED|BLANK_SCREEN|PROBE_BROKEN|INCONCLUSIVE|NOT_RUNNING" "$F"; then
+            if grep -qE "CRASHED|BLANK_SCREEN|PROBE_BROKEN|INCONCLUSIVE|NOT_RUNNING|DIED_AFTER_LAUNCH" "$F"; then
               echo "  $NAME: NG -> $(tr '\n' ',' < "$F")"
               FAILED=1
             else
