@@ -33,6 +33,12 @@ export const palette = {
   gray800: "#334155",         // surface（カード背景）
   gray750: "#475569",         // surface alt
   gray700: "#64748B",         // border
+  /**
+   * ヒント/プレースホルダ用。#64748B はページ地 #F0F4F8 で 4.31、
+   * カード地 #E2EDF7 で 4.01 と WCAG AA(4.5) に届いていなかった（axe 実測）。
+   * この値なら 4.94 / 4.60 / 白 5.46 で全背景 AA を満たす。
+   */
+  gray725: "#5A6B7F",
   gray650: "#94A3B8",         // switch track (dark)
   gray600: "#94A3B8",         // border alt
 

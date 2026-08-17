@@ -26,7 +26,7 @@ export const color = {
   textMuted: palette.gray750,     // #475569（補助テキスト。約6.9:1。旧#64748B→濃く）
   textSubtle: palette.gray750,    // #475569（旧#94A3B8→大幅に濃く）
   textSecondary: palette.gray800, // #334155（ラベル・小見出し）
-  textHint: palette.gray700,      // #64748B（プレースホルダ。旧#CBD5E1→読める濃さに）
+  textHint: palette.gray725,      // #5A6B7F（プレースホルダ。旧#64748B はページ地で4.31＝AA未達）
   /** ネイビー/黒 CTA・地図オーバーレイ上のみ */
   textWhite: palette.white,
   textOnAccent: palette.white,
