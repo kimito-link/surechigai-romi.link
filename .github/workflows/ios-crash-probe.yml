@@ -229,52 +229,7 @@ jobs:
             if [ -f "$SHOT" ]; then
               # 画像の色数を数える。単色（=真っ白/真っ黒）なら描画されていない。
               local COLORS
-              COLORS="$(python3 - "$SHOT" <<'PY' 2>/dev/null || echo "-1"
-import sys, struct, zlib
-# 依存を足さずに PNG を読む（runner に Pillow がある保証はない）
-data = open(sys.argv[1], 'rb').read()
-pos, w, h, idat = 8, 0, 0, b''
-while pos < len(data):
-    ln = struct.unpack('>I', data[pos:pos+4])[0]
-    typ = data[pos+4:pos+8]
-    body = data[pos+8:pos+8+ln]
-    if typ == b'IHDR':
-        w, h, depth, ctype = struct.unpack('>IIBB', body[:10])
-        if depth != 8 or ctype not in (2, 6):
-            print(-1); sys.exit()
-    elif typ == b'IDAT':
-        idat += body
-    elif typ == b'IEND':
-        break
-    pos += 12 + ln
-raw = zlib.decompress(idat)
-ch = 4 if ctype == 6 else 3
-stride = w * ch
-colors = set()
-prev = bytearray(stride)
-i = 0
-for y in range(h):
-    f = raw[i]; i += 1
-    line = bytearray(raw[i:i+stride]); i += stride
-    for x in range(stride):                    # PNG フィルタを戻す
-        a = line[x-ch] if x >= ch else 0
-        b = prev[x]
-        c = prev[x-ch] if x >= ch else 0
-        if f == 1: line[x] = (line[x] + a) & 255
-        elif f == 2: line[x] = (line[x] + b) & 255
-        elif f == 3: line[x] = (line[x] + (a+b)//2) & 255
-        elif f == 4:
-            p = a + b - c
-            pa, pb, pc = abs(p-a), abs(p-b), abs(p-c)
-            pr = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
-            line[x] = (line[x] + pr) & 255
-    if y % 20 == 0:                            # 全画素は重いので間引く
-        for x in range(0, stride, ch * 20):
-            colors.add(bytes(line[x:x+3]))
-    prev = line
-print(len(colors))
-PY
-)"
+              COLORS="$(python3 scripts/qa/png-distinct-colors.py "$SHOT" 2>/dev/null || echo "-1")"
               echo "SCREEN_COLORS[$NAME]: $COLORS"
               if [ "$COLORS" = "1" ]; then
                 echo "VERDICT[$NAME]: BLANK_SCREEN (起動はしたが画面が単色＝何も描画されていない)"
