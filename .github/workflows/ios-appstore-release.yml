@@ -212,6 +212,22 @@ jobs:
       #   project = target = scheme = "app"（slug の surechigai ではない）
       #   pod install は use_modular_headers! 1行で通る（108依存・123pods）
       #   PRODUCT_BUNDLE_IDENTIFIER = com.kimito.link.surechigai（既存と一致）
+      # ★job env に置くだけでは Metro が値を埋め込まなかった（2026-08-17 実測）。
+      #   env は渡っているのに、出来た IPA の中に鍵が無い＝置換されていない。
+      #   Expo は .env を自分で読んで EXPO_PUBLIC_* を静的置換するので、
+      #   ここでファイルとして置く（.env.local は .gitignore されており CI には無い）。
+      #   バンドルを作る prebuild / xcodebuild より前に必ず作ること。
+      - name: Write .env for Metro (EXPO_PUBLIC_*)
+        run: |
+          set -euo pipefail
+          if [ -z "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY:-}" ]; then
+            echo "::error::EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY が未設定。Secrets を確認すること。"
+            exit 1
+          fi
+          printf 'EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=%s\n' "$EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY" > .env
+          # 値は出さない。長さだけで到達を確認する。
+          echo "wrote .env (key length=${#EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY})"
+
       - name: Install Expo prebuild toolchain
         run: pnpm add --save-dev @expo/cli@latest
 

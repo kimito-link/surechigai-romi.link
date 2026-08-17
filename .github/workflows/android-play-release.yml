@@ -138,6 +138,19 @@ jobs:
       # ⚠️ 旧構成(TWA / bubblewrap の android-twa/)は**もう存在しない**。
       #    2026-08 に Expo prebuild へ移行済みで、android/ は .gitignore 済みの生成物。
       #    このステップを消すとビルド対象が無くなる。
+      # ★job env に置くだけでは Metro が値を埋め込まない（2026-08-17・iOS で実測）。
+      #   Expo は .env を読んで EXPO_PUBLIC_* を静的置換するので、ファイルとして置く。
+      #   バンドルを作る prebuild / gradlew より前に必ず作ること。
+      - name: Write .env for Metro (EXPO_PUBLIC_*)
+        run: |
+          set -euo pipefail
+          if [ -z "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY:-}" ]; then
+            echo "::error::EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY が未設定。Secrets を確認すること。"
+            exit 1
+          fi
+          printf 'EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=%s\n' "$EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY" > .env
+          echo "wrote .env (key length=${#EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY})"
+
       - name: Generate native Android project (expo prebuild)
         run: |
           set -euo pipefail
