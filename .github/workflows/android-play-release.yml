@@ -82,6 +82,11 @@ jobs:
       # これまで internal 固定だったため、production には 589 が残ったまま
       # 590/591 が内部テストにしか届いていなかった。
       PLAY_TRACK: production
+      # ★アプリ本体が使う Clerk の公開鍵（2026-08-17・iOS 509 却下の真因と同じ穴）。
+      #   これが無いと Metro は値を埋め込まず、起動直後に
+      #   「セットアップエラー: Clerkの公開鍵が設定されていません」で止まる。
+      #   iOS だけでなく Android のリリースにも渡していなかった。
+      EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
 
     steps:
       - name: Checkout
@@ -206,6 +211,17 @@ jobs:
           chmod +x ./gradlew
           ./gradlew --no-daemon bundleRelease
           ls -l app/build/outputs/bundle/release/
+
+      # ★2026-08-17: iOS 509 が「起動時エラー」で却下された真因（Clerk 公開鍵の
+      #   未埋め込み）は Android のリリースにも同じ穴として存在していた。
+      #   AAB の中の index.android.bundle を見て、鍵が入っているか確かめる。
+      - name: Verify Clerk key is embedded in the bundle
+        run: |
+          set -euo pipefail
+          AAB="android/app/build/outputs/bundle/release/app-release.aab"
+          WORK="$(mktemp -d)"
+          unzip -q "$AAB" -d "$WORK"
+          node scripts/verify-bundle-has-clerk-key.mjs "$WORK"
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v7

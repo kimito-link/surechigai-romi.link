@@ -87,6 +87,13 @@ jobs:
       # 常に "app" になる（2026-08-06 実測）。archive 名にも使う。
       APP_NAME: app
       # ↑↑ ここまで ↑↑
+      # ★アプリ本体が使う Clerk の公開鍵（2026-08-17 の Guideline 2.1(a) 却下の真因）。
+      #   これが無いと Metro は値を埋め込まず、起動直後に
+      #   「セットアップエラー: Clerkの公開鍵が設定されていません」の画面で止まる。
+      #   審査はこれを "Error on launch" と書いてくる（build 509 で実際に却下）。
+      #   pk_live_ はクライアントに露出する前提の公開鍵だが、値の管理を一箇所に
+      #   寄せるため Secrets 経由で渡す。CLERK_SECRET_KEY（下の方にある検証用）とは別物。
+      EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
       IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
       IOS_DIST_CERT_CER_BASE64: ${{ secrets.IOS_DIST_CERT_CER_BASE64 }}
       IOS_DIST_PRIVATE_KEY_PEM_BASE64: ${{ secrets.IOS_DIST_PRIVATE_KEY_PEM_BASE64 }}
@@ -628,6 +635,24 @@ jobs:
           fi
           echo "ipa-path=$IPA_PATH" >> "$GITHUB_OUTPUT"
           echo "Generated IPA: $IPA_PATH"
+
+      # ★2026-08-17: build 509 が Guideline 2.1(a)「Error on launch」で却下された。
+      #   真因は EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY を渡しておらず、バンドルに
+      #   鍵が埋め込まれないまま出荷したこと。アプリは起動するが
+      #   「セットアップエラー」画面で止まる。tsc・テスト・lint・ビルドは全て通る。
+      #   成果物を見る以外に気づけないので、アップロード前にここで止める。
+      - name: Verify Clerk key is embedded in the bundle
+        run: |
+          set -euo pipefail
+          IPA_PATH="${{ steps.export_ipa.outputs.ipa-path }}"
+          WORK="$(mktemp -d)"
+          unzip -q "$IPA_PATH" -d "$WORK"
+          APP_DIR="$(find "$WORK/Payload" -maxdepth 1 -name '*.app' -print -quit)"
+          if [ -z "$APP_DIR" ]; then
+            echo "::error::IPA に .app が見つからない: $IPA_PATH"
+            exit 1
+          fi
+          node scripts/verify-bundle-has-clerk-key.mjs "$APP_DIR"
 
       - name: Verify IPA version and build number before upload
         run: |
