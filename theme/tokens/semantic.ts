@@ -35,7 +35,9 @@ export const color = {
   accentPrimary: palette.kimitoBlue,      // #00427B（ネイビー・メインアクション）
   accentPrimaryAA: palette.kimitoBlue,    // #00427B（淡色背景で十分なコントラスト）
   accentAlt: palette.kimitoPurple,        // #5A4FEA（紫アクセント）
-  accentOrange: palette.kimitoOrange,     // #DD6500（オレンジアクセント）
+  accentOrange: palette.kimitoOrange,     // #DD6500（オレンジアクセント。面・アイコン・大見出し用）
+  /** 小さい文字にオレンジを載せるとき用（#DD6500 は 12px だと AA 未達） */
+  accentOrangeText: palette.kimitoOrangeText, // #A84B00
   accentIndigo: palette.kimitoBlue,       // ネイビーへ統一（旧ティール廃止）
   hostAccent: palette.kimitoPurple,       // #5A4FEA（紫）
   hostAccentLegacy: palette.kimitoBlue,   // #00427B（ネイビー）

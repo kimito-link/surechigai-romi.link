@@ -169,7 +169,9 @@ const styles = StyleSheet.create({
   },
   version: {
     color: palette.kimitoBlue,
-    opacity: 0.72,
+    // 0.72 だと実効色が #3f729e になりカード地 #E2EDF7 で 4.30＝AA 未達だった。
+    // 0.8 で 5.26。色自体（#00427B）は十分濃く、薄めすぎが原因。
+    opacity: 0.8,
     fontWeight: "700",
     letterSpacing: 0.2,
     flexShrink: 0,

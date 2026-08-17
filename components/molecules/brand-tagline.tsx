@@ -65,7 +65,9 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   compactAccent: {
-    color: palette.kimitoOrange,
+    // 12px の小さい文字。ブランド色 #DD6500 だとカード地で 2.98 と AA 未達のため
+    // 文字用の濃い派生色を使う（面・アイコンには kimitoOrange のまま）。
+    color: palette.kimitoOrangeText,
     fontWeight: "800",
   },
   line1: {

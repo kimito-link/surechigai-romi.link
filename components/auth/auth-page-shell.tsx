@@ -72,7 +72,8 @@ function AuthClerkCard({ variant, children }: { variant: "sign-in" | "sign-up"; 
         <Text
           style={{
             marginTop: 6,
-            color: palette.kimitoOrange,
+            // 12px の文字。ブランド色 #DD6500 はカード地で 2.98＝AA 未達のため文字用の派生色。
+            color: palette.kimitoOrangeText,
             fontSize: 12,
             fontWeight: "800",
           }}

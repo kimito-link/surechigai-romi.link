@@ -56,6 +56,13 @@ export const palette = {
   kimitoPurple: "#5A4FEA",    // 紫アクセント（「みんなで一緒に作る」等）
   kimitoBlueSoft: "#E2EDF7",  // 薄青サーフェス（kimito-blue-50 / ヘッダー地）
   kimitoOrange: "#DD6500",    // オレンジアクセント（kimito-orange / --kimito-accent）
+  /**
+   * 小さい文字にオレンジを載せるとき用。ブランド色 #DD6500 は
+   * カード地 #E2EDF7 で 2.98 しかなく、12px の文字では AA に遠く届かない（axe 実測）。
+   * この値なら 4.82 / ページ地 5.18 / 白 5.72。
+   * 面・アイコン・大きな見出しには従来どおり kimitoOrange を使うこと。
+   */
+  kimitoOrangeText: "#A84B00",
   kimitoInkMuted: "#334155",  // 淡色背景上の補助テキスト（slate-700 相当）
   kimitoNavInactive: "#64748B", // 非アクティブなナビ（slate-500）
   kimitoBorderSoft: "#E2E8F0",  // やわらかい境界（slate-200）
