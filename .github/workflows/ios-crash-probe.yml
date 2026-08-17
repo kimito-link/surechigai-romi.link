@@ -136,8 +136,14 @@ jobs:
               return 0
             fi
             xcrun simctl boot "$UDID" || true
-            sleep 20
+            # ★固定 sleep では足りない（2026-08-17）。起動途中に install/launch すると
+            #   RBSServiceErrorDomain Code=1 "Client not authorized" で起動要求が拒否され、
+            #   アプリが立ち上がらないまま「45秒生存」と誤判定していた。
+            #   bootstatus はブート完了まで待って返る。念のため後ろにも余裕を取る。
+            xcrun simctl bootstatus "$UDID" -b || true
+            sleep 10
             xcrun simctl install "$UDID" "$APP"
+            sleep 5
 
             # コンソールログを拾いながら起動する
             xcrun simctl spawn "$UDID" log stream --level debug \
@@ -179,6 +185,27 @@ jobs:
               echo "LAUNCH_RESULT: STAYED_UP (45s 生存。クラッシュせず)"
             fi
             set -e
+
+            # ★kill する前に、アプリが本当に動いているかを PID で確かめる（2026-08-17）。
+            #   `stayed_up`（simctl launch のプロセスが45秒張り付いた）は
+            #   **アプリが生きている証拠ではない**。実際、起動要求が
+            #   RBSServiceErrorDomain Code=1 "Client not authorized" で拒否され、
+            #   アプリが一度も立ち上がっていないのに stayed_up=OK と判定していた
+            #   （launch ログ 0 バイト・スクリーンショットはホーム画面）。
+            #   simctl の外側のプロセスではなく、シミュレータ内のプロセスを見る。
+            local APP_PID
+            APP_PID="$(xcrun simctl spawn "$UDID" launchctl list 2>/dev/null \
+              | grep -F "$BUNDLE_ID" | awk '{print $1}' | head -1)"
+            echo "APP_PID[$NAME]: '${APP_PID:-none}'"
+            if [ -z "$APP_PID" ] || [ "$APP_PID" = "-" ]; then
+              echo "VERDICT[$NAME]: NOT_RUNNING (プロセスが存在しない＝起動できていない)"
+              echo "NOT_RUNNING" >> "/tmp/probe-out/verdicts-$NAME.txt"
+            fi
+
+            # 画面が出ているうちにスクリーンショットを撮る（kill 後だとホーム画面が写る）
+            local SHOT="/tmp/probe-out/screen-$NAME.png"
+            xcrun simctl io "$UDID" screenshot "$SHOT" 2>/dev/null || true
+
             sleep 5
             kill $LOGPID 2>/dev/null || true
 
@@ -224,8 +251,6 @@ jobs:
             #   プロセスが 45 秒生きていても、画面が真っ白なら審査は
             #   「Error on launch」と書いてくる。実際に描画されたかを画素で見る。
             #   ここは判定を厳しくする方向にしか働かないので、失敗しても probe 自体は続ける。
-            local SHOT="/tmp/probe-out/screen-$NAME.png"
-            xcrun simctl io "$UDID" screenshot "$SHOT" 2>/dev/null || true
             if [ -f "$SHOT" ]; then
               # 画像の色数を数える。単色（=真っ白/真っ黒）なら描画されていない。
               local COLORS
@@ -307,7 +332,7 @@ jobs:
               continue
             fi
             # 1台につき複数行出ることがある（起動判定＋画面判定）。厳しい方を採る。
-            if grep -qE "CRASHED|BLANK_SCREEN|PROBE_BROKEN|INCONCLUSIVE" "$F"; then
+            if grep -qE "CRASHED|BLANK_SCREEN|PROBE_BROKEN|INCONCLUSIVE|NOT_RUNNING" "$F"; then
               echo "  $NAME: NG -> $(tr '\n' ',' < "$F")"
               FAILED=1
             else
