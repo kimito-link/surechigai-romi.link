@@ -192,10 +192,12 @@ jobs:
             if grep -qiE "uncaught exception|terminating due to|RangeError|Unhandled JS Exception" \
                  "$LOGFILE" 2>/dev/null; then
               echo "VERDICT[$NAME]: CRASHED"
+              echo "CRASHED" >> "/tmp/probe-out/verdicts-$NAME.txt"
             elif grep -qiE "command not found|No such file|Unable to boot|Invalid device" \
                    "$LOGFILE" 2>/dev/null; then
               # プローブ自身の不具合。成功と区別する（黙って緑にしない）
               echo "VERDICT[$NAME]: PROBE_BROKEN (起動を試せていない)"
+              echo "PROBE_BROKEN" >> "/tmp/probe-out/verdicts-$NAME.txt"
             elif [ "$RC" = "stayed_up" ] || grep -qiE "_setUpFeatureFlags|UIApplicationDelegate|$BUNDLE_ID" \
                    "$LOGFILE" 2>/dev/null; then
               # アプリが実際に立ち上がった痕跡があり、かつクラッシュ文言が無い。
@@ -204,16 +206,85 @@ jobs:
               #   つまり「ログが空」は失敗ではなく、静かに動いている正常な姿でもある。
               #   45秒生きて kill された（=Terminated: 15）なら、それはクラッシュしなかった証拠。
               echo "VERDICT[$NAME]: OK (起動してクラッシュしなかった)"
+              echo "OK" >> "/tmp/probe-out/verdicts-$NAME.txt"
             elif [ ! -s "$LOGFILE" ]; then
               echo "VERDICT[$NAME]: INCONCLUSIVE (ログが空。起動した証拠が無い)"
+              echo "INCONCLUSIVE" >> "/tmp/probe-out/verdicts-$NAME.txt"
             else
               echo "VERDICT[$NAME]: INCONCLUSIVE (起動の痕跡を確認できない)"
+              echo "INCONCLUSIVE" >> "/tmp/probe-out/verdicts-$NAME.txt"
             fi
             echo "--- launch output (tail) ---"
             tail -60 "/tmp/probe-out/launch-$NAME.log" || true
             echo "--- console errors (filtered) ---"
             grep -iE "crash|exception|fatal|abort|assert|terminating|SIGABRT|uncaught|NSInvalidArgument|Unhandled" \
               "/tmp/probe-out/console-$NAME.log" | head -60 || echo "(none)"
+
+            # ★「落ちなかった」だけでは審査を通る保証にならない（2026-08-17 の却下）。
+            #   プロセスが 45 秒生きていても、画面が真っ白なら審査は
+            #   「Error on launch」と書いてくる。実際に描画されたかを画素で見る。
+            #   ここは判定を厳しくする方向にしか働かないので、失敗しても probe 自体は続ける。
+            local SHOT="/tmp/probe-out/screen-$NAME.png"
+            xcrun simctl io "$UDID" screenshot "$SHOT" 2>/dev/null || true
+            if [ -f "$SHOT" ]; then
+              # 画像の色数を数える。単色（=真っ白/真っ黒）なら描画されていない。
+              local COLORS
+              COLORS="$(python3 - "$SHOT" <<'PY' 2>/dev/null || echo "-1"
+import sys, struct, zlib
+# 依存を足さずに PNG を読む（runner に Pillow がある保証はない）
+data = open(sys.argv[1], 'rb').read()
+pos, w, h, idat = 8, 0, 0, b''
+while pos < len(data):
+    ln = struct.unpack('>I', data[pos:pos+4])[0]
+    typ = data[pos+4:pos+8]
+    body = data[pos+8:pos+8+ln]
+    if typ == b'IHDR':
+        w, h, depth, ctype = struct.unpack('>IIBB', body[:10])
+        if depth != 8 or ctype not in (2, 6):
+            print(-1); sys.exit()
+    elif typ == b'IDAT':
+        idat += body
+    elif typ == b'IEND':
+        break
+    pos += 12 + ln
+raw = zlib.decompress(idat)
+ch = 4 if ctype == 6 else 3
+stride = w * ch
+colors = set()
+prev = bytearray(stride)
+i = 0
+for y in range(h):
+    f = raw[i]; i += 1
+    line = bytearray(raw[i:i+stride]); i += stride
+    for x in range(stride):                    # PNG フィルタを戻す
+        a = line[x-ch] if x >= ch else 0
+        b = prev[x]
+        c = prev[x-ch] if x >= ch else 0
+        if f == 1: line[x] = (line[x] + a) & 255
+        elif f == 2: line[x] = (line[x] + b) & 255
+        elif f == 3: line[x] = (line[x] + (a+b)//2) & 255
+        elif f == 4:
+            p = a + b - c
+            pa, pb, pc = abs(p-a), abs(p-b), abs(p-c)
+            pr = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
+            line[x] = (line[x] + pr) & 255
+    if y % 20 == 0:                            # 全画素は重いので間引く
+        for x in range(0, stride, ch * 20):
+            colors.add(bytes(line[x:x+3]))
+    prev = line
+print(len(colors))
+PY
+)"
+              echo "SCREEN_COLORS[$NAME]: $COLORS"
+              if [ "$COLORS" = "1" ]; then
+                echo "VERDICT[$NAME]: BLANK_SCREEN (起動はしたが画面が単色＝何も描画されていない)"
+                echo "BLANK_SCREEN" >> "/tmp/probe-out/verdicts-$NAME.txt"
+              elif [ "$COLORS" = "-1" ] || [ "$COLORS" = "0" ]; then
+                echo "::warning::screenshot check unavailable for $NAME"
+              fi
+            else
+              echo "::warning::could not capture screenshot for $NAME"
+            fi
 
             # シミュレータのクラッシュレポートを回収
             local CRASHDIR="$HOME/Library/Logs/DiagnosticReports"
@@ -263,6 +334,36 @@ jobs:
 
           [ -n "$IPAD_NAME" ] && probe_device "$IPAD_NAME" || echo "::warning::no iPad device type available"
           [ -n "$IPHONE_NAME" ] && probe_device "$IPHONE_NAME" || echo "::warning::no iPhone device type available"
+
+          # ★ここまで判定を出力するだけで、ジョブは常に success だった（2026-08-17 に発覚）。
+          #   CRASHED でも緑になるので「プローブが通ったから提出」という判断ができない。
+          #   審査機と同クラスの iPad が OK でない限り失敗させる（fail-closed）。
+          echo ""
+          echo "=============================================="
+          echo "=== SUMMARY"
+          echo "=============================================="
+          FAILED=0
+          for NAME in "$IPAD_NAME" "$IPHONE_NAME"; do
+            [ -n "$NAME" ] || continue
+            F="/tmp/probe-out/verdicts-$NAME.txt"
+            if [ ! -s "$F" ]; then
+              echo "  $NAME: (判定が記録されていない)"
+              FAILED=1
+              continue
+            fi
+            # 1台につき複数行出ることがある（起動判定＋画面判定）。厳しい方を採る。
+            if grep -qE "CRASHED|BLANK_SCREEN|PROBE_BROKEN|INCONCLUSIVE" "$F"; then
+              echo "  $NAME: NG -> $(tr '\n' ',' < "$F")"
+              FAILED=1
+            else
+              echo "  $NAME: OK"
+            fi
+          done
+          if [ "$FAILED" != "0" ]; then
+            echo "::error::起動プローブが OK ではない。この状態で提出しないこと。"
+            exit 1
+          fi
+          echo "すべての対象機種で起動と描画を確認した。"
 
       - name: Upload probe output
         if: always()
