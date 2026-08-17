@@ -51,7 +51,7 @@ function findBundle(target) {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, e.name);
       if (e.isDirectory()) walk(full, depth + 1);
-      else if (/\.(jsbundle|bundle)$/.test(e.name) || e.name === "index.android.bundle") {
+      else if (/\.(jsbundle|bundle|hbc)$/.test(e.name) || e.name === "index.android.bundle") {
         candidates.push(full);
       }
     }
@@ -87,16 +87,35 @@ for (const s of strings) {
  * 単に pk_live_ で始まるだけの偶然の一致が出る
  * （実際 "pk_test_J2__N2__webpack_require__..." という236文字の誤検知が出た）。
  */
-function looksLikeRealKey(key) {
-  if (DECOYS.has(key)) return false;
-  const body = key.replace(/^pk_(live|test)_/, "");
+function decodesToDomain(body) {
   try {
     const decoded = Buffer.from(body, "base64").toString("utf8");
     // 例: "clerk.example.com$" のような形になる
-    return /^[a-z0-9.-]+\.[a-z]{2,}\$?$/i.test(decoded.trim());
+    return /^[a-z0-9.-]+\.[a-z]{2,}\$$/i.test(decoded.trim());
   } catch {
     return false;
   }
+}
+
+/**
+ * Hermes のバイトコードは文字列テーブルが隙間なく連結されるため、
+ * 抽出した文字列は「実鍵 + 直後の別文字列」になっていることがある。
+ * 実際 pk_live_…bmsk のあとに "ip" がくっついた 34 文字が取れて、
+ * それを「実鍵なし」と誤判定した（＝正しく埋め込まれていたのに落とした）。
+ * よって全体一致だけでなく、前方から詰めていって
+ * Clerk のドメインへデコードできる部分があるかを見る。
+ */
+function looksLikeRealKey(key) {
+  if (DECOYS.has(key)) return false;
+  const m = key.match(/^pk_(?:live|test)_(.+)$/);
+  if (!m) return false;
+  const body = m[1];
+  if (decodesToDomain(body)) return true;
+  // 末尾に別の文字列がくっついている場合に備えて短くしながら試す
+  for (let len = body.length - 1; len >= 12; len -= 1) {
+    if (decodesToDomain(body.slice(0, len))) return true;
+  }
+  return false;
 }
 
 const real = [...keys].filter(looksLikeRealKey);
