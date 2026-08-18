@@ -124,7 +124,16 @@ function RestoreDeepLinkAfterAuthBoot() {
 
   // ユーザーが自分でタブ移動した場合は復元しない(意図の尊重)
   useEffect(() => {
+    // ★ネイティブでは何もしない（2026-08-19・iOS 518 却下の真因）。
+    //   この復元はブラウザの直リンク着地だけが対象で、ネイティブには不要。
+    //   React Native の Hermes には `window` は存在するが
+    //   `addEventListener` が無いため、`typeof window === "undefined"` の
+    //   ガードをすり抜けて `undefined is not a function` で落ちる。
+    //   ErrorBoundary が「エラーが発生しました」を出し、審査は
+    //   Guideline 2.1(a) "an error displayed upon launch" と書いてくる。
+    if (Platform.OS !== "web") return;
     if (typeof window === "undefined") return;
+    if (typeof window.addEventListener !== "function") return;
     const mark = () => {
       userInteractedRef.current = true;
     };

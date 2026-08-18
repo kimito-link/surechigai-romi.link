@@ -26,7 +26,15 @@ export function scheduleAfterIdle(
 
 /** window load 後（既に complete なら即時）に callback を実行。 */
 export function scheduleAfterWindowLoad(callback: () => void): IdleCancel {
-  if (typeof window === "undefined") {
+  // ★ネイティブでは document が無い（2026-08-19・iOS 却下調査で発見）。
+  //   React Native の Hermes には `window` は存在するので
+  //   `typeof window === "undefined"` のガードはすり抜ける。
+  //   その先の `document.readyState` で undefined 参照になるため、
+  //   実際に触る API の存在で判定する。
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return () => {};
+  }
+  if (typeof window.addEventListener !== "function") {
     return () => {};
   }
 
