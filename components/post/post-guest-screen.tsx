@@ -163,6 +163,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
     marginBottom: 8,
+    // 実測 174x36px で HIG 下限を割っていた（2026-08-19 本番実測・375px幅）。
+    minHeight: 44,
+    justifyContent: "center",
   },
   marketingLinkText: {
     color: color.textHint,

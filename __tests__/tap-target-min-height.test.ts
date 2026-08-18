@@ -52,6 +52,13 @@ describe("押下領域は 44px 以上", () => {
     expect(h!).toBeGreaterThanOrEqual(HIG_MIN);
   });
 
+  it("ゲストトップの紹介ページリンク", () => {
+    const src = read("components/post/post-guest-screen.tsx");
+    const h = minHeightOf(src, "marketingLink");
+    expect(h, "post-guest-screen の marketingLink に minHeight が無い").not.toBeNull();
+    expect(h!).toBeGreaterThanOrEqual(HIG_MIN);
+  });
+
   it("天気・ライブカメラのボタン", () => {
     const src = read("components/molecules/place-context-bar.tsx");
     const h = minHeightOf(src, "liveButton");
