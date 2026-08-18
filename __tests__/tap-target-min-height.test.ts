@@ -38,6 +38,20 @@ describe("押下領域は 44px 以上", () => {
     expect(h!).toBeGreaterThanOrEqual(HIG_MIN);
   });
 
+  it("ヘッダーのホーム導線（compact でアイコンだけになる）", () => {
+    const src = read("components/brand/brand-home-link.tsx");
+    const h = minHeightOf(src, "hitArea");
+    expect(h, "brand-home-link の hitArea に minHeight が無い").not.toBeNull();
+    expect(h!).toBeGreaterThanOrEqual(HIG_MIN);
+  });
+
+  it("タグライン行のホーム導線", () => {
+    const src = read("components/brand/brand-home-link.tsx");
+    const h = minHeightOf(src, "taglineHit");
+    expect(h, "brand-home-link の taglineHit に minHeight が無い").not.toBeNull();
+    expect(h!).toBeGreaterThanOrEqual(HIG_MIN);
+  });
+
   it("天気・ライブカメラのボタン", () => {
     const src = read("components/molecules/place-context-bar.tsx");
     const h = minHeightOf(src, "liveButton");

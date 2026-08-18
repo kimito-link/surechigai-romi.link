@@ -119,6 +119,9 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
     paddingRight: 8,
     paddingVertical: 2,
+    // ホームへ戻る主要導線。compact(アイコン28px)だと実測 80x32px しか無く
+    // Apple HIG の 44px を下回っていた（2026-08-19 本番実測・375px幅）。
+    minHeight: 44,
     borderRadius: 8,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as object) : null),
   },
@@ -181,6 +184,9 @@ const styles = StyleSheet.create({
     marginLeft: -4,
     paddingHorizontal: 4,
     paddingVertical: 2,
+    // タグライン行もホームへ飛ぶ押下要素。実測 142x22px で HIG 下限を割っていた。
+    minHeight: 44,
+    justifyContent: "center",
     borderRadius: 6,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as object) : null),
   },
