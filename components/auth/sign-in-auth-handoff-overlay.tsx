@@ -58,11 +58,30 @@ export function SignInAuthHandoffOverlay() {
     if (isAutoXEntry()) return;
     setProvider("x");
     setPhase("intro");
-    const introTimer = window.setTimeout(() => {
+
+    // Clerk のソーシャルボタンが描画され次第、INTRO_MS を待たずに即解除する
+    // （kimitolink-linktree の 0bfd691 から移植。読み取り専用で Clerk には干渉しない）。
+    // セレクタが将来の Clerk DOM 変更で外れても introTimer が INTRO_MS で必ず解除するため、
+    // 検知に失敗しても従来と同じ挙動に留まる（fail-closed）。
+    const CLERK_BTN_SELECTOR =
+      ".cl-socialButtonsIconButton, .cl-socialButtonsBlockButton";
+    const dismiss = () => {
       setProvider(null);
       setPhase(null);
-    }, INTRO_MS);
-    return () => window.clearTimeout(introTimer);
+      observer.disconnect();
+    };
+    const observer = new MutationObserver(() => {
+      if (document.querySelector(CLERK_BTN_SELECTOR)) dismiss();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    // 既に描画済み（キャッシュ等で速いケース）なら即解除。
+    if (document.querySelector(CLERK_BTN_SELECTOR)) dismiss();
+
+    const introTimer = window.setTimeout(dismiss, INTRO_MS);
+    return () => {
+      window.clearTimeout(introTimer);
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {

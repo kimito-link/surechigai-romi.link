@@ -143,6 +143,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 2,
     paddingHorizontal: 2,
+    // Apple HIG / DESIGN.md の下限。中身(アイコン+ラベル)だけだと実測 61x24px しか
+    // 無く、主要導線なのに押しにくかった（2026-08-19 本番実測・375px幅）。
+    // バー本体は 56px あるので 44 を入れても収まる。
+    minHeight: 44,
   },
   label: {
     fontSize: 11,

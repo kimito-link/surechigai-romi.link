@@ -184,7 +184,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    minHeight: 32,
+    // Apple HIG の下限 44px。32 だと実測 106x32px で押しにくかった
+    // （2026-08-19 本番実測・375px幅。kimitolink-linktree の ca8f327 と同型の穴）。
+    minHeight: 44,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
