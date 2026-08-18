@@ -195,9 +195,12 @@ jobs:
               WAITED=$((WAITED + 3))
               # ★アプリが前面にいるうちに撮る。kill 後に撮ると必ずホーム画面が写り、
               #   壁紙の色数を「描画されている」と誤判定する（2026-08-17 に2回踏んだ）。
-              #   15秒あればスプラッシュを抜けて最初の画面が出ている。
-              if [ "$WAITED" = "15" ]; then
-                xcrun simctl io "$UDID" screenshot "/tmp/probe-out/screen-$NAME.png" 2>/dev/null || true
+              #   1枚だけだと起動タイミングのブレを吸収できず、実際に
+              #   「起動前のホーム画面」が写った（2026-08-19）。複数枚撮って全部残す。
+              if [ "$WAITED" = "9" ] || [ "$WAITED" = "18" ] || [ "$WAITED" = "30" ]; then
+                xcrun simctl io "$UDID" screenshot                   "/tmp/probe-out/screen-$NAME-t${WAITED}.png" 2>/dev/null || true
+                # 最後に撮れたものを代表として使う（後段の色数判定はこれを見る）
+                cp "/tmp/probe-out/screen-$NAME-t${WAITED}.png"                    "/tmp/probe-out/screen-$NAME.png" 2>/dev/null || true
               fi
             done
             if [ -z "$RC" ]; then
@@ -221,6 +224,14 @@ jobs:
             local APP_PID
             APP_PID="$(grep -oE "$BUNDLE_ID: [0-9]+" "/tmp/probe-out/launch-$NAME.log" 2>/dev/null \
               | tail -1 | awk '{print $2}')"
+            # launch ログは --console-pty がアプリの出力を受けるまで空のことがある
+            # （静かに起動したケース。2026-08-19 に iPhone 側で NOT_RUNNING を誤検出）。
+            # 取れなければコンソールログの "taskState: Running" からも拾う。
+            if [ -z "$APP_PID" ]; then
+              APP_PID="$(grep -oE 'pid: [0-9]+; taskState: Running' \
+                "/tmp/probe-out/console-$NAME.log" 2>/dev/null | tail -1 \
+                | grep -oE '[0-9]+' | head -1)"
+            fi
             echo "APP_PID[$NAME]: '${APP_PID:-none}'"
             if [ -z "$APP_PID" ]; then
               echo "VERDICT[$NAME]: NOT_RUNNING (起動した証跡が無い)"
