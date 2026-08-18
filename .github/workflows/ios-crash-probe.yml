@@ -70,6 +70,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # ★審査に出すビルドと同じ条件にする（2026-08-19）。
+      #   これが無いと Clerk 鍵の無いバンドルが出来て「セットアップエラー」画面になり、
+      #   本物の不具合を調べているつもりで**別物を観測する**ことになる。
+      #   実際 8/17 はこの差に気づかず、鍵なしのエラー画面を審査の症状と同一視した。
+      - name: Write .env for Metro (EXPO_PUBLIC_*)
+        env:
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY:-}" ]; then
+            echo "::error::EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY が未設定。リリースと同条件で再現できない。"
+            exit 1
+          fi
+          echo "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=$EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY" > .env
+          echo "wrote .env (key length=${#EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY})"
+
       - name: Run expo prebuild (iOS)
         run: |
           set -euo pipefail
