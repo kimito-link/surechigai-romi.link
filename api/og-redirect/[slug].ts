@@ -67,6 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   let username: string | null = null;
+  let avatarUrl: string | null = null;
   let location: ShareLocationInfo | null = null;
 
   try {
@@ -74,6 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (db) {
       const info = await getShareInfoBySlug(db, slug, undefined, { ogpContext: true });
       username = info?.username ?? null;
+      avatarUrl = info?.profileImage ?? null;
       const queryHint = parseShareLocationFromQuery(req.query);
       location = preferExplicitShareLocation(info ? toShareLocation(info) : null, queryHint);
     }
@@ -87,6 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     origin: ORIGIN,
     location,
     username,
+    avatarUrl,
     version: v ?? location?.recordedAt?.getTime() ?? Date.now(),
   });
 

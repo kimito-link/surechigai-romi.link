@@ -1630,6 +1630,8 @@ export async function getOrCreateUserShareSlug(
 export type ShareInfo = {
   name: string | null;
   username: string | null;
+  /** X のプロフィール画像。OGP 地図の丸ピンに使う（2026-08-19） */
+  profileImage: string | null;
   /** 市区町村（粗い粒度。公開サムネ用） */
   area: string | null;
   prefecture: string | null;
@@ -1858,6 +1860,9 @@ export async function getShareInfoBySlug(
 
   const u = userRows[0];
   let username = usernameFromName(u.name);
+  // X のプロフィール画像。OGP 地図の丸ピンに使う（2026-08-19 指示）。
+  // 実体は users ではなく twitterUserCache 側にある。
+  let profileImage: string | null = null;
 
   if (options?.skipUsernameLookup) {
     // 外部 API も追加クエリも踏まない（呼び出し側がユーザーを待たせている経路）
@@ -1873,11 +1878,25 @@ export async function getShareInfoBySlug(
     }
   } else if (!username) {
     const cacheRows = await db
-      .select({ twitterUsername: twitterUserCache.twitterUsername })
+      .select({
+        twitterUsername: twitterUserCache.twitterUsername,
+        profileImage: twitterUserCache.profileImage,
+      })
       .from(twitterUserCache)
       .where(eq(twitterUserCache.displayName, u.name ?? ""))
       .limit(1);
     username = normalizeTwitterUsername(cacheRows[0]?.twitterUsername);
+    profileImage = cacheRows[0]?.profileImage ?? null;
+  }
+
+  // username が既に分かっている場合も、丸ピン用に画像だけ引く（1クエリ）。
+  if (!profileImage && username && !options?.skipUsernameLookup) {
+    const imgRows = await db
+      .select({ profileImage: twitterUserCache.profileImage })
+      .from(twitterUserCache)
+      .where(eq(twitterUserCache.twitterUsername, username))
+      .limit(1);
+    profileImage = imgRows[0]?.profileImage ?? null;
   }
 
   const settingsRows = await db
@@ -1895,6 +1914,7 @@ export async function getShareInfoBySlug(
   const noLocation: ShareInfo = {
     name: u.name,
     username,
+    profileImage,
     area: null,
     prefecture: null,
     address: null,
@@ -1967,6 +1987,7 @@ export async function getShareInfoBySlug(
     return {
       name: u.name,
       username,
+      profileImage,
       area: loc.municipality,
       prefecture: loc.prefecture,
       // 詳細住所は正確な座標を出すときだけ添える（丸め座標のときに番地を出すと不整合になる）
@@ -1996,6 +2017,7 @@ export async function getShareInfoBySlug(
   return {
     name: u.name,
     username,
+    profileImage,
     area: va.municipality,
     prefecture: va.prefecture,
     address: null,

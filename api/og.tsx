@@ -266,6 +266,11 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
   const area = (searchParams.get("area") ?? "").slice(0, 24);
   const pref = (searchParams.get("pref") ?? "").slice(0, 12);
   const name = (searchParams.get("name") ?? "").slice(0, 24);
+  // 地図の丸ピンに出す X のプロフィール画像（2026-08-19 指示）。
+  // 外部URLを踏むので https と長さだけ検証する。取得失敗時は従来の白丸に落ちる。
+  const avatarRaw = searchParams.get("avatar") ?? "";
+  const avatarUrl =
+    avatarRaw.startsWith("https://") && avatarRaw.length <= 300 ? avatarRaw : "";
 
   const brand = "君斗りんくのすれ違ひ通信";
   const tagline = "会いたい君がいる現在地";
@@ -506,7 +511,9 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
   // ピン + ラベルバブル。
   // 地図背景: 中央(タイル中心=実座標)にティールのピン。
   // 夜景背景: 現在地の県の位置に「灯」(金の光)をともし、バブルをその真上に(画面端はクランプ)。
-  const PIN_SIZE = 54;
+  // アイコンが分かる大きさにする（2026-08-19 指示: とまり木のように
+  // 「丸＝その人のサムネ」で誰がどこに居るかを一目で分かるように）。
+  const PIN_SIZE = avatarUrl ? 96 : 54;
   const PIN_BORDER = 6;
   const LABEL_GAP = 14;
   const usePrefAnchor = isNightScene && !!prefPos;
@@ -559,15 +566,28 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
             boxShadow: "0 6px 16px rgba(0,0,0,0.35)",
           },
         },
-        h("div", {
-          style: {
-            width: 16,
-            height: 16,
-            borderRadius: 999,
-            backgroundColor: COLORS.white,
-            display: "flex",
-          },
-        })
+        avatarUrl
+          ? h("img", {
+              src: avatarUrl,
+              width: PIN_SIZE - PIN_BORDER * 2,
+              height: PIN_SIZE - PIN_BORDER * 2,
+              style: {
+                width: PIN_SIZE - PIN_BORDER * 2,
+                height: PIN_SIZE - PIN_BORDER * 2,
+                borderRadius: 999,
+                objectFit: "cover",
+                display: "flex",
+              },
+            })
+          : h("div", {
+              style: {
+                width: 16,
+                height: 16,
+                borderRadius: 999,
+                backgroundColor: COLORS.white,
+                display: "flex",
+              },
+            })
       );
   // バブル位置: 灯の真上。上端(ブランド帯)に食い込むなら灯の下へ。横は画面内にクランプ。
   const bubbleCenterX = Math.min(Math.max(anchorX, 210), WIDTH - 210);

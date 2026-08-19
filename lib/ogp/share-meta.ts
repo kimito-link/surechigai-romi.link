@@ -130,7 +130,7 @@ export function featureShareLocationFirst<T extends ShareFeaturedTrailPoint>(
 /** og:image クエリ（位置更新で v= が変わり X のキャッシュを bust） */
 export function buildOgImageSearchParams(
   info: ShareLocationInfo,
-  options?: { name?: string | null },
+  options?: { name?: string | null; avatar?: string | null },
 ): URLSearchParams {
   const params = new URLSearchParams();
   if (info.area) params.set("area", info.area);
@@ -144,6 +144,10 @@ export function buildOgImageSearchParams(
     params.set("v", String(info.recordedAt.getTime()));
   }
   if (options?.name) params.set("name", options.name);
+  // 地図の丸ピンに本人の X アイコンを出す（2026-08-19 指示: とまり木のように
+  // 「丸＝その人のサムネ」で誰がどこに居るかを一目で分かるようにする）。
+  // 画像は og 側で fetch するので、ここでは URL を渡すだけ。
+  if (options?.avatar) params.set("avatar", options.avatar);
   return params;
 }
 
@@ -162,12 +166,17 @@ export function buildOgRedirectImageTarget(input: {
   origin?: string;
   location: ShareLocationInfo | null;
   username?: string | null;
+  /** 本人の X プロフィール画像。地図の丸ピンに使う */
+  avatarUrl?: string | null;
   version?: string | number;
 }): string {
   const origin = input.origin ?? APP_ORIGIN;
   const params =
     input.location?.hasLocation && input.location.lat != null && input.location.lng != null
-      ? buildOgImageSearchParams(input.location, { name: input.username ?? null })
+      ? buildOgImageSearchParams(input.location, {
+          name: input.username ?? null,
+          avatar: input.avatarUrl ?? null,
+        })
       : new URLSearchParams();
 
   if (input.version != null && input.version !== "") {
