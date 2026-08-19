@@ -18,6 +18,14 @@ import { resolve } from "node:path";
 const SRC = readFileSync(resolve(__dirname, "../lib/share.ts"), "utf8");
 
 describe("PWA でのシェア", () => {
+  it("iOS では空タブ方式を使わない（PWA判定だけでは足りなかった）", () => {
+    /* ★2026-08-19 実機report: about:blank の待機画面が出たまま固まった＝
+       isStandalonePwa() が false を返す経路が実在する（アプリ内ブラウザ経由など）。
+       iOS は「非同期のあとの window.open」自体を塞ぐので、方式ごと使わない。 */
+    expect(SRC).toContain("function cannotUseBlankTab");
+    expect(SRC).toMatch(/detectMobileOs\([\s\S]{0,40}===\s*"ios"/);
+  });
+
   it("standalone 判定を持っている", () => {
     expect(SRC).toContain("function isStandalonePwa");
     // display-mode と navigator.standalone の両方を見る（iOS は後者）
@@ -28,13 +36,13 @@ describe("PWA でのシェア", () => {
   it("PWA では about:blank の空タブを開かない", () => {
     const start = SRC.indexOf("export function prepareSharePopup");
     const body = SRC.slice(start, SRC.indexOf("\n}", start));
-    const guard = body.indexOf("isStandalonePwa()");
+    const guard = body.indexOf("cannotUseBlankTab()");
     const open = body.indexOf('window.open("about:blank"');
     expect(guard).toBeGreaterThan(-1);
     expect(open).toBeGreaterThan(-1);
     // 空タブを開くより前で PWA を弾いていること
     expect(guard).toBeLessThan(open);
-    expect(body).toMatch(/isStandalonePwa\(\)\)\s*return\s*\{\s*popup:\s*null[\s\S]{0,40}\}/);
+    expect(body).toMatch(/cannotUseBlankTab\(\)\)\s*return\s*\{\s*popup:\s*null[\s\S]{0,40}\}/);
   });
 
   it("PWA では同じウィンドウで遷移する（別タブは開けない）", () => {

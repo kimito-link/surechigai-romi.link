@@ -22,6 +22,7 @@
  */
 
 import { SHARE_WAITING_LOGO_DATA_URI } from "./share-waiting-logo.js";
+import { SHARE_WAITING_CHARACTER_DATA_URI } from "./share-waiting-character.js";
 
 /** 待機画面に出す文言。テストから参照するので export する。 */
 export const SHARE_WAITING_TITLE = "Xでシェア";
@@ -40,6 +41,7 @@ export function buildShareWaitingHtml(): string {
 <div class="wrap">
   <div class="card">
     <img class="logo" src="${SHARE_WAITING_LOGO_DATA_URI}" alt="君斗りんく" />
+    <img class="chara" src="${SHARE_WAITING_CHARACTER_DATA_URI}" alt="" aria-hidden="true" />
     <div class="trail" aria-hidden="true">
       <span class="step s1">🐾</span>
       <span class="step s2">🐾</span>
@@ -63,24 +65,46 @@ export function buildShareWaitingHtml(): string {
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { padding: 24px; width: 100%; box-sizing: border-box; }
+  /* ★ファーストビューを覆う（2026-08-19 指示）。
+     以前は max-width 440px の小さなカードで、画面の一部にしか出ていなかった。
+     枠を外して画面全体を使い、ロゴとキャラを主役にする。 */
+  .wrap {
+    padding: 20px;
+    width: 100%;
+    min-height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   .card {
-    max-width: 440px;
+    width: 100%;
+    max-width: 620px;
     margin: 0 auto;
-    background: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 20px;
-    padding: 32px 24px 30px;
     text-align: center;
-    box-shadow: 0 6px 24px rgba(0, 66, 123, 0.08);
   }
   /* ロゴは data URI（外部参照禁止の制約のため）。
      幅で決めて高さは auto。読み込み失敗しても alt が出るだけで崩れない。 */
   .logo {
     display: block;
-    width: min(132px, 42vw);
+    width: min(300px, 68vw);
     height: auto;
-    margin: 0 auto 18px;
+    margin: 0 auto 8px;
+  }
+  /* ゆっくりりんく。ロゴと並ぶ主役なので大きく出す。 */
+  .chara {
+    display: block;
+    width: min(260px, 58vw);
+    height: auto;
+    margin: 0 auto 4px;
+    animation: bob 1.8s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chara { animation: none; }
   }
   .trail {
     display: flex;

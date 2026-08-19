@@ -7,6 +7,7 @@ import * as Haptics from "expo-haptics";
 import { setStringAsync } from "expo-clipboard";
 import { APP_ORIGIN } from "@/lib/site-urls";
 import { renderShareWaitingScreen } from "@/lib/share-waiting-screen";
+import { detectMobileOs } from "@/lib/in-app-browser";
 
 const APP_HASHTAG = "#君斗りんくのすれ違ひ通信";
 
@@ -100,12 +101,33 @@ function isStandalonePwa(): boolean {
   }
 }
 
+/**
+ * 空タブ方式（about:blank を先に開いて後から差し替える）を使えない環境か。
+ *
+ * ★2026-08-19 実機report: PWA 判定だけでは足りなかった。
+ *   ユーザーの画面には about:blank の待機画面が出たままだった＝
+ *   `isStandalonePwa()` が false を返す経路が実在する。
+ *   ホーム画面 PWA から X を踏んで戻った後や、アプリ内ブラウザ
+ *   （SFSafariViewController）経由では display-mode も navigator.standalone も
+ *   standalone にならない。
+ *
+ *   iOS はそもそも「非同期のあとの window.open」を塞ぐ。空タブを先に開いても
+ *   差し替えが効かない/そのまま残るケースがあり、**iOS では方式ごと使わない**のが
+ *   確実。Android/デスクトップは従来どおり空タブ方式（待機画面を見せられる）。
+ */
+function cannotUseBlankTab(): boolean {
+  if (typeof window === "undefined") return true;
+  if (isStandalonePwa()) return true;
+  const ua = window.navigator?.userAgent ?? "";
+  return detectMobileOs(ua) === "ios";
+}
+
 export function prepareSharePopup(): PreparedSharePopup | null {
   if (Platform.OS !== "web" || typeof window === "undefined") return null;
 
   // PWA では空タブ方式が機能しない（about:blank のまま固まる）。
   // popup を持たずに進み、遷移時に目的URLで直接開く。
-  if (isStandalonePwa()) return { popup: null, isPwa: true };
+  if (cannotUseBlankTab()) return { popup: null, isPwa: true };
 
   const popup = window.open("about:blank", SHARE_POPUP_NAME);
   if (popup) {
