@@ -519,26 +519,46 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
   const usePrefAnchor = isNightScene && !!prefPos;
   const anchorX = usePrefAnchor ? prefX : WIDTH / 2;
   const anchorY = usePrefAnchor ? prefY : HEIGHT / 2;
+  // ★夜景（MAPTILER_KEY 無し / タイル取得失敗）でもアバターを出す。
+  //   本番は既定でこちらの経路に来るので、ここに入れないと丸ピンが一度も出ない
+  //   （2026-08-19 実測: 実共有URLの OGP は夜景で金の光のままだった）。
+  const NIGHT_PIN = avatarUrl ? 84 : 26;
   const pin = usePrefAnchor
     ? h(
         "div",
         {
           style: {
             position: "absolute",
-            left: anchorX - 13,
-            top: anchorY - 13,
-            width: 26,
-            height: 26,
+            left: anchorX - NIGHT_PIN / 2,
+            top: anchorY - NIGHT_PIN / 2,
+            width: NIGHT_PIN,
+            height: NIGHT_PIN,
             borderRadius: 999,
-            backgroundColor: "#FFDF8A",
-            boxShadow:
-              "0 0 26px 10px rgba(255,223,138,0.65), 0 0 60px 24px rgba(227,194,104,0.30)",
+            backgroundColor: avatarUrl ? COLORS.white : "#FFDF8A",
+            border: avatarUrl ? `5px solid ${COLORS.white}` : undefined,
+            boxShadow: avatarUrl
+              ? "0 0 30px 10px rgba(255,223,138,0.55), 0 6px 16px rgba(0,0,0,0.45)"
+              : "0 0 26px 10px rgba(255,223,138,0.65), 0 0 60px 24px rgba(227,194,104,0.30)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            overflow: "hidden",
           },
         },
-        h("div", {
+        avatarUrl
+          ? h("img", {
+              src: avatarUrl,
+              width: NIGHT_PIN - 10,
+              height: NIGHT_PIN - 10,
+              style: {
+                width: NIGHT_PIN - 10,
+                height: NIGHT_PIN - 10,
+                borderRadius: 999,
+                objectFit: "cover",
+                display: "flex",
+              },
+            })
+          : h("div", {
           style: {
             width: 10,
             height: 10,
