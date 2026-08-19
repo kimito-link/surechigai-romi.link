@@ -1001,7 +1001,15 @@
   .app-intro .of-hi{ position:absolute; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; border-radius:50%; background:#ffdf8a;
     box-shadow:0 0 14px 5px rgba(255,223,138,.6); animation:akari 2.4s ease-in-out infinite; }
   .app-intro .of-hi2{ width:5px; height:5px; margin:-2.5px 0 0 -2.5px; opacity:.55; box-shadow:0 0 8px 3px rgba(227,194,104,.4); }
-  .app-intro .of-bubble{ position:absolute; left:59%; top:67%; transform:translate(-50%,-160%);
+  /* ★丸ピン＝その人の 𝕏 サムネ。とまり木(tomarigi.me)のように
+     「丸を見れば誰がどこに居るか分かる」という絵柄を LP でも見せる（2026-08-19 指示）。
+     api/og の実絵柄（96pxの白縁つき円にアイコン）と同じ形にする。 */
+  .app-intro .of-pin{ position:absolute; width:clamp(38px,11vw,52px); height:clamp(38px,11vw,52px);
+    transform:translate(-50%,-50%); border-radius:50%; overflow:hidden;
+    border:3px solid #fff; background:#0ea5a4; box-shadow:0 6px 16px rgba(0,0,0,.35);
+    display:flex; align-items:center; justify-content:center; z-index:2; }
+  .app-intro .of-pin img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .app-intro .of-bubble{ position:absolute; left:59%; top:58%; transform:translate(-50%,-160%);
     background:#fff; color:#0f172a; font-family:var(--mincho); font-weight:700; font-size:clamp(12px,3.4vw,15px);
     border-radius:10px; padding:5px 13px; box-shadow:0 6px 18px rgba(0,0,0,.3); white-space:nowrap; }
   .app-intro .of-brand{ position:absolute; left:12px; top:10px; display:inline-flex; align-items:center; gap:6px;
@@ -2107,7 +2115,7 @@
     <div class="ofuda-card">
       <div class="of-map" aria-hidden="true">
         <img class="jp2" src="img/japan.svg" alt="" loading="lazy" />
-        <span class="of-hi" style="left:59%;top:67%"></span>
+        <span class="of-pin" style="left:59%;top:58%"><img src="brand/avatar-sample.png" alt="" width="88" height="88" loading="lazy" /></span>
         <span class="of-hi of-hi2" style="left:38%;top:73%"></span>
         <span class="of-hi of-hi2" style="left:12%;top:79%"></span>
         <span class="of-hi of-hi2" style="left:80%;top:14%"></span>
@@ -2117,7 +2125,7 @@
       <span class="of-brand"><i></i>君斗りんくのすれ違ひ通信</span>
       <span class="of-tag">会いたい君がいる現在地<b>@streamerfunch</b></span>
     </div>
-    <figcaption class="of-caption">灯を報せる便りは、この絵札になって 𝕏 のタイムラインへ。<br />受け取った誰かが、キミのいまの現在地を知る。</figcaption>
+    <figcaption class="of-caption">灯を報せる便りは、この絵札になって 𝕏 のタイムラインへ。<br />地図に浮かぶ丸は、あなたの 𝕏 の顔。ひと目で「誰が、どこに」が伝はります。</figcaption>
   </figure>
 
   <!-- 安心の作法: 正確な場所を見せる仕様だからこそ、見せない自由も同じだけ用意していることを伝える -->
