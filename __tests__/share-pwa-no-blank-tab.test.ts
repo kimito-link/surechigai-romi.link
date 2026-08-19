@@ -34,20 +34,34 @@ describe("PWA でのシェア", () => {
     expect(open).toBeGreaterThan(-1);
     // 空タブを開くより前で PWA を弾いていること
     expect(guard).toBeLessThan(open);
-    expect(body).toMatch(/isStandalonePwa\(\)\)\s*return\s*\{\s*popup:\s*null\s*\}/);
+    expect(body).toMatch(/isStandalonePwa\(\)\)\s*return\s*\{\s*popup:\s*null[\s\S]{0,40}\}/);
   });
 
-  it("popup が無いときは目的URLで新規タブを開く（現在タブを奪わない）", () => {
+  it("PWA では同じウィンドウで遷移する（別タブは開けない）", () => {
+    /* ★2026-08-19 実機report: X も Threads も
+       「投稿画面を開けませんでした。ポップアップ許可を確認してください。」で失敗。
+       iOS の standalone PWA は window.open("_blank") が null を返す。とくに
+       API通信や OGP ウォームを挟んだ**非同期のあと**はユーザー操作起点が切れて
+       確実に塞がれる。8/17 に空タブ方式をやめた結果、open の呼び出しが
+       非同期の後ろにずれてこれを踏んだ。
+       PWA に限っては現在のウィンドウで遷移させる（X から戻れば PWA も復帰する）。 */
     const start = SRC.indexOf("function openWebShareUrl");
-    const body = SRC.slice(start, SRC.indexOf("\n}", start));
+    const body = SRC.slice(start, SRC.indexOf(String.fromCharCode(10) + "}", start));
+    expect(body).toMatch(/isPwa[\s\S]{0,120}window\.location\.assign/);
+  });
+
+  it("PWA 以外では現在タブを奪わず新規タブを開く", () => {
+    const start = SRC.indexOf("function openWebShareUrl");
+    const body = SRC.slice(start, SRC.indexOf(String.fromCharCode(10) + "}", start));
     expect(body).toContain("openInNewTab(twitterUrl)");
-    /* 現在のタブを差し替えるとアプリの画面が失われる（2026-08-04 の実障害）。
-       「してはいけない」と書いたコメントにも語が出るので、コメント行を除いて判定する。 */
+    /* 通常ブラウザで現在のタブを差し替えるとアプリの画面が失われる
+       （2026-08-04 の実障害）。location.assign は PWA 分岐の中だけに限る。 */
     const code = body
-      .split("\n")
+      .split(String.fromCharCode(10))
       .filter((l) => !/^\s*(\/\/|\/\*|\*)/.test(l))
-      .join("\n");
-    expect(code).not.toContain("window.location.assign");
+      .join(String.fromCharCode(10));
+    const assigns = code.match(/window\.location\.assign/g) ?? [];
+    expect(assigns.length).toBe(1);
     expect(code).not.toMatch(/window\.location\.href\s*=/);
   });
 

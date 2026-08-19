@@ -12,6 +12,8 @@ const APP_HASHTAG = "#君斗りんくのすれ違ひ通信";
 
 export type PreparedSharePopup = {
   popup: Window | null;
+  /** standalone PWA か（別タブが開けないので遷移方法を変える） */
+  isPwa?: boolean;
 };
 
 /**
@@ -103,7 +105,7 @@ export function prepareSharePopup(): PreparedSharePopup | null {
 
   // PWA では空タブ方式が機能しない（about:blank のまま固まる）。
   // popup を持たずに進み、遷移時に目的URLで直接開く。
-  if (isStandalonePwa()) return { popup: null };
+  if (isStandalonePwa()) return { popup: null, isPwa: true };
 
   const popup = window.open("about:blank", SHARE_POPUP_NAME);
   if (popup) {
@@ -186,6 +188,16 @@ function openWebShareUrl(
   if (typeof window === "undefined") return false;
 
   if (target) {
+    // ★standalone PWA では別タブを開けない（2026-08-19 実機で確認）。
+    //   iOS の PWA は window.open("_blank") が null を返す。とくに API 通信や
+    //   OGP ウォームを挟んだ**非同期のあと**はユーザー操作起点が切れて確実に塞がれる。
+    //   8/17 に空タブ方式をやめた結果、open の呼び出しが非同期の後ろにずれ、
+    //   「Xの投稿画面を開けませんでした」が毎回出るようになっていた。
+    //   PWA では同じウィンドウで遷移させる。X/Threads から戻れば PWA も復帰する。
+    if (target.isPwa) {
+      window.location.assign(twitterUrl);
+      return true;
+    }
     if (target.popup && !target.popup.closed) {
       target.popup.location.href = twitterUrl;
       try {
