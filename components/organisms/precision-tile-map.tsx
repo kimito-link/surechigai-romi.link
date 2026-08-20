@@ -345,7 +345,10 @@ const MAX_ZOOM = 19;
               {
                 width: markerSize,
                 height: markerSize,
-                borderRadius: markerSize * 0.2,
+                // ★真円にする（2026-08-20 実機report）。0.2 は「角丸の四角」で、
+                //   丸い枠の中に四角いアイコンが入って見えていた。
+                //   とまり木のように「丸＝その人のサムネ」に見せる。
+                borderRadius: markerSize / 2,
                 left: latestPosition.x - markerSize / 2,
                 top: latestPosition.y - markerSize / 2,
               },
@@ -357,8 +360,10 @@ const MAX_ZOOM = 19;
                 style={{
                   width: markerSize - 6,
                   height: markerSize - 6,
-                  borderRadius: (markerSize - 6) * 0.16,
+                  // 内側の画像も真円に切る（外だけ丸めても中身が四角なら意味がない）
+                  borderRadius: (markerSize - 6) / 2,
                 }}
+                resizeMode="cover"
               />
             ) : (
               <MaterialIcons name={markerIcon} size={Math.round(markerSize * 0.55)} color={color.textWhite} />
@@ -477,7 +482,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: 44,
     height: 44,
-    borderRadius: 8,
+    // 既定も真円にしておく（インラインで markerSize/2 に上書きされるが、
+    // 既定が角丸の四角のままだと markerSize 未指定時に四角く出る）
+    borderRadius: 22,
     backgroundColor: color.accentIndigo,
     borderWidth: 3,
     borderColor: color.textWhite,
