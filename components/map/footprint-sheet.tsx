@@ -17,6 +17,7 @@ import {
 } from "@/components/organisms/precision-tile-map";
 import { NavigateToPlaceButton } from "@/components/molecules/navigate-to-place-button";
 import { usePrefWeather, formatWeatherLine } from "@/hooks/use-pref-weather";
+import { useLiveStream, formatLiveStreamLabel } from "@/hooks/use-live-stream";
 import {
   liveCameraLinkFor,
   youtubeLiveSearchUrl,
@@ -62,10 +63,21 @@ export function FootprintSheet({
   const weatherLine = formatWeatherLine(point?.prefecture, weather);
 
   const [liveOpenFailed, setLiveOpenFailed] = useState(false);
-  const cameraLink = liveCameraLinkFor(point?.prefecture);
   const youtubeUrl = youtubeLiveSearchUrl(
     point?.municipality ?? point?.prefecture ?? null,
   );
+
+  /* 配信中の映像が特定できたら検索結果ページではなく映像へ直行する。
+     取れなければ従来どおり検索リンク（キー未設定・quota超過・該当なしでも導線は消えない）。
+     ★この画面と place-context-bar.tsx の2経路あるので必ず両方直すこと
+       （OGP で片方だけ直して本番に出ていなかった前例がある）。 */
+  const { stream } = useLiveStream(point?.prefecture, point?.municipality);
+  const liveUrl = stream?.url ?? youtubeUrl;
+  const liveLabel = formatLiveStreamLabel(stream);
+
+  /* 国交省の一覧ページは映像まで数ステップかかる。直行できるなら上位互換なので隠す。
+     直行が取れない県では唯一の手段なので必ず残す（2026-08-21 ユーザー判断）。 */
+  const cameraLink = stream ? null : liveCameraLinkFor(point?.prefecture);
 
   /** 外部リンクを開く。false を握り潰さず画面で伝える（無反応を作らない） */
   const handleOpenLive = async (url: string) => {
@@ -153,16 +165,33 @@ export function FootprintSheet({
                 <Text style={styles.liveButtonText}>ライブカメラ（国交省）</Text>
               </Pressable>
             ) : null}
-            {youtubeUrl ? (
+            {liveUrl ? (
               <Pressable
-                onPress={() => void handleOpenLive(youtubeUrl)}
-                style={({ pressed }) => [styles.liveButton, pressed && { opacity: 0.75 }]}
+                onPress={() => void handleOpenLive(liveUrl)}
+                style={({ pressed }) => [
+                  styles.liveButton,
+                  stream && styles.liveButtonDirect,
+                  pressed && { opacity: 0.75 },
+                ]}
                 accessibilityRole="link"
-                accessibilityLabel={`${formatPlace(point)}のライブ配信を探す`}
+                accessibilityLabel={
+                  stream
+                    ? `ライブ配信中: ${stream.title} を見る`
+                    : `${formatPlace(point)}のライブ配信を探す`
+                }
                 testID="footprint-sheet-live-youtube"
               >
-                <MaterialIcons name="live-tv" size={16} color={color.textSecondary} />
-                <Text style={styles.liveButtonText}>ライブ配信を探す</Text>
+                <MaterialIcons
+                  name={stream ? "sensors" : "live-tv"}
+                  size={16}
+                  color={stream ? color.accentPrimary : color.textSecondary}
+                />
+                <Text
+                  style={[styles.liveButtonText, stream && styles.liveButtonTextDirect]}
+                  numberOfLines={1}
+                >
+                  {liveLabel}
+                </Text>
               </Pressable>
             ) : null}
           </View>
@@ -344,10 +373,23 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     backgroundColor: color.surfaceAlt,
   },
+  /* 映像へ直行できるときは、押せば見られることが分かるように強調する。
+     配信名が入るぶん幅を取るので、行の中で伸び縮みできるようにする。 */
+  liveButtonDirect: {
+    borderColor: color.accentPrimary,
+    flexShrink: 1,
+    minWidth: 0,
+  },
   liveButtonText: {
     color: color.textSecondary,
     fontSize: 12,
     fontWeight: "600",
+  },
+  liveButtonTextDirect: {
+    color: color.accentPrimary,
+    fontWeight: "800",
+    flexShrink: 1,
+    minWidth: 0,
   },
   liveError: {
     color: color.textMuted,

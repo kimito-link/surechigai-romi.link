@@ -16,6 +16,7 @@ import { View, Text, StyleSheet, Pressable, Platform } from "react-native";
 import { useState } from "react";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { usePrefWeather, formatWeatherLine } from "@/hooks/use-pref-weather";
+import { useLiveStream, formatLiveStreamLabel } from "@/hooks/use-live-stream";
 import {
   liveCameraLinkFor,
   youtubeLiveSearchUrl,
@@ -59,8 +60,19 @@ export function PlaceContextBar({
 
   const { weather } = usePrefWeather(shownPref, shownMuni);
   const weatherLine = formatWeatherLine(shownPref, weather);
-  const cameraLink = liveCameraLinkFor(shownPref);
   const youtubeUrl = youtubeLiveSearchUrl(shownMuni ?? shownPref ?? null);
+
+  /* 配信中の映像が特定できたら、検索結果ページではなく映像へ直行する。
+     取れなければ stream は null のままで、従来どおり検索リンクを出す
+     （キー未設定・quota超過・該当なし、いずれも導線は消えない）。 */
+  const { stream } = useLiveStream(shownPref, shownMuni);
+  const liveUrl = stream?.url ?? youtubeUrl;
+  const liveLabel = formatLiveStreamLabel(stream);
+
+  /* 国交省の一覧ページ（ダムの図など）は映像まで数ステップかかる。
+     直行できるならそちらが上位互換なので隠す。直行が取れない県では
+     国交省が唯一の手段なので必ず残す（2026-08-21 ユーザー判断）。 */
+  const cameraLink = stream ? null : liveCameraLinkFor(shownPref);
 
   const handleOpen = async (url: string) => {
     const opened = await openExternalUrl(url);
@@ -68,7 +80,7 @@ export function PlaceContextBar({
   };
 
   // 天気も導線も無いなら、空の枠だけ出しても意味がないので何も出さない
-  if (!weatherLine && !cameraLink && !youtubeUrl) return null;
+  if (!weatherLine && !cameraLink && !liveUrl) return null;
 
   return (
     <View style={styles.wrap}>
@@ -89,7 +101,7 @@ export function PlaceContextBar({
         </View>
       ) : null}
 
-      {cameraLink || youtubeUrl ? (
+      {cameraLink || liveUrl ? (
         <View style={styles.liveRow}>
           <Text style={styles.liveLabel}>いまの様子</Text>
           {cameraLink ? (
@@ -108,20 +120,34 @@ export function PlaceContextBar({
               <Text style={styles.liveButtonText}>ライブカメラ</Text>
             </Pressable>
           ) : null}
-          {youtubeUrl ? (
+          {liveUrl ? (
             <Pressable
-              onPress={() => void handleOpen(youtubeUrl)}
+              onPress={() => void handleOpen(liveUrl)}
               style={({ pressed }) => [
                 styles.liveButton,
+                stream && styles.liveButtonDirect,
                 pressed && { opacity: 0.75 },
                 Platform.OS === "web" && styles.pressableWeb,
               ]}
               accessibilityRole="link"
-              accessibilityLabel="YouTube でこの場所のライブ配信を探す"
+              accessibilityLabel={
+                stream
+                  ? `ライブ配信中: ${stream.title} を見る`
+                  : "YouTube でこの場所のライブ配信を探す"
+              }
               testID="place-context-youtube-live"
             >
-              <MaterialIcons name="smart-display" size={14} color={color.textSecondary} />
-              <Text style={styles.liveButtonText}>ライブ配信を探す</Text>
+              <MaterialIcons
+                name={stream ? "sensors" : "smart-display"}
+                size={14}
+                color={stream ? color.accentPrimary : color.textSecondary}
+              />
+              <Text
+                style={[styles.liveButtonText, stream && styles.liveButtonTextDirect]}
+                numberOfLines={1}
+              >
+                {liveLabel}
+              </Text>
             </Pressable>
           ) : null}
         </View>
@@ -194,10 +220,23 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     backgroundColor: color.surface,
   },
+  /* 映像へ直行できるときは、押せば見られることが分かるように強調する。
+     配信名が入るぶん幅を取るので、行の中で伸び縮みできるようにしておく。 */
+  liveButtonDirect: {
+    borderColor: color.accentPrimary,
+    flexShrink: 1,
+    minWidth: 0,
+  },
   liveButtonText: {
     color: color.textSecondary,
     fontSize: 11,
     fontWeight: "800",
+  },
+  liveButtonTextDirect: {
+    // #00427B。白地（surface）で 11.6:1 ＝ AA を大きく上回る
+    color: color.accentPrimary,
+    flexShrink: 1,
+    minWidth: 0,
   },
   pressableWeb: {
     cursor: "pointer",
