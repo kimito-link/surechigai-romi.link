@@ -5,6 +5,7 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Link, type Href } from "expo-router";
 import { palette } from "@/theme/tokens";
 import { isNativeAppShell } from "@/lib/native-app-shell";
+import { useAuth } from "@/hooks/use-auth";
 
 type KimitoLoginCtaProps = {
   signInHref: string;
@@ -30,12 +31,30 @@ export function KimitoLoginCta({
   isStarting = false,
   onPress,
 }: KimitoLoginCtaProps) {
+  /* ★2026-08-21 iOS build 520 却下の真因:
+     「はじめる / Login with X が反応しない」。押しても本当に何も起きなかった。
+
+     認証プロバイダの chunk を解決している間、app/_layout.tsx は
+     AUTH_LOADING_PLACEHOLDER（`login: async () => {}` ＝ 何もしない関数）を配る。
+     この間もゲスト画面は描かれるので、**見た目は完全に押せるボタンなのに
+     押すと無反応**になる。app/(tabs)/index.tsx は未ログイン時に
+     isAuthReadyForUI を待たず PostGuestScreen を即描画するため、
+     初回起動（＝審査員の状態）でこの窓に入りやすい。
+
+     one-tap-guest-shell と app-header は isAuthReadyForUI で出し分けていたが、
+     inline-login-prompt と post-guest-screen には出し分けが無かった。
+     呼び出し側で個別に足すと**また足し忘れる**ので、ボタン自身が知る。
+     準備前は既存の「接続中…」表示（disabled + 半透明）に倒す。 */
+  const { isAuthReadyForUI } = useAuth();
+  const isPreparing = !isAuthReadyForUI;
+  const busy = isStarting || isPreparing;
+
   // ネイティブアプリ(App Store 審査対象)では特定プロバイダを名指ししない。
   // X の字面と「1タップ」を出すと、実際は Apple も選べるのに
   // 「X ログインしか無い」と見える（2026-08-05 Guideline 4.8 却下の一因）。
   const isNative = isNativeAppShell();
-  const nativeLabel = isStarting ? "接続中…" : "はじめる";
-  const displayLabel = isStarting ? "接続中…" : label;
+  const nativeLabel = busy ? "接続中…" : "はじめる";
+  const displayLabel = busy ? "接続中…" : label;
   const content = isNative ? (
     <Text style={styles.buttonText}>{nativeLabel}</Text>
   ) : (
@@ -51,6 +70,8 @@ export function KimitoLoginCta({
   if (Platform.OS === "web") {
     // 実 <a href> を出す: E2E/クローラー/右クリック新規タブなどのブラウザネイティブ機能を保つ。
     // onPress は preventDefault しない（href への遷移は保ちつつログインガイド機構も併走させる）。
+    // ★Web は href があるので準備中でも遷移できる（無反応にならない）。
+    //   よって isPreparing で殺さない。文言だけ busy に従う。
     return (
       <Link
         href={signInHref as Href}
@@ -71,16 +92,19 @@ export function KimitoLoginCta({
     );
   }
 
+  /* ネイティブは href が無く onPress が唯一の経路。準備前は login が
+     何もしない関数なので、押せるように見せず「接続中…」で待たせる。 */
   return (
     <Pressable
-      disabled={isStarting}
+      disabled={busy}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={a11yLabel}
+      accessibilityState={{ disabled: busy, busy }}
       style={({ pressed }) => [
         buttonStyle,
         pressed && { opacity: 0.85 },
-        isStarting && { opacity: 0.65 },
+        busy && { opacity: 0.65 },
       ]}
     >
       {content}
