@@ -1,11 +1,20 @@
 /**
  * Xログイン CTA — kimito.link ライト UI 準拠（Web で背景色が確実に効く）
  */
+import { useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Link, type Href } from "expo-router";
 import { palette } from "@/theme/tokens";
 import { isNativeAppShell } from "@/lib/native-app-shell";
 import { useAuth } from "@/hooks/use-auth";
+
+/**
+ * 認証の準備をこれ以上待たない上限。
+ * 超えたらボタンを押せる状態に戻す（永久に固まらせない）。
+ * clerk-auth-bridge.tsx の authReadyTimeout(1000ms) より長めにして、
+ * 正常時にこちらが先に発火して二重に見えないようにする。
+ */
+const AUTH_WAIT_TIMEOUT_MS = 4000;
 
 type KimitoLoginCtaProps = {
   signInHref: string;
@@ -45,8 +54,20 @@ export function KimitoLoginCta({
      inline-login-prompt と post-guest-screen には出し分けが無かった。
      呼び出し側で個別に足すと**また足し忘れる**ので、ボタン自身が知る。
      準備前は既存の「接続中…」表示（disabled + 半透明）に倒す。 */
+  /* ★ただし「準備中」を無期限に信じない（2026-08-21・検証で発覚）。
+     認証プロバイダの読み込みが失敗すると isAuthReadyForUI は永久に false のままで、
+     ボタンが**永久に押せなくなる**。それは却下された「無反応」より悪い。
+     一定時間で諦めて押せる状態に戻し、押した先でエラーを見せる方に倒す
+     （clerk-auth-bridge.tsx の authReadyTimeout と同じ考え方）。 */
   const { isAuthReadyForUI } = useAuth();
-  const isPreparing = !isAuthReadyForUI;
+  const [waitedTooLong, setWaitedTooLong] = useState(false);
+  useEffect(() => {
+    if (isAuthReadyForUI) return;
+    const t = setTimeout(() => setWaitedTooLong(true), AUTH_WAIT_TIMEOUT_MS);
+    return () => clearTimeout(t);
+  }, [isAuthReadyForUI]);
+
+  const isPreparing = !isAuthReadyForUI && !waitedTooLong;
   const busy = isStarting || isPreparing;
 
   // ネイティブアプリ(App Store 審査対象)では特定プロバイダを名指ししない。

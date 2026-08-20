@@ -68,6 +68,35 @@ describe("KimitoLoginCta が認証の準備状態を見る", () => {
   });
 });
 
+describe("永久に固まらないこと（修正が新しい詰みを作らない）", () => {
+  /* ★検証で発覚（2026-08-21）: disabled にするだけだと、認証プロバイダの
+     読み込みが失敗したとき isAuthReadyForUI が永久に false になり、
+     ボタンが**永久に押せなくなる**。却下された「無反応」より悪い。
+     待ちに上限を設け、超えたら押せる状態へ戻す。 */
+  it("待ち時間に上限がある", () => {
+    expect(CTA).toMatch(/AUTH_WAIT_TIMEOUT_MS\s*=\s*\d+/);
+    expect(CTA).toMatch(/setTimeout\(\s*\(\)\s*=>\s*setWaitedTooLong\(true\)/);
+  });
+
+  it("上限を超えたら準備中扱いをやめる（押せる状態に戻す）", () => {
+    expect(CTA).toMatch(/isPreparing\s*=\s*!isAuthReadyForUI\s*&&\s*!waitedTooLong/);
+  });
+
+  it("認証が準備できたらタイマーは張らない（正常時に無駄を出さない）", () => {
+    expect(CTA).toMatch(/if\s*\(isAuthReadyForUI\)\s*return;/);
+  });
+
+  it("loadAuthProviders は失敗を記憶しない（再試行できる）", () => {
+    // reject 済み Promise をメモに残すと、再マウントしても
+    // `if (!authProvidersPromise)` のガードで再生成されず永久に復帰しない。
+    const idx = LAYOUT.indexOf("function loadAuthProviders");
+    const block = LAYOUT.slice(idx, idx + 900);
+
+    expect(block).toMatch(/\.catch\(/);
+    expect(block).toMatch(/authProvidersPromise\s*=\s*null/);
+  });
+});
+
 describe("無反応の原因になった配線が残っていること（前提の固定）", () => {
   it("_layout は解決待ちに login が no-op のプレースホルダを配る", () => {
     // この前提が変わったら、上のガードの理由も見直す必要がある。

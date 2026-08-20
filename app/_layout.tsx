@@ -67,10 +67,21 @@ function loadAuthProviders(): Promise<AuthProviderComponents> {
     authProvidersPromise = Promise.all([
       import("@/components/providers/clerk-root-provider"),
       import("@/components/providers/onboarding-gate"),
-    ]).then(([clerk, gate]) => ({
-      ClerkRootProvider: clerk.ClerkRootProvider,
-      OnboardingGate: gate.OnboardingGate,
-    }));
+    ])
+      .then(([clerk, gate]) => ({
+        ClerkRootProvider: clerk.ClerkRootProvider,
+        OnboardingGate: gate.OnboardingGate,
+      }))
+      /* ★失敗したメモを残さない（2026-08-21）。
+         reject 済みの Promise を掴んだままだと `if (!authProvidersPromise)` の
+         ガードで再生成されず、**アプリを再起動するまで永久に復帰しない**。
+         認証プロバイダが永久に null ＝ isAuthReadyForUI が永久に false になり、
+         ログインボタンが永久に「接続中…」で固まる（無反応より悪い）。
+         失敗は記憶せず、次のマウントで素直に再試行させる。 */
+      .catch((e: unknown) => {
+        authProvidersPromise = null;
+        throw e;
+      });
   }
   return authProvidersPromise;
 }
