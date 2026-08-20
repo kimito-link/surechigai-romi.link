@@ -197,6 +197,16 @@ jobs:
               #   壁紙の色数を「描画されている」と誤判定する（2026-08-17 に2回踏んだ）。
               #   1枚だけだと起動タイミングのブレを吸収できず、実際に
               #   「起動前のホーム画面」が写った（2026-08-19）。複数枚撮って全部残す。
+              # ★押して動くかを見る（2026-08-20・build 520 の却下）。
+              #   「はじめる / Login with X が反応しない」で却下されたのに、
+              #   このプローブは「起動して落ちない」ことしか確かめていなかった。
+              #   押す前後のスクショを撮って、画面が変わるかで判定する。
+              if [ "$WAITED" = "21" ]; then
+                xcrun simctl io "$UDID" screenshot "/tmp/probe-out/tap-before-$NAME.png" 2>/dev/null || true
+                bash scripts/qa/sim-tap-center.sh 0.55 || true
+                sleep 6
+                xcrun simctl io "$UDID" screenshot "/tmp/probe-out/tap-after-$NAME.png" 2>/dev/null || true
+              fi
               if [ "$WAITED" = "9" ] || [ "$WAITED" = "18" ] || [ "$WAITED" = "30" ]; then
                 xcrun simctl io "$UDID" screenshot                   "/tmp/probe-out/screen-$NAME-t${WAITED}.png" 2>/dev/null || true
                 # 最後に撮れたものを代表として使う（後段の色数判定はこれを見る）
