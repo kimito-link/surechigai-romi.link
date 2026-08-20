@@ -26,6 +26,7 @@ import {
   TIER_LABELS,
   STAMPS,
 } from "@/lib/post/encounter-shared";
+import { buildXFollowUrl } from "@/lib/x-follow";
 import { color, palette } from "@/theme/tokens";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { normalizeTwitterUsername } from "@/lib/twitter-username";
@@ -129,6 +130,7 @@ export function EncounterOpenModal({
   const modalDisplayName =
     item.partnerDisplayName || item.partnerName || "ロミユーザー";
   const modalHandle = normalizeTwitterUsername(item.partnerUsername);
+  const followUrl = buildXFollowUrl(modalHandle);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -241,6 +243,24 @@ export function EncounterOpenModal({
               >
                 <Text style={styles.modalXButtonText} numberOfLines={1}>
                   X プロフィールを見る @{modalHandle}
+                </Text>
+              </Pressable>
+            )}
+
+            {/* このアプリはアプリ内DMを持たない（交流は X に委ねる設計）ので、
+                繋がる手段はフォローだけ。プロフィールを開くだけだと相手に
+                「本人か確かめる → フォローを探して押す」が残るため、
+                フォロー確認画面へ直行する導線も並べる。
+                ★自動フォローではない。最後は本人が押す（文言もそう書く）。 */}
+            {followUrl && (
+              <Pressable
+                onPress={() => Linking.openURL(followUrl)}
+                accessibilityRole="link"
+                accessibilityLabel={`@${modalHandle} をXでフォローする`}
+                style={({ pressed }) => [styles.modalFollowButton, pressed && { opacity: 0.8 }]}
+              >
+                <Text style={styles.modalFollowButtonText} numberOfLines={1}>
+                  X でフォローする
                 </Text>
               </Pressable>
             )}
@@ -410,6 +430,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: "center",
     marginBottom: 12,
+  },
+  modalFollowButton: {
+    backgroundColor: color.twitter,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    marginBottom: 12,
+  },
+  modalFollowButtonText: {
+    color: color.textWhite,
+    fontSize: 14,
+    fontWeight: "700",
   },
   modalXButtonText: {
     color: color.twitter,
