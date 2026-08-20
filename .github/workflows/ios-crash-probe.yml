@@ -203,7 +203,12 @@ jobs:
               #   押す前後のスクショを撮って、画面が変わるかで判定する。
               if [ "$WAITED" = "21" ]; then
                 xcrun simctl io "$UDID" screenshot "/tmp/probe-out/tap-before-$NAME.png" 2>/dev/null || true
-                bash scripts/qa/sim-tap-center.sh 0.55 || true
+                # 「はじめる」の中心は実測で画面の上から約48%（0.55 だと165px下を
+                # 叩いてボタンを外していた・2026-08-20）。念のため2点叩く。
+                bash scripts/qa/sim-tap-center.sh 0.48 || true
+                sleep 3
+                xcrun simctl io "$UDID" screenshot "/tmp/probe-out/tap-mid-$NAME.png" 2>/dev/null || true
+                bash scripts/qa/sim-tap-center.sh 0.50 || true
                 sleep 6
                 xcrun simctl io "$UDID" screenshot "/tmp/probe-out/tap-after-$NAME.png" 2>/dev/null || true
               fi
