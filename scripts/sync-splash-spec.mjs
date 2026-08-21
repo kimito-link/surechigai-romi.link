@@ -110,16 +110,55 @@ function main() {
     throw new Error(`仕様データが少なすぎます(${table.length}件)。取り込みに失敗した可能性`);
   }
 
+  /* ★--verify を足した（2026-08-21）。
+     それまでは引数なしで**必ず書き込む**ので、検査のつもりで叩くと作業ツリーが汚れた。
+     しかも出力が LF 固定なのに実ファイルが CRLF のため、
+     中身が同じでも 122 行が差分として出て**本物の変更が埋もれていた**。
+     - 書き込み前に既存ファイルの改行コードへ合わせる（無意味な差分を出さない）
+     - --verify では書き込まず、差分があれば非0で終了する */
+  const verifyOnly = process.argv.includes("--verify");
+
+  /** 既存ファイルの改行コードに合わせる（CRLF のファイルへ LF を書き込まない） */
+  const matchEol = (text, existingPath) => {
+    if (!existsSync(existingPath)) return text;
+    const cur = readFileSync(existingPath, "utf8");
+    const wantsCrlf = cur.includes("\r\n");
+    const lf = text.replace(/\r\n/g, "\n");
+    return wantsCrlf ? lf.replace(/\n/g, "\r\n") : lf;
+  };
+
+  const problems = [];
+
   mkdirSync(dirname(OUT_JSON), { recursive: true });
   const json = {
     _source:
       "pwa-asset-generator (elegantapp) apple-fallback-data.json — Apple Human Interface Guidelines 由来",
     _note: "縦向きのみ（manifest.orientation=portrait）。手で編集しない。更新は pnpm splash:sync。",
-    _syncedAt: new Date().toISOString().slice(0, 10),
+    // ★_syncedAt は実行日なので毎回変わる。--verify の比較対象から外すため、
+    //   既存ファイルがあればその値を引き継ぐ（内容が同じなら差分を出さない）。
+    _syncedAt: (() => {
+      if (existsSync(OUT_JSON)) {
+        try {
+          const prev = JSON.parse(readFileSync(OUT_JSON, "utf8"));
+          const same =
+            JSON.stringify(prev.portrait) === JSON.stringify(table);
+          if (same && prev._syncedAt) return prev._syncedAt;
+        } catch {
+          /* 壊れていれば作り直す */
+        }
+      }
+      return new Date().toISOString().slice(0, 10);
+    })(),
     portrait: table,
   };
-  writeFileSync(OUT_JSON, JSON.stringify(json, null, 2) + "\n", "utf8");
-  console.log(`[splash:sync] wrote scripts/data/ios-launch-sizes.json (${table.length} sizes)`);
+  const jsonText = matchEol(JSON.stringify(json, null, 2) + "\n", OUT_JSON);
+  if (verifyOnly) {
+    const cur = existsSync(OUT_JSON) ? readFileSync(OUT_JSON, "utf8") : "";
+    if (cur !== jsonText) problems.push("scripts/data/ios-launch-sizes.json");
+  } else {
+    writeFileSync(OUT_JSON, jsonText, "utf8");
+    console.log(`[splash:sync] wrote scripts/data/ios-launch-sizes.json (${table.length} sizes)`);
+  }
 
   if (!existsSync(HTML)) throw new Error(`missing ${HTML}`);
   const src = readFileSync(HTML, "utf8");
@@ -131,10 +170,24 @@ function main() {
         "自動生成ブロックを消してしまった可能性があります。",
     );
   }
-  const next = src.slice(0, b + BEGIN.length) + "\n" + renderLinks(table) + "\n" + src.slice(e);
-  writeFileSync(HTML, next, "utf8");
-  console.log(`[splash:sync] updated app/+html.tsx (${table.length} link tags)`);
-  console.log("[splash:sync] 次に `pnpm brand:icons` で画像を生成してください");
+  const rebuilt = src.slice(0, b + BEGIN.length) + "\n" + renderLinks(table) + "\n" + src.slice(e);
+  const next = matchEol(rebuilt, HTML);
+  if (verifyOnly) {
+    if (src !== next) problems.push("app/+html.tsx");
+  } else {
+    writeFileSync(HTML, next, "utf8");
+    console.log(`[splash:sync] updated app/+html.tsx (${table.length} link tags)`);
+    console.log("[splash:sync] 次に `pnpm brand:icons` で画像を生成してください");
+  }
+
+  if (verifyOnly) {
+    if (problems.length > 0) {
+      console.error(`[splash:sync] NG: 生成物が最新ではありません → ${problems.join(", ")}`);
+      console.error("  直し方: pnpm splash:sync を実行してコミットする");
+      process.exit(1);
+    }
+    console.log(`[splash:sync] OK: 生成物は最新（${table.length} sizes）`);
+  }
 }
 
 main();

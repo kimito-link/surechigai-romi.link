@@ -81,6 +81,14 @@ function resolveClickableTarget(candidate: HTMLElement): HTMLElement | null {
 }
 
 function findClickableXButton(): HTMLElement | null {
+  // ★自分自身でガードする（2026-08-21）。
+  //   実際の呼び出し元は Web でしか動かない経路なので今は安全だが、
+  //   この関数だけを見ると `document` を無防備に触っている。
+  //   Hermes には document が無く、うっかり別の場所から呼ぶと
+  //   起動時に全画面エラー → App Store 却下（iOS 518 の実績）になる。
+  //   呼び出し元の事情に安全を委ねない。
+  if (typeof document === "undefined") return null;
+
   const matched = document.querySelector<HTMLElement>(X_BUTTON_SELECTOR);
   if (matched) return resolveClickableTarget(matched);
 

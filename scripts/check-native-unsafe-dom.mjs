@@ -20,13 +20,33 @@
  *
  * 実行: node scripts/check-native-unsafe-dom.mjs
  *
- * ⚠️ 既知の限界（2026-08-19 時点）:
- *   スコープ判定が甘く、**本物の不具合（app/_layout.tsx の
- *   RestoreDeepLinkAfterAuthBoot）を検出できない**ことを確認済み。
- *   同じファイル内の無関係な Platform ガードを拾ってしまうため。
- *   よって `pnpm check` には組み込んでいない。参考情報として使い、
- *   **これが緑でも「ネイティブで安全」とは言えない**。
- *   確実な検証は ios-crash-probe.yml（実機シミュレータで起動）で行うこと。
+ * ★2026-08-21: スコープ判定を直し、`pnpm check` に組み込んだ。
+ *
+ *   それまでは「危険な行の 60 行手前までにガードがあれば OK」としていたため、
+ *   **別の関数やモジュール定数にあるガードを理由に見逃していた**。
+ *   実際 app/_layout.tsx では、24 行上のモジュール定数
+ *   `const INITIAL_WEB_PATH = Platform.OS === "web" && ...` を根拠に、
+ *   別関数 RestoreDeepLinkAfterAuthBoot 内の未ガードな
+ *   `window.addEventListener` が OK と判定されていた。
+ *   これは **iOS 518 却下の原因そのもの**であり、この検査が
+ *   いちばん捕まえなければならない形だった。
+ *
+ *   直した内容: スコープを**内側から外側へ**辿り、
+ *   「自分より浅いインデントの関数開始」ごとにガードを探す。
+ *   これで以下を両立する。
+ *     - ガード済み useEffect の中のクリーンアップ（`return () => {...}`）は通す
+ *     - 別関数・モジュール定数のガードは根拠にしない
+ *
+ *   検証: 却下当時の姿（Platform ガードを外した状態）を再現すると
+ *   NG 4 件で exit 1、戻すと exit 0 になることを確認済み（変異テスト）。
+ *
+ * ⚠️ それでも残る限界:
+ *   静的解析なので、**呼び出し元の事情までは追えない**。
+ *   ガードの無いヘルパー関数は、安全な場所からしか呼ばれていなくても NG になる。
+ *   その場合はヘルパー自身に `typeof document === "undefined"` を足すこと
+ *   （呼び出し元の事情に安全を委ねない方が、そもそも壊れにくい）。
+ *   **これが緑でも「ネイティブで確実に安全」とまでは言えない**。
+ *   最終的な確証は ios-crash-probe.yml（実機シミュレータで起動）で得ること。
  */
 
 import fs from "node:fs";
@@ -60,6 +80,23 @@ const GUARDS = [
   /typeof\s+document\s*===\s*["']undefined["']/,
   /typeof\s+document\s*!==\s*["']undefined["']/,
   /typeof\s+window\.addEventListener\s*!==\s*["']function["']/,
+  /**
+   * ★ヘルパー関数によるガード（2026-08-21 追加）。
+   *
+   * ガードを**その場に書かず、Web判定のヘルパーを呼んで早期 return する**書き方が
+   * このリポジトリには実在する。インラインのガードしか見ていなかったため、
+   * 安全なコードを2件 NG と報告していた（＝誤検知）。
+   *
+   *   lib/_core/manus-runtime.ts:107  `if (!isWeb() || !isInIframe()) return;`
+   *   components/auth/auto-advance-to-x.tsx  `hasAutoXParam()` が
+   *     内部で `Platform.OS !== "web"` を見て false を返し、呼び出し側が早期 return する
+   *
+   * 誤検知を出す検査は**信用されなくなり、本物を見逃す**ので拾えるようにする。
+   * ヘルパー名は「Web/ネイティブの判定」を意味するものだけに限定する
+   * （何でも通すと検査の意味が無くなる）。
+   */
+  /\b(?:!)?isWeb\(\)/,
+  /\bhasAutoXParam\(\)/,
 ];
 
 /** ガードを探す遡り行数。関数の頭で弾く書き方を拾える程度に広く取る。 */
@@ -99,23 +136,48 @@ for (const file of files) {
     if (!RISKY.some((r) => r.test(line))) continue;
 
     const from = Math.max(0, i - LOOKBACK);
-    const context = lines.slice(from, i + 1).join("\n");
-    if (GUARDS.some((g) => g.test(context))) continue;
 
-    // 「同じ関数（useEffect）の中でガードされているか」だけを見る。
-    // ファイル全体で判定すると、別の関数にある Platform ガードを理由に
-    // 本物の不具合を見逃す（2026-08-19 に実際に見逃した）。
-    let blockStart = from;
-    for (let j = i; j >= from; j -= 1) {
-      if (/useEffect\(|^\s*(export )?(async )?function |=>\s*\{\s*$/.test(lines[j])) {
-        blockStart = j;
-        break;
-      }
+    /* ★2026-08-21 修正: ここで「LOOKBACK 行以内にガードがあれば OK」と
+       していたため、**別の関数やモジュール定数にあるガードで見逃していた**。
+       実際 app/_layout.tsx では、24行上のモジュール定数
+       `const INITIAL_WEB_PATH = Platform.OS === "web" && ...` を理由に、
+       別関数 RestoreDeepLinkAfterAuthBoot 内の未ガードな
+       `window.addEventListener` が OK と判定されていた。
+       これは **iOS 518 却下の原因そのもの**であり、この検査が
+       いちばん捕まえなければならない形だった（変異テストで再現して確認）。
+
+       よって広い LOOKBACK 判定は廃止し、**同じ関数の中だけ**を見る。 */
+    /* スコープの開始を探す。**インデントが浅い**行だけを境界とみなす。
+       `const mark = () => {` のような**同じ階層の小さなコールバック**を
+       境界にすると、その手前にある本物のガードを見落とす（実際に起きた）。
+       ここでは「自分より浅いインデントで関数が始まる行」まで遡る。 */
+    /* スコープを**外側へ辿りながら**ガードを探す。
+
+       危険な行は、ガード済み useEffect の中の
+       `return () => { window.removeEventListener(...) }`（クリーンアップ）や、
+       小さなコールバックの中にあることが多い。内側のスコープだけを見ると
+       それらを全部 NG にしてしまう（実際 8 件の誤検知が出た）。
+       クリーンアップは**早期 return したら登録もされない**ので、
+       外側のガードが効いていれば安全である。
+
+       よって「自分より浅いインデントの関数開始」を見つけるたびに
+       そこまでを文脈としてガードを探し、見つからなければさらに外側へ広げる。 */
+    const indentOf = (s) => (s.match(/^\s*/) || [""])[0].length;
+    const isFnStart = (l) =>
+      /useEffect\(|^\s*(export\s+)?(async\s+)?function\b|=>\s*\{\s*$|^\s*(export\s+)?const\s+\w+\s*=\s*(async\s*)?\(/.test(l);
+
+    let guarded = false;
+    let indentLimit = indentOf(lines[i]);
+    for (let j = i - 1; j >= from && !guarded; j -= 1) {
+      const l = lines[j];
+      if (!l.trim()) continue;
+      if (!isFnStart(l) || indentOf(l) >= indentLimit) continue;
+      // ここが一段外側のスコープの入口
+      indentLimit = indentOf(l);
+      const ctx = lines.slice(j, i + 1).join("\n");
+      if (GUARDS.some((g) => g.test(ctx))) guarded = true;
     }
-    if (blockStart >= 0) {
-      const blockCtx = lines.slice(blockStart, i + 1).join(String.fromCharCode(10));
-      if (GUARDS.some((g) => g.test(blockCtx))) continue;
-    }
+    if (guarded) continue;
 
     findings.push({ file: rel, line: i + 1, code: line.trim().slice(0, 90) });
   }
