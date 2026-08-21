@@ -104,11 +104,36 @@ def load_ios_startup_sizes() -> list:
 
 
 def save_ios_startup_image(width: int, height: int, out: Path) -> None:
-    """単色背景（manifest.background_colorと同色）の中央にロゴを配置したsplash画像。"""
+    """単色背景（manifest.background_colorと同色）の中央にロゴを配置したsplash画像。
+
+    ★背景は #E2EDF7 のまま変えない（2026-08-21）。
+      これは manifest.background_color であり、アプリ本体の地色でもある。
+      揃えておくとスプラッシュ→本体で色が変わらず、切り替わりが目立たない。
+
+    ★compose_site_icon() は「ネイビーの正方形」を返す（アプリアイコン用に地を焼いている）。
+      それを薄青の地にそのまま貼ると**濃紺の四角が浮いて見える**（実機PWAで確認）。
+      アイコンとしては正しいが、スプラッシュでは角を丸めて「バッジ」に見せる。
+
+    ★大きさ: 0.28 → 0.62（短辺比）。従来は画面高の約1/10しかなく、
+      「スプラッシュがひどい」「ファーストビューを覆うぐらいにロゴとキャラを」
+      という指摘に繋がっていた。短辺の 62% なら縦画面で高さの約29%を占め、
+      左右にはしっかり余白が残る（端まで詰めると窮屈になるため詰めない）。
+    """
     bg = (0xE2, 0xED, 0xF7, 255)  # manifest.json background_color と一致させる
     canvas = Image.new("RGBA", (width, height), bg)
-    icon_size = int(min(width, height) * 0.28)
+
+    icon_size = int(min(width, height) * 0.62)
     icon = compose_site_icon(icon_size)
+
+    # 角を丸める（iOS のアプリアイコンと同じ比率 ≒ 22.37%）。
+    # 四角のまま貼ると薄青の地から浮くため。
+    radius = int(icon_size * 0.2237)
+    mask = Image.new("L", (icon_size, icon_size), 0)
+    ImageDraw.Draw(mask).rounded_rectangle(
+        [0, 0, icon_size - 1, icon_size - 1], radius=radius, fill=255
+    )
+    icon.putalpha(mask)
+
     ox = (width - icon_size) // 2
     oy = (height - icon_size) // 2
     canvas.paste(icon, (ox, oy), icon)
@@ -130,7 +155,12 @@ def main() -> None:
     save_site_icon(512, ROOT / "public/pwa-icon-512.png")
     save_maskable(512, ROOT / "public/pwa-icon-512-maskable.png")
 
-    save_site_icon(200, ROOT / "assets/images/splash-icon.png")
+    # ★600px で出す（2026-08-21）。app.config.ts の expo-splash-screen は
+    #   imageWidth: 200 だが、これは**ポイント指定**。3x 端末では 600px で描画されるため、
+    #   200px の素材だと 3 倍に引き伸ばされて輪郭が甘くなる。
+    #   素材だけ 3x 相当にしておけば、imageWidth を変えずに（＝レイアウトを変えずに）
+    #   実機での見え方だけが鮮明になる。
+    save_site_icon(600, ROOT / "assets/images/splash-icon.png")
     save_android_foreground(ROOT / "assets/images/android-icon-foreground.png")
 
     # iOS Safari PWA向けスプラッシュ（apple-touch-startup-image）
