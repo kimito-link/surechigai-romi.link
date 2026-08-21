@@ -66,6 +66,10 @@ server/_core/build-info.json
 *.tar.gz
 .cache/
 dist/
+# 調査用に出した Expo web ビルド（dist-map / dist-perf / dist-pl …）。
+# 1つ 60〜85MB あり、放置すると git status が常に汚れて
+# `git add -A` で巻き込む事故の元になる（過去に .npm-cache で実際に踏んだ）。
+dist-*/
 
 # 会議ハーネスの作業ディレクトリ・頂いた参照ソース（ビルド対象外）
 council/
