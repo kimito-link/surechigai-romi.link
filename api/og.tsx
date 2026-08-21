@@ -15,6 +15,7 @@
  */
 import * as React from "react";
 import { ImageResponse } from "@vercel/og";
+import { shouldShowLocationPin } from "../lib/ogp/pin-visibility.js";
 
 export const config = { runtime: "edge" };
 
@@ -519,6 +520,27 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
   const usePrefAnchor = isNightScene && !!prefPos;
   const anchorX = usePrefAnchor ? prefX : WIDTH / 2;
   const anchorY = usePrefAnchor ? prefY : HEIGHT / 2;
+
+  /* ★場所が分からないときにピンを打たない（2026-08-21）。
+     それまでは pref が解決できなくても**日本地図の中央にピンを描いて**いた。
+     「日本のどこか」と書いてあるのに現在地マーカーが特定の一点を指す、
+     という矛盾した絵になっていた（見る人には嘘に見える）。
+
+     このプロダクトの中心価値は「正確な場所を残して後でたどれる」こと。
+     場所が分からないなら**分からないと正直に見せる**方が、
+     偽の一点を指すより誠実で、ブランドの主張とも一致する。
+
+     判定: 夜景で県が特定できない、かつ地図タイルも無い（＝実座標が無い）とき。
+     地図タイルがある場合は中央＝実座標なので、ピンは正しい。
+
+     判断は lib/ogp/pin-visibility.ts の純粋関数に出してテストで固定してある
+     （ここに直接書くと守れず、実際にこの不具合を長く見逃した）。 */
+  const knowsWhere = shouldShowLocationPin({
+    isNightScene,
+    hasPrefPosition: !!prefPos,
+    hasStaticMap: !!staticMap,
+    hasTiles,
+  });
   // ★夜景（MAPTILER_KEY 無し / タイル取得失敗）でもアバターを出す。
   //   本番は既定でこちらの経路に来るので、ここに入れないと丸ピンが一度も出ない
   //   （2026-08-19 実測: 実共有URLの OGP は夜景で金の光のままだった）。
@@ -610,9 +632,17 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
             })
       );
   // バブル位置: 灯の真上。上端(ブランド帯)に食い込むなら灯の下へ。横は画面内にクランプ。
-  const bubbleCenterX = Math.min(Math.max(anchorX, 210), WIDTH - 210);
+  // ★場所が分からないときは指す先が無いので、画面中央に据える（2026-08-21）。
+  //   ピンの真上に置く計算のままだと、ピンが無いのに中途半端な高さに浮いて見える。
+  const bubbleCenterX = knowsWhere
+    ? Math.min(Math.max(anchorX, 210), WIDTH - 210)
+    : WIDTH / 2;
   const bubbleTopAbove = anchorY - PIN_SIZE / 2 - LABEL_GAP - 78;
-  const bubbleTop = bubbleTopAbove < 112 ? anchorY + 34 : bubbleTopAbove;
+  const bubbleTop = !knowsWhere
+    ? HEIGHT / 2 - 45
+    : bubbleTopAbove < 112
+      ? anchorY + 34
+      : bubbleTopAbove;
   const labelBubble = h(
     "div",
     {
@@ -660,7 +690,8 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
       },
     },
     labelBubble,
-    pin
+    // 場所が分からないならピンを出さない（偽の一点を指さない）
+    ...(knowsWhere ? [pin] : [])
   );
 
   // 下部タグライン + ハンドル
