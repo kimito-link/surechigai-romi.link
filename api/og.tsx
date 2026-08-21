@@ -570,7 +570,14 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
             height: NIGHT_PIN,
             borderRadius: 999,
             backgroundColor: avatarUrl ? COLORS.white : "#FFDF8A",
-            border: avatarUrl ? `5px solid ${COLORS.white}` : undefined,
+            /* ★`border: undefined` を渡さない（2026-08-21）。
+               Satori は undefined の border を受け取ると描画に失敗し、
+               **200 のまま 0 バイトの画像**を返す。
+               そのため「県は分かるがアバターが無い」共有（＝Xアイコン未取得の人）
+               の OGP が本番で真っ白になっていた（2026-08-19 の 6545707c6 から）。
+               curl は 200 / image/png を返すので配信確認では気づけず、
+               **サイズを見て初めて分かる**類の不具合。 */
+            border: avatarUrl ? `5px solid ${COLORS.white}` : "0px solid transparent",
             boxShadow: avatarUrl
               ? "0 0 30px 10px rgba(255,223,138,0.55), 0 6px 16px rgba(0,0,0,0.45)"
               : "0 0 26px 10px rgba(255,223,138,0.65), 0 0 60px 24px rgba(227,194,104,0.30)",
