@@ -19,6 +19,16 @@ const ALLOWED_EXTERNAL_DOMAINS = [
   "youtube.com",
   "youtu.be",
   "tiktok.com",
+  // ★Threads（2026-08-21 追加）。
+  //   lib/share.ts の buildThreadsIntentUrl は
+  //   `https://www.threads.com/intent/post?...` を組み立てるのに、
+  //   このリストに threads が**一度も入っていなかった**。
+  //   openExternalUrl は許可外ドメインで**無言で false** を返すため、
+  //   Threads の共有ボタンは押しても何も起きない状態だった（実測で発覚）。
+  //   threads.net は threads.com へ移行済みだが、
+  //   古いリンクが残っている可能性があるので両方許可する。
+  "threads.com",
+  "threads.net",
   // 配信プラットフォーム
   "twitcasting.tv",
   "showroom-live.com",
