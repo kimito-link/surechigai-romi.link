@@ -230,8 +230,21 @@ async function loadJapanSvg(origin: string): Promise<string | null> {
   try {
     const r = await fetch(`${origin}/lp/img/japan.svg`);
     if (!r.ok) return null;
-    const buf = await r.arrayBuffer();
-    return `data:image/svg+xml;base64,${toBase64(buf)}`;
+
+    /* ★沖縄の囲み罫を落とす（2026-08-21）。
+       japan.svg には `class="boundary-line"` の <line> が2本ある。
+       日本地図で沖縄を左下の枠に描くときの「区切り線」で、
+       LPの明るい地では自然に見えるが、色が **#EEEEEE 固定**なので
+       夜景（濃紺）の上では**白い線が2本宙に浮いて見える**。
+       実際、本番のOGP画像で左上に斜線と横線が浮いていた（目視で発覚）。
+
+       SVG本体は LP と共用なので**元ファイルは変えず**、
+       OGP に取り込むときだけ透明にする。 */
+    const svg = new TextDecoder().decode(await r.arrayBuffer()).replace(
+      /(<g[^>]*class="boundary-line"[^>]*)stroke="#EEEEEE"/,
+      '$1stroke="transparent"',
+    );
+    return `data:image/svg+xml;base64,${toBase64(new TextEncoder().encode(svg).buffer as ArrayBuffer)}`;
   } catch {
     return null;
   }
