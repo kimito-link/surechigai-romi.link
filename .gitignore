@@ -108,3 +108,4 @@ public/lp/img/_orig-photo/
 # タイムアウトする（2026-08-15 に実際に踏んだ）。
 .npm-cache/
 .pnpm-store/
+.tmp-responsive-audit.json
