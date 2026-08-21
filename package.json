@@ -50,6 +50,7 @@
     "pagespeed:full": "node scripts/pagespeed-check.mjs",
     "brand:icons": "python scripts/sync-brand-icons.py",
     "splash:sync": "node scripts/sync-splash-spec.mjs",
+    "check:ogp": "node scripts/qa/check-ogp-renders.mjs",
     "check:live-cameras": "node scripts/qa/check-live-camera-links.mjs",
     "check:doc-links": "node scripts/check-doc-links.mjs",
     "contrast:audit": "node scripts/contrast-audit.mjs",
