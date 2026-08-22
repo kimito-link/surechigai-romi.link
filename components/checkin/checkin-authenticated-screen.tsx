@@ -111,10 +111,18 @@ function rememberSponsorCardDisplay(): boolean {
 }
 
 export default function CheckinAuthenticatedScreen() {
+  // ===========================================================================
+  // 1. 環境・認証（画面幅、ログイン状態、タブバーの余白）
+  // ===========================================================================
   const { isDesktop, isMobile } = useResponsive();
   const { isAuthenticated, user } = useAuth();
   const tabInset = useTabBarInset();
 
+  // ===========================================================================
+  // 2. 画面の状態
+  //    state が画面全体の見た目を決める（idle→loading→success / adjust / error / zero）。
+  //    checkin* は「今いる場所」の確定値で、チェックイン成功時にまとめて埋まる。
+  // ===========================================================================
   const [state, setState] = useState<CheckinState>("idle");
   const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>("locating");
   const [newCount, setNewCount] = useState(0);
@@ -153,7 +161,10 @@ export default function CheckinAuthenticatedScreen() {
   const utils = trpc.useUtils();
   const { showError, showToast } = useToast();
 
-  // チェックイン直後にその場で現在地をシェアできる導線（X / Threads）
+  // ===========================================================================
+  // 3. シェア導線（X / Threads / Instagram）
+  //    チェックイン直後にその場で現在地を共有する。OGP画像のウォームもここ。
+  // ===========================================================================
   const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
   const handleShareLocation = useCallback(async (target: ShareTarget = "x") => {
     // 連打ガード: 前回のシェアが飛んでいる間に再タップされると、空タブが増える上に
@@ -341,6 +352,13 @@ export default function CheckinAuthenticatedScreen() {
     lastFixRef.current = { lat: coords.lat, lng: coords.lng, accuracy: 8, observedAt: Date.now() };
   }, []);
 
+  // ===========================================================================
+  // 4. チェックイン本体
+  //    位置を取る → 保存する → 結果演出、の順に進む。
+  //    performCheckinSave: 座標が確定した後の保存とすれ違い判定
+  //    performLocateAndCheckin: 位置取得から保存までの一連（ボタン押下の入口）
+  //    confirmAdjustedCheckin: 地図でピンを直した後の確定
+  // ===========================================================================
   const performCheckinSave = useCallback(
     async (pos: { lat: number; lng: number; accuracy?: number }) => {
       setLoadingPhase("saving");
@@ -648,6 +666,9 @@ export default function CheckinAuthenticatedScreen() {
     setShowLocationIntro(false);
   }, []);
 
+  // ===========================================================================
+  // 5. 設定・位置の一時停止
+  // ===========================================================================
   const handlePauseToggle = useCallback(() => {
     if (pauseLocation.isPending || resumeLocation.isPending) return;
 
@@ -741,6 +762,9 @@ export default function CheckinAuthenticatedScreen() {
 
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   /** スマホは地図を小さくし、シェアCTAが常に見える余白を確保 */
+  // ===========================================================================
+  // 6. レイアウト計算（画面サイズから地図の高さや余白を決める）
+  // ===========================================================================
   const mapHeroHeight = isMobile
     ? Math.min(Math.round(windowWidth * 0.72), 210)
     : Math.min(Math.round(windowHeight * 0.36), 400);
@@ -907,6 +931,9 @@ export default function CheckinAuthenticatedScreen() {
   // 認証済み画面本体（親 checkin.tsx がゲート済み）。見た目(JSX)は
   // checkin-screen-view.tsx に切り出し済み(refactor-instructions.md Debt #11)。
 
+  // ===========================================================================
+  // 7. 描画
+  // ===========================================================================
   return (
     <CheckinScreenView
       isDesktop={isDesktop}
@@ -956,6 +983,9 @@ export default function CheckinAuthenticatedScreen() {
   );
 }
 
+// =============================================================================
+// スタイル
+// =============================================================================
 const styles = StyleSheet.create({
   authLoading: {
     flex: 1,
