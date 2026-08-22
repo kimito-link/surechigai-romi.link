@@ -28,6 +28,30 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+/**
+ * スプラッシュ画像URLに付ける版番号。**画像を作り直したら +1 する。**
+ *
+ * ★なぜ必要か（2026-08-22 実障害）:
+ *   スプラッシュ画像は `/splash/ios-1179x2556.png` のように**名前が固定**で、
+ *   Cloudflare が `max-age=31536000, immutable` で配信する。
+ *   そのため中身を差し替えても**古い画像が配られ続ける**。
+ *
+ *   2026-08-21 に「濃紺の四角」を角丸化・拡大（短辺比 0.28→0.62）したのに、
+ *   35時間後の本番で**20解像度中5件が旧版のまま**だった（実測）:
+ *     ios-1125x2436 / 1170x2532 / 1179x2556 / 1206x2622 / 1242x2208 → 短辺比 0.279
+ *     ios-1242x2688 / 1260x2736 / 1284x2778                        → 短辺比 0.619
+ *   ＝ ★新旧が混在する。全部が古いなら気づけるが、混ざるので気づけない。
+ *
+ *   デプロイの自動パージは `Cloudflare secrets not set` で**一度も動いていない**
+ *   （deploy-vercel.yml のログで確認）。secrets が入るまでの恒久策として、
+ *   URLに版番号を付けて**別URLにする**（ファイル名は変えないので画像生成側は無傷）。
+ *
+ * ★ローカルの画像は正しかった。**壊れていたのは配信**。
+ *   だから「ファイルを見て正しい」では確かめたことにならない。
+ *   本番から落として短辺比を測ること（scripts/qa/check-splash-served.mjs）。
+ */
+const SPLASH_ASSET_VERSION = 2;
 const OUT_JSON = resolve(ROOT, "scripts/data/ios-launch-sizes.json");
 const HTML = resolve(ROOT, "app/+html.tsx");
 
@@ -96,7 +120,7 @@ function renderLinks(table) {
       `        {/* ${device} */}`,
       `        <link`,
       `          rel="apple-touch-startup-image"`,
-      `          href="/splash/ios-${px[0]}x${px[1]}.png"`,
+      `          href="/splash/ios-${px[0]}x${px[1]}.png?v=${SPLASH_ASSET_VERSION}"`,
       `          media="${media}"`,
       `        />`,
     ].join("\n");
