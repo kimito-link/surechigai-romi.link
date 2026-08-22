@@ -23,6 +23,7 @@ import path from "node:path";
 import {
   EXIT,
   computeExitCode,
+  formatProbeReport,
   normalizeProbeResult,
 } from "../scripts/lib/instrument-core.mjs";
 
@@ -101,5 +102,37 @@ describe("check-tracked-imports の実挙動", () => {
       code = (e as { status?: number }).status ?? -1;
     }
     expect(code).toBe(EXIT.PASS);
+  });
+});
+
+describe("古い証拠に印が付く（kimitolink-linktree から取り込み）", () => {
+  it("★60秒より古い verifiedAt には stale が付く", () => {
+    const old = new Date(Date.now() - 245_000).toISOString();
+    const r = normalizeProbeResult({
+      probe: "x",
+      verdict: "pass",
+      evidence: { verifiedAt: old, n: 1 },
+    });
+    // ★verdict は落とさない。stale は「無効」ではなく「古い」。
+    expect(r.verdict).toBe("pass");
+    expect((r.evidence as Record<string, unknown>).stale).toBe(true);
+    expect((r.evidence as Record<string, unknown>).staleSec).toBeGreaterThan(200);
+  });
+
+  it("新しい証拠には印が付かない", () => {
+    const r = normalizeProbeResult({
+      probe: "x",
+      verdict: "pass",
+      evidence: { verifiedAt: new Date().toISOString(), n: 1 },
+    });
+    expect((r.evidence as Record<string, unknown>).stale).toBeUndefined();
+  });
+
+  it("★古い緑は表示で必ず経過時間を出す（緑と同じ見た目にしない）", () => {
+    const old = new Date(Date.now() - 245_000).toISOString();
+    const out = formatProbeReport([
+      { probe: "本番の疎通", verdict: "pass", evidence: { verifiedAt: old, n: 1 } },
+    ]);
+    expect(out).toMatch(/秒前の証拠/);
   });
 });

@@ -38,6 +38,13 @@
  * ───────────────────────────────────────────────────────────────────────────
  */
 
+/**
+ * ★証拠が「古い」と見なすまでの時間。
+ *   kimitolink-linktree/scripts/lib/diag-core.mjs の 60秒を踏襲する
+ *   （疎通・health 系の証拠はこの程度で陳腐化する、という先行実装の実績値）。
+ */
+const STALE_MS = 60 * 1000;
+
 /** ★終了コードの約束(このリポ共通規約)。 */
 export const EXIT = Object.freeze({
   /** 合格。★根拠(evidence)を伴うときだけ名乗れる。 */
@@ -85,6 +92,24 @@ export function normalizeProbeResult(raw) {
   }
   if (verdict !== 'pass' && verdict !== 'fail' && verdict !== 'inconclusive') {
     verdict = 'inconclusive';
+  }
+
+  // ★古い証拠に印を付ける（2026-08-23 に kimitolink-linktree から取り込み）。
+  //   出どころ: kimitolink-linktree/scripts/lib/diag-core.mjs（先行実装）。
+  //
+  //   ★なぜ要るか: 「緑」と「4分前に緑だった」は別物。
+  //   このリポは 2026-08-22 に、**35時間前にキャッシュされた画像**を
+  //   「正しい」と報告して丸一日気づかなかった（旧スプラッシュ配信）。
+  //   証拠にいつ測ったかが無いと、古い緑と今の緑を区別できない。
+  //
+  //   ★verdict は変えない。stale は「無効」ではなく「古い」なので、
+  //   赤にすると再測定できない場面で詰む。★表示で気づかせる方に倒す。
+  if (evidence && typeof evidence.verifiedAt === 'string') {
+    const at = Date.parse(evidence.verifiedAt);
+    if (!Number.isNaN(at) && Date.now() - at > STALE_MS) {
+      evidence.stale = true;
+      evidence.staleSec = Math.round((Date.now() - at) / 1000);
+    }
   }
 
   return {
@@ -150,6 +175,16 @@ export function formatProbeReport(results, opts = {}) {
   if (!fails.length && !unk.length) {
     const ev = pass.length ? `(根拠あり ${pass.length}件)` : '';
     lines.push(`${label}✅ 合格 ${ev}`);
+    // ★古い証拠で緑になっているものは、緑と並べたまま**必ず経過時間を出す**。
+    //   「緑」と「4分前に緑だった」を同じ見た目にしない
+    //   （出どころ: kimitolink-linktree の diag 設計 D-2）。
+    for (const r of pass) {
+      if (r.evidence?.stale) {
+        lines.push(
+          `${label}⏳ ${r.probe}: ★${r.evidence.staleSec}秒前の証拠です（今の状態ではありません）`
+        );
+      }
+    }
   }
   return lines.join('\n');
 }
