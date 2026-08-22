@@ -3,6 +3,7 @@
  */
 import * as Auth from "@/lib/_core/auth";
 import { USER_INFO_KEY } from "@/constants/oauth";
+import { isSilentOAuthNoop, OAUTH_NOT_READY_MESSAGE } from "@/lib/auth/oauth-result";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { clearAllTokenData } from "@/lib/token-manager";
 import { buildSignInAutoXHref, buildSignInSwitchHref } from "@/lib/clerk-route";
@@ -261,6 +262,28 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
         const redirectUrl = `${getApiBaseUrl()}/oauth/twitter-callback`;
         const runOAuth = provider === "apple" ? startAppleOAuthFlow : startOAuthFlow;
         const result = await runOAuth({ redirectUrl });
+
+        /* ★2026-08-22 iOS build 521 却下（520と同じ "Buttons were unresponsive"）の真因。
+           520 の修正を入れた 521 で**同じ症状**が出たので、原因は別だった。
+
+           @clerk/expo の startOAuthFlow は、Clerk がまだ読み込めていないと
+           **例外を投げずに** `createdSessionId: ""` を返して終わる:
+             if (!isSignInLoaded || !isSignUpLoaded) return { createdSessionId: "", ... };
+           下の `if (result.createdSessionId && ...)` は空文字で素通りし、
+           try は正常終了するので catch の Alert も出ない。
+           ＝ ★**ブラウザも開かず、エラーも出ず、本当に何も起きない。**
+
+           しかも isAuthReadyForUI は 1000ms で無条件に true になる（authReadyTimeout）ので、
+           ボタンは「押せる見た目」に戻る。審査員はそれを押して無反応を見る。
+           ★520 の修正は useUser().isLoaded 系の窓を塞いだが、startOAuthFlow が見るのは
+           useSignIn()/useSignUp() の isLoaded で**別の信号**だった。
+
+           ここで握り潰さず throw して、下の catch に「見えるエラー」を出させる。
+           ★ボタンを disabled にする方向では直さない（押せない方が却下より悪い。
+           2026-08-21 に永久 disabled の詰みを作りかけた）。 */
+        if (isSilentOAuthNoop(result)) {
+          throw new Error(OAUTH_NOT_READY_MESSAGE);
+        }
 
         if (result.createdSessionId && result.setActive) {
           await result.setActive({ session: result.createdSessionId });

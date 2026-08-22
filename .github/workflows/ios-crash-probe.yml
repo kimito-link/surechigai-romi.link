@@ -321,6 +321,30 @@ jobs:
               elif [ "$COLORS" = "-1" ] || [ "$COLORS" = "0" ]; then
                 echo "::warning::screenshot check unavailable for $NAME"
               fi
+
+              # ★Clerk が初期化されたかを通信の痕跡で見る（2026-08-22・build 521 の却下）。
+              #
+              #   521 は 520 と同じ "Buttons were unresponsive" で落ちた。真因は
+              #   **Clerk が一度も初期化されないまま、ボタンだけ押せる状態に戻る**こと。
+              #   startOAuthFlow は Clerk 未ロードだと例外を投げずに空の結果を返すので、
+              #   押しても**ブラウザも開かず・エラーも出ず・本当に何も起きない**。
+              #
+              #   ★このプローブは「起動して落ちない」と「画面が単色でない」しか見ておらず、
+              #     520・521 のどちらも緑のまま通した。画素では絶対に分からない
+              #     （ボタンは正しく描画されている。押しても無反応なだけ）。
+              #
+              #   Clerk が生きていれば必ず自分のドメインへ通信する。その痕跡を要求する。
+              #   ★痕跡が無い＝「押せるのに何も起きない」状態そのもの。
+              #   判定は warning に留める（ログ収集は取りこぼしうるので、これ単体で
+              #   赤にはしない。ただし ★見えるところに必ず出す）。
+              if grep -qiE "clerk\.kimito\.link|clerk\.com|/v1/environment" \
+                   "/tmp/probe-out/console-$NAME.log" 2>/dev/null; then
+                echo "CLERK[$NAME]: 初期化の通信あり"
+              else
+                echo "CLERK[$NAME]: ★通信の痕跡なし（Clerk が初期化されていない疑い）"
+                echo "::warning::$NAME: Clerk の通信が観測できませんでした。ログインボタンが無反応になる状態（build 520/521 の却下）と同じ兆候です。"
+                echo "CLERK_SILENT" >> "/tmp/probe-out/verdicts-$NAME.txt"
+              fi
             else
               echo "::warning::could not capture screenshot for $NAME"
             fi
@@ -394,6 +418,13 @@ jobs:
             if grep -qE "CRASHED|BLANK_SCREEN|PROBE_BROKEN|INCONCLUSIVE|NOT_RUNNING|DIED_AFTER_LAUNCH" "$F"; then
               echo "  $NAME: NG -> $(tr '\n' ',' < "$F")"
               FAILED=1
+            elif grep -q "CLERK_SILENT" "$F"; then
+              # ★赤にはしない（ログ収集の取りこぼしがありうる）が、黙って OK とも言わない。
+              #   build 520/521 は「起動して描画もされている」まま却下されたので、
+              #   ここを OK と表示すると**同じ見落としを繰り返す**。
+              echo "  $NAME: OK(起動・描画) / ★注意: Clerk の通信が観測できず"
+              echo "      → ログインボタンが無反応になる却下(520/521)と同じ兆候。"
+              echo "      → 提出前に実機かシミュレータで**実際に押して**確かめること。"
             else
               echo "  $NAME: OK"
             fi
