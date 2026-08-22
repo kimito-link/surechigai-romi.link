@@ -25,6 +25,11 @@ function invalidateHostQueries(utils: ReturnType<typeof trpc.useUtils>) {
 }
 
 export function EventsHostPanel() {
+  // ===========================================================================
+  // 1. サーバーとのやりとり
+  //    自分のイベント一覧と、作成/ライブ開始/ライブ終了/中止の4操作。
+  //    どれも成功したら invalidateHostQueries で一覧を取り直す。
+  // ===========================================================================
   const utils = trpc.useUtils();
   const myQuery = trpc.event.listMine.useQuery();
   const createMut = trpc.event.create.useMutation({
@@ -43,8 +48,14 @@ export function EventsHostPanel() {
     },
   });
 
+  // 中止の確認ダイアログで「どれを中止するか」を保持する。
   const [cancelTarget, setCancelTarget] = useState<{ id: number; title: string } | null>(null);
 
+  // ===========================================================================
+  // 2. 新規作成フォームの入力値
+  //    ここから下の useState は全部「作成フォームの1項目」。
+  //    formError だけは送信時の検証結果を入れる。
+  // ===========================================================================
   const [title, setTitle] = useState("");
   const [isOnline, setIsOnline] = useState(true);
   const [onlineUrl, setOnlineUrl] = useState("");
@@ -61,6 +72,12 @@ export function EventsHostPanel() {
   const [accessCode, setAccessCode] = useState("");
   const [formError, setFormError] = useState("");
 
+  // ===========================================================================
+  // 3. フォームの操作
+  //    quickStart: 開始日時を「今すぐ/1時間後/今夜/明日」で一発入力
+  //    toggleTypeTag: 種別タグの付け外し
+  //    handleCreate: 入力を検証してから作成を投げる
+  // ===========================================================================
   const quickStart = useCallback((preset: "now" | "1h" | "tonight" | "tomorrow") => {
     const d = new Date();
     if (preset === "now") {
@@ -132,6 +149,9 @@ export function EventsHostPanel() {
 
   const items = myQuery.data ?? [];
 
+  // ===========================================================================
+  // 4. 描画（作成フォーム → 自分のイベント一覧 → 中止の確認ダイアログ）
+  // ===========================================================================
   return (
     <View style={styles.list}>
       <View style={styles.formCard}>
@@ -375,6 +395,9 @@ export function EventsHostPanel() {
   );
 }
 
+// =============================================================================
+// スタイル
+// =============================================================================
 const styles = StyleSheet.create({
   list: {
     gap: 12,

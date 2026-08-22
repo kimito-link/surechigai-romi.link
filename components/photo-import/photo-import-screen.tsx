@@ -158,6 +158,9 @@ function PhotoImportBody() {
    */
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const showError = useCallback((msg: string) => setErrorMsg(msg), []);
+  // -----------------------------------------------------------------------
+  // 画面の状態（選んだ写真の一覧・解析中か・取り込み結果）
+  // -----------------------------------------------------------------------
   const [rows, setRows] = useState<PhotoRow[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [done, setDone] = useState<null | {
@@ -178,6 +181,9 @@ function PhotoImportBody() {
     };
   }, []);
 
+  // -----------------------------------------------------------------------
+  // 写真を選ぶ → EXIF を読む（アップロードはしない。端末内で完結）
+  // -----------------------------------------------------------------------
   const onPickFiles = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return;
@@ -222,6 +228,9 @@ function PhotoImportBody() {
     [],
   );
 
+  // -----------------------------------------------------------------------
+  // 取り込みを実行する（選択済み・場所と日付が揃った行だけ送る）
+  // -----------------------------------------------------------------------
   const onImport = useCallback(async () => {
     const targets = rowsRef.current.filter((r) => r.selected && isReady(r));
     if (targets.length === 0) {
@@ -252,6 +261,9 @@ function PhotoImportBody() {
   const readyCount = rows.filter((r) => r.selected && isReady(r)).length;
   const noGpsCount = rows.filter((r) => r.lat == null).length;
 
+  // -----------------------------------------------------------------------
+  // 描画
+  // -----------------------------------------------------------------------
   return (
     <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
       <ScrollView

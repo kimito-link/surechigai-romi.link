@@ -1,3 +1,18 @@
+/**
+ * 足あとを地図タイルの上に描く（正確な場所を「あとで行ける精度」で見せる）。
+ *
+ * 地図ライブラリには依存せず、タイル画像を並べて自前で描画する。
+ *
+ * ── このファイルの構成 ──────────────────────────────
+ *   1. 座標の型          Pixel / VisibleTile
+ *   2. 地図の計算        getVisibleTiles（見える範囲のタイルを選ぶ）
+ *                        metersPerPixelAtLat / projectPoint（緯度経度→画面座標）
+ *   3. 表示の整形        formatDateTime / formatCoordinate
+ *   4. PrecisionTileMap  上記を使って実際に描くコンポーネント
+ *   5. スタイル
+ *
+ * 2〜3 は純粋関数なので export してテストから直接呼べる。
+ */
 import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, Image, useWindowDimensions, StyleProp, ViewStyle, Pressable } from "react-native";
 import Svg, { Polyline } from "react-native-svg";
@@ -35,6 +50,9 @@ type VisibleTile = {
   top: number;
 };
 
+// ---------------------------------------------------------------------------
+// 2. 地図の計算（緯度経度 ↔ 画面座標・見えるタイルの選択）
+// ---------------------------------------------------------------------------
 export function getVisibleTiles(
   center: { lat: number; lng: number },
   mapWidth: number,
@@ -85,6 +103,9 @@ export function projectPoint(point: { lat: number; lng: number }, topLeft: Pixel
   };
 }
 
+// ---------------------------------------------------------------------------
+// 3. 表示の整形（日時・座標を人が読む形へ）
+// ---------------------------------------------------------------------------
 export function formatDateTime(d: Date | string): string {
   const date = d instanceof Date ? d : new Date(d);
   return date.toLocaleString("ja-JP", {
@@ -126,6 +147,9 @@ export function formatCoordinate(point: Pick<TrailPoint, "lat" | "lng">): string
     onZoomChange?: (nextZoom: number) => void;
   }
 
+// ---------------------------------------------------------------------------
+// 4. PrecisionTileMap — 実際に描くコンポーネント
+// ---------------------------------------------------------------------------
 const MIN_ZOOM = 11;
 const MAX_ZOOM = 19;
 
@@ -430,6 +454,9 @@ const MAX_ZOOM = 19;
   );
 }
 
+// ---------------------------------------------------------------------------
+// 5. スタイル
+// ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
   mapFrame: {
     backgroundColor: color.surfaceDark,
