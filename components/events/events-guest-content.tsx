@@ -9,6 +9,15 @@
  *
  * 会議の合意設計: 単一の events を status で「予定→ライブ→終了」と扱う。
  * 配信専用にせず汎用「集まり」。誰=X公開／場所=県・会場の粗い粒度。
+ *
+ * ── このファイルの構成 ──────────────────────────────
+ *   1. 表示ヘルパー   formatDateTime（日時の表示形式）
+ *   2. EventCard      イベント1件のカード（一覧で使い回す共通表示）
+ *   3. CalendarList   「予定」タブ：月めくりカレンダー＋選択日の一覧
+ *   4. LiveList       「ライブ中」タブ：30秒ごとに自動更新
+ *   5. EmptyOrLoading 読み込み中・0件のときの共通表示
+ *   6. EventsGuestContent  タブを切り替える入口（このファイルの export）
+ *   7. スタイル
  */
 
 import {
@@ -42,6 +51,9 @@ function formatDateTime(value: string | Date): string {
   return `${mm}/${dd} ${hh}:${mi}`;
 }
 
+// ---------------------------------------------------------------------------
+// 2. EventCard — イベント1件のカード
+// ---------------------------------------------------------------------------
 /** イベント1件のカード。一覧で使う共通表示。 */
 function EventCard({
   id,
@@ -257,6 +269,9 @@ function EventCard({
   );
 }
 
+// ---------------------------------------------------------------------------
+// 3. CalendarList — 「予定」タブ
+// ---------------------------------------------------------------------------
 /** 予定（カレンダー）タブ。月めくりカレンダー＋選択日のイベント一覧。 */
 function CalendarList() {
   const q = trpc.event.listUpcoming.useQuery({ limit: 100 });
@@ -316,6 +331,9 @@ function CalendarList() {
 }
 
 /** ライブ中（在席）タブ。 */
+// ---------------------------------------------------------------------------
+// 4. LiveList — 「ライブ中」タブ（30秒ごとに自動更新）
+// ---------------------------------------------------------------------------
 function LiveList() {
   const q = trpc.event.listLive.useQuery(undefined, { refetchInterval: 30_000 });
   const items = q.data ?? [];
@@ -333,6 +351,9 @@ function LiveList() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// 5. EmptyOrLoading — 読み込み中・0件の共通表示
+// ---------------------------------------------------------------------------
 function EmptyOrLoading({ loading, message }: { loading?: boolean; message?: string }) {
   return (
     <View style={styles.emptyBox}>
@@ -346,6 +367,9 @@ function EmptyOrLoading({ loading, message }: { loading?: boolean; message?: str
   );
 }
 
+// ---------------------------------------------------------------------------
+// 6. EventsGuestContent — タブ切替の入口
+// ---------------------------------------------------------------------------
 export function EventsGuestContent() {
   const [segment, setSegment] = useState<Segment>("calendar");
 
@@ -395,6 +419,9 @@ export function EventsGuestContent() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// 7. スタイル
+// ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
   segmentBar: {
     flexDirection: "row",
