@@ -5,6 +5,15 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      skip_checks:
+        description: "★検査を飛ばして緊急デプロイする（理由の記入が必須）"
+        type: boolean
+        default: false
+      skip_reason:
+        description: "飛ばす理由（skip_checks=true のとき必須。空なら失敗する）"
+        type: string
+        default: ""
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -12,7 +21,70 @@ env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
+  # ────────────────────────────────────────────────────────────────────
+  # ★デプロイの前に検査を通す門番。
+  #
+  # なぜ要るか(2026-08-22 に配線):
+  #   このワークフローには型チェックもテストも無く、`Gate 1 Check` とは
+  #   **並列**に走っていた(needs 無し)。＝★テストが落ちるコミットでも本番に出た。
+  #   Gate 1 が赤でも Deploy は緑のまま完走する構造だったので、
+  #   「CIが緑」はユーザーに壊れた画面が出ないことを何も保証していなかった。
+  #
+  # ★ユーザー影響で見た設計判断:
+  #   デプロイが数分遅れて困るのは開発者だけ。壊れた本番はユーザー全員が踏む。
+  #   → 遅れる方を選ぶ。復旧も「直して push し直す」だけで、切り戻し操作が要らない。
+  #
+  # 実測: Gate 1 相当の検査は中央値 1.3分(直近12回の main push)。
+  #
+  # ★`Gate 1 Check` と同じ検査が二重に走ることについて:
+  #   意図的にそのまま残す。Gate 1 は **PR でも走る**(マージ前に気づける)のに対し、
+  #   ここは **本番に出る直前の最後の関所**。役割が違うので片方には寄せられない。
+  #   Gate 1 から検査を剥がすと PR の防御が消え、ここを削ると本番が無防備に戻る。
+  #   二重に走る 1.3分は、その両方を保つための対価として払う。
+  # ────────────────────────────────────────────────────────────────────
+  checks:
+    name: Checks (type / test / gates)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # ★逃げ道は用意するが、無言では飛ばせない。
+      #   障害対応で検査が邪魔になる場面は必ず来る(CI自体が壊れた等)。
+      #   ただし「理由の記入」を必須にして、後から追える形にだけはしておく。
+      - name: Validate skip request
+        if: ${{ inputs.skip_checks }}
+        run: |
+          if [ -z "${{ inputs.skip_reason }}" ]; then
+            echo "::error::skip_checks=true のときは skip_reason が必須です（無言で検査を飛ばさない）"
+            exit 1
+          fi
+          echo "::warning::★検査を飛ばして本番デプロイします: ${{ inputs.skip_reason }}"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - name: Install dependencies
+        if: ${{ !inputs.skip_checks }}
+        run: pnpm install
+
+      # pnpm check = tsc + 6ゲート(esm / hermes / native-dom / splash / tracked-imports)
+      # ★tracked-imports は --selftest 込み。検知器が毒で赤くなれることも毎回確かめる。
+      - name: Type check + gates
+        if: ${{ !inputs.skip_checks }}
+        run: pnpm check
+
+      - name: Test
+        if: ${{ !inputs.skip_checks }}
+        run: pnpm test
+
   deploy:
+    needs: checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
