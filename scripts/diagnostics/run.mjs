@@ -19,7 +19,7 @@
 // 出力: 各チェックの結果を1行ずつ集計し、1件でも失敗があれば exit 1(fail-closed)。
 
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -40,10 +40,22 @@ const CHECKS = [
   //   2026-08-23: 上の3本は --selftest を無視して exit 0 を返していた(壊れても緑)。
   //   ★selfTarget: 対象プロジェクトではなく【この diagnostics 自身】を見る。
   { name: 'check-selftest-coverage', path: join(__dirname, 'check-selftest-coverage.mjs'), selfTarget: true },
-  // ★症状の言葉で原因索引を引けるか。引数が無ければ対象から自動で探す。
-  //   2026-08-23: ページに名前は載っていたのに★ここに登録されておらず、
-  //   引数も要るため【一度も走らない】状態だった(配ったのに届いていない型)。
-  { name: 'check-symptom-index', path: join(__dirname, 'check-symptom-index.mjs') },
+  // ★症状の言葉で原因索引を引けるか。置き場所は diagnostics.json で宣言している。
+  //
+  //   ★needsIndex: 索引(ai-hub/index.json)が無い環境では実行しない。
+  //   理由(2026-08-23 に本番デプロイを止めて判明):
+  //     ai-hub は**リモートの無いローカル専用リポ**で、CI の checkout には入らない。
+  //     そのため CI では「症状はあるが索引が無い」＝ exit 2(測れなかった) になり、
+  //     ★正しい判定なのに毎回デプロイが止まる。
+  //   ★索引をこのリポにコピーして解決しない: 正本が2つに割れる
+  //     （このセッションだけで check-tracked-imports と却下KBで同じ害を見ている）。
+  //   → ★索引がある場所（開発者の手元）でだけ走らせる。CI では理由を出して飛ばす。
+  //     これは「測れないものを緑と言う」のではなく「測れる場所で測る」という切り分け。
+  {
+    name: 'check-symptom-index',
+    path: join(__dirname, 'check-symptom-index.mjs'),
+    needsIndex: true
+  },
   // ★check-docs-match-code はキット専用のため外している。
   //   キットの site/features/health-check/index.html（配布ページ本文）と
   //   キット内スクリプトの突き合わせが目的で、このリポにはその相手が存在しない。
@@ -55,8 +67,27 @@ const CHECKS = [
 console.log(`[diagnostics] 対象: ${TARGET_DIR}`);
 console.log('');
 
+/** diagnostics.json で宣言した索引が実在するか（無ければ症状検査は測れない）。 */
+function declaredIndexExists() {
+  try {
+    const decl = JSON.parse(readFileSync(join(TARGET_DIR, 'diagnostics.json'), 'utf8'));
+    return decl?.index ? existsSync(resolve(TARGET_DIR, decl.index)) : false;
+  } catch {
+    return false;
+  }
+}
+
 const results = [];
 for (const check of CHECKS) {
+  if (check.needsIndex && !declaredIndexExists()) {
+    // ★「緑」とは言わない。★何が足りなくて測れないかを必ず書く。
+    console.log(`- ${check.name}: SKIP(原因索引が見つかりません)`);
+    console.log('    → ai-hub はリモートの無いローカル専用リポのため、CI には存在しません。');
+    console.log('    → ★手元では走ります: pnpm diagnose（症状を足したら索引にも足すこと）');
+    console.log('');
+    results.push({ name: check.name, status: 'skip' });
+    continue;
+  }
   if (!existsSync(check.path)) {
     console.log(`- ${check.name}: SKIP(スクリプトが見つからない: ${check.path})`);
     results.push({ name: check.name, status: 'skip' });
