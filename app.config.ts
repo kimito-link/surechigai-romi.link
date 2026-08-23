@@ -92,10 +92,30 @@ const config: ExpoConfig = {
     [
       "expo-splash-screen",
       {
+        /* ★2026-08-23 に方式を直した。それまでの見え方と、なぜ直すか:
+
+           旧: 背景を焼き込んだ**ネイビーの正方形** 600px を imageWidth:200 で置いていた。
+           expo-splash-screen は 288dp キャンバスに画像を中央合成し、**背景は自分で敷く**
+           （@expo/prebuild-config の withAndroidSplashImages.js:166）。
+           そこへ不透過の正方形を渡すと 288dp 全面がネイビーで埋まり、
+           ★Android 12+ が**円形にトリミング**するので「ネイビーの円」になっていた。
+           実測: 生成物の絵柄 bbox 287x287dp / 半対角 202.9dp に対し
+           ★安全円の半径は 96.0dp（Android 公式: 288dp キャンバス・直径192dp の円）。
+
+           新: 画像は**透過PNG 1024px**（Expo 公式の推奨サイズ）。絵柄は安全円の内側
+           （実測: 半対角比 0.285 < 0.333）。背景は下の backgroundColor に任せる。 */
         image: "./assets/images/splash-icon.png",
-        imageWidth: 200,
+        /* dp 指定（px ではない）。Android xxxhdpi は 4x なので 150dp → 600px を要求する。
+           素材が 1024px あるのでアップスケールは起きない。
+           ★200 のままだと安全円をはみ出すため下げている。 */
+        imageWidth: 150,
         resizeMode: "contain",
-        backgroundColor: "#00427B",
+        /* ★本体の地色と揃える（チカつき対策）。
+           旧構成は splash=#00427B（ネイビー）→ 本体=#F0F4F8（ほぼ白）で、
+           起動直後に**濃紺から白へ切り替わる**のが見えていた。
+           PWA manifest(#E2EDF7) と Web のスプラッシュ地も明色なので、
+           ★4箇所のうちネイティブだけが違う状態だった。明色側へ寄せる。 */
+        backgroundColor: "#E2EDF7",
       },
     ],
     [

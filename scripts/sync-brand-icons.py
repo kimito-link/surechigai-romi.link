@@ -56,6 +56,54 @@ def compose_site_icon(size: int) -> Image.Image:
     return canvas
 
 
+
+def compose_splash_logo(size: int) -> Image.Image:
+    """★ネイティブ起動画面用: 背景を焼き込まない透過ロゴ。
+
+    ★なぜアプリアイコン(compose_site_icon)を流用してはいけないか（2026-08-23 実測）:
+      expo-splash-screen は **288dp のキャンバスに画像を中央合成し、背景は自分で敷く**
+      （node_modules/@expo/prebuild-config/.../withAndroidSplashImages.js:166）。
+      そこへ「ネイビーの正方形」を渡すと 288dp 全面がネイビーで埋まり、
+      ★Android 12+ が**円形にトリミング**するので「ネイビーの円」になる。
+      実測: 生成物 drawable-xxxhdpi/splashscreen_logo.png の絵柄 bbox は 287x287dp、
+      半対角 202.9dp に対し**安全円の半径は 96.0dp**（Android 公式: 288dp キャンバス /
+      直径192dp の円 https://developer.android.com/develop/ui/views/launch/splash-screen ）。
+
+    ★対策: 背景は透過にして backgroundColor に任せ、絵柄を安全円の内側へ収める。
+      Expo 公式も「1024x1024 / PNG / **transparent background**」を明記している
+      （https://docs.expo.dev/develop/user-interface/splash-screen-and-app-icon/ ）。
+    """
+    if not SITE_ICON_SOURCE.is_file():
+        raise FileNotFoundError(SITE_ICON_SOURCE)
+
+    # ★完全透過のキャンバス（ここが app アイコンとの決定的な違い）
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+
+    char = Image.open(SITE_ICON_SOURCE).convert("RGBA")
+    pixels = char.load()
+    for y in range(char.height):
+        for x in range(char.width):
+            r, g, b, a = pixels[x, y]
+            if a > 0 and r < 28 and g < 28 and b < 28:
+                pixels[x, y] = (r, g, b, 0)
+
+    # ★安全円(直径192/288 = 66.7%)の内側に収める。
+    #   正方形の絵を円に内接させるので、さらに 1/sqrt(2) を掛ける。
+    safe_ratio = 192.0 / 288.0
+    target = int(size * safe_ratio / (2 ** 0.5))
+    char.thumbnail((target, target), Image.Resampling.LANCZOS)
+    ox = (size - char.width) // 2
+    oy = (size - char.height) // 2
+    canvas.paste(char, (ox, oy), char)
+    return canvas
+
+
+def save_splash_logo(size: int, out: Path) -> None:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    compose_splash_logo(size).save(out, format="PNG")
+    print(f"  wrote {out.relative_to(ROOT)} ({size}x{size}, transparent)")
+
+
 def save_site_icon(size: int, out: Path) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     compose_site_icon(size).save(out, optimize=True)
@@ -160,7 +208,12 @@ def main() -> None:
     #   200px の素材だと 3 倍に引き伸ばされて輪郭が甘くなる。
     #   素材だけ 3x 相当にしておけば、imageWidth を変えずに（＝レイアウトを変えずに）
     #   実機での見え方だけが鮮明になる。
-    save_site_icon(600, ROOT / "assets/images/splash-icon.png")
+    # ★透過の 1024px で出す（2026-08-23 に方式変更）。
+    #   旧: save_site_icon(600, ...) ＝ ネイビーの正方形を焼き込んでいた。
+    #   これを Android 12+ が円形マスクして「ネイビーの円」になっていた（実測）。
+    #   Expo 公式の推奨は 1024x1024・透過PNG。Android xxxhdpi は 4x なので
+    #   imageWidth=150 なら 600px 必要 ＝ 1024 あればアップスケールが起きない。
+    save_splash_logo(1024, ROOT / "assets/images/splash-icon.png")
     save_android_foreground(ROOT / "assets/images/android-icon-foreground.png")
 
     # iOS Safari PWA向けスプラッシュ（apple-touch-startup-image）
