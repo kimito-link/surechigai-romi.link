@@ -71,3 +71,50 @@ export function pickLiveStream(
 
   return { ...hit, url: `https://www.youtube.com/watch?v=${hit.videoId}` };
 }
+
+/**
+ * その配信を「いまの様子」として出してよいか。
+ *
+ * ★2026-08-23 の実害:
+ *   茅野市にいる人に **「【ライブ配信】長野市内の様子」** を出していた。
+ *   ★直線距離で 73km。「いまの様子」と言える距離ではない。
+ *
+ *   仕組み上こうなる: 市区町村で見つからないと都道府県で引き直すため、
+ *   「長野市」の配信が「長野県」の名前で一致してしまう。
+ *   実測（長野県の3市）:
+ *     伊那市 → 伊那谷ライブカメラ   [matched=伊那市]  ★近い
+ *     茅野市 → 長野市内の様子       [matched=長野県]  ★73km先
+ *     塩尻市 → JR長野駅ライブカメラ [matched=長野県]  ★別の市
+ *
+ * ★県フォールバック自体は残す（消すと「配信が無い」が増えて体験が痩せる）。
+ *   ★嘘をつくのをやめるだけにする: 市区町村で当たったものだけ「いまの様子」を名乗り、
+ *   県で当たったものは「県内の様子」と正直に見せる。
+ *
+ *   このプロダクトの価値は「正確な場所」なので、
+ *   ★分からないものを分かったように見せる方が、出さないより害が大きい。
+ *
+ * @param matchedPlace API が実際に一致させた地名（市区町村 or 都道府県）
+ * @param municipality 利用者が実際にいる市区町村
+ */
+export function isSameCityStream(
+  matchedPlace: string | null | undefined,
+  municipality: string | null | undefined,
+): boolean {
+  const m = String(matchedPlace ?? "").trim();
+  const c = String(municipality ?? "").trim();
+  if (!m || !c) return false;
+  // ★核どうしで比べる（「茅野市」と「茅野」を同じと見なす）。
+  return placeCore(m) === placeCore(c);
+}
+
+/**
+ * 「いまの様子」ラベルの文言を決める。
+ *
+ * ★near/far を呼び出し側の if で書かない（画面に散ると必ず食い違う）。
+ */
+export function liveStreamProximityLabel(
+  matchedPlace: string | null | undefined,
+  municipality: string | null | undefined,
+): "いまの様子" | "県内の様子" {
+  return isSameCityStream(matchedPlace, municipality) ? "いまの様子" : "県内の様子";
+}
