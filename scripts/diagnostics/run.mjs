@@ -56,6 +56,12 @@ const CHECKS = [
     path: join(__dirname, 'check-symptom-index.mjs'),
     needsIndex: true
   },
+  // ★「遅い」と言われる経路に時間を測る計器があるか（2026-08-24 にキットから輸入）。
+  //   ★このリポで実際に効いた: warmOgImageNow に計時が無く、
+  //   「OGPが出たり出なかったり」を推測でしか語れなかった。
+  //   計器を入れて初めて 初見3.92秒 / CDNヒット0.12秒（38倍差）が分かり、
+  //   ★待ち上限 3,200ms では初見が間に合わないことが数字で確定した。
+  { name: 'check-timing-instrumented', path: join(__dirname, 'check-timing-instrumented.mjs') },
   // ★check-docs-match-code はキット専用のため外している。
   //   キットの site/features/health-check/index.html（配布ページ本文）と
   //   キット内スクリプトの突き合わせが目的で、このリポにはその相手が存在しない。

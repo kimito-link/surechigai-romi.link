@@ -100,10 +100,31 @@ export async function warmOgImageNow(
       ? { mode: "no-cors", cache: "force-cache" }
       : { headers: { Accept: "image/png,image/*" } };
 
+  /* ★経過時間を測る（2026-08-24 に追加）。
+     なぜ: この関数は「間に合ったかどうか」で結果が変わるのに、
+     ★どれだけ待ったかを一度も記録していなかった。
+     そのため「OGPが出たり出なかったり」を**推測でしか語れなかった**
+     （実測してみると初見 3.7〜3.9秒 / CDNヒット 0.10秒 と 38倍の差があった）。
+
+     ★測っていないものは直せない。まず測る。
+     計器は console に出すだけに留める（送信先を増やさない）。 */
+  const startedAt = Date.now();
+
   // fetch は打ち切らず（バックグラウンドで温まり続けてよい）、待つ側だけを切る。
-  const warming = fetch(url, init).catch(() => {});
-  await Promise.race([
+  const warming = fetch(url, init)
+    .then(() => "fetched" as const)
+    .catch(() => "failed" as const);
+
+  const outcome = await Promise.race([
     warming,
-    new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+    new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), timeoutMs)),
   ]);
+
+  const warmOgMs = Date.now() - startedAt;
+  // ★「間に合わなかった」を静かに捨てない。ここが分かれ目なので必ず残す。
+  if (outcome === "timeout") {
+    console.warn(`[warm-og] timeout warmOgMs:${warmOgMs} (クローラーに間に合わない可能性)`);
+  } else {
+    console.log(`[warm-og] ${outcome} warmOgMs:${warmOgMs}`);
+  }
 }
