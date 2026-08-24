@@ -21,6 +21,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
+// ★コメント除去は check-tracked-imports.mjs の正本を再利用する（同じ処理を2つ書かない）。
+import { stripComments } from "./check-tracked-imports.mjs";
+
 const ROOT = path.resolve(import.meta.dirname, "..");
 
 /**
@@ -38,8 +41,24 @@ const UNSAFE_SPECIFIERS = [
 const SCAN_DIRS = ["app", "lib", "components", "hooks", "modules", "features"];
 const EXTS = new Set([".ts", ".tsx", ".js", ".jsx"]);
 
-/** import 文・動的 import から、指定子だけを抜き出す */
+/**
+ * import 文・動的 import から、指定子だけを抜き出す。
+ *
+ * ★コメントを先に潰してから解析する（2026-08-24 に実測で判明）。
+ *   毒テスト: 危険な import を**コメントに書くだけ**で赤になった
+ *     // import exifr from "exifr"; // コメント内の例示
+ *   ＝ 実行されないコードで止まる＝誤検知。
+ *   誤検知を出す検査は信用されなくなり、やがて本物を見逃す。
+ *
+ *   ★同型の実損が kimitolink-linktree でも見つかっている（ffb546d）:
+ *   「Groovy のコメントを剥がさない生正規表現」で、
+ *   コメントに書くだけで署名の門番が通っていた。
+ *   ★このリポの check-tracked-imports は既に stripComments を持っていたので、
+ *   その正本を再利用する（同じ処理を2つ書かない）。
+ */
 function specifiersOf(source) {
+  // ★実行されない行（コメント内の例示）で赤にしない。
+  source = stripComments(String(source || ""));
   const out = [];
   const patterns = [
     /\bfrom\s+["']([^"']+)["']/g,
