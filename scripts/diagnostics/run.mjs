@@ -62,6 +62,17 @@ const CHECKS = [
   //   計器を入れて初めて 初見3.92秒 / CDNヒット0.12秒（38倍差）が分かり、
   //   ★待ち上限 3,200ms では初見が間に合わないことが数字で確定した。
   { name: 'check-timing-instrumented', path: join(__dirname, 'check-timing-instrumented.mjs') },
+  // ★心拍（製品が「異常なし」を自分で名乗れるか）。
+  //
+  //   ★このリポは現時点で**心拍を持っていない**（実測: exit 1）。
+  //   だから今は run.mjs に**入れない**。入れると毎回赤になり、
+  //   ★赤が日常になって本物の赤を誰も見なくなる（このキットが繰り返し戒めている型）。
+  //
+  //   ★「緑にするために弱める」のではなく「まだ無い」と正直に残す:
+  //     - 実行経路: pnpm check:heartbeat（手で叩ける）
+  //     - 現状と理由: docs/symptoms.md の SG-07
+  //   ★心拍を実装したらここのコメントを消して登録すること。
+  //   （登録を忘れても check-gates-are-wired が孤児として拾う）
   // ★check-docs-match-code はキット専用のため外している。
   //   キットの site/features/health-check/index.html（配布ページ本文）と
   //   キット内スクリプトの突き合わせが目的で、このリポにはその相手が存在しない。

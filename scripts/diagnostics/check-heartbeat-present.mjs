@@ -167,7 +167,13 @@ export function scanDirectory(dir) {
       //     （直せないコードを根拠に合格と言ってしまう）。
       //   兄弟の check-timing-instrumented は同じ SKIP_DIR を既に持っている。
       if (e.isDirectory()) {
-        const SKIP = ['node_modules', '.git', 'dist', 'build', 'out',
+        // ★scripts は見ない（2026-08-27・実測で偽の緑を出したため）。
+        //   この検査は「**製品が**自分の状態を記録しているか」を測るもの。
+        //   scripts/ には検査自身や E2E の道具が入っており、
+        //   ★それらの setInterval を拾って「心拍が在る」と報告していた
+        //   （実際に check-heartbeat-present.mjs 自身と save-auth-state.mjs を根拠に緑になった）。
+        //   ＝ 直せないコード・製品でないコードを根拠に合格と言う状態。
+        const SKIP = ['node_modules', '.git', 'dist', 'build', 'out', 'scripts',
           'vendor', 'coverage', '.next', 'target', 'bin', 'obj', '.vercel', '.expo'];
         // dist-demo / build-old のような派生も除く（実測で dist-map 等が漏れた）
         const skip = SKIP.includes(e.name) || e.name.startsWith('.')
