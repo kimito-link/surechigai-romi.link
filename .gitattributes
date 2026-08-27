@@ -1,0 +1,17 @@
+# ★改行コードを固定する（2026-08-27）。
+#
+# なぜ要るか（実損）:
+#   ワークフローの一部が CRLF、一部が LF で混在していた（編集者の環境次第）。
+#   scripts/lint-pre-submission.mjs の CHECK 7 が `\n` 決め打ちの正規表現で
+#   paths ブロックを読んでおり、CRLF のファイルでは**永久に一致しなかった**。
+#   その結果「on.push.paths が無い」と誤報し、warn 止まりで
+#   ★「ストア提出に進んで安全」と言って exit 0 を返していた。
+#
+#   検査側は `\r?\n` に直したが、★そもそも混在させないのが根治。
+#   同じ型（\n 決め打ち）の検査は他にもありうるため、入口で揃える。
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.mjs   text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf

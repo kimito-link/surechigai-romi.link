@@ -284,8 +284,8 @@ jobs:
           fi
           # スプラッシュは expo-splash-screen プラグインが app.config.ts の設定
           # (image/imageWidth/resizeMode/backgroundColor: #00427B) から prebuild 時に生成する。
-          # よって @capacitor/assets での生成と、Capacitor デフォルト画像の検出ゲート
-          # (verify-ios-splash-not-default.mjs) は不要になった（あのゲートは
+          # よって @capacitor/assets での生成と、Capacitor デフォルト画像の検出ゲートは
+          # 不要になった（2026-08-27 に当該スクリプトを削除済み。あのゲートは
           # `cap add ios` が置く青×ロゴのデフォルトを検出する仕組みで、prebuild には存在しない）。
 
       # LaunchScreen の暗色化は app.config.ts の userInterfaceStyle: "dark" と

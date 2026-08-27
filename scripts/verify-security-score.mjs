@@ -36,7 +36,19 @@ import { fileURLToPath } from 'node:url';
 import { EXIT, formatProbeReport, runSelfTest } from './lib/instrument-core.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, '..', '..');
+/**
+ * ★リポジトリのルート。scripts/ から**1つ**上（2026-08-27 に修正）。
+ *
+ * ★元は `'..', '..'` で2つ上（= github/ の直下）を指しており、
+ *   `app.config.json` を永久に見つけられなかった。実測:
+ *     --selftest    → exit 0（緑）   ※fixture を注入するのでこの行を通らない
+ *     --local-only  → exit 2「app.config.json が見つかりません」
+ *   ＝ ★**検知器のテストだけが緑で、本番の走査は一度も実行されていなかった。**
+ *
+ *   キットから輸入したときのパス前提の違いをそのまま持ち込んだのが原因。
+ *   このリポの他の検査は全て `'..'` 1つ（lint-pre-submission.mjs:25 等）。
+ */
+const ROOT = resolve(__dirname, '..');
 
 const SELFTEST = process.argv.includes('--selftest');
 const LOCAL_ONLY = process.argv.includes('--local-only');

@@ -88,10 +88,40 @@ function collectGates() {
   return out;
 }
 
+/**
+ * ★コメント行を落とす（2026-08-27 に追加）。
+ *
+ * ★なぜ要るか（実測で自分の検査が騙されていた）:
+ *   `ios-appstore-release.yml:288` に
+ *     `# (verify-ios-splash-not-default.mjs) は不要になった（…`
+ *   というコメントがあり、素の `includes()` がこれを拾って
+ *   ★**「不要になった」と書いた文章が、そのゲートを「配線済み」に見せていた。**
+ *
+ *   ＝ 今日 check-hermes-unsafe-imports で潰したのと**同じ型**（コメント非剥離）を、
+ *   自分の新しい検査で再現していた。★弱い印は両方向に壊れる。
+ *
+ * YAML の `#` と JS の `//` `/* *\/` の両方を落とす。
+ * ★URL の `//` を消さないよう、`//` は行頭〜空白の後に限る。
+ */
+export function stripCommentLines(text) {
+  return String(text || "")
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    // ★CRLF を先に潰す（2026-08-27・実測で踏んだ）。
+    //   `.split("\n")` だけだと行末に `\r` が残り、`.*$` が `\r` の手前で止まるため
+    //   ★コメントが消えず「配線済み」と誤判定した。
+    //   同じ日に lint-pre-submission でも CRLF が原因の見逃しを直しており、
+    //   ★このリポではワークフローが CRLF であることを常に疑う。
+    .split(/\r?\n/)
+    .map((line) => line.replace(/(^|\s)#.*$/, "$1").replace(/(^|\s)\/\/.*$/, "$1"))
+    .join("\n");
+}
+
 /** 呼ばれていない検査を返す（純ロジック・テスト可）。 */
 export function findOrphans(gates, texts) {
+  // ★コメントでの言及は「配線」と数えない。
+  const code = texts.map(stripCommentLines);
   return gates
-    .filter((g) => !texts.some((t) => t.includes(g.name)))
+    .filter((g) => !code.some((t) => t.includes(g.name)))
     .map((g) => `${g.dir}/${g.name}`);
 }
 

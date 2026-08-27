@@ -32,6 +32,19 @@ const ANSI_RESET = '\x1b[0m';
 
 const failures = [];
 const warnings = [];
+/**
+ * ★skip / unmeasured を**数える**（2026-08-27 に追加）。
+ *
+ * それまで `skip()` は画面に出すだけで、集計も終了コードへの反映も無かった。
+ * ＝ ★**10ある検査が全部 skip でも「ストア提出に進んで安全」と言って exit 0** だった。
+ * （同型の欠陥を kimitolink-linktree が PR #278 で修正済み。その判断を輸入する）
+ *
+ * ★skip 自体は異常ではない（`ios/` は CI で生成する運用なので手元では読めない等）。
+ *   だから**赤にはしない**。ただし
+ *   ★「全部通った・安全」と名乗るのをやめ、最後に必ず件数を出す。
+ */
+const skipped = [];
+const unmeasuredList = [];
 
 function fail(name, guideline, message) {
   failures.push({ name, guideline, message });
@@ -43,7 +56,17 @@ function ok(name, detail) {
   console.log(`${ANSI_GREEN}✓${ANSI_RESET} ${name}${detail ? `  ${ANSI_DIM}${detail}${ANSI_RESET}` : ''}`);
 }
 function skip(name, why) {
+  skipped.push({ name, why });
   console.log(`${ANSI_DIM}- ${name} (skip: ${why})${ANSI_RESET}`);
+}
+/**
+ * ★「測れなかった」。緑にも赤にも混ぜず、exit 2 で返す。
+ *   skip との違い: skip は「前提が無いので対象外」、
+ *   unmeasured は「対象のはずなのに読み取れなかった」＝**見逃している可能性がある**。
+ */
+function unmeasured(name, why) {
+  unmeasuredList.push({ name, why });
+  console.log(`${ANSI_YELLOW}?${ANSI_RESET} ${name} ${ANSI_DIM}(測れなかった: ${why})${ANSI_RESET}`);
 }
 
 function readFile(rel) {
@@ -304,11 +327,32 @@ function checkWorkflowPaths(rel, requiredScripts, label) {
     skip(`${label}-workflow-paths`, `${rel} が無い`);
     return;
   }
-  const m = wf.match(/\n {4}paths:\n([\s\S]*?)(?=\n[a-z][a-zA-Z_-]*:)/);
+  // ★CRLF に対応する（2026-08-27 に修正）。
+  //   元は `\n` 決め打ちで、実測すると ios-appstore-release.yml は **CRLF 828行**。
+  //     /\n {4}paths:\n/       → false   ← 永久に一致しない
+  //     /\r?\n {4}paths:\r?\n/ → true
+  //   `git show HEAD:` でも同じなので **CI でも再現していた**。
+  //   ＝ paths が実在するのに「無い」と報告し、しかも warn なので提出を止めなかった。
+  const m = wf.match(/\r?\n {4}paths:\r?\n([\s\S]*?)(?=\r?\n[a-z][a-zA-Z_-]*:)/);
   const block = m ? m[1] : '';
   if (!block) {
-    // path filter 無し = 全 push でトリガ(または別 on トリガ)。warn に留める。
-    warn(`${label}-workflow-paths`, 'process', `${rel} に on.push.paths が無い。提出スクリプト修正が再ビルドをトリガするか確認`);
+    // ★「そもそも push で起動しない」と「読み取れなかった」を区別する（2026-08-27）。
+    //   区別せずに warn へ倒すと、★測れていないのに「提出して安全」と言うことになる。
+    //   逆に一律 exit 2 にすると、push 起動しないワークフロー（＝手動専用）で
+    //   毎回止まってしまい、★止まるのが日常になって本物を見なくなる。
+    //
+    //   実測: android-play-release.yml は push: ブロックごとコメントアウトされており
+    //   workflow_dispatch 専用。この場合 paths が無いのは**正常**。
+    const hasActivePush = /\r?\n {2}push:\r?\n/.test(wf);
+    if (!hasActivePush) {
+      skip(`${label}-workflow-paths`, `${rel} は push で起動しない（手動専用）ので paths は不要`);
+      return;
+    }
+    // push で起動するのに paths が読めない＝**見逃している可能性がある**。
+    unmeasured(
+      `${label}-workflow-paths`,
+      `${rel} は push で起動するが on.push.paths を読み取れなかった（書式が想定と違う可能性）`,
+    );
     return;
   }
   // workflow が実際に実行している script のみ必須化(invoke していないものは false flag しない)。
@@ -401,5 +445,30 @@ if (failures.length > 0) {
   console.log('修正レシピは _docs/apple-reject-knowledge-base.md を参照。');
   process.exit(1);
 }
+// ★「測れなかった」があるなら、緑と名乗らない（2026-08-27）。
+//   exit 2 は「異常あり」ではなく「★確かめられていない」。
+//   0 に混ぜると、見逃したまま「提出して安全」と言うことになる。
+if (unmeasuredList.length > 0) {
+  console.log(`${ANSI_YELLOW}--- 測れなかった (${unmeasuredList.length}) ---${ANSI_RESET}`);
+  for (const u of unmeasuredList) console.log(`${ANSI_YELLOW}?${ANSI_RESET} ${u.name}: ${u.why}`);
+  console.log('');
+  console.log(`${ANSI_YELLOW}★これは「異常なし」ではありません。確かめられていない項目があります。${ANSI_RESET}`);
+  console.log('提出してよいかは、上の項目を人が確認してから判断してください。');
+  process.exit(2);
+}
+
+// ★skip があるなら「全部通った」と言わない。
+//   skip 自体は正常なことが多い（ios/ は CI 生成 等）ので赤にはしないが、
+//   ★何本が対象外だったかを必ず見せる。
+if (skipped.length > 0) {
+  console.log(
+    `${ANSI_GREEN}Pre-submission lint: ${ANSI_RESET}` +
+      `実行できた検査は通りました（${ANSI_DIM}対象外 ${skipped.length} 件${ANSI_RESET}）。`,
+  );
+  for (const s of skipped) console.log(`${ANSI_DIM}  - ${s.name}: ${s.why}${ANSI_RESET}`);
+  console.log(`${ANSI_DIM}★対象外の分は確かめていません。提出前に上の理由を読んでください。${ANSI_RESET}`);
+  process.exit(0);
+}
+
 console.log(`${ANSI_GREEN}All pre-submission lint checks passed.${ANSI_RESET}`);
 console.log('ストア提出に進んで安全。');
