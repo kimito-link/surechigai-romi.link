@@ -26,6 +26,7 @@ import {
 import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { useAuth } from "@/hooks/use-auth";
+import { useLoginGuide } from "@/hooks/use-login-guide";
 import { trpc } from "@/lib/trpc";
 import { useTrpcReady } from "@/lib/trpc-ready-context";
 import { color } from "@/theme/tokens";
@@ -73,7 +74,12 @@ function isReady(row: PhotoRow): boolean {
  *    （nav-live-prefecture-panel.tsx / premium.tsx と同じ型）。
  */
 export function PhotoImportScreen() {
-  const { isAuthenticated, isAuthReady, login } = useAuth();
+  const { isAuthenticated, isAuthReady } = useAuth();
+  /* ★login() を直に呼ばない（Guideline 4.8）。
+     provider 省略の login() は既定の "x" に直行し、Apple を選ぶ隙が無くなる。
+     build 524 の却下はこの形が11画面にあったことが原因だった。
+     useLoginGuide なら X と Apple が並ぶ /sign-in へ送られる。 */
+  const openLoginGuide = useLoginGuide();
   const trpcReady = useTrpcReady();
 
   // 未ログインはここで止める（足あとは本人のものなので）。
@@ -90,7 +96,7 @@ export function PhotoImportScreen() {
             ログインするとご利用いただけます。
           </Text>
           <Pressable
-            onPress={() => void login()}
+            onPress={() => openLoginGuide()}
             accessibilityRole="button"
             style={{
               minHeight: 48,

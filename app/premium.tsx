@@ -26,6 +26,7 @@ import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, Text, View
 import { Link, type Href } from "expo-router";
 import Head from "expo-router/head";
 import { useAuth } from "@/hooks/use-auth";
+import { useLoginGuide } from "@/hooks/use-login-guide";
 import { PREMIUM_FEATURES, useIsPremium } from "@/lib/premium-features";
 import { useTrpcReady } from "@/lib/trpc-ready-context";
 import { color } from "@/theme/tokens";
@@ -133,7 +134,9 @@ function PremiumStatusCard() {
 }
 
 export default function PremiumScreen() {
-  const { isAuthenticated, isAuthReady, login } = useAuth();
+  const { isAuthenticated, isAuthReady } = useAuth();
+  /* ★login() を直に呼ばない（Guideline 4.8）。理由は photo-import-screen.tsx と同じ。 */
+  const openLoginGuide = useLoginGuide();
   const trpcReady = useTrpcReady();
   // 購入ボタンの活性判定に使う。状態カードを出せないときは常に false（フェイルクローズ）
   const isPremium = false;
@@ -219,7 +222,7 @@ export default function PremiumScreen() {
 
           {isAuthReady && !isAuthenticated ? (
             <Pressable
-              onPress={() => void login()}
+              onPress={() => openLoginGuide()}
               accessibilityRole="button"
               style={{
                 minHeight: 48,
