@@ -62,6 +62,13 @@ const CHECKS = [
   //   計器を入れて初めて 初見3.92秒 / CDNヒット0.12秒（38倍差）が分かり、
   //   ★待ち上限 3,200ms では初見が間に合わないことが数字で確定した。
   { name: 'check-timing-instrumented', path: join(__dirname, 'check-timing-instrumented.mjs') },
+  // ★計器が「あるのに動かない」形になっていないか（キットから輸入）。
+  //   ★計器が無いなら無いと分かるが、あるのに死んでいると
+  //   「0件だから正常」と誤読する。沈黙を正常と読む最も危険な形。
+  { name: 'check-instruments-reachable', path: join(__dirname, 'check-instruments-reachable.mjs') },
+  // ★コンソールが無いと無言で固まる形（PowerShell の進捗バー等）。
+  //   実測: 既定=返ってこない / 抑止あり=402ms。★1KBでも固まる。
+  { name: 'check-silent-hang-guard', path: join(__dirname, 'check-silent-hang-guard.mjs') },
   // ★心拍（製品が「異常なし」を自分で名乗れるか）。
   //
   //   ★このリポは現時点で**心拍を持っていない**（実測: exit 1）。
