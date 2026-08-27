@@ -1,6 +1,10 @@
 /**
  * instrument-core.mjs — ★検査・計器の共通土台（キット同梱・依存ゼロ・純Node）。
  *
+ * ★このファイル1つをコピーすれば、web-ios-androidキットを使っていない
+ *   他のプロジェクトでもそのまま動く（外部ライブラリへの依存なし）。
+ *   取得先: https://github.com/kimito-link/web-ios-android/blob/main/templates/scripts/lib/instrument-core.mjs
+ *
  * ───────────────────────────────────────────────────────────────────────────
  * ■ ★何を解決するか
  *   検査が「合格 / 不合格」の2値しか答えられないと、
@@ -29,6 +33,52 @@
  *     ★**会議の全メンバーが前提を誤り、立てた論の大半が無効になった**。
  *   → 計器は「自分が何を測っていないか」を出力に書く。
  *
+ * ■ ★このリポ(kimitolink-linktree)で実測した実損（2026-08-24・毒テストで再現）
+ *   ★どちらも「本番のリリース経路に配線済みの門番」が、緑のまま嘘をついていた。
+ *
+ *   ① 未署名なのに「署名済み」と断言して緑
+ *      android-twa/app/build.gradle の `signingConfig signingConfigs.release` を
+ *      コメントアウト（＝未署名 AAB が出る状態）にして
+ *      scripts/app/verify-android-signing-config.mjs を実行 →
+ *      「OK（署名済み AAB が生成されます）」/ ★exit 0。
+ *      真因: Groovy のコメントを剥がさない生正規表現で判定していた。
+ *      ＝ ★**コメントに書くだけで門番が通る**（掟①「名前や書式だけを見る検査は両方向に壊れる」）。
+ *
+ *   ② 何も測っていないのに「全ての地色が一致」と断言して緑
+ *      scripts/app/verify-splash-bg-consistency.mjs を、対象3ファイルが
+ *      1つも無い階層で実行 → 「OK（全ての地色が一致）」/ ★exit 0。
+ *      真因: 3つの検査が `if (existsSync)` の**else 無し**で、
+ *      問題配列が空のまま成功メッセージに落ちていた。
+ *      ＝ ★**1件も比較していないのに「全て一致」と名乗る**。
+ *
+ *   ★教訓: 「exit 2 を持っているか」では見つからない。
+ *     **skip / catch / existsSync の else 無し**を数えると見つかる。
+ *
+ * ■ ★毒テストをするときの罠（このリポで実際に踏みかけた・2026-08-24）
+ *   固定パス（ROOT がスクリプト位置基準など）の門番に、別ディレクトリの毒を
+ *   食わせても**毒は1文字も届かない**。それで出た赤は「ファイルが無い」という
+ *   別理由の赤であり、それを「検知できた」と読みかけた。
+ *   ★掟③のとおり「変異させた」と「変異が適用された」は別物。
+ *     毒を入れたあと grep で**実際に入ったことを確認してから**赤/緑を読むこと。
+ *
+ * ■ 終了コードの約束（3値）
+ *   0 = 合格（★根拠つき） / 1 = 測れた上での赤 / ★2 = 測れなかった
+ *   ★2 を 0 と同じ「緑」に数えないこと。
+ *
+ * ■ 収穫元（実運用で効いている先例・すべて実ファイルで確認）
+ *   - soushin-suggest.link/scripts/blank-map.mjs:17    3値規約の明文化
+ *   - kimitolink-linktree/scripts/lib/diag-core.mjs:18 ★根拠なき pass を降格
+ *   - soushin-suggest.link/scripts/blank-map.mjs:556   --selftest（毒→赤）
+ *   - ai-hub/bin/ci-audit.mjs:212  「N件監査できなかった」を緑と判定しない
+ *   - soushin-suggest.link/scripts/check-boundaries.ps1:132
+ *       赤のとき3行（何が / 直し方 / ★この検査の限界）
+ *
+ * ■ ★「限界の明記」がなぜ要るか（実損の記録）
+ *   soushin-suggest.link/_docs/PAINT-CHAIN-INSTRUMENT-DESIGN.md:
+ *     計器が「可視先頭2行 × 左240px」しか測っていないのに全体の数字と解釈され、
+ *     ★**会議の全メンバーが前提を誤り、立てた論の大半が無効になった**。
+ *   → 計器は「自分が何を測っていないか」を出力に書く。
+ *
  * ■ 使い方（最小）
  *   import { EXIT, computeExitCode, formatProbeReport, runSelfTest } from ./lib/instrument-core.mjs;
  *   const results = [{ probe: 何を測ったか, verdict: pass, evidence: { 走査: n } }];
@@ -38,14 +88,17 @@
  * ───────────────────────────────────────────────────────────────────────────
  */
 
+/** ★終了コードの約束。★このファイルをコピーすれば、web-ios-androidキットを
+ *  使っていない他のリポジトリでもそのまま同じ規約で使える(依存ゼロ・純Node)。 */
 /**
- * ★証拠が「古い」と見なすまでの時間。
- *   kimitolink-linktree/scripts/lib/diag-core.mjs の 60秒を踏襲する
- *   （疎通・health 系の証拠はこの程度で陳腐化する、という先行実装の実績値）。
+ * ★証拠が「いつ測ったものか」を見て、古ければ印を付ける閾値（ミリ秒）。
+ *
+ * ★収穫元: surechigai-romi.link/scripts/lib/instrument-core.mjs（2026-08-27 に正本へ取り込み）。
+ *   ★合格そのものは取り消さない。「古い」は「無効」ではない。
+ *   ただし★古い緑を新しい緑と同じ見た目にはしない（経過秒を必ず出す）。
  */
 const STALE_MS = 60 * 1000;
 
-/** ★終了コードの約束(このリポ共通規約)。 */
 export const EXIT = Object.freeze({
   /** 合格。★根拠(evidence)を伴うときだけ名乗れる。 */
   PASS: 0,
@@ -94,16 +147,7 @@ export function normalizeProbeResult(raw) {
     verdict = 'inconclusive';
   }
 
-  // ★古い証拠に印を付ける（2026-08-23 に kimitolink-linktree から取り込み）。
-  //   出どころ: kimitolink-linktree/scripts/lib/diag-core.mjs（先行実装）。
-  //
-  //   ★なぜ要るか: 「緑」と「4分前に緑だった」は別物。
-  //   このリポは 2026-08-22 に、**35時間前にキャッシュされた画像**を
-  //   「正しい」と報告して丸一日気づかなかった（旧スプラッシュ配信）。
-  //   証拠にいつ測ったかが無いと、古い緑と今の緑を区別できない。
-  //
-  //   ★verdict は変えない。stale は「無効」ではなく「古い」なので、
-  //   赤にすると再測定できない場面で詰む。★表示で気づかせる方に倒す。
+  // ★証拠に verifiedAt があれば、古さを測って印を付ける（合格は取り消さない）。
   if (evidence && typeof evidence.verifiedAt === 'string') {
     const at = Date.parse(evidence.verifiedAt);
     if (!Number.isNaN(at) && Date.now() - at > STALE_MS) {
@@ -175,9 +219,7 @@ export function formatProbeReport(results, opts = {}) {
   if (!fails.length && !unk.length) {
     const ev = pass.length ? `(根拠あり ${pass.length}件)` : '';
     lines.push(`${label}✅ 合格 ${ev}`);
-    // ★古い証拠で緑になっているものは、緑と並べたまま**必ず経過時間を出す**。
-    //   「緑」と「4分前に緑だった」を同じ見た目にしない
-    //   （出どころ: kimitolink-linktree の diag 設計 D-2）。
+    // ★古い証拠での合格は、経過時間を必ず出す（新しい緑と見分けが付かなくしない）。
     for (const r of pass) {
       if (r.evidence?.stale) {
         lines.push(

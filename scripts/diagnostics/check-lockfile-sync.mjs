@@ -67,10 +67,51 @@ if (isMain) {
     console.error('[check-lockfile-sync] → Node プロジェクトのルートで実行してください。');
     process.exit(2);
   }
+  // ★pnpm 運用のリポでも実際に照合する（2026-08-27）。
+  //   それまでは package-lock.json が無いだけで exit 2（測れなかった）になり、
+  //   ★このリポは pnpm なので**毎回デプロイが止まる**状態だった。
+  //   （linktree の横断調査 #5「lockfile照合が pnpm リポで一度も照合せずに緑」の続き。
+  //     緑をやめたのは正しいが、それだけだと今度は永久に測れないままになる。）
+  //   ★pnpm-lock.yaml は YAML だが、依存名の有無を見るだけなら
+  //     行頭のキーを拾えば足りる（依存を増やさないため簡易解析にする）。
+  const pnpmLockPath = join(TARGET_DIR, 'pnpm-lock.yaml');
+  if (!existsSync(lockPath) && existsSync(pnpmLockPath)) {
+    const pkgJson = JSON.parse(readFileSync(pkgPath, 'utf8'));
+    const lockText = readFileSync(pnpmLockPath, 'utf8');
+    const allDeps = { ...(pkgJson.dependencies || {}), ...(pkgJson.devDependencies || {}) };
+    const names = Object.keys(allDeps);
+    // ★1件も依存が無いのに「一致」と言わない。
+    if (names.length === 0) {
+      console.error('[check-lockfile-sync] 🟡 依存が0件のため照合できませんでした(★緑ではありません)。');
+      process.exit(2);
+    }
+    // ★pnpm-lock.yaml での依存名の現れ方（実測して合わせた）:
+    //   importers 配下  … 「      vitest:」（★インデントは可変。実測で6桁だった）
+    //   packages 配下   … 「  '@vitest/expect@2.1.9':」や「  vitest@2.1.9:」
+    //   ★インデントを2桁と決め打ちしたら vitest を「無い」と誤検知した
+    //     （自分で作った偽陽性。実際は34箇所に存在した）。
+    //   → 行頭からの空白は数えず、名前の直後が ' か @ か : であることだけを見る。
+    const inLock = (name) => {
+      const esc = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp("(^|\\n)\\s*'?" + esc + "('|@|:)").test(lockText);
+    };
+    const notInLock = names.filter((n) => !inLock(n));
+    if (notInLock.length > 0) {
+      console.error(`[check-lockfile-sync] package.json にあるが pnpm-lock.yaml に見当たらない依存 ${notInLock.length} 件:`);
+      for (const n of notInLock) console.error(`  - ${n}`);
+      console.error('[check-lockfile-sync] 対処: `pnpm install` で lockfile を更新→ pnpm-lock.yaml をコミット。');
+      console.error('[check-lockfile-sync] ★この検査が判定しないこと: 版の一致は見ません（名前の有無だけ）。');
+      process.exit(1);
+    }
+    console.log(`[check-lockfile-sync] OK(pnpm・依存 ${names.length} 件・lockfile に無いもの 0 件)。`);
+    console.log('[check-lockfile-sync] ★この検査が判定しないこと: 版の一致は見ません（名前の有無だけ）。');
+    process.exit(0);
+  }
+
   if (!existsSync(lockPath)) {
-    console.error('[check-lockfile-sync] 🟡 package-lock.json が無いため照合できませんでした(★緑ではありません)。');
-    console.error('[check-lockfile-sync] → この検査は npm 専用です。pnpm/yarn なら別手段で確認するか、npm install してください。');
-    console.error('[check-lockfile-sync] ★この検査が判定しないこと: pnpm-lock.yaml / yarn.lock の整合性は見ません。');
+    console.error('[check-lockfile-sync] 🟡 lockfile が無いため照合できませんでした(★緑ではありません)。');
+    console.error('[check-lockfile-sync] → npm なら npm install、pnpm なら pnpm install を実行してください。');
+    console.error('[check-lockfile-sync] ★この検査が判定しないこと: yarn.lock は見ません。');
     process.exit(2);
   }
 
