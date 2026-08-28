@@ -109,3 +109,9 @@ public/lp/img/_orig-photo/
 .npm-cache/
 .pnpm-store/
 .tmp-responsive-audit.json
+
+# 計器の生成物（キットの .gitignore と同じ方針）
+# ★.instrument-context.md は毎回再生成される5000行超の索引。追跡しない。
+# ★.instrument-ran.json は「いつ・どのコミットで計器が緑になったか」の記録なので追跡する。
+.instrument-context.md
+.instrument-report.json
