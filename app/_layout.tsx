@@ -19,7 +19,8 @@ if (typeof document !== "undefined") {
 import { usePathname } from "expo-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppNavigationStack } from "@/components/providers/app-navigation-stack";
-import { Platform, View, Text } from "react-native";
+import { Alert, Platform, View, Text } from "react-native";
+import { OAUTH_NOT_READY_MESSAGE } from "@/lib/auth/oauth-result";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
   SafeAreaFrameContext,
@@ -192,7 +193,15 @@ const AUTH_LOADING_PLACEHOLDER: AuthState = {
   isAuthReadyForUI: false,
   refresh: async () => {},
   logout: async () => {},
-  login: async () => {},
+  /* ★no-op にしないこと（2026-08-21 build 520 / 2026-08-28 build 529 の実体）。
+     ここは Clerk chunk 解決待ちの一瞬だけ配られる暫定値だが、その一瞬に
+     利用者がログインボタンを押すことは実際に起きる（審査は初回起動＝キャッシュ空）。
+     ★`async () => {}` だと押しても本当に何も起きず、エラーすら出ない。
+     ⟹ 押されたら「見えるエラー」を出して、押した事実が利用者に伝わるようにする。
+     ★ボタンを disabled にする方向では直さない（押せない方が却下より悪い）。 */
+  login: async () => {
+    Alert.alert("もう一度お試しください", OAUTH_NOT_READY_MESSAGE);
+  },
 };
 
 /**

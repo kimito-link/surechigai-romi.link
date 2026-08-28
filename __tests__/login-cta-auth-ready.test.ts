@@ -98,13 +98,24 @@ describe("永久に固まらないこと（修正が新しい詰みを作らな�
 });
 
 describe("無反応の原因になった配線が残っていること（前提の固定）", () => {
-  it("_layout は解決待ちに login が no-op のプレースホルダを配る", () => {
-    // この前提が変わったら、上のガードの理由も見直す必要がある。
+  it("★_layout の解決待ちプレースホルダは no-op ではない（押した事実が利用者に伝わる）", () => {
+    // ★2026-08-28 に前提を変えた。以前はここが `login: async () => {}` で、
+    //   このテストは「no-op であること」を固定していた（＝壊れた仕様を守っていた）。
+    //
+    //   実害: iOS build 520 と 529 が、どちらもこの窓で却下されている。
+    //   529 の審査コメントは "we were unable to tap Apple and X sign in as it was greyed out"。
+    //   ★押しても何も起きない・エラーも出ない、が構造的に作られていた。
+    //
+    //   ★弱めるのではなく強い条件に置き換える: no-op を禁じ、見えるエラーを要求する。
     const idx = LAYOUT.indexOf("AUTH_LOADING_PLACEHOLDER: AuthState");
     expect(idx).toBeGreaterThan(-1);
-    const block = LAYOUT.slice(idx, idx + 400);
+    const block = LAYOUT.slice(idx, idx + 1400);
 
-    expect(block).toMatch(/login:\s*async\s*\(\)\s*=>\s*\{\}/);
+    // ★no-op に戻したら落ちる
+    expect(block).not.toMatch(/login:\s*async\s*\(\)\s*=>\s*\{\s*\}/);
+    // ★押されたら利用者に見えるものを出すこと
+    expect(block).toMatch(/Alert\.alert/);
+    expect(block).toMatch(/OAUTH_NOT_READY_MESSAGE/);
     expect(block).toMatch(/isAuthReadyForUI:\s*false/);
   });
 
