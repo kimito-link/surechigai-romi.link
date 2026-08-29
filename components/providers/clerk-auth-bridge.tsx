@@ -4,6 +4,7 @@
 import * as Auth from "@/lib/_core/auth";
 import { USER_INFO_KEY } from "@/constants/oauth";
 import { isSilentOAuthNoop, OAUTH_NOT_READY_MESSAGE } from "@/lib/auth/oauth-result";
+import { buildNativeOAuthRedirectUrl } from "@/lib/auth/native-redirect";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { clearAllTokenData } from "@/lib/token-manager";
 import { buildSignInAutoXHref, buildSignInSwitchHref } from "@/lib/clerk-route";
@@ -259,7 +260,15 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
           return;
         }
 
-        const redirectUrl = `${getApiBaseUrl()}/oauth/twitter-callback`;
+        /* ★ネイティブの戻り先はカスタムスキームでなければならない（build 533 却下の真因）。
+           以前はここが `${getApiBaseUrl()}/oauth/twitter-callback` で、ネイティブでは
+           https://surechigai.kimito.link/... が渡っていた。
+           iOS の ASWebAuthenticationSession は callbackURLScheme にカスタムスキームしか
+           一致させないため、★ブラウザが開いたまま戻らない。
+           審査員が閉じると createdSessionId:"" になり、下の isSilentOAuthNoop が
+           Alert を出す ＝ 却下コメントの "displays an error"。
+           理由と出典は lib/auth/native-redirect.ts に書いた。 */
+        const redirectUrl = buildNativeOAuthRedirectUrl();
         const runOAuth = provider === "apple" ? startAppleOAuthFlow : startOAuthFlow;
         const result = await runOAuth({ redirectUrl });
 
