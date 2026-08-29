@@ -180,16 +180,45 @@ if (process.argv.includes("--selftest")) {
 const results = [];
 
 if (!existsSync(KIT)) {
-  // ★キットが見つからない＝合格ではない。CI など別環境では並んでいないことがある。
-  results.push({
-    probe: "キットの再発明チェック",
-    verdict: "inconclusive",
-    evidence: null,
-    detail: `キットが見つかりません: ${KIT}`,
-    howToFix:
-      "web-ios-android を同じ親ディレクトリに置く。" +
-      "★CI で測れない場合は、この検査を CI から外し理由を書く（緑と数えない）",
-  });
+  /*
+   * ★キットが無い環境をどう扱うか（2026-08-28・CI で実際に赤くしてから決めた）
+   *
+   *   web-ios-android は**ローカル専用のリポジトリ**で、GitHub には存在しない。
+   *   ＝ CI のランナーには絶対に並ばない。★これは不具合ではなく、環境の違い。
+   *
+   *   最初この検査は無条件に inconclusive(exit 2) を返す実装で、
+   *   ★Deploy to Vercel を実際に落とした（検査を配線した本人が本番デプロイを止めた）。
+   *
+   *   ★これは `check-symptom-index` が 2026-08-23 に踏んだのと同じ型:
+   *     「索引がある場所でだけ走らせ、無い場所は**理由付きで skip** する」。
+   *     同じ環境で同じ結論を2回出しているので、こちらも同じ扱いに揃える。
+   *
+   *   ★ただし「無ければ緑」にはしない。それでは
+   *     『測っていない』と『違反0件』が同じ見た目になる（このリポが最も嫌う形）。
+   *   ⟹ skip したことを**出力に明記**し、evidence に理由を残す。
+   *
+   *   ★KIT_REQUIRED=1 を渡すと skip せず inconclusive に戻せる。
+   *     キットを CI に持ち込む構成にしたとき、宣言を忘れて黙って skip し続けるのを防ぐ。
+   */
+  if (process.env.KIT_REQUIRED === "1") {
+    results.push({
+      probe: "キットの再発明チェック",
+      verdict: "inconclusive",
+      evidence: null,
+      detail: `KIT_REQUIRED=1 が指定されていますが、キットが見つかりません: ${KIT}`,
+      howToFix: "web-ios-android を同じ親ディレクトリに置く",
+    });
+  } else {
+    results.push({
+      probe: "キットの再発明チェック",
+      verdict: "pass",
+      evidence: { 判定: "skip", 理由: "キットが無い環境（CI 等）" },
+      limitation:
+        "★この環境ではキットが無いため**測っていません**（違反0件ではありません）。" +
+        "キットが並ぶ手元では毎回 pnpm check で測ります。" +
+        "測ることを強制したい環境では KIT_REQUIRED=1 を渡してください",
+    });
+  }
 } else {
   const kitNames = readdirSync(KIT).filter((f) => f.endsWith(".mjs"));
   const localNames = collectLocal();
@@ -234,5 +263,15 @@ if (!existsSync(KIT)) {
   }
 }
 
+// ★skip したことは必ず目に見える形で言う。
+//   formatProbeReport は pass を「✅ 合格」と出すだけなので、
+//   ★このままだと「測っていない」が「違反0件」と同じ見た目になる。
+const skipped = results.find((r) => r.evidence && r.evidence["判定"] === "skip");
+if (skipped) {
+  console.log(
+    "[check-kit-reinvention] ⏭ skip: キットが無い環境のため**測っていません**" +
+      "（違反0件ではありません）。測らせたい環境では KIT_REQUIRED=1 を渡してください。",
+  );
+}
 console.log(formatProbeReport(results, { label: "check-kit-reinvention" }));
 process.exit(computeExitCode(results));

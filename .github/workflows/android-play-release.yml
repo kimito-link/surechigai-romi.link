@@ -40,7 +40,17 @@
 name: android-play-release
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      skip_checks:
+        description: >-
+          ★検査を飛ばして提出する（緊急時のみ）。skip_reason が空だと失敗する。
+        type: boolean
+        default: false
+      skip_reason:
+        description: "★検査を飛ばす理由（skip_checks=true のとき必須）"
+        type: string
+        default: ""
   # Play 系 Secrets 登録後に復活させる（上のコメント3参照）。
   # paths には「このワークフローが実際に run: で叩くスクリプト」を必ず全部載せる
   # (iOS 側の path-filter 修正と同じ教訓。載っていないとそのスクリプトを直しても
@@ -71,7 +81,60 @@ permissions:
   contents: read
 
 jobs:
+  # ────────────────────────────────────────────────────────────────────
+  # ★Play へ出す前に検査を通す門番（2026-08-28 配線）。
+  #
+  # ■ ★なぜ要るか
+  #   このワークフローで走る検査は verify-android-signing-config の1本だけで、
+  #   ★型チェックもテストも通らないまま AAB が作られて公開されていた。
+  #
+  #   iOS 側は 2026-08-28、検査を通さず出した build 529 が実際に却下されている。
+  #   ★Play は手動起動のみ（push は無効化済み）なので事故の入口は狭いが、
+  #   「手で押したから安全」ではない。壊れた版を配るのは同じ。
+  #
+  # ■ ★ユーザー影響で見た設計判断
+  #   公開が数分遅れて困るのは開発者だけ。壊れた版は利用者全員が踏む。
+  #   ★Play は段階公開の巻き戻しに時間がかかるので、出す前に止める方が安い。
+  # ────────────────────────────────────────────────────────────────────
+  checks:
+    name: Checks (type / test / gates)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate skip request
+        if: ${{ inputs.skip_checks }}
+        run: |
+          if [ -z "${{ inputs.skip_reason }}" ]; then
+            echo "::error::skip_checks=true のときは skip_reason が必須です（無言で検査を飛ばさない）"
+            exit 1
+          fi
+          echo "::warning::★検査を飛ばして Play へ提出します: ${{ inputs.skip_reason }}"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - name: Install dependencies
+        if: ${{ !inputs.skip_checks }}
+        run: pnpm install
+
+      - name: Type check + gates
+        if: ${{ !inputs.skip_checks }}
+        run: pnpm check
+
+      - name: Test
+        if: ${{ !inputs.skip_checks }}
+        run: pnpm test
+
   build-and-publish:
+    # ★検査が緑になるまで公開しない
+    needs: checks
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:

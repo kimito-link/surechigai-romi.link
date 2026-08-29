@@ -44,6 +44,15 @@ on:
           (IN_REVIEW 以降は審査官が実機を見ているので、この指定でも触らない)。
         type: boolean
         default: false
+      skip_checks:
+        description: >-
+          ★検査を飛ばして提出する（緊急時のみ）。skip_reason が空だと失敗する。
+        type: boolean
+        default: false
+      skip_reason:
+        description: "★検査を飛ばす理由（skip_checks=true のとき必須）"
+        type: string
+        default: ""
   push:
     branches:
       - main
@@ -77,7 +86,79 @@ permissions:
   contents: read
 
 jobs:
+  # ────────────────────────────────────────────────────────────────────
+  # ★App Store へ出す前に検査を通す門番（2026-08-28 配線）。
+  #
+  # ■ ★なぜ要るか（実害が2件あった）
+  #   ① このワークフローは829行あるのに、★検査を1本も走らせていなかった。
+  #      pnpm check も pnpm test も lint-pre-submission も呼んでいない。
+  #      ios-pre-submission-lint.yml は別ワークフローで paths 限定・needs 関係が無く、
+  #      ★lint が赤でも release は独立に完走していた。
+  #
+  #   ② ★2026-08-28、build 529 がそれで却下された（Guideline 2.1(a)）。
+  #      しかもこの提出は**意図したものではない**。検査の配線作業で package.json を
+  #      編集した push が、下の paths:[package.json] に当たって自動提出された。
+  #      ネイティブでの目視をしないまま Apple に出て、そのまま却下されている。
+  #
+  # ■ ★ユーザー影響で見た設計判断
+  #   提出が数分遅れて困るのは開発者だけ。★却下は審査枠を1回消費し、
+  #   再提出までの数日、利用者にアプリが届かない。→ 遅れる方を選ぶ。
+  #
+  # ■ ★deploy-vercel.yml と同じ型（そちらは 2026-08-22 に解決済み）
+  #   検査を別ジョブに切り出し、submit 側を needs で待たせる。
+  #   ★二重実行は意図的（PR 防御と提出直前の関所は役割が違う）。
+  # ────────────────────────────────────────────────────────────────────
+  checks:
+    name: Checks (type / test / gates / pre-submission lint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # ★逃げ道は用意するが、無言では飛ばせない（deploy-vercel.yml と同じ方針）。
+      #   審査の締切や CI 自体の故障で検査が邪魔になる場面は必ず来る。
+      #   ただし理由の記入を必須にして、後から追える形にだけはしておく。
+      - name: Validate skip request
+        if: ${{ inputs.skip_checks }}
+        run: |
+          if [ -z "${{ inputs.skip_reason }}" ]; then
+            echo "::error::skip_checks=true のときは skip_reason が必須です（無言で検査を飛ばさない）"
+            exit 1
+          fi
+          echo "::warning::★検査を飛ばして App Store へ提出します: ${{ inputs.skip_reason }}"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - name: Install dependencies
+        if: ${{ !inputs.skip_checks }}
+        run: pnpm install
+
+      # pnpm check = tsc + 各ゲート + 計器の統合入口(run-instruments)
+      # ★selftest 込み。検知器が毒で赤くなれることも毎回確かめる。
+      - name: Type check + gates
+        if: ${{ !inputs.skip_checks }}
+        run: pnpm check
+
+      - name: Test
+        if: ${{ !inputs.skip_checks }}
+        run: pnpm test
+
+      # ★却下ベクタの静的チェック。3値exit(0=緑/1=赤/2=測れなかった)。
+      #   ★2 も止める: 「測れなかった」を緑と数えない（2026-08-27 に同スクリプトが
+      #   CRLF で paths を読めず、それを warn に落として「提出して安全」と言っていた）。
+      - name: Pre-submission lint
+        if: ${{ !inputs.skip_checks }}
+        run: node scripts/lint-pre-submission.mjs
+
   submit-ios-build:
+    # ★検査が緑になるまで提出しない（これが無いと 529 と同じことが起きる）
+    needs: checks
     runs-on: macos-latest
     timeout-minutes: 90
     env:
