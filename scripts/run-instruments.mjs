@@ -100,7 +100,25 @@ const results = [];
 results.push(run('全文脈パケット', context, ['--write', '.instrument-context.md', ROOT]));
 results.push(run('汎用診断', diagnostics, [ROOT]));
 results.push(run('進化台帳', improvement, ['--check']));
-results.push(run('計器が走ったか', ran, ['--check', '--max-days', '14']));
+// ★「計器が走ったか」は**そのマシンのローカル状態**を見る計器（2026-08-29 実測）。
+//   .instrument-ran.json に『どのコミットで緑になったか』を書き、git cat-file でSHAを解決する。
+//
+//   ★CI では原理的に測れない:
+//     ・ランナーは毎回使い捨てなので記録が存在しない
+//     ・記録をコミットしても shallow clone でSHAが解決できず
+//       『記録のコミットがこのリポに見つかりません』になる
+//   ★実際に .instrument-ran.json を追跡して Deploy to Vercel を落とした。
+//   意味は『手元で最近ちゃんと計器を回したか』であって、CI に問う質問ではない。
+//
+//   ⟹ CI では理由付きで skip する（★『無ければ緑』にはしない。skip したと明示する）。
+//   check-symptom-index / check-kit-reinvention と同じ扱いに揃えた。
+if (process.env.CI) {
+  console.log(
+    '\n[instruments] ⏭ 計器が走ったか: skip（CI は使い捨て環境で記録が存在しないため**測っていません**）',
+  );
+} else {
+  results.push(run('計器が走ったか', ran, ['--check', '--max-days', '14']));
+}
 if (drift) results.push(run('配布コードのドリフト', drift));
 results.push(run(
   '公開サイトのセキュリティ満点チェック',

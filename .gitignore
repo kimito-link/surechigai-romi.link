@@ -112,6 +112,11 @@ public/lp/img/_orig-photo/
 
 # 計器の生成物（キットの .gitignore と同じ方針）
 # ★.instrument-context.md は毎回再生成される5000行超の索引。追跡しない。
-# ★.instrument-ran.json は「いつ・どのコミットで計器が緑になったか」の記録なので追跡する。
+# ★.instrument-ran.json も追跡しない（2026-08-29・CI を実際に落としてから判明）。
+#   中身は「どのコミットで計器が緑になったか」の記録だが、検証は git cat-file で
+#   そのSHAを解決する。★CI は shallow clone なので手元のSHAが存在せず、
+#   『記録のコミットがこのリポに見つかりません』で exit 2 になる。
+#   ＝ これは共有する記録ではなく**マシンごとのローカル状態**。追跡が誤りだった。
 .instrument-context.md
 .instrument-report.json
+.instrument-ran.json
