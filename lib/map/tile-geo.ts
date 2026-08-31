@@ -28,6 +28,75 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+/**
+ * 押された点を「地図フレーム内のピクセル座標」に直す。
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ■ ★なぜ要るか（2026-09-01・本番のチェックインで実際に起きていた）
+ *
+ *   PC ブラウザでチェックイン →「地図をクリックして位置を修正」すると、
+ *   保存時に赤いエラーが出ていた:
+ *     "Invalid input: expected number, received NaN"（path: lat / lng）
+ *
+ *   ★真因: react-native-web の Pressable の onPress は、レスポンダー由来の
+ *   合成イベントではなく**素の DOM MouseEvent** を渡す。
+ *   locationX / locationY は合成イベントにしか無いプロパティなので undefined になる。
+ *   （react-native-web/dist/modules/usePressEvents/PressResponder.js のコメントに
+ *     onPress が click イベントから発火する旨が書かれている）
+ *
+ *   それが無検査で pixelToLatLng に入り、undefined + number = NaN が全式に伝播した。
+ *   ★clamp は NaN を止めない（Math.min(Math.max(NaN,..)) = NaN）。実測で確認済み。
+ *
+ * ■ ★「押しても無反応」にはしない
+ *   NaN を捨てるだけだと、PC で地図クリックが**何も起きない**画面になる。
+ *   このリポには「押せなくする修正は却下より悪い」という教訓がある（iOS 520/529）。
+ *   ★だから捨てる前に、正しい座標を取り直すのがこの関数の役割。
+ *
+ * ■ ★Platform で分岐しない
+ *   ネイティブは locationX が有限なので1本目で確定し、rect には触れない。
+ *   Web だけ clientX から算出する。★「値の有無」で分けるので、
+ *   将来 react-native-web の実装が変わってもどちらでも動く。
+ *
+ * @param ne  押下イベントの nativeEvent（形が違う環境があるので緩く受ける）
+ * @param rect 地図フレームの矩形（getBoundingClientRect の結果）。取れなければ null
+ * @returns フレーム内座標。★どちらの方法でも決められなければ null（捨てる）
+ * ───────────────────────────────────────────────────────────────────────────
+ */
+export function resolvePressPoint(
+  ne: {
+    locationX?: number | null;
+    locationY?: number | null;
+    clientX?: number | null;
+    clientY?: number | null;
+    // ★RN の NativeTouchEvent は clientX を型に持たないが、Web では実体に載っている。
+    //   型を厳しくすると呼び出し側が通らないので、ここは緩く受けて実行時に確かめる。
+    changedTouches?: ArrayLike<unknown>;
+  } | null | undefined,
+  rect: { left: number; top: number } | null | undefined,
+): { x: number; y: number } | null {
+  if (!ne) return null;
+
+  // ① ネイティブ: View 相対の座標がそのまま来る
+  if (Number.isFinite(ne.locationX) && Number.isFinite(ne.locationY)) {
+    return { x: ne.locationX as number, y: ne.locationY as number };
+  }
+
+  // ② Web: ビューポート座標 - フレームの左上 で相対座標にする。
+  //    ★タッチ（スマホWeb）は clientX がイベント直下に無く changedTouches に入る。
+  const touch = (
+    ne.changedTouches && ne.changedTouches.length > 0 ? ne.changedTouches[0] : null
+  ) as { clientX?: number | null; clientY?: number | null } | null;
+  const clientX = Number.isFinite(ne.clientX) ? ne.clientX : touch?.clientX;
+  const clientY = Number.isFinite(ne.clientY) ? ne.clientY : touch?.clientY;
+
+  if (rect && Number.isFinite(clientX) && Number.isFinite(clientY)) {
+    return { x: (clientX as number) - rect.left, y: (clientY as number) - rect.top };
+  }
+
+  // ③ ★決められなかった。呼び出し側は捨てること（NaN を先へ流さない）。
+  return null;
+}
+
 /** 地図上のクリック座標 → 緯度経度（PrecisionTileMap の projectPoint の逆変換） */
 export function pixelToLatLng(
   x: number,

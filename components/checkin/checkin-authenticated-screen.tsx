@@ -63,6 +63,8 @@ import {
   startWebCheckinWarmup,
   type CheckinFix,
 } from "@/lib/checkin-location-session";
+// ★座標が実数かの判定は既存の正本を使う（依存ゼロ。新しい検証関数を作らない）。
+import { assertFiniteLatLng } from "@/modules/encounter/core/lat-lng";
 import { hasCompletedPostLoginLocationIntro } from "@/features/onboarding/components/PostLoginLocationIntro";
 
 type CheckinState = "idle" | "loading" | "adjust" | "success" | "error" | "zero";
@@ -347,9 +349,15 @@ export default function CheckinAuthenticatedScreen() {
   }, [settingsQuery.data]);
 
   const handleMapPinAdjust = useCallback((coords: { lat: number; lng: number }) => {
-    setCheckinLatLng(coords);
+    // ★受け取った座標を無検査で state と ref に書いていた（2026-09-01 修正）。
+    //   地図側が NaN を出すと、直前まで正しかった座標まで上書きされて保存に流れる。
+    //   ★汚さないことが大事: ここで捨てれば、直前の正しい位置がそのまま残る。
+    const safe = assertFiniteLatLng(coords.lat, coords.lng);
+    if (!safe) return;
+
+    setCheckinLatLng(safe);
     setCheckinAccuracyM(8);
-    lastFixRef.current = { lat: coords.lat, lng: coords.lng, accuracy: 8, observedAt: Date.now() };
+    lastFixRef.current = { lat: safe.lat, lng: safe.lng, accuracy: 8, observedAt: Date.now() };
   }, []);
 
   // ===========================================================================
@@ -595,22 +603,33 @@ export default function CheckinAuthenticatedScreen() {
 
   /** adjust 状態で「この場所に足あとを残す」: 確定済み座標でそのまま保存 */
   const confirmAdjustedCheckin = useCallback(async () => {
-    if (!checkinLatLng) return;
+    // ★`if (!checkinLatLng)` だけでは足りない（2026-09-01 修正）。
+    //   {lat: NaN, lng: NaN} は**オブジェクトなので truthy**＝素通りして保存に進み、
+    //   サーバの Zod が弾いて生の英語エラーが画面に出ていた（本番で発生）。
+    //   ★サーバ側の assertFiniteLatLng は Zod の手前で落ちるため到達しない。
+    //   ここで止めて、利用者には次に何をすればよいかが分かる日本語を見せる。
+    const safeLatLng = assertFiniteLatLng(checkinLatLng?.lat, checkinLatLng?.lng);
+    if (!safeLatLng) {
+      setState("error");
+      setErrorMsg("位置を確定できませんでした。地図をもう一度タップするか、測り直してください");
+      return;
+    }
     if (checkinInFlightRef.current) return;
     checkinInFlightRef.current = true;
     setState("loading");
     setErrorMsg("");
     setRetryAfterSec(null);
     try {
+      // ★検証を通した値だけを使う（checkinLatLng を直接読まない）。
       lastFixRef.current = {
-        lat: checkinLatLng.lat,
-        lng: checkinLatLng.lng,
+        lat: safeLatLng.lat,
+        lng: safeLatLng.lng,
         accuracy: checkinAccuracyM ?? 8,
         observedAt: Date.now(),
       };
       await performCheckinSave({
-        lat: checkinLatLng.lat,
-        lng: checkinLatLng.lng,
+        lat: safeLatLng.lat,
+        lng: safeLatLng.lng,
         accuracy: checkinAccuracyM ?? 8,
       });
     } catch (err: unknown) {

@@ -25,8 +25,11 @@ import {
   fitCenterZoom,
   pixelToLatLng,
   latLngToWorldPixel,
+  resolvePressPoint,
   type TrailPoint,
 } from "@/lib/map/tile-geo";
+// ★座標の有限性は既存の正本を使う（依存ゼロのモジュール。h3-js を巻き込まない）。
+import { assertFiniteLatLng } from "@/modules/encounter/core/lat-lng";
 
 export {
   TILE_SIZE,
@@ -220,10 +223,26 @@ const MAX_ZOOM = 19;
   
   const latestPosition = projected[0]?.pixel ?? { x: mapWidth / 2, y: mapHeight / 2 };
 
-  const handleMapPress = (locationX: number, locationY: number) => {
+  /**
+   * 地図の押下 → 緯度経度。
+   *
+   * ★2026-09-01: ここは locationX/locationY を**無検査で** pixelToLatLng に渡していた。
+   *   Web では両方 undefined になり NaN が保存まで流れて、本番のチェックインで
+   *   「Invalid input: expected number, received NaN」の赤いエラーが出ていた。
+   *   詳細は lib/map/tile-geo.ts の resolvePressPoint を参照。
+   */
+  const handleMapPress = (point: { x: number; y: number } | null) => {
     if (!interactive || !onCoordinateSelect) return;
-    const coords = pixelToLatLng(locationX, locationY, topLeft, zoom);
-    onCoordinateSelect(coords);
+    if (!point) return; // ★座標を決められなかった。NaN を先へ流さない
+
+    const coords = pixelToLatLng(point.x, point.y, topLeft, zoom);
+
+    // ★最後の関所: 既存の正本ガードを通す（新しい検証は書かない）。
+    //   ここまで来た値は正常なはずだが、通さないと NaN が state と保存へ流れる。
+    const safe = assertFiniteLatLng(coords.lat, coords.lng);
+    if (!safe) return;
+
+    onCoordinateSelect(safe);
   };
   
   const metersPerPixel = metersPerPixelAtLat(center.lat, zoom);
@@ -282,8 +301,14 @@ const MAX_ZOOM = 19;
         <Pressable
           style={[StyleSheet.absoluteFill, styles.mapTapLayer]}
           onPress={(e) => {
-            const { locationX, locationY } = e.nativeEvent;
-            handleMapPress(locationX, locationY);
+            // ★Web では nativeEvent が素の MouseEvent で locationX/locationY が無い。
+            //   その場合は clientX と枠の矩形から相対座標を出す（resolvePressPoint）。
+            //   ★currentTarget が DOM 要素でない環境もあるので、取れなければ rect は null。
+            const target = e.currentTarget as unknown as {
+              getBoundingClientRect?: () => { left: number; top: number };
+            } | null;
+            const rect = target?.getBoundingClientRect?.() ?? null;
+            handleMapPress(resolvePressPoint(e.nativeEvent, rect));
           }}
           accessibilityLabel="地図をタップして位置を修正"
         />
