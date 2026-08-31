@@ -70,6 +70,12 @@ export function useLoginGuide() {
 
       // ★ネイティブも同じ画面へ送る。login() を直に呼ぶと provider 既定の "x" に
       //   直行してしまい、Apple が選べない（4.8）。
+      //
+      // ★ここは no-direct-router-push の例外。行き先が returnTo と isSwitch から
+      //   組み立てる動的な URL なので、app-routes の定数（navigate.toXxx）では
+      //   表現できない。★このルールを外すのではなく、この1箇所だけ許可する。
+      //   （2026-09-01: この1件で Gate 1 が 8/29 から赤のままだった）
+      // eslint-disable-next-line local-rules/no-direct-router-push
       router.push(
         (isSwitch ? buildSignInSwitchHref(returnTo) : buildSignInHref(returnTo)) as Href,
       );
