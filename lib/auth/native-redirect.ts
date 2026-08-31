@@ -74,6 +74,29 @@ export function isValidNativeRedirectUrl(url: string): boolean {
 }
 
 /**
+ * ★戻り先の**文字列そのもの**を組み立てる（純粋関数・テストの正本）。
+ *
+ * expo-linking の createURL は `${scheme}:${isTripleSlashed ? '/' : ''}/${hostUri}${path}`
+ * を組む。buildNativeOAuthRedirectUrl は isTripleSlashed を渡していないので既定 false、
+ * かつスタンドアロン（カスタムスキームあり）では hostUri が空になる。
+ * ⟹ 出来上がりは **スラッシュ2本**の `surechigai://oauth-native-callback`。
+ *
+ * ★なぜ別に持つか: makeRedirectUri は expo-auth-session を必要とし、
+ *   vitest から呼べない（トップレベル import できない事情は下の注記のとおり）。
+ *   ★ここを「登録すべき文字列は何か」の正本にして、テストで固定する。
+ *   ★Clerk Dashboard / allowed_origins に登録する値と**必ず同じ**にすること。
+ *   スラッシュの本数が違うと戻り先が一致せず、533 と同じ却下に戻る。
+ */
+export function formatNativeRedirectUrl(scheme: string, path: string): string {
+  return `${scheme}://${path}`;
+}
+
+/** ★このアプリが実際に使う戻り先（登録値の正本）。 */
+export function getNativeOAuthRedirectUrl(): string {
+  return formatNativeRedirectUrl(appConfig.identity.iosScheme, NATIVE_OAUTH_CALLBACK_PATH);
+}
+
+/**
  * ネイティブ OAuth の戻り先を作る。
  *
  * ★scheme は app.config.json の identity.iosScheme（＝ app.config.ts が

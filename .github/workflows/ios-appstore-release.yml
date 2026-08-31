@@ -77,6 +77,17 @@ on:
       - "scripts/lib/asc-screenshot-upload.mjs"
       - "store-assets/appstore/app-icon-1024.png"
       - "release-notes/CURRENT-ja.txt"
+      # ★ネイティブ側のログイン経路（2026-09-01 追加）。
+      #   上の「Web は唯一の真実」方針の**明示的な例外**。
+      #   ここは WebView に載らず、ネイティブの ASWebAuthenticationSession で動くので
+      #   直しても iOS を出し直さない限り審査員には届かない。
+      #
+      #   ★実損: build 533 の却下（Guideline 2.1(a)・2026-08-29）を直した
+      #   c199ac87a は lib/auth/ と components/providers/ だけを触ったため、
+      #   ★この paths に当たらず release workflow が一度も起動しなかった。
+      #   修正は main に在るのに App Store には届かないまま2日が過ぎた。
+      - "lib/auth/**"
+      - "components/providers/**"
 
 concurrency:
   group: ios-appstore-release-${{ github.ref }}
@@ -155,6 +166,21 @@ jobs:
       - name: Pre-submission lint
         if: ${{ !inputs.skip_checks }}
         run: node scripts/lint-pre-submission.mjs
+
+      # ★ネイティブ OAuth の戻り先が Clerk 側に登録されているか（2026-09-01 追加）。
+      #   ★コードだけ直しても、この登録が無いと OAuth から戻ってセッションが作られず、
+      #   build 533 と同じ Guideline 2.1(a)「both do not function」で却下される。
+      #   実測: 533 を直したあとも allowed_origins は null（＝未登録）のままだった。
+      #
+      #   3値: 0=登録済み / 1=未登録で止める / ★2=鍵が無く測れなかった（緑にしない）。
+      #   ★鍵が無い環境では 2 で止まる。「見ていない」を「異常なし」と混ぜないため。
+      - name: Clerk native redirect registered
+        if: ${{ !inputs.skip_checks }}
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+        run: |
+          node scripts/setup-clerk-native-scheme.mjs --selftest
+          node scripts/setup-clerk-native-scheme.mjs --check
 
   submit-ios-build:
     # ★検査が緑になるまで提出しない（これが無いと 529 と同じことが起きる）

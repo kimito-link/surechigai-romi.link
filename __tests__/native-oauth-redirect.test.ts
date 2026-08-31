@@ -29,7 +29,13 @@ import { describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 
-import { isValidNativeRedirectUrl, NATIVE_OAUTH_CALLBACK_PATH } from "@/lib/auth/native-redirect";
+import appConfig from "@/app.config.json";
+import {
+  formatNativeRedirectUrl,
+  getNativeOAuthRedirectUrl,
+  isValidNativeRedirectUrl,
+  NATIVE_OAUTH_CALLBACK_PATH,
+} from "@/lib/auth/native-redirect";
 
 const ROOT = process.cwd();
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), "utf8");
@@ -65,6 +71,30 @@ describe("★ネイティブ OAuth の戻り先（533 却下の再発防止）",
     // ★ここを変えたら Clerk Dashboard の Native applications も変える必要がある。
     //   片方だけ変えるとセッションが作られず、また「押しても入れない」に戻る。
     expect(NATIVE_OAUTH_CALLBACK_PATH).toBe("oauth-native-callback");
+  });
+
+  it("★戻り先はスラッシュ2本（登録値そのものを固定する）", () => {
+    // ★expo-linking の createURL は isTripleSlashed 既定 false、
+    //   スタンドアロンでは hostUri が空 ⟹ `scheme://path`（スラッシュ2本）。
+    expect(formatNativeRedirectUrl("surechigai", "oauth-native-callback"))
+      .toBe("surechigai://oauth-native-callback");
+
+    // ★スラッシュ3本を明示的に否定する。
+    //   本数が違うと戻り先が一致せず、ブラウザが開いたまま返らない＝533 と同じ却下に戻る。
+    expect(formatNativeRedirectUrl("surechigai", "oauth-native-callback"))
+      .not.toContain(":///");
+  });
+
+  it("★実際に使う戻り先が app.config.json の scheme から作られている", () => {
+    // ★ハードコードしていたら、scheme を変えたときに気づけない。
+    const scheme = (appConfig as { identity: { iosScheme: string } }).identity.iosScheme;
+    expect(getNativeOAuthRedirectUrl()).toBe(`${scheme}://${NATIVE_OAUTH_CALLBACK_PATH}`);
+
+    // ★この値をそのまま Clerk の許可リストへ登録する（人が読んで写す欄）。
+    expect(getNativeOAuthRedirectUrl()).toBe("surechigai://oauth-native-callback");
+
+    // ★http(s) でないこと（533 の真因そのもの）
+    expect(isValidNativeRedirectUrl(getNativeOAuthRedirectUrl())).toBe(true);
   });
 
   it("★無反応→見えるエラーのガードを消していない（520/521 の教訓）", () => {

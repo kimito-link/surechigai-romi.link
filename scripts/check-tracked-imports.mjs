@@ -10,22 +10,9 @@
 //   すべて追跡ファイルに解決できるかを静的検査する = git clone 直後の状態を模した判定。依存追加なし。
 //
 // 使い方:
-//   node scripts/check-tracked-imports.mjs                # 3値 exit(下記)
-//   node scripts/check-tracked-imports.mjs --selftest     # 毒→赤 を機械で確認
+//   node scripts/check-tracked-imports.mjs                # 問題があれば exit 1
 //   TRACKED_IMPORT_ROOTS="src,app" node scripts/...       # 検査対象ルートの限定(省略時は全追跡ファイル)
 //   CI の build ステップ直後・pre-push に足すのが定位置。
-//
-// 終了コード(3値・scripts/lib/instrument-core.mjs の共通規約):
-//   0 = 合格(★走査件数という根拠つき) / 1 = 測れた上での赤 / 2 = ★測れなかった(緑ではない)
-//
-// ★なぜ 2 が要るか(2026-08-22 に本リポで実測):
-//   TRACKED_IMPORT_ROOTS に存在しないディレクトリを渡すと、走査 0 ファイルのまま
-//   「OK(検査対象 0 ファイル・未追跡 import 0 件)」と表示して exit 0 になっていた。
-//   ＝ ★何も測っていないのに合格。これは赤より危険(機能して見えるので誰も疑わない)。
-//   このリポは同型の事故を既に踏んでいる:
-//     - check-native-unsafe-dom が却下原因を見逃したまま緑(2026-08-21)
-//     - OGP が 200/image/png のまま 0 バイト(2026-08-21)
-//   → 「0件だから緑」は「一度も測っていない」と区別が付かない。走査件数を根拠として要求する。
 //
 // 対応: 静的 import / export...from / 副作用 import / 動的 import()。
 //   JSDoc 型参照 `{import('./x.js').Foo}` は除外。拡張子は .js/.mjs/.ts/.tsx/.jsx と
@@ -36,8 +23,6 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { EXIT, computeExitCode, formatProbeReport } from './lib/instrument-core.mjs';
-
 const ROOT = resolve(process.cwd());
 const SOURCE_EXT = /\.(js|mjs|ts|tsx|jsx)$/;
 const EXCLUDE = /(^|\/)(node_modules|dist|build|\.next|out)\//;
@@ -46,82 +31,145 @@ const TEST_FILE = /\.(test|spec)\.[a-z]+$/;
 // ---- 純ロジック(fs/git 非依存・単体テスト可) ----------------------------------
 
 /**
- * コメント(// 行・/* ブロック *\/)と文字列リテラルの中身を「同じ長さの空白」に潰す。
- * 削除ではなく空白置換なのは、報告に使う行番号をずらさないため。
+ * ★コメントを「同じ長さの空白」に潰す（行番号がずれないように）。
  *
- * なぜ必要か(surechigai で実際に踏んだ誤検知2件):
- *   - components/atoms/lazy-loading-fallback.tsx の JSDoc は ```tsx コードブロックで
- *     `lazy(() => import('./HeavyComponent'))` という**使い方の例**を示している
- *   - drizzle/schema/index.drizzle-kit.ts のコメントは `export * from "./foo.js"` を
- *     **問題の例として引用**している(drizzle-kit が .js を解決できない経緯の説明)
- * どちらも実行されないので追跡されていなくて当然。ここを除外リストで逃がすと
- * 本物の検出も一緒に殺すので、コメントを構造的に除くのが正しい。
- * (同じ思想が .github/workflows/ios-shell-guardrail.yml にもある:
- *  「コメントには経緯説明で禁止パターン名を引用する。禁止すると教訓が失われる」)
+ * ★2026-08-25 に kimitolink-linktree で実測した誤検知:
+ *   e2e/auth.config.ts の JSDoc に
+ *     *   import { getTestAuth } from "./auth.config";
+ *   という**使用例**が書かれているだけで「未追跡ファイルを import している」と赤になった
+ *   （実際にはそのファイル自身であり、git に追跡もされている）。
+ *
+ *   ヘッダは「JSDoc 型参照は除外」と書いていたが、除外していたのは
+ *   `{import('./x').Foo}` の形だけで、★コメント内の `import ... from` は素通りだった。
+ *
+ * ★これは掟①そのもの: 生テキストに正規表現を当てる検査は、通す方向にも
+ *   見落とす方向にも同じように壊れる。ここでは「★誤って赤にする」方向に壊れていた。
+ *   赤が嘘だと、本物の赤が信用されなくなる（オオカミ少年）。
+ *
+ * ★文字列リテラルは潰さない（`const s = "// not a comment"` を壊さないため）。
+ *
+ * @param {string} text
+ * @returns {string} コメントを空白に置換したテキスト（長さ・改行位置は元のまま）
  */
-export function stripComments(text) {
+export function blankOutComments(text) {
   const s = String(text || '');
   let out = '';
-  // none | line | block | sq | dq | tpl
-  //   文字列リテラルは「中身も含めてそのまま残す」。import の specifier は
-  //   クォートの中身そのものなので、潰すと検出できなくなる。文字列を状態として
-  //   追うのは、その中に現れる // や /* をコメント開始と誤認しないためだけ。
-  //   (例: const re = "http://x" の // をコメント開始と読むと行末まで消えてしまう)
-  let mode = 'none';
-  const blank = (ch) => (ch === '\n' ? '\n' : ' ');
-  for (let i = 0; i < s.length; i += 1) {
-    const ch = s[i];
+  let i = 0;
+  while (i < s.length) {
+    const c = s[i];
     const next = s[i + 1];
-    if (mode === 'none') {
-      if (ch === '/' && next === '/') { mode = 'line'; out += '  '; i += 1; continue; }
-      if (ch === '/' && next === '*') { mode = 'block'; out += '  '; i += 1; continue; }
-      if (ch === "'") { mode = 'sq'; out += ch; continue; }
-      if (ch === '"') { mode = 'dq'; out += ch; continue; }
-      if (ch === '`') { mode = 'tpl'; out += ch; continue; }
-      out += ch;
+    // 文字列リテラル（' " `）はそのまま通す
+    if (c === "'" || c === '"' || c === '`') {
+      const quote = c;
+      out += c;
+      i++;
+      while (i < s.length) {
+        if (s[i] === '\\') { out += s[i] + (s[i + 1] ?? ''); i += 2; continue; }
+        out += s[i];
+        if (s[i] === quote) { i++; break; }
+        i++;
+      }
       continue;
     }
-    if (mode === 'line') {
-      if (ch === '\n') { mode = 'none'; out += '\n'; continue; }
-      out += ' ';
+    // 行コメント（改行は残す）
+    if (c === '/' && next === '/') {
+      while (i < s.length && s[i] !== '\n') { out += ' '; i++; }
       continue;
     }
-    if (mode === 'block') {
-      if (ch === '*' && next === '/') { mode = 'none'; out += '  '; i += 1; continue; }
-      out += blank(ch);
+    // ブロックコメント（改行は残す＝行番号がずれない）
+    if (c === '/' && next === '*') {
+      out += '  ';
+      i += 2;
+      while (i < s.length && !(s[i] === '*' && s[i + 1] === '/')) {
+        out += s[i] === '\n' ? '\n' : ' ';
+        i++;
+      }
+      out += '  ';
+      i += 2;
       continue;
     }
-    // 文字列内: 中身はそのまま出す(エスケープは2文字まとめて通す)。
-    if (ch === '\\') { out += ch; if (next != null) { out += next; i += 1; } continue; }
-    const closer = mode === 'sq' ? "'" : mode === 'dq' ? '"' : '`';
-    if (ch === closer) { mode = 'none'; out += ch; continue; }
-    out += ch;
+    out += c;
+    i++;
+  }
+  return out;
+}
+
+/**
+ * ★「文字列の中に書かれたコード」を潰す。
+ *
+ *   `const sample = "import { a } from './missing';"` のように、
+ *   ★import 文を**データとして**持つコードがある（テストの fixture が典型）。
+ *   これを実物の import と読むと、存在しないファイルを指していると誤検知する。
+ *
+ * ★2026-08-25 実測: この検査に selftest を足した直後、CI で
+ *   ★**自分自身の selftest fixture を「未追跡を import している」と赤にした**（3件）。
+ *   ローカルでは緑だった——★まだ commit していなかったので git ls-files に載らず、
+ *   自分自身が検査対象外だったため。＝「ローカルで緑」は「CIで緑」を意味しない。
+ *
+ *   ★この検査は git 追跡ファイルだけを見るので、
+ *     ★**新規ファイルは commit するまで自分自身を検査できない**という性質がある。
+ *     ローカルの緑を信用しすぎないこと。
+ *
+ * ★ネストした引用符（"..." の中の '...'）は外側だけを見れば十分。
+ *   import 文の解析にしか使わないので、中身を空白にすれば誤検知は消える。
+ *
+ * @param {string} text コメントを潰した後のテキスト
+ * @returns {string} 文字列リテラルの中身を空白にしたテキスト（長さは保つ）
+ */
+export function blankOutStringContents(text) {
+  const s = String(text || '');
+  let out = '';
+  let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (c === "'" || c === '"' || c === '`') {
+      const quote = c;
+      out += c;
+      i++;
+      while (i < s.length) {
+        if (s[i] === '\\') { out += '  '; i += 2; continue; }
+        if (s[i] === quote) { out += quote; i++; break; }
+        // ★改行は残す（行番号がずれない）
+        out += s[i] === '\n' ? '\n' : ' ';
+        i++;
+      }
+      continue;
+    }
+    out += c;
+    i++;
   }
   return out;
 }
 
 /** @param {string} text @returns {{ specifier: string, line: number }[]} */
 export function extractRelativeImportSpecifiers(text) {
-  // コメント内の import 例示を拾わないよう、先にコメントだけを空白へ潰す(行番号は保つ)。
-  const s = stripComments(text);
+  // ★コメントを潰してから当てる（使用例の import を実物と読み違えない）。
+  const s = blankOutComments(text);
+  // ★ただし import 文そのものの引用符は残す必要があるので、
+  //   「文字列の中身を潰した版」は**別に**作り、そちらで
+  //   「そもそも import 文が文字列の中にあるか」を判定する。
+  const sBlank = blankOutStringContents(s);
+  /** ★その位置の import が、文字列リテラルの内側なら無視する。 */
+  const insideString = (idx) => sBlank[idx] === ' ' && s[idx] !== ' ';
   const out = [];
   const isRelative = (spec) => spec.startsWith('./') || spec.startsWith('../');
   const lineAt = (index) => s.slice(0, index).split('\n').length;
   let m;
   // import/export ... from '...'(複数行可)
+  // ★insideString(m.index): その import 文自体が文字列リテラルの中にあるなら data であって import ではない。
   const staticRe = /\b(?:import|export)\b[^;'"]*?\bfrom\s*(['"])((?:(?!\1).)*)\1/g;
   while ((m = staticRe.exec(s)) != null) {
-    if (isRelative(m[2])) out.push({ specifier: m[2], line: lineAt(m.index) });
+    if (isRelative(m[2]) && !insideString(m.index)) out.push({ specifier: m[2], line: lineAt(m.index) });
   }
   // 副作用 import '...';
   const sideEffectRe = /\bimport\s*(['"])((?:(?!\1).)*)\1\s*;/g;
   while ((m = sideEffectRe.exec(s)) != null) {
-    if (isRelative(m[2])) out.push({ specifier: m[2], line: lineAt(m.index) });
+    if (isRelative(m[2]) && !insideString(m.index)) out.push({ specifier: m[2], line: lineAt(m.index) });
   }
   // 動的 import('...')。JSDoc 型参照(閉じ括弧直後に `.識別子` が続く)は除外。
   const dynamicRe = /\bimport\s*\(\s*(['"])((?:(?!\1).)*)\1\s*\)(\.[a-zA-Z_$])?/g;
   while ((m = dynamicRe.exec(s)) != null) {
-    if (isRelative(m[2]) && !m[3]) out.push({ specifier: m[2], line: lineAt(m.index) });
+    if (isRelative(m[2]) && !m[3] && !insideString(m.index)) out.push({ specifier: m[2], line: lineAt(m.index) });
   }
   return out;
 }
@@ -174,111 +222,101 @@ export function findUntrackedImports(files, trackedFiles) {
 // process.argv[1] を file:// URL に正規化して比較する(node標準の url.pathToFileURL)。
 // 手作りのパス文字列比較(resolve + pathname置換)は Windows でスラッシュ方向/ドライブレターの
 // 大小差により一致せず isMain=false のまま exit 0 で抜ける偽陽性を生む(2026-07-06実測・ai-hub selftest fixtureで検出)。
-const isMain = Boolean(process.argv[1]) && pathToFileURL(process.argv[1]).href === import.meta.url;
-
 /**
- * ★--selftest: 毒を食わせて「本当に赤くなるか」を機械で確かめる。
+ * ★selftest（毒→赤）。2026-08-25 追加。
  *
- * ★なぜ要るか: このリポは 2026-08-21 に check-native-unsafe-dom で
- *   「却下当時の姿を再現したら OK と報告した」＝検知が効いていない検査を実際に見つけている。
- *   手作業の変異テストは忘れるので、検知器が赤くなれること自体を機械で持つ。
+ * ★なぜ足したか: この検査は「コメント内の使用例」を実物の import と誤読して
+ *   ★嘘の赤を出していた（kimitolink-linktree で実測）。直したが、
+ *   selftest が無ければ次に同じ壊れ方をしても誰も気付けない。
+ *   ★掟②「exit 2 を持っていることと、守れていることは別」。
  *
- * ★毒はリポの状態に依存させない(キットの警告: 状態に依存した selftest は
- *   その状態が変わった瞬間に壊れる)。ここでは純粋関数へ in-memory の fixture を渡す。
+ * ★毒は状態に依存しない（実ファイルを触らず、文字列を純関数に食わせる）。
  */
-function selfTest() {
-  // ★fixture の import 指定子は文字列連結で組み立てる。
-  //   このファイル自身が検査対象なので、fixture に import 文をそのまま書くと
-  //   「自分が未追跡ファイルを import している」と検出されてしまう(2026-08-22 に実際に踏んだ)。
-  //   ★組み立ては素の文字列連結で行う。テンプレートリテラルの ${} 補間で
-  //   クォートを混ぜる書き方(`'.${'/'}ghost'`)は stripComments の状態機械を
-  //   反転させ、以降の解析を崩した(2026-08-22 に実測)。凝った書き方をしない。
-  const Q = String.fromCharCode(39); // シングルクォート
-  const G = Q + '.' + '/' + 'ghost' + Q;
-
+function selftest() {
   const cases = [
     {
-      name: '未追跡ファイルへの相対 import を検出できる',
-      run: () =>
-        findUntrackedImports(
-          [{ path: 'lib/a.ts', text: `import { x } from ${G};` }],
-          new Set(['lib/a.ts'])
-        ).length === 1
+      name: '毒1: 本物の未追跡 import を検出できる',
+      text: "import { a } from './missing';\n",
+      tracked: ['src/app.ts'],
+      from: 'src/app.ts',
+      wantViolation: true
     },
     {
-      name: '追跡済みなら緑になる(誤検知しない)',
-      run: () =>
-        findUntrackedImports(
-          [{ path: 'lib/a.ts', text: `import { x } from ${G};` }],
-          new Set(['lib/a.ts', 'lib/ghost.ts'])
-        ).length === 0
+      name: '毒2: ★JSDoc の使用例を実物と誤読しない（今回の誤検知そのもの）',
+      text: '/**\n *   import { getTestAuth } from "./auth.config";\n */\nexport const x = 1;\n',
+      tracked: ['e2e/auth.config.ts'],
+      from: 'e2e/auth.config.ts',
+      wantViolation: false
     },
     {
-      name: 'コメント内の import 例示を拾わない',
-      run: () =>
-        findUntrackedImports(
-          [{ path: 'lib/a.ts', text: `// import { x } from ${G};\nexport const y = 1;` }],
-          new Set(['lib/a.ts'])
-        ).length === 0
+      name: '毒3: ★行コメントに書いた import も拾わない',
+      text: "// import { a } from './missing';\nexport const x = 1;\n",
+      tracked: ['src/app.ts'],
+      from: 'src/app.ts',
+      wantViolation: false
     },
     {
-      name: 'JSDoc の型参照 import(\'./x\').T を拾わない',
-      run: () =>
-        findUntrackedImports(
-          [{ path: 'lib/a.ts', text: `/** @type {import(${G}).T} */\nexport const y = 1;` }],
-          new Set(['lib/a.ts'])
-        ).length === 0
+      name: '毒4: ★文字列リテラル内の // でコメント判定を壊さない',
+      text: "const url = 'https://example.com';\nimport { a } from './missing';\n",
+      tracked: ['src/app.ts'],
+      from: 'src/app.ts',
+      wantViolation: true
     },
     {
-      name: '★走査 0 件を緑にしない(exit 2 になる)',
-      run: () => computeExitCode([]) === EXIT.INCONCLUSIVE
+      name: '毒5: 追跡済みへの import は赤にしない（誤検知しない）',
+      text: "import { a } from './util';\n",
+      tracked: ['src/app.ts', 'src/util.ts'],
+      from: 'src/app.ts',
+      wantViolation: false
     },
     {
-      name: '★根拠なき pass は緑にならない(自動降格)',
-      run: () =>
-        computeExitCode([{ probe: 'x', verdict: 'pass', evidence: null }]) === EXIT.INCONCLUSIVE
+      // ★2026-08-25 CI で実際に踏んだ: この検査自身の selftest fixture
+      //   （文字列として持っている import 文）を実物と読んで自分を赤にした。
+      //   ローカルで緑だったのは、まだ commit しておらず git ls-files に
+      //   自分が載っていなかったから。★ローカルの緑を信用しすぎない。
+      name: '★文字列リテラルの中の import 文を実物と読まない（自分の fixture で自爆しない）',
+      text: 'const sample = "import { a } from \'./missing\';";\nexport const x = 1;\n',
+      tracked: ['scripts/gate.mjs'],
+      from: 'scripts/gate.mjs',
+      wantViolation: false
     }
   ];
 
   const fails = [];
   for (const c of cases) {
-    let ok = false;
-    try { ok = c.run() === true; } catch (e) { fails.push(`${c.name}: 例外 (${e && e.message})`); continue; }
-    if (!ok) fails.push(`${c.name}: ★期待どおりに動かなかった(検知が効いていない)`);
+    const got = findUntrackedImports([{ path: c.from, text: c.text }], new Set(c.tracked));
+    const hasViolation = got.length > 0;
+    if (hasViolation !== c.wantViolation) {
+      fails.push(
+        `${c.name}: 期待=${c.wantViolation ? '赤' : '緑'} / 実際=${hasViolation ? '赤' : '緑'}`
+      );
+    }
   }
-
   if (fails.length > 0) {
-    console.error('[check-tracked-imports --selftest] 🔴 検査自体が壊れています:');
+    console.error('[check-tracked-imports] 🔴 selftest 失敗:');
     for (const f of fails) console.error(`  - ${f}`);
-    process.exit(EXIT.FAIL);
+    process.exit(1);
   }
-  console.log(`[check-tracked-imports --selftest] ✅ ${cases.length}件すべて期待どおり(毒→赤 / 正常→緑)。`);
-  process.exit(EXIT.PASS);
+  console.log(`[check-tracked-imports] ✅ selftest 合格（${cases.length}件: 本物は赤・コメントは緑）`);
+  process.exit(0);
 }
 
-if (isMain && process.argv.includes('--selftest')) selfTest();
-
+const isMain = Boolean(process.argv[1]) && pathToFileURL(process.argv[1]).href === import.meta.url;
 if (isMain) {
+  if (process.argv.includes('--selftest')) selftest();
+
   let all;
   try {
     all = execSync('git ls-files', { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
       .split('\n').map((s) => s.trim()).filter(Boolean);
-  } catch {
-    // ★「git が無いので skip」を緑にしない。この検査の存在意義は
-    //   git 追跡状態だけを真実として見ることなので、それが読めない＝測れていない。
-    console.log(
-      formatProbeReport(
-        [{
-          probe: '追跡ファイルの相対 import 解決',
-          verdict: 'inconclusive',
-          evidence: null,
-          detail: 'git ls-files が実行できませんでした(gitリポジトリでない/git が無い)',
-          howToFix: 'git リポジトリのルートで、git が PATH にある環境で実行する'
-        }],
-        { label: 'check-tracked-imports' }
-      )
-    );
-    process.exit(EXIT.INCONCLUSIVE);
+  } catch (e) {
+    // ★2026-08-25: ここは以前 exit 0（緑）だった。
+    //   git が無い/壊れている＝**一度も検査していない**のであって「問題なし」ではない。
+    //   ★「測れなかった」は 2。0 と混ぜない（掟②・件数0の緑こそ最も危険）。
+    console.error('[check-tracked-imports] 🟡 git ls-files を実行できませんでした（★緑ではありません）。');
+    console.error(`[check-tracked-imports] → 理由: ${e && e.message}`);
+    console.error('[check-tracked-imports] → 測れるようにするには: git リポジトリのルートで実行してください。');
+    process.exit(2);
   }
   const trackedSet = new Set(all);
   const roots = String(process.env.TRACKED_IMPORT_ROOTS || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -288,58 +326,31 @@ if (isMain) {
   for (const p of targets) {
     try { files.push({ path: p, text: readFileSync(join(ROOT, p), 'utf8') }); } catch { /* 索引ズレはスキップ */ }
   }
-  const violations = findUntrackedImports(files, trackedSet);
-
-  // ★この検査が判定しないこと(過信を防ぐため出力に添える)。
-  const LIMITATION =
-    '相対 import のみ。エイリアス(@/…)・パッケージ名・実行時に組み立てるパスは見ていない';
-
-  /** @type {import('./lib/instrument-core.mjs').ProbeResult[]} */
-  const results = [];
-
+  // ★走査 0 件は「未追跡 import なし」ではなく【一度も見ていない】（2026-09-01 追加）。
+  //   ★逆輸入元 surechigai-romi.link が持っていた契約をキット側にも入れる。
+  //   実損: TRACKED_IMPORT_ROOTS に存在しないディレクトリ名（リネーム時に置き去りに
+  //   なりやすい）を渡すと、0 ファイルを走査して「OK・0 件」と緑を出していた。
+  //   ★件数0の緑は、この検査群が最も嫌う形（掟②）。
   if (files.length === 0) {
-    // ★走査 0 は「違反なし」ではなく「測れなかった」。ここを緑にすると偽の緑になる。
-    results.push({
-      probe: '追跡ファイルの相対 import 解決',
-      verdict: 'inconclusive',
-      evidence: null,
-      detail:
-        roots.length > 0
-          ? `TRACKED_IMPORT_ROOTS="${roots.join(',')}" に一致する追跡ファイルが 0 件でした`
-          : '追跡ファイルが 0 件でした(git ls-files が空)',
-      howToFix:
-        roots.length > 0
-          ? 'TRACKED_IMPORT_ROOTS のディレクトリ名が実在するか確認する(リネーム時に置き去りになりやすい)'
-          : 'リポジトリのルートで実行しているか確認する',
-      limitation: LIMITATION
-    });
-  } else if (violations.length > 0) {
-    results.push({
-      probe: '追跡ファイルの相対 import 解決',
-      verdict: 'fail',
-      evidence: { 走査ファイル: files.length, 違反: violations.length },
-      detail: `git 未追跡のファイルへ import している疑い ${violations.length} 件`,
-      howToFix: '新規ファイルなら `git add <path>` してから commit',
-      limitation: LIMITATION
-    });
-  } else {
-    // ★evidence(走査件数)を伴うので pass を名乗れる。空だと instrument-core が自動降格する。
-    results.push({
-      probe: '追跡ファイルの相対 import 解決',
-      verdict: 'pass',
-      evidence: { 走査ファイル: files.length, 違反: 0 },
-      limitation: LIMITATION
-    });
+    console.error('[check-tracked-imports] 🟡 検査対象が 0 件でした（★緑ではありません。一度も見ていません）。');
+    console.error(
+      roots.length > 0
+        ? `[check-tracked-imports] → TRACKED_IMPORT_ROOTS="${roots.join(',')}" に一致する追跡ファイルが 0 件でした。`
+        : '[check-tracked-imports] → 追跡ファイルにソースが 1 件もありませんでした。'
+    );
+    console.error('[check-tracked-imports] → 直し方: TRACKED_IMPORT_ROOTS のディレクトリ名が実在するか確認してください。');
+    process.exit(2);
   }
 
-  console.log(formatProbeReport(results, { label: 'check-tracked-imports' }));
-
-  for (const v of violations) {
-    console.error(`  ${v.from}:${v.line} が '${v.specifier}' を import → 追跡に無い: ${v.candidates.join(' / ')}`);
-  }
+  const violations = findUntrackedImports(files, trackedSet);
   if (violations.length > 0) {
+    console.error(`[check-tracked-imports] git 未追跡のファイルへ import している疑い ${violations.length} 件:`);
+    for (const v of violations) {
+      console.error(`  ${v.from}:${v.line} が '${v.specifier}' を import → 追跡に無い: ${v.candidates.join(' / ')}`);
+    }
+    console.error('[check-tracked-imports] 対処: 新規ファイルなら `git add <path>` してから commit。');
     console.error('[check-tracked-imports] (ローカル検証は作業ツリー基準のため、この検査だけが git clone 直後=CI/Vercel の実体を再現します)');
+    process.exit(1);
   }
-
-  process.exit(computeExitCode(results));
+  console.log(`[check-tracked-imports] OK(検査対象 ${files.length} ファイル・未追跡 import 0 件)。`);
 }

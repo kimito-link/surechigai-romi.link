@@ -22,7 +22,7 @@
     "dev:metro": "cross-env EXPO_USE_METRO_WORKSPACE_ROOT=1 EXPO_PORT=8081 npx expo start --web --port 8081",
     "build": "node scripts/generate-build-info.cjs && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node scripts/copy-build-info.cjs",
     "start": "NODE_ENV=production node dist/index.js",
-    "check": "tsc --noEmit && node scripts/check-esm-imports.mjs && node scripts/check-hermes-unsafe-imports.mjs && node scripts/check-native-unsafe-dom.mjs && node scripts/sync-splash-spec.mjs --verify && node scripts/check-tracked-imports.mjs --selftest && node scripts/check-splash-safe-circle.mjs --selftest && node scripts/check-splash-safe-circle.mjs && node scripts/qa/check-login-options-visible.mjs --selftest && node scripts/check-gates-are-wired.mjs --selftest && node scripts/check-gates-are-wired.mjs && node scripts/check-kit-reinvention.mjs --selftest && node scripts/check-kit-reinvention.mjs && node scripts/verify-security-score.mjs --selftest && node scripts/verify-security-score.mjs --local-only && node scripts/run-instruments.mjs .",
+    "check": "tsc --noEmit && node scripts/check-esm-imports.mjs && node scripts/verify-hermes-unsafe-imports.mjs --selftest && node scripts/verify-hermes-unsafe-imports.mjs . && node scripts/check-native-unsafe-dom.mjs && node scripts/sync-splash-spec.mjs --verify && node scripts/check-tracked-imports.mjs --selftest && node scripts/check-splash-safe-circle.mjs --selftest && node scripts/check-splash-safe-circle.mjs && node scripts/qa/check-login-options-visible.mjs --selftest && node scripts/check-gates-are-wired.mjs --selftest && node scripts/check-gates-are-wired.mjs && node scripts/check-kit-reinvention.mjs --selftest && node scripts/check-kit-reinvention.mjs && node scripts/verify-no-secrets-in-dist.mjs --selftest && node scripts/verify-root-cause-claim.mjs --selftest && node scripts/verify-root-cause-claim.mjs && node scripts/verify-doc-impl-coverage.mjs --selftest && node scripts/verify-doc-impl-coverage.mjs . && node scripts/verify-security-score.mjs --selftest && node scripts/verify-security-score.mjs --local-only && node scripts/run-instruments.mjs .",
     "check:instruments": "node scripts/check-tracked-imports.mjs --selftest",
     "check:splash-served": "node scripts/qa/check-splash-served.mjs",
     "check:login-options": "node scripts/qa/check-login-options-visible.mjs",
@@ -65,7 +65,16 @@
     "check:doc-links": "node scripts/check-doc-links.mjs",
     "contrast:audit": "node scripts/contrast-audit.mjs",
     "check:a11y": "node scripts/qa/axe-a11y-check.mjs",
-    "pagespeed:a11y": "node scripts/pagespeed-a11y-routes.mjs"
+    "pagespeed:a11y": "node scripts/pagespeed-a11y-routes.mjs",
+    "check:symptom-wiring": "node scripts/verify-key-coverage.mjs --config key-coverage.config.json",
+    "check:symptom-wiring:selftest": "node scripts/verify-key-coverage.mjs --selftest",
+    "check:claims": "node scripts/verify-claims-provenance.mjs",
+    "check:claims:selftest": "node scripts/verify-claims-provenance.mjs --selftest",
+    "check:no-secrets-in-dist": "node scripts/verify-no-secrets-in-dist.mjs dist",
+    "responsive:runtime": "node scripts/verify-responsive-runtime.mjs https://surechigai.kimito.link",
+    "responsive:runtime:selftest": "node scripts/verify-responsive-runtime.mjs --selftest",
+    "check:clerk-native-scheme": "node scripts/setup-clerk-native-scheme.mjs --check",
+    "check:clerk-native-scheme:selftest": "node scripts/setup-clerk-native-scheme.mjs --selftest"
   },
   "dependencies": {
     "@clerk/backend": "^3.8.4",
