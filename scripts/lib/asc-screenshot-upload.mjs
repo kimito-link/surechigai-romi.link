@@ -154,6 +154,69 @@ async function uploadOneSet(api, localizationId, dir, displayType, prefix) {
 
 // 必要な iPhone スクショセット(現状 6.7" + 6.5")を `dir` から全部アップロード。
 // ファイルは prefix 照合。常に delete-then-reupload で「今のキャプチャ」を出す。
+/**
+ * ★アップロードした画像を Apple が処理し終えるまで待つ。
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * ■ ★なぜ要るか（2026-09-01・実際に提出が失敗した）
+ *
+ *   スクショ10枚を上げた **7秒後**に審査提出を投げて、409 で弾かれた:
+ *     STATE_ERROR.SCREENSHOT_UPLOADS_IN_PROGRESS
+ *     "The screenshot ... is still in progress."
+ *
+ *   ★アップロード（commit）が 200 を返しても、Apple 側の処理は終わっていない。
+ *   このワークフローは「上げたら必ず提出する」順なので、待たない限り
+ *   ★毎回この競合に当たる（たまたま通ることはあっても、運任せになる）。
+ *
+ * ■ ★判定の根拠
+ *   assetDeliveryState.state === 'COMPLETE' が完了。
+ *   （このファイルの listScreenshots のコメントに元から書かれていた。
+ *     ★判定方法は分かっていたのに、待つ処理だけが無かった。）
+ *
+ * ■ ★この関数が保証しないこと
+ *   Apple 側が FAILED を返した画像は「完了」ではないが、ここでは止めない
+ *   （提出時に 409 で分かる）。★時間切れも例外にせず、その旨を出して先へ進む。
+ *   ここで落とすと、待てば通る提出まで落としてしまうため。
+ * ───────────────────────────────────────────────────────────────────────────
+ */
+export async function waitForScreenshotProcessing(api, localizationId, opts = {}) {
+  const timeoutMs = opts.timeoutMs ?? 180_000;
+  const intervalMs = opts.intervalMs ?? 5_000;
+  const startedAt = Date.now();
+
+  const setIds = [];
+  for (const { code } of IPHONE_DISPLAY_TYPES) {
+    try {
+      const setId = await findOrCreateScreenshotSet(api, localizationId, code);
+      if (setId) setIds.push(setId);
+    } catch { /* セットが無ければ待つものも無い */ }
+  }
+  if (setIds.length === 0) return { waited: 0, pending: 0, timedOut: false };
+
+  while (Date.now() - startedAt < timeoutMs) {
+    let pending = 0;
+    for (const setId of setIds) {
+      const shots = await listScreenshots(api, setId);
+      for (const s of shots) {
+        const state = s?.attributes?.assetDeliveryState?.state;
+        if (state && state !== 'COMPLETE') pending += 1;
+      }
+    }
+    if (pending === 0) {
+      const waited = Math.round((Date.now() - startedAt) / 1000);
+      console.log(`  screenshots: 処理完了を確認しました（${waited}秒待機）`);
+      return { waited, pending: 0, timedOut: false };
+    }
+    console.log(`  screenshots: Apple 側で処理中 ${pending} 件… ${intervalMs / 1000}秒待ちます`);
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+
+  const waited = Math.round((Date.now() - startedAt) / 1000);
+  console.log(`  ★screenshots: ${waited}秒待っても処理が終わりませんでした。このまま提出を試みます`);
+  console.log('  （提出が 409 SCREENSHOT_UPLOADS_IN_PROGRESS で落ちたら、時間を置いて再実行してください）');
+  return { waited, pending: -1, timedOut: true };
+}
+
 export async function uploadIPhoneScreenshots(api, localizationId, dir) {
   if (!fs.existsSync(dir)) {
     console.log(`  (no screenshots dir at ${dir}; skipping)`);
@@ -168,5 +231,11 @@ export async function uploadIPhoneScreenshots(api, localizationId, dir) {
     skipped += r.skipped;
     deleted += r.deleted || 0;
   }
+
+  // ★1枚でも上げたなら、Apple の処理完了を待ってから戻る（提出の 409 を防ぐ）。
+  if (uploaded > 0) {
+    await waitForScreenshotProcessing(api, localizationId);
+  }
+
   return { uploaded, skipped, deleted };
 }
