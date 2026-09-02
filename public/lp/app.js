@@ -1375,11 +1375,16 @@
     (function(){
       var saveData=false; try{ saveData=navigator.connection && navigator.connection.saveData; }catch(e){}
       /* メイン幻燈：木札「観る」でタップ再生。終わったらposterへ戻る（ループしない）。 */
-      document.querySelectorAll('.gento').forEach(function(g){
-        var v=g.querySelector('.gento-video'), btn=g.querySelector('.gento-miru');
+      /* ★.jikkei(実景=本物の写真)も同じ作法で動かす。クラス名だけ分けているのは
+         見た目の意匠が違うため(端末模型に額装しない)。挙動は幻燈と同一。 */
+      document.querySelectorAll('.gento, .jikkei').forEach(function(g){
+        var isJikkei = g.classList.contains('jikkei');
+        var v=g.querySelector(isJikkei ? '.jikkei-video' : '.gento-video');
+        var btn=g.querySelector(isJikkei ? '.jikkei-miru' : '.gento-miru');
         if(!v||!btn) return;
         /* 本当に読めない時だけ壊れ扱い（MEDIA_ERR_SRC_NOT_SUPPORTED/NETWORK）。 */
-        v.addEventListener('error', function(){ if(v.error && (v.error.code===4||v.error.code===2)) g.classList.add('gento-broken'); });
+        var brokenClass = isJikkei ? 'jikkei-broken' : 'gento-broken';
+        v.addEventListener('error', function(){ if(v.error && (v.error.code===4||v.error.code===2)) g.classList.add(brokenClass); });
         btn.addEventListener('click', function(){
           g.classList.add('playing');
           /* preload=none なので click(=ユーザージェスチャー)で load してから play。

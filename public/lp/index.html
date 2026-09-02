@@ -715,6 +715,32 @@
   .gento.playing .gento-miru{ opacity:0; pointer-events:none; }
   .gento-broken .gento-miru{ display:none; }
 
+  /* ===== 実景（じっけい）：唯一の「本物の写真」。端末模型に入れず、掛軸のように額装する。
+     ★ここまでのLPは全て「見立て(ダミー)」で、名も画面も仮のもの。その直後に本物を1枚だけ置く。
+     ★gento-phone(スマホ枠)を流用しない: 風景を端末に入れると「アプリの画面」に見えてしまう。 */
+  /* ★幅はビューポート基準にする(既存 .gento-phone と同じ作法)。
+     親の ol.michiyuki / .tb-scene は縦書き基調で【幅が0】になるため、
+     %指定にすると 2px に潰れる(実測で踏んだ)。 */
+  .jikkei-frame{ width:clamp(220px,70vw,390px); margin:2px auto 12px;
+    position:relative; aspect-ratio:9/16; border-radius:4px; overflow:hidden;
+    background:#0a1826; border:1px solid rgba(227,194,104,.28);
+    box-shadow:0 14px 44px rgba(0,0,0,.45), 0 0 0 6px rgba(20,16,10,.35); }
+  .jikkei-frame video,.jikkei-frame .jikkei-poster{ position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; display:block; }
+  .jikkei-frame .jikkei-poster{ z-index:1; }
+  .jikkei.playing .jikkei-frame .jikkei-poster{ opacity:0; visibility:hidden; }
+  /* 夜の実写なので四隅を軽く落とす。写真そのものの色は変えない(見立てと違い"事実"なので) */
+  .jikkei-frame::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:2;
+    background:radial-gradient(115% 85% at 50% 42%, transparent 62%, rgba(6,10,18,.42)); }
+  .jikkei-miru{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:3; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px; padding:9px 18px; background:var(--washi-2); border:1.5px solid var(--sumi-soft);
+    border-radius:3px; box-shadow:2px 3px 0 rgba(35,32,27,.3); font-family:var(--fude); color:var(--sumi); font-size:15px; letter-spacing:.16em; transition:opacity .4s ease; }
+  .jikkei.playing .jikkei-miru{ opacity:0; pointer-events:none; }
+  .jikkei-broken .jikkei-miru{ display:none; }
+  .jikkei-cap{ width:clamp(220px,70vw,390px); margin:8px auto 0; text-align:center; font-family:var(--fude); color:var(--sumi-soft);
+    font-size:13px; letter-spacing:.08em; line-height:1.85; }
+  .jikkei-cap b{ display:block; color:var(--sumi); font-size:15px; letter-spacing:.12em; margin-bottom:3px; }
+
   /* ===== 賑（にぎわい）：gento-phone枠を流用した「見立ての実画面」。ダミー多数で賑はひを演出 ===== */
   .nigiwai-phone{ width:clamp(220px,70vw,390px); aspect-ratio:132/270; margin:2px auto 12px;
     border-radius:26px; border:1.5px solid #33475e; background:linear-gradient(160deg,#0f2138,#0a1826); padding:8px; box-shadow:0 12px 40px rgba(0,0,0,.4); }
@@ -1933,6 +1959,25 @@
           <figcaption>
             <b class="sk-name">幻燈 ― 守りの写し絵</b>
             <span class="sk-desc">見せ方の按配、宿を隠す、灯を消す。名は明かしても寝屋は明かさぬ、その実の画面。</span>
+          </figcaption>
+        </figure>
+      </li>
+      <!-- ★実景：この長い巻でただ一枚の「本物」。ここまでは全て見立て(名も画面も仮)。
+           だからこそ最後に、実際に足を運んで撮った夜景を置いて「行ける場所だ」と着地させる。
+           長野県諏訪市・立石公園（諏訪湖を見下ろす高台。アニメ映画の聖地として知られる）。 -->
+      <li class="shukuba jikkei reveal" id="tb-jikkei">
+        <span class="sk-no">終の宿</span>
+        <figure class="sk-fuda">
+          <div class="jikkei-frame">
+            <img class="jikkei-poster" src="video/tateishi-poster-v1.webp" alt="長野県諏訪市・立石公園から見た諏訪湖の夜景。展望台に傘をさした二人が立っている" loading="lazy" width="720" height="1280" />
+            <video class="jikkei-video" playsinline muted preload="none" width="720" height="1280" poster="video/tateishi-poster-v1.webp">
+              <source src="video/tateishi-v1.mp4" type="video/mp4" />
+            </video>
+            <button class="jikkei-miru" type="button" aria-label="実景を観る">観る</button>
+          </div>
+          <figcaption class="jikkei-cap">
+            <b>長野県 諏訪市・立石公園</b>
+            <span>ここまでの絵は、すべて見立て。<br />これだけが、実際に足を運んで残した一葉。<br />――君も、この高台に立てる。</span>
           </figcaption>
         </figure>
       </li>
