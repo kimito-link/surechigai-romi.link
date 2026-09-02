@@ -74,7 +74,15 @@
     "responsive:runtime": "node scripts/verify-responsive-runtime.mjs https://surechigai.kimito.link",
     "responsive:runtime:selftest": "node scripts/verify-responsive-runtime.mjs --selftest",
     "check:clerk-native-scheme": "node scripts/setup-clerk-native-scheme.mjs --check",
-    "check:clerk-native-scheme:selftest": "node scripts/setup-clerk-native-scheme.mjs --selftest"
+    "check:clerk-native-scheme:selftest": "node scripts/setup-clerk-native-scheme.mjs --selftest",
+    "ci:timeouts": "node scripts/check-workflow-timeouts.mjs .",
+    "ci:timeouts:selftest": "node scripts/check-workflow-timeouts.mjs --selftest",
+    "ci:dependabot": "node scripts/check-dependabot-queue.mjs",
+    "ci:dependabot:selftest": "node scripts/check-dependabot-queue.mjs --selftest",
+    "check:instrument-proof": "node scripts/check-instrument-proof.mjs",
+    "check:instrument-proof:selftest": "node scripts/check-instrument-proof.mjs --selftest",
+    "ci:usage": "node scripts/check-actions-usage.mjs",
+    "ci:usage:selftest": "node scripts/check-actions-usage.mjs --selftest"
   },
   "dependencies": {
     "@clerk/backend": "^3.8.4",
