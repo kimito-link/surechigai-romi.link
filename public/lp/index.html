@@ -718,15 +718,44 @@
   /* ===== 実景（じっけい）：唯一の「本物の写真」。端末模型に入れず、掛軸のように額装する。
      ★ここまでのLPは全て「見立て(ダミー)」で、名も画面も仮のもの。その直後に本物を1枚だけ置く。
      ★gento-phone(スマホ枠)を流用しない: 風景を端末に入れると「アプリの画面」に見えてしまう。 */
-  /* ★幅はビューポート基準にする(既存 .gento-phone と同じ作法)。
-     親の ol.michiyuki / .tb-scene は縦書き基調で【幅が0】になるため、
-     %指定にすると 2px に潰れる(実測で踏んだ)。 */
-  .jikkei-frame{ width:clamp(220px,70vw,390px); margin:2px auto 12px;
+  /* ★この節だけ画面いっぱいに開く。ここは巻末で唯一の「本物」なので、
+     見立ての宿と同じ幅に収めず、スケールで別格だと分からせる。
+     ★親(.michiyuki / .tb-scene)は縦書き基調で幅が0のため、%やvwでは効かない。
+     100vw を左右にはみ出させる形で全幅にする(margin-left:calc(50% - 50vw))。 */
+  li.shukuba.jikkei{ width:100vw; max-width:100vw; margin-left:calc(50% - 50vw);
+    margin-right:calc(50% - 50vw); padding:clamp(28px,6vw,72px) 0 clamp(20px,4vw,48px);
+    background:linear-gradient(180deg, rgba(6,10,18,0) 0%, rgba(6,10,18,.55) 18%, rgba(6,10,18,.55) 82%, rgba(6,10,18,0) 100%); }
+  li.shukuba.jikkei::marker{ content:""; }
+  .jikkei .sk-no{ display:block; text-align:center; margin-bottom:clamp(10px,2vw,18px); }
+  .jikkei .sk-fuda{ width:100%; margin:0; }
+
+  /* 実景(風景)と実画面(アプリ)を対で並べる。狭い画面では縦に積む。 */
+  .jikkei-pair{ display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start;
+    gap:clamp(28px,5vw,72px); width:min(1180px,92vw); margin:0 auto; }
+  /* ★2枚を一度に見せつつ、できるだけ大きく。
+     縦長素材なので幅を上げるとすぐ2画面分になり「壮大」でなく「長い」になる。
+     ⟹ 画面高から逆算した上限を持たせ、その範囲で最大まで広げる。
+     ★背の高い方(スクショ 9:19.6)を基準にしないと、はみ出す。 */
+  .jikkei-item{ flex:1 1 0; min-width:0; max-width:min(420px, calc((78vh - 132px) * 0.46)); }
+  /* ★2枚の画像の高さを揃える。比率が違う(9:16 と 9:19.6)ので、
+     幅を揃えると高さがズレて「対」に見えない。高さを基準に揃える。 */
+  .jikkei-frame{ height:min(calc(78vh - 132px), 660px); }
+  .jikkei-item .jikkei-frame{ width:auto; aspect-ratio:9/16; margin-inline:auto; }
+  .jikkei-shot{ aspect-ratio:720/1564 !important; }
+
+  .jikkei-frame{ width:100%; margin:0 auto;
     position:relative; aspect-ratio:9/16; border-radius:4px; overflow:hidden;
     background:#0a1826; border:1px solid rgba(227,194,104,.28);
     box-shadow:0 14px 44px rgba(0,0,0,.45), 0 0 0 6px rgba(20,16,10,.35); }
   .jikkei-frame video,.jikkei-frame .jikkei-poster{ position:absolute; inset:0; width:100%; height:100%;
     object-fit:cover; display:block; }
+  /* ★アプリのスクショは 720x1564(9:19.6)。9:16 に cover で入れると上下が切れて
+     肝心の「足あとを残しました」が消える。実比率のまま全体を見せる。 */
+  /* ★スクショは白背景なので、暗い帯の上だと縁が消えて隣の写真と地続きに見える。
+     金の細縁を回して「別の一枚」だと分かるようにする(実景側と同じ縁) */
+  .jikkei-shot{ aspect-ratio:720/1564; background:#f4f6f8; }
+  .jikkei-shot img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
+  .jikkei-shot::after{ display:none; }
   .jikkei-frame .jikkei-poster{ z-index:1; }
   .jikkei.playing .jikkei-frame .jikkei-poster{ opacity:0; visibility:hidden; }
   /* 夜の実写なので四隅を軽く落とす。写真そのものの色は変えない(見立てと違い"事実"なので) */
@@ -737,9 +766,16 @@
     border-radius:3px; box-shadow:2px 3px 0 rgba(35,32,27,.3); font-family:var(--fude); color:var(--sumi); font-size:15px; letter-spacing:.16em; transition:opacity .4s ease; }
   .jikkei.playing .jikkei-miru{ opacity:0; pointer-events:none; }
   .jikkei-broken .jikkei-miru{ display:none; }
-  .jikkei-cap{ width:clamp(220px,70vw,390px); margin:8px auto 0; text-align:center; font-family:var(--fude); color:var(--sumi-soft);
-    font-size:13px; letter-spacing:.08em; line-height:1.85; }
-  .jikkei-cap b{ display:block; color:var(--sumi); font-size:15px; letter-spacing:.12em; margin-bottom:3px; }
+  /* ★全幅の暗い帯の上に載るので、既定の墨色では読めない。和紙色に寄せる。 */
+  .jikkei-cap{ width:100%; margin:10px auto 0; text-align:center; font-family:var(--fude);
+    color:rgba(243,236,224,.72); font-size:13px; letter-spacing:.08em; line-height:1.85; }
+  .jikkei-cap b{ display:block; color:rgba(243,236,224,.96); font-size:15px; letter-spacing:.12em; margin-bottom:3px; }
+  /* 節そのものの前書き（2枚に共通する一言） */
+  .jikkei-lead{ width:min(760px,88vw); margin:0 auto clamp(18px,3vw,32px); text-align:center;
+    font-family:var(--fude); color:rgba(243,236,224,.8); font-size:clamp(14px,1.6vw,17px);
+    letter-spacing:.1em; line-height:2; }
+  .jikkei-lead b{ color:rgba(227,194,104,.95); font-weight:normal; }
+  @media (max-width:700px){ .jikkei-item{ flex:0 1 min(78vw,340px); } }
 
   /* ===== 賑（にぎわい）：gento-phone枠を流用した「見立ての実画面」。ダミー多数で賑はひを演出 ===== */
   .nigiwai-phone{ width:clamp(220px,70vw,390px); aspect-ratio:132/270; margin:2px auto 12px;
@@ -1968,17 +2004,34 @@
       <li class="shukuba jikkei reveal" id="tb-jikkei">
         <span class="sk-no">終の宿</span>
         <figure class="sk-fuda">
-          <div class="jikkei-frame">
-            <img class="jikkei-poster" src="video/tateishi-poster-v1.webp" alt="長野県諏訪市・立石公園から見た諏訪湖の夜景。展望台に傘をさした二人が立っている" loading="lazy" width="720" height="1280" />
-            <video class="jikkei-video" playsinline muted preload="none" width="720" height="1280" poster="video/tateishi-poster-v1.webp">
-              <source src="video/tateishi-v1.mp4" type="video/mp4" />
-            </video>
-            <button class="jikkei-miru" type="button" aria-label="実景を観る">観る</button>
+          <p class="jikkei-lead">ここまでの絵は、すべて見立て。<br />
+            これだけが、<b>実際にこの足で立ち、この手で残した</b>一組。</p>
+          <div class="jikkei-pair">
+            <!-- 左：実景（その場所そのもの） -->
+            <div class="jikkei-item">
+              <div class="jikkei-frame">
+                <img class="jikkei-poster" src="video/tateishi-poster-v1.webp" alt="長野県諏訪市・立石公園から見た諏訪湖の夜景。展望台に傘をさした二人が立っている" loading="lazy" width="720" height="1280" />
+                <video class="jikkei-video" playsinline muted preload="none" width="720" height="1280" poster="video/tateishi-poster-v1.webp">
+                  <source src="video/tateishi-v1.mp4" type="video/mp4" />
+                </video>
+                <button class="jikkei-miru" type="button" aria-label="実景を観る">観る</button>
+              </div>
+              <figcaption class="jikkei-cap">
+                <b>その夜、そこに立った</b>
+                <span>長野県 諏訪市・立石公園</span>
+              </figcaption>
+            </div>
+            <!-- 右：実画面（同じ場所で、アプリが残したもの） -->
+            <div class="jikkei-item">
+              <div class="jikkei-frame jikkei-shot">
+                <img src="video/tateishi-checkin-v1.webp" alt="アプリの実画面。長野県諏訪市でチェックインし「足あとを残しました」と表示されている" loading="lazy" width="720" height="1564" />
+              </div>
+              <figcaption class="jikkei-cap">
+                <b>その足あとが、残った</b>
+                <span>同じ夜、同じ場所。±5m の精度で</span>
+              </figcaption>
+            </div>
           </div>
-          <figcaption class="jikkei-cap">
-            <b>長野県 諏訪市・立石公園</b>
-            <span>ここまでの絵は、すべて見立て。<br />これだけが、実際に足を運んで残した一葉。<br />――君も、この高台に立てる。</span>
-          </figcaption>
         </figure>
       </li>
     </ol>
