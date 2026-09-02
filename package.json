@@ -186,7 +186,7 @@
     "eslint": "^9.39.2",
     "eslint-config-expo": "~10.0.0",
     "expo-atlas": "^0.4.3",
-    "jsdom": "^27.4.0",
+    "jsdom": "^30.0.1",
     "playwright": "^1.57.0",
     "prettier": "^3.7.4",
     "qrcode": "^1.5.4",
