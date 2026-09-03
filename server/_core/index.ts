@@ -613,8 +613,15 @@ async function startServer() {
   }
 
   // Sentry error handler must be after all controllers and before other error middleware
+  //
+  // ★Sentry 10.72 で expressErrorHandler() の戻り値が独自の ExpressErrorMiddleware 型に
+  //   変わり、express の app.use() に直接渡すと TS2769 になる
+  //   （req/res が Express のものではなく Sentry 独自の ExpressRequest/ExpressResponse）。
+  //   ★as でキャストして黙らせるのではなく、Sentry が公式に用意している
+  //   setupExpressErrorHandler(app) を使う（同 SDK のドキュメント例もこの形）。
+  //   これなら SDK 側が型の面倒を見るので、次の更新でまた壊れることがない。
   if (process.env.SENTRY_DSN) {
-    app.use(Sentry.expressErrorHandler());
+    Sentry.setupExpressErrorHandler(app);
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
