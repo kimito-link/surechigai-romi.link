@@ -82,7 +82,11 @@
     "check:instrument-proof": "node scripts/check-instrument-proof.mjs",
     "check:instrument-proof:selftest": "node scripts/check-instrument-proof.mjs --selftest",
     "ci:usage": "node scripts/check-actions-usage.mjs",
-    "ci:usage:selftest": "node scripts/check-actions-usage.mjs --selftest"
+    "ci:usage:selftest": "node scripts/check-actions-usage.mjs --selftest",
+    "check:decision-receipt": "node scripts/check-decision-receipt.mjs",
+    "check:decision-receipt:selftest": "node scripts/check-decision-receipt.mjs --selftest",
+    "check:shared-parts": "node scripts/diagnostics/check-shared-parts-used.mjs .",
+    "check:shared-parts:selftest": "node scripts/diagnostics/check-shared-parts-used.mjs --selftest"
   },
   "dependencies": {
     "@clerk/backend": "^3.16.13",
