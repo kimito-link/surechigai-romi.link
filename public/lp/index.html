@@ -304,23 +304,42 @@
      ★writing-mode:vertical-rl を持つ flex コンテナでは、主軸が既に
      「右→左」に向く。ここで row-reverse を足すと**二重に反転して**
      2行目が右に来てしまった（実測で踏んだ）。既定のままが正しい。
-     ★右端には章ナビ（四季のドット）が居るので、そこを避けて配置する。 */
+
+     ★2026-09-04: 右端から【画面中央】へ移した。この2行がファーストビューの
+     主役（アプリの約束そのもの）で、端に置くと添え物に見えるため。
+     ★序の文章とは重ねない。序は下へ送る（.nv-inner の margin-top で押し出す）。 */
   .nv-tate{ position:absolute; z-index:2; pointer-events:none;
-    right:clamp(46px,7vw,104px); top:50%; transform:translateY(-50%);
-    display:flex; gap:clamp(10px,1.8vw,20px);
+    left:50%; top:clamp(8vh,11vh,14vh); transform:translateX(-50%);
+    display:flex; gap:clamp(10px,1.8vw,22px);
     writing-mode:vertical-rl; text-orientation:upright;
-    font-family:var(--fude); font-size:clamp(15px,2.4vw,22px);
-    letter-spacing:.28em; line-height:1.9; color:rgba(233,224,206,.88);
-    text-shadow:0 2px 14px rgba(0,0,0,.7), 0 0 30px rgba(10,20,36,.5); }
+    font-family:var(--fude); font-size:clamp(14px,2.1vw,19px);
+    /* ★字間を詰める。縦書きは字間がそのまま列の長さになるので、
+       ここが大きいと下の序へぶつかる（実測: .3em で画面外まで伸びた）。 */
+    letter-spacing:.16em; line-height:1.75; color:rgba(233,224,206,.92);
+    /* ★列の高さに上限を設ける。これを超えるぶんは字を詰めて収める。 */
+    max-height:clamp(180px,30vh,260px);
+    text-shadow:0 2px 16px rgba(0,0,0,.75), 0 0 34px rgba(10,20,36,.55); }
+  /* ★縦書きが上を占めるぶん、序の文章を下へ送って重なりを避ける。
+     ★実物(1280x800)で測った値に合わせている:
+       縦書き 88〜328px / 序 282〜945px だったので、
+       ①序が縦書きに46px食い込み ②英文が画面外へ145pxはみ出していた。
+     ★切り出しプレビューでは収まって見えたが、実物とは別物だった。
+       以後この節は【実ページを測って】直す。 */
+  .novel .nv-inner{ margin-top:clamp(96px,15vh,150px); }
   .nv-tate span{ display:block; }
   /* ★2行目（答え）を金で。1行目が「たとえ〜ても」の譲歩なので、対比で効く。 */
   .nv-tate .kotae{ color:rgba(227,194,104,.95); }
   /* ★狭い画面では文字が縦に長すぎて画面外へ出る。小さくして端に寄せる。 */
   @media (max-width:600px){
-    .nv-tate{ right:34px; font-size:clamp(12px,3.4vw,15px); letter-spacing:.2em; gap:8px; }
+    .nv-tate{ font-size:clamp(15px,4.4vw,20px); letter-spacing:.24em; gap:12px;
+      top:clamp(10vh,13vh,16vh); }
+    .novel .nv-inner{ margin-top:clamp(200px,30vh,280px); }
   }
   /* ★とても低い画面（横向きスマホ等）では隠す。序の言葉を押しのけてまで見せない。 */
-  @media (max-height:560px){ .nv-tate{ display:none; } }
+  @media (max-height:560px){
+    .nv-tate{ display:none; }
+    .novel .nv-inner{ margin-top:0; }
+  }
 
   /* ★英文の一行（冒頭と巻末で同じ言葉を置く＝円環の目印）。
      ★日本語が読めない人にも、最初の画面で世界観が伝わるようにする。 */
@@ -358,7 +377,10 @@
     opacity:0; transition:opacity 2s ease; }
   .novel.in .nv-title{ opacity:1; }
   .novel .nv-label{ font-family:var(--fude); font-size:12px; letter-spacing:.5em; color:#6f93b8; text-indent:.5em; margin-bottom:1.6em; }
-  .novel .nv-text{ font-family:var(--mincho); font-size:clamp(16px,4vw,21px); line-height:2.7; letter-spacing:.1em; color:#dce6f2; }
+  /* ★行間を 2.7→2.15 に詰めた（2026-09-04）。天の声3行を足して八行になり、
+     ★英文まで含めるとファーストビュー（1280x800）から 150px はみ出していた。
+     文字の大きさは変えない（読みやすさを削らずに、余白だけで収める）。 */
+  .novel .nv-text{ font-family:var(--mincho); font-size:clamp(16px,4vw,21px); line-height:2.15; letter-spacing:.1em; color:#dce6f2; }
   /* 墨書きリビール（§4.1）: 筆のスイープ＋にじみから定着 */
   .novel .nv-text .l{ display:block; opacity:0; }
   .novel.in .nv-text .l{
@@ -368,11 +390,37 @@
     -webkit-mask-size:300% 100%; mask-size:300% 100%;
     -webkit-mask-position:100% 0; mask-position:100% 0;
   }
-  .novel.in .nv-text .l:nth-child(1){ animation-delay:1.0s }
-  .novel.in .nv-text .l:nth-child(2){ animation-delay:3.4s }
-  .novel.in .nv-text .l:nth-child(3){ animation-delay:6.2s }
-  .novel.in .nv-text .l:nth-child(4){ animation-delay:8.6s }
-  .novel.in .nv-text .l:nth-child(5){ animation-delay:11.0s }
+  /* ★間隔を詰めた（2026-09-04）。天の声3行を足したことで、
+     元の刻み（2.4〜2.8秒）のままだと最後の行まで★16.8秒かかる。
+     ファーストビューでそれだけ待たせると、読み手は下へ行ってしまう。
+     ⟹ 1行あたり約1.7秒に詰めて、八行でも★12秒台に収める。
+     ★墨が引かれる演出（2.4秒）はそのまま。重なって出るぶん密度が上がる。 */
+  .novel.in .nv-text .l:nth-child(1){ animation-delay:0.8s }
+  .novel.in .nv-text .l:nth-child(2){ animation-delay:2.5s }
+  .novel.in .nv-text .l:nth-child(3){ animation-delay:4.2s }
+  .novel.in .nv-text .l:nth-child(4){ animation-delay:5.9s }
+  .novel.in .nv-text .l:nth-child(5){ animation-delay:7.6s }
+
+  /* ★天の声（2026-09-04）。上の五行より少しだけ小さく、間を空けて置く。
+     ★語り手が古典の引用から「読み手への問いかけ」へ移ることを、
+     字の大きさと余白で示す（別の声だと一目で分かるように）。 */
+  .novel .nv-koe{ font-family:var(--mincho); font-size:clamp(14px,3.4vw,18px);
+    line-height:2.15; letter-spacing:.12em; color:#c3d3e6;
+    margin-top:clamp(12px,2vw,20px); }
+  .novel .nv-koe .l{ display:block; opacity:0; }
+  .novel.in .nv-koe .l{
+    animation: sumi-hake 2.4s cubic-bezier(.3,.5,.2,1) forwards;
+    -webkit-mask-image:linear-gradient(90deg, #000 45%, transparent 65%);
+            mask-image:linear-gradient(90deg, #000 45%, transparent 65%);
+    -webkit-mask-size:300% 100%; mask-size:300% 100%;
+    -webkit-mask-position:100% 0; mask-position:100% 0;
+  }
+  /* ★上の五行（最後が7.6s）を受けて続ける。
+     ★ここで少し間（1.9秒）を置くのは、引用が終わって
+     「語り手が読み手へ向き直る」呼吸を作るため。 */
+  .novel.in .nv-koe .l:nth-child(1){ animation-delay:9.5s }
+  .novel.in .nv-koe .l:nth-child(2){ animation-delay:11.2s }
+  .novel.in .nv-koe .l:nth-child(3){ animation-delay:12.9s }
   @keyframes sumi-hake{
     0%  { opacity:0; filter:blur(5px); letter-spacing:.22em;
           -webkit-mask-position:100% 0; mask-position:100% 0; }
@@ -766,6 +814,50 @@
     border-radius:3px; box-shadow:2px 3px 0 rgba(35,32,27,.3); font-family:var(--fude); color:var(--sumi); font-size:15px; letter-spacing:.16em; transition:opacity .4s ease; }
   .gento.playing .gento-miru{ opacity:0; pointer-events:none; }
   .gento-broken .gento-miru{ display:none; }
+
+  /* ===== 追体験デモ（2026-09-04）=====
+     ★スマホ枠を画面中央に sticky で固定し、スクロール量に応じて中の画面を差し替える。
+     ★方式は kimitolink-linktree の components/HeroFlowDemo.tsx と同じ考え方
+     （あちらは React。このLPは素のHTML/JSなので、同じ「進捗0→1で切り替え」だけを
+     素のJSで書いた。新しい発想を持ち込んでいない）。
+     ★見せるのは**本物のアプリ画面**。見立てではないと最初に分からせるのが狙い。 */
+  .taiken{ position:relative; }
+  /* ★スクロールの「距離」をここで作る。中の枠は sticky で貼り付く。 */
+  .taiken-track{ height:340vh; }
+  .taiken-stage{ position:sticky; top:0; height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:clamp(10px,2vw,18px); }
+  .taiken-phone{ width:clamp(210px,62vw,330px); aspect-ratio:132/270;
+    border-radius:26px; border:1.5px solid #33475e;
+    background:linear-gradient(160deg,#0f2138,#0a1826); padding:8px;
+    box-shadow:0 16px 48px rgba(0,0,0,.45); }
+  .taiken-screen{ position:relative; height:100%; border-radius:19px; overflow:hidden; background:#0a1826; }
+  /* ★transition に一切頼らない（2026-09-04・実測で2回踏んだ）。
+     ★フェードで切り替える実装は、transition が進まない環境
+     （ブラウザ自動操作・省電力・タブが裏）で前の画面が残り、
+     ★3枚が同時に見える【二重写し】になった（実測: opacity .23/.04/.15）。
+     ⟹ display で確実に1枚だけにする。演出より「必ず正しく見える」を優先。
+     ★フェードを足したくなったら、transition ではなく
+     「切り替え後に一度だけ animation を当てる」形にすること（止まっても残らない）。 */
+  .taiken-screen img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+    display:none; }
+  .taiken-screen img.on{ display:block; animation:taiken-in .5s ease both; }
+  @keyframes taiken-in{ from{ opacity:0 } to{ opacity:1 } }
+  /* ★いま何を見ているかの一言。画面が変わるたびに差し替わる。 */
+  .taiken-cap{ font-family:var(--fude); text-align:center; color:rgba(233,224,206,.9);
+    font-size:clamp(13px,2vw,17px); letter-spacing:.1em; line-height:1.9;
+    min-height:3.6em; text-shadow:0 2px 12px rgba(0,0,0,.6); }
+  .taiken-cap b{ display:block; color:rgba(227,194,104,.95); font-weight:normal;
+    font-size:clamp(15px,2.4vw,20px); margin-bottom:2px; }
+  /* ★進み具合。読み手が「あと何画面か」を知れるようにする。 */
+  .taiken-dots{ display:flex; gap:7px; }
+  .taiken-dots i{ width:6px; height:6px; border-radius:50%; background:rgba(233,224,206,.28);
+    transition:background .4s ease, transform .4s ease; }
+  .taiken-dots i.on{ background:rgba(227,194,104,.95); transform:scale(1.35); }
+  @media (prefers-reduced-motion:reduce){
+    .taiken-track{ height:auto; }
+    .taiken-stage{ position:static; height:auto; padding:clamp(30px,6vw,60px) 0; }
+  }
 
   /* ===== 実景（じっけい）：唯一の「本物の写真」。端末模型に入れず、掛軸のように額装する。
      ★ここまでのLPは全て「見立て(ダミー)」で、名も画面も仮のもの。その直後に本物を1枚だけ置く。
@@ -1426,8 +1518,42 @@
       <span class="l">歩いた足あとが、消えずに残る話。</span>
       <span class="l">どうか、ゆっくり、下ってゆかれよ。</span>
     </p>
+    <!-- ★天の声（2026-09-04）。芭蕉の語り手が、そのまま読み手へ問いかける。
+         ★人物像はぼかす：「君」としか呼ばないので、読む人が自分の話として受け取れる。
+         ★別の <p> にしたのは、上の五行（古典の引用）と声の主が違うと分かるようにするため。 -->
+    <p class="nv-koe">
+      <span class="l">君を想ふとき、</span>
+      <span class="l">――いま、どこにゐるだらう。</span>
+      <span class="l">ふと、来た道を、辿つてみる。</span>
+    </p>
     <!-- ★冒頭で置く一行。巻末の実景でもう一度置いて円環を閉じる。 -->
     <p class="nv-en" lang="en">Where you are, the place I want to be.</p>
+  </div>
+</section>
+
+<!-- ════════════════ 追体験デモ（実際の画面を、スクロールで見せる） ════════════════ -->
+<!-- ★序で「すれ違っても分かる」と約束したので、その直後に**本物の画面**を見せる。
+     ★スマホ枠を sticky で固定し、スクロールで中身が進む
+     （kimitolink-linktree の HeroFlowDemo と同じ方式。あちらはReact、こちらは素のJS）。 -->
+<section class="taiken" id="taiken" aria-label="実際の画面を見る">
+  <div class="taiken-track">
+    <div class="taiken-stage">
+      <div class="taiken-phone">
+        <div class="taiken-screen" id="taikenScreen">
+          <img class="on" src="video/tateishi-checkin-v1.webp" alt="チェックインして足あとを残した画面" width="720" height="1564" />
+          <img src="video/junrei-poster-v1.webp" alt="足あとの軌跡を地図でたどる画面" width="540" height="1170" loading="lazy" />
+          <img src="video/megiri-poster-v1.webp" alt="すれ違った相手からの封筒が届いた画面" width="540" height="1170" loading="lazy" />
+          <img src="video/koyomi-poster-v1.webp" alt="訪れた土地が図鑑に増えていく画面" width="540" height="1170" loading="lazy" />
+        </div>
+      </div>
+      <p class="taiken-cap" id="taikenCap">
+        <b>足あとを、残す</b>
+        いま居る場所を、±5m の精度で。<br />あとから、戻って来られる。
+      </p>
+      <div class="taiken-dots" id="taikenDots" aria-hidden="true">
+        <i class="on"></i><i></i><i></i><i></i>
+      </div>
+    </div>
   </div>
 </section>
 
