@@ -295,6 +295,33 @@
     background:linear-gradient(180deg, rgba(10,20,36,.72) 0%, rgba(15,32,54,.55) 45%, rgba(19,40,74,.78) 100%); }
   @media (prefers-reduced-motion:reduce){ .novel-jikkei video{ display:none; } }
 
+  /* ★序に重ねる縦書きの一言（2026-09-04）。
+     ★予告編のような縦組みで、実写の夜景の上に置く。
+     読ませるのは2行だけ——「すれ違っても分かる」という約束を、
+     最初の画面で言い切る。
+     ★.nv-inner（序の文字）より奥・実写より手前に置き、文字とは重ねない。 */
+  /* ★縦書きは右の列から読む。
+     ★writing-mode:vertical-rl を持つ flex コンテナでは、主軸が既に
+     「右→左」に向く。ここで row-reverse を足すと**二重に反転して**
+     2行目が右に来てしまった（実測で踏んだ）。既定のままが正しい。
+     ★右端には章ナビ（四季のドット）が居るので、そこを避けて配置する。 */
+  .nv-tate{ position:absolute; z-index:2; pointer-events:none;
+    right:clamp(46px,7vw,104px); top:50%; transform:translateY(-50%);
+    display:flex; gap:clamp(10px,1.8vw,20px);
+    writing-mode:vertical-rl; text-orientation:upright;
+    font-family:var(--fude); font-size:clamp(15px,2.4vw,22px);
+    letter-spacing:.28em; line-height:1.9; color:rgba(233,224,206,.88);
+    text-shadow:0 2px 14px rgba(0,0,0,.7), 0 0 30px rgba(10,20,36,.5); }
+  .nv-tate span{ display:block; }
+  /* ★2行目（答え）を金で。1行目が「たとえ〜ても」の譲歩なので、対比で効く。 */
+  .nv-tate .kotae{ color:rgba(227,194,104,.95); }
+  /* ★狭い画面では文字が縦に長すぎて画面外へ出る。小さくして端に寄せる。 */
+  @media (max-width:600px){
+    .nv-tate{ right:34px; font-size:clamp(12px,3.4vw,15px); letter-spacing:.2em; gap:8px; }
+  }
+  /* ★とても低い画面（横向きスマホ等）では隠す。序の言葉を押しのけてまで見せない。 */
+  @media (max-height:560px){ .nv-tate{ display:none; } }
+
   /* ★英文の一行（冒頭と巻末で同じ言葉を置く＝円環の目印）。
      ★日本語が読めない人にも、最初の画面で世界観が伝わるようにする。 */
   /* ★下端に貼り付くとスクロール指示のアイコンと重なる（実測1280x800でぎりぎりだった）。
@@ -1355,6 +1382,11 @@
       <source src="video/tateishi-v1.mp4" type="video/mp4" />
     </video>
   </div>
+  <!-- ★縦書きの一言。実写の夜景の上に重ねる（予告編のような組み）。 -->
+  <p class="nv-tate">
+    <span>たとへ、すれ違うても</span>
+    <span class="kotae">君の現在地が、わかる。</span>
+  </p>
   <div class="amanogawa" aria-hidden="true"></div>
   <svg class="silhouette" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
     <path d="M0 300 L0 180 Q150 120 300 160 T600 150 Q780 110 900 165 T1200 140 L1200 300 Z" fill="#060c18"/>
