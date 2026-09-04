@@ -283,6 +283,27 @@
   .novel{ position:relative; z-index:3; min-height:118vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
     text-align:center; padding:clamp(40px,8vw,90px) var(--shell); overflow:hidden;
     background:linear-gradient(180deg,#0a1424 0%,#0f2036 46%,#13284a 100%); }
+  /* ★序の奥に「実際の夜」を薄く敷く（2026-09-04）。
+     ★巻末の実景（立石公園）と**同じ映像**をここでも使い、
+     冒頭で見た夜へ最後に戻ってくる円環にする。
+     ★主役は序の言葉なので、うんと沈めて「気配」に留める（読字性を壊さない）。
+     ★動きは控えめ: 自動再生・無音・ループ。reduce motion では静止画のみ。 */
+  .novel-jikkei{ position:absolute; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .novel-jikkei img,.novel-jikkei video{ position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; display:block; opacity:.30; filter:saturate(.55) contrast(.92) brightness(.72); }
+  .novel-jikkei::after{ content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(10,20,36,.72) 0%, rgba(15,32,54,.55) 45%, rgba(19,40,74,.78) 100%); }
+  @media (prefers-reduced-motion:reduce){ .novel-jikkei video{ display:none; } }
+
+  /* ★英文の一行（冒頭と巻末で同じ言葉を置く＝円環の目印）。
+     ★日本語が読めない人にも、最初の画面で世界観が伝わるようにする。 */
+  /* ★下端に貼り付くとスクロール指示のアイコンと重なる（実測1280x800でぎりぎりだった）。
+     上の余白を詰めて、序の言葉の続きとして読める位置に置く。 */
+  .nv-en{ margin:clamp(8px,1.4vw,16px) auto 0; max-width:min(680px,86vw);
+    font-family:"Georgia","Times New Roman",serif; font-style:italic;
+    font-size:clamp(13px,1.7vw,18px); letter-spacing:.06em; line-height:1.9;
+    color:rgba(233,224,206,.78); text-shadow:0 1px 10px rgba(0,0,0,.55); }
+
   /* 実写を加工したような粒状ノイズ */
   .novel::before{ content:""; position:absolute; inset:0; pointer-events:none; opacity:.5; mix-blend-mode:overlay;
     background-image:repeating-radial-gradient(circle at 30% 20%, rgba(255,255,255,.05) 0 1px, transparent 1px 3px),
@@ -416,7 +437,11 @@
     filter:blur(2px); animation:yurameki 5s ease-in-out infinite; transform-origin:center; }
   @keyframes yurameki{ 0%,100%{ transform:scaleY(1) translateX(0) } 50%{ transform:scaleY(.86) translateX(3px) } }
   /* 富士山のシルエット（夜・湖の向こう） */
-  .novel .fuji-yo{ position:absolute; left:0; right:0; bottom:24%; width:100%; height:auto; z-index:1; opacity:.92; }
+  /* ★2026-09-04: 序に実写(立石公園の夜)を敷いたので、作り物の富士シルエットは外す。
+     ★実写の稜線と二重写しになり「うっすら富士が浮いて見える」ノイズになっていた。
+     富士そのものは後半の「雲が晴れ、はじめて、富士が見えた。」の章が担うので、
+     ★ここで見せる必要はない（同じものを2度見せると、後半の一枚が効かなくなる）。 */
+  .novel .fuji-yo{ display:none; }
   /* 流れ星：スーッと流れて消える */
   .novel .nagareboshi{ position:absolute; width:3px; height:3px; border-radius:50%; background:#eaf3ff; opacity:0; z-index:1;
     box-shadow:0 0 6px 2px rgba(234,243,255,.8); }
@@ -775,6 +800,11 @@
     font-family:var(--fude); color:rgba(243,236,224,.8); font-size:clamp(14px,1.6vw,17px);
     letter-spacing:.1em; line-height:2; }
   .jikkei-lead b{ color:rgba(227,194,104,.95); font-weight:normal; }
+  /* ★冒頭(.nv-en)と対になる一行。同じ言葉・同じ書体で「戻ってきた」と分からせる。 */
+  .jikkei-en{ width:min(680px,88vw); margin:0 auto clamp(18px,3vw,30px); text-align:center;
+    font-family:"Georgia","Times New Roman",serif; font-style:italic;
+    font-size:clamp(13px,1.7vw,18px); letter-spacing:.06em; line-height:1.9;
+    color:rgba(233,224,206,.72); }
   @media (max-width:700px){ .jikkei-item{ flex:0 1 min(78vw,340px); } }
 
   /* ===== 賑（にぎわい）：gento-phone枠を流用した「見立ての実画面」。ダミー多数で賑はひを演出 ===== */
@@ -1316,6 +1346,15 @@
 
 <!-- ════════════════ 序章・扉（冬の闇に語りが浮かぶ） ════════════════ -->
 <section class="novel reveal" id="hajimari" data-scene="winter">
+  <!-- ★実際の夜（長野県諏訪市・立石公園）を奥に薄く敷く。
+       ★巻末の「終の宿・実景」と同じ映像で、最後にこの夜へ戻ってくる。
+       装飾なので aria-hidden。読み上げには序の言葉だけが届く。 -->
+  <div class="novel-jikkei" aria-hidden="true">
+    <img src="video/tateishi-poster-v1.webp" alt="" width="720" height="1280" fetchpriority="low" />
+    <video autoplay muted loop playsinline preload="none" poster="video/tateishi-poster-v1.webp">
+      <source src="video/tateishi-v1.mp4" type="video/mp4" />
+    </video>
+  </div>
   <div class="amanogawa" aria-hidden="true"></div>
   <svg class="silhouette" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
     <path d="M0 300 L0 180 Q150 120 300 160 T600 150 Q780 110 900 165 T1200 140 L1200 300 Z" fill="#060c18"/>
@@ -1352,6 +1391,8 @@
       <span class="l">歩いた足あとが、消えずに残る話。</span>
       <span class="l">どうか、ゆっくり、下ってゆかれよ。</span>
     </p>
+    <!-- ★冒頭で置く一行。巻末の実景でもう一度置いて円環を閉じる。 -->
+    <p class="nv-en" lang="en">Where you are, the place I want to be.</p>
   </div>
 </section>
 
@@ -2006,6 +2047,9 @@
         <figure class="sk-fuda">
           <p class="jikkei-lead">ここまでの絵は、すべて見立て。<br />
             これだけが、<b>実際にこの足で立ち、この手で残した</b>一組。</p>
+          <!-- ★冒頭の序に置いた一行を、ここでもう一度。
+               ★同じ夜（同じ映像）に戻ってきたことを、同じ言葉で示す。 -->
+          <p class="jikkei-en" lang="en">Where you are, the place I want to be.</p>
           <div class="jikkei-pair">
             <!-- 左：実景（その場所そのもの） -->
             <div class="jikkei-item">
