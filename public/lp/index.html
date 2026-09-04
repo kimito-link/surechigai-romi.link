@@ -1389,8 +1389,11 @@
   </p>
   <div class="amanogawa" aria-hidden="true"></div>
   <svg class="silhouette" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-    <path d="M0 300 L0 180 Q150 120 300 160 T600 150 Q780 110 900 165 T1200 140 L1200 300 Z" fill="#060c18"/>
-    <path d="M0 300 L0 230 Q200 190 420 220 T820 210 Q1000 185 1200 215 L1200 300 Z" fill="#0a1322"/>
+    <!-- ★作り物の稜線2枚は外した（2026-09-04）。
+         序に実写（立石公園の夜景）を敷いたので、★本物の山と二重写しになり
+         「うっすら富士が浮いて見える」ノイズになっていた。
+         ★鳥居・灯籠・人影は残す。これは風景ではなく「そこに誰かが居る」印なので、
+         実写の上に重なっても意味が濁らない。 -->
     <g fill="#05080f"><path d="M560 300 L560 210 L566 205 L572 210 L572 300 Z"/><path d="M576 300 L576 215 L582 210 L588 215 L588 300 Z"/></g>
     <ellipse cx="624" cy="298" rx="16" ry="4" fill="#05080f"/>
     <g fill="#05080f" transform="translate(616 244)"><path d="M0 0 Q8 -18 16 0 Z"/><rect x="2" y="2" width="12" height="6" rx="2"/><path d="M4 8 L4 40 M12 8 L12 40 M4 22 L0 30 M12 22 L16 30" stroke="#05080f" stroke-width="3" fill="none" stroke-linecap="round"/></g>
@@ -1591,6 +1594,14 @@
      mizu-scene同様、sticky(高さ0)ホルダー＋100dvhキャンバスで章内に粘着させる。 -->
 <section class="story lp-defer night hoshizora-scene" data-scene="clear">
   <div class="hoshizora-holder" aria-hidden="true"><canvas id="hoshizoraCanvas" class="hoshizora-canvas"></canvas></div>
+  <!-- ★出会いの記憶。ここから「願い」へ繋ぐ（2026-09-04 追加）。
+       ★序の「たとへ、すれ違うても／君の現在地が、わかる。」と対になる。
+       序で約束したことを、ここで物語として言い直す。 -->
+  <p class="ph" data-fx="hoshi-nagare">星が降るように、星が降った日。</p>
+  <p class="ph">僕たちは、出会った。</p>
+  <p class="ph key">世界中の、どこにゐても。</p>
+  <p class="ph">会いたい君の、現在地。</p>
+  <p class="ph key">時間と距離を、違へても――<br />すれ違ふことが、できる。</p>
   <p class="ph" data-fx="hoshi-nagare">すうっと、流れ星が、ひとつ。</p>
   <p class="ph" data-fx="hoshi-nagare">願いを言う間もなく、消えていった。</p>
   <p class="ph key">けれど――願いは、もう、足が叶えている。</p>
