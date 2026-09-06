@@ -311,25 +311,5 @@
       "source": "/((?!api/|lp(?:/|$)|fonts/|_expo/|assets/|favicon|icon-|pwa-icon-|apple-touch-icon|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt|sitemap\\.xml).*)",
       "destination": "/index.html"
     }
-  ],
-  "routes": [
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/_expo/(.*)",
-      "status": 404,
-      "dest": "/404.html"
-    },
-    {
-      "src": "/assets/(.*)",
-      "status": 404,
-      "dest": "/404.html"
-    },
-    {
-      "src": "/fonts/(.*)",
-      "status": 404,
-      "dest": "/404.html"
-    }
   ]
 }
