@@ -126,15 +126,27 @@ async function cacheFirstStrategy(request, cacheName) {
   return fetchAndCache(request, cache);
 }
 
-// Network-first strategy (for API requests)
+// JSを頼んだのにHTMLが返ってきたかを判定する。
+// ★2026-09-06: サーバーが存在しないチャンクに index.html を HTTP 200 で返していたため、
+//   ブラウザが HTML を ES module として実行できず「Loading module ... failed」で固まった。
+//   サーバー側は 404.html で修正済みだが、SWがそれを掴んで延命させないよう多層で守る。
+function isHtmlMasqueradingAsScript(request, response) {
+  if (!isJsBundlePath(new URL(request.url).pathname)) return false;
+  const type = response.headers.get('content-type') || '';
+  return type.includes('text/html');
+}
+
+// Network-first strategy (JSバンドル用)
+// ★このパスに来るのはJSバンドルだけ。APIはこの手前(fetchハンドラ冒頭)でSWを素通りする。
 async function networkFirstStrategy(request, cacheName) {
   const cache = await caches.open(cacheName);
   
   try {
     const networkResponse = await fetch(request);
     
-    // Cache successful responses
-    if (networkResponse.ok) {
+    // 成功しても、JSの代わりにHTMLが返っていたらキャッシュしない。
+    // キャッシュすると壊れた応答が端末に居座り、リロードでも直らなくなる。
+    if (networkResponse.ok && !isHtmlMasqueradingAsScript(request, networkResponse)) {
       cache.put(request, networkResponse.clone());
     }
     
@@ -146,12 +158,13 @@ async function networkFirstStrategy(request, cacheName) {
       return cachedResponse;
     }
     
-    // Return offline JSON for API requests
+    // ★JSを頼まれている以上、JSONを返してはいけない（JSONはJSとして構文エラーになる）。
+    //   空のJSモジュールを返し、呼び出し側のチャンク落ち検知に正しく繋げる。
     return new Response(
-      JSON.stringify({ error: 'オフラインです', offline: true }),
+      '/* offline: module unavailable */',
       { 
         status: 503,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/javascript; charset=utf-8' }
       }
     );
   }

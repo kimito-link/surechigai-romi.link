@@ -67,6 +67,9 @@ export const DECIDED = {
   "verify-ios-splash-not-default.mjs": "同上(iOS)。2026-08-27に実体無しを確認し削除済み",
   "verify-signing-material-path.mjs": "Capacitor前提の署名材料パス検査",
   "verify-webdir-consistency.mjs": "capacitor.config.json の webDir 整合。非該当",
+  "verify-twa-signing-matches-assetlinks.mjs":
+    "TWA(Bubblewrap)専用。このリポは Expo prebuild のネイティブAndroid(android/)で、" +
+    "android-twa/ も assetlinks.json も持たない（2026-09-06 実体確認）",
 
   // ── Cloudflare Pages 専用。このリポは Vercel へデプロイする。
   "cloudflare-auth.mjs": "Cloudflare Pages デプロイ用。このリポはVercel",

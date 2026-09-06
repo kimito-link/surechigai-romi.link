@@ -23,6 +23,7 @@ import { TRPCError } from "@trpc/server";
 import { protectedProcedure, publicProcedure, router } from "../../../server/_core/trpc.js";
 import { getDb } from "../../../server/db/connection.js";
 import { isValidPrefecture } from "../core/prefectures.js";
+import { isSafeEventUrl } from "../core/safe-url.js";
 import { serializeTypeTags, parseTypeTags } from "../core/status.js";
 import { hashAccessCode, verifyAccessCode } from "../core/access.js";
 import { venueLabelFromGeocode } from "../core/venue-label.js";
@@ -145,7 +146,15 @@ export const eventRouter = router({
         locationType: z.enum(["online", "offline"]),
         prefecture: z.string().max(32).optional(),
         venueName: z.string().max(120).optional(),
-        onlineUrl: z.string().url().max(2000).optional(),
+        // ★https のみ。z.string().url() だけだと javascript: / data: が通る
+        onlineUrl: z
+          .string()
+          .url()
+          .max(2000)
+          .refine(isSafeEventUrl, {
+            message: "オンライン会場のURLは https:// で始まる必要があります",
+          })
+          .optional(),
         startAt: z.string().datetime(),
         endAt: z.string().datetime().optional(),
         visibility: z.enum(["public", "unlisted"]).default("public"),
