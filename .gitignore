@@ -120,3 +120,7 @@ public/lp/img/_orig-photo/
 .instrument-context.md
 .instrument-report.json
 .instrument-ran.json
+
+# 別プロジェクト向けの一時作業スクリプト（このリポの成果物ではない）
+# ★2026-09-02 に ouenmovie の連写用として作られたもの。
+_shot-*.mjs

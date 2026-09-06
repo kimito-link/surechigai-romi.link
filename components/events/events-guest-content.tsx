@@ -26,12 +26,15 @@ import {
   StyleSheet,
   TextInput,
   Platform,
-  Linking,
   Pressable,
 } from "react-native";
 import { useState, useCallback, useMemo } from "react";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { toDateKey } from "@/lib/events/date-key";
+import {
+  openExternalUrl,
+  openUserProvidedUrl,
+} from "@/lib/navigation/external-links";
 import {
   LazyEventCalendar,
 } from "@/lib/lazy-heavy-components";
@@ -105,11 +108,13 @@ function EventCard({
       : [prefecture, effectiveVenue].filter(Boolean).join(" ") || "場所未設定";
 
   const openX = useCallback(() => {
-    if (creatorXUrl) Linking.openURL(creatorXUrl).catch(() => {});
+    if (creatorXUrl) void openExternalUrl(creatorXUrl);
   }, [creatorXUrl]);
 
   const openLink = useCallback(() => {
-    if (effectiveUrl) Linking.openURL(effectiveUrl).catch(() => {});
+    // ★ユーザーが入れたURL。javascript: 等を踏まないよう https 限定で開く
+    //   （会議URLは列挙できないので許可ドメイン方式は使えない）
+    if (effectiveUrl) void openUserProvidedUrl(effectiveUrl);
   }, [effectiveUrl]);
 
   /** Xシェア: タイトル・日時・場所をツイートテキストにして intent/tweet へ飛ばす */
@@ -124,7 +129,9 @@ function EventCard({
         ? "オンライン"
         : [prefecture, venueName].filter(Boolean).join(" ") || "場所未定";
     const text = `【集まり】${title}\n${mm}/${dd} ${hh}:${mi}〜 ${placeStr}\n#君斗りんくのすれ違ひ通信`;
-    Linking.openURL(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`).catch(() => {});
+    void openExternalUrl(
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
+    );
   }, [title, startAt, locationType, prefecture, venueName]);
 
   const handleReveal = useCallback(() => {

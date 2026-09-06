@@ -28,7 +28,7 @@ import { initSentry, Sentry } from "./sentry.js";
 import { rateLimiterMiddleware } from "./rate-limiter.js";
 import { verifyAdminPassword } from "../admin-password-auth.js";
 import { getSessionCookieOptions } from "./cookies.js";
-import type { Request, Response } from "express";
+import type { Request, Response, ErrorRequestHandler } from "express";
 import { SESSION_MAX_AGE_MS } from "../../shared/const.js";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -614,7 +614,12 @@ async function startServer() {
 
   // Sentry error handler must be after all controllers and before other error middleware
   if (process.env.SENTRY_DSN) {
-    app.use(Sentry.expressErrorHandler());
+    // ★@sentry/node v10 は Express 5 系の型で ExpressErrorMiddleware を返すが、
+    //   このリポは express v4（@types/express v4）なので構造的に一致せず tsc が落ちる。
+    //   実行時のシグネチャ (err, req, res, next) は v4/v5 で同一なので、
+    //   ここだけ ErrorRequestHandler として受け直す。
+    //   ★express を v5 に上げるときはこのキャストごと外せる。
+    app.use(Sentry.expressErrorHandler() as unknown as ErrorRequestHandler);
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");

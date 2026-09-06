@@ -28,6 +28,10 @@ node scripts/inject-sw-version.cjs || true
 # expo export 後に public の favicon 等で dist を上書き + HTML に ?v= 付与
 node scripts/sync-brand-to-dist.cjs
 
+# Vercel の 404 ページを用意する。これが無いと存在しないアセットに index.html が
+# HTTP 200 で返り、古いJSチャンクを要求した端末が「Loading module failed」で固まる。
+node scripts/emit-404.cjs
+
 # LP（public/lp）を dist に同期 — surechigai-romi.link/lp/ で静的配信
 if [ -d public/lp ]; then
   mkdir -p dist/lp
