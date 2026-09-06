@@ -128,7 +128,7 @@
       ]
     },
     {
-      "source": "/assets/(.*)",
+      "source": "/assets/:path*.:hash([0-9a-f]{32}).:ext",
       "headers": [
         {
           "key": "Cache-Control",
@@ -141,7 +141,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "value": "public, max-age=2592000"
         }
       ]
     },
