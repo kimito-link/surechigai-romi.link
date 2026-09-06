@@ -93,7 +93,12 @@ async function probe(target) {
     };
   }
 
+  // ★404 を返しているなら Content-Type は問わない。
+  //   404ページ自体はHTMLで正しく、ブラウザは 404 を見て「取得失敗」と扱うので
+  //   ES module として実行しようとはしない。
+  //   見たいのは「200 で HTML を掴まされる」ケース（それがこの不具合の実体だった）。
   if (
+    res.status === 200 &&
     target.forbidContentType &&
     contentType.toLowerCase().includes(target.forbidContentType)
   ) {
@@ -108,10 +113,19 @@ async function probe(target) {
     };
   }
 
+  // ★根拠(evidence)を付けないと instrument-core が pass を名乗らせない。
+  //   「測った証拠のない緑」を作らないための土台側の仕組み。
   return {
     probe: target.what,
     verdict: "pass",
     detail: `${target.path} → ${res.status}（期待どおり存在しないと答えた）`,
+    evidence: {
+      url,
+      status: res.status,
+      contentType: contentType || null,
+      cacheControl: res.headers.get("cache-control") ?? null,
+      verifiedAt: new Date().toISOString(),
+    },
   };
 }
 
