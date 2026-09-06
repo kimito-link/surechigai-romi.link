@@ -119,7 +119,7 @@
       ]
     },
     {
-      "source": "/_expo/static/js/(.*)",
+      "source": "/_expo/static/js/:path*-:hash([0-9a-f]{32}).js",
       "headers": [
         {
           "key": "Cache-Control",
