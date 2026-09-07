@@ -1,7 +1,7 @@
 # 地図: ネイティブアプリのログインが外部ブラウザに出る問題（2026-08-06）
 
 作成: 司令塔（Claude Opus 5）が実コードと本番を読んで作成。手順は
-`github/WAYFINDER-TO-SPEC-HOWTO.md` の wayfinder→to-spec 方式。
+`../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md` の wayfinder→to-spec 方式。
 
 ## お題
 

@@ -1,7 +1,7 @@
 # 地図(wayfinder): 「その場の情報」と「SNS往復」と「通知」
 
 > 作成: 2026-08-15 / 地図・裏取り = 司令塔(Claude Opus 5) / コード変更なし
-> 方式: [WAYFINDER-TO-SPEC-HOWTO.md](../../WAYFINDER-TO-SPEC-HOWTO.md) 手順1
+> 方式: [../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md](../../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md) 手順1
 > この地図を Fable に渡して `place-context-and-sns-SPEC.md` を設計させる。
 
 ## お題（ユーザーからの7件）

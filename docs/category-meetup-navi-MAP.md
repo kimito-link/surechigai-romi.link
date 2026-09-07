@@ -1,7 +1,7 @@
 # 地図(wayfinder): カテゴリで会いに行く / 自宅に帰る
 
 > 作成: 司令塔(Claude Opus 5) / 2026-09-06 / **実コードを読んで書いた事実ベース**
-> 手法: [WAYFINDER-TO-SPEC-HOWTO.md](../../WAYFINDER-TO-SPEC-HOWTO.md) 手順1
+> 手法: [../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md](../../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md) 手順1
 > ★コードは一切変更していない。
 
 ## お題（オーナーの言葉）
