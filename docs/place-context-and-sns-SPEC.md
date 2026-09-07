@@ -2,7 +2,7 @@
 
 > **設計 = Fable (claude-fable-5) / 地図・裏取り = 司令塔 (Claude Opus 5) / 2026-08-15**
 > 根拠地図: [place-context-and-sns-MAP.md](place-context-and-sns-MAP.md)
-> 方式: [../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md](../../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md) 手順2
+> 方式: [WAYFINDER-TO-SPEC-HOWTO.md](../../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md) 手順2
 
 ---
 

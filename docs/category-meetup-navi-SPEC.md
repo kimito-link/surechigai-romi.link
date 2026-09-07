@@ -2,7 +2,7 @@
 
 > **設計 = Fable 5.1（claude-fable-5-1）／ 地図・裏取り = 司令塔(Claude Opus 5)／ 2026-09-07**
 > 地図: [category-meetup-navi-MAP.md](category-meetup-navi-MAP.md)
-> 手法: [../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md](../../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md) 手順2
+> 手法: [WAYFINDER-TO-SPEC-HOWTO.md](../../web-ios-android/docs/ai-workflows/WAYFINDER-TO-SPEC-HOWTO.md) 手順2
 >
 > ## ★司令塔による裏取りの結果（HOWTO「仕様の裏取り」）
 >

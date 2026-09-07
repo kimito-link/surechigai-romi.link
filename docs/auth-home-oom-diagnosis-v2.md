@@ -4,7 +4,7 @@
 対象: `components/post/post-authenticated-screen.tsx` とその描画経路・データ層
 本番確認: `https://surechigai.kimito.link/version.json` の commitSha = `0d55579`（Phase 3 まで反映済みであることを実際に取得して確認した）
 
-作成経緯: ../web-ios-android/docs/ai-workflows/COUNCIL-HOWTO.md の会議ハーネス（tsuioku-no-kirameki.com/scripts/meeting.mjs, COUNCIL_QUALITY=1）でOOM再発の仮説を発散・批判させ、その素材＋既存の地雷マップ（`docs/auth-home-lightweight-PLAN.md`、メモリ`surechigai-auth-home-oom.md`）をFable(claude-fable-5)サブエージェントに渡し、実コードを直接読んで裏取りさせた診断書。
+作成経緯: ../../web-ios-android/docs/ai-workflows/COUNCIL-HOWTO.md の会議ハーネス（tsuioku-no-kirameki.com/scripts/meeting.mjs, COUNCIL_QUALITY=1）でOOM再発の仮説を発散・批判させ、その素材＋既存の地雷マップ（`docs/auth-home-lightweight-PLAN.md`、メモリ`surechigai-auth-home-oom.md`）をFable(claude-fable-5)サブエージェントに渡し、実コードを直接読んで裏取りさせた診断書。
 
 ---
 
