@@ -46,6 +46,24 @@
         "scripts/check-decision-receipt.mjs",
         "scripts/record-decision-receipt.mjs"
       ]
+    },
+    {
+      "at": "2026-09-08T03:26:01.440Z",
+      "responsibility": "利用状況の日次スナップショット（登録者の行動を日次で記録する計器）。既存の recordDbGrowthSnapshot と同じ責務の隣に置き、別ファイルを作らない",
+      "decision": "REUSE",
+      "canonicalSource": "server/db-growth-alert.ts",
+      "scopePaths": [
+        "drizzle/migrations/0006_usage_snapshots.sql"
+      ]
+    },
+    {
+      "at": "2026-09-08T03:26:01.545Z",
+      "responsibility": "parseUsageCount の回帰テスト。0件と測れなかったを混ぜないことを守る",
+      "decision": "REUSE",
+      "canonicalSource": "server/db-growth-alert.ts",
+      "scopePaths": [
+        "__tests__/usage-snapshot.test.ts"
+      ]
     }
   ]
 }

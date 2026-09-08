@@ -20,7 +20,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { getDb } = await import("../server/db/connection.js");
-    const { recordDbGrowthSnapshot } = await import("../server/db-growth-alert.js");
+    const { recordDbGrowthSnapshot, recordUsageSnapshot } = await import(
+      "../server/db-growth-alert.js"
+    );
 
     const db = await getDb();
     if (!db) {
@@ -34,11 +36,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const dbGrowth = await recordDbGrowthSnapshot(db);
 
+    // 利用状況の日次スナップショット。★失敗しても sweep 全体を落とさない
+    // （DB成長の監視が本来の役割で、そちらを巻き添えにしない）。
+    let usage: Awaited<ReturnType<typeof recordUsageSnapshot>> | null = null;
+    let usageError: string | null = null;
+    try {
+      usage = await recordUsageSnapshot(db);
+    } catch (err) {
+      usageError = err instanceof Error ? err.message : String(err);
+      console.error("[sweep] usageSnapshot failed:", usageError);
+    }
+
     console.log("[sweep] dbGrowth", dbGrowth);
+    console.log("[sweep] usage", usage ?? `失敗: ${usageError}`);
 
     res.status(200).json({
       ok: true,
       dbGrowth,
+      // ★null なら「測れなかった」。0 件と区別できるようにする
+      usage,
+      usageError,
       sweptAt: new Date().toISOString(),
     });
   } catch (err) {
