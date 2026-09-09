@@ -132,6 +132,61 @@ export async function openExternalUrl(url: string): Promise<boolean> {
   }
 }
 
+/**
+ * ユーザーが入力したURL（集まりのオンライン会場など）が開いてよいURLか。
+ *
+ * ★許可ドメイン列挙を使わない理由:
+ *   会議URLは Zoom / Google Meet / Teams / Whereby / 自社システム…と無数にあり、
+ *   列挙は原理的に破綻する。実際 ALLOWED_DOMAINS には会議サービスが1つも無く、
+ *   openExternalUrl に通すと**無言で false を返して何も起きない**
+ *   （押しても無反応。過去に Threads 共有で同じ事故を起こしている）。
+ *
+ * ★守るべきは「ドメインが誰か」ではなく「スキームが危険でないか」:
+ *   javascript: や data: が通ると、他人が作った集まりを開いただけで
+ *   任意コードを踏まされる。zod の .url() はこれらを**通してしまう**ため、
+ *   入口の検証だけに頼らずここでも見る。
+ */
+export function isSafeUserProvidedUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") {
+      console.warn(`[Navigation] Blocked non-HTTPS user URL: ${url}`);
+      return false;
+    }
+    if (!parsed.hostname) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * ユーザーが入力したURLを開く（https のみ。ドメインは限定しない）。
+ *
+ * 集まりのオンライン会場URLのように、**開ける先を列挙できない**ものに使う。
+ * 運営が管理するリンク（協賛枠・アプリ内導線）には openExternalUrl を使うこと。
+ */
+export async function openUserProvidedUrl(url: string): Promise<boolean> {
+  if (!isSafeUserProvidedUrl(url)) return false;
+
+  try {
+    if (Platform.OS === "web") {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return true;
+    }
+    const canOpen = await Linking.canOpenURL(url);
+    if (!canOpen) {
+      console.warn(`[Navigation] Cannot open user URL: ${url}`);
+      return false;
+    }
+    await Linking.openURL(url);
+    return true;
+  } catch (error) {
+    console.error(`[Navigation] Failed to open user URL: ${url}`, error);
+    return false;
+  }
+}
+
 // ========================================
 // Twitter専用ヘルパー関数
 // ========================================

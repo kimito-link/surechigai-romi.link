@@ -33,11 +33,16 @@ import { useScreenFocused } from "@/hooks/use-screen-focused";
 import { PostScreenView } from "@/components/post/post-screen-view";
 import { styles } from "@/components/post/post-screen-styles";
 
-// docs/auth-home-oom-diagnosis-v2.md: 認証済みホームのOOMが e0cbccf(居場所リアルタイム公開)
-// 導入以前は起きていなかったとの実機報告を受け、原因切り分けのため居場所マーカーの
-// 描画とpresence.list定期クエリを一時停止する。マイページの設定・API・DBは変更しない
-// （UI表示のみのオフ）。原因が確定し次第、安全な形で作り直して再有効化する。
-const LIVE_PRESENCE_RADAR_ENABLED = false;
+// ★2026-09-08 再有効化。2026-07-04 に 6058111eb で OOM 切り分けのため一時停止したが、
+// 真因は別（lib/icons/material-icons.web.tsx の動的import + React 19 の無限sync再レンダリング）で
+// b3337de で解決済みだった。診断書にも「presence refetch は旧仮説として無効」と明記がある。
+// ＝ この機能は2ヶ月間、無実のまま止まっていた。
+//
+// ★「たぶん大丈夫」で戻していない。本番に対して10分ソークを2回回して比較した:
+//   レーダーOFF（この変更前）: 判定OK / ヒープ 21.77→22.76MB(0.01MB/分) / エラー0件
+//   レーダーON （この変更後）: コミットメッセージに記載
+// 逃げ道の ?romiLiteHome=1 はそのまま残してある。
+const LIVE_PRESENCE_RADAR_ENABLED = true;
 
 /**
  * 認証済みホーム OOM の bisect 用キルスイッチ（恒久的に残す）。

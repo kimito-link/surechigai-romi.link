@@ -43,6 +43,13 @@
       "when": 1786714588580,
       "tag": "0005_damp_cammi",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788837682389,
+      "tag": "0006_usage_snapshots",
+      "breakpoints": true
     }
   ]
 }

@@ -298,6 +298,52 @@ async function main() {
 
   await page.screenshot({ path: path.join(OUT_DIR, "00-start.png") }).catch(() => {});
 
+  // ★実際に認証済み画面に居るかを、DOM で確かめる（2026-09-08 追加）。
+  //
+  // ★なぜ必要か（実際に踏んだ）
+  //   authState は「ファイルの cookies が空でない」ことしか見ていない。
+  //   2026-09-08、期限内の cookie が20件ある .auth/auth-state.json を使って
+  //   10分ソークを2回回し、両方 verdict=OK / authState=ok を得たが、
+  //   **終了時スクリーンショットは「1タップではじめる」＝ゲスト画面だった**
+  //   （2回のスクショが1バイトも違わないことで気づいた）。
+  //   ＝ 認証済みホームを一度も測らずに「OK」と言っていた。
+  //
+  //   ゲスト画面を測った結果で「OOMは再発しない」と判断するのは、
+  //   測っていないものを測ったことにする行為なので、ここで止める。
+  const authProbe = await page
+    .evaluate(() => {
+      const text = document.body?.innerText ?? "";
+      return {
+        // ゲスト画面にしか出ない文言
+        guestMarkers: ["1タップではじめる", "新規登録もこちら"].filter((m) =>
+          text.includes(m),
+        ),
+        textLength: text.length,
+      };
+    })
+    .catch(() => null);
+
+  const looksGuest = (authProbe?.guestMarkers?.length ?? 0) > 0;
+  if (looksGuest && !ALLOW_GUEST) {
+    console.error(
+      [
+        "",
+        "★認証済みホームに到達できていません（ゲスト画面が表示されています）。",
+        `  検出した文言: ${authProbe.guestMarkers.join(" / ")}`,
+        "",
+        "  .auth/auth-state.json は存在しますが、本番でログイン状態になりませんでした。",
+        "  cookie の期限切れ・ドメイン不一致・Clerk 側のセッション失効が考えられます。",
+        "",
+        "  対処: pnpm e2e:auth-save で X ログインをやり直して認証状態を取り直す。",
+        "  ゲスト画面をあえて測りたい場合は --allow-guest を付けてください。",
+        "",
+        "★このまま計測しても、認証済みホームの OOM は測れません（中断します）。",
+      ].join(String.fromCharCode(10)),
+    );
+    await browser.close().catch(() => {});
+    process.exit(2); // ★2 = 測れなかった（赤ではない）
+  }
+
   // --- サンプリング関数 ---
   let prevProbe = { docId: null, mutTotal: 0, longTaskMs: 0 };
   let prevPaintFrames = 0;

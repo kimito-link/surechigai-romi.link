@@ -1411,4 +1411,62 @@
       });
     })();
 
+    /* 追体験デモ：スマホ枠を sticky で固定し、スクロール量で中の画面を切り替える。
+       ★方式は kimitolink-linktree の HeroFlowDemo.tsx と同じ（あちらは React）。
+       ★scroll ごとに rAF を1回だけ予約する形にする。毎回予約すると
+       スクロール中に何十回も走って重くなる。 */
+    (function(){
+      var sec = document.getElementById('taiken');
+      if (!sec) return;
+      var screenEl = document.getElementById('taikenScreen');
+      var capEl = document.getElementById('taikenCap');
+      var dotsEl = document.getElementById('taikenDots');
+      if (!screenEl || !capEl || !dotsEl) return;
+
+      var imgs = [].slice.call(screenEl.querySelectorAll('img'));
+      var dots = [].slice.call(dotsEl.querySelectorAll('i'));
+      if (imgs.length === 0) return;
+
+      /* 画面ごとの説明。imgs と同じ順・同じ数で持つ。 */
+      var CAPS = [
+        ['足あとを、残す', 'いま居る場所を、±5m の精度で。<br />あとから、戻って来られる。'],
+        ['軌跡を、たどる', '歩いた道が、そのまま地図に。<br />あの日どこにゐたか、思ひ出せる。'],
+        ['封筒が、届く', '同じ場所を通った誰かと、すれ違ふ。<br />時間が違つても、届く。'],
+        ['土地が、増える', '訪れた国が、図鑑に溜まってゆく。<br />旅の記録は、消えない。']
+      ];
+
+      var current = -1;
+      function render(p){
+        /* ★0〜1 を画面数に割る。最後の画面も同じ長さ見せたいので、
+           1.0 ちょうどで溢れないよう index を丸める。 */
+        var i = Math.min(imgs.length - 1, Math.floor(p * imgs.length));
+        if (i === current) return;
+        current = i;
+        imgs.forEach(function(el, n){ el.classList.toggle('on', n === i); });
+        dots.forEach(function(el, n){ el.classList.toggle('on', n === i); });
+        var c = CAPS[i];
+        if (c) capEl.innerHTML = '<b>' + c[0] + '</b>' + c[1];
+      }
+
+      var ticking = false;
+      function onScroll(){
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function(){
+          ticking = false;
+          var track = sec.querySelector('.taiken-track');
+          if (!track) return;
+          var rect = track.getBoundingClientRect();
+          var total = rect.height - window.innerHeight;
+          var scrolled = -rect.top;
+          var p = total > 0 ? scrolled / total : (scrolled <= 0 ? 0 : 1);
+          render(Math.max(0, Math.min(1, p)));
+        });
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll, { passive: true });
+      onScroll();
+    })();
+
   })();

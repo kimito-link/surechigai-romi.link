@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "receipts": [
+    {
+      "at": "2026-09-06T11:22:06.914Z",
+      "responsibility": "本番で存在しない静的ファイルが404を返すかを測る検査",
+      "decision": "REUSE",
+      "canonicalSource": "scripts/lib/instrument-core.mjs",
+      "scopePaths": [
+        "scripts/qa/check-missing-assets-404.mjs"
+      ]
+    },
+    {
+      "at": "2026-09-06T11:22:13.711Z",
+      "responsibility": "ユーザー入力URLの安全性検証(サーバー側)。クライアント側の isSafeUserProvidedUrl と対になるが、あちらは react-native 依存でサーバーから使えないため別実装",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "modules/event/core/safe-url.ts"
+      ]
+    },
+    {
+      "at": "2026-09-06T11:22:13.977Z",
+      "responsibility": "Vercel向けに dist/404.html を出力する。Expo が出す +not-found.html は Vercel が認識しないため名前を与える",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "scripts/emit-404.cjs"
+      ]
+    },
+    {
+      "at": "2026-09-06T11:22:31.122Z",
+      "responsibility": "isSafeEventUrl の回帰テスト。テストは __tests__/ に集約する既存慣習に従う",
+      "decision": "REUSE",
+      "canonicalSource": "modules/event/core/safe-url.ts",
+      "scopePaths": [
+        "__tests__/event-safe-url.test.ts"
+      ]
+    },
+    {
+      "at": "2026-09-06T11:22:31.271Z",
+      "responsibility": "Decision Receipt の検査と記録。web-ios-android キットの正本をそのまま輸入",
+      "decision": "SYNC",
+      "canonicalSource": "scripts/lib/instrument-proof.mjs",
+      "scopePaths": [
+        "scripts/check-decision-receipt.mjs",
+        "scripts/record-decision-receipt.mjs"
+      ]
+    },
+    {
+      "at": "2026-09-08T03:26:01.440Z",
+      "responsibility": "利用状況の日次スナップショット（登録者の行動を日次で記録する計器）。既存の recordDbGrowthSnapshot と同じ責務の隣に置き、別ファイルを作らない",
+      "decision": "REUSE",
+      "canonicalSource": "server/db-growth-alert.ts",
+      "scopePaths": [
+        "drizzle/migrations/0006_usage_snapshots.sql"
+      ]
+    },
+    {
+      "at": "2026-09-08T03:26:01.545Z",
+      "responsibility": "parseUsageCount の回帰テスト。0件と測れなかったを混ぜないことを守る",
+      "decision": "REUSE",
+      "canonicalSource": "server/db-growth-alert.ts",
+      "scopePaths": [
+        "__tests__/usage-snapshot.test.ts"
+      ]
+    }
+  ]
+}

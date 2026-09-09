@@ -7,7 +7,7 @@
 
 import { desc, gte, sql } from "drizzle-orm";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { dbStatsSnapshots } from "../drizzle/schema/index.js";
+import { dbStatsSnapshots, usageSnapshots } from "../drizzle/schema/index.js";
 import * as schema from "../drizzle/schema/index.js";
 import { notifyOwner } from "./_core/notification.js";
 
@@ -231,6 +231,105 @@ export async function recordDbGrowthSnapshot(db: DB): Promise<DbGrowthSnapshot> 
 
   await maybeSendDbGrowthAlert(db, snapshot);
   return snapshot;
+}
+
+
+/** usage_snapshots の1行。数値はすべて件数（バイトではない）。 */
+export type UsageSnapshotResult = {
+  id: number | null;
+  capturedAt: Date;
+  totalUsers: number;
+  activeUsers7d: number;
+  activeUsers30d: number;
+  usersWithLocations: number;
+  activeLoggers7d: number;
+  placeNotes: number;
+  encounters: number;
+  events: number;
+  participations: number;
+};
+
+type UsageCountRow = Record<string, unknown>;
+
+/** 利用状況スナップショットで数える列。★増やすときはここだけ触る。 */
+export const USAGE_SNAPSHOT_COUNT_KEYS = [
+  "totalUsers",
+  "activeUsers7d",
+  "activeUsers30d",
+  "usersWithLocations",
+  "activeLoggers7d",
+  "placeNotes",
+  "encounters",
+  "events",
+  "participations",
+] as const;
+
+/**
+ * COUNT(*) の戻り値を数値にする。★測れなかったときは 0 にせず throw する。
+ *
+ * ★なぜ toSafeNumber を使わないか（このリポが繰り返し踏んだ型）
+ *   toSafeNumber は undefined / null を **0 に丸める**。それだと
+ *   「アクティブユーザーが0人」と「SQLが壊れて測れていない」が
+ *   **同じ 0 として記録され、区別できなくなる**。
+ *   計器の役目は「測れなかったことを測れなかったと言う」ことなので、
+ *   ここでは黙って0を書かず、呼び出し側（api/sweep.ts）で
+ *   usage: null / usageError として記録させる。
+ */
+export function parseUsageCount(key: string, value: unknown): number {
+  if (typeof value === "bigint") return Number(value);
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  throw new Error(
+    `[usage-snapshot] ${key} を数値にできませんでした（受け取った値: ${JSON.stringify(value)}）。` +
+      "★0 として記録すると「0件」と「測れなかった」が区別できなくなるため中断します。",
+  );
+}
+
+/**
+ * 利用状況の日次スナップショットを1行記録する。
+ *
+ * ★recordDbGrowthSnapshot と同じ作法（SQL 1本 → insert → returning）で書いている。
+ *   計器を増やすときに読み手が迷わないようにするため。
+ *
+ * ★COUNT(*) を使う理由: recordDbGrowthSnapshot は reltuples（推定値）を使っているが、
+ *   あちらは「DBが何バイト太ったか」を見るので推定で足りる。
+ *   こちらは「7日以内に戻ってきた人が0人か1人か」を見るので、
+ *   **推定値では判断できない**。行数が小さいうちは COUNT(*) のコストも無視できる。
+ *   ★行数が増えて重くなったら、そのとき推定へ切り替える（今その判断はしない）。
+ *
+ * ★この関数が測れないもの: 未登録の訪問者数。方式の限界（schema のコメント参照）。
+ */
+export async function recordUsageSnapshot(db: DB): Promise<UsageSnapshotResult> {
+  const result = await db.execute(sql`
+    SELECT
+      (SELECT COUNT(*) FROM users) AS "totalUsers",
+      (SELECT COUNT(*) FROM users WHERE "lastSignedIn" > NOW() - INTERVAL '7 days') AS "activeUsers7d",
+      (SELECT COUNT(*) FROM users WHERE "lastSignedIn" > NOW() - INTERVAL '30 days') AS "activeUsers30d",
+      (SELECT COUNT(DISTINCT "userId") FROM locations WHERE "deletedAt" IS NULL) AS "usersWithLocations",
+      (SELECT COUNT(DISTINCT "userId") FROM locations WHERE "deletedAt" IS NULL AND "recordedAt" > NOW() - INTERVAL '7 days') AS "activeLoggers7d",
+      (SELECT COUNT(*) FROM locations WHERE "deletedAt" IS NULL AND note IS NOT NULL) AS "placeNotes",
+      (SELECT COUNT(*) FROM encounters) AS "encounters",
+      (SELECT COUNT(*) FROM events) AS "events",
+      (SELECT COUNT(*) FROM event_participations WHERE "deletedAt" IS NULL) AS "participations"
+  `);
+
+  const row = rowsFromExecute<UsageCountRow>(result)[0] ?? {};
+  const capturedAt = new Date();
+  // ★1列でも数値にできなければ throw する（0 で埋めない）
+  const counts = Object.fromEntries(
+    USAGE_SNAPSHOT_COUNT_KEYS.map((key) => [key, parseUsageCount(key, row[key])]),
+  ) as Record<(typeof USAGE_SNAPSHOT_COUNT_KEYS)[number], number>;
+  const values = { capturedAt, ...counts };
+
+  const inserted = await db
+    .insert(usageSnapshots)
+    .values(values)
+    .returning({ id: usageSnapshots.id });
+
+  return { id: inserted[0]?.id ?? null, ...values };
 }
 
 export function resetDbGrowthAlertFlags(): void {

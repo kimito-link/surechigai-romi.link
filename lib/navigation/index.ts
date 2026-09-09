@@ -17,6 +17,8 @@ export {
   openShowroomRoom,
   openTicketSite,
   getAllowedDomains,
+  isSafeUserProvidedUrl,
+  openUserProvidedUrl,
 } from "./external-links";
 
 export {
