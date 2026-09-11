@@ -1,10 +1,14 @@
 /**
- * ブランドコピー「会いたい君がいる現在地」
+ * ブランドコピー「現在地でつながる／すれ違ひ通信」
  * 君斗りんくのすれ違ひ通信の感情の核（DESIGN.md）。全ページとログアウト時に
  * バランスよく差し込むための共通コンポーネント。
  *
  * - compact: ヘッダー下やモーダルなどに収める 1〜2 行の小さめ表記
  * - 「現在地」を kimitoOrange で強調し、正確な場所を残す価値と結びつける
+ *
+ * ★2026-09-11 変更: 旧「会いたい君がいる現在地」から差し替え。
+ *   旧コピーは特定作品の世界観を連想させうるという判断（法的な問題ではない）。
+ *   「すれ違ひ」は旧仮名（アプリ名と揃える）。「すれ違い」と書かないこと。
  */
 import { Text, View, StyleSheet, type TextStyle } from "react-native";
 import { palette } from "@/theme/tokens";
@@ -35,10 +39,10 @@ export function BrandTagline({
       <Text
         style={[styles.compact, onDark && styles.compactOnDark, { textAlign: align }, style]}
         numberOfLines={1}
-        accessibilityLabel="会いたい君がいる現在地"
+        accessibilityLabel="現在地でつながる、すれ違ひ通信"
       >
-        会いたい君がいる
         <Text style={[styles.compactAccent, onDark && styles.compactAccentOnDark]}>現在地</Text>
+        でつながる、すれ違ひ通信
       </Text>
     );
   }
@@ -46,12 +50,14 @@ export function BrandTagline({
   return (
     <View
       style={{ alignItems: align === "center" ? "center" : "flex-start" }}
-      accessibilityLabel="会いたい君がいる現在地"
+      accessibilityLabel="現在地でつながる、すれ違ひ通信"
     >
       <Text style={[styles.line1, onDark && styles.line1OnDark, lcpProminent && styles.line1Lcp]}>
-        会いたい君がいる
+        現在地でつながる
       </Text>
-      <Text style={[styles.line2, onDark && styles.line2OnDark, lcpProminent && styles.line2Lcp]}>現在地</Text>
+      <Text style={[styles.line2, onDark && styles.line2OnDark, lcpProminent && styles.line2Lcp]}>
+        すれ違ひ通信
+      </Text>
     </View>
   );
 }

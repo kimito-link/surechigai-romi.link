@@ -19,7 +19,7 @@ export const TAB_ROUTES: AuditRoute[] = [
   {
     path: "/",
     label: "ポスト",
-    expectText: /会いたい君がいる現在地|封筒と足あと|移動の足あと/,
+    expectText: /現在地でつながる|キミの現在地|封筒と足あと|移動の足あと/,
     guestOk: true,
   },
   {
@@ -37,7 +37,7 @@ export const TAB_ROUTES: AuditRoute[] = [
   {
     path: "/zukan",
     label: "現在地",
-    expectText: /会いたい君がいる現在地|あなたの記録/,
+    expectText: /現在地でつながる|キミの現在地|あなたの記録/,
     guestOk: true,
   },
   {

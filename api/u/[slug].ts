@@ -37,9 +37,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const slugParam = req.query.slug;
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
 
-  let title = "君斗りんくのすれ違ひ通信｜会いたい君がいる現在地";
+  let title = "君斗りんくのすれ違ひ通信｜キミの現在地を刻む";
   let description =
-    "位置情報で近くにいた人とすれ違える、無料のすれ違い通信。会いたい君がいる現在地をたどろう。";
+    "位置情報で近くにいた人とすれ違える、無料のすれ違ひ通信。キミの現在地を刻もう。";
   let resolvedLocation: ShareLocationInfo | null = null;
 
   if (slug && /^[A-Za-z0-9]{1,16}$/.test(slug)) {
@@ -71,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             resolveShareDetailedPlace(infoLocation) ??
             "どこか";
           title = `${who} は ${place} にいるよ｜君斗りんくのすれ違ひ通信`;
-          description = `${place} で記録された足あと。会いたい君がいる現在地をたどろう。`;
+          description = `${place} で記録された足あと。キミの現在地を刻もう。`;
         }
       }
     } catch {

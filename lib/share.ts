@@ -388,7 +388,7 @@ export function buildMyLocationShareText(areaLabel?: string): {
 } {
   const where = areaLabel ? `${areaLabel}にいるよ。` : "";
   return {
-    text: `${where}会いたい君がいる現在地。`,
+    text: `${where}キミの現在地を刻む。`,
     hashtags: ["君斗りんくのすれ違ひ通信"],
   };
 }

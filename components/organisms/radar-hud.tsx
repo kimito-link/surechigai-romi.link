@@ -50,7 +50,7 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
   const openLoginGuide = useLoginGuide();
   const [isDismissed, setIsDismissed] = useState(!showIntro);
 
-  // 「会いたい君がいる」のグローをレーダーの鼓動のように明滅させる（signal glow）。
+  // 「キミの」のグローをレーダーの鼓動のように明滅させる（signal glow）。
   const glow = useSharedValue(0.4);
   const reduceMotion = useReducedMotion();
   useEffect(() => {
@@ -121,11 +121,11 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
                 pointerEvents="none"
                 style={[styles.catchMain, styles.catchMainGlow, stylesBySize[heroSize].catchMain, glowStyle]}
               >
-                会いたい君がいる
+                キミの
               </Animated.Text>
               {/* 前面：くっきりした白文字 */}
               <Text selectable style={[styles.catchMain, stylesBySize[heroSize].catchMain]}>
-                会いたい君がいる
+                キミの
               </Text>
             </View>
             {/* 「現在地」にピンを添えて“正確な場所を残す”価値を示す */}
@@ -145,7 +145,7 @@ export function RadarHud({ onDismissIntro, showIntro = true, isAuthenticated }: 
             </View>
           </View>
           <Text selectable style={[styles.catchSub, stylesBySize[heroSize].catchSub]}>
-            キミは今、どこにいる？
+            を、刻む。
           </Text>
 
           {/* 未ログインの人へ「ログインしたくなる」ベネフィットを3点提示 */}

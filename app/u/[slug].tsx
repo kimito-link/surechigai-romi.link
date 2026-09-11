@@ -81,7 +81,7 @@ function ProfileHeaderContent({
         twitterHandle={username}
       />
       <View style={styles.profileText}>
-        <Text style={styles.kicker}>会いたい君がいる現在地</Text>
+        <Text style={styles.kicker}>キミの現在地を刻む</Text>
         <Text style={styles.whoLine} numberOfLines={2}>
           {who}
         </Text>

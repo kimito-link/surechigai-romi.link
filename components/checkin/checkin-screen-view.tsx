@@ -290,7 +290,7 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.description}>
-            会いたい君がいる現在地を、正確な足あととして残します
+            キミの現在地を、正確な足あととして刻みます
           </Text>
 
           {pausedBanner}

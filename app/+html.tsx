@@ -30,7 +30,7 @@ export default function Root({ children }: PropsWithChildren) {
         <title>{PWA_APP_NAME}</title>
         <meta
           name="description"
-          content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
+          content="位置情報で近くにいた人とすれ違える、無料のすれ違ひ通信アプリ。キミの現在地を刻んで、あとからその場所をたどれる。"
         />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={`${APP_ORIGIN}/`} />
@@ -38,17 +38,17 @@ export default function Root({ children }: PropsWithChildren) {
         {/* OGP / Twitter Card */}
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="君斗りんくのすれ違ひ通信" />
-        <meta property="og:title" content="君斗りんくのすれ違ひ通信｜会いたい君がいる現在地" />
+        <meta property="og:title" content="君斗りんくのすれ違ひ通信｜現在地でつながる、すれ違ひ通信" />
         <meta
           property="og:description"
-          content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。会いたい君がいる現在地で、移動の足あとを残して後でその場所をたどれる。"
+          content="位置情報で近くにいた人とすれ違える、無料のすれ違ひ通信アプリ。キミの現在地を刻んで、あとからその場所をたどれる。"
         />
         <meta property="og:url" content={`${APP_ORIGIN}/`} />
         <meta property="og:image" content={`${APP_ORIGIN}/og-default.png`} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="君斗りんくのすれ違ひ通信｜会いたい君がいる現在地" />
+        <meta name="twitter:title" content="君斗りんくのすれ違ひ通信｜現在地でつながる、すれ違ひ通信" />
         <meta
           name="twitter:description"
           content="位置情報で近くにいた人とすれ違える、無料のすれ違い通信アプリ。"

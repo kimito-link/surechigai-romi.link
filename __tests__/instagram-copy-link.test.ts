@@ -40,8 +40,8 @@ describe("buildMyLocationShareText（3導線で共通の文面）", () => {
   });
 
   it("主役コピーを必ず含む", () => {
-    expect(buildMyLocationShareText("茅野市").text).toContain("会いたい君がいる現在地");
-    expect(buildMyLocationShareText(undefined).text).toContain("会いたい君がいる現在地");
+    expect(buildMyLocationShareText("茅野市").text).toContain("キミの現在地を刻む");
+    expect(buildMyLocationShareText(undefined).text).toContain("キミの現在地を刻む");
   });
 
   it("地名が無くても本文が成立する", () => {

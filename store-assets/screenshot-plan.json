@@ -9,7 +9,7 @@
       "slot": 1,
       "path": "/",
       "label": "value",
-      "title": "会いたい君がいる現在地",
+      "title": "現在地でつながる、すれ違ひ通信",
       "subtitle": "移動の足あとを残して、あとからその場所へ",
       "scrollToSelector": null
     },
@@ -52,7 +52,7 @@
   "_framedCaptions": "frame-appstore-screenshots.mjs 用の仕上げキャプション。{波括弧} がアクセント色になる。\\n で改行。",
   "framedCaptions": {
     "1": {
-      "headline": "会いたい君がいる\n{現在地}",
+      "headline": "現在地でつながる\n{すれ違ひ通信}",
       "sub": "移動の足あとを残して、あとからその場所へ"
     },
     "2": {

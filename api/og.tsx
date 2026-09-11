@@ -287,7 +287,7 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
     avatarRaw.startsWith("https://") && avatarRaw.length <= 300 ? avatarRaw : "";
 
   const brand = "君斗りんくのすれ違ひ通信";
-  const tagline = "会いたい君がいる現在地";
+  const tagline = "キミの現在地を刻む";
   const placeLabel = area
     ? `${area} にいるよ`
     : pref

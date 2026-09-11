@@ -26,7 +26,7 @@ const authFile = resolveAuthStatePath();
 const hasAuth = hasUsableAuthState(authFile);
 
 const GUEST_TABS: { path: string; heading: RegExp; label: string }[] = [
-  { path: "/", heading: /会いたい君がいる|現在地|ログイン/, label: "post" },
+  { path: "/", heading: /キミの|現在地|ログイン/, label: "post" },
   { path: "/checkin", heading: /チェックイン|現在地を記録/, label: "checkin" },
   { path: "/events", heading: /集まり|予定/, label: "events" },
   { path: "/zukan", heading: /みんなの現在地|図鑑|都道府県/, label: "zukan" },
@@ -111,7 +111,7 @@ test.describe("tab wait investigation — guest", () => {
       persona: "guest",
       fromPath: "/events",
       toPath: "/",
-      heading: /会いたい君がいる|現在地|ログイン/,
+      heading: /キミの|現在地|ログイン/,
       cold: false,
     });
     samples.push(backHome);

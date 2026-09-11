@@ -158,7 +158,7 @@ export function AuthPageIntro({ variant, appleEnabled = false }: AuthPageIntroPr
               : "X アカウントひとつで、足あと記録とすれ違い通信をはじめる"}
         </Text>
         <Text style={{ marginTop: 12, fontSize: 16, lineHeight: 24, color: palette.gray600 }}>
-          会いたい君がいる現在地——正確な場所を残して、あとからたどれる。
+          キミの現在地を刻む——正確な場所を残して、あとからたどれる。
           ログインは{" "}
           <Text style={{ fontWeight: "700", color: palette.gray900 }}>
             {appleEnabled ? "X（旧 Twitter）か Apple のアカウント" : "X（旧 Twitter）のアカウントだけ"}

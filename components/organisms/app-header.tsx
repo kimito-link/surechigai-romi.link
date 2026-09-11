@@ -37,7 +37,7 @@ export type AppHeaderProps = {
   showLoginStatus?: boolean;
   showMenu?: boolean;
   showLoginButton?: boolean;
-  /** ブランドコピー「会いたい君がいる現在地」を表示（既定 true）。ヒーローで強調済みの画面は false */
+  /** ブランドコピー「現在地でつながる、すれ違ひ通信」を表示（既定 true）。ヒーローで強調済みの画面は false */
   showTagline?: boolean;
   /** full=ポスト等 / compact=タブ画面（タグライン非表示・低ヘッダー） */
   variant?: "full" | "compact";

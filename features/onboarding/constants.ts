@@ -25,8 +25,8 @@ export interface OnboardingSlide {
 export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: "hero",
-    chip: "会いたい君がいる現在地",
-    title: "会いたい君がいる\n現在地",
+    chip: "現在地でつながる、すれ違ひ通信",
+    title: "現在地でつながる\nすれ違ひ通信",
     description: "移動の足あとを、あとで行ける\n正確な場所として残す",
     accent: "signal",
     characterType: "rinku",
