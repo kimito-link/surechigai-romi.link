@@ -26,6 +26,12 @@ import { findMatches } from "../core/matching.js";
 import { moderateText } from "../core/moderation.js";
 import { reverseGeocodeWithTimeout } from "../core/geocoding.js";
 import {
+  MAX_PROFILE_CATEGORIES,
+  isCategoryId,
+  parseCategories,
+  serializeCategories,
+} from "../core/category.js";
+import {
   isAcceptableAccuracy,
   isLocationRecordingPaused,
   resolveMunicipality,
@@ -546,5 +552,44 @@ export const encounterRouter = router({
         .where(eq(users.id, ctx.user.id));
 
       return { ok: true };
+    }),
+
+  /**
+   * 属性カテゴリを保存する。
+   *
+   * ★固定語彙のみを受ける（自由入力を許さない）。
+   *   これにより moderateText を通す必要が無い——
+   *   不適切な文字列がそもそも入らない構造になっている。
+   *   これが「投稿を持たない＝モデレーション不要」の具体例。
+   */
+  updateCategories: protectedProcedure
+    .input(
+      z.object({
+        categories: z
+          .array(z.string().max(24))
+          .max(MAX_PROFILE_CATEGORIES),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const unknown = input.categories.filter((id) => !isCategoryId(id));
+      if (unknown.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `知らないカテゴリです: ${unknown.join(", ")}`,
+        });
+      }
+
+      const db = await requireDb();
+      await db
+        .update(users)
+        .set({
+          categories: serializeCategories(
+            input.categories,
+            MAX_PROFILE_CATEGORIES,
+          ),
+        })
+        .where(eq(users.id, ctx.user.id));
+
+      return { ok: true, categories: parseCategories(input.categories.join(",")) };
     }),
 });

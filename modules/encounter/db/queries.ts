@@ -710,6 +710,8 @@ export type EncounterListItem = {
   partnerName: string | null;
   partnerHitokoto: string | null;
   partnerHitokotoUpdatedAt: Date | null;
+  /** 相手の属性カテゴリ（カンマ区切り生値）。UI側で parseCategories する */
+  partnerCategories: string | null;
   tier: number;
   h3R7: string | null;
   areaName: string | null;
@@ -793,6 +795,7 @@ export async function getMyEncounters(
       name: users.name,
       hitokoto: users.hitokoto,
       hitokotoUpdatedAt: users.hitokotoUpdatedAt,
+      categories: users.categories,
       isSuspended: users.isSuspended,
     })
     .from(users)
@@ -945,6 +948,7 @@ export async function getMyEncounters(
       partnerName: partner.name,
       partnerHitokoto: partner.hitokoto,
       partnerHitokotoUpdatedAt: partner.hitokotoUpdatedAt,
+      partnerCategories: partner.categories,
       tier: row.tier,
       h3R7: row.h3R7,
       areaName: row.areaName,

@@ -50,6 +50,13 @@
       "when": 1788837682389,
       "tag": "0006_usage_snapshots",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789120152440,
+      "tag": "0007_user_categories",
+      "breakpoints": true
     }
   ]
 }

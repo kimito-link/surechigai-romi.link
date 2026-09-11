@@ -45,6 +45,12 @@ export const users = pgTable("users", {
   isSuspended: boolean("isSuspended").default(false).notNull(),
   // 君斗りんくのすれ違ひ通信: 公開共有リンク用の非連番スラッグ（/u/<shareSlug> のOGP用）
   shareSlug: varchar("shareSlug", { length: 16 }).unique(),
+  /**
+   * 属性カテゴリ（カンマ区切り・最大3件）。"" = 未設定。
+   * ★固定語彙のみ。modules/encounter/core/category.ts が正本。
+   * ★自由入力にしない（投稿を持たない＝モデレーション不要という利点を守るため）。
+   */
+  categories: text("categories").default("").notNull(),
 });
 
 export type User = typeof users.$inferSelect;

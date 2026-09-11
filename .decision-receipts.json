@@ -64,6 +64,42 @@
       "scopePaths": [
         "__tests__/usage-snapshot.test.ts"
       ]
+    },
+    {
+      "at": "2026-09-11T09:55:34.644Z",
+      "responsibility": "属性カテゴリの固定語彙と判定（parse/serialize/shared）。既存の TYPE_TAG_LABELS とは別軸（あちらは集まりの開催形式、こちらは人の属性）",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "modules/encounter/core/category.ts"
+      ]
+    },
+    {
+      "at": "2026-09-11T09:55:34.764Z",
+      "responsibility": "カテゴリの回帰テスト。固定語彙・前方互換・交わり判定を守る",
+      "decision": "REUSE",
+      "canonicalSource": "modules/encounter/core/category.ts",
+      "scopePaths": [
+        "__tests__/category.test.ts"
+      ]
+    },
+    {
+      "at": "2026-09-11T09:55:34.892Z",
+      "responsibility": "カテゴリチップの表示。既存 events-event-card の tagChip と同じ見た目に揃える",
+      "decision": "REUSE",
+      "canonicalSource": "components/events/events-event-card.tsx",
+      "scopePaths": [
+        "components/molecules/category-chips.tsx"
+      ]
+    },
+    {
+      "at": "2026-09-11T09:55:35.015Z",
+      "responsibility": "カテゴリ選択モーダル。HitokotoModal と同じ型・同じスタイル集に揃える",
+      "decision": "REUSE",
+      "canonicalSource": "components/mypage/hitokoto-modal.tsx",
+      "scopePaths": [
+        "components/mypage/category-picker-modal.tsx"
+      ]
     }
   ]
 }

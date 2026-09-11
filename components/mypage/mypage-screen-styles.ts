@@ -364,6 +364,16 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
   },
+  /** 選択中のカテゴリチップ。★色だけでなく枠線でも示す(色覚に依存しない) */
+  categoryChipOn: {
+    borderColor: color.accentIndigo,
+    borderWidth: 2,
+    backgroundColor: color.accentIndigo + "1A",
+  },
+  categoryChipTextOn: {
+    color: color.accentIndigo,
+    fontWeight: "800",
+  },
   hitokotoFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
