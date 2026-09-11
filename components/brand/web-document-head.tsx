@@ -5,7 +5,7 @@ import Head from "expo-router/head";
 import { Platform } from "react-native";
 
 /** ブラウザタブ・iOS ホーム画面追加の正式名称 */
-export const PWA_APP_NAME = "君斗りんくのすれ違ひ通信-現在地でつながる、すれ違ひ通信";
+export const PWA_APP_NAME = "君斗りんくのすれ違ひ通信";
 /** ヘッダー等の短い表示用 */
 export const DOCUMENT_TITLE = "君斗りんくのすれ違ひ通信";
 

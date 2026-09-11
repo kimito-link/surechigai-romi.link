@@ -39,10 +39,11 @@ export function BrandTagline({
       <Text
         style={[styles.compact, onDark && styles.compactOnDark, { textAlign: align }, style]}
         numberOfLines={1}
-        accessibilityLabel="現在地でつながる、すれ違ひ通信"
+        accessibilityLabel="キミの現在地を刻む"
       >
+        キミの
         <Text style={[styles.compactAccent, onDark && styles.compactAccentOnDark]}>現在地</Text>
-        でつながる、すれ違ひ通信
+        を、刻む。
       </Text>
     );
   }
@@ -50,13 +51,16 @@ export function BrandTagline({
   return (
     <View
       style={{ alignItems: align === "center" ? "center" : "flex-start" }}
-      accessibilityLabel="現在地でつながる、すれ違ひ通信"
+      accessibilityLabel="キミの現在地を刻む"
     >
       <Text style={[styles.line1, onDark && styles.line1OnDark, lcpProminent && styles.line1Lcp]}>
-        現在地でつながる
+        キミの
       </Text>
       <Text style={[styles.line2, onDark && styles.line2OnDark, lcpProminent && styles.line2Lcp]}>
-        すれ違ひ通信
+        現在地
+      </Text>
+      <Text style={[styles.line1, onDark && styles.line1OnDark]}>
+        を、刻む。
       </Text>
     </View>
   );

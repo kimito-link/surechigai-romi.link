@@ -51,7 +51,7 @@ export function PostGuestScreen() {
         <View style={styles.hero}>
           <BrandTagline compact={false} align="center" lcpProminent />
           <Text style={styles.heroSub}>
-            移動の足あとを残して、すれ違いと聖地巡礼を
+            移動の足あとを残して、すれ違ひと聖地巡礼を
           </Text>
         </View>
         <View style={styles.previewWrap}>
