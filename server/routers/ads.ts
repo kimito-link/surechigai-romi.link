@@ -39,6 +39,10 @@ type SponsorCardDto = {
   sponsorLabel: "協賛" | "お知らせ";
 };
 
+// ★lib/sponsor-frequency.ts の todayKey と本体は同一だが、あちらは react-native の
+//   Platform を import しているのでサーバーから使えない（サーバー側は react-native を
+//   一切 import していない。2026-09-14 に実測して確認）。
+//   ＝ これは「統合してはいけない重複」。共有化するなら Platform 非依存の層を先に作る。
 function todayKey(date = new Date()): string {
   return date.toISOString().slice(0, 10);
 }

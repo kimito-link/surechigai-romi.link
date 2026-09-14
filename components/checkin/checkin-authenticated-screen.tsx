@@ -65,52 +65,19 @@ import {
 } from "@/lib/checkin-location-session";
 // ★座標が実数かの判定は既存の正本を使う（依存ゼロ。新しい検証関数を作らない）。
 import { assertFiniteLatLng } from "@/modules/encounter/core/lat-lng";
+// ★協賛の表示頻度は lib/sponsor-frequency.ts が正本。ここで自前に持たない
+//   （2026-09-14: 同じ実装をこのファイルにコピーして持っていたのを解消した。
+//    正本は sponsor-slot.tsx が既に使っており、こちらだけ取り残されていた）。
+import {
+  SPONSOR_CLIENT_CAP,
+  canRequestSponsorCard,
+  rememberSponsorCardDisplay,
+} from "@/lib/sponsor-frequency";
 import { hasCompletedPostLoginLocationIntro } from "@/features/onboarding/components/PostLoginLocationIntro";
 
 type CheckinState = "idle" | "loading" | "adjust" | "success" | "error" | "zero";
 type LoadingPhase = "locating" | "saving";
 const RETRY_FIX_MAX_AGE_MS = 60_000;
-const SPONSOR_CLIENT_CAP = 3;
-const SPONSOR_CLIENT_COUNTER_KEY = "kimito:sponsor-impressions";
-
-type SponsorClientCounter = {
-  date: string;
-  count: number;
-};
-
-function todayKey(date = new Date()): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function readSponsorClientCounter(): SponsorClientCounter {
-  const fallback = { date: todayKey(), count: 0 };
-  if (Platform.OS !== "web" || typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(SPONSOR_CLIENT_COUNTER_KEY);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw) as Partial<SponsorClientCounter>;
-    if (parsed.date !== fallback.date || typeof parsed.count !== "number") return fallback;
-    return { date: parsed.date, count: Math.max(0, parsed.count) };
-  } catch {
-    return fallback;
-  }
-}
-
-function canRequestSponsorCard(): boolean {
-  return readSponsorClientCounter().count < SPONSOR_CLIENT_CAP;
-}
-
-function rememberSponsorCardDisplay(): boolean {
-  if (Platform.OS !== "web" || typeof window === "undefined") return true;
-  try {
-    const current = readSponsorClientCounter();
-    const next = { date: todayKey(), count: Math.min(SPONSOR_CLIENT_CAP, current.count + 1) };
-    window.localStorage.setItem(SPONSOR_CLIENT_COUNTER_KEY, JSON.stringify(next));
-    return next.count < SPONSOR_CLIENT_CAP;
-  } catch {
-    return true;
-  }
-}
 
 export default function CheckinAuthenticatedScreen() {
   // ===========================================================================

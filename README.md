@@ -6,7 +6,7 @@ GitHub リポジトリ: `kimito-link/surechigai-romi.link`
 移動の副産物として封筒（すれ違い）が溜まり、帰宅後にまとめて開封する受動体験アプリ。
 DSすれちがい通信の本質「開いた時に既に何かが起きている」をコアに据え、Xログインのみ・アプリ内DM禁止で運営する。
 
-設計書: `../surechigai-nico/docs/V2-SURECHIGAI-DESIGN.md`
+設計書: `../_archive/surechigai-nico/docs/V2-SURECHIGAI-DESIGN.md`
 
 ---
 
