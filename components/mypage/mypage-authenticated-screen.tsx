@@ -35,6 +35,10 @@ import {
 import { warmOgImageNow } from "@/hooks/use-warm-og-image";
 import { readNoticeEnabled, writeNoticeEnabled } from "@/lib/encounter-notice";
 import type { TrailVisibility } from "@/modules/encounter/core/trail-visibility";
+import {
+  parseCategories,
+  type CategoryId,
+} from "@/modules/encounter/core/category";
 import { useLivePresenceControls } from "@/hooks/use-live-presence";
 import { MypageScreenView } from "@/components/mypage/mypage-screen-view";
 import { styles } from "@/components/mypage/mypage-screen-styles";
@@ -87,6 +91,26 @@ export function MypageAuthenticatedScreen() {
     void writeNoticeEnabled(next);
   }, []);
   const [localHitokoto, setLocalHitokoto] = useState("");
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [localCategories, setLocalCategories] = useState<readonly string[]>([]);
+
+  /**
+   * ★保存済みの「ひとこと」「属性」を読み直す。
+   *
+   * auth.me は ctx.user（users テーブルの行そのもの）を返すので、hitokoto も
+   * categories もここに既に流れている。専用の読み出し手続きは足さない。
+   *
+   * ★これが無いと「保存はできるが、画面を開くたび空に見える」状態になる
+   *   （実際 localHitokoto は useState("") 固定で、ひとことがずっとそうなっていた）。
+   */
+  const meQuery = trpc.auth.me.useQuery();
+  useEffect(() => {
+    const me = meQuery.data;
+    if (!me) return;
+    setLocalHitokoto(me.hitokoto ?? "");
+    setLocalCategories(parseCategories(me.categories));
+  }, [meQuery.data]);
+
   const { resetTutorial } = useTutorial();
   const { resetOnboarding } = useOnboarding();
 
@@ -151,6 +175,33 @@ export function MypageAuthenticatedScreen() {
       updateHitokoto.mutate({ text });
     },
     [updateHitokoto],
+  );
+
+  const updateCategories = trpc.encounter.updateCategories.useMutation({
+    onSuccess: () => {
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    },
+  });
+
+  const handleCategoriesSave = useCallback(
+    (ids: CategoryId[]) => {
+      const prev = localCategories;
+      // 先に画面へ反映する（保存待ちで選んだものが消えて見えるのを避ける）
+      setLocalCategories(ids);
+      updateCategories.mutate(
+        { categories: ids },
+        {
+          onError: (err) => {
+            // ★失敗したら元に戻す。保存できていないのに保存済みに見せない
+            setLocalCategories(prev);
+            Alert.alert("エラー", err.message || "属性の保存に失敗しました");
+          },
+        },
+      );
+    },
+    [localCategories, updateCategories],
   );
 
   const handleUnblock = useCallback(
@@ -314,6 +365,10 @@ export function MypageAuthenticatedScreen() {
       setHitokotoModalVisible={setHitokotoModalVisible}
       localHitokoto={localHitokoto}
       handleHitokotoSave={handleHitokotoSave}
+      categories={localCategories}
+      categoryModalVisible={categoryModalVisible}
+      setCategoryModalVisible={setCategoryModalVisible}
+      handleCategoriesSave={handleCategoriesSave}
       showBlockList={showBlockList}
       setShowBlockList={setShowBlockList}
       resetTutorial={resetTutorial}

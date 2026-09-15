@@ -40,6 +40,9 @@ import {
 import { LocationPauseControl } from "@/components/mypage/location-pause-control";
 import { DeleteAccountControl } from "@/components/mypage/delete-account-control";
 import { HitokotoModal } from "@/components/mypage/hitokoto-modal";
+import { CategoryPickerModal } from "@/components/mypage/category-picker-modal";
+import { CategoryChips } from "@/components/molecules/category-chips";
+import type { CategoryId } from "@/modules/encounter/core/category";
 import type { AuthUser } from "@/lib/auth-context";
 import { styles } from "@/components/mypage/mypage-screen-styles";
 
@@ -79,6 +82,11 @@ export type MypageScreenViewProps = {
   setHitokotoModalVisible: (value: boolean) => void;
   localHitokoto: string;
   handleHitokotoSave: (text: string) => void;
+  /** 属性カテゴリ（固定語彙・最大3件）。"さがす" で同じ属性の人を見つける材料になる */
+  categories: readonly string[];
+  categoryModalVisible: boolean;
+  setCategoryModalVisible: (value: boolean) => void;
+  handleCategoriesSave: (ids: CategoryId[]) => void;
   showBlockList: boolean;
   setShowBlockList: (value: boolean) => void;
   resetTutorial: () => void;
@@ -120,6 +128,10 @@ export function MypageScreenView(props: MypageScreenViewProps) {
     setHitokotoModalVisible,
     localHitokoto,
     handleHitokotoSave,
+    categories,
+    categoryModalVisible,
+    setCategoryModalVisible,
+    handleCategoriesSave,
     showBlockList,
     setShowBlockList,
     resetTutorial,
@@ -360,6 +372,30 @@ export function MypageScreenView(props: MypageScreenViewProps) {
           />
         </View>
 
+        {/* 属性 — 同じ属性の人に見つけてもらうための固定カテゴリ（最大3件） */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>属性</Text>
+            <Pressable
+              onPress={() => setCategoryModalVisible(true)}
+              style={({ pressed }) => [styles.editButton, pressed && { opacity: 0.7 }]}
+              accessibilityRole="button"
+              accessibilityLabel="属性を編集"
+            >
+              <MaterialIcons name="edit" size={16} color={color.accentIndigo} />
+              <Text style={styles.editButtonText}>編集</Text>
+            </Pressable>
+          </View>
+          {categories.length > 0 ? (
+            <CategoryChips ids={categories} />
+          ) : (
+            <Text style={styles.hitokotoDisplay}>(属性未設定)</Text>
+          )}
+          <Text style={styles.hitokotoNote}>
+            同じ属性の人に見つけてもらいやすくなります
+          </Text>
+        </View>
+
         {/* ひとこと */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -546,6 +582,16 @@ export function MypageScreenView(props: MypageScreenViewProps) {
         onClose={() => setHitokotoModalVisible(false)}
         onSave={handleHitokotoSave}
       />
+
+      {/* 属性編集モーダル。★固定語彙をタップで選ぶだけ（自由入力を置かない） */}
+      {categoryModalVisible ? (
+        <CategoryPickerModal
+          visible={categoryModalVisible}
+          current={categories}
+          onClose={() => setCategoryModalVisible(false)}
+          onSave={handleCategoriesSave}
+        />
+      ) : null}
 
       {/* Xアカウント切り替え。X側のログアウトはユーザー操作が要るので案内する。 */}
       <SwitchXAccountModal

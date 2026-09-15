@@ -20,6 +20,7 @@ import { PrefectureCreatorCard } from "@/components/molecules/prefecture-creator
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { navigate } from "@/lib/navigation";
+import { parseCategories } from "@/modules/encounter/core/category";
 import { palette } from "@/theme/tokens";
 
 function Breadcrumb({
@@ -56,6 +57,15 @@ export default function PrefectureCreatorsScreen() {
     { prefecture: prefName },
     { enabled: !!prefName },
   );
+
+  /**
+   * 閲覧者自身の属性。一致したチップだけを強調するために使う。
+   * ★ゲストでは引かない（未ログインでは強調する相手が居ない）。
+   * ★useAuth().user は lib/_core/auth の独自型で categories を持たないので、
+   *   auth.me（users テーブル行）から読む。
+   */
+  const meQuery = trpc.auth.me.useQuery(undefined, { enabled: isAuthenticated });
+  const viewerCategories = parseCategories(meQuery.data?.categories);
 
   const creators = data?.creators ?? [];
   const count = creators.length;
@@ -143,6 +153,7 @@ export default function PrefectureCreatorsScreen() {
                   key={c.userId}
                   creator={c}
                   onPress={openTrail}
+                  viewerCategories={viewerCategories}
                 />
               ))}
             </View>

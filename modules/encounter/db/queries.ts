@@ -24,6 +24,7 @@ import { H3_RES_5, H3_RES_7, kRing, toGrid, toH3Cell, toH3ParentCell } from "../
 import type { NearbyCandidate, TimeshiftCandidate } from "../core/matching.js";
 import type { PrefectureCreatorListRow } from "../core/prefecture-creator-types.js";
 import { LIVE_WINDOW_MS } from "../core/prefecture-creator-types.js";
+import { parseCategories } from "../core/category.js";
 import {
   classifyLocationToPrefectureName,
   isValidPrefectureName,
@@ -1292,6 +1293,7 @@ export async function getCreatorsByPrefecture(
       openId: users.openId,
       isSuspended: users.isSuspended,
       shareSlug: users.shareSlug,
+      categories: users.categories,
     })
     .from(users)
     .where(inArray(users.id, userIds));
@@ -1344,6 +1346,8 @@ export async function getCreatorsByPrefecture(
       shareSlug: isValidShareSlug(user.shareSlug) ? user.shareSlug : null,
       lastStayedAt,
       isLive: now - lastStayedAt.getTime() < LIVE_WINDOW_MS,
+      // ★未知 id は parseCategories が捨てる（語彙を減らしても古い値で壊れない）
+      categories: parseCategories(user.categories),
     });
   }
 

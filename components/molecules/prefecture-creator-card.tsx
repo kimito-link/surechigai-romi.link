@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { formatRelativeJa } from "@/lib/date-utils";
 import type { PrefectureCreatorListRow } from "@/modules/encounter/core/prefecture-creator-types";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
+import { CategoryChips } from "@/components/molecules/category-chips";
 import { palette } from "@/theme/tokens";
 
 export type PrefectureCreator = PrefectureCreatorListRow;
@@ -10,13 +11,19 @@ export type PrefectureCreator = PrefectureCreatorListRow;
 type PrefectureCreatorCardProps = {
   creator: PrefectureCreator;
   onPress?: (shareSlug: string) => void;
+  /** 閲覧者の属性。一致したものだけチップを強調する（数字は出さない） */
+  viewerCategories?: readonly string[];
 };
 
 /**
  * surechigai-nico の CreatorRow 相当。
  * アバター + 表示名 + （任意）@handle + 最終滞在。タップで /u/<shareSlug> へ。
  */
-export function PrefectureCreatorCard({ creator, onPress }: PrefectureCreatorCardProps) {
+export function PrefectureCreatorCard({
+  creator,
+  onPress,
+  viewerCategories,
+}: PrefectureCreatorCardProps) {
   const fallbackInitial = (creator.displayName || creator.twitterHandle || "?").slice(0, 1);
   const canOpen = Boolean(creator.shareSlug && onPress);
 
@@ -43,6 +50,11 @@ export function PrefectureCreatorCard({ creator, onPress }: PrefectureCreatorCar
         <Text style={styles.stayedMeta}>
           この県に最後に滞在: {formatRelativeJa(creator.lastStayedAt)}
         </Text>
+        {creator.categories.length > 0 ? (
+          <View style={styles.categoryRow}>
+            <CategoryChips ids={creator.categories} highlight={viewerCategories} />
+          </View>
+        ) : null}
       </View>
 
       {creator.isLive ? (
@@ -124,6 +136,9 @@ const styles = StyleSheet.create({
     color: "#8A7960",
     marginTop: 2,
     lineHeight: 16,
+  },
+  categoryRow: {
+    marginTop: 4,
   },
   liveBadge: {
     flexDirection: "row",

@@ -9,6 +9,12 @@ export type PrefectureCreatorListRow = {
   shareSlug: string | null;
   lastStayedAt: Date;
   isLive: boolean;
+  /**
+   * 属性カテゴリ（固定語彙の id。未設定なら空配列）。
+   * ★「何が一致したか」を示すためだけに使う。相性スコアのような数字は作らない
+   *   （modules/encounter/core/category.ts の方針）。
+   */
+  categories: string[];
 };
 
 export const LIVE_WINDOW_MS = 30 * 60 * 1000;
