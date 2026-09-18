@@ -1,1 +1,318 @@
-PLACEHOLDER
+{
+  "version": 2,
+  "git": {
+    "deploymentEnabled": false
+  },
+  "buildCommand": "bash scripts/vercel-build.sh",
+  "installCommand": "pnpm install",
+  "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://clerk.kimito.link https://challenges.cloudflare.com https://va.vercel-scripts.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.twimg.com https://*.clerk.com https://unavatar.io https://kimito.link https://*.openfreemap.org https://tile.openstreetmap.org; connect-src 'self' https://clerk.kimito.link https://*.clerk.accounts.dev https://clerk-telemetry.com https://*.sentry.io https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://api.x.com https://api.twitter.com https://*.openfreemap.org https://tile.openstreetmap.org https://*.vercel-insights.com https://cloudflareinsights.com; frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.kimito.link; worker-src 'self' blob:; media-src 'self' data: blob:; manifest-src 'self'; form-action 'self' https://clerk.kimito.link https://kimito.link"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(self), camera=(), microphone=(), browsing-topics=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
+      ]
+    },
+    {
+      "source": "/lp/video/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Accept-Ranges",
+          "value": "bytes"
+        }
+      ]
+    },
+    {
+      "source": "/favicon-48.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/favicon.ico",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/favicon-:size.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/pwa-icon-:file",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/apple-touch-icon.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/icon-:size.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/favicon.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/_expo/static/js/:path*-:hash([0-9a-f]{32}).js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/:path*.:hash([0-9a-f]{32}).:ext",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/fonts/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000"
+        }
+      ]
+    },
+    {
+      "source": "/splash/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/lp/img/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/lp/brand/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/lp/app.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/trpc/[trpc].ts": {
+      "maxDuration": 30
+    },
+    "api/sweep.ts": {
+      "maxDuration": 30
+    }
+  },
+  "redirects": [
+    {
+      "source": "/sign-up",
+      "destination": "/sign-in",
+      "permanent": false
+    },
+    {
+      "source": "/sign-up/",
+      "destination": "/sign-in",
+      "permanent": false
+    },
+    {
+      "source": "/icon-192.png",
+      "destination": "/pwa-icon-192.png",
+      "permanent": false
+    },
+    {
+      "source": "/icon-512.png",
+      "destination": "/pwa-icon-512.png",
+      "permanent": false
+    },
+    {
+      "source": "/apple-touch-icon.png",
+      "destination": "/pwa-icon-180.png",
+      "permanent": false
+    },
+    {
+      "source": "/logo192.png",
+      "destination": "/pwa-icon-192.png",
+      "permanent": false
+    },
+    {
+      "source": "/logo512.png",
+      "destination": "/pwa-icon-512.png",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-forwarded-proto",
+          "value": "http"
+        }
+      ],
+      "destination": "https://surechigai.kimito.link/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "surechigai-romi.link"
+        }
+      ],
+      "destination": "https://surechigai.kimito.link/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.surechigai-romi.link"
+        }
+      ],
+      "destination": "https://surechigai.kimito.link/:path*",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
+      "source": "/sign-in",
+      "destination": "/sign-in.html"
+    },
+    {
+      "source": "/sign-in/",
+      "destination": "/sign-in.html"
+    },
+    {
+      "source": "/auth/kimito-link",
+      "destination": "/auth/kimito-link.html"
+    },
+    {
+      "source": "/auth/kimito-link/",
+      "destination": "/auth/kimito-link.html"
+    },
+    {
+      "source": "/sso-callback",
+      "destination": "/sso-callback.html"
+    },
+    {
+      "source": "/sso-callback/",
+      "destination": "/sso-callback.html"
+    },
+    {
+      "source": "/oauth/twitter-callback",
+      "destination": "/oauth/twitter-callback.html"
+    },
+    {
+      "source": "/oauth/twitter-callback/",
+      "destination": "/oauth/twitter-callback.html"
+    },
+    {
+      "source": "/((?!api/|lp(?:/|$)|fonts/|_expo/|assets/|favicon|icon-|pwa-icon-|apple-touch-icon|manifest\\.json|offline\\.html|sw\\.js|version\\.json|robots\\.txt|sitemap\\.xml).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
