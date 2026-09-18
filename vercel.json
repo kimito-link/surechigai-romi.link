@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "git": {
+    "deploymentEnabled": false
+  },
   "buildCommand": "bash scripts/vercel-build.sh",
   "installCommand": "pnpm install",
   "outputDirectory": "dist",
@@ -74,15 +77,6 @@
       ]
     },
     {
-      "source": "/favicon.png",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
       "source": "/pwa-icon-:file",
       "headers": [
         {
@@ -102,6 +96,15 @@
     },
     {
       "source": "/icon-:size.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/favicon.png",
       "headers": [
         {
           "key": "Cache-Control",
