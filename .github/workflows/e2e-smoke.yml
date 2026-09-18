@@ -7,7 +7,9 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
-    - cron: "0 3 * * *"
+    # 日次は Actions 無料枠を食い潰していた（2026-09 実測で月3000分を早期消化）。
+    # 本番デプロイ後は workflow_run で既に走るので、定期は週1に落とす。
+    - cron: "0 3 * * 1"
 
 jobs:
   e2e-guest:
