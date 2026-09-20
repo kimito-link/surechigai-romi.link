@@ -15,6 +15,12 @@ export type EncounterItem = {
   partnerDisplayName?: string | null;
   partnerProfileImage?: string | null;
   partnerFollowersCount?: number | null;
+  /**
+   * 相手の属性カテゴリ（カンマ区切りの生値）。parseCategories で配列にする。
+   * ★サーバー（EncounterListItem）は以前から返していたが、この型が受けていなかったため
+   *   UI からは見えていなかった（2026-09-20 に配線）。
+   */
+  partnerCategories?: string | null;
 };
 
 export const TIER_LABELS: Record<number, string> = {

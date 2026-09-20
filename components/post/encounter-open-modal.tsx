@@ -29,7 +29,13 @@ import {
 import { buildXFollowUrl } from "@/lib/x-follow";
 import { color, palette } from "@/theme/tokens";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
+import { CategoryChips } from "@/components/molecules/category-chips";
 import { normalizeTwitterUsername } from "@/lib/twitter-username";
+import {
+  parseCategories,
+  sharedCategories,
+} from "@/modules/encounter/core/category";
+import { trpc } from "@/lib/trpc";
 
 function FloatingEmoji({ emoji, offsetX }: { emoji: string; offsetX: number }) {
   const progress = useSharedValue(0);
@@ -130,6 +136,18 @@ export function EncounterOpenModal({
   const modalDisplayName =
     item.partnerDisplayName || item.partnerName || "ロミユーザー";
   const modalHandle = normalizeTwitterUsername(item.partnerUsername);
+
+  /**
+   * 相手の属性と、そのうち自分と一致したもの。
+   * ★「何が一致したか」だけを見せる。相性スコアのような数字は作らない
+   *   （根拠を説明できない数字は信用を損なう。core/category.ts の方針）。
+   */
+  const meQuery = trpc.auth.me.useQuery();
+  const partnerCategories = parseCategories(item.partnerCategories);
+  const matched = sharedCategories(
+    partnerCategories,
+    parseCategories(meQuery.data?.categories),
+  );
   const followUrl = buildXFollowUrl(modalHandle);
 
   return (
@@ -199,6 +217,18 @@ export function EncounterOpenModal({
                 <Text style={styles.modalHitokoto} numberOfLines={4}>
                   {item.partnerHitokoto}
                 </Text>
+              </View>
+            )}
+
+            {/* 属性。一致したものは枠つきで強調される（CategoryChips の highlight） */}
+            {partnerCategories.length > 0 && (
+              <View style={styles.modalCategoriesWrap}>
+                <CategoryChips ids={partnerCategories} highlight={matched} />
+                {matched.length > 0 && (
+                  <Text style={styles.modalCategoryNote}>
+                    あなたと同じ属性が {matched.length} つ
+                  </Text>
+                )}
               </View>
             )}
 
@@ -370,6 +400,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     fontStyle: "italic",
+  },
+  modalCategoriesWrap: {
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 12,
+  },
+  modalCategoryNote: {
+    color: color.accentIndigo,
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "center",
   },
   modalTotal: {
     color: color.textMuted,
