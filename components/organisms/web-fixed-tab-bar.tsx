@@ -30,7 +30,7 @@ const TABS: TabItem[] = [
   },
   {
     href: "/(tabs)/checkin",
-    label: "チェックイン",
+    label: "現在地",
     icon: "location-on",
     activePaths: ["/checkin"],
     prefetchKey: "checkin",
@@ -44,8 +44,8 @@ const TABS: TabItem[] = [
   },
   {
     href: "/(tabs)/zukan",
-    label: "図鑑",
-    icon: "menu-book",
+    label: "さがす",
+    icon: "public",
     activePaths: ["/zukan"],
     prefetchKey: "zukan",
   },

@@ -21,7 +21,7 @@ export default function CheckinScreen() {
     return (
       <ScreenContainer containerClassName="bg-background">
         <TabScreenHeader
-          title="チェックイン"
+          title="現在地"
           showCharacters={false}
           isDesktop={isDesktop}
           showMenu
@@ -35,7 +35,7 @@ export default function CheckinScreen() {
   if (!isAuthenticated) {
     return (
       <OneTapGuestShell
-        title="チェックイン"
+        title="現在地"
         headline="今いる場所を、あとで行ける精度で残す"
         preview={<CheckinGuestPreview />}
         benefits={[

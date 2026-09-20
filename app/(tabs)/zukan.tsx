@@ -23,13 +23,13 @@ export default function ZukanScreen() {
   if (!isAuthenticated) {
     return (
       <OneTapGuestShell
-        title="現在地"
+        title="さがす"
         headline="現在地でつながる、すれ違ひ通信"
         preview={(heroMapWidth) => <ZukanGuestLive availableWidth={heroMapWidth} />}
         benefits={[
           { icon: "map", label: "都道府県" },
-          { icon: "groups", label: "みんな" },
-          { icon: "ios-share", label: "Xでシェア" },
+          { icon: "sell", label: "属性で合う" },
+          { icon: "ios-share", label: "Xでつながる" },
         ]}
         heroPanelWidth={ZUKAN_HERO_PANEL_WIDTH}
         heroExtra={<GuestPlaceContext />}

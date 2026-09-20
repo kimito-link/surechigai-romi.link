@@ -178,7 +178,7 @@ export function ZukanAuthenticatedScreen() {
   return (
     <ScreenContainer containerClassName="bg-background">
       <TabScreenHeader
-        title="みんなの現在地"
+        title="さがす"
         contextKey="zukan"
         showCharacters={false}
         isDesktop={isDesktop}

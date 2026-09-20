@@ -130,7 +130,7 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
   return (
     <ScreenContainer containerClassName="bg-background" style={isMapFirst ? styles.screenFlex : undefined}>
       <TabScreenHeader
-        title="チェックイン"
+        title="現在地"
         contextKey="checkin"
         showCharacters={false}
         isDesktop={isDesktop}

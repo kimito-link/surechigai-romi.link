@@ -22,9 +22,9 @@ interface GlobalMenuProps {
 
 const TAB_SHORTCUTS = [
   { icon: "home", label: "ポスト", path: "/(tabs)" },
-  { icon: "location-on", label: "チェックイン", path: "/(tabs)/checkin" },
+  { icon: "location-on", label: "現在地", path: "/(tabs)/checkin" },
   { icon: "event", label: "集まり", path: "/(tabs)/events" },
-  { icon: "book", label: "図鑑", path: "/(tabs)/zukan" },
+  { icon: "public", label: "さがす", path: "/(tabs)/zukan" },
   { icon: "map", label: "軌跡", path: "/(tabs)/map" },
   { icon: "person", label: "マイページ", path: "/(tabs)/mypage" },
 ] as const;

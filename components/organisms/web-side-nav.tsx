@@ -29,7 +29,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/(tabs)/zukan",
-    label: "みんなの現在地",
+    label: "さがす",
     icon: "public",
     activePaths: ["/zukan"],
     prefetchKey: "zukan",
@@ -43,7 +43,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/(tabs)/checkin",
-    label: "チェックイン",
+    label: "現在地",
     icon: "location-on",
     activePaths: ["/checkin"],
     prefetchKey: "checkin",

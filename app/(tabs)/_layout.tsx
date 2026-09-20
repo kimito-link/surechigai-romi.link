@@ -124,8 +124,8 @@ function TabNav() {
           name="checkin"
           options={{
             lazy: true,
-            title: "チェックイン",
-            tabBarAccessibilityLabel: "チェックイン — 現在地を記録",
+            title: "現在地",
+            tabBarAccessibilityLabel: "現在地 — 今いる場所を記録する",
             tabBarIcon: ({ color: iconColor }) => <CheckinTabIcon color={iconColor} />,
           }}
         />
@@ -142,8 +142,8 @@ function TabNav() {
           name="zukan"
           options={{
             lazy: true,
-            title: "現在地",
-            tabBarAccessibilityLabel: "みんなの現在地 — 都道府県別",
+            title: "さがす",
+            tabBarAccessibilityLabel: "さがす — 属性と都道府県で人を見つける",
             tabBarIcon: ({ color: iconColor }) => (
               <IconSymbol size={26} name="globe.asia.australia.fill" color={iconColor} />
             ),
