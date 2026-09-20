@@ -26,6 +26,7 @@
   "exclude": [
     "node_modules",
     "dist",
-    "council"
+    "council",
+    "line-bot"
   ]
 }

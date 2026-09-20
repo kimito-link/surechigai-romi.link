@@ -1,7 +1,7 @@
 {
   "_source": "pwa-asset-generator (elegantapp) apple-fallback-data.json — Apple Human Interface Guidelines 由来",
   "_note": "縦向きのみ（manifest.orientation=portrait）。手で編集しない。更新は pnpm splash:sync。",
-  "_syncedAt": "2026-08-16",
+  "_syncedAt": "2026-09-20",
   "portrait": [
     {
       "px": [
@@ -41,6 +41,18 @@
     },
     {
       "px": [
+        1080,
+        2340
+      ],
+      "logical": [
+        360,
+        780
+      ],
+      "dpr": 3,
+      "device": "iPhone 13 mini"
+    },
+    {
+      "px": [
         1125,
         2436
       ],
@@ -49,7 +61,7 @@
         812
       ],
       "dpr": 3,
-      "device": "iPhone 13 mini"
+      "device": "iPhone 11 Pro"
     },
     {
       "px": [
@@ -217,7 +229,7 @@
         1112
       ],
       "dpr": 2,
-      "device": "iPad Air 10.5-inch"
+      "device": "iPad Pro 10.5-inch"
     },
     {
       "px": [
@@ -229,7 +241,19 @@
         1194
       ],
       "dpr": 2,
-      "device": "iPad Pro 11-inch"
+      "device": "iPad Pro 11-inch 1st–4th generation"
+    },
+    {
+      "px": [
+        1668,
+        2420
+      ],
+      "logical": [
+        834,
+        1210
+      ],
+      "dpr": 2,
+      "device": "iPad Pro 11-inch 5th and 6th generation"
     },
     {
       "px": [
@@ -242,6 +266,18 @@
       ],
       "dpr": 2,
       "device": "iPad Pro 12.9-inch"
+    },
+    {
+      "px": [
+        2064,
+        2752
+      ],
+      "logical": [
+        1032,
+        1376
+      ],
+      "dpr": 2,
+      "device": "iPad Pro 13-inch"
     }
   ]
 }

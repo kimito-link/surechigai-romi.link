@@ -91,6 +91,12 @@ export default function Root({ children }: PropsWithChildren) {
         {/* iPhone 13 mini */}
         <link
           rel="apple-touch-startup-image"
+          href="/splash/ios-1080x2340.png?v=2"
+          media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 360px) and (device-height: 780px) and (resolution: 3dppx) and (orientation: portrait)"
+        />
+        {/* iPhone 11 Pro */}
+        <link
+          rel="apple-touch-startup-image"
           href="/splash/ios-1125x2436.png?v=2"
           media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 375px) and (device-height: 812px) and (resolution: 3dppx) and (orientation: portrait)"
         />
@@ -172,23 +178,35 @@ export default function Root({ children }: PropsWithChildren) {
           href="/splash/ios-1640x2360.png?v=2"
           media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 820px) and (device-height: 1180px) and (resolution: 2dppx) and (orientation: portrait)"
         />
-        {/* iPad Air 10.5-inch */}
+        {/* iPad Pro 10.5-inch */}
         <link
           rel="apple-touch-startup-image"
           href="/splash/ios-1668x2224.png?v=2"
           media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 834px) and (device-height: 1112px) and (resolution: 2dppx) and (orientation: portrait)"
         />
-        {/* iPad Pro 11-inch */}
+        {/* iPad Pro 11-inch 1st–4th generation */}
         <link
           rel="apple-touch-startup-image"
           href="/splash/ios-1668x2388.png?v=2"
           media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 834px) and (device-height: 1194px) and (resolution: 2dppx) and (orientation: portrait)"
+        />
+        {/* iPad Pro 11-inch 5th and 6th generation */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-1668x2420.png?v=2"
+          media="(device-width: 834px) and (device-height: 1210px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 834px) and (device-height: 1210px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPad Pro 12.9-inch */}
         <link
           rel="apple-touch-startup-image"
           href="/splash/ios-2048x2732.png?v=2"
           media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 1024px) and (device-height: 1366px) and (resolution: 2dppx) and (orientation: portrait)"
+        />
+        {/* iPad Pro 13-inch */}
+        <link
+          rel="apple-touch-startup-image"
+          href="/splash/ios-2064x2752.png?v=2"
+          media="(device-width: 1032px) and (device-height: 1376px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 1032px) and (device-height: 1376px) and (resolution: 2dppx) and (orientation: portrait)"
         />
 {/* SPLASH-LINKS:END */}
         {/* フォールバック（media省略）: 新機種等で上記のどのdevice-width/heightにも
