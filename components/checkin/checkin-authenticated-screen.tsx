@@ -447,10 +447,10 @@ export default function CheckinAuthenticatedScreen() {
       //   ★await しない: ハブが遅くてもチェックインの完了演出を遅らせない
       //     （lib/ogp/warm-og-image.ts:40-47 と同じ判断。未解決 Promise で
       //      レスポンスが詰まった 2026-07-31 の実機障害が理由）。
-      //   ★成功/失敗を画面に出さない: 記録はおまけ。本業を巻き添えにしない。
+      //   ★結果を画面に出さない: 記録はおまけ。本業を巻き添えにしない。
       //   ★allSettled は invalidate 失敗でもここへ来る。その場合 getData() は
       //     古い値を返すが、送信側が前回値と同じなら送らないので実害は小さい。
-      //   ★state==="success" を条件にしない: すれ違い0人（zero）でも保存は成功している。
+      //   ★state==="success" を条件にしない: すれ違い0人（zero）でも保存は済んでいる。
       const hubSignal = utils.dashboard.mySignal.getData();
       void sendHubSummary(
         {
