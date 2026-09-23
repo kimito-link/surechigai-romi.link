@@ -100,6 +100,25 @@
       "scopePaths": [
         "components/mypage/category-picker-modal.tsx"
       ]
+    },
+    {
+      "at": "2026-09-23T12:13:22.724Z",
+      "responsibility": "kimito.link ハブへの利用サマリ送信が、測れていない値を0で埋めず・受け口に捨てられる値を送らず・失敗してもチェックインを巻き添えにしないことを守るテスト",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/hub-summary-send.test.ts"
+      ]
+    },
+    {
+      "at": "2026-09-23T12:15:02.197Z",
+      "responsibility": "本番が GitHub の main と同じコミットで動いているかを測る計器。キットから無改変で輸入（測定先は app.config.json の productionDomain から解決されるため改変不要）。★正本は web-ios-android/templates/scripts/ 配下（リポ外なのでcanonicalSourceにはリポ内の実体を書く）。★coreのユニットテスト(.mjs)は vitest の include が **/*.test.ts のみで走らないため持ち込まない（判定ロジックは --selftest が毎回検証する）",
+      "decision": "REUSE",
+      "canonicalSource": "scripts/lib/deploy-freshness-core.mjs",
+      "scopePaths": [
+        "scripts/check-deploy-freshness.mjs",
+        "scripts/lib/deploy-freshness-core.mjs"
+      ]
     }
   ]
 }
