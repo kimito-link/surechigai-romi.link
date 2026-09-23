@@ -147,7 +147,7 @@ export async function sendHubSummary(
     // ★リトライしない。失敗しても次のチェックインで上書きされる。
     if (res.ok) writeLastSent(fingerprint);
   } catch {
-    // noop — ハブへの記録はおまけ。本業（チェックイン）を絶対に巻き添えにしない。
+    // noop — ハブへの記録はおまけ。本業（チェックイン）を巻き添えにしない。
   }
 }
 
