@@ -37,6 +37,7 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useWarmOgImage, warmOgImageNow } from "@/hooks/use-warm-og-image";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
+import { sendHubSummary } from "@/lib/kimito-link-urls";
 import { trpc } from "@/lib/trpc";
 import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MOBILE_WEB_CHROME } from "@/theme/tokens";
 import { computeCheckinScrollBottomInset } from "@/lib/layout/responsive-layout";
@@ -434,6 +435,31 @@ export default function CheckinAuthenticatedScreen() {
         utils.settings.get.invalidate(),
         utils.dashboard.mySignal.invalidate(),
       ]);
+
+      // ★kimito.link のハブへ利用サマリを送る（best-effort・2026-09-23）。
+      //
+      //   ここ以外に置けない理由:
+      //     checkIn のレスポンス（encounter.ts:274）は newEncounters＝**増分**しか返さず、
+      //     :371-381 の楽観的更新も encounterPartnerCount / visitedPrefectureCount を
+      //     触らない。つまり invalidate が終わるまで、この2つは**前回の古い値**のまま。
+      //     ＝ 確定値が手に入るのは、直上の allSettled を抜けたこの地点だけ。
+      //
+      //   ★await しない: ハブが遅くてもチェックインの完了演出を遅らせない
+      //     （lib/ogp/warm-og-image.ts:40-47 と同じ判断。未解決 Promise で
+      //      レスポンスが詰まった 2026-07-31 の実機障害が理由）。
+      //   ★成功/失敗を画面に出さない: 記録はおまけ。本業を巻き添えにしない。
+      //   ★allSettled は invalidate 失敗でもここへ来る。その場合 getData() は
+      //     古い値を返すが、送信側が前回値と同じなら送らないので実害は小さい。
+      //   ★state==="success" を条件にしない: すれ違い0人（zero）でも保存は成功している。
+      const hubSignal = utils.dashboard.mySignal.getData();
+      void sendHubSummary(
+        {
+          encounterPartnerCount: hubSignal?.encounterPartnerCount,
+          visitedPrefectureCount: hubSignal?.visitedPrefectureCount,
+          latestRecordedAt: hubSignal?.latestRecordedAt,
+        },
+        getAuthToken,
+      );
 
       pulse.value = withTiming(1);
 
