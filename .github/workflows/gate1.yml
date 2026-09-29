@@ -129,6 +129,13 @@ jobs:
             exit 1
           }
       - name: Type check
+        # ★2026-09-29: このジョブは「差分の型・構文チェック」が目的であり、本番URLへの
+        #   実アクセス(malwarecheck.site API)は不要（デプロイ後の本番実測は
+        #   deploy-vercel.yml の Post-deploy security score が別途担う）。
+        #   常に --local-only にすることで、PR時にその場の本番の既存状態
+        #   （PRの差分と無関係な技術的負債）でブロックされることを防ぐ。
+        env:
+          RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY: "1"
         run: pnpm check
       - name: Test
         run: pnpm test
