@@ -5,14 +5,6 @@
  *   node scripts/run-instruments.mjs [対象リポ]
  *   node scripts/run-instruments.mjs --deep [対象リポ]  # 各計器のselftestも実行
  *   node scripts/run-instruments.mjs --security-url https://example.com [対象リポ]
- *   node scripts/run-instruments.mjs --security-local-only [対象リポ]  # 本番URL実測をしない
- *
- * ★2026-09-29追加（--security-local-only）: PR検証（pull_request）は「このPRの差分」を
- *   見るべき場であり、本番URL実測（malwarecheck.site API呼び出し）はその時点の本番の
- *   既存状態（CSP設定等、PRの差分と無関係な過去からの技術的負債）まで巻き込んで
- *   PRをブロックしてしまう（実損: CSPのunsafe-inline/unsafe-eval設定はmainでも同じ
- *   減点があり、無関係なPRが通らなくなっていた）。デプロイ後の本番実測は
- *   deploy-vercel.yml等のpush時ワークフローに委ね、PR時はローカル先取り検査に留める。
  *
  * 0=全て測れて緑 / 1=赤あり / 2=測れなかった項目あり。
  */
@@ -25,9 +17,6 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
 const DEEP = argv.includes('--deep');
 const SELFTEST = argv.includes('--selftest');
-// ★環境変数でも切り替え可能にする（package.json の `pnpm check` は固定引数のため、
-//   CIワークフロー側から pull_request 時だけ渡せる経路が要る。CLI引数を優先する）。
-const SECURITY_LOCAL_ONLY = argv.includes('--security-local-only') || process.env.RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY === '1';
 function option(name, fallback = null) {
   const at = argv.lastIndexOf(name);
   return at >= 0 && at + 1 < argv.length ? argv[at + 1] : fallback;
@@ -134,7 +123,7 @@ if (drift) results.push(run('配布コードのドリフト', drift));
 results.push(run(
   '公開サイトのセキュリティ満点チェック',
   security,
-  SECURITY_LOCAL_ONLY ? ['--local-only'] : (SECURITY_URL ? ['--url', SECURITY_URL] : []),
+  SECURITY_URL ? ['--url', SECURITY_URL] : [],
 ));
 // ★レスポンシブ静的チェックは、このリポでは【非該当】として意図的に外す。
 //   理由(2026-08-28 実測): この検査は CSS ファイル・HTML内<style> を静的解析するが、
