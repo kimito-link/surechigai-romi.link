@@ -75,8 +75,19 @@ jobs:
 
       # pnpm check = tsc + 6ゲート(esm / hermes / native-dom / splash / tracked-imports)
       # ★tracked-imports は --selftest 込み。検知器が毒で赤くなれることも毎回確かめる。
+      #
+      # ★2026-09-29: RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY=1 を付ける。
+      #   pnpm check 内の run-instruments.mjs が公開サイトのセキュリティ満点チェック
+      #   (verify-security-score.mjs)で本番URL(surechigai.kimito.link)へ実アクセスして
+      #   いたが、このジョブは「まだデプロイされていない新しいコード」を検査する場であり、
+      #   実際に本番へGETしても測れるのは**入れ替わる前の今の本番**でしかない。
+      #   新しいコードのCSP設定等は内部先取り検査（ヘッダ・HTML静的解析）で判定できるため
+      #   そちらだけに留める。実際の本番URLでの計測は下のPost-deploy verifyの後で行う
+      #   （デプロイが完了し、新しいコードが本番に出てから初めて意味を持つ）。
       - name: Type check + gates
         if: ${{ !inputs.skip_checks }}
+        env:
+          RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY: "1"
         run: pnpm check
 
       - name: Test
@@ -150,3 +161,13 @@ jobs:
           done
           echo "version.json not updated yet (Vercel may still be building)"
           exit 1
+
+      # ★2026-09-29: デプロイ前ジョブ(checks)は --local-only にしたため、本番URLでの
+      #   実測（malwarecheck.site API経由）はここでのみ行う。新しいコードが実際に
+      #   本番へ出た後の計測であり、本来の「出荷前に本番の見え方を確かめる」という
+      #   趣旨に合う。ここが赤くても既にデプロイは完了しているため、ワークフロー全体を
+      #   失敗させず警告に留める（継続的な技術的負債の可視化が目的。デプロイの成否とは
+      #   別軸）。
+      - name: Post-deploy security score (informational)
+        continue-on-error: true
+        run: node scripts/verify-security-score.mjs --url https://surechigai.kimito.link
