@@ -5,6 +5,17 @@
  *   node scripts/run-instruments.mjs [対象リポ]
  *   node scripts/run-instruments.mjs --deep [対象リポ]  # 各計器のselftestも実行
  *   node scripts/run-instruments.mjs --security-url https://example.com [対象リポ]
+ *   node scripts/run-instruments.mjs --security-local-only [対象リポ]  # 本番URL実測をしない
+ *
+ * ★2026-09-29追加（--security-local-only）: デプロイ前チェック（push直後、まだ本番に
+ *   反映されていない新しいコードを検査する場）で本番URL実測（malwarecheck.site API呼び出し）
+ *   を行うと、これから出す新しいコードではなく「入れ替わる前の今の本番」を測ってしまい、
+ *   その時点の本番の既存状態（CSP設定等、デプロイしようとしている差分と無関係な過去からの
+ *   技術的負債）でデプロイ自体がブロックされる（実損: CSPのunsafe-inline/unsafe-eval設定
+ *   による既存の減点で、Deploy to Vercel の checks ジョブが常に失敗し、本番へのデプロイが
+ *   一切通らなくなっていた）。新しいコードのCSP設定等は内部先取り検査（ヘッダ・HTML静的解析）
+ *   で判定できるため、デプロイ前はそちらに留め、本番URLでの実測はデプロイ完了後
+ *   （Post-deploy verify以降）に行う。
  *
  * 0=全て測れて緑 / 1=赤あり / 2=測れなかった項目あり。
  */
@@ -17,6 +28,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
 const DEEP = argv.includes('--deep');
 const SELFTEST = argv.includes('--selftest');
+// ★環境変数でも切り替え可能にする（package.json の `pnpm check` は固定引数のため、
+//   CIワークフロー側から特定ジョブだけに渡せる経路が要る）。CLI引数を優先する。
+const SECURITY_LOCAL_ONLY = argv.includes('--security-local-only') || process.env.RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY === '1';
 function option(name, fallback = null) {
   const at = argv.lastIndexOf(name);
   return at >= 0 && at + 1 < argv.length ? argv[at + 1] : fallback;
@@ -123,7 +137,7 @@ if (drift) results.push(run('配布コードのドリフト', drift));
 results.push(run(
   '公開サイトのセキュリティ満点チェック',
   security,
-  SECURITY_URL ? ['--url', SECURITY_URL] : [],
+  SECURITY_LOCAL_ONLY ? ['--local-only'] : (SECURITY_URL ? ['--url', SECURITY_URL] : []),
 ));
 // ★レスポンシブ静的チェックは、このリポでは【非該当】として意図的に外す。
 //   理由(2026-08-28 実測): この検査は CSS ファイル・HTML内<style> を静的解析するが、
