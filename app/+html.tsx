@@ -312,7 +312,13 @@ export default function Root({ children }: PropsWithChildren) {
             解除は app/_layout.tsx の releaseBootVeil()（React マウント直後）＋保険で6秒後。 */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var h=false;var ls=window.localStorage;if(ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="/boot-mark.png";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
+            /* ★2026-09-29: __client_uat（.kimito.link 共有Clerk cookie）チェックを追加。
+               lib/clerk-public-routes.ts の hasClerkSessionHint() と同じ判定条件を、
+               このファイルは静的レンダリング専用（TSを直接importできない）ため
+               独立したJS文字列として複製している。両者がドリフトしないことは
+               __tests__/guest-shell-no-clerk-chunk.test.ts で契約化する想定。
+               設計: DESIGN-kimito-family-prepaint-auth-mode-2026-09-29.md */
+            __html: `(function(){try{var h=false;var m=document.cookie.match(/(?:^|;\\s*)__client_uat[^=]*=([^;]*)/);if(m&&m[1]&&m[1]!=="0"){h=true}var ls=window.localStorage;if(!h&&ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(!h&&ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="/boot-mark.png";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
           }}
         />
         {/* ブートベールの実DOMオーバーレイ（ロゴ＋スピナー）。

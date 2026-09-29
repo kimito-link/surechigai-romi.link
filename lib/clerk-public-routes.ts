@@ -70,10 +70,29 @@ export function shouldDeferClerkOnWeb(
   return !hasClerkSessionHint();
 }
 
+/**
+ * `.kimito.link` 親ドメインで共有される Clerk 認証 cookie `__client_uat` が
+ * 「ログイン済み」を示すか。値は Unix 秒。'0' はゲスト、'0' 以外はログイン済み
+ * （中間状態なし）。HttpOnly ではないので document.cookie から読める。
+ * exosome (yukkuri-exosome.link/src/js/auth-gate.js) ・kimito.link 本体と
+ * 同一ロジック（設計書 DESIGN-kimito-family-prepaint-auth-mode-2026-09-29.md）。
+ * Clerk はドメイン接尾辞付き `__client_uat_<suffix>` を併置することがあるため、
+ * 接尾辞の有無を問わず先頭一致させる。
+ */
+function hasLiveClerkUatCookie(): boolean {
+  if (typeof document === "undefined") return false;
+  const m = document.cookie.match(/(?:^|;\s*)__client_uat[^=]*=([^;]*)/);
+  return !!(m && m[1] && m[1] !== "0");
+}
+
 /** localStorage / cookie の Clerk セッション hint（Guest シェル誤適用の防止）。 */
 export function hasClerkSessionHint(): boolean {
   if (typeof window === "undefined") return false;
   try {
+    // ★2026-09-29追加: 他の kimito-link 系サービス（kimito.link本体・exosome等）で
+    //   ログイン済みの場合、このドメインの localStorage には何も書かれていないため
+    //   従来の判定では見落としていた。`.kimito.link` 共有cookie を最優先で見る。
+    if (hasLiveClerkUatCookie()) return true;
     if (window.localStorage.getItem(USER_INFO_KEY)) return true;
     for (let i = 0; i < window.localStorage.length; i++) {
       const key = window.localStorage.key(i);
