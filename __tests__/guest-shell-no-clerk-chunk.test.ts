@@ -69,4 +69,48 @@ describe("ゲストWebシェルと Clerk chunk", () => {
     expect(localStorageIdx).toBeGreaterThan(-1);
     expect(uatIdx).toBeLessThan(localStorageIdx);
   });
+
+  /**
+   * ★2026-09-29実損（本番で実際に踏んだ）: Clerk は `__client_uat_<suffix>` と
+   * `__client_uat`（接尾辞無し）を併置することがある。前者が先に出現し値が'0'だと、
+   * String#match（最初の1件のみ）ベースの実装では後者の実際の値を見ずに
+   * ゲスト誤判定していた（本番URLで実測して発覚）。matchAll/exec-loopで
+   * 全件を見て、いずれか1つでも'0'以外ならログイン済みと判定することを固定する。
+   * clerk-public-routes.ts と +html.tsx 両方が対象。
+   */
+  it("hasLiveClerkUatCookie 相当のロジックが matchAll/exec-loop で全件を見る（1件目の '0' で確定しない）", () => {
+    const start = ROUTES.indexOf("function hasLiveClerkUatCookie");
+    const body = ROUTES.slice(start, start + 500);
+    // .match( 単体（グローバルフラグ無し・1件のみ返す）だけで完結していないこと
+    const usesMatchAll = /matchAll/.test(body);
+    const usesGlobalExecLoop = /\/g\)/.test(body) && /exec\(/.test(body);
+    expect(usesMatchAll || usesGlobalExecLoop).toBe(true);
+  });
+
+  it("+html.tsx の __client_uat 判定も1件のみの match() で完結していない（グローバル走査）", () => {
+    const scriptStart = HTML_ROOT.indexOf("__client_uat");
+    const scriptEnd = HTML_ROOT.indexOf("data-auth-boot", scriptStart);
+    const scriptBody = HTML_ROOT.slice(scriptStart, scriptEnd);
+    const usesGlobalExecLoop = /\/g/.test(scriptBody) && /exec\(/.test(scriptBody);
+    const usesMatchAll = /matchAll/.test(scriptBody);
+    expect(usesGlobalExecLoop || usesMatchAll).toBe(true);
+  });
+
+  it("実際の判定ロジック: 接尾辞付きcookieが'0'でも、接尾辞無しが'0'以外ならログイン済みと判定する", () => {
+    // clerk-public-routes.ts の hasLiveClerkUatCookie と同じロジックをここで再現し、
+    // 本番で実際に発生したcookieの並び（接尾辞付きが先・値0、接尾辞無しが後・値あり）で検証する。
+    function hasLiveClerkUatCookie(cookieString: string): boolean {
+      const matches = cookieString.matchAll(/(?:^|;\s*)__client_uat[^=]*=([^;]*)/g);
+      for (const m of matches) {
+        if (m[1] && m[1] !== "0") return true;
+      }
+      return false;
+    }
+    // 本番で実測した並び: __client_uat_ZGVu8CMk=0; __client_uat=1234567890
+    expect(hasLiveClerkUatCookie("__client_uat_ZGVu8CMk=0; __client_uat=1234567890")).toBe(true);
+    // 両方0ならゲスト
+    expect(hasLiveClerkUatCookie("__client_uat_ZGVu8CMk=0; __client_uat=0")).toBe(false);
+    // cookie自体が無ければゲスト
+    expect(hasLiveClerkUatCookie("")).toBe(false);
+  });
 });
