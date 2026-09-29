@@ -129,6 +129,13 @@ jobs:
             exit 1
           }
       - name: Type check
+        # ★PR検証は「このPRの差分」を見る場。本番URL実測(malwarecheck.site API)は
+        #   その時点の本番の既存状態（PRと無関係な技術的負債）まで巻き込んでPRを
+        #   ブロックしてしまうため、PR時はローカル先取り検査に留める
+        #   （実損2026-09-29: CSPのunsafe-inline/unsafe-eval設定はmainでも同じ減点が
+        #   あり、無関係なPRが通らなくなっていた）。本番実測はpush時のみ行う。
+        env:
+          RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY: ${{ github.event_name == 'pull_request' && '1' || '0' }}
         run: pnpm check
       - name: Test
         run: pnpm test
