@@ -44,6 +44,7 @@ import { TrpcReadyProvider } from "@/lib/trpc-ready-context";
 import { GestureRoot } from "@/components/providers/gesture-root";
 import { WebDocumentHead } from "@/components/brand/web-document-head";
 import { navigateReplace } from "@/lib/navigation";
+import { AutoAdvanceToX } from "@/components/auth/auto-advance-to-x";
 
 /**
  * ★重要: ClerkRootProvider は lazy() ではなく手動 import で読み込む。
@@ -382,6 +383,13 @@ export default function RootLayout() {
   return (
     <ThemeProvider deferNativeWind={deferNativeWind}>
       <WebDocumentHead />
+      {/* ★AutoAdvanceToXはstack(appContent)の外に置く(2026-09-30実損対応)。
+          appContentはisMissingClerkKey/useGuestWebShell/authProviders解決状況で
+          親コンポーネントの型が変わり、そのたびstack以下が丸ごと再マウントされる
+          既知の構造(上のコメント参照)。この位置ならAuthProvider切り替えの影響を
+          受けず、useEffectの多重実行(=X認可への自動click中にコンポーネントが
+          再マウントされ遷移が握りつぶされる不具合)を避けられる。 */}
+      <AutoAdvanceToX />
       <SafeAreaProvider initialMetrics={providerInitialMetrics}>
         {shouldOverrideSafeArea ? (
           <SafeAreaFrameContext.Provider value={frame}>

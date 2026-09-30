@@ -230,12 +230,15 @@ export function AutoAdvanceToX() {
       markFiredNow();
       cleanupTimers();
       const urlBeforeClick = window.location.href;
-      // debug(調査用・未確認): removeAutoXParam()を一時的に無効化し、
-      // router.replace()自体がフルリロードの真因かを切り分ける。
+      // rAFは非表示タブで動かない(2026-09-30実機検証)。setTimeout(fn,0)で次タスクまで遅延。
+      // paramの除去(router.replace)はclick成功後に回す: このコンポーネントは
+      // app/_layout.tsxのstack外に固定配置済み(2026-09-30)のため再マウントの
+      // 影響は受けないが、OAuth遷移そのものを最優先する設計を保つ。
       window.setTimeout(() => {
         const freshButton = findClickableXButton();
         if (!freshButton) return;
         freshButton.click();
+        removeAutoXParam();
         window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
       }, 0);
     }
