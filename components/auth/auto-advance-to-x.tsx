@@ -230,17 +230,17 @@ export function AutoAdvanceToX() {
       markFiredNow();
       cleanupTimers();
       const urlBeforeClick = window.location.href;
-      // rAFは非表示タブで動かない(2026-09-30実機検証)。setTimeout(fn,0)で次タスクまで遅延。
-      // paramの除去(router.replace)はclick成功後に回す: このコンポーネントは
-      // app/_layout.tsxのstack外に固定配置済み(2026-09-30)のため再マウントの
-      // 影響は受けないが、OAuth遷移そのものを最優先する設計を保つ。
+      // ★setTimeout(fn,0)=1タスク遅延では不十分だった(2026-09-30実機検証)。
+      //   MutationObserver検知直後はClerkが<SignIn/>を描画した直後でイベント
+      //   ハンドラがまだ完全にアタッチされていない競合状態があり、click自体は
+      //   実行されるのにX OAuthフローが開始されない現象を確認済み。150msに延長する。
       window.setTimeout(() => {
         const freshButton = findClickableXButton();
         if (!freshButton) return;
         freshButton.click();
         removeAutoXParam();
         window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
-      }, 0);
+      }, 150);
     }
     observer = new MutationObserver(tryClick);
     observer.observe(document.body, {
