@@ -158,6 +158,14 @@ export function AutoAdvanceToX() {
     function giveUp() {
       cleanupTimers();
       setShowOverlay(false);
+      // ★サイレント失敗の可視化（Clerkの内部クラス名変更でCSSセレクタ・
+      //   フォールバック両方が外れた場合の検知用）。ユーザー体験は変えず
+      //   通常の選択モーダルへ戻すのみ（正本§4.1「壊れ方の上限を改善ゼロに固定」）。
+      if (typeof console !== "undefined" && console.warn) {
+        console.warn(
+          "[AutoAdvanceToX] Xボタンが見つからずタイムアウトしました。通常の選択モーダルのまま表示します。Clerkの内部クラス名が変わった可能性があります。",
+        );
+      }
     }
 
     function tryClick() {
