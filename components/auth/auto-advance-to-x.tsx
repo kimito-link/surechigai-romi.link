@@ -229,11 +229,9 @@ export function AutoAdvanceToX() {
       didClick = true;
       markFiredNow();
       cleanupTimers();
-      removeAutoXParam();
       const urlBeforeClick = window.location.href;
-      // ★removeAutoXParam()のrouter.replace()がReact再レンダリングを起こし、ここで
-      //   取得したボタン要素をDOMから切り離すことを実機ログ(isConnected:false)で
-      //   確認した(2026-09-30)。setTimeout内で再取得してからclickする。
+      // debug(調査用・未確認): removeAutoXParam()を一時的に無効化し、
+      // router.replace()自体がフルリロードの真因かを切り分ける。
       window.setTimeout(() => {
         const freshButton = findClickableXButton();
         if (!freshButton) return;
