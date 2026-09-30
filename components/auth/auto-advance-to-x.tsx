@@ -148,6 +148,13 @@ function findClickableXButton(): HTMLElement | null {
 export function AutoAdvanceToX() {
   const [showOverlay, setShowOverlay] = useState(false);
   const { user, isAuthReady } = useAuth();
+  if (typeof window !== "undefined") {
+    (window as unknown as { __autoAdvanceMountCount?: number }).__autoAdvanceMountCount =
+      ((window as unknown as { __autoAdvanceMountCount?: number }).__autoAdvanceMountCount ?? 0) + 1;
+    console.warn(
+      `[AutoAdvanceToX][DEBUG] render #${(window as unknown as { __autoAdvanceMountCount?: number }).__autoAdvanceMountCount}`,
+    );
+  }
 
   useEffect(() => {
     const hasParam = hasAutoXParam();
