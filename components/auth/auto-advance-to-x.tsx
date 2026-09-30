@@ -152,7 +152,16 @@ function findClickableXButton(): HTMLElement | null {
   return null;
 }
 
-/** kimito.link と同じ 1 タップ導線。Clerk 標準 SignIn を壊さず、X ボタンへ click を送る。 */
+/**
+ * kimito.link と同じ 1 タップ導線。Clerk 標準 SignIn を壊さず、X ボタンへ click を送る。
+ *
+ * ★2026-09-30実損対応: tryClick()内のbutton.click()はrequestAnimationFrameで1フレーム
+ *   遅延させている。MutationObserver検知直後の同期clickだと、Clerkが<SignIn/>を描画した
+ *   直後でイベントハンドラがまだ完全にアタッチされていない競合状態があり、click自体は
+ *   実行されるのにX OAuthフローが開始されない現象を実機で確認した(同じbuttonを後から
+ *   コンソールで単体click()すると常に成功する=button自体・Clerk自体は正常、タイミングの
+ *   問題)。Reactのコミットフェーズ完了後にclickすることで解消を狙う。
+ */
 export function AutoAdvanceToX() {
   const [showOverlay, setShowOverlay] = useState(false);
   const { user, isAuthReady } = useAuth();
@@ -204,14 +213,12 @@ export function AutoAdvanceToX() {
       markFiredNow();
       cleanupTimers();
       const urlBeforeClick = window.location.href;
-      // ★click→URLクリーンアップの順で行う(2026-09-30実損対応)。
-      //   逆順(URL変更を先に行う)だと、removeAutoXParam()がトリガーする
-      //   Reactの再レンダリングでこのbutton要素の状態が壊れ、直後のclick()が
-      //   ClerkのOAuthフローを開始できない現象を実機で確認した。
-      button.click();
-      removeAutoXParam();
-      // ★click後にナビゲーションが起きない失敗モードの検知（2026-09-30実損発見・原因未特定）。
-      window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
+      // ★rAFで1フレーム遅延させてからclick(2026-09-30実損対応、詳細はファイル冒頭コメント)。
+      requestAnimationFrame(() => {
+        button.click();
+        removeAutoXParam();
+        window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
+      });
     }
 
     observer = new MutationObserver(tryClick);
