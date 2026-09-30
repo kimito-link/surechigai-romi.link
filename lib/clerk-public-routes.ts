@@ -76,13 +76,22 @@ export function shouldDeferClerkOnWeb(
  * （中間状態なし）。HttpOnly ではないので document.cookie から読める。
  * exosome (yukkuri-exosome.link/src/js/auth-gate.js) ・kimito.link 本体と
  * 同一ロジック（設計書 DESIGN-kimito-family-prepaint-auth-mode-2026-09-29.md）。
- * Clerk はドメイン接尾辞付き `__client_uat_<suffix>` を併置することがあるため、
- * 接尾辞の有無を問わず先頭一致させる。
+ *
+ * ★2026-09-29実損修正: Clerk はドメイン接尾辞付き `__client_uat_<suffix>` を
+ *   `__client_uat`（接尾辞無し）と併置することがある（本番実測で確認）。
+ *   `.match()`は最初にマッチした1件しか見ないため、`__client_uat_xxx=0;
+ *   __client_uat=1234567890`のように接尾辞付きの方が先に出現する並びだと、
+ *   実際はログイン済みなのに先頭の`0`だけを見てゲスト誤判定していた
+ *   （exosomeの`auth-mode.js`も同型の実装で同じ穴を持つ）。
+ *   `matchAll`で全件を見て、いずれか1つでも'0'以外ならログイン済みとする。
  */
 function hasLiveClerkUatCookie(): boolean {
   if (typeof document === "undefined") return false;
-  const m = document.cookie.match(/(?:^|;\s*)__client_uat[^=]*=([^;]*)/);
-  return !!(m && m[1] && m[1] !== "0");
+  const matches = document.cookie.matchAll(/(?:^|;\s*)__client_uat[^=]*=([^;]*)/g);
+  for (const m of matches) {
+    if (m[1] && m[1] !== "0") return true;
+  }
+  return false;
 }
 
 /** localStorage / cookie の Clerk セッション hint（Guest シェル誤適用の防止）。 */

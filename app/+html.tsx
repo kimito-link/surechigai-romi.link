@@ -317,8 +317,15 @@ export default function Root({ children }: PropsWithChildren) {
                このファイルは静的レンダリング専用（TSを直接importできない）ため
                独立したJS文字列として複製している。両者がドリフトしないことは
                __tests__/guest-shell-no-clerk-chunk.test.ts で契約化する想定。
-               設計: DESIGN-kimito-family-prepaint-auth-mode-2026-09-29.md */
-            __html: `(function(){try{var h=false;var m=document.cookie.match(/(?:^|;\\s*)__client_uat[^=]*=([^;]*)/);if(m&&m[1]&&m[1]!=="0"){h=true}var ls=window.localStorage;if(!h&&ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(!h&&ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="/boot-mark.png";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
+               設計: DESIGN-kimito-family-prepaint-auth-mode-2026-09-29.md
+
+               ★2026-09-29実損修正: Clerk はドメイン接尾辞付き __client_uat_<suffix> を
+               __client_uat（接尾辞無し）と併置することがある（本番実測で確認）。
+               String#match は最初の1件しか返さないため、接尾辞付きの'0'が先に
+               マッチするとログイン済みでもゲスト誤判定していた。matchAll非対応の
+               古いブラウザにも配るES5的なコードのため、正規表現のgフラグ+execの
+               ループで全件を見て、いずれか1つでも'0'以外ならログイン済みとする。 */
+            __html: `(function(){try{var h=false;var re=/(?:^|;\\s*)__client_uat[^=]*=([^;]*)/g;var m;while((m=re.exec(document.cookie))){if(m[1]&&m[1]!=="0"){h=true;break}}var ls=window.localStorage;if(!h&&ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(!h&&ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="/boot-mark.png";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
           }}
         />
         {/* ブートベールの実DOMオーバーレイ（ロゴ＋スピナー）。
