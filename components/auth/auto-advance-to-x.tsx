@@ -1,11 +1,11 @@
 import { Image } from "expo-image";
-import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Platform, Text, View } from "react-native";
 import { palette } from "@/theme/tokens";
 import { isNativeAppShell } from "@/lib/native-app-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { shouldAutoAdvanceToX } from "@/lib/auto-advance-to-x-guard";
+import { navigateReplace } from "@/lib/navigation";
 
 const AUTO_PARAM = "auto";
 const AUTO_VALUE = "x";
@@ -95,14 +95,15 @@ function markFiredNow(): void {
  *   瞬間、Expo Router自身が「記憶していた古いパス(auto=x付き)」でURLを上書きし
  *   直してしまうことを実機ログで確認した(スタックトレースでExpo Router内部の
  *   history.replace呼び出しであることまで特定済み)。
- *   router.replace()(expo-routerの公式API)を使えば、React Navigationの
- *   ルート状態自体が更新されるため、この巻き戻りが起きない。
+ *   navigateReplace.withUrl()(このリポ既存の集約ナビゲーションAPI、内部でexpo-routerの
+ *   router.replace()を呼ぶ)を使えば、React Navigationのルート状態自体が更新される
+ *   ため、この巻き戻りが起きない。
  */
 function removeAutoXParam(): void {
   const url = new URL(window.location.href);
   if (url.searchParams.get(AUTO_PARAM) !== AUTO_VALUE) return;
   url.searchParams.delete(AUTO_PARAM);
-  router.replace(`${url.pathname}${url.search}${url.hash}` as never);
+  navigateReplace.withUrl(`${url.pathname}${url.search}${url.hash}`);
 }
 
 function resolveClickableTarget(candidate: HTMLElement): HTMLElement | null {
