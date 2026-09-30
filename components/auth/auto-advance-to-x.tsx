@@ -3,9 +3,26 @@ import { useEffect, useState } from "react";
 import { Platform, Text, View } from "react-native";
 import { palette } from "@/theme/tokens";
 import { isNativeAppShell } from "@/lib/native-app-shell";
-import { useAuth } from "@/hooks/use-auth";
 import { shouldAutoAdvanceToX } from "@/lib/auto-advance-to-x-guard";
 import { navigateReplace } from "@/lib/navigation";
+
+/**
+ * ★useAuth()を直接呼ばないこと（2026-09-30実損対応）。
+ *   app/_layout.tsxのAuthProvider切り替え（placeholder→ClerkRootProvider等、
+ *   ラッパーの型系譜が変わるたびstackツリー全体が強制的に再マウントされる既知の構造、
+ *   _layout.tsx 117-126行目のコメント参照）の影響で、useAuth()に依存するこの
+ *   コンポーネントがReact hydrationエラー(#418)を誘発することを実機ログで確認した。
+ *   components/auth/auto-x-return-notice.tsxと同じ設計（window.Clerkを任意参照して
+ *   Providerへの依存を断つ）を踏襲する。
+ */
+type ClerkGlobal = { loaded?: boolean; user?: unknown };
+
+function readClerkAuthState(): { isAuthReady: boolean; hasUser: boolean } {
+  if (typeof window === "undefined") return { isAuthReady: false, hasUser: false };
+  const clerk = (window as unknown as { Clerk?: ClerkGlobal }).Clerk;
+  if (!clerk?.loaded) return { isAuthReady: false, hasUser: false };
+  return { isAuthReady: true, hasUser: !!clerk.user };
+}
 
 const AUTO_PARAM = "auto";
 const AUTO_VALUE = "x";
@@ -165,67 +182,62 @@ function findClickableXButton(): HTMLElement | null {
  */
 export function AutoAdvanceToX() {
   const [showOverlay, setShowOverlay] = useState(false);
-  const { user, isAuthReady } = useAuth();
 
   useEffect(() => {
     const hasParam = hasAutoXParam();
-    // ログイン済み（UserButton 経由の再訪など）では発火させず、param だけ消して終了。
-    if (hasParam && isAuthReady && user) {
-      removeAutoXParam();
+    if (!hasParam) {
       setShowOverlay(false);
       return;
     }
-    if (!shouldAutoAdvanceToX({ hasParam, isSso: isSsoCallback(), isAuthReady, hasUser: !!user })) {
+    if (isSsoCallback()) {
       setShowOverlay(false);
       return;
     }
-
     setShowOverlay(true);
-
     if (isWithinCooldown()) {
       const t = window.setTimeout(() => setShowOverlay(false), 400);
       return () => window.clearTimeout(t);
     }
-
     let didClick = false;
     let observer: MutationObserver | null = null;
     const intervalId = window.setInterval(tryClick, POLL_MS);
     const timeoutId = window.setTimeout(giveUp, TIMEOUT_MS);
-
     function cleanupTimers() {
       window.clearInterval(intervalId);
       window.clearTimeout(timeoutId);
       observer?.disconnect();
       observer = null;
     }
-
     function giveUp() {
       cleanupTimers();
       setShowOverlay(false);
       warnButtonNotFound();
     }
-
     function tryClick() {
       if (didClick) return;
+      const { isAuthReady, hasUser } = readClerkAuthState();
+      if (isAuthReady && hasUser) {
+        // ログイン済み再訪: 発火させず param だけ消して終了。
+        didClick = true;
+        removeAutoXParam();
+        cleanupTimers();
+        setShowOverlay(false);
+        return;
+      }
+      if (!shouldAutoAdvanceToX({ hasParam: true, isSso: false, isAuthReady, hasUser })) return;
       const button = findClickableXButton();
       if (!button) return;
-
       didClick = true;
       markFiredNow();
       cleanupTimers();
       const urlBeforeClick = window.location.href;
-      // ★setTimeout(fn, 0)で次のタスクキューまで遅延させてからclick(2026-09-30実損対応)。
-      //   requestAnimationFrameは非表示/非フォーカスタブでコールバックが実行されない
-      //   ブラウザの仕様(rAFスロットリング)があり実機検証で判明したため、可視性に依存しない
-      //   setTimeoutを使う。同期clickだとClerkの<SignIn/>描画直後でイベントハンドラが
-      //   まだ完全にアタッチされていない競合状態があった。
+      // rAFは非表示タブで動かない(2026-09-30実機検証)。setTimeout(fn,0)で次タスクまで遅延。
       window.setTimeout(() => {
         button.click();
         removeAutoXParam();
         window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
       }, 0);
     }
-
     observer = new MutationObserver(tryClick);
     observer.observe(document.body, {
       attributes: true,
@@ -239,7 +251,7 @@ export function AutoAdvanceToX() {
       didClick = true;
       cleanupTimers();
     };
-  }, [isAuthReady, user]);
+  }, []);
 
   if (!showOverlay) return null;
 
