@@ -1,8 +1,11 @@
 # Xワンタップログイン: 自動click後にX認可画面へ遷移しない問題（調査中・未解決）
 
-> 状態: **交絡要因(hydrationエラー)を排除・本物の症状を確定・原因はまだ未特定**。
-> 実装未着手。次に読む人はここから再開できる。まず
-> 「2026-09-30 静穏環境での再検証（交絡要因の切り分け完了）」節から読む。
+> 状態: **真因を`/sign-in`ページ自体のReact hydrationエラーに特定・
+> このエラー自体の根本原因(SSG時とクライアントの状態不一致箇所)は未特定**。
+> `AutoAdvanceToX`側での複数の緩和策(click順序・rAF→setTimeout)は実装・
+> デプロイ済みだが、hydrationエラー自体を止めない限り本質的解決にならないと判明。
+> 次に読む人は「2026-09-30 最終結論: 真因は`/sign-in`ページのhydrationエラー」
+> 節から読む。
 
 ## 2026-09-30 静穏環境での再検証（交絡要因の切り分け完了、最新かつ最重要）
 
@@ -189,3 +192,69 @@ kimitolink-linktree（Next.js）・kimito-Link-Voice（静的HTML/Vanilla JS）�
 Expo Routerを使っていない。もしExpo Routerのhistory競合が真因なら、この2つで症状が
 出ないことと整合する。surechigai-romi.linkだけがExpo/React Native Web構成であり、
 これが「同じDOM click送信方式なのに、この1プロジェクトだけ失敗する」ことの説明になりうる。
+
+## 2026-09-30 最終結論: 真因は`/sign-in`ページのhydrationエラー（実装未着手のまま一旦区切り）
+
+一連の緩和策（click→URLクリーンアップの順序変更・requestAnimationFrame遅延・
+setTimeout(fn,0)遅延）をそれぞれ本番デプロイ・実地検証したが、**いずれも症状を
+完全には解消できなかった**。最終的に、複数回の実地検証を通じて次の一貫したパターンが
+確定した:
+
+1. `/sign-in`ページへの**直接アクセス**（新規タブ・フルページロード）時、
+   **ほぼ毎回** React hydrationエラー（Minified React error #418）が発生する。
+2. トップページ`/`経由でのクライアントサイドルーティングでの`/sign-in`到達時は、
+   hydrationエラーが発生しないことが多い（ただし絶対ではなく、発生した回もある）。
+3. hydrationエラーが起きると、Reactがコンポーネントツリーを強制的に再生成する
+   （公式仕様: 「As a result this tree will be regenerated on the client」）。
+   これにより`AutoAdvanceToX`のuseEffectが不安定なタイミングで再実行され、
+   `tryClick()`のクロージャ・`setTimeout`のコールバック等が失われる。
+4. `AutoAdvanceToX`自身の`removeAutoXParam()`（`navigateReplace.withUrl`経由、
+   React Navigation状態変更を伴う）の呼び出し自体が、**新たなhydrationエラーを
+   誘発しているように見える**タイミングも実機ログで観測された
+   （`[Navigation] Replacing to: ...`ログの直後に2回目のhydrationエラーが発生）。
+
+### なぜ個別の緩和策が効かなかったか
+
+- **click→URLクリーンアップの順序変更**: hydrationエラー自体は解消しないため、
+  順序を変えてもエラー発生・再マウントのタイミング次第で同じ問題が起きる。
+- **requestAnimationFrame遅延**: 実地検証で致命的な副作用が判明。**Browser pane
+  の検証タブは`document.visibilityState === "hidden"`・`document.hasFocus() ===
+  false`の状態で動作しており、rAFコールバックが一度も実行されなかった**
+  （ブラウザ標準のrAFスロットリング仕様）。この発見自体は正しい修正
+  （setTimeoutへの変更）につながったが、根本のhydration問題は未解決のまま。
+- **setTimeout(fn, 0)遅延**: 可視性に依存しない点は正しいが、hydrationエラーに
+  よる再マウント自体を防げないため、症状の発生確率を下げた可能性はあるが
+  完全解消には至らなかった。
+
+### 次に着手すべきこと（優先順位順）
+
+1. **`app/sign-in.tsx`のhydrationミスマッチの直接原因を特定する。**
+   疑わしい箇所:
+   - `const [isCallback, setIsCallback] = useState(() => Platform.OS === "web" ?
+     isClerkHashSsoCallback() : false)`（useState初期化関数内でのwindow参照）
+   - `isAuthReady`の値がSSG時（`app.config.ts`の`web.output: "static"`）と
+     クライアント初回レンダー時で一致しているか
+   - React本体の開発ビルド（`react-dom`のunminified版）で実際のエラーメッセージ
+     全文を取得する（本番は`Minified React error #418`で詳細が読めない。
+     `https://react.dev/errors/418?args[]=...`のクエリに実際の差分情報が
+     URLエンコードされているはずなので、そこから詳細を読み取れる可能性がある）。
+2. **hydrationエラーを止めてから、`AutoAdvanceToX`側の緩和策（今回実装した
+   click順序・setTimeout遅延）が有効かを再検証する。** hydrationさえ止まれば、
+   現在の実装のままで解決する可能性が高い。
+3. hydrationエラーの根絶が難しい場合の代替案として、`AutoAdvanceToX`を
+   `useEffect`の再実行に対してより堅牢にする（例: `sessionStorage`ベースの
+   クールダウンを「click試行」ではなく「実際のナビゲーション成功」まで
+   確認してから設定する、`MutationObserver`を再マウントのたびに使い捨てず
+   モジュールレベルで一度だけ設定する等）。ただしこれは対症療法であり、
+   基準②「100年メンテナンスのいらない設計」の観点では1が優先されるべき。
+
+### 現状のコード状態（2026-09-30時点でmainにデプロイ済み）
+
+`components/auth/auto-advance-to-x.tsx`は以下の状態:
+- `tryClick()`: click実行→`removeAutoXParam()`→`warnIfUrlUnchanged`の順（コミット
+  `b71fe50aa`時点）。`setTimeout(fn, 0)`で1タスク遅延させてからclickする。
+- `removeAutoXParam()`: `navigateReplace.withUrl()`（expo-router公式APIの
+  ラッパー）を使用。`window.history.replaceState`直接呼び出しは廃止済み
+  （Expo Router内部状態との不整合を修正するため）。
+- タイムアウト（9秒）・click後2秒判定、両方のサイレント失敗可視化
+  （`console.warn`）は実装済み・機能確認済み。
