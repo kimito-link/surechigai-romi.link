@@ -98,6 +98,18 @@ function removeAutoXParam(): void {
   );
 }
 
+/** ★調査用(2026-09-30・後で削除): history.replaceStateの呼び出し元を1回だけフックしてログする。 */
+function hookReplaceStateOnce(): void {
+  const w = window as unknown as { __rsHooked?: boolean };
+  if (w.__rsHooked) return;
+  w.__rsHooked = true;
+  const orig = window.history.replaceState.bind(window.history);
+  window.history.replaceState = (state: unknown, title: string, url?: string | URL | null) => {
+    console.warn("[DEBUG][replaceState]", url, new Error().stack?.split("\n").slice(2, 6).join(" | "));
+    return orig(state, title, url as string);
+  };
+}
+
 function resolveClickableTarget(candidate: HTMLElement): HTMLElement | null {
   const target =
     candidate.closest<HTMLElement>("button, a, [role='button']") ?? candidate;
@@ -150,6 +162,7 @@ export function AutoAdvanceToX() {
   const { user, isAuthReady } = useAuth();
 
   useEffect(() => {
+    hookReplaceStateOnce();
     const hasParam = hasAutoXParam();
     // ログイン済み（UserButton 経由の再訪など）では発火させず、param だけ消して終了。
     if (hasParam && isAuthReady && user) {
