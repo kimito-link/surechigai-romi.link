@@ -155,12 +155,13 @@ function findClickableXButton(): HTMLElement | null {
 /**
  * kimito.link と同じ 1 タップ導線。Clerk 標準 SignIn を壊さず、X ボタンへ click を送る。
  *
- * ★2026-09-30実損対応: tryClick()内のbutton.click()はrequestAnimationFrameで1フレーム
+ * ★2026-09-30実損対応: tryClick()内のbutton.click()はsetTimeout(fn, 0)で1タスク
  *   遅延させている。MutationObserver検知直後の同期clickだと、Clerkが<SignIn/>を描画した
  *   直後でイベントハンドラがまだ完全にアタッチされていない競合状態があり、click自体は
  *   実行されるのにX OAuthフローが開始されない現象を実機で確認した(同じbuttonを後から
  *   コンソールで単体click()すると常に成功する=button自体・Clerk自体は正常、タイミングの
- *   問題)。Reactのコミットフェーズ完了後にclickすることで解消を狙う。
+ *   問題)。requestAnimationFrameは非表示/非フォーカスタブでコールバックが実行されない
+ *   仕様があり検証環境で機能しなかったため不採用、setTimeoutを使う。
  */
 export function AutoAdvanceToX() {
   const [showOverlay, setShowOverlay] = useState(false);
@@ -182,11 +183,9 @@ export function AutoAdvanceToX() {
     setShowOverlay(true);
 
     if (isWithinCooldown()) {
-      console.warn("[DEBUG] blocked by cooldown, mount aborted");
       const t = window.setTimeout(() => setShowOverlay(false), 400);
       return () => window.clearTimeout(t);
     }
-    console.warn("[DEBUG] effect running, not in cooldown");
 
     let didClick = false;
     let observer: MutationObserver | null = null;
@@ -215,14 +214,16 @@ export function AutoAdvanceToX() {
       markFiredNow();
       cleanupTimers();
       const urlBeforeClick = window.location.href;
-      requestAnimationFrame(() => {
-        console.warn("[DEBUG] about to click", performance.now());
+      // ★setTimeout(fn, 0)で次のタスクキューまで遅延させてからclick(2026-09-30実損対応)。
+      //   requestAnimationFrameは非表示/非フォーカスタブでコールバックが実行されない
+      //   ブラウザの仕様(rAFスロットリング)があり実機検証で判明したため、可視性に依存しない
+      //   setTimeoutを使う。同期clickだとClerkの<SignIn/>描画直後でイベントハンドラが
+      //   まだ完全にアタッチされていない競合状態があった。
+      window.setTimeout(() => {
         button.click();
-        console.warn("[DEBUG] clicked", performance.now());
-        window.setTimeout(() => {
-          console.warn("[DEBUG] 2s later, url=", window.location.href);
-        }, 2000);
-      });
+        removeAutoXParam();
+        window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
+      }, 0);
     }
 
     observer = new MutationObserver(tryClick);
