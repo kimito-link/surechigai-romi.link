@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Platform, Text, View } from "react-native";
 import { palette } from "@/theme/tokens";
@@ -87,27 +88,21 @@ function markFiredNow(): void {
   }
 }
 
+/**
+ * ★2026-09-30実損対応: window.history.replaceStateを直接叩くと、Expo Routerの
+ *   内部ルーティング状態(node_modules/expo-router/build/fork/useLinking.jsの
+ *   onStateChange)と不整合になり、直後にReact Navigationの状態変化がトリガーされた
+ *   瞬間、Expo Router自身が「記憶していた古いパス(auto=x付き)」でURLを上書きし
+ *   直してしまうことを実機ログで確認した(スタックトレースでExpo Router内部の
+ *   history.replace呼び出しであることまで特定済み)。
+ *   router.replace()(expo-routerの公式API)を使えば、React Navigationの
+ *   ルート状態自体が更新されるため、この巻き戻りが起きない。
+ */
 function removeAutoXParam(): void {
   const url = new URL(window.location.href);
   if (url.searchParams.get(AUTO_PARAM) !== AUTO_VALUE) return;
   url.searchParams.delete(AUTO_PARAM);
-  window.history.replaceState(
-    window.history.state,
-    "",
-    `${url.pathname}${url.search}${url.hash}`,
-  );
-}
-
-/** ★調査用(2026-09-30・後で削除): history.replaceStateの呼び出し元を1回だけフックしてログする。 */
-function hookReplaceStateOnce(): void {
-  const w = window as unknown as { __rsHooked?: boolean };
-  if (w.__rsHooked) return;
-  w.__rsHooked = true;
-  const orig = window.history.replaceState.bind(window.history);
-  window.history.replaceState = (state: unknown, title: string, url?: string | URL | null) => {
-    console.warn("[DEBUG][replaceState]", url, new Error().stack?.split("\n").slice(2, 6).join(" | "));
-    return orig(state, title, url as string);
-  };
+  router.replace(`${url.pathname}${url.search}${url.hash}` as never);
 }
 
 function resolveClickableTarget(candidate: HTMLElement): HTMLElement | null {
@@ -162,7 +157,6 @@ export function AutoAdvanceToX() {
   const { user, isAuthReady } = useAuth();
 
   useEffect(() => {
-    hookReplaceStateOnce();
     const hasParam = hasAutoXParam();
     // ログイン済み（UserButton 経由の再訪など）では発火させず、param だけ消して終了。
     if (hasParam && isAuthReady && user) {
