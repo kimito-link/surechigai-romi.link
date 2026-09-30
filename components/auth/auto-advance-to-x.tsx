@@ -182,9 +182,11 @@ export function AutoAdvanceToX() {
     setShowOverlay(true);
 
     if (isWithinCooldown()) {
+      console.warn("[DEBUG] blocked by cooldown, mount aborted");
       const t = window.setTimeout(() => setShowOverlay(false), 400);
       return () => window.clearTimeout(t);
     }
+    console.warn("[DEBUG] effect running, not in cooldown");
 
     let didClick = false;
     let observer: MutationObserver | null = null;
@@ -213,7 +215,6 @@ export function AutoAdvanceToX() {
       markFiredNow();
       cleanupTimers();
       const urlBeforeClick = window.location.href;
-      // ★調査用(2026-09-30・一時的にremoveAutoXParamを外してclick単独の効果を切り分け中)。
       requestAnimationFrame(() => {
         console.warn("[DEBUG] about to click", performance.now());
         button.click();
