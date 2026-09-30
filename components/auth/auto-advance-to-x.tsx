@@ -202,10 +202,14 @@ export function AutoAdvanceToX() {
 
       didClick = true;
       markFiredNow();
-      removeAutoXParam();
       cleanupTimers();
       const urlBeforeClick = window.location.href;
+      // ★click→URLクリーンアップの順で行う(2026-09-30実損対応)。
+      //   逆順(URL変更を先に行う)だと、removeAutoXParam()がトリガーする
+      //   Reactの再レンダリングでこのbutton要素の状態が壊れ、直後のclick()が
+      //   ClerkのOAuthフローを開始できない現象を実機で確認した。
       button.click();
+      removeAutoXParam();
       // ★click後にナビゲーションが起きない失敗モードの検知（2026-09-30実損発見・原因未特定）。
       window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
     }
