@@ -148,13 +148,6 @@ function findClickableXButton(): HTMLElement | null {
 export function AutoAdvanceToX() {
   const [showOverlay, setShowOverlay] = useState(false);
   const { user, isAuthReady } = useAuth();
-  if (typeof window !== "undefined") {
-    (window as unknown as { __autoAdvanceMountCount?: number }).__autoAdvanceMountCount =
-      ((window as unknown as { __autoAdvanceMountCount?: number }).__autoAdvanceMountCount ?? 0) + 1;
-    console.warn(
-      `[AutoAdvanceToX][DEBUG] render #${(window as unknown as { __autoAdvanceMountCount?: number }).__autoAdvanceMountCount}`,
-    );
-  }
 
   useEffect(() => {
     const hasParam = hasAutoXParam();
@@ -200,19 +193,13 @@ export function AutoAdvanceToX() {
       if (!button) return;
 
       didClick = true;
-      console.warn("[AutoAdvanceToX][DEBUG] tryClick: button found, about to click", button.outerHTML.slice(0, 200));
       markFiredNow();
       removeAutoXParam();
-      console.warn("[AutoAdvanceToX][DEBUG] after removeAutoXParam, url=", window.location.href);
       cleanupTimers();
       const urlBeforeClick = window.location.href;
       button.click();
-      console.warn("[AutoAdvanceToX][DEBUG] after button.click(), url=", window.location.href, "isConnected=", button.isConnected);
       // ★click後にナビゲーションが起きない失敗モードの検知（2026-09-30実損発見・原因未特定）。
-      window.setTimeout(() => {
-        console.warn("[AutoAdvanceToX][DEBUG] 2s after click, url=", window.location.href);
-        warnIfUrlUnchanged(urlBeforeClick);
-      }, 2000);
+      window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
     }
 
     observer = new MutationObserver(tryClick);
