@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
-// import { AutoAdvanceToX } from "@/components/auth/auto-advance-to-x"; // ★調査用(2026-09-30)
+import { AutoAdvanceToXMinimal as AutoAdvanceToX } from "@/components/auth/auto-advance-to-x"; // ★調査用(2026-09-30)
 import { AddXAccountNotice } from "@/components/auth/add-x-account-notice";
 import { AuthCallbackShell } from "@/components/auth/auth-callback-shell";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
@@ -50,7 +50,7 @@ export default function SignInScreen() {
   if (isCallback) {
     return (
       <>
-        {/* ★調査用(2026-09-30・一時無効化): AutoAdvanceToXがhydrationエラーの原因か切り分け中 */}
+        <AutoAdvanceToX />
         <AuthCallbackShell>{signInBody}</AuthCallbackShell>
       </>
     );
@@ -58,7 +58,7 @@ export default function SignInScreen() {
 
   return (
     <>
-      {/* ★調査用(2026-09-30・一時無効化): AutoAdvanceToXがhydrationエラーの原因か切り分け中 */}
+      <AutoAdvanceToX />
       <AuthPageShell variant="sign-in">
         {/* ログイン済みで /sign-in が開かれた＝「アカウントを追加」導線。X 側セッションが残ると
             同じ垢に戻るため、先にXを切り替える案内を <SignIn/> の上に出す（設計 A/C）。 */}
