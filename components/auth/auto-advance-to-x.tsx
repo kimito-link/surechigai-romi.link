@@ -53,6 +53,32 @@ function isWithinCooldown(): boolean {
   }
 }
 
+/**
+ * click実行後にナビゲーションが起きない失敗モードの検知（2026-09-30実損発見）。
+ * button.click()自体は成功するのに、実際にX認可画面へ遷移しないケースがあった
+ * （原因未特定。satellite構成またはClerk側の内部処理起因の可能性）。
+ * giveUp()（ボタン未発見時のタイムアウト）では検知できない別の失敗モードのため分離。
+ */
+function warnIfUrlUnchanged(urlBeforeClick: string): void {
+  if (window.location.href !== urlBeforeClick) return;
+  if (typeof console === "undefined" || !console.warn) return;
+  console.warn(
+    "[AutoAdvanceToX] Xボタンをclickしましたが、想定時間内にページ遷移が発生しませんでした。X認可フローが開始されていない可能性があります。",
+  );
+}
+
+/**
+ * ボタン未発見のままタイムアウトした場合の可視化（PR#48）。
+ * Clerkの内部クラス名変更でCSSセレクタ・フォールバック両方が外れた場合の検知用。
+ * ユーザー体験は変えず通常の選択モーダルへ戻すのみ（正本§4.1「壊れ方の上限を改善ゼロに固定」）。
+ */
+function warnButtonNotFound(): void {
+  if (typeof console === "undefined" || !console.warn) return;
+  console.warn(
+    "[AutoAdvanceToX] Xボタンが見つからずタイムアウトしました。通常の選択モーダルのまま表示します。Clerkの内部クラス名が変わった可能性があります。",
+  );
+}
+
 function markFiredNow(): void {
   try {
     sessionStorage.setItem(COOLDOWN_KEY, String(Date.now()));
@@ -158,14 +184,7 @@ export function AutoAdvanceToX() {
     function giveUp() {
       cleanupTimers();
       setShowOverlay(false);
-      // ★サイレント失敗の可視化（Clerkの内部クラス名変更でCSSセレクタ・
-      //   フォールバック両方が外れた場合の検知用）。ユーザー体験は変えず
-      //   通常の選択モーダルへ戻すのみ（正本§4.1「壊れ方の上限を改善ゼロに固定」）。
-      if (typeof console !== "undefined" && console.warn) {
-        console.warn(
-          "[AutoAdvanceToX] Xボタンが見つからずタイムアウトしました。通常の選択モーダルのまま表示します。Clerkの内部クラス名が変わった可能性があります。",
-        );
-      }
+      warnButtonNotFound();
     }
 
     function tryClick() {
@@ -179,20 +198,8 @@ export function AutoAdvanceToX() {
       cleanupTimers();
       const urlBeforeClick = window.location.href;
       button.click();
-      // ★サイレント失敗の可視化（2026-09-30実損発見）: click自体は実行できても、
-      //   その後実際にX認可画面へナビゲーションが起きないケースがある
-      //   （原因未特定。satellite構成またはClerk側の内部処理起因の可能性）。
-      //   giveUp()（ボタン未発見時のタイムアウト）では検知できない別の失敗モードのため、
-      //   click実行後も一定時間URLが変わらなければ別途警告する。
-      window.setTimeout(() => {
-        if (window.location.href === urlBeforeClick) {
-          if (typeof console !== "undefined" && console.warn) {
-            console.warn(
-              "[AutoAdvanceToX] Xボタンをclickしましたが、想定時間内にページ遷移が発生しませんでした。X認可フローが開始されていない可能性があります。",
-            );
-          }
-        }
-      }, 2000);
+      // ★click後にナビゲーションが起きない失敗モードの検知（2026-09-30実損発見・原因未特定）。
+      window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
     }
 
     observer = new MutationObserver(tryClick);
