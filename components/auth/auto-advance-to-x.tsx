@@ -230,15 +230,13 @@ export function AutoAdvanceToX() {
       didClick = true;
       markFiredNow();
       cleanupTimers();
-      // ★click前にparamを消す(2026-09-30実損対応)。click直後にrouter.replace()を
-      //   呼ぶと、ClerkのOAuthリダイレクト処理とExpo Routerのナビゲーション処理が
-      //   競合し、X認可画面へ行かずフルリロードで/sign-inへ戻ってしまう競合状態を
-      //   実機ネットワークログで確認した(_layout等のチャンクが2回ロードされる)。
       removeAutoXParam();
       const urlBeforeClick = window.location.href;
       // rAFは非表示タブで動かない(2026-09-30実機検証)。setTimeout(fn,0)で次タスクまで遅延。
       window.setTimeout(() => {
+        console.warn("[DEBUG] pre-click", { connected: button.isConnected, disabled: (button as HTMLButtonElement).disabled, ariaDisabled: button.getAttribute("aria-disabled") });
         button.click();
+        console.warn("[DEBUG] post-click", { connected: button.isConnected, href: window.location.href });
         window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
       }, 0);
     }
