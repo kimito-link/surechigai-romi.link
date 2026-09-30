@@ -1,6 +1,58 @@
 # Xワンタップログイン: 自動click後にX認可画面へ遷移しない問題（調査中・未解決）
 
-> 状態: **原因の手前まで特定・未解決**。実装未着手。次に読む人はここから再開できる。
+> 状態: **決定的な追加証拠を確保・原因はまだ完全特定できず**。実装未着手。
+> 次に読む人はここから再開できる。まず「2026-09-30 追加調査（詳細ログでの実測）」節から読む。
+
+## 2026-09-30 追加調査（詳細ログでの実測、最重要の追記）
+
+`components/auth/auto-advance-to-x.tsx`の`tryClick()`に一時的なデバッグログ
+（`removeAutoXParam()`直後・`button.click()`直後・2秒後、それぞれのURL）を仕込み、
+本番(`surechigai.kimito.link`)にデプロイして実測した(コミット`21d876625`、
+その後`155cb5bce`で削除済み)。
+
+**確定した事実**:
+1. `removeAutoXParam()`は正しく動作しており、`?auto=x`パラメータは実際に除去される
+   （ログ: `after removeAutoXParam, url= https://surechigai.kimito.link/sign-in?redirect_url=%2F`）
+2. `button.click()`は実際に呼ばれ、ボタンはDOMに接続されたまま
+   （`isConnected: true`）
+3. **`button.click()`実行の2秒後に発火するはずの`window.setTimeout`コールバックが
+   一度も実行されない**（ログが一切出ない、10秒以上待っても出ない）
+4. ネットワークログで、`GET https://surechigai.kimito.link/sign-in?redirect_url=%2F&auto=x`
+   （**`?auto=x`付きの同一URL**）への完全なドキュメントリクエストが**複数回繰り返されている**
+   ことを確認した。1回しかナビゲートしていないにもかかわらず。
+
+**3と4を総合すると**: `button.click()`実行直後、ページ全体が予期せず繰り返しリロードされている
+可能性が高い。`window.setTimeout`はページの完全なアンロードで確実にキャンセルされるため、
+3の現象と整合する。Service Workerのログ（`[SW] ...`）は一切出ておらず、Service Worker由来の
+リロードは否定できた。`chunk-load-recovery.ts`の`tryRecoverFromChunkError`も、
+`sessionStorage`に`surechigai.chunkReload.v1`フラグが立っていないことから今回は未発火と確認済み。
+
+★★**重要な未検証の交絡要因**: この実測は、調査中に同じブランチへ短時間で複数回
+コミット・デプロイを繰り返していた最中に行った。ネットワークログで観測した
+「繰り返しGETリクエスト」の中で`sign-in-*.js`のファイル名ハッシュが変化していたことから、
+**Vercelの新しいデプロイが進行中でCDN/クライアント側キャッシュが不安定だった可能性を
+排除できていない**。もしこれが原因なら、観測した「ページの繰り返しリロード」は
+調査自体が引き起こしたノイズであり、本番の安定状態（デプロイの合間）では再現しない
+可能性がある。**次に調べる人は、直近30分以内にこのリポジトリへのpush/デプロイが
+無い、完全に静穏な状態で同じ実測をやり直すこと**（デバッグログの再現手順は下記）。
+
+**デバッグログの再現手順**（必要なら`tryClick()`に以下を一時的に追加する。
+場所は`didClick = true;`の直後から）:
+```ts
+console.warn("[DEBUG] button found", button.outerHTML.slice(0, 200));
+markFiredNow();
+removeAutoXParam();
+console.warn("[DEBUG] after removeAutoXParam, url=", window.location.href);
+cleanupTimers();
+const urlBeforeClick = window.location.href;
+button.click();
+console.warn("[DEBUG] after click, url=", window.location.href, "isConnected=", button.isConnected);
+window.setTimeout(() => console.warn("[DEBUG] 2s after click, url=", window.location.href), 2000);
+```
+本番デプロイ後、新規タブ・`sessionStorage.clear()`済みの状態で
+`/sign-in?redirect_url=%2F&auto=x`へアクセスし、コンソールログとネットワークログ
+（`read_network_requests`、`urlPattern: "sign-in"`）の両方を確認する。
+「2秒後」のログが出るか、同一URLへの複数回のGETが無いかを見る。
 
 ## 症状
 
