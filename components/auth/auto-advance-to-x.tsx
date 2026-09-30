@@ -177,7 +177,22 @@ export function AutoAdvanceToX() {
       markFiredNow();
       removeAutoXParam();
       cleanupTimers();
+      const urlBeforeClick = window.location.href;
       button.click();
+      // ★サイレント失敗の可視化（2026-09-30実損発見）: click自体は実行できても、
+      //   その後実際にX認可画面へナビゲーションが起きないケースがある
+      //   （原因未特定。satellite構成またはClerk側の内部処理起因の可能性）。
+      //   giveUp()（ボタン未発見時のタイムアウト）では検知できない別の失敗モードのため、
+      //   click実行後も一定時間URLが変わらなければ別途警告する。
+      window.setTimeout(() => {
+        if (window.location.href === urlBeforeClick) {
+          if (typeof console !== "undefined" && console.warn) {
+            console.warn(
+              "[AutoAdvanceToX] Xボタンをclickしましたが、想定時間内にページ遷移が発生しませんでした。X認可フローが開始されていない可能性があります。",
+            );
+          }
+        }
+      }, 2000);
     }
 
     observer = new MutationObserver(tryClick);
