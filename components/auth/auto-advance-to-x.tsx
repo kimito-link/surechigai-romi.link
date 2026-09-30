@@ -310,13 +310,3 @@ export function AutoAdvanceToX() {
     </View>
   );
 }
-
-/** ★調査用(2026-09-30・切り分け専用・後で削除): フックだけ呼んで何もしない最小版。 */
-export function AutoAdvanceToXMinimal() {
-  const [, setShowOverlay] = useState(false);
-  const { isAuthReady } = useAuth();
-  useEffect(() => {
-    setShowOverlay(false);
-  }, [isAuthReady]);
-  return null;
-}

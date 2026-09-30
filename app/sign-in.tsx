@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
-import { AutoAdvanceToXMinimal as AutoAdvanceToX } from "@/components/auth/auto-advance-to-x"; // ★調査用(2026-09-30)
+import { AutoAdvanceToX } from "@/components/auth/auto-advance-to-x";
 import { AddXAccountNotice } from "@/components/auth/add-x-account-notice";
 import { AuthCallbackShell } from "@/components/auth/auth-callback-shell";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";

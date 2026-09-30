@@ -1,11 +1,10 @@
 # Xワンタップログイン: 自動click後にX認可画面へ遷移しない問題（調査中・未解決）
 
-> 状態: **真因を`/sign-in`ページ自体のReact hydrationエラーに特定・
-> このエラー自体の根本原因(SSG時とクライアントの状態不一致箇所)は未特定**。
-> `AutoAdvanceToX`側での複数の緩和策(click順序・rAF→setTimeout)は実装・
-> デプロイ済みだが、hydrationエラー自体を止めない限り本質的解決にならないと判明。
-> 次に読む人は「2026-09-30 最終結論: 真因は`/sign-in`ページのhydrationエラー」
-> 節から読む。
+> 状態: **hydrationエラーの根本原因を`app/_layout.tsx`のAuthProvider切り替え構造まで
+> 特定完了。修正方針は判明したが実装未着手**。`AutoAdvanceToX`側での複数の緩和策
+> (click順序・rAF→setTimeout)は実装・デプロイ済みだが、hydrationエラー自体を
+> 止めない限り本質的解決にならない。次に読む人は「2026-09-30 根本原因の完全特定:
+> AuthProvider切り替えによる`stack`ツリー再マウント」節から読む。
 
 ## 2026-09-30 静穏環境での再検証（交絡要因の切り分け完了、最新かつ最重要）
 
@@ -258,3 +257,97 @@ setTimeout(fn,0)遅延）をそれぞれ本番デプロイ・実地検証した�
   （Expo Router内部状態との不整合を修正するため）。
 - タイムアウト（9秒）・click後2秒判定、両方のサイレント失敗可視化
   （`console.warn`）は実装済み・機能確認済み。
+
+## 2026-09-30 根本原因の完全特定: AuthProvider切り替えによる`stack`ツリー再マウント
+
+段階的な切り分け実験（`AutoAdvanceToX`全体を無効化→最小版(フック呼び出しのみ)に
+置き換え）を本番デプロイ・実地検証した結果:
+
+1. **`AutoAdvanceToX`を完全に無効化するとhydrationエラーは一度も再現しなかった。**
+2. **`useEffect`の中身をすべて`setShowOverlay(false)`だけに単純化した最小版
+   （`useState`+`useAuth`のフック呼び出しのみ残す）に置き換えても、
+   複数回の試行で確率的にhydrationエラーが再現した。**
+
+2の結果から、`hasAutoXParam`・`tryClick`・`MutationObserver`等の複雑なロジック自体は
+原因ではなく、**`useAuth()`フックを呼ぶコンポーネントが`/sign-in`のツリーに
+存在すること自体**が引き金になっていると判明した。
+
+### 真因: `app/_layout.tsx`のAuthProvider切り替え構造
+
+`app/_layout.tsx`の`appContent`は4つの分岐を持つ（348-378行目）:
+
+```tsx
+if (isMissingClerkKey) { ... }
+else if (useGuestWebShell) {
+  appContent = <GuestAuthProvider><GuestWebProviders>{stack}</GuestWebProviders></GuestAuthProvider>;
+}
+else if (authProviders) {  // ClerkRootProvider chunk解決済み
+  appContent = <OnboardingGate><ClerkRootProvider>{stack}<RestoreDeepLinkAfterAuthBoot /></ClerkRootProvider></OnboardingGate>;
+}
+else {  // chunk解決待ちの一瞬
+  appContent = <TrpcReadyProvider value={false}>
+    <AuthContextProvider value={AUTH_LOADING_PLACEHOLDER}>{stack}</AuthContextProvider>
+  </TrpcReadyProvider>;
+}
+```
+
+`stack`（`<AppNavigationStack />`、`sign-in.tsx`を含むルーティングツリー全体）は
+「同一の要素インスタンス」として各分岐に渡されているが（343行目のコメント参照）、
+**ラッパーの型自体（`GuestAuthProvider` vs `TrpcReadyProvider>AuthContextProvider`
+vs `OnboardingGate>ClerkRootProvider`）が変わるため、Reactの子要素識別ルール上、
+`stack`は強制的にアンマウント→再マウントされる**。
+
+これは`app/_layout.tsx`のコメント（117-126行目）に既に明記されている**既知の設計上の
+トレードオフ**そのものである:
+
+> ★ディープリンク自己復元(2026-07-11 実測バグの恒久対策): 認証プロバイダ(動的import)の
+> 解決時にラッパー構成が「placeholder → OnboardingGate>ClerkRootProvider」へ
+> 切り替わる。Reactは親の型系譜が変わった子を必ずアンマウントするため、
+> stack(React Navigation一式)はこの瞬間に再マウントされ...
+
+この既知の再マウントが起きるタイミングで、たまたま`AutoAdvanceToX`
+（またはそれに類する`useAuth()`呼び出しコンポーネント）がマウントされていると、
+Reactの内部状態とSSR結果の対応関係が壊れ、hydrationエラー(#418)として
+報告される、という筋道である。
+
+`RestoreDeepLinkAfterAuthBoot`は「URLが`/`に巻き戻る」症状への対策として
+既に実装されているが、**hydrationエラー自体、およびそれに伴う`AutoAdvanceToX`の
+再マウント（＝クールダウン・クロージャの喪失）への対策は無い**。
+
+### なぜ`?auto=x`の有無で発生確率が変わるのか（未確定・仮説）
+
+`hasAutoXParam()`は`isAuthReady`の値を条件分岐に使う（`shouldAutoAdvanceToX`
+経由）。`auto=x`付きの場合、`AutoAdvanceToX`は`isAuthReady`が`false`→`true`に
+変化するたびに`useEffect`を再実行し、`showOverlay`の状態変更（追加のレンダー）を
+伴う。`auto=x`無しの場合はこの追加レンダーが発生しないため、AuthProvider切り替えの
+再マウントタイミングと衝突する機会が構造的に少なくなる、という説明が筋が通る
+（未検証）。
+
+### 修正方針（優先順位順、実装未着手）
+
+1. **本命: `AutoAdvanceToX`を`stack`の外側、かつAuthProvider切り替えの影響を
+   受けない安定した位置に移動する。** 例えば`app/_layout.tsx`の最上位
+   （`RestoreDeepLinkAfterAuthBoot`と同じ階層）に置き、`sign-in.tsx`個別ではなく
+   グローバルに1箇所だけ配置する。ただしこれは`useAuth()`が利用可能な
+   Provider配下という制約と、対象ページ（`/sign-in`）限定という要件の両立が必要で、
+   設計を要する。
+2. **次善: `AutoAdvanceToX`内で`useAuth()`の代わりに、Provider切り替えの影響を
+   受けない代替手段（例: `window.Clerk`のグローバル直接参照、または
+   `AutoXReturnNotice`が既に使っている「`window.Clerk`を任意参照してProvider依存を
+   断つ」パターンの踏襲）を使う。** `AutoXReturnNotice`のコメント
+   （50-57行目）に「★useUser()を直接呼ばないこと」という同種の教訓が既にある
+   ——`AutoAdvanceToX`にも同じ設計を適用すべきだった可能性が高い。
+3. **対症療法（非推奨、基準②「100年メンテナンスのいらない設計」に反する）:
+   `AutoAdvanceToX`のuseEffectを、再マウントに対して冪等かつ堅牢にする**
+   （sessionStorageベースのクールダウンを「試行」ではなく「成功」まで
+   確認してから設定する等）。根本のReact再マウント自体は解消しないため、
+   将来同種の問題が別の形で再発するリスクを残す。
+
+### 検証方法（次のセッションで実施）
+
+1. 方針2（`window.Clerk`直接参照への切り替え）をまず試す。`AutoXReturnNotice`と
+   同じパターンなので実装コストが低く、既存の設計と一貫性が取れる。
+2. 実装後、静穏な環境で新規タブ・複数回の試行によりhydrationエラーが
+   発生しないことを統計的に確認する（1回の成功では確率的事象のため不十分。
+   最低5回程度の試行を推奨）。
+3. hydrationエラーが解消したら、X認可画面への実際の遷移も同時に確認する。
