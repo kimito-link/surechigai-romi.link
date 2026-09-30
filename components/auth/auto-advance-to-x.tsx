@@ -225,18 +225,19 @@ export function AutoAdvanceToX() {
         return;
       }
       if (!shouldAutoAdvanceToX({ hasParam: true, isSso: false, isAuthReady, hasUser })) return;
-      const button = findClickableXButton();
-      if (!button) return;
+      if (!findClickableXButton()) return;
       didClick = true;
       markFiredNow();
       cleanupTimers();
       removeAutoXParam();
       const urlBeforeClick = window.location.href;
-      // rAFは非表示タブで動かない(2026-09-30実機検証)。setTimeout(fn,0)で次タスクまで遅延。
+      // ★removeAutoXParam()のrouter.replace()がReact再レンダリングを起こし、ここで
+      //   取得したボタン要素をDOMから切り離すことを実機ログ(isConnected:false)で
+      //   確認した(2026-09-30)。setTimeout内で再取得してからclickする。
       window.setTimeout(() => {
-        console.warn("[DEBUG] pre-click", { connected: button.isConnected, disabled: (button as HTMLButtonElement).disabled, ariaDisabled: button.getAttribute("aria-disabled") });
-        button.click();
-        console.warn("[DEBUG] post-click", { connected: button.isConnected, href: window.location.href });
+        const freshButton = findClickableXButton();
+        if (!freshButton) return;
+        freshButton.click();
         window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
       }, 0);
     }
