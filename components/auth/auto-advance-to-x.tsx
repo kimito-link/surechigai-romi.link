@@ -213,11 +213,14 @@ export function AutoAdvanceToX() {
       markFiredNow();
       cleanupTimers();
       const urlBeforeClick = window.location.href;
-      // ★rAFで1フレーム遅延させてからclick(2026-09-30実損対応、詳細はファイル冒頭コメント)。
+      // ★調査用(2026-09-30・一時的にremoveAutoXParamを外してclick単独の効果を切り分け中)。
       requestAnimationFrame(() => {
+        console.warn("[DEBUG] about to click", performance.now());
         button.click();
-        removeAutoXParam();
-        window.setTimeout(() => warnIfUrlUnchanged(urlBeforeClick), 2000);
+        console.warn("[DEBUG] clicked", performance.now());
+        window.setTimeout(() => {
+          console.warn("[DEBUG] 2s later, url=", window.location.href);
+        }, 2000);
       });
     }
 
