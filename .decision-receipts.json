@@ -153,6 +153,15 @@
       "scopePaths": [
         "apps/web/middleware.ts"
       ]
+    },
+    {
+      "at": "2026-10-01T10:19:35.820Z",
+      "responsibility": "sw-next-asset-bypass",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/sw-next-bypass.test.ts"
+      ]
     }
   ]
 }

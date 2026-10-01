@@ -77,6 +77,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // ★Next.js（apps/web）のアセットは素通しする — Web の Next.js 化（strangler 移行）用。
+  //   2026-10-01 追加。移行したパスは別プロジェクト（surechigai-web）が応答するため、
+  //   その配下の /_next/ をこの Service Worker が握ると**旧ビルドのチャンクを
+  //   掴んだまま**になり、デプロイしても画面が変わらない事故になる。
+  //   ★`isJsBundlePath` は「.js で終わる」だけで判定するので、この分岐が無いと
+  //     /_next/static/.../*.js が networkFirstStrategy に入って**キャッシュされる**
+  //     （ここより下に置くと手遅れになるので、早期 return の位置に置く）。
+  //   ナビゲーション自体は navigationStrategy が no-store のネットワーク専用なので安全。
+  if (url.pathname.startsWith('/_next/')) {
+    return;
+  }
+
   // JS バンドル — network-first（古い stale キャッシュで白画面になるのを防ぐ）
   if (isJsBundlePath(url.pathname)) {
     event.respondWith(networkFirstStrategy(request, CACHE_NAME));
