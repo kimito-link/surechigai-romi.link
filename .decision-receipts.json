@@ -144,6 +144,15 @@
         "apps/web/app/layout.tsx",
         "apps/web/postcss.config.mjs"
       ]
+    },
+    {
+      "at": "2026-10-01T09:19:39.604Z",
+      "responsibility": "clerk-middleware",
+      "decision": "REUSE",
+      "canonicalSource": "../web-ios-android/templates/next-app/middleware.ts.template",
+      "scopePaths": [
+        "apps/web/middleware.ts"
+      ]
     }
   ]
 }

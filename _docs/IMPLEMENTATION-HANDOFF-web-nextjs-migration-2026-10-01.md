@@ -411,3 +411,65 @@ Vercel Dashboard → `surechigai-web` → Settings → Deployment Protection →
 **Step 3**: 旧プロジェクトの `vercel.json` に rewrites を足し、`/sign-in` だけを
 新プロジェクトへ転送する（本番切替・ロールバックは rewrite 1行の revert）。
 ★着手は上の保護解除と、2〜3 の実機確認が済んでから。
+
+### Step 2 続き: 保護解除後の実機確認（2026-10-01）
+
+オーナーが Vercel Authentication を Disabled にしたので実機で測った。
+
+| 確認 | 結果 |
+|---|---|
+| 検証用サブドメインの 302 | ✅ **解消**（302 → **200**） |
+| `Production Keys are only allowed for domain` | ✅ **出なくなった**（＝Clerk が `*.kimito.link` を受け入れている） |
+| 本番への影響 | ✅ 無し（`surechigai.kimito.link` は 200 のまま） |
+
+### ★★発見: middleware が無いと Clerk が起動しない
+
+保護を解いたら別のエラーが出た:
+```
+Refused to execute script from
+'https://surechigai-next.kimito.link/__clerk/npm/@clerk/clerk-js@6/dist/clerk.browser.js'
+because its MIME type ('text/html') is not executable
+```
+
+`/__clerk/` を誰も配信していないので 404 → Clerk の JS が読めない。
+
+**対照実験で原因を特定**:
+| 配信元 | Clerk JS の読み込み先 |
+|---|---|
+| 本番 `surechigai.kimito.link`（旧 Expo） | `clerk.kimito.link`（直接） |
+| `kimito.link`（基準） | `clerk.kimito.link`（直接） |
+| **`apps/web`（middleware 無し）** | **`/__clerk/...`（プロキシ経路・404）** |
+
+→ 真因は **`apps/web` に middleware が無かったこと**。
+金型 `templates/next-app/middleware.ts.template` を輸入して解消する
+（★「鍵が違う」「サブドメイン未登録」と誤診しやすい。実際に一度そう疑った）。
+
+★**金型からの意図的な差分**: 金型は「公開ルート以外は `auth.protect()`」だが、
+strangler 移行中は**このアプリが `/sign-in` しか配信していない**ため、
+当面は **protect せず Clerk を初期化するだけ**にした。
+ルートを移すたびに保護対象を足していく。
+
+### ★ブロック中（2つ目）: `CLERK_SECRET_KEY` が未登録
+
+middleware を入れてデプロイしたら **500 `MIDDLEWARE_INVOCATION_FAILED`**。
+`clerkMiddleware` はサーバー側で動くので**秘密鍵が要る**。
+
+★これはメモリ [[vercel-preview-clerk-secret-missing]] と**同じ型**の既知事故。
+
+**検証用サブドメインは動いていたビルドへ戻した**（200 を維持。壊したままにしない）。
+
+**対処はオーナー作業**（秘密鍵はこちらで扱わない運用）:
+```
+Vercel → surechigai-web → Settings → Environment Variables
+  CLERK_SECRET_KEY  を Production / Preview / Development に登録
+```
+★値は kimito.link 本番と**同じ Clerk インスタンス**のもの（`clerk.kimito.link`）。
+★★`sk_` はチャットに貼らない・ファイルに書かない。Dashboard へ直接入力する。
+
+### 登録後にこちらで確認すること
+
+1. middleware 入りビルドを deploy し直し、検証用サブドメインを向け直す
+2. `/sign-in/` が 200
+3. **Clerk JS が `clerk.kimito.link` から読まれる**（`/__clerk/` が出ない）
+4. コンソールエラー 0
+5. `?auto=x` でオーバーレイ → x.com へ遷移
