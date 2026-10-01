@@ -349,3 +349,65 @@ Clerk 自体がロードできない。★**これは既知の制約でコード
 Step 2: 新 Vercel プロジェクト `surechigai-web` を作成し、検証用サブドメインを立てる。
 ★**着手前に Clerk Dashboard の Allowed subdomains へ検証用サブドメインを登録する**
 （未登録だと無言で失敗する）。
+
+---
+
+## Step 2 実施記録（2026-10-01・ブランチ `feat/web-nextjs-step2`）
+
+### ✅ 完了したこと
+
+| 項目 | 結果 |
+|---|---|
+| CSP を `apps/web/next.config.ts` へ移送 | ✅ 14ディレクティブ全てが旧 `vercel.json` と**機械比較で一致** |
+| Vercel プロジェクト `surechigai-web` 作成 | ✅ Next.js として自動検出。`apps/web` を root にリンク |
+| 環境変数登録 | ✅ `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`（公開可能キー）を production/preview/development へ。★秘密鍵は入れていない |
+| デプロイ | ✅ `https://surechigai-web.vercel.app` |
+| 検証用サブドメイン | ✅ `https://surechigai-next.kimito.link`（証明書発行済み） |
+| ヘッダーの実測 | ✅ デプロイ先で CSP・X-Frame-Options・no-store が**実際に出ることを curl で確認**。clerk.kimito.link / api.x.com / openfreemap / sentry が許可されている |
+| ★本番への影響 | ✅ **無し**。`surechigai.kimito.link` は 200 のまま（新プロジェクトは別物でカスタムドメイン未接続） |
+
+### ★ブロック中: Vercel Deployment Protection（SSO）が有効
+
+```
+GET https://surechigai-next.kimito.link/sign-in/
+  → 302  location: https://vercel.com/sso-api?url=...
+```
+
+新プロジェクトがチームの既定の保護設定を引き継いでいる（旧プロジェクトは公開＝200）。
+**この状態では未ログインの訪問者が到達できず、Clerk の動作確認もできない。**
+
+★これは Step 0 の宿題 **0-3「Vercel 保護状態」** そのもの。Phase 0 で「未確認」と
+記録していた項目が、ここで実際に効いてきた。
+
+**対処はオーナー作業**（セキュリティ設定の変更にあたるため、こちらでは行わない）:
+Vercel Dashboard → `surechigai-web` → Settings → Deployment Protection →
+**Vercel Authentication を Disabled**（または該当サブドメインを除外）。
+
+> https://vercel.com/kimito-link/surechigai-web/settings/deployment-protection
+
+★旧プロジェクト `surechigai-romi-link` は公開設定なので、**同じ状態に揃える**のが筋。
+
+### 緑の条件の達成状況
+
+| 条件 | 結果 |
+|---|---|
+| `surechigai-web` 作成・env 登録・デプロイ | ✅ |
+| 本番エイリアスが 200 | ✅ `surechigai-web.vercel.app` は 200 |
+| curl でヘッダー確認 | ✅ CSP ほか実測済み |
+| Browser pane でオーバーレイ→x.com 遷移 | ★**未達成**（保護解除待ち。302 で画面に到達できない） |
+
+### ★解除後にこちらで確認すること
+
+1. `surechigai-next.kimito.link/sign-in/` が **200** になる
+2. **Clerk が実際にロードされる**（コンソールに
+   `Production Keys are only allowed for domain` が**出ない**こと）
+   ★これが出たら Clerk Allowed subdomains の登録漏れを疑う
+   （オーナーは「登録済み」と回答。★「登録されている」と「通る」は別なので実機で見る）
+3. `?auto=x` でオーバーレイ → x.com へ遷移する
+4. ★**ログイン往復の完走は Step 3**（本番 rewrite 後）。この段階では求めない
+
+### 次の一手
+
+**Step 3**: 旧プロジェクトの `vercel.json` に rewrites を足し、`/sign-in` だけを
+新プロジェクトへ転送する（本番切替・ロールバックは rewrite 1行の revert）。
+★着手は上の保護解除と、2〜3 の実機確認が済んでから。

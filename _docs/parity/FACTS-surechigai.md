@@ -84,12 +84,15 @@ FROM users GROUP BY 1;
 **確認方法**: `SELECT count(*) FROM users;` ほか主要テーブルの件数。
 **テーブル総数**: ✅ **25**（`drizzle/schema/` の `pgTable` 実数。`ads/api-usage/audit/db-stats/encounter/event/event-participation/premium/users`）
 
-## 5. Clerk Allowed subdomains — ★未確認（Dashboard の目視が要る）
+## 5. Clerk Allowed subdomains — ✅ **登録済み（2026-10-01 オーナー確認）**
 
-★**未登録だと無言で失敗する**（メモリ `clerk-allowed-subdomains-is-on-must-register`）。
-検証用サブドメイン（例 `surechigai-next.kimito.link`）も**着手前に**登録が要る。
-**確認方法**: Clerk Dashboard を開き、Allowed subdomains の一覧を見る。
-★コードに `clerk.kimito.link` の文字列があっても稼働中と即断しない（CLAUDE.md の戒め）。
+オーナーより「既に登録済み」との回答。4サブドメイン＋検証用サブドメイン
+（`surechigai-next.kimito.link`）が Allowed subdomains に入っている前提で進める。
+
+★★**ただし「登録されている」と「ログインが通る」は別。** 未登録なら無言で失敗するので、
+Step 2 でプレビューURLを開いたときに Clerk がロードされるか（コンソールに
+`Production Keys are only allowed for domain` が出ないか）を**実機で確かめる**。
+出たら登録漏れを疑う。
 
 ## 6. Vercel 保護状態・本番 satellite の真偽 — ★未確認
 
