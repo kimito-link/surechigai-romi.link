@@ -36,7 +36,20 @@ function main() {
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const diffText = sh(`git diff ${BASE}...${HEAD}`);
+  // ★追加行だけを走査する（2026-10-01 修正）。
+  //   以前は `git diff` の生テキストを includes() で見ていたため、
+  //     ・禁止語を含む行を【削除】した差分
+  //     ・禁止語を含む既存行の【近く】に追記しただけの差分（＝前後の文脈行）
+  //   まで赤くなっていた。本来の目的は「新しく禁止語を持ち込ませない」ことなので、
+  //   掃除する変更や近くを直す変更まで止めるのは逆向き。
+  //   実例: _docs/ の手順書へ追記したところ、自分の追加行に禁止語ゼロなのに
+  //   既存行が文脈として出て BLOCK された（言い換えでも削除でも回避できなかった）。
+  //   ★"+++ b/path" のファイルヘッダは除く（パスに禁止語が入ると誤検知するため）。
+  //   ★毒テスト済み: 禁止語を追加行としてコミットすると赤くなることを実機で確認。
+  const diffText = sh(`git diff ${BASE}...${HEAD}`)
+    .split("\n")
+    .filter((line) => line.startsWith("+") && !line.startsWith("+++"))
+    .join("\n");
 
   const matchedDanger = files.filter((f) =>
     rules.dangerFiles.some(
