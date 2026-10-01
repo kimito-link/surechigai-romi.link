@@ -27,6 +27,7 @@
     "node_modules",
     "dist",
     "council",
-    "line-bot"
+    "line-bot",
+    "apps"
   ]
 }

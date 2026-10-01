@@ -124,3 +124,9 @@ public/lp/img/_orig-photo/
 # 別プロジェクト向けの一時作業スクリプト（このリポの成果物ではない）
 # ★2026-09-02 に ouenmovie の連写用として作られたもの。
 _shot-*.mjs
+
+# Next.js（apps/web — Web の Next.js 化。strangler 移行中は旧 Expo と同居する）
+apps/web/.next/
+apps/web/out/
+apps/web/next-env.d.ts
+apps/web/.env.local

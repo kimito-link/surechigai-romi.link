@@ -259,6 +259,93 @@ CSP/no-storeヘッダー、sw.jsの`/_next/`素通し、ルート排他設定。
 
 ## 次の一手
 
+★**2026-10-01 更新: Step 0〜1 は実施済み**（本書末尾「Step 1 実施記録」を見る。
+ブランチ `feat/web-nextjs-phase1`）。次は **Step 2**（新 Vercel プロジェクト作成・
+検証用サブドメイン）。以下は着手前に書かれた記述で、記録として残す。
+
 実装は今回やらない。次チャット（または別モデル・別セッション）にこの実装ハンドオフを読ませ、
 ブランチを切ってStep 0から着手する。着手前に必ずStep 0の未確認事項（0-3・0-7、Vercel MCPの
 teamスコープ再認証）を埋めること。
+
+---
+
+## Step 1 実施記録（2026-10-01・ブランチ `feat/web-nextjs-phase1`）
+
+### ✅ 完了したこと
+
+- `apps/web` を独立 package として作成。**kimito.link と同一バージョン**に揃えた
+  （Next 16.3.8 / React 19.3.0 / Clerk 7.9.9 / Tailwind 4.3.3）
+- 認証金型 `templates/web/auth-mode/nextjs` を**初めて輸入**（実績 0 → 1）
+- ルート `tsconfig.json` の `exclude` に `apps` を追加（Expo 側の型検査を壊さないため）
+- `.gitignore` に `apps/web/.next/`・`apps/web/.env.local` を追加
+  （★このリポは Expo なので `.next` が無視対象に入っていなかった）
+
+### ★金型は無改変で動いた（金型の設計が機能した）
+
+6ファイルすべて1文字も直さずにビルドが通った。書き換えたのは設計どおり
+`auth-brand.config.ts` のみ。
+
+### 実測で確定した設定値
+
+| 項目 | 値 | 根拠 |
+|---|---|---|
+| `afterAuthPath` | **`/`** | 本番 `/api/health` の `expectedPostAuthPath: "/"`（kimito.link の `/dashboard/` ではない） |
+| `afterSignOutPath` | `/logout` | `lib/header-user-button-props.ts:21` |
+
+### 緑の条件の達成状況
+
+| 条件 | 結果 |
+|---|---|
+| `apps/web` で `pnpm build` が通る | ✅ `/sign-in/[[...sign-in]]` が生成される |
+| ルート側 `tsc --noEmit` が変更前と同じ | ✅ exit 0 |
+| Decision Receipt ゲート | ✅ 緑（REUSE 6件 / LOCAL 3件） |
+| `diff-check`（誇張表現ゲート） | ✅ Gate1 ok（★下記の修正後） |
+| ローカルで `/sign-in/?redirect_url=%2F&auto=x` を開く | △ **部分的**（下記） |
+
+### ★達成できていない条件（正直に記す）
+
+**`<SignIn/>` はローカルでは描画されない。コンソールエラー0も達成していない。**
+
+```
+Clerk: Production Keys are only allowed for domain "kimito.link".
+API Error: The Request HTTP Origin header must be equal to or a subdomain of the requesting URL.
+```
+
+本番キー（`pk_live`）は `kimito.link` 系ドメインでしか動かないため、`localhost:3001` では
+Clerk 自体がロードできない。★**これは既知の制約でコードの不具合ではない**
+（メモリ [[authenticated-e2e-runs-against-production]] と同根）。
+
+**確認できたこと**: `AutoAdvanceToX` のオーバーレイは設定どおり描画された
+（見出し・補足・Sensitive 先出しの3要素をアクセシビリティツリーで実見）。
+＝ 金型と `auth-brand.config.ts` の配線は動いている。
+
+**ログイン往復の検証は Step 3（本番 rewrite 後）で行う**（手順書の想定どおり）。
+
+### ★Step 1 で見つけた金型の穴（修正済み・Phase 1.5 を前倒し）
+
+**このリポの `diff-check` は誇張表現をコメントも含めて弾く**（禁止語の一覧は `scripts/diff-check.mjs` を見る。★この検査は「引用」と「断定」を区別しないので、禁止語は文書内でも書かない）。
+金型のコメントが3箇所引っかかり、**無改変では commit できなかった**。
+
+- `auth-layout.tsx.example`: FORCE の説明文に禁止語が1つ（→ 語を削って同義に）
+- `auth-routes.ts.example`: 2箇所（→ 「行けず」「揃える」に言い換え）
+
+→ **金型側を修正し、README に「輸入実績1件」と穴の記録を追記した**（還流完了）。
+以後この金型のコメントに誇張語を書かない。
+
+### ★Step 2 の宿題（落とさない）: CSP
+
+旧プロジェクトの `vercel.json:14` にある `Content-Security-Policy` は
+**`/(.*)` に掛かっている**。strangler の rewrite で `/sign-in` を新プロジェクトが
+応答するようになると、**旧 vercel.json の header は当たらない**
+（＝移行したパスだけ CSP が消える）。`apps/web/next.config.ts` にコメントで明記済み。
+
+★なお `pnpm check` の
+「公開サイトのセキュリティ満点チェック 🔴（script-src の unsafe-inline/unsafe-eval で -5点）」は
+**本番サイト `https://surechigai.kimito.link` を測った結果**であり、
+未デプロイの `apps/web` とは無関係な**既存の赤**（`main` でも同じ）。
+
+### 次の一手
+
+Step 2: 新 Vercel プロジェクト `surechigai-web` を作成し、検証用サブドメインを立てる。
+★**着手前に Clerk Dashboard の Allowed subdomains へ検証用サブドメインを登録する**
+（未登録だと無言で失敗する）。
