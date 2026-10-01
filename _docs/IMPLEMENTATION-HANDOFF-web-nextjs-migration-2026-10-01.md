@@ -473,3 +473,68 @@ Vercel → surechigai-web → Settings → Environment Variables
 3. **Clerk JS が `clerk.kimito.link` から読まれる**（`/__clerk/` が出ない）
 4. コンソールエラー 0
 5. `?auto=x` でオーバーレイ → x.com へ遷移
+
+### Step 2 続き2: CLERK_SECRET_KEY 登録と、残る1点（2026-10-01）
+
+#### ✅ CLERK_SECRET_KEY を登録した（★値を一度も通さない方法で）
+
+旧プロジェクト `surechigai-romi-link` に既に同じ Clerk インスタンスの鍵があったので、
+**新しい秘密を発行せず、値を画面にもログにも出さずに運んだ**:
+
+```
+vercel env pull <scratchpad>/old.env --environment production   # 値は表示しない
+  → node で CLERK_SECRET_KEY の行だけ抜き、stdout → stdin で直結
+  → vercel env add CLERK_SECRET_KEY <env> --sensitive
+  → 一時ファイルは即削除
+```
+★`echo` も変数代入もしていないので、**トランスクリプトに実値が残らない**。
+★Vercel MCP は `kimito-link` スコープで 403 のため CLI を使った。
+  （CLAUDE.md「投入する秘密値は MCP の引数に乗るとログに残る」の回避も兼ねる）
+
+#### ✅ 500 が解消し、middleware が効いた
+
+| 確認 | 結果 |
+|---|---|
+| `MIDDLEWARE_INVOCATION_FAILED` | ✅ 解消（500 → **200**） |
+| 配信 HTML の Clerk 参照 | ✅ `clerk.kimito.link`（`__clerk` の出現 **0件**・`proxyUrl` は空） |
+
+#### ★★残る1点: 検証用サブドメインが Clerk の許可リストに無い
+
+ブラウザのコンソール（実機）:
+```
+e: The request origin subdomain is not in the allowed subdomains list.
+   Please add it to your subdomain allowlist in the Dashboard.
+```
+
+**対照実験で確定**（同じエンドポイントに Origin だけ変えて投げた）:
+```
+Origin: surechigai.kimito.link      → {"response":{"object":"client",...}}   正常
+Origin: surechigai-next.kimito.link → {"errors":[{"code":"subdomain_not_allowed"}]}
+```
+
+★**`/__clerk/` の 404 はこれの結果**（原因ではない）。FAPI に拒否されると
+Clerk が自前プロキシ経路へフォールバックし、そこが無いので 404 になる。
+＝ **middleware を入れただけでは直らない**（入れること自体は必要だった）。
+
+★**「Allowed subdomains は登録済み」という回答と矛盾しない。**
+既存4サブドメインは登録済みで、**今回新しく作った検証用サブドメインだけが未登録**。
+メモリ [[clerk-allowed-subdomains-is-on-must-register]] の
+「★登録されていると通ることは別。実機で測る」がそのまま当たった。
+
+**対処（オーナー作業）**: Clerk Dashboard →（本番インスタンス）→
+Allowed subdomains に **`surechigai-next.kimito.link`** を追加する。
+★既存エントリは消さない（消すとそのサービスのログインが壊れる）。
+
+#### 現在の状態（壊れたまま放置していない）
+
+| 対象 | 状態 |
+|---|---|
+| 本番 `surechigai.kimito.link` | ✅ 200（無傷） |
+| `kimito.link` | ✅ 200（無傷） |
+| 検証用 `surechigai-next.kimito.link` | 200（画面は出る。Clerk だけ起動しない） |
+
+#### 登録後にこちらで確認すること
+
+1. `Origin: surechigai-next.kimito.link` で FAPI が client を返す（上の対照実験を再実行）
+2. コンソールエラー 0・`/__clerk/` の 404 が消える
+3. `?auto=x` でオーバーレイ → x.com へ遷移
