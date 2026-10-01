@@ -6,6 +6,40 @@ import type { NextConfig } from "next";
  *   土台にしつつ、Next 16 系の実運用値へ合わせている（金型は Next 15 のままなので
  *   Phase 1.5 で還流する）。
  */
+/**
+ * ★Content-Security-Policy（2026-10-01・Step 2 で移送）
+ *
+ * 旧プロジェクトの `../../vercel.json` の headers "/(.*)" が正本だったが、
+ * strangler の rewrite で移行したパスを**新プロジェクトが応答する**ようになると
+ * 旧 vercel.json の header は当たらない（応答するオリジンが変わるため）。
+ * ＝ 移行したパスだけ CSP が消える。そこで同じ内容をここへ写した。
+ *
+ * ★許可先は旧設定から1つも減らしていない（Clerk・X API・地図タイル・Sentry 等）。
+ *   減らすと本番で沈黙して壊れるため、整理するなら実機確認とセットで行う。
+ *
+ * ★既知の減点: script-src の 'unsafe-inline' / 'unsafe-eval'。
+ *   `verify-security-score` が -5点として既に赤を出している（本番も同じ）。
+ *   ここでは**旧と同じ挙動を保つことを優先**して踏襲した。
+ *   外すと Clerk が動かなくなる可能性が高いので、改善は別途 nonce 化等を
+ *   実機確認付きで行う（この移送では挙動を変えない）。
+ */
+const CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://clerk.kimito.link https://challenges.cloudflare.com https://va.vercel-scripts.com https://static.cloudflareinsights.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https://*.twimg.com https://*.clerk.com https://unavatar.io https://kimito.link https://*.openfreemap.org https://tile.openstreetmap.org",
+  "connect-src 'self' https://clerk.kimito.link https://*.clerk.accounts.dev https://clerk-telemetry.com https://*.sentry.io https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://api.x.com https://api.twitter.com https://*.openfreemap.org https://tile.openstreetmap.org https://*.vercel-insights.com https://cloudflareinsights.com",
+  "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.kimito.link",
+  "worker-src 'self' blob:",
+  "media-src 'self' data: blob:",
+  "manifest-src 'self'",
+  "form-action 'self' https://clerk.kimito.link https://kimito.link",
+].join("; ");
+
 const nextConfig: NextConfig = {
   // 既存 Expo Web と同じく末尾スラッシュ付きに揃える（既存URLを壊さない）。
   trailingSlash: true,
@@ -38,16 +72,7 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          // ★★CSP はここで持たせる必要がある（Step 2 の宿題）。
-          //   旧プロジェクトの CSP は ../../vercel.json の headers "/(.*)" にあるが、
-          //   strangler の rewrite で /sign-in を**新プロジェクトが応答する**ようになると、
-          //   旧 vercel.json の header は当たらない（応答するオリジンが変わるため）。
-          //   ＝ 移行したパスだけ CSP が消え、セキュリティ点数が下がる。
-          //   Step 2 で ../../vercel.json:14 の Content-Security-Policy を写し、
-          //   clerk.kimito.link / x.com など既存の許可先を欠かさないこと。
-          //   ★本番は現在 script-src に unsafe-inline/unsafe-eval を含み減点されている
-          //     （verify-security-score の既存の赤）。写すときに改善を検討してよいが、
-          //     Clerk が動かなくなるので外すなら実機確認が要る。
+          { key: "Content-Security-Policy", value: CSP },
         ],
       },
     ];
