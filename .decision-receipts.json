@@ -119,6 +119,31 @@
         "scripts/check-deploy-freshness.mjs",
         "scripts/lib/deploy-freshness-core.mjs"
       ]
+    },
+    {
+      "at": "2026-10-01T06:04:53.449Z",
+      "responsibility": "clerk-x-signin-ui",
+      "decision": "REUSE",
+      "canonicalSource": "../web-ios-android/templates/web/auth-mode/nextjs/README.md",
+      "scopePaths": [
+        "apps/web/app/(auth)/layout.tsx",
+        "apps/web/app/(auth)/sign-in/[[...sign-in]]/page.tsx",
+        "apps/web/components/AuthPageShell.tsx",
+        "apps/web/components/AutoAdvanceToX.tsx",
+        "apps/web/lib/auth-routes.ts",
+        "apps/web/lib/auth-brand.config.ts"
+      ]
+    },
+    {
+      "at": "2026-10-01T06:05:23.256Z",
+      "responsibility": "nextjs-app-bootstrap-config",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "apps/web/next.config.ts",
+        "apps/web/app/layout.tsx",
+        "apps/web/postcss.config.mjs"
+      ]
     }
   ]
 }
