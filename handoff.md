@@ -91,9 +91,12 @@ NEXT_ACTION:
   1. 実アカウントで1回ログインを完走し、ログイン済み状態でのauto=x非発火を確認する
   2. _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md のStep 4は完了
      （/auth/kimito-link移植済み・本番実機で未ログイン→X認可画面まで2回確認）。
-     次はStep 5（AutoAdvanceToX等を web-ios-android/templates/web/auth-mode/nextjs/ へ
-     金型格上げ、check-drift.mjsのPAIRS登録）。なお /auth/kimito-link の
-     ログイン済み→トップ分岐は実アカウントでのログインが要るため未確認
+     Step 5（金型への格上げ）も完了（web-ios-android commit 586669e）: 穴5件を
+     templates/web/auth-mode/nextjs/ へ還流し、無改変コピーの4ファイル
+     （kimito-link-redirect.ts / KimitoLinkRedirect.tsx / auth-guide-page /
+     そのテスト）を check-drift PAIRS に登録（このリポのコピーとバイト一致）。
+     ★これら4ファイルをこのリポだけで書き換えると drift 検査が割れる。直すなら金型側から。
+     なお /auth/kimito-link のログイン済み→トップ分岐は実アカウントが要るため未確認
   3. apps/web/middleware.tsのedge runtime非推奨警告への対応（任意、優先度低）
   4. ★sign-upページは作らない（2026-10-02確定・既存設計を確認済み）。
      surechigaiはサインアップ専用ページを持たない設計（lib/auth-routes.tsの
