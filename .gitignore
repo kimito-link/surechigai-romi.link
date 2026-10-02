@@ -1,5 +1,8 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# 並列セッション協調ファイル（web-ios-android/CLAUDE.md「並列セッション協調プロトコル」節）
+.agent/coord.md
+
 # dependencies
 node_modules/
 

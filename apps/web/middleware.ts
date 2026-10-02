@@ -13,6 +13,13 @@
 //   clerkMiddleware を置くと clerk.kimito.link から直接読む形になり解消する
 //   （本番 surechigai.kimito.link / kimito.link はどちらも直接読み＝対照で確認済み）。
 //
+// ★★2026-10-02 実機で踏んだ続き: 上記コメントの「clerkMiddleware を置けば解消する」
+//   は不正確だった。`surechigai-web.vercel.app` 単体へアクセスすると同じ404が再現した。
+//   真因は matcher の除外パターン `js(?!on)` ——`/__clerk/npm/.../clerk.browser.js` も
+//   拡張子 `.js` を持つため、**matcher の除外対象に該当し middleware が実行されていなかった**。
+//   Clerk公式ドキュメント（clerk.com/docs/reference/nextjs/clerk-middleware）が明記する通り、
+//   `/__clerk/(.*)` を matcher に明示的に含める必要がある（静的アセット除外より優先させる）。
+//
 // ★strangler 移行中の方針（金型からの意図的な差分）:
 //   金型は「公開ルート以外は auth.protect()」だが、この段階では
 //   **このアプリは /sign-in しか配信していない**（他のパスは旧 Expo 側が応答する）。
@@ -26,6 +33,9 @@ export default clerkMiddleware();
 
 export const config = {
   matcher: [
+    // ★Clerk のフロントエンドAPIプロキシ経路。静的アセット除外より先に置き、
+    //   拡張子 .js を理由に除外されないようにする（2026-10-02 実損対応）。
+    "/__clerk/(.*)",
     // 静的アセット・_next を除く全ルート。
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
