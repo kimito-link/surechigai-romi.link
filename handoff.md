@@ -76,10 +76,11 @@ TEST_RESULT: 全項目緑。
   未実施: ログイン済み状態での auto=x 非発火確認（実アカウントでのOAuth完走が必要なため
   このセッションでは未実施。次回、実際にログインを1回完走したのち確認すること）
 REMAINING_RISKS:
-  - ★/auth/kimito-link(/)は旧Expo側の静的HTMLへ戻してある（commit 517ad1510）。Step 3で
-    新プロジェクトへ転送したがapps/webに未移植で本番404になっていた退行の対処。
-    アプリ内ログイン案内(LOGIN_GUIDE)が使うルート。Step 4で移植するまでvercel.jsonの
-    このルートを新プロジェクトへ向け直さないこと（向け直すなら移植と同時）
+  - /auth/kimito-link(/)はStep 4でNext.jsへ移植済み（commit 4eea5a695）。経緯: Step 3で
+    未移植のまま新プロジェクトへ転送して本番404になり、一度旧Expo側へ戻して(517ad1510)から
+    移植した。ロールバックはvercel.jsonの2ルートを /auth/kimito-link.html に戻すだけ
+    （旧静的HTMLは dist に残っている）。教訓: 付け替えは「移植→新プロジェクト単体で200確認→
+    vercel.json付け替え」の順で行う
   - ログイン済み時のauto=x非発火が未確認（上記）。Browser paneはXに未ログインのため
     実施できていない（ユーザーがpane内でXにログインすれば検証できる）
   - /sso-callback系・/oauth/twitter-callback系はMVPスコープ外のため旧Expo側のまま
@@ -88,8 +89,11 @@ REMAINING_RISKS:
     （`const config = { runtime: 'nodejs' }`への移行をClerkが推奨。実害なし、次の機会に対応）
 NEXT_ACTION:
   1. 実アカウントで1回ログインを完走し、ログイン済み状態でのauto=x非発火を確認する
-  2. _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md Step 4
-     （/auth/kimito-link移植）、Step 5（AutoAdvanceToX等の金型格上げ）へ進む
+  2. _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md のStep 4は完了
+     （/auth/kimito-link移植済み・本番実機で未ログイン→X認可画面まで2回確認）。
+     次はStep 5（AutoAdvanceToX等を web-ios-android/templates/web/auth-mode/nextjs/ へ
+     金型格上げ、check-drift.mjsのPAIRS登録）。なお /auth/kimito-link の
+     ログイン済み→トップ分岐は実アカウントでのログインが要るため未確認
   3. apps/web/middleware.tsのedge runtime非推奨警告への対応（任意、優先度低）
   4. ★sign-upページは作らない（2026-10-02確定・既存設計を確認済み）。
      surechigaiはサインアップ専用ページを持たない設計（lib/auth-routes.tsの
