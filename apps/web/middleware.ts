@@ -27,21 +27,25 @@
 //   よって当面は **protect せず、Clerk を初期化するだけ** にする。
 //   ルートを移してくるたびに、その都度 isProtectedRoute へ足していく。
 //
-// ★★2026-10-02 実機で踏んだ続きのその先: matcher に /__clerk/(.*) を足しても
-//   「Invalid host」400が解消しなかった。真因は clerkMiddleware() を**オプションなし**
-//   で呼んでいたこと——matcher で /__clerk/ がmiddlewareを通るようにはなったが、
-//   実際にヘッダー(Clerk-Proxy-Url 等)を付けてclerk.kimito.linkへ転送する処理
-//   (frontendApiProxy)自体が有効化されていなかった。Clerk公式ドキュメント
-//   （clerk.com/docs/guides/dashboard/dns-domains/proxy-fapi）が明記する通り、
-//   frontendApiProxy: { enabled: true } を明示する必要がある。
+// ★★2026-10-02 実機で踏んだ続きのその先（訂正含む）: frontendApiProxy: { enabled: true }
+//   を試したが誤りだった。この機能は「Clerkのカスタムドメインを使わず、Clerkの
+//   デフォルトフロントエンドAPI(frontend-api.clerk.dev)への直接アクセスがブロックされる
+//   環境向け」の別機能——有効にすると常にfrontend-api.clerk.devへ転送し、
+//   publishableKeyが指すカスタムドメイン(clerk.kimito.link)は使われない
+//   （実機で「Invalid host」が解消せず、window.Clerk.frontendApiは正しいのに
+//   window.Clerk.proxyUrlが勝手にセットされていることで発覚）。削除して解消した。
+//
+//   ★根本原因はClerk JS自身の自動判定: 本番URLが`*.vercel.app`で終わるとき、
+//   Clerk JSはサーバー側の設定に関わらず自動でプロキシモード(/__clerk/経由)に入る
+//   （公式Issue等で報告されている既知挙動）。つまり`surechigai-web.vercel.app`
+//   「単体」での検証は、この自動判定のせいで最初から正しく動かない構成であり、
+//   検証にならない。カスタムドメイン(例: surechigai.kimito.link)経由でアクセス
+//   すれば`.vercel.app`で終わらないため自動判定に入らず、Clerk JSはpublishableKey
+//   から直接 clerk.kimito.link を使う——これが唯一の正しい検証方法。
 // ============================================================================
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware({
-  frontendApiProxy: {
-    enabled: true,
-  },
-});
+export default clerkMiddleware();
 
 export const config = {
   matcher: [
