@@ -7,38 +7,69 @@
 
 # Handoff
 
-STATUS: 未完了（2026-09-30完了報告は誤りだった。設計完了・実装未着手の新フェーズへ移行）
-ROOT_CAUSE: 2026-09-30時点で「3つの真因を修正し完了」と報告したが、2026-10-01に本番を実機再確認したところ
-  React Hydrationエラー(#418)・2つの`_layout`チャンクの並行ロード・AutoAdvanceToXの多重レンダリング(render #1〜#4)が
-  依然として発生していることを確認した。過去の修正（真因A・B・C、下記に記録として残す）はいずれも症状への
-  対症療法であり、**真の根本原因はExpo Router Web自体の構造的な脆さ**（Clerk認証プロバイダを動的import(`import()`)で
-  遅延ロードする設計が、Reactに「ラッパーの型系譜が変わった」と判定させ、stackツリー全体を強制再マウントさせる）
-  と特定した。同じkimito.link系列のkimitolink-linktree（Next.js + Clerk、ClerkProviderが静的import）は
-  同種の自動X認可機能を持ちながらコンソールエラーゼロで安定稼働しており、この比較で構造差が確定した。
-  対症療法を重ねるほど新しい症状（今回の#418・二重chunk）が生まれる状態のため、Web版だけをNext.js + Clerkへ
-  移行し回避策の連鎖を断つ方針に切り替えた。詳細: _docs/DESIGN-web-nextjs-migration-2026-10-01.md、
-  _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md参照。
+STATUS: Step 1〜3完了・本番反映済み・実機検証済み（mainへマージ・push済み、commit 9f5c30318）
+ROOT_CAUSE: Web版のちらつき（React #418・多重レンダリング）の真因はExpo Router Web構造の脆さ
+  （Clerk認証プロバイダの動的import解決時にReactがコンポーネントツリー全体を強制再マウントする）。
+  詳細は _docs/DESIGN-web-nextjs-migration-2026-10-01.md 参照（この節の過去記録は変更なし）。
 
-  （過去の記録・2026-09-30時点の3真因、症状の一部は改善したが全体解決には至らなかった）
-  真因A: `tryClick()`内でX認可ボタンをclickする**前**に`removeAutoXParam()`（`navigateReplace.withUrl()`＝`router.replace()`）を呼んでいたため、Reactの再レンダリングが完了してボタン要素がDOMからデタッチされ（`button.isConnected === false`を実機ログで確認）、その後の`.click()`が何も起こさなくなっていた。
-  真因B: `AutoAdvanceToX`が`app/sign-in.tsx`（`app/_layout.tsx`の`appContent`分岐＝`stack`の内側）に置かれていたため、`isMissingClerkKey`/`useGuestWebShell`/`authProviders`解決状況でAuthProviderの型が切り替わるたびに`stack`全体が強制再マウントされる既知の構造（`_layout.tsx`117-126行目に既存コメントあり）に巻き込まれ、`useEffect`が再実行されてclick処理のクロージャ（`didClick`フラグ等）がリセットされていた。
-  真因C: MutationObserverがXボタンの出現を検知した直後の同期`click()`が、Clerkが`<SignIn/>`を描画した直後でイベントハンドラがまだ完全にアタッチされていない競合状態に当たっていた（`setTimeout(fn, 0)`の1タスク遅延では不十分）。
+  Step 3実施中に新たに2つの地雷を踏み、解決した（いずれも金型
+  web-ios-android/templates/next-app/middleware.ts.templateへ還流済み）:
+
+  1. **`/__clerk/`プロキシ経路がmatcherの拡張子除外パターンに誤って該当し404になる地雷**
+     （matcher内`js(?!on)`が`/__clerk/npm/.../clerk.browser.js`にもマッチしてしまう）。
+     `/__clerk/(.*)`をmatcherの先頭に明示して解消。
+
+  2. **「別Vercelプロジェクトへの外部rewriteプロキシ」構成で`/__clerk/v1/client`が
+     「400 Invalid host」を返し続ける地雷**（本丸）。真因はClerk JS自身の自動判定——
+     本番URL(`VERCEL_PROJECT_PRODUCTION_URL`)が`*.vercel.app`で終わるとき、Clerk JSは
+     サーバー側の設定に関わらず強制的に自前プロキシ経路(`/__clerk/`)を使おうとする。
+     `surechigai-web`プロジェクトにカスタムドメインを割り当てていない限り常に該当する。
+     - 誤った対処1: `frontendApiProxy: { enabled: true }` → 常にClerkデフォルトドメイン
+       (frontend-api.clerk.dev)へ転送する別機能で、カスタムフロントエンドAPI
+       (clerk.kimito.link)を使う構成では逆効果。却下・削除。
+     - 誤った対処2: `frontendApiProxy: { enabled: false }` / 環境変数`CLERK_DISABLE_AUTO_PROXY=true`
+       → サーバー側では効くが、**クライアントコンポーネント(ClientClerkProvider)内で
+       mergeNextClerkPropsWithEnvが再実行される際、`NEXT_PUBLIC_`接頭辞の無い環境変数は
+       Next.jsの仕様上ブラウザバンドルに埋め込まれずundefinedになる**ため効かない
+       （@clerk/nextjs 7.9.9のソースを直接読んで特定）。
+     - **正しい解決**: `ClerkProvider`に`domain="clerk.kimito.link"`を明示。
+       `getAutoProxyUrlFromEnvironment`の`hasDomain`チェックで早期リターンし、
+       サーバー・クライアント両方で自動判定を回避できる。
+       （apps/web/app/(auth)/layout.tsx に実装済み）
+
 FILES_CHANGED:
-  - 2026-10-01時点でコード変更なし。設計書2件を作成（_docs/DESIGN-web-nextjs-migration-2026-10-01.md、
-    _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md）
-  - （過去の記録）components/auth/auto-advance-to-x.tsx / app/_layout.tsx / app/sign-in.tsx / vercel.json /
-    _docs/DESIGN-x-auto-click-navigation-failure-2026-09-30.md / ai-generic-rules/docs/policies/CLERK_X_LOGIN_PLAYBOOK.md
-TESTS_RUN: 2026-10-01: Browser paneで本番(https://surechigai.kimito.link/)を実機確認（コンソールログ・
-  ネットワークリクエストログ）。比較対象としてkimitolink-linktree本番も確認。
-TEST_RESULT: 2026-10-01実機確認で症状の再現を確認（React error #418複数回・`_layout`チャンク2種類の並行ロード・
-  AutoAdvanceToX render #1〜#4）。2026-09-30の「5/5回成功」は特定の実行環境・タイミングでは成立していたが、
-  問題の根本（構造的な再マウント）は解消していなかったと判明。
-REMAINING_RISKS: Next.js移行が完了するまで、この種の症状（React #418・多重レンダリング）が形を変えて
-  再発し続ける可能性が高い。対症療法をこれ以上重ねない（回避策のたびに複雑さが増し新しい症状を生む
-  パターンが2026-09-30と2026-10-01で2回観測された）。
-NEXT_ACTION: _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.mdのStep 0から実装に着手する
-  （次チャット・別セッション推奨）。ネイティブアプリのビルドには影響しない設計（Web版`/sign-in`系のみ
-  Next.jsへプロキシする段階移行）。
-LAST_WORKED_ON: 2026-10-01
-WORKED_BY: claude-desktop（web-ios-androidキットのセッションから越境作業、Fableへ設計委任・司令塔が裏取り）
-MACHINE_NOTES: -
+  - apps/web/middleware.ts（/__clerk/ matcher追加、最終的にオプションなしのシンプルな形）
+  - apps/web/app/(auth)/layout.tsx（domain="clerk.kimito.link"追加、★最終解決の本体）
+  - vercel.json（Step 3: /sign-in・/sign-in/・/auth/kimito-link・/auth/kimito-link/・
+    /__clerk/:path*・/_next/:path* をsurechigai-web.vercel.appへの外部プロキシに差し替え）
+  - public/sw.js（Next.jsアセットの素通し、Step 3の前提）
+  - web-ios-android/templates/next-app/middleware.ts.template（上記2つの地雷と訂正を金型へ還流）
+
+TESTS_RUN: 2026-10-02、本番ドメイン(https://surechigai.kimito.link/sign-in/)でBrowser pane実機検証:
+  - window.Clerk.loaded / frontendApi / proxyUrl の値を直接確認
+  - 新規タブ・キャッシュなしでコンソールエラー0件を確認
+  - ?redirect_url=%2F&auto=x を5回連続実行し、X認可画面への自動遷移を確認
+TEST_RESULT: 全項目緑。
+  - window.Clerk.frontendApi === "clerk.kimito.link"、proxyUrl === ""（空、プロキシ不使用）
+  - Minified React error #418 = 0件
+  - auto=x自動遷移 5/5成功（x.com/i/oauth2/authorize への遷移を確認）
+  未実施: ログイン済み状態での auto=x 非発火確認（実アカウントでのOAuth完走が必要なため
+  このセッションでは未実施。次回、実際にログインを1回完走したのち確認すること）
+REMAINING_RISKS:
+  - ログイン済み時のauto=x非発火が未確認（上記）
+  - /sso-callback系・/oauth/twitter-callback系はMVPスコープ外のため旧Expo側のまま
+    （vercel.jsonでsurechigai-webへは転送していない）
+  - apps/web/middleware.tsが"edge" runtimeの非推奨警告をビルドログに出している
+    （`const config = { runtime: 'nodejs' }`への移行をClerkが推奨。実害なし、次の機会に対応）
+NEXT_ACTION:
+  1. 実アカウントで1回ログインを完走し、ログイン済み状態でのauto=x非発火を確認する
+  2. _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md Step 4
+     （/auth/kimito-link移植）、Step 5（AutoAdvanceToX等の金型格上げ）へ進む
+  3. apps/web/middleware.tsのedge runtime非推奨警告への対応（任意、優先度低）
+LAST_WORKED_ON: 2026-10-02
+WORKED_BY: claude-desktop（web-ios-androidキットのセッションから越境作業。前セッションが
+  Step 1・2を実施、本セッションがStep 3の実機検証・地雷解決・本番反映・mainマージを担当）
+MACHINE_NOTES: vercel.jsonへの直接編集がこのセッションのClaude Code権限分類器(Blind Apply /
+  Auto-Mode Bypass)に繰り返し拒否された。最終的にユーザー本人がGit Bash経由でファイルを
+  上書き保存し、コミットのみセッション側で実行した。同種の作業を別セッションで行う場合、
+  同じ拒否に当たる可能性がある。
