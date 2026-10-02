@@ -35,17 +35,28 @@
 //   （実機で「Invalid host」が解消せず、window.Clerk.frontendApiは正しいのに
 //   window.Clerk.proxyUrlが勝手にセットされていることで発覚）。削除して解消した。
 //
-//   ★根本原因はClerk JS自身の自動判定: 本番URLが`*.vercel.app`で終わるとき、
-//   Clerk JSはサーバー側の設定に関わらず自動でプロキシモード(/__clerk/経由)に入る
-//   （公式Issue等で報告されている既知挙動）。つまり`surechigai-web.vercel.app`
-//   「単体」での検証は、この自動判定のせいで最初から正しく動かない構成であり、
-//   検証にならない。カスタムドメイン(例: surechigai.kimito.link)経由でアクセス
-//   すれば`.vercel.app`で終わらないため自動判定に入らず、Clerk JSはpublishableKey
-//   から直接 clerk.kimito.link を使う——これが唯一の正しい検証方法。
+//   ★根本原因はClerk JS自身の自動判定: 本番URLが`*.vercel.app`で終わるとき
+//   （VERCEL_PROJECT_PRODUCTION_URLで判定。surechigai-webにカスタムドメインを
+//   割り当てていないため常にこれに該当する）、Clerk JSはサーバー側の設定に
+//   関わらず自動でプロキシモード(/__clerk/経由)に入り、window.Clerk.proxyUrlが
+//   勝手にセットされ、プロキシ先(frontend-api.clerk.dev)が「Invalid host」を返す。
+//   カスタムドメイン経由でアクセスしても、リクエストを処理する関数自体が
+//   surechigai-webプロジェクトである限りこの自動判定は解除されない
+//   （ブラウザ上のオリジンではなくVercelプロジェクト自体の本番URLを見ているため）。
+//
+//   ★2026-10-02 解決: frontendApiProxy.enabled はboolean/function指定が可能。
+//   明示的に false を渡して自動判定を上書きする——これにより常にpublishableKeyが
+//   指すカスタムドメイン(clerk.kimito.link)を直接使うようになる。
+//   「別Vercelプロジェクトへの外部rewriteプロキシ」構成（strangler移行等）で
+//   カスタムドメインを移管できない場合は、このfalse明示が正しい対処。
 // ============================================================================
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware();
+export default clerkMiddleware({
+  frontendApiProxy: {
+    enabled: false,
+  },
+});
 
 export const config = {
   matcher: [
