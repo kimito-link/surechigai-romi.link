@@ -44,19 +44,21 @@
 //   surechigai-webプロジェクトである限りこの自動判定は解除されない
 //   （ブラウザ上のオリジンではなくVercelプロジェクト自体の本番URLを見ているため）。
 //
-//   ★2026-10-02 解決: frontendApiProxy.enabled はboolean/function指定が可能。
-//   明示的に false を渡して自動判定を上書きする——これにより常にpublishableKeyが
-//   指すカスタムドメイン(clerk.kimito.link)を直接使うようになる。
+//   ★frontendApiProxy.enabled: false も試したが効果なし（@clerk/shared/dist/proxy.mjs
+//   のソースを直接読んで判明）。自動判定ロジック(getAutoProxyUrlFromEnvironment)は
+//   frontendApiProxyオプションとは**別系統**で、クライアント側(ブラウザのClerk JS)の
+//   初期化propsとしてサーバー側が静的/SSR時に注入するproxyUrl文字列を直接制御する
+//   専用の環境変数 `CLERK_DISABLE_AUTO_PROXY` を見る設計だった（NEXT_PUBLIC_不要、
+//   サーバー側のみでよい）。
+//
+//   ★2026-10-02 最終解決: Vercelプロジェクト(surechigai-web)の環境変数に
+//   `CLERK_DISABLE_AUTO_PROXY=true` を追加（シークレットではない設定フラグ）。
 //   「別Vercelプロジェクトへの外部rewriteプロキシ」構成（strangler移行等）で
-//   カスタムドメインを移管できない場合は、このfalse明示が正しい対処。
+//   カスタムドメインを移管できない場合、この環境変数が正しい対処。
 // ============================================================================
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware({
-  frontendApiProxy: {
-    enabled: false,
-  },
-});
+export default clerkMiddleware();
 
 export const config = {
   matcher: [
