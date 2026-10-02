@@ -76,7 +76,12 @@ TEST_RESULT: 全項目緑。
   未実施: ログイン済み状態での auto=x 非発火確認（実アカウントでのOAuth完走が必要なため
   このセッションでは未実施。次回、実際にログインを1回完走したのち確認すること）
 REMAINING_RISKS:
-  - ログイン済み時のauto=x非発火が未確認（上記）
+  - ★/auth/kimito-link(/)は旧Expo側の静的HTMLへ戻してある（commit 517ad1510）。Step 3で
+    新プロジェクトへ転送したがapps/webに未移植で本番404になっていた退行の対処。
+    アプリ内ログイン案内(LOGIN_GUIDE)が使うルート。Step 4で移植するまでvercel.jsonの
+    このルートを新プロジェクトへ向け直さないこと（向け直すなら移植と同時）
+  - ログイン済み時のauto=x非発火が未確認（上記）。Browser paneはXに未ログインのため
+    実施できていない（ユーザーがpane内でXにログインすれば検証できる）
   - /sso-callback系・/oauth/twitter-callback系はMVPスコープ外のため旧Expo側のまま
     （vercel.jsonでsurechigai-webへは転送していない）
   - apps/web/middleware.tsが"edge" runtimeの非推奨警告をビルドログに出している
