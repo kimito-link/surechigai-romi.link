@@ -73,22 +73,28 @@ TEST_RESULT: 全項目緑。
   - auto=x自動遷移 5/5成功（x.com/i/oauth2/authorize への遷移を確認）
   - ブランディング（日本語見出し・X主役化・左カラムのサービス紹介・ロゴ/キャラ画像）
     すべて本番ドメインで表示確認済み
-  未実施: ログイン済み状態での auto=x 非発火確認（実アカウントでのOAuth完走が必要なため
-  このセッションでは未実施。次回、実際にログインを1回完走したのち確認すること）
+  ログイン済み状態の確認（2026-10-02、ユーザー本人の普段のChrome＝X・kimito.linkにログイン済みで実施。
+  資格情報の入力は無し）:
+  - /sign-in/?auto=x: isSignedIn=true・待機画面(overlay)なし・x.comへ遷移せず /sign-in/ に留まる ＝ 非発火OK
+  - /auth/kimito-link/: ログイン済みで surechigai.kimito.link/ （トップ）へ着地 ＝ 分岐OK
+  - 観察: ログイン済みでも /sign-in/ は通常のログイン画面を表示し続ける（本家kimito.linkと同じ挙動。
+    URLのauto=xも残る。設計書の「autoが消える」は満たさないが実害なし。直すなら
+    AutoAdvanceToXでログイン済み時もremoveAutoXParamを呼ぶ／ログイン済みはafterAuthPathへ送る、が候補）
 REMAINING_RISKS:
   - /auth/kimito-link(/)はStep 4でNext.jsへ移植済み（commit 4eea5a695）。経緯: Step 3で
     未移植のまま新プロジェクトへ転送して本番404になり、一度旧Expo側へ戻して(517ad1510)から
     移植した。ロールバックはvercel.jsonの2ルートを /auth/kimito-link.html に戻すだけ
     （旧静的HTMLは dist に残っている）。教訓: 付け替えは「移植→新プロジェクト単体で200確認→
     vercel.json付け替え」の順で行う
-  - ログイン済み時のauto=x非発火が未確認（上記）。Browser paneはXに未ログインのため
-    実施できていない（ユーザーがpane内でXにログインすれば検証できる）
+  - （解消）ログイン済み時のauto=x非発火・/auth/kimito-linkのトップ分岐は2026-10-02に
+    確認済み（上のTEST_RESULT）。Browser paneはXに未ログインなので、ログイン済みの再確認は
+    ユーザー本人のChrome（claude-in-chrome）で行うこと
   - /sso-callback系・/oauth/twitter-callback系はMVPスコープ外のため旧Expo側のまま
     （vercel.jsonでsurechigai-webへは転送していない）
   - apps/web/middleware.tsが"edge" runtimeの非推奨警告をビルドログに出している
     （`const config = { runtime: 'nodejs' }`への移行をClerkが推奨。実害なし、次の機会に対応）
 NEXT_ACTION:
-  1. 実アカウントで1回ログインを完走し、ログイン済み状態でのauto=x非発火を確認する
+  1. （完了）ログイン済み状態のauto=x非発火・中継ページの分岐は確認済み
   2. _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md のStep 4は完了
      （/auth/kimito-link移植済み・本番実機で未ログイン→X認可画面まで2回確認）。
      Step 5（金型への格上げ）も完了（web-ios-android commit 586669e）: 穴5件を
@@ -96,7 +102,6 @@ NEXT_ACTION:
      （kimito-link-redirect.ts / KimitoLinkRedirect.tsx / auth-guide-page /
      そのテスト）を check-drift PAIRS に登録（このリポのコピーとバイト一致）。
      ★これら4ファイルをこのリポだけで書き換えると drift 検査が割れる。直すなら金型側から。
-     なお /auth/kimito-link のログイン済み→トップ分岐は実アカウントが要るため未確認
   3. apps/web/middleware.tsのedge runtime非推奨警告への対応（任意、優先度低）
   4. ★sign-upページは作らない（2026-10-02確定・既存設計を確認済み）。
      surechigaiはサインアップ専用ページを持たない設計（lib/auth-routes.tsの
