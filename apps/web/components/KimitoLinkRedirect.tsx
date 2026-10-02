@@ -9,7 +9,7 @@
  *   3. 移動は window.location.replace（通常の画面遷移）。"/" は旧Expo側の管轄で
  *      Next.js ルーターの外にあるため、router.replace だと境界をまたぐ soft navigation で壊れる。
  *   4. 行き先は固定パスのみ（外部入力なし）。
- *   5. JS・Clerk が失敗しても、画面に出ている手動リンクで必ず先へ進める
+ *   5. JS・Clerk が失敗しても、画面に出ている手動リンクで先へ進める
  *      （壊れ方の上限を「自動で進まないだけ」に固定する）。
  */
 "use client";
