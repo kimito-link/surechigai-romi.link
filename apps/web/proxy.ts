@@ -1,5 +1,8 @@
 // ============================================================================
-// Clerk 認証の middleware。
+// Clerk 認証の proxy（Next.js 16 では旧 middleware.ts の名前が proxy.ts に変わった）。
+// ★2026-10-02: middleware.ts → proxy.ts に改名（Next 16 の「middleware は非推奨」警告への対応。
+//   中身は同じ clerkMiddleware()。proxy は Node.js ランタイム固定で、Clerk 7 が対応済み）。
+//   以下のコメント内の「middleware」は、この proxy.ts のことを指す。
 // ★出典: web-ios-android/templates/next-app/middleware.ts.template（金型）
 //   ＝ kimitolink-linktree の実運用版。輸入実績2件目。
 //

@@ -9,6 +9,9 @@ const BOT_UA =
   /bot|crawl|spider|slurp|facebookexternalhit|twitterbot|linkedinbot|slackbot|discordbot|whatsapp|telegram|embedly|pinterest|vkshare|line-poker|meta-externalagent|redditbot|skypeuripreview/i;
 
 export const config = {
+  // ★Edge ランタイムは非推奨（Vercel のビルド警告）。Node.js ランタイムを明示する。
+  //   OGP クローラー向けの内部 fetch だけの処理で、Edge 固有の機能は使っていない。
+  runtime: "nodejs",
   matcher: ["/u/:slug"],
 };
 
