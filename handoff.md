@@ -8,7 +8,7 @@
 # Handoff
 
 STATUS: Step 1〜3完了＋サインイン画面のブランディング追加、本番反映済み・実機検証済み
-  （mainへマージ・push済み、最新commit 9ed36b324）
+  （mainへマージ・push済み、最新commit 22c83a436）
 ROOT_CAUSE: Web版のちらつき（React #418・多重レンダリング）の真因はExpo Router Web構造の脆さ
   （Clerk認証プロバイダの動的import解決時にReactがコンポーネントツリー全体を強制再マウントする）。
   詳細は _docs/DESIGN-web-nextjs-migration-2026-10-01.md 参照（この節の過去記録は変更なし）。
@@ -46,8 +46,13 @@ FILES_CHANGED:
   - apps/web/lib/clerk-appearance.ts（新規・X主役化スタイル、kimitolink-linktree踏襲）
   - apps/web/components/AuthPageIntro.tsx（新規・左カラムのサービス紹介、
     3キャラクター画像使用。AuthPageShellのintroスロットが全てnullのまま
-    <SignIn/>単体だけが寂しく表示されていたのを解消）
+    <SignIn/>単体だけが寂しく表示されていたのを解消。sign-in専用に
+    シンプル化済み＝variant propは無い、下記sign-up撤回の経緯参照）
   - apps/web/public/pwa-icon-192.png・chara/{link,konta,tanunee}.png（新規、画像素材）
+  - apps/web/lib/auth-routes.ts（SIGN_UP_HREFをSIGN_IN_HREFと同じ値に統一。
+    旧Expo側 lib/clerk-route.ts の正本実装に揃えた）
+  - （削除・撤回）apps/web/app/(auth)/sign-up/ — 一度新設したが、surechigaiは
+    サインアップ専用ページを持たない既存設計と矛盾し本番で到達不可能だったため削除
   - vercel.json（Step 3: /sign-in・/sign-in/・/auth/kimito-link・/auth/kimito-link/・
     /__clerk/:path*・/_next/:path* をsurechigai-web.vercel.appへの外部プロキシに差し替え。
     さらに/_next/image/専用rewriteを追加＝trailingSlash:true構成でのnext/image地雷対処）
@@ -81,8 +86,12 @@ NEXT_ACTION:
   2. _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md Step 4
      （/auth/kimito-link移植）、Step 5（AutoAdvanceToX等の金型格上げ）へ進む
   3. apps/web/middleware.tsのedge runtime非推奨警告への対応（任意、優先度低）
-  4. sign-upページ（apps/web/app/(auth)/sign-up/）はまだ存在しない（MVPスコープ外）。
-     作成時はAuthPageIntro variant="sign-up"を同様に組み込むこと
+  4. ★sign-upページは作らない（2026-10-02確定・既存設計を確認済み）。
+     surechigaiはサインアップ専用ページを持たない設計（lib/auth-routes.tsの
+     SIGN_UP_HREF = SIGN_IN_HREF、vercel.jsonの/sign-up→/sign-inリダイレクト参照）。
+     一度apps/web側にsign-upページを新設したが、この既存設計と矛盾し本番で
+     到達不可能だったため削除・撤回済み（commit 22c83a436）。次にこの提案が
+     出たら、まずこのSTATUSとlib/auth-routes.tsのコメントを読むこと
 LAST_WORKED_ON: 2026-10-02
 WORKED_BY: claude-desktop（web-ios-androidキットのセッションから越境作業。前セッションが
   Step 1・2を実施、本セッションがStep 3の実機検証・地雷解決・本番反映・mainマージ・
