@@ -26,10 +26,22 @@
 //   ここで全部を保護対象にすると、移行していないパスの扱いを二重に持つことになる。
 //   よって当面は **protect せず、Clerk を初期化するだけ** にする。
 //   ルートを移してくるたびに、その都度 isProtectedRoute へ足していく。
+//
+// ★★2026-10-02 実機で踏んだ続きのその先: matcher に /__clerk/(.*) を足しても
+//   「Invalid host」400が解消しなかった。真因は clerkMiddleware() を**オプションなし**
+//   で呼んでいたこと——matcher で /__clerk/ がmiddlewareを通るようにはなったが、
+//   実際にヘッダー(Clerk-Proxy-Url 等)を付けてclerk.kimito.linkへ転送する処理
+//   (frontendApiProxy)自体が有効化されていなかった。Clerk公式ドキュメント
+//   （clerk.com/docs/guides/dashboard/dns-domains/proxy-fapi）が明記する通り、
+//   frontendApiProxy: { enabled: true } を明示する必要がある。
 // ============================================================================
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware();
+export default clerkMiddleware({
+  frontendApiProxy: {
+    enabled: true,
+  },
+});
 
 export const config = {
   matcher: [
