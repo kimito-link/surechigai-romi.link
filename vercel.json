@@ -310,11 +310,11 @@
     },
     {
       "source": "/auth/kimito-link",
-      "destination": "/auth/kimito-link.html"
+      "destination": "https://surechigai-web.vercel.app/auth/kimito-link"
     },
     {
       "source": "/auth/kimito-link/",
-      "destination": "/auth/kimito-link.html"
+      "destination": "https://surechigai-web.vercel.app/auth/kimito-link/"
     },
     {
       "source": "/__clerk/:path*",

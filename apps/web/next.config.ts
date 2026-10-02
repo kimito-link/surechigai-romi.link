@@ -66,6 +66,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/sign-in/:path*", headers: noStoreHeaders },
       { source: "/sign-up/:path*", headers: noStoreHeaders },
+      { source: "/auth/:path*", headers: noStoreHeaders },
       {
         source: "/(.*)",
         headers: [
