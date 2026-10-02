@@ -302,19 +302,27 @@
     },
     {
       "source": "/sign-in",
-      "destination": "/sign-in.html"
+      "destination": "https://surechigai-web.vercel.app/sign-in"
     },
     {
       "source": "/sign-in/",
-      "destination": "/sign-in.html"
+      "destination": "https://surechigai-web.vercel.app/sign-in/"
     },
     {
       "source": "/auth/kimito-link",
-      "destination": "/auth/kimito-link.html"
+      "destination": "https://surechigai-web.vercel.app/auth/kimito-link"
     },
     {
       "source": "/auth/kimito-link/",
-      "destination": "/auth/kimito-link.html"
+      "destination": "https://surechigai-web.vercel.app/auth/kimito-link/"
+    },
+    {
+      "source": "/__clerk/:path*",
+      "destination": "https://surechigai-web.vercel.app/__clerk/:path*"
+    },
+    {
+      "source": "/_next/:path*",
+      "destination": "https://surechigai-web.vercel.app/_next/:path*"
     },
     {
       "source": "/sso-callback",
