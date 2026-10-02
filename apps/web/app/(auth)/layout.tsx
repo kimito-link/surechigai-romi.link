@@ -32,6 +32,18 @@ export default function AuthLayout({
       // 方式A: 共通アカウント（親ドメインで __client cookie を共有）。
       // ★サブドメイン方式なら satellite 設定は不要かつ有害
       //   （isSatellite:true は verified でない限り /v1/client/sync が落ちる）。
+      //
+      // ★domain明示が必須（2026-10-02実機確認）: この値が無いと、Vercelの自動
+      //   プロキシ判定(本番URLが*.vercel.appで終わるか)がクライアント側で
+      //   再計算され、「400 Invalid host」になる。サーバー環境変数
+      //   CLERK_DISABLE_AUTO_PROXYだけでは、クライアントコンポーネント
+      //   (ClientClerkProvider)内で再度mergeNextClerkPropsWithEnvが走る際、
+      //   process.env.CLERK_DISABLE_AUTO_PROXYはNEXT_PUBLIC_接頭辞が無いため
+      //   ブラウザバンドルでは常にundefinedになり効かない（Next.jsの仕様上、
+      //   非公開環境変数はクライアントコードに埋め込まれない）。domainを
+      //   明示すればgetAutoProxyUrlFromEnvironmentのhasDomainチェックで
+      //   早期リターンし、サーバー・クライアント両方で自動判定を回避できる。
+      domain="clerk.kimito.link"
       allowedRedirectOrigins={
         process.env.NODE_ENV === "development"
           ? [...developmentRedirectOrigins, ...allowedRedirectOrigins]
