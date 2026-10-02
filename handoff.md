@@ -97,8 +97,16 @@ REMAINING_RISKS:
     ユーザー本人のChrome（claude-in-chrome）で行うこと
   - /sso-callback系・/oauth/twitter-callback系はMVPスコープ外のため旧Expo側のまま
     （vercel.jsonでsurechigai-webへは転送していない）
-  - apps/web/middleware.tsが"edge" runtimeの非推奨警告をビルドログに出している
-    （`const config = { runtime: 'nodejs' }`への移行をClerkが推奨。実害なし、次の機会に対応）
+  - （解消・commit 295b5eee6）middleware警告は2種類あり、出どころが別だった（以前ここに
+    「apps/web/middleware.tsのedge警告」と書いたのは取り違え）:
+    1) apps/web: Next.js 16の「middlewareは非推奨、proxyを使う」→ middleware.ts を proxy.ts に改名
+       （中身はclerkMiddleware()のまま。ビルドで警告消失・本番でログイン状態/auto=xの戻しとも正常）
+    2) ルートの middleware.ts（OGPクローラー向け /u/:slug の内部fetch）: Vercelの「Edgeランタイムは
+       非推奨」→ config.runtime: "nodejs" を明示。変更前後で本番の応答を比較し、クローラー向け
+       (1803B・OGP HTML)と人間向け(SPA)の振り分けが同じことを確認（差分は ?v= のキャッシュ回避値のみ）。
+       ロールバックは config の runtime 行を消すだけ
+    ★Next 16 以上のmiddlewareは proxy.ts。金型 templates/next-app/middleware.ts.template の
+      冒頭にも注意書きを入れた（金型自体はNext 15前提なので名前はmiddleware.tsのまま）
 NEXT_ACTION:
   1. （完了）ログイン済み状態のauto=x非発火・中継ページの分岐は確認済み
   2. _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md のStep 4は完了
@@ -108,7 +116,7 @@ NEXT_ACTION:
      （kimito-link-redirect.ts / KimitoLinkRedirect.tsx / auth-guide-page /
      そのテスト）を check-drift PAIRS に登録（このリポのコピーとバイト一致）。
      ★これら4ファイルをこのリポだけで書き換えると drift 検査が割れる。直すなら金型側から。
-  3. apps/web/middleware.tsのedge runtime非推奨警告への対応（任意、優先度低）
+  3. （完了）middleware警告2件への対応（上のREMAINING_RISKS参照）
   4. ★sign-upページは作らない（2026-10-02確定・既存設計を確認済み）。
      surechigaiはサインアップ専用ページを持たない設計（lib/auth-routes.tsの
      SIGN_UP_HREF = SIGN_IN_HREF、vercel.jsonの/sign-up→/sign-inリダイレクト参照）。
