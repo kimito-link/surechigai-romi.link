@@ -9,11 +9,8 @@
  */
 import { ClerkProvider } from "@clerk/nextjs";
 import { authBrandConfig } from "@/lib/auth-brand.config";
-
-// ★自プロジェクトの localization / appearance を使うならここで差し替える。
-//   省略可（Clerk の既定が使われる）。
-// import { brandJaJP } from "@/lib/clerk-localization";
-// import { brandClerkAppearance } from "@/lib/clerk-appearance";
+import { surechigaiJaJP } from "@/lib/clerk-localization";
+import { surechigaiClerkAppearance } from "@/lib/clerk-appearance";
 
 const {
   afterAuthPath,
@@ -64,8 +61,8 @@ export default function AuthLayout({
       signInFallbackRedirectUrl={afterAuthPath}
       signUpFallbackRedirectUrl={afterAuthPath}
       afterSignOutUrl={afterSignOutPath}
-      // localization={brandJaJP}
-      // appearance={brandClerkAppearance}
+      localization={surechigaiJaJP}
+      appearance={surechigaiClerkAppearance}
     >
       <div id="main-content" tabIndex={-1}>
         {children}

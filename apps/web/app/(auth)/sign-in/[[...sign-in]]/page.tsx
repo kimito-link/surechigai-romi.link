@@ -14,6 +14,7 @@
 import type { Metadata } from "next";
 import { SignIn } from "@clerk/nextjs";
 import { AutoAdvanceToX } from "@/components/AutoAdvanceToX";
+import { AuthPageIntro } from "@/components/AuthPageIntro";
 import { AuthPageShell } from "@/components/AuthPageShell";
 import { isClerkSsoCallback } from "@/lib/auth-routes";
 
@@ -36,7 +37,7 @@ export default async function SignInPage({ params }: SignInPageProps) {
   }
 
   return (
-    <AuthPageShell variant="sign-in">
+    <AuthPageShell variant="sign-in" intro={<AuthPageIntro variant="sign-in" />}>
       {/* ★?auto=x のときだけ発火して X ボタンへ click を送る。 */}
       <AutoAdvanceToX />
       <SignIn />

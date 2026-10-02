@@ -325,6 +325,10 @@
       "destination": "https://surechigai-web.vercel.app/_next/:path*"
     },
     {
+      "source": "/_next/image/",
+      "destination": "https://surechigai-web.vercel.app/_next/image/"
+    },
+    {
       "source": "/sso-callback",
       "destination": "/sso-callback.html"
     },
