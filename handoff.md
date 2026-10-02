@@ -77,9 +77,15 @@ TEST_RESULT: 全項目緑。
   資格情報の入力は無し）:
   - /sign-in/?auto=x: isSignedIn=true・待機画面(overlay)なし・x.comへ遷移せず /sign-in/ に留まる ＝ 非発火OK
   - /auth/kimito-link/: ログイン済みで surechigai.kimito.link/ （トップ）へ着地 ＝ 分岐OK
-  - 観察: ログイン済みでも /sign-in/ は通常のログイン画面を表示し続ける（本家kimito.linkと同じ挙動。
-    URLのauto=xも残る。設計書の「autoが消える」は満たさないが実害なし。直すなら
-    AutoAdvanceToXでログイン済み時もremoveAutoXParamを呼ぶ／ログイン済みはafterAuthPathへ送る、が候補）
+  - 観察（解消済み・commit 3d045ec14）: 当初、ログイン済みでも /sign-in/?auto=x は通常のログイン画面を
+    表示し続け、URLのauto=xも残っていた。ログイン済み＋auto=xのときだけトップへ戻す修正を入れた。
+    ★auto=x無しは戻さない（/sign-in/はログイン済みのまま別Xアカウントを追加・切り替えに来る人がいて、
+    その導線は意図してauto=xを付けない。lib/clerk-route.tsのbuildSignInSwitchHref参照）。
+    ★ループ防止: 直近10秒に戻していたら戻さない（sessionStorage）。判定は純関数 signed-in-bounce.ts
+    （__tests__/signed-in-bounce.test.ts、5件）。本番実機（ユーザー本人のChrome）で、
+    auto=x付き→トップへ着地しauto=xも消える／auto=x無し→ログイン画面のまま／ループ無し、を確認済み。
+    ★AutoAdvanceToX.tsx・signed-in-bounce.ts・そのテストは金型とバイト一致（check-drift登録）。
+    このリポだけで書き換えると割れる。直すなら web-ios-android/templates/web/auth-mode/nextjs/ から
 REMAINING_RISKS:
   - /auth/kimito-link(/)はStep 4でNext.jsへ移植済み（commit 4eea5a695）。経緯: Step 3で
     未移植のまま新プロジェクトへ転送して本番404になり、一度旧Expo側へ戻して(517ad1510)から
