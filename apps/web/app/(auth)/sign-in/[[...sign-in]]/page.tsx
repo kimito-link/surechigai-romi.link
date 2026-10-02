@@ -37,7 +37,7 @@ export default async function SignInPage({ params }: SignInPageProps) {
   }
 
   return (
-    <AuthPageShell variant="sign-in" intro={<AuthPageIntro variant="sign-in" />}>
+    <AuthPageShell variant="sign-in" intro={<AuthPageIntro />}>
       {/* ★?auto=x のときだけ発火して X ボタンへ click を送る。 */}
       <AutoAdvanceToX />
       <SignIn />

@@ -4,13 +4,13 @@
  * ★出典: kimitolink-linktree/components/AuthPageIntro.tsx
  *   「移植すべきは配置の順序」（AuthPageShell.tsxのコメント参照）に従い、
  *   骨組みを踏襲しつつ中身をすれ違ひ通信のものに差し替えた。
+ *
+ * ★sign-up variantは持たない（2026-10-02確定）: surechigaiはサインアップ専用
+ *   ページを持たない設計（lib/auth-routes.ts の SIGN_UP_HREF = SIGN_IN_HREF 参照）。
+ *   X OAuthだけのログインでは、Clerkの<SignIn/>が初回ユーザーも既存ユーザーも
+ *   同じ画面で扱うため、sign-in/sign-upを文言レベルで分ける意味が無い。
  */
 import Image from "next/image";
-import Link from "next/link";
-
-type AuthPageIntroProps = {
-  variant: "sign-in" | "sign-up";
-};
 
 const MASCOTS = [
   { src: "/chara/link.png", name: "ゆっくりリンク" },
@@ -18,9 +18,7 @@ const MASCOTS = [
   { src: "/chara/tanunee.png", name: "たぬ姉" },
 ] as const;
 
-export function AuthPageIntro({ variant }: AuthPageIntroProps) {
-  const isSignIn = variant === "sign-in";
-
+export function AuthPageIntro() {
   return (
     <section
       className="w-full max-w-xl overflow-hidden rounded-4xl border border-sky-900/15 bg-white/95 shadow-xs text-left"
@@ -28,7 +26,7 @@ export function AuthPageIntro({ variant }: AuthPageIntroProps) {
     >
       <div className="bg-linear-to-br from-sky-50 via-white to-orange-50 px-5 pb-6 pt-6 sm:px-6">
         <p className="mx-auto w-fit rounded-full bg-white/90 px-4 py-1.5 text-center text-sm font-bold text-sky-900 shadow-xs ring-1 ring-sky-900/10 sm:text-base">
-          {isSignIn ? "おかえり〜！待ってたよ" : "はじめまして！"}
+          おかえり〜！待ってたよ
         </p>
         <ul className="mt-4 flex items-end justify-center gap-3 sm:gap-5">
           {MASCOTS.map((m) => (
@@ -55,20 +53,19 @@ export function AuthPageIntro({ variant }: AuthPageIntroProps) {
           id="auth-intro-heading"
           className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl leading-snug"
         >
-          {isSignIn
-            ? "現在地でつながる、すれ違ひ通信"
-            : "X アカウントひとつで、すれ違ひ通信をはじめる"}
+          現在地でつながる、すれ違ひ通信
         </h1>
         <p className="mt-3 text-base text-slate-600 sm:text-lg leading-relaxed">
           キミの現在地を刻む、すれ違い記録アプリ。ログインは{" "}
           <strong className="font-semibold text-slate-800">
             X（旧 Twitter）のアカウントだけ
           </strong>
-          。新しいパスワードはいりません。
+          。新しいパスワードはいりません。はじめての方もこのまま X で続ければ、
+          自動でアカウントが作られます。
         </p>
 
         <h2 className="mt-5 text-sm font-bold text-slate-900 sm:text-base">
-          {isSignIn ? "ログイン後にできること" : "登録後にできること"}
+          ログイン後にできること
         </h2>
         <ul className="mt-2 space-y-2 text-sm text-slate-600 sm:text-base leading-relaxed">
           <li className="flex gap-2">
@@ -105,30 +102,6 @@ export function AuthPageIntro({ variant }: AuthPageIntroProps) {
             </span>
           </li>
         </ul>
-
-        {!isSignIn ? (
-          <p className="mt-4 rounded-lg bg-sky-50 px-3 py-2 text-xs text-slate-600 sm:text-sm leading-relaxed">
-            すでにアカウントをお持ちの方は{" "}
-            <Link
-              href="/sign-in/"
-              className="font-semibold text-sky-900 underline underline-offset-2"
-            >
-              ログイン
-            </Link>
-            へ。
-          </p>
-        ) : (
-          <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:text-sm leading-relaxed">
-            はじめての方は{" "}
-            <Link
-              href="/sign-up/"
-              className="font-semibold text-sky-900 underline underline-offset-2"
-            >
-              新規登録（無料）
-            </Link>
-            から。
-          </p>
-        )}
       </div>
     </section>
   );

@@ -28,7 +28,14 @@ export const SIGN_IN_HREF = `${signInPath}?${redirectParam}`;
  */
 export const SIGN_IN_AUTO_X_HREF = `${signInPath}?${redirectParam}&auto=x`;
 
-export const SIGN_UP_HREF = `${signUpPath}?${redirectParam}`;
+/**
+ * ★surechigaiはサインアップ専用ページを持たない（出典: lib/clerk-route.ts＝旧Expo側の
+ *   正本実装。vercel.jsonも/sign-up・/sign-up/を/sign-inへリダイレクトする設計）。
+ *   X OAuthだけのログインでは、Clerkの<SignIn/>が初回ユーザーも既存ユーザーも
+ *   同じ画面・同じ導線で扱うため、サインアップ専用UIを分ける意味が無い
+ *   （2026-08-01 commit 5bc5df462「/sign-up 直アクセスが404だったのでリダイレクト」）。
+ */
+export const SIGN_UP_HREF = SIGN_IN_HREF;
 
 /**
  * 素の `/sign-in/`・`/sign-up/`（redirect_url 無し）を正規 href に格上げする。
