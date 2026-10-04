@@ -57,4 +57,9 @@ describe("public/lp/index.html", () => {
     expect(html).toMatch(/<script src="kimito-legal-footer\.js"[^>]*data-terms="\/terms\/"[^>]*data-privacy="\/privacy\/"/);
     expect(html).toContain('data-service-name="君斗りんくのすれ違ひ通信"');
   });
+
+  it("背後が写真のLPなので、フッターの色を奥付と同じ紙色にしている（既定のままだと暗い風景の上で読めない）", () => {
+    expect(html).toMatch(/--klf-bg:\s*var\(--washi\)/);
+    expect(html).toMatch(/--klf-fg:\s*var\(--sumi-soft\)/);
+  });
 });
