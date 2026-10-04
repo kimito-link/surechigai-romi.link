@@ -231,3 +231,56 @@ pnpm check:heartbeat
 
 心拍を実装したら `scripts/diagnostics/run.mjs` に登録してください
 （登録を忘れても `check-gates-are-wired` が孤児として拾います）。
+
+---
+
+## SG-09 起動のときに画面がちかちかする
+
+**症状の言葉**: 「スプラッシュがちかちか」「起動画面が点滅する」「開くと色が何回も変わる」
+
+**見分け方**: ホーム画面から開いた(PWA)直後の約1秒に、色の違う画面が連続する。
+目視では何が何ミリ秒続くか分からないので、**画面録画をフレームで割る**か、下の測定を使う。
+
+**2026-10-05 の実測（iPhone の実機録画 120fps ／ Android 実機の録画 ／ Playwright で本番を測定）**:
+
+| 段階 | iPhone | Android |
+|---|---|---|
+| 1 | 黒（OSがアプリを開く演出。こちらでは触れない） | 白＋アイコン（OS標準。`manifest` に `background_color` が無いため白） |
+| 2 | 自作のベール（ロゴ＋タイトル）が約0.08秒 | 自作のベール（アイコンの大きさ・位置が飛ぶ） |
+| 3 | **空白 → 灰色の骨組み → 本編** | **空白（約0.1〜0.15秒）→ 本編** |
+
+- 段階3が**アプリ側の原因**: ルートのレイアウトがマウントした時点でベールを外していたが、
+  タブの画面はまだ読み込み中だった。解除から本編まで、ゲストで約350ms / ログイン済みヒントで約570ms
+  （CPUの速さによらず再現）。
+- 直した所: ① 灰色の骨組み(`ChunkFallback`)を、ベールと揃えてある `BrandLoadingScreen` に寄せた（`app/(tabs)/index.tsx`）。
+  ② ベールの解除を、ルートのレイアウトではなくトップ画面の中身のマウント後に移した（`lib/boot-veil.ts`）。
+  どちらも**新しい仕組みは足していない**（既存部品の使い回しと、呼び出し場所の移動だけ）。
+- ★直せていない所（理由つき）:
+  - iPhone の標準の起動画像（`apple-touch-startup-image`）が出ない件。iOS は**ホーム画面に追加した時点で
+    起動画像を固定**するため、追加し直さないと反映されない。配信は正常（`check:splash-served` 合格）。
+    `manifest.background_color` を足すと iOS 16.4+ が起動画像を無視する（`scripts/check-pwa-splash.mjs`）ので
+    Android のためには足せない。**白い Android の起動画面は iOS とのトレードオフとして残している**。
+  - 他タブ（events / map / mypage / zukan）や認証済みの殻の骨組み。起動経路ではないため触っていない。
+
+**測る**（これは合否に入れていない計測の道具。端末と回線で値が揺れるため）:
+
+```
+node scripts/qa/measure-launch-timeline.mjs                       # ゲスト
+HINT=1 node scripts/qa/measure-launch-timeline.mjs                # ログイン済みヒントあり
+```
+
+出力の最後の `▶ ベール解除から … まで NNNms` が、空白（または骨組み）の長さ。0 に近いほど良い。
+
+**Android 実機で撮る手順**（PC に USB 接続した実機。Windows では iOS Simulator が使えない）:
+
+```
+adb shell am force-stop <WebAPKのパッケージ名>
+adb shell screenrecord --bit-rate 12000000 --time-limit 9 /sdcard/launch.mp4 &
+adb shell monkey -p <WebAPKのパッケージ名> -c android.intent.category.LAUNCHER 1
+adb pull /sdcard/launch.mp4 .
+```
+
+WebAPK は Chrome のメニュー「ホーム画面に追加 → インストール」で入る。確認が済んだら
+`adb uninstall` で取り除く。録画は ffmpeg で `fps=30` に割ってタイル状に並べると、段階が見える。
+★端末の画面に個人の内容（メッセージ等）が映っていることがあるので、撮った画像は確認後すぐ消す。
+
