@@ -162,6 +162,15 @@
       "scopePaths": [
         "__tests__/sw-next-bypass.test.ts"
       ]
+    },
+    {
+      "at": "2026-10-04T12:15:37.801Z",
+      "responsibility": "LP共通フッター(運営表記+法務リンク)",
+      "decision": "REUSE",
+      "canonicalSource": "web-ios-android/templates/web/legal-footer/kimito-legal-footer.js.example",
+      "scopePaths": [
+        "public/lp/kimito-legal-footer.js"
+      ]
     }
   ]
 }
