@@ -180,6 +180,15 @@
       "scopePaths": [
         "public/lp/kimito-legal-footer.js"
       ]
+    },
+    {
+      "at": "2026-10-04T12:38:49.523Z",
+      "responsibility": "LP共通フッターの重なり順",
+      "decision": "REUSE",
+      "canonicalSource": "web-ios-android/templates/web/legal-footer/kimito-legal-footer.js.example",
+      "scopePaths": [
+        "public/lp/kimito-legal-footer.js"
+      ]
     }
   ]
 }
