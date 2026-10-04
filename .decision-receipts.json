@@ -207,6 +207,33 @@
       "scopePaths": [
         "__tests__/launch-loading-brand.test.ts"
       ]
+    },
+    {
+      "at": "2026-10-04T21:03:59.062Z",
+      "responsibility": "起動ベールの解除/測定: lib/boot-veil.ts",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/boot-veil.ts"
+      ]
+    },
+    {
+      "at": "2026-10-04T21:03:59.214Z",
+      "responsibility": "起動ベールの解除/測定: __tests__/boot-veil-release.test.ts",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/boot-veil-release.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-04T21:03:59.355Z",
+      "responsibility": "起動ベールの解除/測定: scripts/qa/measure-launch-timeline.mjs",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "scripts/qa/measure-launch-timeline.mjs"
+      ]
     }
   ]
 }

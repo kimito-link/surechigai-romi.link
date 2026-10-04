@@ -2,15 +2,23 @@
  * ポスト画面 — 認証ゲート + 本体 chunk の遅延読み込み。
  * 未ログイン時は radar / tRPC / reanimated chunk を読まない。
  */
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { PostGuestScreen } from "@/components/post/post-guest-screen";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 import { hasClerkSessionHint } from "@/lib/clerk-public-routes";
 import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
+import { releaseBootVeil } from "@/lib/boot-veil";
 
 export default function PostScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
+
+  // 起動ベール（+html.tsx）を、この画面の中身（ヒーロー / 待機画面 / 認証済みの殻）が出た時に外す。
+  // ルートのレイアウトで外すと、タブの画面が読み込み中の空白が露出する（lib/boot-veil.ts 参照）。
+  useEffect(() => {
+    releaseBootVeil();
+  }, []);
 
   if (!isAuthReadyForUI) {
     // ログイン済みヒントがあるのにゲスト用ヒーローを一瞬見せると

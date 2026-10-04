@@ -38,6 +38,7 @@ import {
 import { startDeferredWebBootstrap } from "@/lib/bootstrap/web-bootstrap";
 import { prefetchGuestTabChunks, prefetchHeavyTabChunks, prefetchGuestEventsImmediate } from "@/lib/bootstrap/prefetch-tab-chunks";
 import { isGuestAppWebRoute } from "@/lib/clerk-public-routes";
+import { isBootVeilReleasedByLandingScreen, releaseBootVeil } from "@/lib/boot-veil";
 import { GuestWebProviders } from "@/components/providers/guest-web-providers";
 import { GuestAuthProvider, AuthContextProvider, type AuthState } from "@/lib/auth-context";
 import { TrpcReadyProvider } from "@/lib/trpc-ready-context";
@@ -205,29 +206,6 @@ const AUTH_LOADING_PLACEHOLDER: AuthState = {
   },
 };
 
-/**
- * +html.tsx が掛けたブートベール（data-auth-boot）を外す。
- * このモジュールの実コードを変えると _layout チャンクが改名される点も利用している
- * （CDNキャッシュ地雷の汚染払い。docs/investigation 参照）。
- *
- * ★2026-08-16: マウント直後に同期で外していたため、iOS実機PWAで
- * 「ベール → 無地＋タブバーだけ → 本体」と、中身が描けていない空白が露出していた
- * （実機録画で確認）。React のマウントは「描画が終わった」ことを意味しないので、
- * 2フレーム待ってから外す。1フレームだとレイアウト直後・ペイント前で足りない。
- * 保険の6秒タイマーは +html.tsx 側にあるので、ここで失敗しても永久に残ることはない。
- */
-function releaseBootVeil(): void {
-  if (Platform.OS !== "web" || typeof document === "undefined") return;
-
-  const remove = () => document.documentElement.removeAttribute("data-auth-boot");
-
-  if (typeof requestAnimationFrame !== "function") {
-    remove();
-    return;
-  }
-  requestAnimationFrame(() => requestAnimationFrame(remove));
-}
-
 function MissingClerkKeyScreen() {
   return (
     <View
@@ -277,9 +255,11 @@ export default function RootLayout() {
   const useGuestWebShell = Platform.OS === "web" && shouldUseGuestWebShell(pathname);
   const deferNativeWind = useGuestWebShell && shouldDeferTrpcOnGuestWeb(pathname);
 
-  // +html.tsx のブートベール解除（React がマウントした瞬間に本物のUIへ引き継ぐ）
+  // +html.tsx のブートベール解除。トップ画面（/）は、画面の中身が出た時に画面自身が外す
+  // （app/(tabs)/index.tsx）。ここで外すと、タブの画面が読み込み中の空白が露出する。
+  // それ以外の画面は、React がマウントした時点で外す。lib/boot-veil.ts 参照。
   useEffect(() => {
-    releaseBootVeil();
+    if (!isBootVeilReleasedByLandingScreen(pathname)) releaseBootVeil();
   }, []);
 
   useEffect(() => {
