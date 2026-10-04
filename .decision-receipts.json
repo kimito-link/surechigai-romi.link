@@ -189,6 +189,15 @@
       "scopePaths": [
         "public/lp/kimito-legal-footer.js"
       ]
+    },
+    {
+      "at": "2026-10-04T13:12:47.355Z",
+      "responsibility": "ワンタップXの検索範囲の契約テスト",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/auto-advance-scope.test.ts"
+      ]
     }
   ]
 }
