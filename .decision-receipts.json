@@ -198,6 +198,15 @@
       "scopePaths": [
         "__tests__/auto-advance-scope.test.ts"
       ]
+    },
+    {
+      "at": "2026-10-04T20:44:34.713Z",
+      "responsibility": "起動直後の待機画面のブランド統一の契約テスト",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/launch-loading-brand.test.ts"
+      ]
     }
   ]
 }
