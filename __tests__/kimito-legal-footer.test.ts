@@ -62,4 +62,8 @@ describe("public/lp/index.html", () => {
     expect(html).toMatch(/--klf-bg:\s*var\(--washi\)/);
     expect(html).toMatch(/--klf-fg:\s*var\(--sumi-soft\)/);
   });
+
+  it("背景写真が position:fixed で全面に敷かれているので、フッターの重なり順を奥付(z-index 5)に揃えている", () => {
+    expect(html).toMatch(/--klf-z:\s*5/);
+  });
 });
