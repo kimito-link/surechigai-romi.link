@@ -171,6 +171,15 @@
       "scopePaths": [
         "public/lp/kimito-legal-footer.js"
       ]
+    },
+    {
+      "at": "2026-10-04T12:30:09.913Z",
+      "responsibility": "LP共通フッターの色の差し替え口",
+      "decision": "REUSE",
+      "canonicalSource": "web-ios-android/templates/web/legal-footer/kimito-legal-footer.js.example",
+      "scopePaths": [
+        "public/lp/kimito-legal-footer.js"
+      ]
     }
   ]
 }
