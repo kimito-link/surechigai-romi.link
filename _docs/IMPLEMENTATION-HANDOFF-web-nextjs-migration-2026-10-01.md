@@ -119,7 +119,7 @@ Next 16はReact 19.3系を要求し別系統の依存を連れてくる。同じ
 **Phase N+1: ドメインを新プロジェクトへ移し、旧プロジェクトを`/api/*`のfallbackにする**（別設計書スコープ）
 
 ### B-3. デプロイ
-- 新Vercelプロジェクト`surechigai-web`（名前固定）。Root Directory: `apps/web`、Git連携ON（main）
+- 新Vercelプロジェクト`surechigai-web`（名前固定）。Root Directory: `apps/web`。★Git連携は効いておらず、デプロイは手元の Vercel CLI からの手動（2026-10-04 に確認。下の注記参照）
 - env: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`（旧`EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`と同じ値）、
   `CLERK_SECRET_KEY`、satellite系（D-1参照）。値の受け渡しは`~/.claude/CLAUDE.md`
   「クリップボード経由」節に従う

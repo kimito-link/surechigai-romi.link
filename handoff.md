@@ -108,6 +108,16 @@ REMAINING_RISKS:
     ★Next 16 以上のmiddlewareは proxy.ts。金型 templates/next-app/middleware.ts.template の
       冒頭にも注意書きを入れた（金型自体はNext 15前提なので名前はmiddleware.tsのまま）
 NEXT_ACTION:
+  0. ★★`surechigai-web`（/sign-in /auth/kimito-link を配るNext.js）は **main にマージしても本番に反映されない**。
+     Git連携では動いておらず、これまでの本番反映は全部、手元の Vercel CLI からの手動デプロイだった
+     （`vercel ls surechigai-web` の Username が全件 info-44441025・直近が2日前、で確認。2026-10-04）。
+     `apps/web` を変えたら、マージ後に自分で次を実行し、本番の読み込みチャンクで確認する:
+       cd apps/web && npx vercel deploy --prod --scope kimito-link --yes
+     確認の仕方: 本番 /sign-in/ をブラウザで開き、`performance.getEntriesByType('resource')` のJSを fetch して
+     変えた文字列が入っているか見る（HTMLの script 一覧だけでは遅延チャンクの変更は見えない）。
+     ★Claude Code の自動モードは、この本番デプロイを権限分類器が拒否する。ユーザーが会話で明示的に頼めば実行できる。
+     ★反映漏れの実例: 2026-10-04 に ワンタップXの検索範囲の修正(#55)をマージしたが、デプロイしておらず約40分間
+     古いコードのままだった（チャンクのハッシュが変わらないことで気づいた）。
   1. （完了）ログイン済み状態のauto=x非発火・中継ページの分岐は確認済み
   2. _docs/IMPLEMENTATION-HANDOFF-web-nextjs-migration-2026-10-01.md のStep 4は完了
      （/auth/kimito-link移植済み・本番実機で未ログイン→X認可画面まで2回確認）。
