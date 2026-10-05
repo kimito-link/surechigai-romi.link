@@ -252,6 +252,15 @@
       "scopePaths": [
         "scripts/check-pwa-splash.mjs"
       ]
+    },
+    {
+      "at": "2026-10-05T02:15:33.606Z",
+      "responsibility": "起動画像(apple-touch-startup-image)が内容ハッシュ名・クエリ無しで配られることの契約テスト(splash:sync出力が壊れたら赤)",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/splash-content-hashed.test.ts"
+      ]
     }
   ]
 }
