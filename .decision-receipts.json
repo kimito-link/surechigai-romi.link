@@ -261,6 +261,33 @@
       "scopePaths": [
         "__tests__/splash-content-hashed.test.ts"
       ]
+    },
+    {
+      "at": "2026-10-05T04:42:38.831Z",
+      "responsibility": "本家マイページ導線(React)の判定部品: 金型コピー",
+      "decision": "REUSE",
+      "canonicalSource": "web-ios-android/templates/web/auth-mode/nextjs/KimitoDashboardLink.tsx.example",
+      "scopePaths": [
+        "components/auth/kimito-dashboard-link.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-05T04:42:38.956Z",
+      "responsibility": "ヘッダー右上の kimito.link マイページ導線: このアプリ固有の配線(useAuth→props, Web=<a>/native=openExternalUrl)",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/organisms/header-kimito-dashboard-link.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-05T04:42:39.060Z",
+      "responsibility": "kimito.link マイページ導線の契約テスト(未ログインで描かない/ログインで描く/href固定・クエリ無し/許可リスト)",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/kimito-dashboard-link.test.tsx"
+      ]
     }
   ]
 }

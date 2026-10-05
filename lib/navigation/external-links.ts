@@ -50,6 +50,10 @@ const ALLOWED_EXTERNAL_DOMAINS = [
   // 画像APIは有償なので取り込まず、公式の一覧ページへリンクするだけ。
   // ここに無いと openExternalUrl が無言で false を返し、押しても何も起きない。
   "mlit.go.jp",
+  // 本家 kimito.link（共通アカウントの拠点）。ヘッダーの「kimito.link マイページ」導線
+  // （components/organisms/header-kimito-dashboard-link.tsx）がネイティブでここを通る。
+  // ここに無いと openExternalUrl が無言で false を返し、押しても何も起きない。
+  "kimito.link",
   // その他
   "line.me",
   // lin.ee は LINE 公式アカウントの短縮URL（友だち追加の流入経路つき）。

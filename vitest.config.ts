@@ -2,6 +2,13 @@ import { defineConfig } from "vitest/config";
 import path from "path";
 
 export default defineConfig({
+  // ★JSX は automatic runtime で変換する（2026-10-05）。
+  //   tsconfig（expo/tsconfig.base）の "jsx": "react-native" を esbuild が classic 変換と解釈し、
+  //   `React` を import していないコンポーネント（Metro では babel-preset-expo が自動注入する）を
+  //   vitest で描画すると "ReferenceError: React is not defined" になる。
+  //   Metro と同じ automatic に揃えることで、.tsx のコンポーネントをそのまま描画テストできる
+  //   （__tests__/kimito-dashboard-link.test.tsx が最初の利用者）。
+  esbuild: { jsx: "automatic" },
   test: {
     globals: true,
     environment: "node",
