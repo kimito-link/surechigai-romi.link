@@ -3,7 +3,7 @@
  */
 import { useAuth } from "@/hooks/use-auth";
 import { EventsGuestContent } from "@/components/events/events-guest-content";
-import { ChunkFallback } from "@/lib/chunk-fallback";
+import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 
@@ -11,7 +11,7 @@ export default function EventsScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
   if (!isAuthReadyForUI) {
-    return <ChunkFallback minHeight={360} />;
+    return <BrandLoadingScreen />;
   }
 
   if (!isAuthenticated) {

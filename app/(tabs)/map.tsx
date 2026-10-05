@@ -4,7 +4,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { TrailGuestPreview } from "@/components/organisms/one-tap-guest-previews";
-import { ChunkFallback } from "@/lib/chunk-fallback";
+import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 import { GuestPlaceContext } from "@/components/molecules/guest-place-context";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
@@ -13,7 +13,7 @@ export default function MapScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
   if (!isAuthReadyForUI) {
-    return <ChunkFallback minHeight={360} />;
+    return <BrandLoadingScreen />;
   }
 
   if (!isAuthenticated) {

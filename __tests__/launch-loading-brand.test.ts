@@ -21,3 +21,26 @@ describe("app/(tabs)/index.tsx の起動直後の待機画面", () => {
     expect(src).toMatch(/return <PostGuestScreen \/>;\s*\}\s*if \(!isAuthenticated\)/);
   });
 });
+
+describe("タブ全体の待機も、ベールと同じブランドの待機画面（BrandLoadingScreen）", () => {
+  const FULL_TAB_FILES = [
+    "components/tabs/tab-authenticated-shell.tsx",
+    "app/(tabs)/events.tsx",
+    "app/(tabs)/map.tsx",
+    "app/(tabs)/mypage.tsx",
+    "app/(tabs)/zukan.tsx",
+  ];
+
+  it.each(FULL_TAB_FILES)("%s は灰色の骨組み（ChunkFallback）を使わず BrandLoadingScreen を使う", (rel) => {
+    const f = readFileSync(join(__dirname, "..", rel), "utf8");
+    expect(f).toMatch(/import \{ BrandLoadingScreen \} from "@\/components\/atoms\/brand-loading-screen"/);
+    expect(f).toMatch(/<BrandLoadingScreen \/>/);
+    expect(f).not.toMatch(/import[^;]*ChunkFallback|<ChunkFallback/);
+  });
+
+  it("画面の一部の小さな待機（lazy-heavy-components）は、全画面にしないので ChunkFallback のまま", () => {
+    const f = readFileSync(join(__dirname, "..", "lib/lazy-heavy-components.tsx"), "utf8");
+    expect(f).toMatch(/<ChunkFallback minHeight=\{/);
+  });
+});
+
