@@ -243,6 +243,15 @@
       "scopePaths": [
         "__tests__/manifest-background-color.test.ts"
       ]
+    },
+    {
+      "at": "2026-10-05T01:19:37.691Z",
+      "responsibility": "PWA起動画面の検査(金型コピー)",
+      "decision": "REUSE",
+      "canonicalSource": "web-ios-android/templates/scripts/check-pwa-splash.mjs",
+      "scopePaths": [
+        "scripts/check-pwa-splash.mjs"
+      ]
     }
   ]
 }

@@ -29,7 +29,7 @@
     "check:login-options": "node scripts/qa/check-login-options-visible.mjs",
     "check:heartbeat": "node scripts/diagnostics/check-heartbeat-present.mjs .",
     "check:security": "node scripts/verify-security-score.mjs",
-    "check:pwa-splash": "node scripts/check-pwa-splash.mjs --url https://surechigai.kimito.link",
+    "check:pwa-splash": "node scripts/check-pwa-splash.mjs --url https://surechigai.kimito.link --expect-bg \"#E2EDF7\"",
     "diagnose": "node scripts/run-instruments.mjs .",
     "diagnose:deep": "node scripts/run-instruments.mjs --deep .",
     "improve:record": "node scripts/record-improvement.mjs --auto",
