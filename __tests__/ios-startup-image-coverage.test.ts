@@ -10,7 +10,7 @@
  * 対策として表を公式仕様データ駆動に変えた:
  *   正本      scripts/data/ios-launch-sizes.json（pnpm splash:sync で更新）
  *   linkタグ  app/+html.tsx の SPLASH-LINKS ブロック（同スクリプトが生成）
- *   画像      public/splash/ios-<w>x<h>.png（pnpm brand:icons が生成）
+ *   画像      public/splash/ios-<w>x<h>.<内容ハッシュ12桁>.png（pnpm brand:icons が生成 → splash:sync が改名）
  *
  * このテストは「3者がズレていないこと」を守る。手で片方だけ直すと落ちる。
  */
@@ -52,9 +52,11 @@ describe("iOS PWA スプラッシュのカバレッジ", () => {
     const missingMedia: string[] = [];
 
     for (const { px, logical, dpr } of SPEC.portrait) {
-      const name = `ios-${px[0]}x${px[1]}.png`;
-      if (!existsSync(resolve(ROOT, `public/splash/${name}`))) missingImage.push(name);
-      if (!HTML_SRC.includes(`/splash/${name}`)) missingLink.push(name);
+      const name = `ios-${px[0]}x${px[1]}`;
+      // 内容ハッシュ名（2026-10-05〜）。href から実ファイル名を引いて、実在を確かめる。
+      const href = HTML_SRC.match(new RegExp(`/splash/(${name}\\.[0-9a-f]{12}\\.png)`))?.[1];
+      if (!href) missingLink.push(name);
+      else if (!existsSync(resolve(ROOT, `public/splash/${href}`))) missingImage.push(href);
 
       // iOS の media は CSS 論理ピクセル。実ピクセルで書くと一致せず無視される。
       const re = new RegExp(
@@ -77,17 +79,19 @@ describe("iOS PWA スプラッシュのカバレッジ", () => {
     const begin = HTML_SRC.indexOf("SPLASH-LINKS:BEGIN");
     const end = HTML_SRC.indexOf("SPLASH-LINKS:END");
     const block = HTML_SRC.slice(begin, end);
-    // media 付きの link は全て自動生成ブロック内に収まっていること
+    // media 付きの link は全て自動生成ブロック内に収まっていること（fallback も同じブロックで書き出す）
     const totalWithMedia = (HTML_SRC.match(/rel="apple-touch-startup-image"[\s\S]{0,400}?media=/g) ?? []).length;
     const inBlock = (block.match(/rel="apple-touch-startup-image"/g) ?? []).length;
-    expect(inBlock).toBe(totalWithMedia);
+    // ブロック内 = media 付き全部 + media 無しの fallback 1 本
+    expect(inBlock).toBe(totalWithMedia + 1);
   });
 
   it("media 無しのフォールバックが1つある（未知の新機種の保険）", () => {
-    expect(HTML_SRC).toMatch(
-      /<link\s+rel="apple-touch-startup-image"\s+href="\/splash\/ios-fallback\.png"\s*\/>/,
+    const m = HTML_SRC.match(
+      /<link\s+rel="apple-touch-startup-image"\s+href="\/splash\/(ios-fallback\.[0-9a-f]{12}\.png)"\s*\/>/,
     );
-    expect(existsSync(resolve(ROOT, "public/splash/ios-fallback.png"))).toBe(true);
+    expect(m).not.toBeNull();
+    expect(existsSync(resolve(ROOT, `public/splash/${m![1]}`))).toBe(true);
   });
 
   it("仕様データは手編集を禁止する注意書きを持つ", () => {

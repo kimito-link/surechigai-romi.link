@@ -40,8 +40,14 @@ import { computeExitCode, formatProbeReport } from "../lib/instrument-core.mjs";
 
 const BASE = process.argv[2] ?? "https://surechigai.kimito.link";
 
-/** scripts/sync-splash-spec.mjs の SPLASH_ASSET_VERSION と合わせる。 */
-const ASSET_VERSION = 2;
+/**
+ * 起動画像の URL は、本番の HTML に書かれている href をそのまま使う。
+ * ★2026-10-05: ファイル名を内容ハッシュ入り（ios-<w>x<h>.<12桁>.png）にし、`?v=` を廃止した。
+ *   名前を決め打ちすると、画像を作り直すたびにこの検査が追随できなくなる。
+ *   「実ユーザーが受け取る URL と同じもの」を要求する、という原則のためでもある。
+ */
+const HASHED_HREF = /^\/splash\/(ios-\d+x\d+|ios-fallback)\.([0-9a-f]{12})\.png$/;
+const SPLASH_HREF_RE = /<link\s[^>]*rel="apple-touch-startup-image"[^>]*>/g;
 
 /** 全20件は重いので、代表的な解像度を広く拾う（旧版が残っていた5件を必ず含む）。 */
 const TARGETS = [
@@ -63,6 +69,17 @@ function pngSize(buf) {
   return [buf.readUInt32BE(16), buf.readUInt32BE(20)];
 }
 
+async function fetchHtmlHrefs() {
+  const res = await fetch(`${BASE}/`, { signal: AbortSignal.timeout(20000) });
+  const html = await res.text();
+  const hrefs = [];
+  for (const tag of html.match(SPLASH_HREF_RE) ?? []) {
+    const m = tag.match(/href="([^"]+)"/);
+    if (m) hrefs.push(m[1].replace(/&amp;/g, "&"));
+  }
+  return { status: res.status, hrefs };
+}
+
 /**
  * PNG をデコードせずに中央の箱の幅を測るのは難しいので、
  * ここでは **バイト長と寸法** を使った軽い判定に留めたうえで、
@@ -73,13 +90,13 @@ function pngSize(buf) {
  *   ★**サイズの分布が二極化していないか**を見れば旧版の残留を捕まえられる
  *   （旧版は 78KB / 新版は 184KB のように倍以上違った）。
  */
-async function fetchAsset(name) {
+async function fetchAsset(name, href) {
   // ★キャッシュ避けのパラメータを足してはいけない。
   //   最初この関数は `&_probe=${Date.now()}` を付けていた。すると毎回
   //   **CDN を回避して新しい実体を取ってしまい、旧版が配信されていても緑になる**。
   //   実際そうなっており、障害の最中に実行しても検出できなかった（実測で発覚）。
   //   ＝ ★**実ユーザーが受け取るURLと同じもの**を要求しなければ検査にならない。
-  const url = `${BASE}/splash/${name}.png?v=${ASSET_VERSION}`;
+  const url = `${BASE}${href}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
   const buf = Buffer.from(await res.arrayBuffer());
   return { res, buf, dim: pngSize(buf) };
@@ -88,10 +105,78 @@ async function fetchAsset(name) {
 const results = [];
 const rows = [];
 
+let page;
+try {
+  page = await fetchHtmlHrefs();
+} catch (e) {
+  console.log(
+    formatProbeReport(
+      [
+        {
+          probe: "本番HTMLの起動画像href",
+          verdict: "inconclusive",
+          evidence: null,
+          detail: `取得できない: ${String(e).slice(0, 60)}`,
+          howToFix: "ネットワークと本番の稼働を確認する",
+        },
+      ],
+      { label: "check-splash-served" },
+    ),
+  );
+  process.exit(2);
+}
+
+/** href から stem（ios-<w>x<h> / ios-fallback）を引く。ハッシュ名・旧名・クエリ付きのどれも受ける */
+const hrefByName = new Map();
+for (const href of page.hrefs) {
+  const m = href.match(/^\/splash\/(ios-\d+x\d+|ios-fallback)(?:\.[0-9a-f]{12})?\.png(?:\?.*)?$/);
+  if (m && !hrefByName.has(m[1])) hrefByName.set(m[1], href);
+}
+
+// ★href の形そのものを検査する（2026-10-05）。固定名＋クエリは SG-02 と同じ型の罠だったので、
+//   全 href が「クエリ無し・内容ハッシュ名」であることを要求する。
+{
+  const bad = page.hrefs.filter((h) => !HASHED_HREF.test(h));
+  results.push(
+    page.hrefs.length === 0
+      ? {
+          probe: "起動画像hrefが内容ハッシュ名",
+          verdict: "fail",
+          evidence: { HTTP: page.status },
+          detail: "本番HTMLに apple-touch-startup-image が見つからない",
+          howToFix: "app/+html.tsx の SPLASH-LINKS ブロックと本番デプロイを確認する",
+        }
+      : bad.length > 0
+        ? {
+            probe: "起動画像hrefが内容ハッシュ名",
+            verdict: "fail",
+            evidence: { 件数: page.hrefs.length, 不適合: bad.length },
+            detail: `クエリ付き・固定名の href が残っている: ${bad.slice(0, 3).join(", ")}`,
+            howToFix: "pnpm splash:sync で内容ハッシュ名にして再デプロイする（反映前なら旧版のまま）",
+          }
+        : {
+            probe: "起動画像hrefが内容ハッシュ名",
+            verdict: "pass",
+            evidence: { 件数: page.hrefs.length },
+          },
+  );
+}
+
 for (const name of TARGETS) {
+  const href = hrefByName.get(name);
+  if (!href) {
+    results.push({
+      probe: `splash ${name}`,
+      verdict: "fail",
+      evidence: null,
+      detail: "本番HTMLにこの解像度の link タグが無い",
+      howToFix: "pnpm splash:sync を実行して app/+html.tsx を作り直し、再デプロイする",
+    });
+    continue;
+  }
   let got;
   try {
-    got = await fetchAsset(name);
+    got = await fetchAsset(name, href);
   } catch (e) {
     results.push({
       probe: `splash ${name}`,
@@ -161,8 +246,8 @@ if (bpps.length >= 3) {
         `解像度によって中身の重さが ${spread.toFixed(1)}倍 も違う` +
         `（旧版が配信されている疑い）: ${light.map((o) => o.name).join(", ")}`,
       howToFix:
-        "scripts/sync-splash-spec.mjs の SPLASH_ASSET_VERSION を +1 して再デプロイ" +
-        "（Cloudflare の immutable キャッシュに旧版が残っている）",
+        "pnpm splash:sync で画像を内容ハッシュ名にして再デプロイ" +
+        "（名前が変われば CDN の immutable キャッシュに旧版が残る余地は無い）",
       limitation: "画素の意匠までは見ていない。バイト密度の開きで旧版残留を推定している",
     });
   } else {

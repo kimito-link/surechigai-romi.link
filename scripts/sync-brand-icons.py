@@ -219,6 +219,8 @@ def main() -> None:
     # iOS Safari PWA向けスプラッシュ（apple-touch-startup-image）
     for spec in load_ios_startup_sizes():
         w, h = spec["px"]
+        # ★ここではハッシュ無しの名前で出す。直後に `pnpm splash:sync` を実行すると、
+        #   中身の sha256 先頭12桁入りの名前へ改名され、+html.tsx の href も揃う（2026-10-05）。
         save_ios_startup_image(w, h, ROOT / f"public/splash/ios-{w}x{h}.png")
     # media属性なしのフォールバック（新機種等でdevice-width/heightが未登録の解像度でも
     # スプラッシュが真っ黒/無地にならないようにする保険）。
