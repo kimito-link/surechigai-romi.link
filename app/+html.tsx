@@ -1,6 +1,7 @@
 import { ScrollViewStyleReset } from "expo-router/html";
 import { PWA_APP_NAME } from "@/components/brand/web-document-head";
 import { APP_ORIGIN, MARKETING_URL } from "@/lib/site-urls";
+import { palette } from "@/theme/tokens/palette";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -211,8 +212,18 @@ export default function Root({ children }: PropsWithChildren) {
         {/* フォールバック（media省略）: 未知の新機種の保険 */}
         <link rel="apple-touch-startup-image" href="/splash/ios-fallback.e79991887443.png" />
 {/* SPLASH-LINKS:END */}
-        <meta name="theme-color" content="#00427B" />
+        {/* ★2026-10-05: theme-color を本体の地色 #E2EDF7（palette.kimitoBlueSoft ＝
+            manifest.background_color ＝ ブートベール地）にそろえた。
+            それまでは紺 #00427B で、Android(WebAPK) の実機録画では
+            「OS起動画面のステータスバー＝manifest.theme_color(紺)」→「Chrome の窓へ切り替わった
+            一瞬だけ明色」→「この meta が効いて紺」と、起動のたびに紺→明→紺の往復が見えていた。
+            地色と同じ明色にすれば、どの段階でも同じ色になり往復が消える。
+            値は manifest.json の theme_color と同じであること（__tests__/manifest-background-color.test.ts
+            と scripts/check-pwa-splash.mjs の 2b が照合する）。 */}
+        <meta name="theme-color" content={palette.kimitoBlueSoft} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        {/* iOS standalone のステータスバー。地色が明色なので default（黒文字）のまま。
+            black-translucent にすると白文字が明色地に乗って読めなくなる。 */}
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="application-name" content={PWA_APP_NAME} />
         <meta name="apple-mobile-web-app-title" content={PWA_APP_NAME} />
