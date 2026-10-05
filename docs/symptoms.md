@@ -79,7 +79,7 @@
 **★2026-09-14 追記: 同じ言葉で訴えられたが、原因が別だった例**
 
 「スプラッシュがおかしい」と言われて5経路すべて実測したところ、**起動画面そのものは無罪**だった
-（検査2本合格／起動画像21件とアイコン4件が全て `200 image/png`／`background_color` 無し／
+（検査2本合格／起動画像21件とアイコン4件が全て `200 image/png`／`background_color` 無し（当時。2026-10-05 に戻した）／
 `boot-mark.png` 実在／ブートベールも無条件 `useEffect` で2フレーム後に解除される健全な実装）。
 
 **真因は `public/manifest.json` の `short_name` が28文字になっていたこと**。
@@ -245,7 +245,7 @@ pnpm check:heartbeat
 
 | 段階 | iPhone | Android |
 |---|---|---|
-| 1 | 黒（OSがアプリを開く演出。こちらでは触れない） | 白＋アイコン（OS標準。`manifest` に `background_color` が無いため白） |
+| 1 | 黒（OSがアプリを開く演出。こちらでは触れない） | 白＋アイコン（OS標準。この時点の `manifest` に `background_color` が無かったため白。2026-10-05 に #E2EDF7 を戻した） |
 | 2 | 自作のベール（ロゴ＋タイトル）が約0.08秒 | 自作のベール（アイコンの大きさ・位置が飛ぶ） |
 | 3 | **空白 → 灰色の骨組み → 本編** | **空白（約0.1〜0.15秒）→ 本編** |
 
@@ -260,8 +260,17 @@ pnpm check:heartbeat
 - ★直せていない所（理由つき）:
   - iPhone の標準の起動画像（`apple-touch-startup-image`）が出ない件。iOS は**ホーム画面に追加した時点で
     起動画像を固定**するため、追加し直さないと反映されない。配信は正常（`check:splash-served` 合格）。
-    `manifest.background_color` を足すと iOS 16.4+ が起動画像を無視する（`scripts/check-pwa-splash.mjs`）ので
-    Android のためには足せない。**白い Android の起動画面は iOS とのトレードオフとして残している**。
+  - ★2026-10-05 訂正: 以前ここに「`manifest.background_color` を足すと iOS 16.4+ が起動画像を無視するので
+    足せない（Android の白い起動画面はトレードオフ）」と書いていたが、**この説には Apple/WebKit の公式記述という
+    一次情報が無く**、リポ内の根拠も kimito.link の実機観察1件（OS 版の記載なし）と静的検査だけだった。
+    同日の iPhone 実機録画では、`background_color` を外した状態でも起動の最初が黒で起動画像は出なかった
+    ＝ この説では現実を説明できない。一方 Android(WebAPK) は `name` + `background_color` + `icons` から
+    起動画面を作る（web.dev）ため、無いと白でベール(#E2EDF7)との間で色が飛ぶ。
+    よって `background_color: #E2EDF7`（ベール・本体の地色と同じ）を戻した。Android は地色がそろう見込み
+    （マージ後に Android 実機で WebAPK を入れ直して録画確認する）。`scripts/check-pwa-splash.mjs` は
+    「あり、かつ #E2EDF7 と一致」を合格条件に反転済み。
+    iOS で起動画像が出ない原因は**未確定**。候補は「ホーム画面に追加した時点で固定される」
+    「href の `?v=2`」「iOS 26 の挙動」。
   - 認証済みで開いたときの待機画面は、契約テストでの確認のみ（ログイン済みの本番セッションが無く、実測していない）。
 
 **測る**（これは合否に入れていない計測の道具。端末と回線で値が揺れるため）:
@@ -288,7 +297,7 @@ WebAPK は Chrome のメニュー「ホーム画面に追加 → インストー
 
 **★本家 kimito.link の起動画面は手本にならない（2026-10-05 に実測）**: 資産を受け継がせる話のとき、起動画面は
 受け継ぐものが無い。
-- 構造は surechigai と同じ: `apple-touch-startup-image` 20本（全て `200 image/png`）、`manifest` に `background_color` なし、
+- 構造は surechigai と同じ: `apple-touch-startup-image` 20本（全て `200 image/png`）、`manifest` に `background_color` なし（2026-10-05 時点の実測）、
   自作のベールなし（Next.js の標準）
 - 起動画像は**濃い紺(#00427B)の地＋3人組のロゴ**で、次に出る本編は白っぽい。紺 → 白の明るさの飛びがある
   （surechigai は起動画像・ベール・本編が同じ薄い青で、色はそろっている）

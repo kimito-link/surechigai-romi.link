@@ -234,6 +234,15 @@
       "scopePaths": [
         "scripts/qa/measure-launch-timeline.mjs"
       ]
+    },
+    {
+      "at": "2026-10-05T00:56:41.474Z",
+      "responsibility": "manifest.background_colorと地色の一致を検査する契約テスト",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/manifest-background-color.test.ts"
+      ]
     }
   ]
 }
