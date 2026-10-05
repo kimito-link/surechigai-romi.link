@@ -1,0 +1,15 @@
+measure-page-flicker  https://surechigai.kimito.link/sign-in/
+  device=iPhone 15 Pro Max cpu×2 network=3g seconds=10 standalone=yes frames=114@10fps
+  白一色フレーム(>=98% が輝度>=250): 20 枚 at t=[0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9]
+  フラッシュ(前フレームとの平均輝度差>50): 0 枚
+  縦ずれ(layout-shift: 既にあった要素が縦に動いた回数): 1 回  CLS 合計 0.5443
+    6.1s score=0.5443 div.order-2.flex 88→574
+  追跡要素の移動(--track の要素の top が動いた回数): 0 回
+  最初に画面が変わるまで(差分>8): 2.0 秒
+  console error: 0 件 / pageerror: 0 件
+  遷移: 1.7s https://surechigai.kimito.link/sign-in/ → 4.1s https://surechigai.kimito.link/sign-in/
+  3xx: 307 https://clerk.kimito.link/npm/@clerk/clerk-js@6/dist/clerk.browser.js → https://clerk.kimito.link/npm/@clerk/clerk-js@6.36.0/dist/clerk.browser.js | 307 https://clerk.kimito.link/npm/@clerk/ui@1/dist/ui.browser.js → https://clerk.kimito.link/npm/@clerk/ui@1.38.0/dist/ui.browser.js
+  navigation timing: responseStart=1505ms DCL=2408ms load=3780ms redirects=0
+  追跡した要素: div.mx-auto.flex
+  判定: 🔴 フラッシュまたは縦ずれあり  (exit 1)
+  出力: C:\Users\info\AppData\Local\Temp\claude\C--Users-info-OneDrive--------Resilio-github-web-ios-android\04914ca1-4619-4b8c-835f-448f04b41081\scratchpad\flicker-sure-signin-before  (video.webm / timeline.json / frames.csv / tiles.png / summary.txt)

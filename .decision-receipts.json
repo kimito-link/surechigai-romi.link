@@ -288,6 +288,33 @@
       "scopePaths": [
         "__tests__/kimito-dashboard-link.test.tsx"
       ]
+    },
+    {
+      "at": "2026-10-05T08:11:30.564Z",
+      "responsibility": "Next.js sign-in の Clerk 同寸プレースホルダ: キット金型 ClerkMountFallback のコピー（箱モデルの数値だけ本番 DOM 実測値）",
+      "decision": "REUSE",
+      "canonicalSource": "web-ios-android/templates/web/auth-mode/nextjs/ClerkMountFallback.tsx.example",
+      "scopePaths": [
+        "apps/web/components/ClerkMountFallback.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-05T08:11:30.809Z",
+      "responsibility": "Clerk sign-in カード／ネイティブ自前ログインの箱モデル（寸法）の単一の真実。Expo 側プレースホルダが読む依存ゼロ定数。apps/web 側の同じ数値とは契約テストで同期",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/clerk-card-box-model.ts"
+      ]
+    },
+    {
+      "at": "2026-10-05T08:11:31.251Z",
+      "responsibility": "sign-in ちらつきゼロ契約テスト（到着 intro 無し／箱モデル=実測／押せるボタン数／Next 側 fallback と数値同期）",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/signin-no-flicker.test.tsx"
+      ]
     }
   ]
 }

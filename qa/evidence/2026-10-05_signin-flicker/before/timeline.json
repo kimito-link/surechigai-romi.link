@@ -1,0 +1,158 @@
+{
+  "params": {
+    "url": "https://surechigai.kimito.link/sign-in/",
+    "cpu": 2,
+    "network": "3g",
+    "seconds": 10,
+    "device": "iPhone 15 Pro Max",
+    "standalone": true,
+    "serviceWorkers": "block",
+    "track": [],
+    "cookies": [],
+    "playwright": "C:\\Users\\info\\OneDrive\\デスクトップ\\Resilio\\github\\surechigai-romi.link\\node_modules\\playwright\\index.js",
+    "measuredAt": "2026-10-05T07:53:28.225Z"
+  },
+  "navigations": [
+    {
+      "t": 1745,
+      "url": "https://surechigai.kimito.link/sign-in/"
+    },
+    {
+      "t": 4149,
+      "url": "https://surechigai.kimito.link/sign-in/"
+    }
+  ],
+  "responses": [
+    {
+      "t": 1742,
+      "status": 200,
+      "type": "document",
+      "url": "https://surechigai.kimito.link/sign-in/",
+      "location": null,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+    },
+    {
+      "t": 2120,
+      "status": 307,
+      "type": "script",
+      "url": "https://clerk.kimito.link/npm/@clerk/clerk-js@6/dist/clerk.browser.js",
+      "location": "https://clerk.kimito.link/npm/@clerk/clerk-js@6.36.0/dist/clerk.browser.js",
+      "cacheControl": "private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
+    },
+    {
+      "t": 2127,
+      "status": 307,
+      "type": "script",
+      "url": "https://clerk.kimito.link/npm/@clerk/ui@1/dist/ui.browser.js",
+      "location": "https://clerk.kimito.link/npm/@clerk/ui@1.38.0/dist/ui.browser.js",
+      "cacheControl": "private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0"
+    }
+  ],
+  "console": [],
+  "pageErrors": [],
+  "layoutShifts": [
+    {
+      "kind": "layout-shift",
+      "wall": 1791186814583.3,
+      "value": 0.5442512066497062,
+      "sources": [
+        {
+          "node": "div.order-2.flex",
+          "fromTop": 88,
+          "toTop": 574,
+          "height": 165
+        }
+      ],
+      "tVideo": 6.142300048828125
+    }
+  ],
+  "rects": [
+    {
+      "kind": "rect",
+      "wall": 1791186810615,
+      "key": "div.mx-auto.flex",
+      "top": 0,
+      "height": 709,
+      "scrollY": 0,
+      "href": "https://surechigai.kimito.link/sign-in/",
+      "tVideo": 2.174
+    },
+    {
+      "kind": "rect",
+      "wall": 1791186814579,
+      "key": "div.mx-auto.flex",
+      "top": 0,
+      "height": 1194,
+      "scrollY": 0,
+      "href": "https://surechigai.kimito.link/sign-in/",
+      "tVideo": 6.138
+    }
+  ],
+  "final": {
+    "href": "https://surechigai.kimito.link/sign-in/",
+    "title": "ログイン",
+    "redirectCount": 0,
+    "nav": {
+      "redirectEnd": 0,
+      "responseStart": 1504.7999999970198,
+      "domContentLoaded": 2407.599999997765,
+      "load": 3780.199999999255,
+      "type": "navigate"
+    },
+    "htmlAttributes": {
+      "lang": "ja"
+    },
+    "bodyBackground": "rgb(255, 255, 255)",
+    "htmlBackground": "rgba(0, 0, 0, 0)"
+  },
+  "gotoStart": 222,
+  "gotoCommit": 1745,
+  "videoStartWall": 1791186808441,
+  "verticalShifts": [
+    {
+      "kind": "layout-shift",
+      "wall": 1791186814583.3,
+      "value": 0.5442512066497062,
+      "sources": [
+        {
+          "node": "div.order-2.flex",
+          "fromTop": 88,
+          "toTop": 574,
+          "height": 165
+        }
+      ],
+      "tVideo": 6.142300048828125
+    }
+  ],
+  "trackedMoves": [],
+  "frameSummary": {
+    "frames": 114,
+    "whiteOnlyCount": 20,
+    "whiteOnlyAt": [
+      0,
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1,
+      1.1,
+      1.2,
+      1.3,
+      1.4,
+      1.5,
+      1.6,
+      1.7,
+      1.8,
+      1.9
+    ],
+    "flashCount": 0,
+    "flashAt": [],
+    "firstChangeAt": 2
+  },
+  "clsTotal": 0.5442512066497062
+}

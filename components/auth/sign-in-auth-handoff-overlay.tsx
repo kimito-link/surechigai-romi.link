@@ -1,6 +1,13 @@
 /**
  * sign-in ページ専用ハンドオフオーバーレイ。
- * kimitolink AuthHandoffOverlay と同一の intro + クリック観測ロジック。
+ * kimitolink AuthHandoffOverlay と同一のクリック観測ロジック（押下後にだけ全画面を被せる）。
+ *
+ * ★到着 intro は 2026-10-05 に撤去した（ちらつきゼロ契約 ①「到着時に全画面を被せない」。
+ *   正本: web-ios-android/templates/web/auth-mode/README.md ④ ／ _docs/DESIGN-signin-no-flicker-2026-10-05.md 判断 1）。
+ *   以前はマウント直後に `phase: "intro"` で紺の全画面を最長 INTRO_MS=1100ms 被せていたため、
+ *   「白 → ページ → 紺 → ページ」の 4 段になり、回線が遅いほど紺が長く出ていた（本家 before: フラッシュ 2 枚）。
+ *   「待ちを丁寧に見せる」のはユーザーが自分で起こした待ち（ボタン押下→外部認可へ渡る瞬間）に対してだけ意味がある。
+ *   ★戻さないこと。契約テスト: __tests__/signin-no-flicker.test.tsx（マウント直後に何も描かない）。
  */
 import { Image } from "expo-image";
 import { useEffect, useRef, useState } from "react";
@@ -9,12 +16,10 @@ import { useAuthHandoff } from "@/lib/auth-handoff-context";
 import { palette } from "@/theme/tokens";
 
 const SAFETY_MS = 6000;
-const INTRO_MS = 1100;
 
 const LINK_CHARACTER = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 
 type Provider = "x" | "google" | "other";
-type Phase = "intro" | "handoff";
 
 function detectProvider(el: Element | null): Provider | null {
   const btn = el?.closest(
@@ -44,8 +49,8 @@ function isAutoXEntry(): boolean {
 
 export function SignInAuthHandoffOverlay() {
   const { hideHandoff } = useAuthHandoff();
+  // ★到着時は null（何も描かない）。Clerk のソーシャルボタンが押されたときだけ provider が入る。
   const [provider, setProvider] = useState<Provider | null>(null);
-  const [phase, setPhase] = useState<Phase | null>(null);
   const bounce = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(0)).current;
 
@@ -56,55 +61,21 @@ export function SignInAuthHandoffOverlay() {
   useEffect(() => {
     if (Platform.OS !== "web") return;
     if (isAutoXEntry()) return;
-    setProvider("x");
-    setPhase("intro");
-
-    // Clerk のソーシャルボタンが描画され次第、INTRO_MS を待たずに即解除する
-    // （kimitolink-linktree の 0bfd691 から移植。読み取り専用で Clerk には干渉しない）。
-    // セレクタが将来の Clerk DOM 変更で外れても introTimer が INTRO_MS で必ず解除するため、
-    // 検知に失敗しても従来と同じ挙動に留まる（fail-closed）。
-    const CLERK_BTN_SELECTOR =
-      ".cl-socialButtonsIconButton, .cl-socialButtonsBlockButton";
-    const dismiss = () => {
-      setProvider(null);
-      setPhase(null);
-      observer.disconnect();
-    };
-    const observer = new MutationObserver(() => {
-      if (document.querySelector(CLERK_BTN_SELECTOR)) dismiss();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    // 既に描画済み（キャッシュ等で速いケース）なら即解除。
-    if (document.querySelector(CLERK_BTN_SELECTOR)) dismiss();
-
-    const introTimer = window.setTimeout(dismiss, INTRO_MS);
-    return () => {
-      window.clearTimeout(introTimer);
-      observer.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (Platform.OS !== "web") return;
-    if (isAutoXEntry()) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const onClick = (e: MouseEvent) => {
       const p = detectProvider(e.target as Element);
       if (!p) return;
       setProvider(p);
-      setPhase("handoff");
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         setProvider(null);
-        setPhase(null);
       }, SAFETY_MS);
     };
 
     document.addEventListener("click", onClick, { capture: true });
     const onPageShow = () => {
       setProvider(null);
-      setPhase(null);
     };
     window.addEventListener("pageshow", onPageShow);
 
@@ -165,6 +136,7 @@ export function SignInAuthHandoffOverlay() {
   return (
     <View
       accessibilityLiveRegion="assertive"
+      testID="auth-handoff-overlay"
       style={{
         position: overlayPosition,
         top: 0,
@@ -205,11 +177,9 @@ export function SignInAuthHandoffOverlay() {
             textAlign: "center",
           }}
         >
-          {phase === "intro"
-            ? "ログインの準備をしています。"
-            : isX
-              ? "Xの画面に少し変わります。すぐ戻ってきます。"
-              : "すぐにあなたのページへ。"}
+          {isX
+            ? "Xの画面に少し変わります。すぐ戻ってきます。"
+            : "すぐにあなたのページへ。"}
         </Text>
       </View>
       <View

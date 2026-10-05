@@ -32,6 +32,20 @@ export type AuthBrandConfig = {
   clerkFrontendApiDomain: string;
 
   /**
+   * Clerk 本体が描かれるまで置く同寸プレースホルダ（components/ClerkMountFallback.tsx）の設定。
+   * ★出典: web-ios-android/templates/web/auth-mode/nextjs/auth-brand.config.ts.example（ちらつきゼロ契約 ②）。
+   */
+  clerkCard: {
+    /** カード左上のロゴ。clerk-appearance.ts の logoImageUrl と同じ画像（実際に配信されているパス） */
+    logoSrc: string;
+    /**
+     * 本番 Clerk Dashboard のソーシャルプロバイダ（表示順）。hero は主役ボタン（黒地、appearance の heroButton）。
+     * ★Dashboard で増減したらここも合わせる（数が違うとボタン 1 個ぶん 58px ずつ縦ずれが戻る）。
+     */
+    providers: { key: string; title: string; hero: boolean }[];
+  };
+
+  /**
    * ワンタップ遷移中のフルスクリーン表示。
    * ★画像を出さないなら image を null にする（金型は画像なしでも動く）。
    */
@@ -79,6 +93,18 @@ export const authBrandConfig: AuthBrandConfig = {
   developmentRedirectOrigins: ["http://127.0.0.1:3000", "http://localhost:3000"],
 
   clerkFrontendApiDomain: "clerk.kimito.link",
+
+  clerkCard: {
+    // clerk-appearance.ts の options.logoImageUrl と同じ。
+    logoSrc: "/pwa-icon-192.png",
+    // https://surechigai.kimito.link/sign-in/ の本番 DOM を 2026-10-05 に実測した構成
+    // （.cl-socialButtonsBlockButton__x / __apple / __google の 3 つ。X は appearance の order:-1 で先頭）。
+    providers: [
+      { key: "x", title: "X / Twitter", hero: true },
+      { key: "apple", title: "Apple", hero: false },
+      { key: "google", title: "Google", hero: false },
+    ],
+  },
 
   autoAdvance: {
     // ★画像は Phase 1 では出さない（既存アセットの移植は後続ステップ）。
