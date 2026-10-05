@@ -10,12 +10,19 @@
  *     （kimito が db0032a で実際に壊し、eda1133 で標準に戻して復旧した）。
  *
  * ★catch-all（[[...sign-in]]）が必須。Clerk が /sign-in/sso-callback を使うため。
+ *
+ * ★ちらつきゼロ契約（web-ios-android/templates/web/auth-mode/README.md ④、2026-10-05）:
+ *   - `<SignIn fallback={<ClerkMountFallback/>}/>`: Clerk 本体が描かれるまで**同寸**のプレースホルダを置く。
+ *     fallback 無しだと Clerk JS が届くまでカードの枠が高さ 0 の帯になり、本体が出た瞬間に下の説明カードが
+ *     +486px 跳ねていた（本番 before 実測: qa/evidence/2026-10-05_signin-flicker/before/summary.txt）。
+ *   - 到着時に全画面を被せる intro は置かない（handoffOverlay はボタン押下後にだけ描くものに限る）。
  */
 import type { Metadata } from "next";
 import { SignIn } from "@clerk/nextjs";
 import { AutoAdvanceToX } from "@/components/AutoAdvanceToX";
 import { AuthPageIntro } from "@/components/AuthPageIntro";
 import { AuthPageShell } from "@/components/AuthPageShell";
+import { ClerkMountFallback } from "@/components/ClerkMountFallback";
 import { isClerkSsoCallback } from "@/lib/auth-routes";
 
 export const metadata: Metadata = {
@@ -33,14 +40,15 @@ export default async function SignInPage({ params }: SignInPageProps) {
 
   // ★SSO コールバック中は装飾を出さない（戻り処理の邪魔をしない）。
   if (isClerkSsoCallback(segments)) {
-    return <SignIn />;
+    return <SignIn fallback={<ClerkMountFallback mode="sign-in" />} />;
   }
 
   return (
     <AuthPageShell variant="sign-in" intro={<AuthPageIntro />}>
       {/* ★?auto=x のときだけ発火して X ボタンへ click を送る。 */}
       <AutoAdvanceToX />
-      <SignIn />
+      {/* ★fallback は本物と同寸のプレースホルダ（くるくるにしない。ちらつきゼロ契約）。 */}
+      <SignIn fallback={<ClerkMountFallback mode="sign-in" />} />
     </AuthPageShell>
   );
 }
