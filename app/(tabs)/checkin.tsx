@@ -48,7 +48,7 @@ export default function CheckinScreen() {
   }
 
   return (
-    <TabAuthenticatedShell screenName="CheckinTab" fallbackMinHeight={480}>
+    <TabAuthenticatedShell screenName="CheckinTab">
       <AuthenticatedScreenSlot screen="checkin" />
     </TabAuthenticatedShell>
   );

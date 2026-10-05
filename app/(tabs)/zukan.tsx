@@ -4,7 +4,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { ZukanGuestLive } from "@/components/organisms/zukan-guest-live";
-import { ChunkFallback } from "@/lib/chunk-fallback";
+import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 import { GuestPlaceContext } from "@/components/molecules/guest-place-context";
@@ -17,7 +17,7 @@ export default function ZukanScreen() {
   const { isAuthenticated, isAuthReadyForUI } = useAuth();
 
   if (!isAuthReadyForUI) {
-    return <ChunkFallback minHeight={360} />;
+    return <BrandLoadingScreen />;
   }
 
   if (!isAuthenticated) {
