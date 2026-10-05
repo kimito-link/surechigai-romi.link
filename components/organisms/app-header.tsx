@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { LazyGlobalMenu } from "@/lib/lazy-heavy-components";
 import { HeaderUserButton } from "@/components/organisms/header-user-button";
+import { HeaderKimitoDashboardLink } from "@/components/organisms/header-kimito-dashboard-link";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { BrandHomeLink, BrandHomeTaglineLink } from "@/components/brand/brand-home-link";
 import { navigate } from "@/lib/navigation";
@@ -196,6 +197,10 @@ export function AppHeader({
                 kimito.link と同じアカウント管理/サインアウトのドロップダウンを出す。
                 native と未ログイン・ゲストシェルでは null（header-user-button 側でガード）。 */}
             <HeaderUserButton />
+
+            {/* 本家 kimito.link のマイページ（共通アカウントの拠点）への導線。ログイン中だけ描く。
+                判定は金型 components/auth/kimito-dashboard-link.tsx、配線は header-kimito-dashboard-link.tsx。 */}
+            <HeaderKimitoDashboardLink />
 
             {showMenu && (
               <Pressable
