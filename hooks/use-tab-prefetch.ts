@@ -11,7 +11,6 @@ const HREF_TAB_MAP: Record<string, TabPrefetchKey> = {
   "/": "post",
   "/index": "post",
   "/checkin": "checkin",
-  "/events": "events",
   "/zukan": "zukan",
   "/map": "map",
   "/mypage": "mypage",
@@ -31,7 +30,6 @@ export function hrefToTabPrefetchKey(href: string | undefined): TabPrefetchKey |
     }
   }
   if (href.includes("checkin")) return "checkin";
-  if (href.includes("events")) return "events";
   if (href.includes("zukan")) return "zukan";
   if (href.includes("map")) return "map";
   if (href.includes("mypage")) return "mypage";

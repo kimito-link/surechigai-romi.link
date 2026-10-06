@@ -27,7 +27,7 @@
  * 使い方の例:
  *   npx expo export --source-maps --output-dir .tmp-oom-dist
  *   pnpm qa:freeze-probe serve .tmp-oom-dist --port=8788 &
- *   pnpm qa:freeze-probe verify /checkin / /zukan /mypage /events
+ *   pnpm qa:freeze-probe verify /checkin / /zukan /mypage
  *   pnpm qa:freeze-probe symbolicate --maps-dir=.tmp-oom-dist/_expo/static/js/web
  */
 

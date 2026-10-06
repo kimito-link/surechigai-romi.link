@@ -20,7 +20,6 @@ export const STATIC_ROUTES = {
   HOME_ROOT: "/",
   CREATE_TAB: "/(tabs)/create",
   CHECKIN_TAB: "/(tabs)/checkin",
-  EVENTS_TAB: "/(tabs)/events",
   ZUKAN_TAB: "/(tabs)/zukan",
   MAP_TAB: "/(tabs)/map",
   MYPAGE_TAB: "/(tabs)/mypage",
@@ -95,7 +94,6 @@ export type RouteParams = {
   [STATIC_ROUTES.HOME_ROOT]: undefined;
   [STATIC_ROUTES.CREATE_TAB]: undefined;
   [STATIC_ROUTES.CHECKIN_TAB]: undefined;
-  [STATIC_ROUTES.EVENTS_TAB]: undefined;
   [STATIC_ROUTES.ZUKAN_TAB]: undefined;
   [STATIC_ROUTES.MAP_TAB]: { focus?: string; municipality?: string } | undefined;
   [STATIC_ROUTES.MYPAGE_TAB]: undefined;
@@ -161,11 +159,6 @@ export const navigate = {
   toCheckinTab: () => {
     console.log("[Navigation] Navigating to checkin tab");
     router.push(STATIC_ROUTES.CHECKIN_TAB as never);
-  },
-
-  toEventsTab: () => {
-    console.log("[Navigation] Navigating to events tab");
-    router.push(STATIC_ROUTES.EVENTS_TAB as never);
   },
 
   toZukanTab: () => {

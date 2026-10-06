@@ -49,13 +49,6 @@ const NAV_ITEMS: NavItem[] = [
     prefetchKey: "checkin",
   },
   {
-    href: "/(tabs)/events",
-    label: "集まり",
-    icon: "event",
-    activePaths: ["/events"],
-    prefetchKey: "events",
-  },
-  {
     href: "/(tabs)/map",
     label: "軌跡",
     icon: "map",

@@ -102,7 +102,6 @@ describe("shouldUseGuestWebShell", () => {
   it("全タブ preview を guest シェルと判定", () => {
     expect(shouldUseGuestWebShell("/")).toBe(true);
     expect(shouldUseGuestWebShell("/checkin")).toBe(true);
-    expect(shouldUseGuestWebShell("/events")).toBe(true);
     expect(shouldUseGuestWebShell("/u/demo")).toBe(true);
   });
 

@@ -101,11 +101,6 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: "events-host-smoke",
-      testMatch: /events-host\.smoke\.spec\.ts/,
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
       name: "audit-guest-mobile",
       testMatch: /full-site-audit\.spec\.ts/,
       use: { ...devices["Pixel 5"] },

@@ -32,14 +32,6 @@
     },
     {
       "slot": 4,
-      "path": "/events",
-      "label": "events",
-      "title": "集まりで、すれ違いを狙う",
-      "subtitle": "予定とライブ中がひと目で分かる",
-      "scrollToSelector": null
-    },
-    {
-      "slot": 5,
       "path": "/checkin",
       "label": "checkin",
       "title": "いまいる場所を、正確に残す",
@@ -64,10 +56,6 @@
       "sub": "思い出の場所へ、あとからたどり着ける"
     },
     "4": {
-      "headline": "{集まり}で、すれ違いを狙う",
-      "sub": "予定とライブ中がひと目で分かる"
-    },
-    "5": {
       "headline": "いまいる場所を\n{正確に}残す",
       "sub": "あとからその場所へたどり着ける精度で"
     }

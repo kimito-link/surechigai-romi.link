@@ -25,7 +25,6 @@ describe("app/(tabs)/index.tsx の起動直後の待機画面", () => {
 describe("タブ全体の待機も、ベールと同じブランドの待機画面（BrandLoadingScreen）", () => {
   const FULL_TAB_FILES = [
     "components/tabs/tab-authenticated-shell.tsx",
-    "app/(tabs)/events.tsx",
     "app/(tabs)/map.tsx",
     "app/(tabs)/mypage.tsx",
     "app/(tabs)/zukan.tsx",

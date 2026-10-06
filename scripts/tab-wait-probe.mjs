@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const BASE_URL = (process.env.BASE_URL ?? "https://surechigai.kimito.link").replace(/\/$/, "");
-const ROUTES = ["/", "/checkin", "/events", "/zukan", "/map", "/mypage"];
+const ROUTES = ["/", "/checkin", "/zukan", "/map", "/mypage"];
 const OUT_DIR = path.resolve("docs/investigation/artifacts");
 
 async function fetchText(url) {
@@ -102,7 +102,6 @@ async function main() {
     routeResults,
     prefetchGapCandidates: [
       { module: "post-authenticated-screen", priority: "P0", reason: "route lazy 未 prefetch" },
-      { module: "events-authenticated-screen", priority: "P0", reason: "route lazy 未 prefetch" },
       { module: "zukan-authenticated-screen", priority: "P0", reason: "route lazy 未 prefetch" },
       { module: "mypage-authenticated-screen", priority: "P1", reason: "route lazy 未 prefetch" },
       { module: "public-web-providers", priority: "P2", reason: "guest tRPC mount" },

@@ -10,7 +10,6 @@ import { navigate } from "@/lib/navigation";
 export type ScreenContextKey =
   | "post"
   | "checkin"
-  | "events"
   | "zukan"
   | "map"
   | "mypage";
@@ -55,16 +54,6 @@ export function useScreenContextBar(screen: ScreenContextKey | undefined): {
           return {
             message: `最新: ${data.latestPlaceLabel}`,
             tone: "default",
-          };
-        }
-        return null;
-      case "events":
-        if (data.upcomingParticipationCount > 0) {
-          return {
-            message: `参加表明中の集まりが ${data.upcomingParticipationCount} 件`,
-            actionLabel: "確認",
-            tone: "accent",
-            onAction: () => navigate.toMypageTab(),
           };
         }
         return null;

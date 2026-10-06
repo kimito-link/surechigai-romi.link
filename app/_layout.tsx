@@ -36,8 +36,7 @@ import {
   shouldUseGuestWebShell,
 } from "@/lib/clerk-public-routes";
 import { startDeferredWebBootstrap } from "@/lib/bootstrap/web-bootstrap";
-import { prefetchGuestTabChunks, prefetchHeavyTabChunks, prefetchGuestEventsImmediate } from "@/lib/bootstrap/prefetch-tab-chunks";
-import { isGuestAppWebRoute } from "@/lib/clerk-public-routes";
+import { prefetchGuestTabChunks, prefetchHeavyTabChunks } from "@/lib/bootstrap/prefetch-tab-chunks";
 import { isBootVeilReleasedByLandingScreen, releaseBootVeil } from "@/lib/boot-veil";
 import { GuestWebProviders } from "@/components/providers/guest-web-providers";
 import { GuestAuthProvider, AuthContextProvider, type AuthState } from "@/lib/auth-context";
@@ -286,13 +285,6 @@ export default function RootLayout() {
       }, 2000);
     })();
   }, [useGuestWebShell]);
-
-  useEffect(() => {
-    if (Platform.OS !== "web" || !useGuestWebShell) return;
-    if (isGuestAppWebRoute(pathname) && (pathname === "/events" || pathname.startsWith("/events/"))) {
-      prefetchGuestEventsImmediate();
-    }
-  }, [pathname, useGuestWebShell]);
 
   useEffect(() => {
     if (useGuestWebShell) return;

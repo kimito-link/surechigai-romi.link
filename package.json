@@ -43,7 +43,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "qr": "node scripts/generate_qr.mjs",
-    "e2e": "playwright test --project=public-smoke --project=one-tap-x --project=trail-auth-smoke --project=events-host-smoke --project=audit-guest-mobile --project=audit-guest-desktop",
+    "e2e": "playwright test --project=public-smoke --project=one-tap-x --project=trail-auth-smoke --project=audit-guest-mobile --project=audit-guest-desktop",
     "e2e:one-tap": "playwright test --project=one-tap-x",
     "e2e:audit": "playwright test --project=audit-guest-mobile --project=audit-guest-desktop --project=audit-auth-mobile --project=audit-auth-desktop",
     "e2e:ui": "playwright test --ui",

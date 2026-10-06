@@ -92,29 +92,6 @@ export function NavigatePreview() {
   );
 }
 
-export function EventsPreview() {
-  return (
-    <View style={previewCard}>
-      <View style={styles.segmentRow}>
-        <View style={[styles.segment, styles.segmentActive]}>
-          <Text style={styles.segmentTextActive}>予定</Text>
-        </View>
-        <View style={styles.segment}>
-          <Text style={styles.segmentText}>ライブ中</Text>
-        </View>
-      </View>
-      <View style={styles.eventRow}>
-        <MaterialIcons name="calendar-today" size={16} color={palette.kimitoBlue} />
-        <View>
-          <Text style={styles.cardTitle}>7/15 14:00 推し活ライブ</Text>
-          <Text style={styles.cardBody}>東京都 · ライブ表明中</Text>
-        </View>
-      </View>
-      <Text style={caption}>集まりタブ — カレンダーとライブ追尾</Text>
-    </View>
-  );
-}
-
 /** @deprecated レガシー doin-challenge 用 */
 export function ParticipantsPreview() {
   return null;
@@ -127,7 +104,7 @@ export function ChartPreview() {
 
 /** @deprecated レガシー doin-challenge 用 */
 export function NotificationPreview() {
-  return <EventsPreview />;
+  return null;
 }
 
 /** @deprecated レガシー doin-challenge 用 */
@@ -147,10 +124,7 @@ export function PreviewComponent({ type }: { type?: string }) {
       return <TrailPreview />;
     case "navigate":
       return <NavigatePreview />;
-    case "events":
-      return <EventsPreview />;
     case "notification":
-      return <EventsPreview />;
     case "participants":
     case "chart":
     case "crown":
@@ -247,45 +221,5 @@ const styles = StyleSheet.create({
     color: palette.white,
     fontSize: 13,
     fontWeight: "800",
-  },
-  segmentRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 10,
-    width: "100%",
-  },
-  segment: {
-    flex: 1,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignItems: "center",
-    backgroundColor: palette.white,
-    borderWidth: 1,
-    borderColor: palette.kimitoBlue + "22",
-  },
-  segmentActive: {
-    backgroundColor: palette.kimitoBlueSoft,
-    borderColor: palette.kimitoBlue,
-  },
-  segmentText: {
-    color: color.textMuted,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  segmentTextActive: {
-    color: palette.kimitoBlue,
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  eventRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    width: "100%",
-    backgroundColor: palette.white,
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: palette.kimitoBlue + "18",
   },
 });

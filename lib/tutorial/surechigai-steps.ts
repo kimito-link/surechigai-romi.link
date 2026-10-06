@@ -41,15 +41,6 @@ export const SURECHIGAI_TUTORIAL_STEPS: TutorialStep[] = [
     previewType: "navigate",
   },
   {
-    message: "集まりの\n予定とライブ",
-    subMessage: "「集まり」タブ — カレンダーで予定を見て、ライブ中の場所も追える",
-    character: "konta_smile",
-    speech: "予定はゲストでも見られる。主催はログイン後に作成できるよ。",
-    tapToContinue: true,
-    successAnimation: "sparkle",
-    previewType: "events",
-  },
-  {
     message: "準備\nできました",
     subMessage: "まずチェックイン。交流はXへ — アプリ内は一方向の合図だけ",
     character: "tanune_smile",
