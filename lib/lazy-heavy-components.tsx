@@ -3,8 +3,6 @@ import { ChunkFallback } from "@/lib/chunk-fallback";
 import type { WebTrailMap } from "@/components/organisms/web-trail-map";
 import type { PrecisionTileMap } from "@/components/organisms/precision-tile-map";
 import type { JapanBlockMap } from "@/components/organisms/japan-block-map";
-import type { EventCalendar } from "@/components/molecules/event-calendar";
-import type { EventDateTimePicker } from "@/components/molecules/event-datetime-picker";
 import type { PrefectureSelector } from "@/components/ui/prefecture-selector";
 import type { SignalAccountGrid } from "@/components/organisms/signal-account-grid";
 import type { EnvelopePulse } from "@/components/molecules/envelope-pulse";
@@ -22,14 +20,6 @@ const PrecisionTileMapLazy = lazy(() =>
 );
 const JapanBlockMapLazy = lazy(() =>
   import("@/components/organisms/japan-block-map").then((m) => ({ default: m.JapanBlockMap })),
-);
-const EventCalendarLazy = lazy(() =>
-  import("@/components/molecules/event-calendar").then((m) => ({ default: m.EventCalendar })),
-);
-const EventDateTimePickerLazy = lazy(() =>
-  import("@/components/molecules/event-datetime-picker").then((m) => ({
-    default: m.EventDateTimePicker,
-  })),
 );
 const PrefectureSelectorLazy = lazy(() =>
   import("@/components/ui/prefecture-selector").then((m) => ({ default: m.PrefectureSelector })),
@@ -57,8 +47,6 @@ const GlobalMenuLazy = lazy(() =>
 type WebTrailMapProps = ComponentProps<typeof WebTrailMap>;
 type PrecisionTileMapProps = ComponentProps<typeof PrecisionTileMap>;
 type JapanBlockMapProps = ComponentProps<typeof JapanBlockMap>;
-type EventCalendarProps = ComponentProps<typeof EventCalendar>;
-type EventDateTimePickerProps = ComponentProps<typeof EventDateTimePicker>;
 type PrefectureSelectorProps = ComponentProps<typeof PrefectureSelector>;
 type SignalAccountGridProps = ComponentProps<typeof SignalAccountGrid>;
 type EnvelopePulseProps = ComponentProps<typeof EnvelopePulse>;
@@ -86,22 +74,6 @@ export function LazyJapanBlockMap(props: JapanBlockMapProps) {
   return (
     <Suspense fallback={<ChunkFallback minHeight={180} />}>
       <JapanBlockMapLazy {...props} />
-    </Suspense>
-  );
-}
-
-export function LazyEventCalendar(props: EventCalendarProps) {
-  return (
-    <Suspense fallback={<ChunkFallback minHeight={320} />}>
-      <EventCalendarLazy {...props} />
-    </Suspense>
-  );
-}
-
-export function LazyEventDateTimePicker(props: EventDateTimePickerProps) {
-  return (
-    <Suspense fallback={<ChunkFallback minHeight={240} />}>
-      <EventDateTimePickerLazy {...props} />
     </Suspense>
   );
 }

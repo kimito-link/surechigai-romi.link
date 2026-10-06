@@ -28,7 +28,6 @@ export function AuthQuerySync() {
       void utils.encounter.invalidate();
       void utils.settings.invalidate();
       void utils.dashboard.invalidate();
-      void utils.eventParticipation.invalidate();
       void utils.presence.invalidate();
       prefetchCoreAuthenticatedData(utils);
       prefetchAllTabChunksIdle();

@@ -29,12 +29,6 @@ export const TAB_ROUTES: AuditRoute[] = [
     guestOk: true,
   },
   {
-    path: "/events",
-    label: "集まり",
-    expectText: /主催・ライブ表明|予定/,
-    guestOk: true,
-  },
-  {
     path: "/zukan",
     label: "現在地",
     expectText: /現在地でつながる|キミの現在地|あなたの記録/,

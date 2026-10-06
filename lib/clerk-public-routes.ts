@@ -10,7 +10,6 @@ const GUEST_APP_TAB_ROUTES = [
   "/",
   "/index",
   "/checkin",
-  "/events",
   "/zukan",
   "/map",
   "/mypage",

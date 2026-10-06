@@ -22,7 +22,6 @@ import { MySignalSummary } from "@/components/dashboard/my-signal-summary";
 import { SponsorSlot } from "@/components/molecules/sponsor-slot";
 import { MypageActionList } from "@/components/dashboard/mypage-action-list";
 import { LatestFootprintCard } from "@/components/dashboard/latest-footprint-card";
-import { HostEventsSummary } from "@/components/dashboard/host-events-summary";
 import { XLinkRescueCard } from "@/components/dashboard/x-link-rescue-card";
 import {
   SwitchXAccountModal,
@@ -243,7 +242,6 @@ export function MypageScreenView(props: MypageScreenViewProps) {
         {/* 協賛枠。在庫が無い/今日の上限に達している場合は何も描かない。
             統計の直後＝「自分の記録を見終えた」区切りに置く。 */}
         <SponsorSlot slot="mypage_stats" />
-        <HostEventsSummary />
 
         {/* 設定（折りたたみ） */}
         <View style={styles.section}>
@@ -448,7 +446,7 @@ export function MypageScreenView(props: MypageScreenViewProps) {
             <View style={{ flex: 1 }}>
               <Text style={[styles.menuItemText, { color: color.textPrimary }]}>使い方ガイドをもう一度</Text>
               <Text style={{ color: color.textMuted, fontSize: 11, marginTop: 2 }}>
-                封筒・チェックイン・現在地・ナビ・集まりの6ステップ
+                封筒・チェックイン・現在地・ナビの5ステップ
               </Text>
             </View>
           </Pressable>

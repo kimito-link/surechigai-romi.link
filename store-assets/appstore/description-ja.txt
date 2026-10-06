@@ -1,20 +1,3 @@
-# Google Play ストア掲載情報
-
-`scripts/play-fill-listing.mjs` がこのファイルを読む。
-**`## 詳しい説明` の直後の ``` フェンスの中身**が Play の「詳しい説明」になる
-（フェンスが無いと起動直後に例外で落ちるので、見出しとフェンスは消さないこと）。
-
-文面は `store-assets/appstore/description-ja.txt`（App Store の説明文の正本）と同一に保つ。
-両ストアで内容がズレると、どちらが正か分からなくなるため。
-iOS 側の正本は App Store Connect で、変更したらここも合わせる。
-
-- 詳しい説明: 4000文字以内
-- 簡単な説明: 80文字以内（`app.config.json` の `identity.shortDescription`）
-- タイトル: 30文字以内（`app.config.json` の `identity.displayName`）
-
-## 詳しい説明
-
-```
 同じ場所を通った人と、時間がずれていてもすれ違える、足あと記録アプリです。
 
 ■ 足あとを残す
@@ -39,10 +22,3 @@ iOS 側の正本は App Store Connect で、変更したらここも合わせる
 自宅の場所を隠す設定や、最長72時間の記録休止もできます。
 
 記録と再訪は、ずっと無料です。
-```
-
-## 簡単な説明（参考・正本は app.config.json）
-
-```
-現在地でつながる、すれ違ひ通信。キミの現在地を刻む。
-```

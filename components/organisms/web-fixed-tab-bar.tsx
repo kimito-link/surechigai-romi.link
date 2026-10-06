@@ -36,13 +36,6 @@ const TABS: TabItem[] = [
     prefetchKey: "checkin",
   },
   {
-    href: "/(tabs)/events",
-    label: "集まり",
-    icon: "event",
-    activePaths: ["/events"],
-    prefetchKey: "events",
-  },
-  {
     href: "/(tabs)/zukan",
     label: "さがす",
     icon: "public",

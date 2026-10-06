@@ -24,11 +24,6 @@ const CheckinTabIconAuthenticated = lazy(() =>
     default: m.CheckinTabIconAuthenticated,
   })),
 );
-const EventsTabIconAuthenticated = lazy(() =>
-  import("@/components/tabs/events-tab-icon-authenticated").then((m) => ({
-    default: m.EventsTabIconAuthenticated,
-  })),
-);
 const TabAuthenticatedChrome = lazy(() =>
   import("@/components/tabs/tab-authenticated-chrome").then((m) => ({
     default: m.TabAuthenticatedChrome,
@@ -43,18 +38,6 @@ function CheckinTabIcon({ color: iconColor }: { color: string }) {
   return (
     <Suspense fallback={<IconSymbol size={26} name="location.fill" color={iconColor} />}>
       <CheckinTabIconAuthenticated iconColor={iconColor} />
-    </Suspense>
-  );
-}
-
-function EventsTabIcon({ color: iconColor }: { color: string }) {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) {
-    return <IconSymbol size={26} name="calendar" color={iconColor} />;
-  }
-  return (
-    <Suspense fallback={<IconSymbol size={26} name="calendar" color={iconColor} />}>
-      <EventsTabIconAuthenticated iconColor={iconColor} />
     </Suspense>
   );
 }
@@ -127,15 +110,6 @@ function TabNav() {
             title: "現在地",
             tabBarAccessibilityLabel: "現在地 — 今いる場所を記録する",
             tabBarIcon: ({ color: iconColor }) => <CheckinTabIcon color={iconColor} />,
-          }}
-        />
-        <Tabs.Screen
-          name="events"
-          options={{
-            lazy: true,
-            title: "集まり",
-            tabBarAccessibilityLabel: "集まり — 予定と今ここ",
-            tabBarIcon: ({ color: iconColor }) => <EventsTabIcon color={iconColor} />,
           }}
         />
         <Tabs.Screen

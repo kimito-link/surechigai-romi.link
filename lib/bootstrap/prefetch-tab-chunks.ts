@@ -3,7 +3,6 @@ import { scheduleAfterIdle, scheduleAfterWindowLoad } from "@/lib/schedule-after
 const PREFETCH_MODULES = [
   () => import("@/components/tabs/authenticated-screen-funnel"),
   () => import("@/components/organisms/web-trail-map"),
-  () => import("@/components/molecules/event-calendar"),
   () => import("@/components/molecules/envelope-pulse"),
   () => import("@/components/molecules/character-here"),
   () => import("@/lib/icons/material-icons.web").then((m) => {
@@ -12,7 +11,6 @@ const PREFETCH_MODULES = [
 ] as const;
 
 const GUEST_PREFETCH_MODULES = [
-  () => import("@/components/events/events-guest-content"),
   () => import("@/components/providers/public-web-providers"),
 ] as const;
 
@@ -36,14 +34,7 @@ export function prefetchHeavyTabChunks(): () => void {
   return runPrefetch(PREFETCH_MODULES);
 }
 
-/** `/events` 直リンク向け — idle 待ちせず guest 集まり chunk を先読み。 */
-export function prefetchGuestEventsImmediate(): void {
-  if (typeof window === "undefined") return;
-  void import("@/components/events/events-guest-content").catch(() => {});
-  void import("@/components/molecules/event-calendar").catch(() => {});
-}
-
-/** Guest Web: LCP 確定後 idle で tRPC / 集まり guest chunk を先読み。 */
+/** Guest Web: LCP 確定後 idle で tRPC / guest chunk を先読み。 */
 export function prefetchGuestTabChunks(): () => void {
   if (guestStarted || typeof window === "undefined") {
     return () => {};

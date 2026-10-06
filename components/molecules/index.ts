@@ -42,7 +42,6 @@ export { HoverableListItem } from "./hoverable-list-item";
 export { LoginSuccessModal } from "./login-success-modal";
 export { LoginSuccessModalWrapper } from "./login-success-modal-wrapper";
 export { LogoutConfirmModal } from "./logout-confirm-modal";
-export { EncouragementModal, useEncouragementModal } from "./encouragement-modal";
 
 // Form系
 export { DatePicker } from "./date-picker";

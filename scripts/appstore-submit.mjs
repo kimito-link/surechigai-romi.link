@@ -323,8 +323,12 @@ async function ensureLocalization(api, versionId, sourceLocId, whatsNew) {
   const fallbackKeywords = readAppstoreMetaFile('keywords-ja.txt');
   const fallbackPromotionalText = readAppstoreMetaFile('promotional-text-ja.txt');
   const attrs = {
+    // ★リポの store-assets/appstore/description-ja.txt があれば**それを正本として優先**する（2026-10-06）。
+    //   以前は ASC 側の既存文面が勝ち、リポのファイルは「無いときの代用」にすぎなかったため、
+    //   ASC にだけ存在する説明文（リポ外・レビュー不能）が提出物の実体になっていた。
+    //   説明文の先頭1文は app.config.json の distinction.oneLiner と一致させる（lint CHECK 25）。
     description:
-      copy?.attributes?.description || ja?.attributes?.description || fallbackDescription,
+      fallbackDescription || copy?.attributes?.description || ja?.attributes?.description,
     keywords: copy?.attributes?.keywords || ja?.attributes?.keywords || fallbackKeywords,
     marketingUrl:
       copy?.attributes?.marketingUrl || ja?.attributes?.marketingUrl || STORE_MARKETING_URL,
@@ -502,8 +506,8 @@ function buildDefaultReviewNotes() {
     // このアプリは username/password 方式を持たない（Clerk が OAuth 専用構成）ため、
     // 「サインイン不要で評価できること」と「Apple ID でそのまま入れること」を正しく伝える。
     lines.push(
-      'Sign-in is NOT required to evaluate this app. Browse, the nationwide map, the ' +
-        'stamp book, and the meetup list are all viewable without an account, so no demo ' +
+      'Sign-in is NOT required to evaluate this app. Browse, the nationwide map and the ' +
+        'stamp book are viewable without an account, so no demo ' +
         'credentials are needed. To review the signed-in experience, tap the start button ' +
         'on the first screen and choose "Sign in with Apple" — your own Apple ID works and ' +
         'no separate registration is necessary. This app has no username/password login: ' +

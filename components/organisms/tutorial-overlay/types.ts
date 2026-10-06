@@ -49,7 +49,7 @@ export type TutorialStep = {
   /** 成功時のアニメーション */
   successAnimation?: "confetti" | "pulse" | "sparkle" | "none";
   /** プレビュー画像タイプ */
-  previewType?: "map" | "participants" | "chart" | "notification" | "crown" | "checkin" | "envelope" | "trail" | "events" | "navigate" | "none";
+  previewType?: "map" | "participants" | "chart" | "notification" | "crown" | "checkin" | "envelope" | "trail" | "navigate" | "none";
 };
 
 export type TutorialOverlayProps = {

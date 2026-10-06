@@ -28,7 +28,6 @@ const hasAuth = hasUsableAuthState(authFile);
 const GUEST_TABS: { path: string; heading: RegExp; label: string }[] = [
   { path: "/", heading: /キミの|現在地|ログイン/, label: "post" },
   { path: "/checkin", heading: /チェックイン|現在地を記録/, label: "checkin" },
-  { path: "/events", heading: /集まり|予定/, label: "events" },
   { path: "/zukan", heading: /みんなの現在地|図鑑|都道府県/, label: "zukan" },
   { path: "/map", heading: /軌跡|足あと/, label: "map" },
   { path: "/mypage", heading: /マイページ|ログイン/, label: "mypage" },
@@ -56,23 +55,23 @@ test.describe("tab wait investigation — guest", () => {
     );
   });
 
-  test("LayerA: guest / → /events (cold)", async ({ page }) => {
+  test("LayerA: guest / → /map (cold)", async ({ page }) => {
     const s = await measureTabNavigation(page, {
-      scenario: "layerA_guest_home_to_events",
+      scenario: "layerA_guest_home_to_map",
       persona: "guest",
       fromPath: "/",
-      toPath: "/events",
-      heading: /集まり|予定/,
+      toPath: "/map",
+      heading: /軌跡|足あと/,
       cold: true,
     });
     samples.push(s);
   });
 
-  test("LayerA: guest /events → /zukan (warm)", async ({ page }) => {
+  test("LayerA: guest /map → /zukan (warm)", async ({ page }) => {
     const s = await measureTabNavigation(page, {
-      scenario: "layerA_guest_events_to_zukan",
+      scenario: "layerA_guest_map_to_zukan",
       persona: "guest",
-      fromPath: "/events",
+      fromPath: "/map",
       toPath: "/zukan",
       heading: /みんなの現在地|図鑑|都道府県/,
       cold: false,
@@ -80,7 +79,7 @@ test.describe("tab wait investigation — guest", () => {
     samples.push(s);
   });
 
-  test("guest cold: 6 tabs direct navigation", async ({ page }) => {
+  test("guest cold: 5 tabs direct navigation", async ({ page }) => {
     for (const tab of GUEST_TABS) {
       const s = await measureTabNavigation(page, {
         scenario: `guest_cold_direct_${tab.label}`,
@@ -94,22 +93,22 @@ test.describe("tab wait investigation — guest", () => {
     }
   });
 
-  test("guest warm: round-trip / → /events → /", async ({ page }) => {
+  test("guest warm: round-trip / → /map → /", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    const toEvents = await measureTabNavigation(page, {
-      scenario: "guest_warm_home_to_events",
+    const toMap = await measureTabNavigation(page, {
+      scenario: "guest_warm_home_to_map",
       persona: "guest",
       fromPath: "/",
-      toPath: "/events",
-      heading: /集まり|予定/,
+      toPath: "/map",
+      heading: /軌跡|足あと/,
       cold: false,
     });
-    samples.push(toEvents);
+    samples.push(toMap);
 
     const backHome = await measureTabNavigation(page, {
-      scenario: "guest_warm_events_to_home",
+      scenario: "guest_warm_map_to_home",
       persona: "guest",
-      fromPath: "/events",
+      fromPath: "/map",
       toPath: "/",
       heading: /キミの|現在地|ログイン/,
       cold: false,
@@ -117,13 +116,13 @@ test.describe("tab wait investigation — guest", () => {
     samples.push(backHome);
   });
 
-  test("guest: spinner duration capture / → /events", async ({ page }) => {
+  test("guest: spinner duration capture / → /map", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const start = Date.now();
     let spinnerMs = 0;
     let sawSpinner = false;
 
-    const goto = page.goto("/events", { waitUntil: "domcontentloaded" });
+    const goto = page.goto("/map", { waitUntil: "domcontentloaded" });
     const deadline = start + 6000;
     while (Date.now() < deadline) {
       const progress = page.locator('[role="progressbar"]');
@@ -136,13 +135,13 @@ test.describe("tab wait investigation — guest", () => {
       await page.waitForTimeout(40);
     }
     await goto;
-    await page.getByText(/集まり|予定/).first().waitFor({ state: "visible", timeout: 15000 }).catch(() => {});
+    await page.getByText(/軌跡|足あと/).first().waitFor({ state: "visible", timeout: 15000 }).catch(() => {});
 
     samples.push({
-      scenario: "guest_spinner_probe_events",
+      scenario: "guest_spinner_probe_map",
       persona: "guest",
       fromPath: "/",
-      toPath: "/events",
+      toPath: "/map",
       cold: false,
       navigationMs: Date.now() - start,
       shellVisibleMs: null,
@@ -184,13 +183,12 @@ test.describe("tab wait investigation — guest", () => {
   const AUTH_TABS: { path: string; heading: RegExp; label: string }[] = [
     { path: "/", heading: /ポスト|封筒|新着|チェックイン/, label: "post" },
     { path: "/checkin", heading: /チェックイン/, label: "checkin" },
-    { path: "/events", heading: /集まり/, label: "events" },
     { path: "/zukan", heading: /みんなの現在地|図鑑/, label: "zukan" },
     { path: "/map", heading: /軌跡/, label: "map" },
     { path: "/mypage", heading: /マイページ/, label: "mypage" },
   ];
 
-  test("auth cold: 6 tabs direct from /", async ({ page }) => {
+  test("auth cold: 5 tabs direct from /", async ({ page }) => {
     for (const tab of AUTH_TABS) {
       const s = await measureTabNavigation(page, {
         scenario: `auth_cold_direct_${tab.label}`,
@@ -253,13 +251,13 @@ test.describe("tab wait investigation — guest", () => {
 
 // WS3: ベースライン拡張（既存 tab-instant-display 相当 + shell during spinner）
 test.describe("tab wait baseline assertions — guest", () => {
-  test("サイドナビまたはタブバーは /→/events 遷移中も表示されうる", async ({ page }) => {
+  test("サイドナビまたはタブバーは /→/map 遷移中も表示されうる", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
     const shellBefore = await page.getByText("君斗りんく").first().isVisible().catch(() => false);
 
-    void page.goto("/events", { waitUntil: "domcontentloaded" });
+    void page.goto("/map", { waitUntil: "domcontentloaded" });
     let shellDuring = false;
     for (let i = 0; i < 30; i++) {
       if (await page.getByText("君斗りんく").first().isVisible().catch(() => false)) {
@@ -269,7 +267,7 @@ test.describe("tab wait baseline assertions — guest", () => {
       await page.waitForTimeout(100);
     }
 
-    await page.getByText(/集まり|予定/).first().waitFor({ state: "visible", timeout: 15000 });
+    await page.getByText(/軌跡|足あと/).first().waitFor({ state: "visible", timeout: 15000 });
 
     test.info().annotations.push({
       type: "baseline",

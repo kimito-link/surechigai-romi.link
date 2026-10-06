@@ -2,7 +2,6 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { navigate } from "@/lib/navigation";
 import { useMySignal } from "@/hooks/use-my-signal";
-import { MypageUpcomingEventsSection } from "@/components/mypage/mypage-upcoming-events-section";
 import { color, palette } from "@/theme/tokens";
 
 function ActionRow({
@@ -66,8 +65,7 @@ export function MypageActionList() {
 
   const hasActions =
     (data?.unopenedCount ?? 0) > 0 ||
-    !data?.checkedInToday ||
-    (data?.upcomingParticipationCount ?? 0) > 0;
+    !data?.checkedInToday;
 
   return (
     <View style={styles.section}>
@@ -90,8 +88,6 @@ export function MypageActionList() {
       {!hasActions ? (
         <Text style={styles.emptyHint}>やることはありません。移動を楽しんでね。</Text>
       ) : null}
-
-      <MypageUpcomingEventsSection embedded />
     </View>
   );
 }
