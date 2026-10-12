@@ -33,7 +33,6 @@ const DEFAULT_MESSAGE = "読み込み中…";
    マークはベールが preload 済み＝同じ URL なのでキャッシュが効く。
    style の calc/clamp は react-native-web が CSS にそのまま通す（型は数値のみなので as never）。 */
 const WEB_MARK_SIZE = BOOT.markSize;
-const WEB_MARK_SOURCE = { uri: BOOT.markSrc };
 
 interface BrandLoadingScreenProps {
   /** 読み込み中に出す一言。省略時は「読み込み中…」 */
@@ -79,12 +78,24 @@ export function BrandLoadingScreen({
         accessibilityRole="progressbar"
         accessibilityLabel={message}
       >
-        <Image
-          source={WEB_MARK_SOURCE}
-          style={[styles.webMark, { width: WEB_MARK_SIZE, height: WEB_MARK_SIZE } as never]}
-          contentFit="contain"
-          transition={0}
-          accessibilityLabel=""
+        {/* ★<Image>（expo-image）でなく CSS の背景画像で描く。ベール（#romi-boot-veil .romi-boot-chara）と
+            同じ仕組み・同じ URL にして、切り替わりの最初の1コマからマークが出るようにする。
+            expo-image は <img> のデコードを非同期に待つため、実機の起動録画で
+            「ベール解除→待機画面」の1コマ（約14ms）だけマークが消えていた（2026-10-12）。 */}
+        <View
+          style={
+            [
+              styles.webMark,
+              {
+                width: WEB_MARK_SIZE,
+                height: WEB_MARK_SIZE,
+                backgroundImage: `url("${BOOT.markSrc}")`,
+                backgroundSize: "contain",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              },
+            ] as never
+          }
         />
         <View style={styles.webMeta}>
           <Text style={styles.webTitle}>{BOOT.title}</Text>

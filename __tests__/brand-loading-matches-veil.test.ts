@@ -32,6 +32,21 @@ describe("Web の待機画面はブートベールと同じ絵・同じ位置", 
     expect(LOADING_SRC).toContain("styles.webMeta");
   });
 
+  it("Web のマークは CSS の背景画像で描く（expo-image の非同期デコードで最初の1コマが消えるのを防ぐ）", () => {
+    // ★2026-10-12 実機の起動録画: expo-image だとベール解除→待機画面の1コマ（約14ms）だけマークが消えた。
+    // Web 分岐（Platform.OS === "web" の if）から、ネイティブ側の return（styles.container）の手前まで
+    const web = LOADING_SRC.slice(
+      LOADING_SRC.indexOf('Platform.OS === "web" && fullscreen'),
+      LOADING_SRC.indexOf("styles.container"),
+    );
+    expect(web.length).toBeGreaterThan(200);
+    // 経緯を書いたコメントに <Image> が出てくるので、コメントを除いてから見る
+    const code = web.replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(code).toContain("backgroundImage");
+    expect(code).toContain("BOOT.markSrc");
+    expect(code).not.toMatch(/<Image\b/);
+  });
+
   it("Web かつフルスクリーンのときだけ新レイアウトにする（ネイティブ・部分表示は従来どおり）", () => {
     expect(LOADING_SRC).toMatch(/Platform\.OS === "web" && fullscreen/);
   });
