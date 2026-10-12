@@ -4,11 +4,10 @@
  * ログイン済みトップ（`/`）の殻。
  *
  * ■ 表示の決め方（ちらつきを作らない）
- *   - サーバーが cookie から「ログイン済みヒント」を渡す（hintedSignedIn）。ヒントありなら**最初の HTML から**
- *     ログイン済みの殻を出す。ゲスト画面→ログイン済み画面の切り替わりを見せない。
- *   - Clerk が確定したら実際の状態に合わせる。ヒントと食い違い（ヒントあり→実はゲスト）のときだけ
- *     ゲスト表示へ直す。ヒントなしでゲストの人は最初からゲスト表示（ここでは待たせない）。
- *   - ヒントなし（cookie が無い／'0'）は、Clerk の確定を待たず最初からゲスト表示（待機画面は挟まない）。
+ *   - サーバーが Clerk の `auth()` で判定した結果（serverSignedIn）を受け取り、ログイン済みなら
+ *     **最初の HTML から**ログイン済みの殻を出す。ゲスト画面→ログイン済み画面の切り替わりを見せない。
+ *   - Clerk JS が確定したら、その値を正にする。食い違ったときだけ描き直す（判断は lib/shell-state.ts）。
+ *   - ゲストは Clerk の確定を待たず最初からゲスト表示（待機画面は挟まない）。
  *
  * ■ デザイン（DESIGN.md）
  *   ヒーローは「キミの／現在地／を、刻む。」の3段で「現在地」だけ橙。★ヒーローにアプリ名は出さない
@@ -20,6 +19,7 @@
  */
 import { useAuth, useUser } from "@clerk/nextjs";
 import { SIGN_IN_AUTO_X_HREF } from "@/lib/auth-routes";
+import { resolveShellState } from "@/lib/shell-state";
 
 const TABS = [
   { href: "/", label: "ポスト", current: true },
@@ -30,15 +30,17 @@ const TABS = [
 ] as const;
 
 type Props = {
-  /** サーバーが cookie（__client_uat）から判定した「ログイン済みかも」。認証ではない。 */
-  hintedSignedIn: boolean;
+  /** サーバーが Clerk の `auth()` で判定した「ログイン済みか」。初期値であって認可ではない。 */
+  serverSignedIn: boolean;
 };
 
-export function LoggedInTopShell({ hintedSignedIn }: Props) {
+export function LoggedInTopShell({ serverSignedIn }: Props) {
   const { isLoaded, isSignedIn } = useAuth();
 
-  // 確定後の状態。未確定の間はヒントに従う。
-  const showSignedIn = isLoaded ? isSignedIn === true : hintedSignedIn;
+  // 確定後は Clerk JS が正。未確定の間はサーバーの判定に従う（lib/shell-state.ts）。
+  const showSignedIn =
+    resolveShellState({ serverSignedIn, clientLoaded: isLoaded, clientSignedIn: isSignedIn }) ===
+    "signed-in";
 
   return (
     <div className="flex min-h-dvh flex-col bg-[#E2EDF7] text-[#0F172A]">
