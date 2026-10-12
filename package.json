@@ -52,6 +52,7 @@
     "e2e:auth-verify": "node scripts/save-auth-state.mjs --verify",
     "qa:doctor": "node scripts/qa-doctor.mjs",
     "qa:freeze-probe": "node scripts/qa/freeze-probe.mjs",
+    "qa:android-launch": "node scripts/qa/check-android-launch.mjs",
     "soak:auth-home": "node scripts/auth-home-soak.mjs",
     "qa:first-load": "node scripts/first-load-crash.mjs",
     "qa:monkey": "node scripts/qa/monkey-guest.mjs",
