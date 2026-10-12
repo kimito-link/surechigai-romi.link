@@ -24,6 +24,21 @@ export default function Root({ children }: PropsWithChildren) {
             通常訪問でも 27KB を最優先で取りに行っていた
             （Lighthouse: offscreen-images 27KB + uses-responsive-images 6KB の指摘）。
             ベールが出るのは「ログイン済みヒントあり」か「PWA standalone 起動」のときだけ。 */}
+        {/* ★2026-10-12 PWA 起動（display-mode: standalone）のときだけ効く静的な preload を足した。
+            実機の起動録画 10 回中 4 回、OS の起動画面からベールへ切り替わる瞬間（約3.2秒）に
+            アイコンが 15〜109ms 消えていた＝ベールの最初の描画にマーク画像が間に合っていなかった。
+            判定スクリプトが body の中から動的に挿す preload では遅いので、<head> の静的な link にする。
+            ★media=(display-mode: standalone) を付けるのが肝: 付けないと通常訪問でも 27KB を取りに行く
+            （2026-08-17 に Lighthouse で指摘され、無条件の静的 preload をやめた経緯）。media が合わない
+            ブラウザ表示では取りに行かないので、通常訪問の転送量は増えない。
+            （ログイン済みヒントだけで standalone でない訪問は、従来どおり下の判定スクリプトが動的に挿す） */}
+        <link
+          rel="preload"
+          as="image"
+          href={BOOT.markSrc}
+          media="(display-mode: standalone)"
+          fetchPriority="high"
+        />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
