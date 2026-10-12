@@ -284,15 +284,35 @@ export default function Root({ children }: PropsWithChildren) {
              ベールが出ない通常訪問でも 27KB を取りに行っていた。
              背景画像は「その要素が表示されるときだけ」読まれる（display:none の間は読まない）。
              正方形の素材なので width/height を同値にして比率を保つ。 */
+          /* ★2026-10-12 Android 実機（moto g64y／Android 15）の起動録画で、OS の起動画面のアイコンと
+             ここのアイコンが「大きさ・縦位置」とも違い、切り替わりで飛んでいた:
+               OS の起動画面 = 画面幅の55.3% / 縦中心 49.9%
+               ここ（修正前）= 画面幅の44%  / 縦中心 約45%（タイトル+スピナーと一緒に中央寄せだったため上へ押し上がる）
+             → アイコンだけを画面中央に固定（absolute）し、タイトル+スピナーはその下に独立して置く。
+               大きさは OS の起動画面に合わせて 55vw（上下限で挟む）。 */
+          #romi-boot-veil { --romi-boot-mark: clamp(160px, 55vw, 260px); }
           #romi-boot-veil .romi-boot-chara {
-            width: clamp(160px, 44vw, 260px);
-            height: clamp(160px, 44vw, 260px);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: var(--romi-boot-mark);
+            height: var(--romi-boot-mark);
             display: block;
-            margin-bottom: 20px;
             background-image: url("/boot-mark.png");
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
+          }
+          /* タイトル+スピナー: アイコンの下端から20px下に置く（アイコンの位置には影響しない）。 */
+          #romi-boot-veil .romi-boot-meta {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(50% + var(--romi-boot-mark) / 2 + 20px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
           }
           #romi-boot-veil .romi-boot-title {
             font-size: 15px;
@@ -360,8 +380,10 @@ export default function Root({ children }: PropsWithChildren) {
               背景画像にすると preload は生成されず、**表示されるときだけ**読まれる。
               ベールを出す場面では判定スクリプトが動的 preload を挿すので速度は落ちない。 */}
           <div className="romi-boot-chara" role="presentation" />
-          <div className="romi-boot-title">君斗りんくのすれ違ひ通信</div>
-          <div className="romi-boot-spinner" />
+          <div className="romi-boot-meta">
+            <div className="romi-boot-title">君斗りんくのすれ違ひ通信</div>
+            <div className="romi-boot-spinner" />
+          </div>
         </div>
         {children}
         {enableSpeedInsights && (

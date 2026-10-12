@@ -69,6 +69,23 @@ describe("ブートベールのマーク画像", () => {
     expect(script).toContain('/boot-mark.png');
   });
 
+  it("アイコンは画面中央に固定され、OS の起動画面と同じ大きさ（55vw）で、タイトルの有無で動かない", () => {
+    /* ★2026-10-12 Android 実機の録画: OS の起動画面のアイコン = 幅55.3% / 縦中心49.9%。
+       ベールは 44% / 約45%（タイトル+スピナーと一緒に中央寄せで上へ押し上がっていた）で、
+       切り替わりでアイコンが飛んでいた。 */
+    expect(HTML_SRC).toContain("--romi-boot-mark: clamp(160px, 55vw, 260px)");
+    const chara = HTML_SRC.slice(
+      HTML_SRC.indexOf("#romi-boot-veil .romi-boot-chara {"),
+      HTML_SRC.indexOf("}", HTML_SRC.indexOf("#romi-boot-veil .romi-boot-chara {")),
+    );
+    expect(chara).toContain("position: absolute");
+    expect(chara).toContain("top: 50%");
+    expect(chara).toContain("left: 50%");
+    expect(chara).toContain("translate(-50%, -50%)");
+    // タイトル+スピナーは別枠（アイコンの位置に影響させない）
+    expect(HTML_SRC).toContain('className="romi-boot-meta"');
+  });
+
   it("最優先で取りに行く指定がある", () => {
     expect(HTML_SRC).toContain('fetchpriority');
   });
