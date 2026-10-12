@@ -1,18 +1,64 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+/*
+  Tailwind 4 のトークン定義（config ファイルではなく CSS の @theme に集約する）。
+  書法の出典: ../web-ios-android/templates/next-app/app/globals.css
+
+  ★色の正本は theme/tokens/palette.ts（Expo 側）。
+    そこから apps/web/lib/brand-tokens.ts に値だけ写し、さらにここが3つめの写しになる。
+    palette.ts を直接 import すると react-native が Next.js 側へ入ってくるので写しにしている。
+    三者がずれないよう __tests__/web-theme-tokens-parity.test.ts が見張る。
+
+  ★色を増やすときは palette.ts（正本）→ brand-tokens.ts → ここ、の順。
+    ここだけに足すと parity テストが赤になる。
+
+  使い方: bg-kimito-bg / text-kimito-blue / text-kimito-orange-text など。
+*/
+@theme {
+  /* ページの地色。★起動画像・ベール・manifest と同じ1色にそろえる（SG-09 の契約）。
+     ★#F0F4F8 を書かないこと。起動中に地色が飛ぶ。 */
+  --color-kimito-bg: #e2edf7;
+
+  /* 親ブランドのネイビー。CTA の背景と見出しに使う。 */
+  --color-kimito-blue: #00427b;
+
+  /* 薄青のサーフェス（地色と同値）。 */
+  --color-kimito-blue-soft: #e2edf7;
+
+  /* ブランドのオレンジ。★面・アイコンにだけ使う。
+     地色 #E2EDF7 の上で 2.98:1 なので、文字には下の orange-text を使う。 */
+  --color-kimito-orange: #dd6500;
+
+  /* オレンジの文字用（地色の上で 4.82:1 ＝ WCAG AA）。 */
+  --color-kimito-orange-text: #a84b00;
+
+  /* やわらかい境界線。 */
+  --color-kimito-border-soft: #e2e8f0;
+
+  /* 本文インク。淡色背景の上で AA を満たす濃さ。 */
+  --color-ink-secondary: #334155;
+  --color-ink-muted: #475569;
+  --color-ink-hint: #5a6b7f;
+
+  /* ゲストホームの固定ヘッダーの高さ。本文の上余白と対で使う。 */
+  --spacing-header: 68px;
+
+  /* タッチできる要素の最小の高さ（DESIGN.md layout.touchTargetMin）。 */
+  --spacing-touch: 44px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-  }
+/*
+  ★ライト単一テーマに固定する（旧 midnight ダークは廃止済み・DESIGN.md）。
+  以前ここには prefers-color-scheme: dark で地色を #0f172a に反転させる指定があったが、
+  暗い端末で地色が飛ぶ経路になるので外した（SG-09: 起動のときに画面がちかちかする）。
+*/
+:root {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-kimito-bg);
+  color: var(--color-ink-secondary);
+  font-family: system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }

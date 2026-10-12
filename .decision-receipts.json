@@ -373,6 +373,16 @@
       "scopePaths": [
         "scripts/lib/distinction-checks.mjs"
       ]
+    },
+    {
+      "at": "2026-10-12T05:50:32.628Z",
+      "responsibility": "brand-color-tokens-tailwind-theme",
+      "decision": "SYNC",
+      "canonicalSource": "theme/tokens/palette.ts",
+      "scopePaths": [
+        "apps/web/app/globals.css",
+        "__tests__/web-theme-tokens-parity.test.ts"
+      ]
     }
   ]
 }
