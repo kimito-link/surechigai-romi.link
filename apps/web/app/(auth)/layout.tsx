@@ -1,72 +1,20 @@
 /**
- * app/(auth)/layout.tsx — 認証ルートの ClerkProvider 設定（金型）
+ * app/(auth)/layout.tsx — 認証ルートのレイアウト。
  *
- * ★出典: kimitolink-linktree/app/(auth)/layout.tsx（本番稼働中）
- * ★ブランド依存は auth-brand.config.ts に外出し済み。
- *
- * ★ここが「共通アカウント（1ログインで全サービス）」の心臓部。
- *   allowedRedirectOrigins に無いサービスへは**沈黙して戻れない**（エラーも出ない）。
+ * ★ClerkProvider の設定（共通アカウントの心臓部）は components/SurechigaiClerkProvider.tsx に集約した。
+ *   allowedRedirectOrigins に無いサービスへは**沈黙して戻れない**（エラーも出ない）ので、
+ *   変えるときは必ずそちらのコメントを読むこと。
  */
-import { ClerkProvider } from "@clerk/nextjs";
-import { authBrandConfig } from "@/lib/auth-brand.config";
-import { surechigaiJaJP } from "@/lib/clerk-localization";
-import { surechigaiClerkAppearance } from "@/lib/clerk-appearance";
-
-const {
-  afterAuthPath,
-  signInPath,
-  signUpPath,
-  afterSignOutPath,
-  allowedRedirectOrigins,
-  developmentRedirectOrigins,
-} = authBrandConfig;
+import { SurechigaiClerkProvider } from "@/components/SurechigaiClerkProvider";
 
 export default function AuthLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <ClerkProvider
-      // 方式A: 共通アカウント（親ドメインで __client cookie を共有）。
-      // ★サブドメイン方式なら satellite 設定は不要かつ有害
-      //   （isSatellite:true は verified でない限り /v1/client/sync が落ちる）。
-      //
-      // ★domain明示が必須（2026-10-02実機確認）: この値が無いと、Vercelの自動
-      //   プロキシ判定(本番URLが*.vercel.appで終わるか)がクライアント側で
-      //   再計算され、「400 Invalid host」になる。サーバー環境変数
-      //   CLERK_DISABLE_AUTO_PROXYだけでは、クライアントコンポーネント
-      //   (ClientClerkProvider)内で再度mergeNextClerkPropsWithEnvが走る際、
-      //   process.env.CLERK_DISABLE_AUTO_PROXYはNEXT_PUBLIC_接頭辞が無いため
-      //   ブラウザバンドルでは常にundefinedになり効かない（Next.jsの仕様上、
-      //   非公開環境変数はクライアントコードに埋め込まれない）。domainを
-      //   明示すればgetAutoProxyUrlFromEnvironmentのhasDomainチェックで
-      //   早期リターンし、サーバー・クライアント両方で自動判定を回避できる。
-      domain="clerk.kimito.link"
-      allowedRedirectOrigins={
-        process.env.NODE_ENV === "development"
-          ? [...developmentRedirectOrigins, ...allowedRedirectOrigins]
-          : allowedRedirectOrigins
-      }
-      allowedRedirectProtocols={["http:", "https:"]}
-      signInUrl={signInPath}
-      signUpUrl={signUpPath}
-      // ★FORCE: どの入口から来ても着地先へ送る（最優先）。
-      //   env(NEXT_PUBLIC_CLERK_SIGN_IN/UP_FORCE_REDIRECT_URL)にも設定するが、
-      //   コードでも明示して env 欠落時の迷子を二重に防ぐ（Clerk公式推奨）。
-      //   ★注意: FORCE は redirect_url より強い。姉妹サービスから送客されたとき
-      //   「戻れない」事故になるので、各サービスが**自分の** sign-in を持つ設計にする
-      //   （kimito.link/sign-in へ送客しない。exosome が 2026-09-16 に実測して確定）。
-      signInForceRedirectUrl={afterAuthPath}
-      signUpForceRedirectUrl={afterAuthPath}
-      // FALLBACK は FORCE が効かない経路の保険（既定の '/' 着地を防ぐ）。
-      signInFallbackRedirectUrl={afterAuthPath}
-      signUpFallbackRedirectUrl={afterAuthPath}
-      afterSignOutUrl={afterSignOutPath}
-      localization={surechigaiJaJP}
-      appearance={surechigaiClerkAppearance}
-    >
+    <SurechigaiClerkProvider>
       <div id="main-content" tabIndex={-1}>
         {children}
       </div>
-    </ClerkProvider>
+    </SurechigaiClerkProvider>
   );
 }
