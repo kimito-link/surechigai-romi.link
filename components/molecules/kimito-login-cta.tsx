@@ -34,6 +34,9 @@ const buttonStyle = {
   minHeight: 48,
 };
 
+/** X を名指しするボタン（𝕏 付き）の地。X のブランドの黒にして「X のボタン」だと一目で分かるようにする。 */
+const xButtonStyle = { ...buttonStyle, backgroundColor: palette.xBlack };
+
 export function KimitoLoginCta({
   signInHref,
   label = "1タップではじめる",
@@ -87,6 +90,9 @@ export function KimitoLoginCta({
   const a11yLabel = isNative
     ? `${nativeLabel}（AppleまたはXでサインイン）`
     : `Xで${displayLabel}`;
+  /* ★2026-10-12 X を名指しするボタン（𝕏 付き＝ネイティブ以外）は X の黒。
+     ネイティブは「はじめる」だけで X を名指ししない（Apple も選べる。Guideline 4.8）ので従来の紺のまま。 */
+  const baseButtonStyle = isNative ? buttonStyle : xButtonStyle;
 
   if (Platform.OS === "web") {
     // 実 <a href> を出す: E2E/クローラー/右クリック新規タブなどのブラウザネイティブ機能を保つ。
@@ -103,7 +109,7 @@ export function KimitoLoginCta({
         accessibilityRole="button"
         accessibilityLabel={a11yLabel}
         style={[
-          buttonStyle,
+          baseButtonStyle,
           styles.webLink,
           isStarting && { opacity: 0.65 },
         ]}
@@ -123,7 +129,7 @@ export function KimitoLoginCta({
       accessibilityLabel={a11yLabel}
       accessibilityState={{ disabled: busy, busy }}
       style={({ pressed }) => [
-        buttonStyle,
+        baseButtonStyle,
         pressed && { opacity: 0.85 },
         busy && { opacity: 0.65 },
       ]}

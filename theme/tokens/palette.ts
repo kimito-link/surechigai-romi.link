@@ -203,6 +203,11 @@ export const palette = {
   tutorialText: "#1F2937",
   shadowBlack: "rgba(0, 0, 0, 0.25)",
 
+  // X（旧 Twitter）のブランドの黒。「X で 1 タップ」のログインボタンの地（DESIGN.md「CTA」の #0F1419）。
+  // ログイン画面の Clerk の「X / Twitterで続ける」ボタン（黒）と同じ印象にそろえ、X のボタンだと一目で分かるようにする。
+  // ★ネイティブアプリ(App Store 審査対象)の「はじめる」ボタンには使わない（X を名指ししない。Guideline 4.8）。
+  xBlack: "#0F1419",
+
   // Special
   transparent: "transparent",
   black: "#000000",

@@ -71,7 +71,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: palette.kimitoBlue,
+    // 𝕏 を名指しするボタンなので X の黒（palette.xBlack）。メインの「𝕏 1タップではじめる」と色をそろえる。
+    backgroundColor: palette.xBlack,
     paddingHorizontal: 14,
     height: touchTarget.minSize,
     borderRadius: 999,
