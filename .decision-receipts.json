@@ -325,6 +325,54 @@
         "apps/web/lib/brand-tokens.ts",
         "__tests__/brand-tokens-parity.test.ts"
       ]
+    },
+    {
+      "at": "2026-10-12T05:33:17.168Z",
+      "responsibility": "guest-home-auth-gate",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "apps/web/lib/guest-home-gate.ts",
+        "__tests__/guest-home-gate.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-12T05:33:17.273Z",
+      "responsibility": "guest-home-copy-constants",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "apps/web/lib/guest-home-copy.ts",
+        "__tests__/guest-home-copy.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-12T05:43:28.236Z",
+      "responsibility": "served-bundle-verification",
+      "decision": "REUSE",
+      "canonicalSource": "../web-ios-android/templates/scripts/verify-served-bundle.mjs",
+      "scopePaths": [
+        "scripts/verify-served-bundle.mjs"
+      ]
+    },
+    {
+      "at": "2026-10-12T05:43:28.313Z",
+      "responsibility": "team-distinction-verification-4-3a",
+      "decision": "REUSE",
+      "canonicalSource": "../web-ios-android/templates/scripts/verify-team-distinction.mjs",
+      "scopePaths": [
+        "scripts/verify-team-distinction.mjs",
+        "scripts/lib/team-distinction-core.mjs"
+      ]
+    },
+    {
+      "at": "2026-10-12T05:43:55.766Z",
+      "responsibility": "distinction-checks-shared-lib",
+      "decision": "REUSE",
+      "canonicalSource": "../web-ios-android/templates/scripts/lib/distinction-checks.mjs",
+      "scopePaths": [
+        "scripts/lib/distinction-checks.mjs"
+      ]
     }
   ]
 }

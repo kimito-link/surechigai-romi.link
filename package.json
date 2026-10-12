@@ -82,6 +82,10 @@
     "ci:dependabot:selftest": "node scripts/check-dependabot-queue.mjs --selftest",
     "check:instrument-proof": "node scripts/check-instrument-proof.mjs",
     "check:instrument-proof:selftest": "node scripts/check-instrument-proof.mjs --selftest",
+    "check:served-bundle": "node scripts/verify-served-bundle.mjs https://surechigai.kimito.link .vercel/output/static / /sign-in/",
+    "check:served-bundle:selftest": "node scripts/verify-served-bundle.mjs --selftest",
+    "check:team-distinction": "node scripts/verify-team-distinction.mjs --root ..",
+    "check:team-distinction:selftest": "node scripts/verify-team-distinction.mjs --selftest",
     "ci:usage": "node scripts/check-actions-usage.mjs",
     "ci:usage:selftest": "node scripts/check-actions-usage.mjs --selftest"
   },
