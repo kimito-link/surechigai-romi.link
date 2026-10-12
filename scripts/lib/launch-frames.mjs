@@ -12,7 +12,8 @@
  *   icon:    濃紺（#00427B 付近）の「つながった最大の塊」の幅％と縦の中心％。無ければ null。
  *            ★画面の上 10%（ステータスバー）と下 12%（ナビゲーションバー）は見ない。
  *            ★タイトル文字・スピナーは小さく独立した塊なので除かれる。
- *   heroBar: 幅の 85% 以上に渡る濃紺の帯＝ヒーローの CTA ボタン（「1タップではじめる」）。
+ *   heroBar: 幅の 85% 以上に渡る濃紺 または X の黒（#0F1419）の帯＝ヒーローの CTA ボタン（「1タップではじめる」）。
+ *            ★CTA の色は変わりうる（2026-10-12 に紺→X の黒）ので、どちらでも見つける。
  *
  * ■ 判定（analyzeLaunch）
  *   基準 = 最初にアイコンが出たフレーム群（OS の起動画面）の中央値。
@@ -34,6 +35,15 @@ export function isNavy(r, g, b) {
 }
 
 /**
+ * X の黒（#0F1419 付近）か。ヒーローの「𝕏 1タップではじめる」ボタンの地（2026-10-12 に紺から X の黒へ変更）。
+ * ★ヒーローの帯の検出は、紺のままでも X の黒でも見つけられるようにする（ボタンの色を変えたとき、
+ *   この検査が「ヒーローまで届かなかった」と測れなくなる事故が実際に起きた）。
+ */
+export function isInk(r, g, b) {
+  return r < 45 && g < 45 && b < 52 && b >= r;
+}
+
+/**
  * 1フレーム（RGB の生バイト列）を要約する。
  *
  * ★方式: 濃紺の画素を「つながった塊（連結成分）」に分け、最大の塊の外接矩形を見る。
@@ -49,18 +59,52 @@ export function summarizeFrame({ data, width, height }) {
   const top = Math.floor(height * 0.1);
   const bottom = Math.floor(height * 0.88);
   const rowsN = bottom - top;
-  const size = width * rowsN;
 
-  const mask = new Uint8Array(size);
+  const navy = new Uint8Array(width * rowsN);
+  const dark = new Uint8Array(width * rowsN); // 紺 or X の黒（ヒーローの帯用）
   for (let y = 0; y < rowsN; y++) {
     const base = (top + y) * width * 3;
     for (let x = 0; x < width; x++) {
       const i = base + x * 3;
-      if (isNavy(data[i], data[i + 1], data[i + 2])) mask[y * width + x] = 1;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const n = isNavy(r, g, b);
+      if (n) navy[y * width + x] = 1;
+      if (n || isInk(r, g, b)) dark[y * width + x] = 1;
     }
   }
 
-  // 連結成分（4近傍）。最大面積の塊の外接矩形を取る。
+  const minArea = width * height * 0.015;
+
+  // アイコン: 紺の「つながった最大の塊」
+  const iconBlock = largestComponent(navy, width, rowsN);
+  if (iconBlock && iconBlock.area >= minArea) {
+    const blockW = iconBlock.maxX - iconBlock.minX + 1;
+    const blockH = iconBlock.maxY - iconBlock.minY + 1;
+    const wPct = (blockW / width) * 100;
+    const hPct = (blockH / height) * 100;
+    const isBar = wPct >= 85 && hPct < wPct * 0.6;
+    // アイコン: 帯でなく、縦にある程度の高さがある塊（画面の 8% 未満は文字など）
+    if (!isBar && hPct >= 8) {
+      const cy = top + (iconBlock.minY + iconBlock.maxY) / 2;
+      return { icon: { wPct, cyPct: (cy / height) * 100, hPct }, heroBar: false };
+    }
+  }
+
+  // ヒーローの帯: 紺 or X の黒の塊で、幅が広い（85%以上）かつ低い
+  const bar = largestComponent(dark, width, rowsN);
+  if (bar && bar.area >= minArea) {
+    const wPct = ((bar.maxX - bar.minX + 1) / width) * 100;
+    const hPct = ((bar.maxY - bar.minY + 1) / height) * 100;
+    if (wPct >= 85 && hPct < wPct * 0.6) return { icon: null, heroBar: true };
+  }
+  return { icon: null, heroBar: false };
+}
+
+/** 2値マスクの連結成分（4近傍）のうち、面積が最大の塊の外接矩形。 */
+function largestComponent(mask, width, rowsN) {
+  const size = width * rowsN;
   const seen = new Uint8Array(size);
   const stack = new Int32Array(size);
   let best = null;
@@ -90,23 +134,7 @@ export function summarizeFrame({ data, width, height }) {
     }
     if (!best || area > best.area) best = { area, minX, maxX, minY, maxY };
   }
-
-  // 小さな塊（文字・スピナー・ノイズ）は無視
-  if (!best || best.area < width * height * 0.015) return { icon: null, heroBar: false };
-
-  const blockW = best.maxX - best.minX + 1;
-  const blockH = best.maxY - best.minY + 1;
-  const wPct = (blockW / width) * 100;
-  const hPct = (blockH / height) * 100;
-
-  // ヒーローの帯: 幅が広い（85%以上）で、高さは低い（アイコンのような正方形ではない）
-  if (wPct >= 85 && hPct < wPct * 0.6) return { icon: null, heroBar: true };
-
-  // アイコン: 縦にある程度の高さがある塊（画面の 8% 未満は文字など）
-  if (hPct < 8) return { icon: null, heroBar: false };
-
-  const cy = top + (best.minY + best.maxY) / 2;
-  return { icon: { wPct, cyPct: (cy / height) * 100, hPct }, heroBar: false };
+  return best;
 }
 
 function median(nums) {

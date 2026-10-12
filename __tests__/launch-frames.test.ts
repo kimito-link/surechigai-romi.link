@@ -78,6 +78,24 @@ describe("summarizeFrame", () => {
     expect(s.icon).toBeNull();
   });
 
+  it("★ヒーローの帯が X の黒（#0F1419）でも heroBar として検出する（ボタンの色を変えて検査が測れなくなった事故の回帰）", () => {
+    // 2026-10-12 に CTA を紺から X の黒へ変えたところ、帯が濃紺前提の検出が「ヒーローまで届かなかった」となり、
+    // 実機の検査が5回すべて『測れなかった』になった。
+    const d = frame([]);
+    const INK: [number, number, number] = [15, 20, 25];
+    for (let y = HERO.y0; y < HERO.y1; y++) for (let x = HERO.x0; x < HERO.x1; x++) d.data.set(INK, (y * W + x) * 3);
+    const s = summarizeFrame(d);
+    expect(s.heroBar).toBe(true);
+    expect(s.icon).toBeNull();
+  });
+
+  it("X の黒の小さなボタン（ヘッダーのピル）は heroBar でもアイコンでもない", () => {
+    const d = frame([]);
+    const INK: [number, number, number] = [15, 20, 25];
+    for (let y = 22; y < 38; y++) for (let x = 70; x < 96; x++) d.data.set(INK, (y * W + x) * 3);
+    expect(summarizeFrame(d)).toEqual({ icon: null, heroBar: false });
+  });
+
   it("濃紺が無い画面（ホーム画面など）は icon も heroBar もなし", () => {
     const s = summarizeFrame(frame([]));
     expect(s).toEqual({ icon: null, heroBar: false });
