@@ -11,7 +11,7 @@
  * Web の初回ブートベール（app/+html.tsx の #romi-boot-veil）と
  * 背景色・キャラ・配置を揃えてあるので、ベール解除後にここへ繋がっても絵が飛ばない。
  */
-import { View, Text, StyleSheet, ActivityIndicator, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Platform, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
 import { color, palette } from "@/theme/tokens";
 
@@ -20,6 +20,18 @@ const LINK_CHARACTER = require("@/assets/images/characters/link/link-yukkuri-smi
 
 /** #romi-boot-veil と同じブランド背景（manifest.background_color / ヘッダー地と統一）。 */
 const BOOT_BACKGROUND = palette.kimitoBlueSoft;
+
+const DEFAULT_MESSAGE = "読み込み中…";
+
+/* ★2026-10-12 Web のフルスクリーン待機は、ブートベール（app/+html.tsx の #romi-boot-veil）と
+   **同じ絵・同じ位置**にする。Android 実機の起動録画で、ベール解除の直後に
+   「アイコンの無い文字だけの画面 → ロゴ＋ゆっくりりんく（ベールとは別の絵）」と
+   切り替わり、絵と位置が飛んでいた。
+   マークは /boot-mark.png（ベールが preload 済み＝同じ URL なのでキャッシュが効く）。
+   大きさ・位置の式は +html.tsx の --romi-boot-mark と同じ。
+   style の calc/clamp は react-native-web が CSS にそのまま通す（型は数値のみなので as never）。 */
+const WEB_MARK_SIZE = "clamp(160px, 55vw, 260px)";
+const WEB_MARK_SOURCE = { uri: "/boot-mark.png" };
 
 interface BrandLoadingScreenProps {
   /** 読み込み中に出す一言。省略時は「読み込み中…」 */
@@ -32,7 +44,7 @@ interface BrandLoadingScreenProps {
 }
 
 export function BrandLoadingScreen({
-  message = "読み込み中…",
+  message = DEFAULT_MESSAGE,
   fullscreen = true,
 }: BrandLoadingScreenProps) {
   const { width, height } = useWindowDimensions();
@@ -54,6 +66,32 @@ export function BrandLoadingScreen({
   const logoWidth = hasViewport
     ? Math.min(Math.max(width * 0.34, 120), 240, height * 0.18)
     : 150;
+
+  if (Platform.OS === "web" && fullscreen) {
+    return (
+      <View
+        style={[
+          styles.webRoot,
+          hasViewport ? { minHeight: Math.max(height - 124, 320) } : null,
+        ]}
+        accessibilityRole="progressbar"
+        accessibilityLabel={message}
+      >
+        <Image
+          source={WEB_MARK_SOURCE}
+          style={[styles.webMark, { width: WEB_MARK_SIZE, height: WEB_MARK_SIZE } as never]}
+          contentFit="contain"
+          transition={0}
+          accessibilityLabel=""
+        />
+        <View style={styles.webMeta}>
+          <Text style={styles.webTitle}>君斗りんくのすれ違ひ通信</Text>
+          <ActivityIndicator size={28} color={palette.kimitoBlue} />
+          {message !== DEFAULT_MESSAGE ? <Text style={styles.message}>{message}</Text> : null}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View
@@ -108,6 +146,34 @@ const styles = StyleSheet.create({
   fullscreen: {
     flex: 1,
     alignSelf: "stretch",
+  },
+  /* Web 専用レイアウト（ベールと同じ絵・位置）。マークは中央に固定し、タイトル+スピナーはその下の別枠。 */
+  webRoot: {
+    flex: 1,
+    alignSelf: "stretch",
+    width: "100%",
+    position: "relative",
+    backgroundColor: BOOT_BACKGROUND,
+  },
+  webMark: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: "-50%" }, { translateY: "-50%" }],
+  } as never,
+  webMeta: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: `calc(50% + ${WEB_MARK_SIZE} / 2 + 20px)`,
+    alignItems: "center",
+    gap: 24,
+  } as never,
+  webTitle: {
+    color: palette.kimitoBlue,
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.6,
   },
   title: {
     color: palette.kimitoBlue,
