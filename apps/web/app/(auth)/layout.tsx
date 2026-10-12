@@ -3,7 +3,7 @@
  *
  * ★ClerkProvider の設定（共通アカウントの心臓部）は components/SurechigaiClerkProvider.tsx に集約した。
  *   allowedRedirectOrigins に無いサービスへは**沈黙して戻れない**（エラーも出ない）ので、
- *   変えるときは必ずそちらのコメントを読むこと。
+ *   変えるときはそちらのコメントを先に読むこと。
  */
 import { SurechigaiClerkProvider } from "@/components/SurechigaiClerkProvider";
 
