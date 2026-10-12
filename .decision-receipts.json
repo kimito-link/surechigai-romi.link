@@ -397,6 +397,16 @@
         "apps/web/components/guest-home/GuestHomeBenefits.tsx",
         "apps/web/components/guest-home/GuestHomeCta.tsx"
       ]
+    },
+    {
+      "at": "2026-10-12T06:56:58.294Z",
+      "responsibility": "trpc-server-side-caller-nextjs",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "apps/web/lib/trpc-server.ts",
+        "__tests__/trpc-server-contract.test.ts"
+      ]
     }
   ]
 }
