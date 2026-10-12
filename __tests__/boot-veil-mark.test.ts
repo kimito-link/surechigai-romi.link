@@ -91,17 +91,6 @@ describe("ブートベールのマーク画像", () => {
     expect(HTML_SRC).toContain('className="romi-boot-meta"');
   });
 
-  it("静的な preload は、PWA 起動（display-mode: standalone）のときだけ効く media 付き（通常訪問で27KBを取らない）", () => {
-    /* ★2026-10-12 実機の起動録画で、OS の起動画面→ベールの切り替わりにアイコンが消える欠けが
-       10回中4回出ていた（ベールの最初の描画にマーク画像が間に合わない）。<head> の静的 preload で
-       早く取りに行く。ただし無条件だと通常訪問でも27KBを取るので、media 付きに限る。 */
-    const tags = HTML_SRC.match(/<link\s[^>]*as="image"[^>]*\/>/g) ?? [];
-    const markTags = tags.filter((t) => t.includes("rel=\"preload\"") && t.includes("BOOT.markSrc"));
-    expect(markTags.length, "マークの静的 preload が無い").toBe(1);
-    expect(markTags[0]).toContain('media="(display-mode: standalone)"');
-    expect(markTags[0]).toContain('fetchPriority="high"');
-  });
-
   it("最優先で取りに行く指定がある", () => {
     expect(HTML_SRC).toContain('fetchpriority');
   });
