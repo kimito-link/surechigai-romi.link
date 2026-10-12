@@ -3,6 +3,8 @@ import { PWA_APP_NAME } from "@/components/brand/web-document-head";
 import { APP_ORIGIN, MARKETING_URL } from "@/lib/site-urls";
 import { palette } from "@/theme/tokens/palette";
 import { BOOT } from "@/theme/tokens/boot";
+// ログイン中ヒントの「ゲストでも Clerk が書くキー」の除外リスト（lib/clerk-public-routes.ts が正本。下の判定スクリプトに埋め込む）
+import { NON_SESSION_CLERK_STORAGE_KEYS } from "@/lib/clerk-public-routes";
 // ★ベールのマークを CSS に直接埋め込む（data URI）。このファイル（Node 側の静的レンダリング専用）だけが import する。
 import { BOOT_MARK_DATA_URI } from "@/theme/tokens/boot-mark-data";
 import type { PropsWithChildren } from "react";
@@ -361,7 +363,7 @@ export default function Root({ children }: PropsWithChildren) {
                マッチするとログイン済みでもゲスト誤判定していた。matchAll非対応の
                古いブラウザにも配るES5的なコードのため、正規表現のgフラグ+execの
                ループで全件を見て、いずれか1つでも'0'以外ならログイン済みとする。 */
-            __html: `(function(){try{var h=false;var re=/(?:^|;\\s*)__client_uat[^=]*=([^;]*)/g;var m;while((m=re.exec(document.cookie))){if(m[1]&&m[1]!=="0"){h=true;break}}var ls=window.localStorage;if(!h&&ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(!h&&ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="${BOOT.markSrc}";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
+            __html: `(function(){try{var h=false;var re=/(?:^|;\\s*)__client_uat[^=]*=([^;]*)/g;var m;while((m=re.exec(document.cookie))){if(m[1]&&m[1]!=="0"){h=true;break}}var ls=window.localStorage;if(!h&&ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(!h&&ls){var ig=${JSON.stringify(NON_SESSION_CLERK_STORAGE_KEYS)};for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1&&ig.indexOf(k)===-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="${BOOT.markSrc}";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
           }}
         />
         {/* ブートベールの実DOMオーバーレイ（ロゴ＋スピナー）。

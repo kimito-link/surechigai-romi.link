@@ -5,6 +5,29 @@
 const USER_INFO_KEY = "manus-runtime-user-info";
 const PUBLIC_WEB_PREFIXES = ["/u/"] as const;
 
+/**
+ * Clerk が「ログインしていなくても」書き込む localStorage のキー。セッションの印ではないので、
+ * ログイン中ヒントの判定に数えない。
+ *
+ * ★2026-10-12 実機（moto g64y）で確認: ゲスト（`__client_uat` = 0）の端末にも `__clerk_environment`
+ *   （Clerk の環境設定のキャッシュ。約 7KB）が入っていた。以前は「`clerk` を含むキーが1つでもあれば
+ *   ログイン中」としていたため、**一度でも Clerk を読み込んだ端末は永久に「ログイン中」扱い**になっていた
+ *   （Clerk を読む → このキーが書かれる → 次回もヒントが真になり Clerk を読む、の自己増殖）。
+ *   結果、ゲストなのに毎回 Clerk の chunk（約 762KB）と clerk-js を読み、ベールも長引いていた。
+ * ★セッションの正本は cookie（`__client_uat` が '0' 以外／`__session`）。localStorage は補助。
+ * ★除外リスト方式にしている理由: 未知のキーは従来どおり「ヒントあり」に倒す（ログイン済みなのに
+ *   ゲスト画面を見せる側の誤りを避ける）。新しく「ゲストでも書かれるキー」を見つけたらここに足す。
+ * ★app/+html.tsx のインラインスクリプト（静的レンダリング用の独立 JS）にも同じリストを埋め込んでいる。
+ */
+export const NON_SESSION_CLERK_STORAGE_KEYS: readonly string[] = ["__clerk_environment"];
+
+/** localStorage のキーが「Clerk のセッションの印」か（`clerk` を含み、かつ除外リストに無い）。 */
+export function isClerkSessionStorageKey(key: string | null | undefined): boolean {
+  if (!key) return false;
+  if (NON_SESSION_CLERK_STORAGE_KEYS.includes(key)) return false;
+  return key.startsWith("__clerk") || key.includes("clerk");
+}
+
 /** Guest preview 向けアプリタブ（Clerk セッションなしで閲覧可）。 */
 const GUEST_APP_TAB_ROUTES = [
   "/",
@@ -103,9 +126,7 @@ export function hasClerkSessionHint(): boolean {
     if (hasLiveClerkUatCookie()) return true;
     if (window.localStorage.getItem(USER_INFO_KEY)) return true;
     for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i);
-      if (key && (key.startsWith("__clerk") || key.includes("clerk")))
-        return true;
+      if (isClerkSessionStorageKey(window.localStorage.key(i))) return true;
     }
     if (
       typeof document !== "undefined" &&
