@@ -315,6 +315,16 @@
       "scopePaths": [
         "__tests__/signin-no-flicker.test.tsx"
       ]
+    },
+    {
+      "at": "2026-10-12T04:50:30.577Z",
+      "responsibility": "brand-color-tokens-nextjs",
+      "decision": "SYNC",
+      "canonicalSource": "theme/tokens/palette.ts",
+      "scopePaths": [
+        "apps/web/lib/brand-tokens.ts",
+        "__tests__/brand-tokens-parity.test.ts"
+      ]
     }
   ]
 }
