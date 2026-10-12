@@ -3,6 +3,8 @@ import { PWA_APP_NAME } from "@/components/brand/web-document-head";
 import { APP_ORIGIN, MARKETING_URL } from "@/lib/site-urls";
 import { palette } from "@/theme/tokens/palette";
 import { BOOT } from "@/theme/tokens/boot";
+// ★ベールのマークを CSS に直接埋め込む（data URI）。このファイル（Node 側の静的レンダリング専用）だけが import する。
+import { BOOT_MARK_DATA_URI } from "@/theme/tokens/boot-mark-data";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -300,7 +302,11 @@ export default function Root({ children }: PropsWithChildren) {
             width: var(--romi-boot-mark);
             height: var(--romi-boot-mark);
             display: block;
-            background-image: url("${BOOT.markSrc}");
+            /* ★2026-10-12 外部ファイル(BOOT.markSrc)でなく data URI を埋め込む。実機の起動録画 10 回中 4 回、
+               OS の起動画面→ベールの切り替わりでアイコンが 15〜109ms 消えていた＝最初の描画に画像の取得が
+               間に合っていなかった。静的な preload（media 付き）では頻度が変わらなかった（4/10→4/10）。
+               費用: HTML が約 31KB 増える（theme/tokens/boot-mark-data.ts、scripts/gen-boot-mark-data.mjs で生成）。 */
+            background-image: url("${BOOT_MARK_DATA_URI}");
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;

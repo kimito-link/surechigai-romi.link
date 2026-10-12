@@ -12,9 +12,11 @@
  *   3. 参照先がうっかり元の巨大画像に戻る
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync, statSync } from "node:fs";
-import { resolve } from "node:path";
+import { createHash } from "node:crypto";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { BOOT } from "../theme/tokens/boot";
+import { BOOT_MARK_DATA_URI, BOOT_MARK_SOURCE_SHA256 } from "../theme/tokens/boot-mark-data";
 
 const ROOT = resolve(__dirname, "..");
 const HTML_SRC = readFileSync(resolve(ROOT, "app/+html.tsx"), "utf8");
@@ -33,16 +35,53 @@ describe("ブートベールのマーク画像", () => {
     expect(kb).toBeLessThanOrEqual(MAX_MARK_KB);
   });
 
-  it("ベールは /boot-mark.png を背景画像として参照している", () => {
+  it("ベールは、マークを CSS の背景画像（data URI で埋め込み）として持っている", () => {
     /* ★2026-08-17: <img> をやめて CSS 背景画像にした。
        <img> だと React が全ページの <head> に preload を自動生成し、
        ベールが display:none の通常訪問でも 27KB を取りに行っていたため
-       （Lighthouse: offscreen-images）。背景画像は表示時にだけ読まれる。 */
-    // マークの URL は theme/tokens/boot.ts の BOOT.markSrc が正本（+html.tsx は参照するだけ）
+       （Lighthouse: offscreen-images）。背景画像は表示時にだけ読まれる。
+       ★2026-10-12: さらに外部ファイルをやめ、data URI を CSS に直接埋め込んだ。実機の起動録画 10 回中 4 回、
+       OS の起動画面→ベールの切り替わりでアイコンが 15〜109ms 消えていた（外部ファイルの取得が最初の描画に
+       間に合わない）。静的 preload（media 付き）では頻度が変わらなかったため。 */
+    expect(HTML_SRC).toContain('background-image: url("${BOOT_MARK_DATA_URI}")');
+    // 外部ファイルの URL を背景画像に直接書かない（待機画面・動的 preload 用の BOOT.markSrc は別用途）
+    expect(HTML_SRC).not.toContain('background-image: url("${BOOT.markSrc}")');
     expect(BOOT.markSrc).toBe("/boot-mark.png");
-    expect(HTML_SRC).toContain('background-image: url("${BOOT.markSrc}")');
     // img に戻すと preload が復活するので、src 属性では持たないこと
     expect(HTML_SRC).not.toContain('src="/boot-mark.png"');
+  });
+
+  it("埋め込みの data URI は WebP で、HTML の増分に予算がある（40KB 以下）", () => {
+    // 全訪問者の HTML に入る。大きくなりすぎると通常訪問が遅くなる（約31KB。2026-10-12 時点）
+    expect(BOOT_MARK_DATA_URI.startsWith("data:image/webp;base64,")).toBe(true);
+    expect(BOOT_MARK_DATA_URI.length / 1024).toBeLessThanOrEqual(40);
+  });
+
+  it("埋め込みは public/boot-mark.png と同期している（PNG を変えたら gen-boot-mark-data を再実行）", () => {
+    const sha = createHash("sha256").update(readFileSync(MARK_PATH)).digest("hex");
+    expect(BOOT_MARK_SOURCE_SHA256).toBe(sha);
+  });
+
+  it("★data URI のモジュールを import してよいのは app/+html.tsx だけ（クライアントのバンドルに入れない）", () => {
+    // 入ると全員の JS が約31KB 増える。+html.tsx は Node 側の静的レンダリング専用でバンドルされない。
+    const offenders: string[] = [];
+    const skip = new Set(["node_modules", ".git", ".expo", "dist", ".vercel", "apps", "line-bot", ".claude"]);
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        if (skip.has(name)) continue;
+        const p = join(dir, name);
+        const st = statSync(p);
+        if (st.isDirectory()) walk(p);
+        else if (/\.(ts|tsx|js|jsx|mjs)$/.test(name)) {
+          const rel = p.slice(ROOT.length + 1).replace(/\\/g, "/");
+          if (rel === "theme/tokens/boot-mark-data.ts" || rel === "scripts/gen-boot-mark-data.mjs") continue;
+          if (rel.startsWith("__tests__/")) continue;
+          if (readFileSync(p, "utf8").includes("boot-mark-data")) offenders.push(rel);
+        }
+      }
+    };
+    walk(ROOT);
+    expect(offenders).toEqual(["app/+html.tsx"]);
   });
 
   it("巨大な元画像(/lp/img/chara/link.png)をベールで使っていない", () => {
