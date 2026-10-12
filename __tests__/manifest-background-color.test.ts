@@ -14,10 +14,12 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { palette } from "../theme/tokens/palette";
+import { BOOT } from "../theme/tokens/boot";
 
 const ROOT = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
 
+// ブランドの地色（実値の固定）。正本は theme/tokens/boot.ts の BOOT.background で、ここで両者の一致も確かめる。
 const BASE_BG = "#E2EDF7";
 
 describe("manifest.background_color と地色の一致", () => {
@@ -26,16 +28,20 @@ describe("manifest.background_color と地色の一致", () => {
   it("manifest の background_color が #E2EDF7（大文字小文字は無視）", () => {
     expect(typeof manifest.background_color).toBe("string");
     expect(manifest.background_color!.toUpperCase()).toBe(BASE_BG);
+    // 起動画面の値の正本（BOOT.background）と同じ
+    expect(manifest.background_color!.toUpperCase()).toBe(BOOT.background.toUpperCase());
   });
 
-  it("ブートベール（app/+html.tsx）の背景色と一致する", () => {
+  it("ブートベール（app/+html.tsx）の背景色は BOOT.background を参照し、その値が #E2EDF7", () => {
     const html = read("app/+html.tsx");
-    expect(html).toMatch(/background-color:\s*#E2EDF7\s*!important/i);
+    expect(html).toMatch(/background-color:\s*\$\{BOOT\.background\}\s*!important/);
+    expect(BOOT.background.toUpperCase()).toBe(BASE_BG);
   });
 
-  it("BrandLoadingScreen は palette.kimitoBlueSoft を地色にしており、その値が #E2EDF7", () => {
+  it("BrandLoadingScreen は BOOT.background（＝palette.kimitoBlueSoft）を地色にしており、その値が #E2EDF7", () => {
     const src = read("components/atoms/brand-loading-screen.tsx");
-    expect(src).toMatch(/BOOT_BACKGROUND\s*=\s*palette\.kimitoBlueSoft/);
+    expect(src).toMatch(/BOOT_BACKGROUND\s*=\s*BOOT\.background/);
+    expect(BOOT.background).toBe(palette.kimitoBlueSoft);
     expect(palette.kimitoBlueSoft.toUpperCase()).toBe(BASE_BG);
   });
 });

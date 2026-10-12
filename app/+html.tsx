@@ -2,6 +2,7 @@ import { ScrollViewStyleReset } from "expo-router/html";
 import { PWA_APP_NAME } from "@/components/brand/web-document-head";
 import { APP_ORIGIN, MARKETING_URL } from "@/lib/site-urls";
 import { palette } from "@/theme/tokens/palette";
+import { BOOT } from "@/theme/tokens/boot";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -262,7 +263,7 @@ export default function Root({ children }: PropsWithChildren) {
           html[data-auth-boot="1"] #root { visibility: hidden; }
           /* html/body 両方に背景色を敷き、初期段階でOS(ダークモード)の黒地が透けないようにする。 */
           html[data-auth-boot="1"], html[data-auth-boot="1"] body {
-            background-color: #E2EDF7 !important;
+            background-color: ${BOOT.background} !important;
           }
           /* 実DOMの全面オーバーレイ。既定は非表示、ベール中(data-auth-boot=1)だけ表示。 */
           #romi-boot-veil {
@@ -270,7 +271,7 @@ export default function Root({ children }: PropsWithChildren) {
             position: fixed;
             inset: 0;
             z-index: 2147483646;
-            background-color: #E2EDF7;
+            background-color: ${BOOT.background};
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -289,8 +290,8 @@ export default function Root({ children }: PropsWithChildren) {
                OS の起動画面 = 画面幅の55.3% / 縦中心 49.9%
                ここ（修正前）= 画面幅の44%  / 縦中心 約45%（タイトル+スピナーと一緒に中央寄せだったため上へ押し上がる）
              → アイコンだけを画面中央に固定（absolute）し、タイトル+スピナーはその下に独立して置く。
-               大きさは OS の起動画面に合わせて 55vw（上下限で挟む）。 */
-          #romi-boot-veil { --romi-boot-mark: clamp(160px, 55vw, 260px); }
+               大きさは OS の起動画面に合わせる（値は theme/tokens/boot.ts の BOOT.markSize が正本）。 */
+          #romi-boot-veil { --romi-boot-mark: ${BOOT.markSize}; }
           #romi-boot-veil .romi-boot-chara {
             position: absolute;
             top: 50%;
@@ -299,17 +300,17 @@ export default function Root({ children }: PropsWithChildren) {
             width: var(--romi-boot-mark);
             height: var(--romi-boot-mark);
             display: block;
-            background-image: url("/boot-mark.png");
+            background-image: url("${BOOT.markSrc}");
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
           }
-          /* タイトル+スピナー: アイコンの下端から20px下に置く（アイコンの位置には影響しない）。 */
+          /* タイトル+スピナー: アイコンの下端から BOOT.metaGap 下に置く（アイコンの位置には影響しない）。 */
           #romi-boot-veil .romi-boot-meta {
             position: absolute;
             left: 0;
             right: 0;
-            top: calc(50% + var(--romi-boot-mark) / 2 + 20px);
+            top: calc(50% + var(--romi-boot-mark) / 2 + ${BOOT.metaGap});
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -317,7 +318,7 @@ export default function Root({ children }: PropsWithChildren) {
           #romi-boot-veil .romi-boot-title {
             font-size: 15px;
             font-weight: 700;
-            color: #00427B;
+            color: ${BOOT.titleColor};
             letter-spacing: 0.04em;
             margin-bottom: 24px;
           }
@@ -354,7 +355,7 @@ export default function Root({ children }: PropsWithChildren) {
                マッチするとログイン済みでもゲスト誤判定していた。matchAll非対応の
                古いブラウザにも配るES5的なコードのため、正規表現のgフラグ+execの
                ループで全件を見て、いずれか1つでも'0'以外ならログイン済みとする。 */
-            __html: `(function(){try{var h=false;var re=/(?:^|;\\s*)__client_uat[^=]*=([^;]*)/g;var m;while((m=re.exec(document.cookie))){if(m[1]&&m[1]!=="0"){h=true;break}}var ls=window.localStorage;if(!h&&ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(!h&&ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="/boot-mark.png";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
+            __html: `(function(){try{var h=false;var re=/(?:^|;\\s*)__client_uat[^=]*=([^;]*)/g;var m;while((m=re.exec(document.cookie))){if(m[1]&&m[1]!=="0"){h=true;break}}var ls=window.localStorage;if(!h&&ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(!h&&ls){for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="${BOOT.markSrc}";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
           }}
         />
         {/* ブートベールの実DOMオーバーレイ（ロゴ＋スピナー）。
@@ -381,7 +382,7 @@ export default function Root({ children }: PropsWithChildren) {
               ベールを出す場面では判定スクリプトが動的 preload を挿すので速度は落ちない。 */}
           <div className="romi-boot-chara" role="presentation" />
           <div className="romi-boot-meta">
-            <div className="romi-boot-title">君斗りんくのすれ違ひ通信</div>
+            <div className="romi-boot-title">{BOOT.title}</div>
             <div className="romi-boot-spinner" />
           </div>
         </div>

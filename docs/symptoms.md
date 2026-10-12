@@ -289,6 +289,12 @@ pnpm check:heartbeat
   が挟まっていた（`BrandLoadingScreen`）。→ Web のフルスクリーン待機だけ、ベールと同じ `/boot-mark.png`・
   同じ大きさ・同じ中央位置に（5c4ce13ec、`__tests__/brand-loading-matches-veil.test.ts` で式の一致を固定）。
   実機3回の起動録画でアイコンが消えるコマは無く、本番ページでの再現でも待機画面のマークは 226px・画面中央。
+- **起動画面の値の正本**: 地色・マークの絵・大きさ・間隔・タイトルは `theme/tokens/boot.ts` の `BOOT` に1か所だけ
+  置き、ベール（`app/+html.tsx`）と待機画面（`BrandLoadingScreen`）は必ずここから取る（直書き禁止。
+  `__tests__/boot-single-source.test.ts` が固定）。`manifest.json` / `package.json` / `app.config.ts` は
+  ここから取れない静的ファイルなので、値が `BOOT` と同じことをテストで照合する。
+  ★`app.config.ts` から `BOOT` を import してはいけない（Expo の設定読み込みが出力なしで失敗する。2026-10-12 確認）。
+  OS の起動画面に合わせたマークの大きさ（`BOOT.markSize`）は実機の実測値なので、変えるときは実機で測り直す。
 - **起動の長さの内訳**（実機録画 3 回。録画開始の 1.5 秒後に起動）: 起動から本編まで約5〜7秒のうち
   OS の起動画面が約2.9〜4.4秒（★Chrome 自体のコールドスタート＋最初の描画。アプリ側では触れない）、
   ベールが約1.4〜2.6秒。Chrome が起動済みなら約0.6秒、端末内の再読み込みは約0.5〜0.9秒

@@ -14,6 +14,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
+import { BOOT } from "../theme/tokens/boot";
 
 const ROOT = resolve(__dirname, "..");
 const HTML_SRC = readFileSync(resolve(ROOT, "app/+html.tsx"), "utf8");
@@ -37,7 +38,9 @@ describe("ブートベールのマーク画像", () => {
        <img> だと React が全ページの <head> に preload を自動生成し、
        ベールが display:none の通常訪問でも 27KB を取りに行っていたため
        （Lighthouse: offscreen-images）。背景画像は表示時にだけ読まれる。 */
-    expect(HTML_SRC).toContain('background-image: url("/boot-mark.png")');
+    // マークの URL は theme/tokens/boot.ts の BOOT.markSrc が正本（+html.tsx は参照するだけ）
+    expect(BOOT.markSrc).toBe("/boot-mark.png");
+    expect(HTML_SRC).toContain('background-image: url("${BOOT.markSrc}")');
     // img に戻すと preload が復活するので、src 属性では持たないこと
     expect(HTML_SRC).not.toContain('src="/boot-mark.png"');
   });
@@ -66,14 +69,16 @@ describe("ブートベールのマーク画像", () => {
     );
     // 条件が真になった側のブロックで preload を挿していること
     expect(script).toContain('pl.rel="preload"');
-    expect(script).toContain('/boot-mark.png');
+    expect(script).toContain('${BOOT.markSrc}');
   });
 
   it("アイコンは画面中央に固定され、OS の起動画面と同じ大きさ（55vw）で、タイトルの有無で動かない", () => {
     /* ★2026-10-12 Android 実機の録画: OS の起動画面のアイコン = 幅55.3% / 縦中心49.9%。
        ベールは 44% / 約45%（タイトル+スピナーと一緒に中央寄せで上へ押し上がっていた）で、
        切り替わりでアイコンが飛んでいた。 */
-    expect(HTML_SRC).toContain("--romi-boot-mark: clamp(160px, 55vw, 260px)");
+    // 値そのもの（OS の起動画面に合わせた実測値）は BOOT.markSize に1か所だけ。+html.tsx は参照する。
+    expect(BOOT.markSize).toBe("clamp(160px, 55vw, 260px)");
+    expect(HTML_SRC).toContain("--romi-boot-mark: ${BOOT.markSize}");
     const chara = HTML_SRC.slice(
       HTML_SRC.indexOf("#romi-boot-veil .romi-boot-chara {"),
       HTML_SRC.indexOf("}", HTML_SRC.indexOf("#romi-boot-veil .romi-boot-chara {")),

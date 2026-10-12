@@ -14,12 +14,13 @@
 import { View, Text, StyleSheet, ActivityIndicator, Platform, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
 import { color, palette } from "@/theme/tokens";
+import { BOOT } from "@/theme/tokens/boot";
 
 const APP_LOGO = require("@/assets/images/logos/kimitolink-logo.webp");
 const LINK_CHARACTER = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 
-/** #romi-boot-veil と同じブランド背景（manifest.background_color / ヘッダー地と統一）。 */
-const BOOT_BACKGROUND = palette.kimitoBlueSoft;
+/** #romi-boot-veil と同じブランド背景（値の正本は theme/tokens/boot.ts の BOOT.background）。 */
+const BOOT_BACKGROUND = BOOT.background;
 
 const DEFAULT_MESSAGE = "読み込み中…";
 
@@ -27,11 +28,12 @@ const DEFAULT_MESSAGE = "読み込み中…";
    **同じ絵・同じ位置**にする。Android 実機の起動録画で、ベール解除の直後に
    「アイコンの無い文字だけの画面 → ロゴ＋ゆっくりりんく（ベールとは別の絵）」と
    切り替わり、絵と位置が飛んでいた。
-   マークは /boot-mark.png（ベールが preload 済み＝同じ URL なのでキャッシュが効く）。
-   大きさ・位置の式は +html.tsx の --romi-boot-mark と同じ。
+   マーク・大きさ・間隔・タイトルは **すべて theme/tokens/boot.ts の BOOT から取る**（ここに直書きしない。
+   ベールと食い違うと切り替わりで絵が飛ぶ。__tests__/boot-single-source.test.ts が固定）。
+   マークはベールが preload 済み＝同じ URL なのでキャッシュが効く。
    style の calc/clamp は react-native-web が CSS にそのまま通す（型は数値のみなので as never）。 */
-const WEB_MARK_SIZE = "clamp(160px, 55vw, 260px)";
-const WEB_MARK_SOURCE = { uri: "/boot-mark.png" };
+const WEB_MARK_SIZE = BOOT.markSize;
+const WEB_MARK_SOURCE = { uri: BOOT.markSrc };
 
 interface BrandLoadingScreenProps {
   /** 読み込み中に出す一言。省略時は「読み込み中…」 */
@@ -85,7 +87,7 @@ export function BrandLoadingScreen({
           accessibilityLabel=""
         />
         <View style={styles.webMeta}>
-          <Text style={styles.webTitle}>君斗りんくのすれ違ひ通信</Text>
+          <Text style={styles.webTitle}>{BOOT.title}</Text>
           <ActivityIndicator size={28} color={palette.kimitoBlue} />
           {message !== DEFAULT_MESSAGE ? <Text style={styles.message}>{message}</Text> : null}
         </View>
@@ -119,7 +121,7 @@ export function BrandLoadingScreen({
         transition={0}
         accessibilityLabel=""
       />
-      <Text style={styles.title}>君斗りんくのすれ違ひ通信</Text>
+      <Text style={styles.title}>{BOOT.title}</Text>
       <View style={styles.statusRow}>
         <ActivityIndicator size="small" color={palette.kimitoBlue} />
         <Text style={styles.message}>{message}</Text>
@@ -165,12 +167,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    top: `calc(50% + ${WEB_MARK_SIZE} / 2 + 20px)`,
+    top: `calc(50% + ${WEB_MARK_SIZE} / 2 + ${BOOT.metaGap})`,
     alignItems: "center",
     gap: 24,
   } as never,
   webTitle: {
-    color: palette.kimitoBlue,
+    color: BOOT.titleColor,
     fontSize: 15,
     fontWeight: "700",
     letterSpacing: 0.6,
