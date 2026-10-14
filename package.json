@@ -84,7 +84,8 @@
     "check:instrument-proof": "node scripts/check-instrument-proof.mjs",
     "check:instrument-proof:selftest": "node scripts/check-instrument-proof.mjs --selftest",
     "ci:usage": "node scripts/check-actions-usage.mjs",
-    "ci:usage:selftest": "node scripts/check-actions-usage.mjs --selftest"
+    "ci:usage:selftest": "node scripts/check-actions-usage.mjs --selftest",
+    "check:deletion-coverage": "node scripts/check-deletion-coverage.mjs --selftest && node scripts/check-deletion-coverage.mjs --mode sql --deletion modules/encounter/db/account-deletion.ts --scan drizzle/schema"
   },
   "dependencies": {
     "@clerk/backend": "^3.8.4",

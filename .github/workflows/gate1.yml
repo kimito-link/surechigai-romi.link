@@ -137,6 +137,13 @@ jobs:
         env:
           RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY: "1"
         run: pnpm check
+      # ★退会しても個人データが残るのを止める。
+      #   このリポは今のところ漏れゼロだが、**検査が無いと次に増やしたとき気づけない**。
+      #   kimito.link では健康記録（TTL 460日）が、doin では通知とテンプレートが漏れていた。
+      #   ★selftest を先に走らせる（検査器が常に緑を返す状態がいちばん危ない）。
+      - name: 退会削除の網羅（selftest → 本検査）
+        run: pnpm check:deletion-coverage
+
       - name: Test
         run: pnpm test
 
