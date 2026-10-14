@@ -133,3 +133,7 @@ apps/web/.next/
 apps/web/out/
 apps/web/next-env.d.ts
 apps/web/.env.local
+
+# ★別リポの入れ子（2026-10-14）。line-bot は github/line-bot が正本。
+#   ここに複製があると、どちらが正しいか分からなくなる。
+/line-bot/
