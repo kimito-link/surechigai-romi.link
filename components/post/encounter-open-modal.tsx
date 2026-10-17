@@ -19,12 +19,14 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
+import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import {
   type EncounterItem,
   TIER_COLORS,
   TIER_LABELS,
   STAMPS,
+  formatEncounterDate,
 } from "@/lib/post/encounter-shared";
 import { buildXFollowUrl } from "@/lib/x-follow";
 import { color, palette } from "@/theme/tokens";
@@ -94,7 +96,13 @@ export function EncounterOpenModal({
   useEffect(() => {
     if (visible && item) {
       if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        // レア度（Tier 4-5）に応じてすれ違ひデコードの触覚パターンを変化させる
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (item.tier >= 4) {
+          setTimeout(() => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          }, 160);
+        }
       }
       opacity.value = 1;
       rotation.value = withSequence(
@@ -125,7 +133,10 @@ export function EncounterOpenModal({
     setFloats((f) => [...f, { id, emoji, offsetX }]);
     setTimeout(() => setFloats((f) => f.filter((e) => e.id !== id)), 950);
     if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setTimeout(() => {
+        void Haptics.selectionAsync();
+      }, 140);
     }
   };
 
@@ -149,6 +160,7 @@ export function EncounterOpenModal({
     parseCategories(meQuery.data?.categories),
   );
   const followUrl = buildXFollowUrl(modalHandle);
+  const dateLabel = formatEncounterDate(item.occurredAt);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -159,7 +171,7 @@ export function EncounterOpenModal({
               style={[
                 styles.modalTierBanner,
                 {
-                  backgroundColor: tierColor + "33",
+                  backgroundColor: tierColor + "1F",
                   borderColor: tierColor,
                   borderWidth: 1,
                 },
@@ -170,9 +182,6 @@ export function EncounterOpenModal({
                   styles.modalTierText,
                   {
                     color: tierColor,
-                    textShadowColor: tierColor,
-                    textShadowOffset: { width: 0, height: 0 },
-                    textShadowRadius: 8,
                   },
                 ]}
               >
@@ -208,9 +217,15 @@ export function EncounterOpenModal({
               </Text>
             )}
 
-            <Text style={styles.modalArea} numberOfLines={2}>
-              {item.areaName || item.prefecture || "不明なエリア"}
-            </Text>
+            <View style={styles.modalLocationBadge}>
+              <MaterialIcons name="place" size={15} color={palette.kimitoOrange} />
+              <Text style={styles.modalArea} numberOfLines={1}>
+                {item.areaName || item.prefecture || "不明なエリア"}
+              </Text>
+              {dateLabel ? (
+                <Text style={styles.modalDateText}>· {dateLabel}</Text>
+              ) : null}
+            </View>
 
             {item.partnerHitokoto && (
               <View style={styles.modalHitokotoWrap}>
@@ -341,24 +356,26 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 360,
     backgroundColor: color.surface,
-    borderRadius: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
     overflow: "hidden",
-    padding: 24,
+    padding: 20,
   },
   modalTierBanner: {
     paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    borderRadius: 8,
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalTierText: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "800",
   },
   modalAvatarWrap: {
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   modalAvatar: {
     width: 80,
@@ -381,17 +398,35 @@ const styles = StyleSheet.create({
     color: color.textMuted,
     fontSize: 13,
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  modalLocationBadge: {
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: palette.kimitoBlueSoft,
+    marginBottom: 14,
   },
   modalArea: {
-    color: color.textMuted,
+    color: palette.kimitoBlue,
     fontSize: 13,
-    textAlign: "center",
-    marginBottom: 16,
+    fontWeight: "700",
+  },
+  modalDateText: {
+    color: color.textMuted,
+    fontSize: 12,
+    fontWeight: "600",
+    fontVariant: ["tabular-nums"],
   },
   modalHitokotoWrap: {
-    backgroundColor: color.surfaceAlt,
-    borderRadius: 12,
+    backgroundColor: palette.kimitoBg,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
     padding: 12,
     marginBottom: 12,
   },
@@ -399,7 +434,6 @@ const styles = StyleSheet.create({
     color: color.textSecondary,
     fontSize: 14,
     textAlign: "center",
-    fontStyle: "italic",
   },
   modalCategoriesWrap: {
     alignItems: "center",
@@ -416,7 +450,7 @@ const styles = StyleSheet.create({
     color: color.textMuted,
     fontSize: 12,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalStampsWrap: {
     position: "relative",
@@ -425,21 +459,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   modalStampButton: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: color.surfaceAlt,
+    backgroundColor: palette.kimitoBg,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "transparent",
+    borderColor: palette.kimitoBorderSoft,
   },
   modalStampButtonActive: {
-    borderColor: color.teal500,
-    backgroundColor: color.teal500 + "22",
+    borderColor: palette.kimitoBlue,
+    backgroundColor: palette.kimitoBlueSoft,
   },
   modalStampEmoji: {
     fontSize: 26,
@@ -456,25 +490,27 @@ const styles = StyleSheet.create({
     fontSize: 30,
   },
   stampConfirm: {
-    color: color.teal500,
+    color: palette.kimitoBlue,
     fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
     marginBottom: 14,
   },
   modalXButton: {
-    backgroundColor: color.twitter + "22",
+    backgroundColor: palette.kimitoBlueSoft,
     borderWidth: 1,
-    borderColor: color.twitter + "55",
-    borderRadius: 12,
+    borderColor: palette.kimitoBorderSoft,
+    borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
+    minHeight: 44,
     alignItems: "center",
-    marginBottom: 12,
+    justifyContent: "center",
+    marginBottom: 10,
   },
   modalFollowButton: {
-    backgroundColor: color.twitter,
-    borderRadius: 12,
+    backgroundColor: palette.xBlack,
+    borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
     alignItems: "center",
@@ -488,9 +524,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   modalXButtonText: {
-    color: color.twitter,
+    color: palette.kimitoBlue,
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   modalSafetyRow: {
     flexDirection: "row",

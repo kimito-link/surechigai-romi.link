@@ -9,12 +9,28 @@ import {
   View,
 } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
+import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { POST_LOGIN_LOCATION_INTRO_KEY } from "@/features/onboarding/constants";
 import { color, palette } from "@/theme/tokens";
 
 const RINKU_HERO = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
+
+const LOCATION_INTRO_STEPS = [
+  {
+    icon: "my-location" as const,
+    label: "正確な現在地を測位（±数m〜数十m）",
+  },
+  {
+    icon: "place" as const,
+    label: "あとで行ける精度で地図に足あとを保存",
+  },
+  {
+    icon: "mail-outline" as const,
+    label: "同じ場所を通った人とすれ違ひ通信",
+  },
+] as const;
 
 export async function hasCompletedPostLoginLocationIntro(): Promise<boolean> {
   if (Platform.OS === "web" && typeof window !== "undefined") {
@@ -50,6 +66,9 @@ export function PostLoginLocationIntro({
   const [busy, setBusy] = useState(false);
 
   const handleAllow = useCallback(async () => {
+    if (Platform.OS !== "web") {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     setBusy(true);
     try {
       await markPostLoginLocationIntroDone();
@@ -60,6 +79,9 @@ export function PostLoginLocationIntro({
   }, [onAllow]);
 
   const handleLater = useCallback(async () => {
+    if (Platform.OS !== "web") {
+      void Haptics.selectionAsync();
+    }
     await markPostLoginLocationIntroDone();
     await onLater();
   }, [onLater]);
@@ -74,6 +96,21 @@ export function PostLoginLocationIntro({
             <Text style={styles.title}>位置情報を使います</Text>
           </View>
           <Text style={styles.body}>あとで行ける精度で、この場所を保存するためです</Text>
+
+          <View style={styles.stepsWrap}>
+            {LOCATION_INTRO_STEPS.map((step) => (
+              <View key={step.label} style={styles.stepRow}>
+                <View style={styles.stepIconWrap}>
+                  <MaterialIcons name={step.icon} size={16} color={palette.kimitoBlue} />
+                </View>
+                <Text style={styles.stepText}>{step.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          <Text style={styles.reassurance}>
+            ボタンを押した時だけ記録します。1タップでいつでも一時停止できます。
+          </Text>
 
           <Pressable
             onPress={handleAllow}
@@ -122,8 +159,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   hero: {
-    width: 96,
-    height: 96,
+    width: 88,
+    height: 88,
     alignSelf: "center",
   },
   titleRow: {
@@ -143,6 +180,41 @@ const styles = StyleSheet.create({
     color: color.textSecondary,
     fontSize: 14,
     lineHeight: 22,
+    textAlign: "center",
+  },
+  stepsWrap: {
+    backgroundColor: palette.kimitoBg,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  stepRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  stepIconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: palette.kimitoBlueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepText: {
+    flex: 1,
+    color: color.textPrimary,
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 18,
+  },
+  reassurance: {
+    color: color.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
     textAlign: "center",
   },
   primaryBtn: {

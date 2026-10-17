@@ -101,21 +101,51 @@ export function RadarGuestPreview() {
       <Svg
         width="100%"
         height="100%"
-        viewBox="0 0 390 560"
+        viewBox="0 0 390 240"
         preserveAspectRatio="xMidYMid slice"
       >
-        <Rect x="0" y="0" width="390" height="560" fill={palette.white} />
-        <Circle cx="195" cy="280" r="60" fill="none" stroke={BLUE_18} strokeWidth="2" />
-        <Circle cx="195" cy="280" r="120" fill="none" stroke={BLUE_18} strokeWidth="2" />
-        <Circle cx="195" cy="280" r="180" fill="none" stroke={BLUE_18} strokeWidth="2" />
-        <Line x1="195" y1="60" x2="195" y2="500" stroke={ROAD} strokeWidth="1" />
-        <Line x1="30" y1="280" x2="360" y2="280" stroke={ROAD} strokeWidth="1" />
-        <Circle cx="195" cy="280" r="10" fill={palette.kimitoOrange} />
+        <Rect x="0" y="0" width="390" height="240" fill={palette.white} />
+        {/* 周辺道路グリッド */}
+        <Line x1="55" y1="0" x2="115" y2="240" stroke={ROAD} strokeWidth="1.5" />
+        <Line x1="255" y1="0" x2="225" y2="240" stroke={ROAD} strokeWidth="1.5" />
+        <Line x1="345" y1="0" x2="310" y2="240" stroke={ROAD} strokeWidth="1.5" />
+        <Line x1="0" y1="56" x2="390" y2="42" stroke={ROAD} strokeWidth="1.5" />
+        <Line x1="0" y1="184" x2="390" y2="196" stroke={ROAD} strokeWidth="1.5" />
+        {/* レーダー同心円と精度円 */}
+        <Circle cx="195" cy="116" r="38" fill={BLUE_10} stroke={BLUE_45} strokeWidth="1.5" />
+        <Circle cx="195" cy="116" r="74" fill="none" stroke={BLUE_18} strokeWidth="1.5" />
+        <Circle cx="195" cy="116" r="110" fill="none" stroke={BLUE_18} strokeWidth="1.5" />
+        {/* 十字走査線とスキャンライン */}
+        <Line x1="195" y1="12" x2="195" y2="220" stroke={ROAD} strokeWidth="1" />
+        <Line x1="40" y1="116" x2="350" y2="116" stroke={ROAD} strokeWidth="1" />
+        <Line
+          x1="195"
+          y1="116"
+          x2="278"
+          y2="52"
+          stroke={palette.kimitoBlue}
+          strokeWidth="2"
+          strokeOpacity="0.45"
+        />
+        {/* 他の足あとシグナル点 */}
+        <Circle cx="128" cy="82" r="5" fill={palette.kimitoBlue} />
+        <Circle cx="264" cy="144" r="5" fill={palette.kimitoBlue} />
+        {/* 現在地ピン（オレンジ核＋白縁） */}
+        <Circle cx="195" cy="116" r="13" fill={palette.white} />
+        <Circle cx="195" cy="116" r="9" fill={palette.kimitoOrange} />
       </Svg>
-      <View style={styles.envelope}>
-        <MaterialIcons name="mail-outline" size={24} color={palette.kimitoBlue} />
+      <View style={styles.radarPlaceBadge}>
+        <MaterialIcons name="my-location" size={14} color={palette.kimitoBlue} />
+        <Text style={styles.radarPlaceText}>秋葉原・東京都</Text>
+        <Text style={styles.radarAccuracyText}>14:32 · ±12m</Text>
       </View>
-      <Text style={styles.radarCaption}>封筒が届くかも</Text>
+      <View style={styles.envelope}>
+        <MaterialIcons name="mail" size={16} color={palette.kimitoOrangeText} />
+        <Text style={styles.envelopeBadgeText}>すれ違ひ 2通</Text>
+      </View>
+      <View style={styles.radarBottomBar}>
+        <Text style={styles.radarCaption}>正確な現在地を刻み、すれ違ひの封筒を受信</Text>
+      </View>
     </PreviewSurface>
   );
 }
@@ -185,26 +215,67 @@ const styles = StyleSheet.create({
     right: 24,
     top: "20%",
   },
+  radarPlaceBadge: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+  },
+  radarPlaceText: {
+    color: palette.kimitoBlue,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  radarAccuracyText: {
+    color: color.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+  },
   envelope: {
     position: "absolute",
-    top: "34%",
-    left: "62%",
-    width: 44,
-    height: 34,
+    top: 10,
+    right: 10,
+    flexDirection: "row",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 8,
     backgroundColor: palette.kimitoBlueSoft,
     borderWidth: 1,
     borderColor: palette.kimitoBorderSoft,
     alignItems: "center",
     justifyContent: "center",
+    gap: 5,
+  },
+  envelopeBadgeText: {
+    color: palette.kimitoBlue,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  radarBottomBar: {
+    position: "absolute",
+    left: 10,
+    right: 10,
+    bottom: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: palette.kimitoBg,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+    alignItems: "center",
   },
   radarCaption: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: "58%",
-    color: color.textMuted,
-    fontSize: 13,
+    color: color.textSecondary,
+    fontSize: 12,
     fontWeight: "700",
     textAlign: "center",
   },

@@ -5,11 +5,11 @@
  * ピンフォーカスは有限アニメ（withTiming のみ、withRepeat は使わない）。
  */
 
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Pressable, StyleSheet, Platform } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming } from "react-native-reanimated";
 import { useEffect } from "react";
 import MaterialIcons from "@/lib/icons/material-icons";
-import { color, contentMaxWidth, borderRadius, spacing } from "@/theme/tokens";
+import { color, palette, contentMaxWidth, borderRadius, spacing } from "@/theme/tokens";
 import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
 import type { ShareTarget } from "@/lib/share";
 import { MapErrorBoundary } from "@/components/ui/map-error-boundary";
@@ -64,10 +64,18 @@ export function CheckinSuccessPanel({
     transform: [{ scale: focusScale.value }],
   }));
 
+  const coordText =
+    Number.isFinite(mapPoint.lat) && Number.isFinite(mapPoint.lng)
+      ? `${mapPoint.lat.toFixed(5)}, ${mapPoint.lng.toFixed(5)}`
+      : null;
+
   return (
     <View style={styles.panel}>
       <View style={styles.banner}>
-        <Text style={styles.bannerText}>足あとを残しました</Text>
+        <View style={styles.bannerPill}>
+          <MaterialIcons name="check-circle" size={18} color={palette.kimitoBlue} />
+          <Text style={styles.bannerText}>足あとを残しました</Text>
+        </View>
       </View>
 
       <Animated.View style={[styles.mapWrap, focusStyle]}>
@@ -94,6 +102,12 @@ export function CheckinSuccessPanel({
       <Text style={styles.metaLine}>
         {recordedAtLabel} · {getAccuracyHeadline(accuracyM)}
       </Text>
+      {coordText ? (
+        <View style={styles.coordBadge}>
+          <MaterialIcons name="my-location" size={13} color={palette.kimitoBlue} />
+          <Text style={styles.coordText}>{coordText}</Text>
+        </View>
+      ) : null}
 
       {newEncounterCount > 0 ? (
         <Text style={styles.encounterLine}>{newEncounterCount}件のすれ違いが届きました！</Text>
@@ -197,6 +211,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: spacing.xs,
   },
+  bannerPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: borderRadius.md,
+    backgroundColor: palette.kimitoBlueSoft,
+  },
   bannerText: {
     color: color.textPrimary,
     fontSize: 18,
@@ -220,6 +243,25 @@ const styles = StyleSheet.create({
     color: color.textMuted,
     fontSize: 12,
     textAlign: "center",
+  },
+  coordBadge: {
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: borderRadius.md,
+    backgroundColor: palette.kimitoBg,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+  },
+  coordText: {
+    color: color.textSecondary,
+    fontSize: 12,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
   encounterLine: {
     color: color.textSecondary,

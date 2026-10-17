@@ -26,9 +26,9 @@ import {
 } from "@/components/post/guest-home-shell-header";
 
 const GUEST_HOME_BENEFITS = [
-  { icon: "place", label: "足あと" },
-  { icon: "mail-outline", label: "封筒" },
-  { icon: "groups", label: "すれ違い" },
+  { icon: "place", label: "足あと", sub: "正確に残す" },
+  { icon: "mail-outline", label: "封筒", sub: "合図が届く" },
+  { icon: "groups", label: "すれ違ひ", sub: "軌跡でつながる" },
 ] as const;
 
 export function PostGuestScreen() {
@@ -54,18 +54,25 @@ export function PostGuestScreen() {
             移動の足あとを残して、すれ違ひと聖地巡礼を
           </Text>
         </View>
-        <View style={styles.previewWrap}>
+        <View style={styles.previewWrap} testID="guest-home-radar-preview">
           <RadarGuestPreview />
         </View>
         <View style={styles.benefits}>
           {GUEST_HOME_BENEFITS.map((benefit) => (
             <View key={benefit.label} style={styles.benefitItem}>
-              <MaterialIcons
-                name={benefit.icon}
-                size={20}
-                color={palette.kimitoBlue}
-              />
-              <Text style={styles.benefitText}>{benefit.label}</Text>
+              <View style={styles.benefitIconBadge}>
+                <MaterialIcons
+                  name={benefit.icon}
+                  size={18}
+                  color={palette.kimitoBlue}
+                />
+              </View>
+              <Text style={styles.benefitText} numberOfLines={1}>
+                {benefit.label}
+              </Text>
+              <Text style={styles.benefitSubText} numberOfLines={1}>
+                {benefit.sub}
+              </Text>
             </View>
           ))}
         </View>
@@ -107,13 +114,14 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 16,
-    gap: 16,
+    gap: 14,
   },
   hero: {
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 8,
-    paddingVertical: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   heroSub: {
     color: color.textMuted,
@@ -121,12 +129,19 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
     maxWidth: 320,
-    marginTop: 12,
+    marginTop: 10,
   },
   previewWrap: {
     width: "100%",
     maxWidth: 420,
+    height: 216,
     alignSelf: "center",
+    position: "relative",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+    backgroundColor: palette.white,
+    overflow: "hidden",
   },
   ctaNote: {
     color: color.textHint,
@@ -135,8 +150,11 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   benefits: {
+    width: "100%",
+    maxWidth: 420,
+    alignSelf: "center",
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "stretch",
     justifyContent: "space-between",
     gap: 8,
   },
@@ -144,12 +162,34 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     alignItems: "center",
-    gap: 4,
+    justifyContent: "center",
+    backgroundColor: palette.white,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    gap: 2,
+  },
+  benefitIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: palette.kimitoBlueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
   },
   benefitText: {
-    color: color.textSecondary,
+    color: color.textPrimary,
+    fontSize: 13,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  benefitSubText: {
+    color: color.textMuted,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "600",
     textAlign: "center",
   },
   ctaBlock: {

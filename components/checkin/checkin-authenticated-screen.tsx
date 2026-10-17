@@ -472,11 +472,18 @@ export default function CheckinAuthenticatedScreen() {
         setNewCount(result.newEncounters);
 
         if (Platform.OS !== "web") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setTimeout(() => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          }, 180);
         }
       } else {
         lastFixRef.current = null;
         setState("zero");
+
+        if (Platform.OS !== "web") {
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
       }
     },
     [checkIn, utils, pulse, mapScale, mapOpacity],
@@ -547,6 +554,10 @@ export default function CheckinAuthenticatedScreen() {
       const locationResult = await locationResultPromise;
       const pos = locationResult.fix;
       lastFixRef.current = pos;
+
+      if (Platform.OS !== "web") {
+        void Haptics.selectionAsync();
+      }
 
       setCheckinLatLng({ lat: pos.lat, lng: pos.lng });
       setCheckinAccuracyM(pos.accuracy ?? null);

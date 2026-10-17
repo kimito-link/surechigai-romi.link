@@ -99,6 +99,13 @@ export const DECIDED = {
   "android-cert-expiry-check.mjs":
     "★該当するが保留。keystoreはGitHub Secretsにのみ在り手元に無いのでCIでしか測れない。" +
     "提出ワークフローへのゲート配線(Phase 2)と一緒に入れる",
+  "verify-served-bundle.mjs":
+    "★該当するが保留（デプロイ後ワークフロー専用）。.vercel/output/static のビルド成果物と本番配信JSのsha256を比較する計器で、" +
+    "デプロイ前の pnpm check 時点では .vercel/output/static が存在せず、" +
+    "このリポでは CDN_CACHE_EPOCH（theme/tokens/index.ts）と deploy-vercel.yml の check-deploy-freshness で管理している",
+  "verify-team-distinction.mjs":
+    "複数リポ横断点検用（1リポ単体のCIには姉妹リポが並ばないため親ディレクトリ --root 指定で横断実行する設計。" +
+    "かつ app.config.json の distinction フィールドと lib/team-distinction-core.mjs 前提のため単体リポでは非該当）",
 };
 
 /** 検査とみなすファイル名。 */
