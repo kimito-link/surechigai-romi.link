@@ -296,6 +296,7 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
           {pausedBanner}
 
           <View style={styles.buttonWrap}>
+            <View style={styles.outerSignalHalo} pointerEvents="none" />
             {state === "loading" && (
               <Animated.View
                 style={[
@@ -316,15 +317,17 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
                 style={({ pressed }) => [
                   styles.checkinButton,
                   { backgroundColor: isPausing ? color.border : getButtonColor() },
-                  pressed && { opacity: 0.85 },
+                  pressed && { opacity: 0.88 },
                   (state === "loading" || isPausing || isRetryCoolingDown) && { opacity: 0.8 },
                 ]}
               >
-                <MaterialIcons
-                  name={getButtonIcon() as "check" | "close" | "refresh" | "location-on"}
-                  size={22}
-                  color={color.textWhite}
-                />
+                <View style={styles.checkinButtonIconBadge}>
+                  <MaterialIcons
+                    name={getButtonIcon() as "check" | "close" | "refresh" | "location-on"}
+                    size={28}
+                    color={color.textWhite}
+                  />
+                </View>
                 <Text style={styles.checkinButtonText}>{getButtonLabel()}</Text>
               </Pressable>
             </Animated.View>
@@ -500,11 +503,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 24,
   },
+  outerSignalHalo: {
+    position: "absolute",
+    width: 176,
+    height: 176,
+    borderRadius: 88,
+    borderWidth: 2,
+    borderColor: palette.kimitoBlueSoft,
+  },
   pulseRing: {
     position: "absolute",
-    width: 180,
-    height: 180,
-    borderRadius: 90,
+    width: 184,
+    height: 184,
+    borderRadius: 92,
     borderWidth: 2,
   },
   primaryButtonAnimated: {
@@ -512,18 +523,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   checkinButton: {
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
     width: 160,
     height: 160,
     borderRadius: 80,
+    paddingHorizontal: 14,
+    borderWidth: 3,
+    borderColor: palette.kimitoBlueSoft,
+  },
+  checkinButtonIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   checkinButtonText: {
     color: color.textWhite,
     fontWeight: "800",
-    fontSize: 16,
+    fontSize: 15,
+    lineHeight: 20,
+    textAlign: "center",
   },
   resultBox: {
     width: "100%",
