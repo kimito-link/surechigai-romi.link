@@ -56,52 +56,69 @@ export function AuthPageIntro() {
           現在地でつながる、すれ違ひ通信
         </h1>
         <p className="mt-3 text-base text-slate-600 sm:text-lg leading-relaxed">
-          キミの現在地を刻む、すれ違い記録アプリ。ログインは{" "}
+          同じ聖地・イベント・街を歩いた{" "}
           <strong className="font-semibold text-slate-800">
-            X（旧 Twitter）のアカウントだけ
+            同じ興味関心の 𝕏 ユーザー
           </strong>
-          。新しいパスワードはいりません。はじめての方もこのまま X で続ければ、
-          自動でアカウントが作られます。
+          と交差してフォロワーが増える位置記録アプリ。ログインは{" "}
+          <strong className="font-semibold text-slate-800">
+            𝕏（旧 Twitter）または Apple のアカウントだけ
+          </strong>
+          。新しいパスワードは不要で、はじめての方も1タップで自動登録されます。
         </p>
 
         <h2 className="mt-5 text-sm font-bold text-slate-900 sm:text-base">
-          ログイン後にできること
+          ログイン後にすぐできること
         </h2>
         <ul className="mt-2 space-y-2 text-sm text-slate-600 sm:text-base leading-relaxed">
           <li className="flex gap-2">
-            <span className="mt-0.5 shrink-0 text-sky-900" aria-hidden>
+            <span className="mt-0.5 shrink-0 font-bold text-sky-900" aria-hidden>
               ✓
             </span>
             <span>
-              <strong className="font-medium text-slate-800">現在地</strong>
-              を記録して、すれ違った場所を振り返る
+              <strong className="font-semibold text-slate-800">
+                顔アイコン入り「現在地絵札（OGP）」
+              </strong>
+              を 𝕏 に1タップ共有し、同じ界隈の仲間に見つけてもらえる
             </span>
           </li>
           <li className="flex gap-2">
-            <span className="mt-0.5 shrink-0 text-sky-900" aria-hidden>
+            <span className="mt-0.5 shrink-0 font-bold text-sky-900" aria-hidden>
               ✓
             </span>
             <span>
-              すれ違い履歴を
-              <strong className="font-medium text-slate-800">
-                マイページ
+              同じ場所を通った人と30日タイムシフトで
+              <strong className="font-semibold text-slate-800">
+                すれ違ひ成立
               </strong>
-              で一覧表示
+              ・興味タグ（#推し活 #聖地巡礼）でつながる
             </span>
           </li>
           <li className="flex gap-2">
-            <span className="mt-0.5 shrink-0 text-sky-900" aria-hidden>
+            <span className="mt-0.5 shrink-0 font-bold text-sky-900" aria-hidden>
               ✓
             </span>
             <span>
-              X アカウントのプロフィールと連携して、
-              <strong className="font-medium text-slate-800">
-                だれにすれ違ったか
+              歩いた都道府県の
+              <strong className="font-semibold text-slate-800">
+                全国図鑑＆すれ違ひランキング
               </strong>
-              を記録
+              が育ち、マイページで軌跡を振り返れる
             </span>
           </li>
         </ul>
+
+        <div className="mt-5 flex flex-wrap gap-4 border-t border-slate-200 pt-4 text-sm font-bold text-sky-900">
+          <a href="/" className="underline hover:text-sky-700">
+            ← アプリトップへ戻る
+          </a>
+          <a href="/lp/" className="underline hover:text-sky-700">
+            サービス紹介（LP）
+          </a>
+          <a href="/special-thanks" className="underline hover:text-sky-700">
+            特別協力
+          </a>
+        </div>
       </div>
     </section>
   );

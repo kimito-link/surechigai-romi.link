@@ -71,7 +71,7 @@ function ZukanGuestLiveShell({ availableWidth }: ZukanGuestLiveProps) {
           />
         </View>
         <Text style={styles.liveText} numberOfLines={1}>
-          全国の 𝕏 旅人の足あとを集計中…
+          県をタップして同じ趣味の 𝕏 旅人を探そう
         </Text>
       </View>
       <View style={styles.mapWrap}>
@@ -83,12 +83,13 @@ function ZukanGuestLiveShell({ availableWidth }: ZukanGuestLiveProps) {
           maxMapWidth={HERO_MAX_MAP_WIDTH}
         />
       </View>
+      <View style={styles.chipRowPlaceholder} />
     </View>
   );
 }
 
 function ZukanGuestLiveInner({ availableWidth }: ZukanGuestLiveProps) {
-  const { data, isLoading } = trpc.zukan.activePrefectures.useQuery(undefined, {
+  const { data } = trpc.zukan.activePrefectures.useQuery(undefined, {
     retry: 1,
     staleTime: 60_000,
   });
@@ -127,11 +128,9 @@ function ZukanGuestLiveInner({ availableWidth }: ZukanGuestLiveProps) {
           />
         </View>
         <Text style={styles.liveText} numberOfLines={1}>
-          {isLoading
-            ? "公開中の足あとを集計中…"
-            : totalPeople > 0
-              ? `いま ${totalPeople} 人の 𝕏 旅人が現在地を公開中`
-              : "県をタップして同じ趣味の 𝕏 旅人を探そう"}
+          {totalPeople > 0
+            ? `いま ${totalPeople} 人の 𝕏 旅人が現在地を公開中`
+            : "県をタップして同じ趣味の 𝕏 旅人を探そう"}
         </Text>
       </View>
 
@@ -158,7 +157,9 @@ function ZukanGuestLiveInner({ availableWidth }: ZukanGuestLiveProps) {
             </View>
           ))}
         </View>
-      ) : null}
+      ) : (
+        <View style={styles.chipRowPlaceholder} />
+      )}
     </View>
   );
 }
@@ -212,6 +213,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     paddingHorizontal: 16,
+    minHeight: 28,
+  },
+  chipRowPlaceholder: {
+    minHeight: 28,
   },
   chip: {
     flexDirection: "row",

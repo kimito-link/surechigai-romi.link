@@ -152,14 +152,13 @@ export function AuthPageIntro({ variant, appleEnabled = false }: AuthPageIntroPr
           }}
         >
           {isSignIn
-            ? "移動の足あとを残し、すれ違いの思い出をたどる"
+            ? "移動の足あとを残し、すれ違ひの思い出をたどる"
             : appleEnabled
-              ? "アカウントひとつで、足あと記録とすれ違い通信をはじめる"
-              : "X アカウントひとつで、足あと記録とすれ違い通信をはじめる"}
+              ? "アカウントひとつで、足あと記録とすれ違ひ通信をはじめる"
+              : "X アカウントひとつで、足あと記録とすれ違ひ通信をはじめる"}
         </Text>
         <Text style={{ marginTop: 12, fontSize: 16, lineHeight: 24, color: palette.gray600 }}>
-          キミの現在地を刻む——正確な場所を残して、あとからたどれる。
-          ログインは{" "}
+          同じ聖地・イベント・街を歩いた仲間と交差してフォロワーが増える。ログインは{" "}
           <Text style={{ fontWeight: "700", color: palette.gray900 }}>
             {appleEnabled ? "X（旧 Twitter）か Apple のアカウント" : "X（旧 Twitter）のアカウントだけ"}
           </Text>
@@ -170,17 +169,17 @@ export function AuthPageIntro({ variant, appleEnabled = false }: AuthPageIntroPr
           {isSignIn ? "ログイン後にできること" : "登録後にできること"}
         </Text>
         <CheckItem>
-          <Text style={{ fontWeight: "600", color: palette.gray900 }}>移動の足あと</Text>
-          を正確な座標で記録し、思い出の場所へ戻れる
+          <Text style={{ fontWeight: "600", color: palette.gray900 }}>顔アイコン入り現在地絵札（OGP）</Text>
+          をシェアして、同じ界隈の仲間に見つけてもらえる
         </CheckItem>
         <CheckItem>
           同じ場所を通った人との
-          <Text style={{ fontWeight: "600", color: palette.gray900 }}>すれ違い</Text>
-          を記録・リアクション
+          <Text style={{ fontWeight: "600", color: palette.gray900 }}>すれ違ひ</Text>
+          を記録・興味タグでつながる
         </CheckItem>
         <CheckItem>
           訪れたエリアの
-          <Text style={{ fontWeight: "600", color: palette.gray900 }}>図鑑</Text>
+          <Text style={{ fontWeight: "600", color: palette.gray900 }}>全国図鑑＆ランキング</Text>
           を集めて、日本地図を彩る
         </CheckItem>
 

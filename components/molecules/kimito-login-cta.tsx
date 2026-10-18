@@ -78,7 +78,9 @@ export function KimitoLoginCta({
   // 「X ログインしか無い」と見える（2026-08-05 Guideline 4.8 却下の一因）。
   const isNative = isNativeAppShell();
   const nativeLabel = busy ? "接続中…" : "はじめる";
-  const displayLabel = busy ? "接続中…" : label;
+  // Web は href / location 遷移が即座に使えるため、裏の Clerk chunk 解決待ち（isPreparing）で
+  // 「接続中… → 1タップではじめる」とラベルをちらつかせない（押下後の isStarting 時のみ接続中表示）。
+  const displayLabel = isStarting ? "接続中…" : label;
   const content = isNative ? (
     <Text style={styles.buttonText} numberOfLines={1}>{nativeLabel}</Text>
   ) : (
@@ -96,15 +98,22 @@ export function KimitoLoginCta({
 
   if (Platform.OS === "web") {
     // 実 <a href> を出す: E2E/クローラー/右クリック新規タブなどのブラウザネイティブ機能を保つ。
-    // onPress は preventDefault しない（href への遷移は保ちつつログインガイド機構も併走させる）。
     // ★Web は href があるので準備中でも遷移できる（無反応にならない）。
-    //   よって isPreparing で殺さない。文言だけ busy に従う。
+    //   よって isPreparing で殺さない。
+    // ★onPress（useLoginGuide）が渡されている場合は Expo Router の SPA 遷移（app/sign-in.tsx の一瞬マウント）を
+    //   preventDefault で止め、window.location.href による Next.js /sign-in への直行と二重発火させない。
     return (
       <Link
         href={signInHref as Href}
-        onPress={() => {
-          if (isStarting) return;
-          onPress?.();
+        onPress={(e) => {
+          if (isStarting) {
+            e.preventDefault();
+            return;
+          }
+          if (onPress) {
+            e.preventDefault();
+            onPress();
+          }
         }}
         accessibilityRole="button"
         accessibilityLabel={a11yLabel}

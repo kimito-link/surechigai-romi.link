@@ -192,7 +192,7 @@ export function ClerkMountFallback({
             </p>
           </div>
         </div>
-        {/* = .cl-socialButtons（ボタン × n ＋ gap × (n-1)）。押下不可・薄く脈動 */}
+        {/* = .cl-socialButtons（ボタン × n ＋ gap × (n-1)）。ちらつきを防ぐため点滅アニメーション（animate-pulse）は使わず本物と同色で静止描画 */}
         <div aria-hidden className="flex flex-col" style={{ gap: box.buttonGap }}>
           {providers.map((p) => (
             <div
@@ -201,8 +201,8 @@ export function ClerkMountFallback({
               style={{ height: box.buttonHeight }}
               className={
                 p.hero
-                  ? "flex animate-pulse items-center justify-center gap-4 rounded-[14px] bg-[#0f1419] px-3 text-[15px] font-semibold text-white"
-                  : "flex animate-pulse items-center justify-center gap-4 rounded-[14px] bg-white px-3 text-[15px] font-semibold text-slate-500 shadow-[0_0_0_1px_rgba(15,23,42,0.18)]"
+                  ? "flex items-center justify-center gap-4 rounded-[14px] bg-[#0f1419] px-3 text-[15px] font-semibold text-white"
+                  : "flex items-center justify-center gap-4 rounded-[14px] bg-white px-3 text-[15px] font-semibold text-slate-700 shadow-[0_0_0_1px_rgba(15,23,42,0.18)]"
               }
             >
               {p.icon ?? (p.key === "x" ? <XGlyph /> : <span className="h-4 w-4 rounded-sm bg-slate-200" />)}

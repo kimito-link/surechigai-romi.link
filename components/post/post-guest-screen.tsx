@@ -30,12 +30,8 @@ import {
   GUEST_HOME_HEADER_HEIGHT,
 } from "@/components/post/guest-home-shell-header";
 import { navigate } from "@/lib/navigation";
-import { GuestPlaceContext } from "@/components/molecules/guest-place-context";
 import { useWebSideNavActive } from "@/components/organisms/web-side-nav";
 import { WEB_APP_FOOTER_HEIGHT } from "@/components/organisms/web-app-footer";
-import { useTrpcReady } from "@/lib/trpc-ready-context";
-import { trpc } from "@/lib/trpc";
-import { CATEGORY_LABELS, type CategoryId } from "@/modules/encounter/core/category";
 
 const AVATAR_RINKU = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 const AVATAR_KONTA = require("@/assets/images/characters/konta/kitsune-yukkuri-smile-mouth-open.png");
@@ -169,102 +165,19 @@ const YUKKURI_DIALOGUES = [
 /** 分割ウィンドウ・タブレット・PC（>= 720px）では2カラムのダッシュボード構成に切り替える */
 const SPLIT_LAYOUT_MIN_WIDTH = 720;
 
+const SHOWCASE_TOP_PREFECTURES = [
+  { prefecture: "東京都", peopleCount: 18, liveCount: 5 },
+  { prefecture: "大阪府", peopleCount: 11, liveCount: 3 },
+  { prefecture: "愛知県", peopleCount: 8, liveCount: 2 },
+];
+
 function GuestLiveRankingSection({ isSplitLayout }: { isSplitLayout: boolean }) {
-  const trpcReady = useTrpcReady();
-  if (!trpcReady) {
-    return (
-      <GuestRankingBoardView
-        isSplitLayout={isSplitLayout}
-        travelers={FALLBACK_TRAVELERS}
-        topPrefectures={[
-          { prefecture: "東京都", peopleCount: 18, liveCount: 5 },
-          { prefecture: "大阪府", peopleCount: 11, liveCount: 3 },
-          { prefecture: "愛知県", peopleCount: 8, liveCount: 2 },
-        ]}
-        totalPeople={37}
-      />
-    );
-  }
-  return <GuestLiveRankingSectionInner isSplitLayout={isSplitLayout} />;
-}
-
-function GuestLiveRankingSectionInner({ isSplitLayout }: { isSplitLayout: boolean }) {
-  const { data: prefData } = trpc.zukan.activePrefectures.useQuery(undefined, {
-    staleTime: 60_000,
-    retry: 1,
-  });
-
-  const sortedPrefs = [...(prefData?.prefectures ?? [])].sort(
-    (a, b) => b.peopleCount - a.peopleCount,
-  );
-  const topPrefName = sortedPrefs[0]?.prefecture ?? "東京都";
-
-  const { data: creatorData } = trpc.zukan.creatorsByPrefecture.useQuery(
-    { prefecture: topPrefName },
-    {
-      staleTime: 60_000,
-      retry: 1,
-    },
-  );
-
-  const liveCreators = creatorData?.creators ?? [];
-  const mergedTravelers: ShowcaseTraveler[] = [];
-
-  for (let i = 0; i < liveCreators.length && mergedTravelers.length < 3; i += 1) {
-    const c = liveCreators[i];
-    const catLabels =
-      c.categories && c.categories.length > 0
-        ? c.categories
-            .slice(0, 2)
-            .map((cat) => `#${CATEGORY_LABELS[cat as CategoryId] ?? cat}`)
-            .join(" ")
-        : "#聖地巡礼 #推し活";
-    const fallbackAvatar =
-      [AVATAR_RINKU, AVATAR_KONTA, AVATAR_TANUNE][i % 3] ?? AVATAR_RINKU;
-    mergedTravelers.push({
-      id: `live-${c.userId}`,
-      rank: mergedTravelers.length + 1,
-      name: c.displayName || c.twitterHandle || "旅人",
-      handle: c.twitterHandle ? `@${c.twitterHandle.replace(/^@/, "")}` : "@traveler",
-      prefecture: topPrefName,
-      categoryLabel: catLabels,
-      scoreLabel: c.isLive ? "LIVE 滞在中" : "公開足あと記録中",
-      quote: `${topPrefName}で現在地を刻みました！`,
-      avatarSource: c.profileImage ? { uri: c.profileImage } : fallbackAvatar,
-      shareSlug: c.shareSlug,
-      isLive: c.isLive,
-    });
-  }
-
-  for (const fb of FALLBACK_TRAVELERS) {
-    if (mergedTravelers.length >= 3) break;
-    mergedTravelers.push({
-      ...fb,
-      rank: mergedTravelers.length + 1,
-    });
-  }
-
-  const topPrefectures =
-    sortedPrefs.length >= 3
-      ? sortedPrefs.slice(0, 3)
-      : [
-          ...sortedPrefs,
-          ...[
-            { prefecture: "東京都", peopleCount: 18, liveCount: 5 },
-            { prefecture: "大阪府", peopleCount: 11, liveCount: 3 },
-            { prefecture: "愛知県", peopleCount: 8, liveCount: 2 },
-          ].filter((d) => !sortedPrefs.some((s) => s.prefecture === d.prefecture)),
-        ].slice(0, 3);
-
-  const totalPeople =
-    prefData?.totalPeople && prefData.totalPeople > 0 ? prefData.totalPeople : 37;
-
   return (
     <GuestRankingBoardView
       isSplitLayout={isSplitLayout}
-      travelers={mergedTravelers}
-      topPrefectures={topPrefectures}
-      totalPeople={totalPeople}
+      travelers={FALLBACK_TRAVELERS}
+      topPrefectures={SHOWCASE_TOP_PREFECTURES}
+      totalPeople={37}
     />
   );
 }
@@ -740,7 +653,6 @@ export function PostGuestScreen() {
               {xSuperpowerMiniStrip}
               {ctaSection}
               {benefitCards}
-              <GuestPlaceContext />
             </View>
           </View>
         ) : (
@@ -766,7 +678,6 @@ export function PostGuestScreen() {
             {xSuperpowerMiniStrip}
             {ctaSection}
             {benefitCards}
-            <GuestPlaceContext />
           </View>
         )}
 

@@ -102,7 +102,10 @@ export function AppHeader({
     navigate.toMypageTab();
   };
 
-  const showLoginButtonStable = showLoginButton && isAuthReadyForUI && !user;
+  // Web は /sign-in への location 遷移が即座に使えるため、isAuthReadyForUI 解決待ちで
+  // ヘッダーのログインボタンを後からポップインさせない（ちらつき防止）。
+  const showLoginButtonStable =
+    showLoginButton && !user && (Platform.OS === "web" || isAuthReadyForUI);
   // ログイン済みアカウントは全画面で常に同じピルを出す（Clerk ロード待ちで空白にしない）
   const showLoginStatusStable = Boolean(showLoginStatus && isAuthReadyForUI && user);
 
