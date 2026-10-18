@@ -186,9 +186,9 @@ export function AppHeader({
                   pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
                 ]}
               >
-                <Text style={styles.loginGlyph}>𝕏</Text>
+                <Text style={styles.loginGlyph} numberOfLines={1}>𝕏</Text>
                 {!isLoginGlyphOnly ? (
-                  <Text style={styles.loginButtonText}>ではじめる</Text>
+                  <Text style={styles.loginButtonText} numberOfLines={1}>ではじめる</Text>
                 ) : null}
               </Pressable>
             ) : null}
@@ -413,12 +413,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
     minHeight: touchTarget.minSize,
     height: touchTarget.minSize,
     paddingHorizontal: 14,
     borderRadius: 999,
     backgroundColor: palette.kimitoBlue,
     gap: 6,
+    ...(Platform.OS === "web" ? ({ whiteSpace: "nowrap" } as object) : null),
   },
   loginButtonGlyphOnly: {
     width: touchTarget.minSize,

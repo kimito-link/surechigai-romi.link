@@ -80,11 +80,11 @@ export function KimitoLoginCta({
   const nativeLabel = busy ? "接続中…" : "はじめる";
   const displayLabel = busy ? "接続中…" : label;
   const content = isNative ? (
-    <Text style={styles.buttonText}>{nativeLabel}</Text>
+    <Text style={styles.buttonText} numberOfLines={1}>{nativeLabel}</Text>
   ) : (
     <>
-      <Text style={styles.xGlyph}>𝕏</Text>
-      <Text style={styles.buttonText}>{displayLabel}</Text>
+      <Text style={styles.xGlyph} numberOfLines={1}>𝕏</Text>
+      <Text style={styles.buttonText} numberOfLines={1}>{displayLabel}</Text>
     </>
   );
   const a11yLabel = isNative
@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
     textDecorationLine: "none",
     display: "flex",
     width: "100%",
+    ...(Platform.OS === "web" ? ({ whiteSpace: "nowrap" } as object) : null),
   },
   xGlyph: {
     color: palette.white,
