@@ -38,17 +38,26 @@ const TOP_CHIPS_COUNT = 5;
 type ZukanGuestLiveProps = {
   /** ヒーロー地図ペインの実幅（OneTapGuestShellのrender propから渡される） */
   availableWidth?: number;
+  /**
+   * 見出しと追加要素が地図の「上」に積まれている配置か（OneTapGuestShell の layout.stacked）。
+   * true なら、見出しを避けるために空けていた上の余白(72px)は不要。
+   */
+  stacked?: boolean;
 };
 
-export function ZukanGuestLive({ availableWidth }: ZukanGuestLiveProps) {
+/** 見出しが地図の上に重なる配置のとき、見出しを避けるために空ける上の余白。 */
+const OVERLAY_TOP_INSET = 72;
+const STACKED_TOP_INSET = 12;
+
+export function ZukanGuestLive({ availableWidth, stacked = false }: ZukanGuestLiveProps) {
   const trpcReady = useTrpcReady();
-  if (!trpcReady) return <ZukanGuestLiveShell availableWidth={availableWidth} />;
-  return <ZukanGuestLiveInner availableWidth={availableWidth} />;
+  if (!trpcReady) return <ZukanGuestLiveShell availableWidth={availableWidth} stacked={stacked} />;
+  return <ZukanGuestLiveInner availableWidth={availableWidth} stacked={stacked} />;
 }
 
-function ZukanGuestLiveShell({ availableWidth }: ZukanGuestLiveProps) {
+function ZukanGuestLiveShell({ availableWidth, stacked = false }: ZukanGuestLiveProps) {
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingTop: stacked ? STACKED_TOP_INSET : OVERLAY_TOP_INSET }]}>
       <View style={styles.liveRow}>
         <View style={styles.avatarStack}>
           <Image
@@ -88,7 +97,7 @@ function ZukanGuestLiveShell({ availableWidth }: ZukanGuestLiveProps) {
   );
 }
 
-function ZukanGuestLiveInner({ availableWidth }: ZukanGuestLiveProps) {
+function ZukanGuestLiveInner({ availableWidth, stacked = false }: ZukanGuestLiveProps) {
   const { data } = trpc.zukan.activePrefectures.useQuery(undefined, {
     retry: 1,
     staleTime: 60_000,
@@ -105,7 +114,7 @@ function ZukanGuestLiveInner({ availableWidth }: ZukanGuestLiveProps) {
     .slice(0, TOP_CHIPS_COUNT);
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingTop: stacked ? STACKED_TOP_INSET : OVERLAY_TOP_INSET }]}>
       <View style={styles.liveRow}>
         <View style={styles.avatarStack}>
           <Image
@@ -170,7 +179,7 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
     gap: 8,
-    paddingTop: 72,
+    /* paddingTop は配置に応じて、コンポーネント側で上書きする（OVERLAY_TOP_INSET / STACKED_TOP_INSET） */
     paddingBottom: 76,
   },
   liveRow: {

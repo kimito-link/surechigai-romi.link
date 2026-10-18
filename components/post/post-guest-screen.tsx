@@ -518,7 +518,10 @@ export function PostGuestScreen() {
   const headerOffset = Platform.OS === "web" ? GUEST_HOME_HEADER_HEIGHT : 0;
   const bottomChrome = sideNavActive ? WEB_APP_FOOTER_HEIGHT + 16 : tabInset;
   const availableHeight = Math.max(480, height - headerOffset - bottomChrome);
-  const mobileRadarHeight = Math.max(216, Math.min(248, Math.round(height * 0.28)));
+  /* ★2026-10-18: 下限 216 → 244。レーダーの人物（吹き出し+アイコン+ハッシュタグ）は約115px要り、
+  上の余白44+下のカード68と合わせて約227px、右のアバターは14px下がるのでさらに約8px。
+     216だと、短い画面で下のカードがハッシュタグの下半分を隠した（232でも右端がわずかに切れたため 244）。 */
+  const mobileRadarHeight = Math.max(244, Math.min(256, Math.round(height * 0.28)));
 
   const xSuperpowerMiniStrip = (
     <View style={styles.xMiniStrip}>

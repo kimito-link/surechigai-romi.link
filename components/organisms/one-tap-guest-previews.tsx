@@ -428,7 +428,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 16,
     right: 16,
-    bottom: 64,
+    /* ★2026-10-18: 64 → 80。下のボタン列(ベネフィット)が約72px占めるため、64だと
+       カードの下端とボタン列の上端が重なっていた（本番の /map・/checkin で実測）。 */
+    bottom: 80,
     backgroundColor: "rgba(255,255,255,0.96)",
     borderRadius: 14,
     borderWidth: 1,
@@ -467,7 +469,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 16,
     right: 16,
-    bottom: 64,
+    /* ★2026-10-18: 64 → 80。下のボタン列(ベネフィット)が約72px占めるため、64だと
+       カードの下端とボタン列の上端が重なっていた（本番の /map・/checkin で実測）。 */
+    bottom: 80,
     backgroundColor: "rgba(255,255,255,0.96)",
     borderRadius: 14,
     borderWidth: 1,

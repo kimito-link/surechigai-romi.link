@@ -27,7 +27,15 @@ export type OneTapGuestBenefit = {
  * （JapanBlockMapのavailableWidth等）が必要な場合はrender prop形式で受け取れるようにする。
  * 単純な要素(<CheckinGuestPreview />等)を渡す既存の使い方は変更不要。
  */
-type OneTapGuestPreview = React.ReactNode | ((heroMapWidth: number) => React.ReactNode);
+type OneTapGuestPreview =
+  | React.ReactNode
+  | ((heroMapWidth: number, layout: OneTapGuestPreviewLayout) => React.ReactNode);
+
+/**
+ * ヒーロー内の並べ方。stacked=true は、見出しと追加要素(heroExtra)が地図の「上」に積まれ、
+ * 地図の上端に見出しが重ならない配置（地図側が見出し用に空けていた余白は不要）。
+ */
+export type OneTapGuestPreviewLayout = { stacked: boolean };
 
 type OneTapGuestShellProps = {
   title: string;
@@ -53,8 +61,12 @@ type OneTapGuestShellProps = {
   heroPanelWidth?: number;
 };
 
-function renderPreview(preview: OneTapGuestPreview | undefined, heroMapWidth: number) {
-  return typeof preview === "function" ? preview(heroMapWidth) : preview;
+function renderPreview(
+  preview: OneTapGuestPreview | undefined,
+  heroMapWidth: number,
+  stacked = false,
+) {
+  return typeof preview === "function" ? preview(heroMapWidth, { stacked }) : preview;
 }
 
 const DEFAULT_BENEFITS: readonly [
@@ -68,7 +80,15 @@ const DEFAULT_BENEFITS: readonly [
 ];
 
 const FOOTER_ESTIMATED_HEIGHT = 104;
-const HERO_MIN_HEIGHT = 320;
+/**
+ * ★2026-10-18: 320 → 420。地図の上に重ねる要素（ピン・下のカード・下のボタン列）は、
+ * それぞれ「ヒーローの高さに対する割合」や「下から◯px」で置かれている。高さが足りない
+ * 短い画面（iPhone SE 相当）では、これらが互いにぶつかって文字が隠れた（本番の実測）。
+ * 重ならない最小の高さを確保する。足りない分は画面を縦にスクロールして見られる。
+ */
+const HERO_MIN_HEIGHT = 420;
+/** 積み配置（heroExtra あり）のとき、見出しの下に確保する地図部分の最小の高さ。 */
+const STACK_PREVIEW_MIN_HEIGHT = 420;
 const HERO_DESKTOP_PANEL_WIDTH = 360;
 const SPLIT_HERO_MIN_WIDTH = 768;
 
@@ -204,15 +224,27 @@ export function OneTapGuestShell({
                 {cta}
               </View>
             </View>
+          ) : heroExtra ? (
+            /* ★2026-10-18: 追加要素(天気・ライブカメラ)があるときは、見出し→追加要素→地図の順に
+               **上から積む**。以前は見出しと追加要素を地図の上に position:absolute で浮かせていたため、
+               追加要素の高さ(約130px)の分だけ地図の上端と重なり、都道府県のタイルや
+               下のカードが隠れた（本番の /zukan・/map で実測）。
+               追加要素は見出しの直下＝ファーストビュー内、という 2026-08-17 の要件は保つ。 */
+            <View style={[styles.heroStacked, { minHeight: heroMinHeight }]}>
+              <View style={styles.heroStackTop}>
+                <View style={styles.headlinePanel}>{headlineNode}</View>
+                <View style={styles.heroExtra}>{heroExtra}</View>
+              </View>
+              <View style={styles.heroStackPreview}>
+                {renderPreview(preview, heroMapWidth, true)}
+                <View style={styles.heroOverlayBottom}>{benefitsOverlayNode}</View>
+              </View>
+            </View>
           ) : (
             <View style={[styles.hero, { minHeight: heroMinHeight }]}>
               {renderPreview(preview, heroMapWidth)}
               <View style={styles.heroOverlayTop}>
                 <View style={styles.headlinePanel}>{headlineNode}</View>
-                {/* ★2026-08-17: 見出しの直下＝ファーストビュー内に出す枠。
-                    children(belowFold) に置くと 783px の画面外になり
-                    「どこにあるか分からない」が繰り返し起きた。 */}
-                {heroExtra ? <View style={styles.heroExtra}>{heroExtra}</View> : null}
               </View>
               <View style={styles.heroOverlayBottom}>{benefitsOverlayNode}</View>
             </View>
@@ -285,6 +317,22 @@ const styles = StyleSheet.create({
     top: 16,
     left: 16,
     right: 16,
+  },
+  /* 積み配置（heroExtra あり）。見出し→追加要素→地図の順に、重ならずに並べる。 */
+  heroStacked: {
+    width: "100%",
+  },
+  heroStackTop: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+  },
+  heroStackPreview: {
+    position: "relative",
+    width: "100%",
+    overflow: "hidden",
+    flexGrow: 1,
+    minHeight: STACK_PREVIEW_MIN_HEIGHT,
   },
   /* ファーストビュー内に出す追加要素の枠（天気・ライブカメラなど）。
      見出しの直下に置くので、スクロールしなくても目に入る。 */
