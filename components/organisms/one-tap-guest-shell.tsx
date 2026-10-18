@@ -55,6 +55,12 @@ type OneTapGuestShellProps = {
    */
   heroExtra?: React.ReactNode;
   /**
+   * 積み配置（heroExtra あり・モバイル）での、追加要素の位置。
+   *   "above"（既定）: 見出しの直下、地図の上。
+   *   "below"       : 地図の下。地図が主役の画面（/zukan）で、地図を最初の画面に出すため。
+   */
+  heroExtraPlacement?: "above" | "below";
+  /**
    * デスクトップ2ペイン時の右パネル幅（既定 HERO_DESKTOP_PANEL_WIDTH=360）。
    * 地図ペインを広く取りたい画面（zukan）で上書きする。
    */
@@ -134,6 +140,7 @@ export function OneTapGuestShell({
   benefits = DEFAULT_BENEFITS,
   children,
   heroExtra,
+  heroExtraPlacement = "above",
   heroPanelWidth = HERO_DESKTOP_PANEL_WIDTH,
 }: OneTapGuestShellProps) {
   const { width, height, isDesktop } = useResponsive();
@@ -233,12 +240,19 @@ export function OneTapGuestShell({
             <View style={[styles.heroStacked, { minHeight: heroMinHeight }]}>
               <View style={styles.heroStackTop}>
                 <View style={styles.headlinePanel}>{headlineNode}</View>
-                <View style={styles.heroExtra}>{heroExtra}</View>
+                {heroExtraPlacement === "above" ? (
+                  <View style={styles.heroExtra}>{heroExtra}</View>
+                ) : null}
               </View>
               <View style={styles.heroStackPreview}>
                 {renderPreview(preview, heroMapWidth, true)}
                 <View style={styles.heroOverlayBottom}>{benefitsOverlayNode}</View>
               </View>
+              {heroExtraPlacement === "below" ? (
+                <View style={styles.heroStackBottom}>
+                  <View style={styles.heroExtra}>{heroExtra}</View>
+                </View>
+              ) : null}
             </View>
           ) : (
             <View style={[styles.hero, { minHeight: heroMinHeight }]}>
@@ -325,6 +339,12 @@ const styles = StyleSheet.create({
   heroStackTop: {
     paddingHorizontal: 16,
     paddingTop: 16,
+    paddingBottom: 12,
+  },
+  /* 追加要素を地図の下に置くとき（heroExtraPlacement="below"）の枠。 */
+  heroStackBottom: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
     paddingBottom: 12,
   },
   heroStackPreview: {

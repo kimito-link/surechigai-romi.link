@@ -35,6 +35,8 @@ export default function ZukanScreen() {
         ]}
         heroPanelWidth={ZUKAN_HERO_PANEL_WIDTH}
         heroExtra={<GuestPlaceContext />}
+        /* 日本地図が主役の画面なので、地図を最初の画面に出し、天気・ライブカメラは地図の下に置く（運営者の判断 2026-10-18） */
+        heroExtraPlacement="below"
       />
     );
   }
