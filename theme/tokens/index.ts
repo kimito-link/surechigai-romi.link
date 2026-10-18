@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 44; // 2026-10-18: /zukan は日本地図を先に出し、天気・ライブカメラを地図の下に置く
+export const CDN_CACHE_EPOCH = 45; // 2026-10-18: /checkin の見出しを読点で改行し、孤立文字をなくす

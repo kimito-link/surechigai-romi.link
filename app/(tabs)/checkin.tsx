@@ -36,7 +36,7 @@ export default function CheckinScreen() {
     return (
       <OneTapGuestShell
         title="現在地"
-        headline="今いる場所を、あとで行ける精度で残す"
+        headline={"今いる場所を、\nあとで行ける精度で残す"}
         preview={<CheckinGuestPreview />}
         benefits={[
           { icon: "place", label: "正確に残す" },
