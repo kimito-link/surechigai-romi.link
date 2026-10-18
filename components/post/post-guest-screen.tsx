@@ -162,6 +162,16 @@ export function PostGuestScreen() {
               </View>
               {ctaSection}
               {benefitCards}
+              <View style={styles.specStrip}>
+                <View style={styles.specRow}>
+                  <MaterialIcons name="gps-fixed" size={14} color={palette.kimitoBlue} />
+                  <Text style={styles.specText}>生座標 + H3 r8 永続保存</Text>
+                </View>
+                <View style={styles.specRow}>
+                  <MaterialIcons name="history" size={14} color={palette.kimitoBlue} />
+                  <Text style={styles.specText}>30日タイムシフト交差判定</Text>
+                </View>
+              </View>
               <GuestPlaceContext />
               {marketingLinkNode}
             </View>
@@ -373,6 +383,26 @@ const styles = StyleSheet.create({
   },
   ctaBlockSplit: {
     maxWidth: "100%",
+  },
+  specStrip: {
+    width: "100%",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: palette.kimitoBg,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+    gap: 6,
+  },
+  specRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  specText: {
+    color: color.textSecondary,
+    fontSize: 12,
+    fontWeight: "700",
   },
   marketingLink: {
     alignSelf: "center",
