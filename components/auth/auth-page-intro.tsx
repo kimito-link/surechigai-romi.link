@@ -52,6 +52,10 @@ function NavLink({ href, label }: { href: Href; label: string }) {
     <Link href={href} asChild>
       <Text
         style={{
+          // web の Text は inline なので minHeight が効かない。flex にして 44px を確保する
+          display: "flex",
+          alignItems: "center",
+          alignSelf: "flex-start",
           minHeight: 44,
           fontWeight: "700",
           fontSize: 14,
