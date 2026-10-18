@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 36; // 2026-10-18: Expo App Awards 2026 UI/UXブラッシュアップ・ゲストホームレーダー高さ修正・ハプティクス演出強化
+export const CDN_CACHE_EPOCH = 37; // 2026-10-18: レスポンシブ2カラム化・ヘッダーCTA改行修正・レーダー地図プレビュー高密度化

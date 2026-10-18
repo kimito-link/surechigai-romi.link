@@ -14,7 +14,7 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { buildSignInAutoXHref } from "@/lib/clerk-route";
 import { color, palette } from "@/theme/tokens";
-import { WEB_SIDE_NAV_WIDTH } from "@/components/organisms/web-side-nav";
+import { useWebSideNavActive, WEB_SIDE_NAV_WIDTH } from "@/components/organisms/web-side-nav";
 
 export type OneTapGuestBenefit = {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -70,6 +70,7 @@ const DEFAULT_BENEFITS: readonly [
 const FOOTER_ESTIMATED_HEIGHT = 104;
 const HERO_MIN_HEIGHT = 320;
 const HERO_DESKTOP_PANEL_WIDTH = 360;
+const SPLIT_HERO_MIN_WIDTH = 768;
 
 function normalizeReturnTo(pathname: string | null): string {
   if (!pathname || pathname === "/auth/kimito-link") return "/";
@@ -116,6 +117,7 @@ export function OneTapGuestShell({
   heroPanelWidth = HERO_DESKTOP_PANEL_WIDTH,
 }: OneTapGuestShellProps) {
   const { width, height, isDesktop } = useResponsive();
+  const sideNavActive = useWebSideNavActive();
   const tabInset = useTabBarInset();
   const pathname = usePathname();
   const openLoginGuide = useLoginGuide();
@@ -126,6 +128,11 @@ export function OneTapGuestShell({
   const [footerHeight, setFooterHeight] = useState(FOOTER_ESTIMATED_HEIGHT);
 
   const isHero = Boolean(preview);
+  const isSplitHero = isDesktop || width >= SPLIT_HERO_MIN_WIDTH;
+  const effectivePanelWidth =
+    !isDesktop && isSplitHero ? Math.min(heroPanelWidth, 300) : heroPanelWidth;
+  const sideNavOffset = sideNavActive ? WEB_SIDE_NAV_WIDTH : 0;
+
   const hasLoginButtonRow = Boolean(isAuthReadyForUI && !user);
   const headerSpacerHeight = getTabHeaderSpacerHeight({
     variant: "compact",
@@ -137,13 +144,12 @@ export function OneTapGuestShell({
     HERO_MIN_HEIGHT,
     height -
       headerSpacerHeight -
-      (isDesktop ? 0 : footerHeight + footerBottomInset),
+      (isSplitHero ? 0 : footerHeight + footerBottomInset),
   );
-  // isDesktop(width>=1024)は必ずサイドバー表示条件(width>=900)を満たすため、
-  // サイドバー分は確実に引ける。heroPanelの borderLeftWidth(1px) も差し引く。
-  const heroMapWidth = isDesktop
-    ? Math.max(0, width - WEB_SIDE_NAV_WIDTH - heroPanelWidth - 1)
-    : width;
+  // サイドバー分（sideNavActive時）と heroPanel の borderLeftWidth(1px) を差し引く。
+  const heroMapWidth = isSplitHero
+    ? Math.max(0, width - sideNavOffset - effectivePanelWidth - 1)
+    : Math.max(0, width - sideNavOffset);
 
   const handleFooterLayout = (event: LayoutChangeEvent) => {
     const measured = Math.round(event.nativeEvent.layout.height);
@@ -179,19 +185,19 @@ export function OneTapGuestShell({
         style={styles.scroll}
         contentContainerStyle={[
           !isHero && styles.content,
-          !isHero && isDesktop && styles.contentDesktop,
+          !isHero && isSplitHero && styles.contentDesktop,
           {
             paddingBottom:
-              tabInset + (isDesktop ? 24 : footerHeight),
+              tabInset + (isSplitHero ? 24 : footerHeight),
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
         {isHero ? (
-          isDesktop ? (
+          isSplitHero ? (
             <View style={[styles.heroRow, { minHeight: heroMinHeight }]}>
               <View style={styles.heroMap}>{renderPreview(preview, heroMapWidth)}</View>
-              <View style={[styles.heroPanel, { width: heroPanelWidth }]}>
+              <View style={[styles.heroPanel, { width: effectivePanelWidth }]}>
                 <Text style={styles.headline}>{headline}</Text>
                 {benefitsNode}
                 {heroExtra ? <View style={styles.heroExtra}>{heroExtra}</View> : null}
@@ -215,7 +221,7 @@ export function OneTapGuestShell({
           <>
             <Text style={styles.headline}>{headline}</Text>
             {benefitsNode}
-            {isDesktop ? cta : null}
+            {isSplitHero ? cta : null}
           </>
         )}
         <View style={isHero ? styles.belowFold : undefined}>
@@ -224,7 +230,7 @@ export function OneTapGuestShell({
         </View>
       </ScrollView>
 
-      {!isDesktop ? (
+      {!isSplitHero ? (
         <View
           // nativeID: App Store スクショ撮影時に隠すためのフック。
           // このフッターはタブバー直上に固定表示されるため、撮影すると

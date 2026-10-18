@@ -106,6 +106,15 @@ export const DECIDED = {
   "verify-team-distinction.mjs":
     "複数リポ横断点検用（1リポ単体のCIには姉妹リポが並ばないため親ディレクトリ --root 指定で横断実行する設計。" +
     "かつ app.config.json の distinction フィールドと lib/team-distinction-core.mjs 前提のため単体リポでは非該当）",
+  "check-proposal.mjs":
+    "自己改善ループの提案書(Markdown)と lib/proposal-format-core.mjs 前提のCLIツール。" +
+    "このリポには提案書ディレクトリも proposal-format-core.mjs も存在せず、改善記録は check-improvement.mjs で管理している",
+  "check-symptom-card.mjs":
+    "自己改善ループの症状カード(JSON)と lib/symptom-card-core.mjs 前提のCLIツール。" +
+    "このリポには症状カードディレクトリも symptom-card-core.mjs も存在せず、症状索引は check-symptom-index.mjs で管理している",
+  "check-security-scan-ran.mjs":
+    "Claude Code 専用の /claude-security プラグインが出力する CLAUDE-SECURITY-REVISION-*.json 刻印の検査。" +
+    "このリポは verify-security-score.mjs を pnpm check に配線してセキュリティ検査を実施しており、未実行時は exit 2 (INCONCLUSIVE) になる手動スキャン確認用のため保留",
 };
 
 /** 検査とみなすファイル名。 */
