@@ -107,12 +107,17 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   line1Lcp: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "800",
+    letterSpacing: 0.4,
+    color: palette.kimitoBlue,
   },
   line2Lcp: {
-    fontSize: 36,
+    fontSize: 38,
+    lineHeight: 44,
     fontWeight: "900",
-    marginTop: 4,
+    letterSpacing: -0.8,
+    marginTop: 2,
+    marginBottom: 2,
   },
 });

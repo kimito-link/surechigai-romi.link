@@ -98,17 +98,17 @@ function NavLivePrefecturePanelInner() {
 
 const styles = StyleSheet.create({
   panel: {
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    marginBottom: 12,
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: palette.kimitoBlue + "10",
+    borderRadius: 12,
+    backgroundColor: "#F8FAFC",
     borderWidth: 1,
-    borderColor: palette.kimitoBlue + "28",
-    gap: 6,
+    borderColor: "#E2E8F0",
+    gap: 4,
   },
   panelHover: {
-    backgroundColor: palette.kimitoBlue + "16",
+    backgroundColor: "#F1F5F9",
   },
   headRow: {
     flexDirection: "row",
@@ -121,10 +121,10 @@ const styles = StyleSheet.create({
     color: palette.kimitoBlue,
   },
   meta: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
     color: color.textMuted,
-    lineHeight: 17,
+    lineHeight: 16,
   },
   chips: {
     flexDirection: "row",

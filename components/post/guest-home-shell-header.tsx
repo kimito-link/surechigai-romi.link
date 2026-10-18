@@ -64,16 +64,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    backgroundColor: palette.kimitoBlueSoft,
+    paddingHorizontal: 18,
+    backgroundColor: palette.white,
     borderBottomWidth: 1,
-    borderBottomColor: `${palette.kimitoBlue}66`,
+    borderBottomColor: palette.kimitoBorderSoft,
+    ...(Platform.OS === "web"
+      ? ({
+          backgroundColor: "rgba(255,255,255,0.94)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        } as object)
+      : null),
   },
   title: {
     flex: 1,
-    color: palette.kimitoBlue,
+    color: palette.gray900,
     fontSize: 15,
     fontWeight: "800",
+    letterSpacing: -0.2,
     marginRight: 12,
   },
   loginLink: {
