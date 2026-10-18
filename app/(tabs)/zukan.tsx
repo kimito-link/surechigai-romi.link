@@ -25,7 +25,9 @@ export default function ZukanScreen() {
       <OneTapGuestShell
         title="さがす"
         headline="現在地でつながる、すれ違ひ通信"
-        preview={(heroMapWidth) => <ZukanGuestLive availableWidth={heroMapWidth} />}
+        preview={(heroMapWidth, layout) => (
+          <ZukanGuestLive availableWidth={heroMapWidth} stacked={layout.stacked} />
+        )}
         benefits={[
           { icon: "map", label: "都道府県" },
           { icon: "sell", label: "属性で合う" },
