@@ -11,12 +11,17 @@
  * サイズ(≈991px)のまま464px幅のペインからはみ出しoverflow:hiddenで見切れる不具合）。
  */
 import { View, Text, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 import { trpc } from "@/lib/trpc";
 import { navigate } from "@/lib/navigation";
 import { LazyJapanBlockMap } from "@/lib/lazy-heavy-components";
 import { useTrpcReady } from "@/lib/trpc-ready-context";
 import { prefectureShortLabel } from "@/modules/encounter/core/prefecture-labels";
 import { color, palette } from "@/theme/tokens";
+
+const AVATAR_RINKU = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
+const AVATAR_KONTA = require("@/assets/images/characters/konta/kitsune-yukkuri-smile-mouth-open.png");
+const AVATAR_TANUNE = require("@/assets/images/characters/tanunee/tanuki-yukkuri-smile-mouth-open.png");
 
 const EMPTY_SET: Set<string> = new Set();
 /**
@@ -45,7 +50,29 @@ function ZukanGuestLiveShell({ availableWidth }: ZukanGuestLiveProps) {
   return (
     <View style={styles.root}>
       <View style={styles.liveRow}>
-        <Text style={styles.liveText}>公開中の足あとを集計中…</Text>
+        <View style={styles.avatarStack}>
+          <Image
+            source={AVATAR_RINKU}
+            accessibilityLabel="りんく"
+            style={styles.miniAvatar}
+            contentFit="cover"
+          />
+          <Image
+            source={AVATAR_KONTA}
+            accessibilityLabel="こん太"
+            style={styles.miniAvatar}
+            contentFit="cover"
+          />
+          <Image
+            source={AVATAR_TANUNE}
+            accessibilityLabel="たぬ姉"
+            style={styles.miniAvatar}
+            contentFit="cover"
+          />
+        </View>
+        <Text style={styles.liveText} numberOfLines={1}>
+          全国の 𝕏 旅人の足あとを集計中…
+        </Text>
       </View>
       <View style={styles.mapWrap}>
         <LazyJapanBlockMap
@@ -79,12 +106,32 @@ function ZukanGuestLiveInner({ availableWidth }: ZukanGuestLiveProps) {
   return (
     <View style={styles.root}>
       <View style={styles.liveRow}>
-        <Text style={styles.liveText}>
+        <View style={styles.avatarStack}>
+          <Image
+            source={AVATAR_RINKU}
+            accessibilityLabel="りんく"
+            style={styles.miniAvatar}
+            contentFit="cover"
+          />
+          <Image
+            source={AVATAR_KONTA}
+            accessibilityLabel="こん太"
+            style={styles.miniAvatar}
+            contentFit="cover"
+          />
+          <Image
+            source={AVATAR_TANUNE}
+            accessibilityLabel="たぬ姉"
+            style={styles.miniAvatar}
+            contentFit="cover"
+          />
+        </View>
+        <Text style={styles.liveText} numberOfLines={1}>
           {isLoading
             ? "公開中の足あとを集計中…"
             : totalPeople > 0
-              ? `いま ${totalPeople} 人が、現在地を公開中`
-              : "まだ今日の足あとがありません。最初の1人になろう"}
+              ? `いま ${totalPeople} 人の 𝕏 旅人が現在地を公開中`
+              : "県をタップして同じ趣味の 𝕏 旅人を探そう"}
         </Text>
       </View>
 
@@ -122,30 +169,38 @@ const styles = StyleSheet.create({
     width: "100%",
     justifyContent: "center",
     gap: 8,
-    // 親（one-tap-guest-shell）は見出しを heroOverlayTop(absolute/top:16)、
-    // ベネフィットを heroOverlayBottom(absolute/bottom:12) で浮かせている。
-    // どちらもヒーロー内容の上に重なるため、上下に逃げ場を作る。
-    // 空けないと 414px で
-    //   上: 「現在地でつながる、すれ違ひ通信」と「いま N 人が…」が 8px 重なる
-    //   下: 「沖縄」とボタン行が 14px 重なる
-    // （いずれも 2026-08-01 に実測で確認）。
-    // 下は 76px 必要（40px では「沖縄」とボタン行が 17px 重なる — 実測）。
-    // ※スクショで文字が切れて見えたのは撮影用スペーサーぶんの上乗せが原因で、
-    //   実機・実ブラウザでは 76px でラベルは画面内に収まる。
     paddingTop: 72,
     paddingBottom: 76,
   },
   liveRow: {
     alignSelf: "center",
-    backgroundColor: "rgba(255,255,255,0.88)",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    maxWidth: "94%",
+  },
+  avatarStack: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    flexShrink: 0,
+  },
+  miniAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
   },
   liveText: {
     color: color.textPrimary,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "800",
+    flexShrink: 1,
   },
   mapWrap: {
     width: "100%",
