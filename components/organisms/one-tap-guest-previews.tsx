@@ -104,7 +104,7 @@ export function CheckinGuestPreview() {
             </View>
             <Text style={styles.checkinPlaceTitle}>渋谷区道玄坂・東京都</Text>
             <Text style={styles.checkinCoordText}>
-              35.6595°N, 139.7005°E · H3 r8 · 同じ場所の 𝕏 仲間と交差
+              35.6595°N, 139.7005°E · H3 r8 · 𝕏 仲間と交差
             </Text>
           </View>
         </>

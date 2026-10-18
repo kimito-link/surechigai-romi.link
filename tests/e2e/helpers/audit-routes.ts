@@ -25,7 +25,7 @@ export const TAB_ROUTES: AuditRoute[] = [
   {
     path: "/checkin",
     label: "チェックイン",
-    expectText: /今いる場所を、あとで行ける精度で残す|現在地を記録する/,
+    expectText: /今いる場所を、\s*あとで行ける精度で残す|現在地を記録する/,
     guestOk: true,
   },
   {
