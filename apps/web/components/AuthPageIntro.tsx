@@ -108,14 +108,14 @@ export function AuthPageIntro() {
           </li>
         </ul>
 
-        <div className="mt-5 flex flex-wrap gap-4 border-t border-slate-200 pt-4 text-sm font-bold text-sky-900">
-          <a href="/" className="underline hover:text-sky-700">
+        <div className="mt-5 flex flex-wrap gap-x-4 border-t border-slate-200 pt-4 text-sm font-bold text-sky-900">
+          <a href="/" className="inline-flex min-h-[44px] items-center underline hover:text-sky-700">
             ← アプリトップへ戻る
           </a>
-          <a href="/lp/" className="underline hover:text-sky-700">
+          <a href="/lp/" className="inline-flex min-h-[44px] items-center underline hover:text-sky-700">
             サービス紹介（LP）
           </a>
-          <a href="/special-thanks" className="underline hover:text-sky-700">
+          <a href="/special-thanks" className="inline-flex min-h-[44px] items-center underline hover:text-sky-700">
             特別協力
           </a>
         </div>
