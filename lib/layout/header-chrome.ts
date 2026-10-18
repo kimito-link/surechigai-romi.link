@@ -11,8 +11,12 @@ import {
 
 /** 狭幅2段目: ログイン済みアカウントピル */
 export const HEADER_NARROW_ACCOUNT_EXTRA = 54;
-/** 狭幅2段目: ログインボタン */
-export const HEADER_NARROW_LOGIN_EXTRA = 44;
+/**
+ * 狭幅2段目: ログインボタン。
+ * ログインボタンは AppHeader の1段目（メニューの隣）に出るため、2段目は存在しない。
+ * 以前は 44px を確保しており、ゲスト画面のヘッダー下に約44pxの空白帯ができていた（2026-10-18 実測）。
+ */
+export const HEADER_NARROW_LOGIN_EXTRA = 0;
 
 export type TabHeaderSpacerOptions = {
   variant?: "full" | "compact";
