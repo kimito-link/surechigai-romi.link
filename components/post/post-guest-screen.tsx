@@ -605,7 +605,7 @@ export function PostGuestScreen() {
   const headerOffset = Platform.OS === "web" ? GUEST_HOME_HEADER_HEIGHT : 0;
   const bottomChrome = sideNavActive ? WEB_APP_FOOTER_HEIGHT + 16 : tabInset;
   const availableHeight = Math.max(480, height - headerOffset - bottomChrome);
-  const mobileRadarHeight = Math.max(250, Math.min(330, Math.round(height * 0.35)));
+  const mobileRadarHeight = Math.max(216, Math.min(248, Math.round(height * 0.28)));
 
   const xSuperpowerMiniStrip = (
     <View style={styles.xMiniStrip}>
@@ -997,7 +997,7 @@ const styles = StyleSheet.create({
   },
   previewWrap: {
     width: "100%",
-    minHeight: 240,
+    minHeight: 216,
     alignSelf: "center",
     position: "relative",
     borderRadius: 8,

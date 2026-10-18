@@ -286,7 +286,7 @@ export function RadarGuestPreview() {
         <View style={[styles.radarUserNode, styles.radarUserLeft]}>
           <View style={styles.speechBubbleWhite}>
             <Text style={styles.speechBubbleText} numberOfLines={1}>
-              「どこかなー？」
+              どこかな？
             </Text>
           </View>
           <View style={[styles.radarAvatarCircle, styles.radarAvatarBlue]}>
@@ -308,7 +308,7 @@ export function RadarGuestPreview() {
         <View style={[styles.radarUserNode, styles.radarUserCenter]}>
           <View style={styles.speechBubbleOrange}>
             <Text style={styles.speechBubbleOrangeText} numberOfLines={1}>
-              「秋葉原 にいるよ」
+              秋葉原にいるよ
             </Text>
           </View>
           <View style={[styles.radarAvatarCircleLarge, styles.radarAvatarOrange]}>
@@ -330,7 +330,7 @@ export function RadarGuestPreview() {
         <View style={[styles.radarUserNode, styles.radarUserRight]}>
           <View style={styles.speechBubbleWhite}>
             <Text style={styles.speechBubbleText} numberOfLines={1}>
-              「あ、いたいた！」
+              いたいた！
             </Text>
           </View>
           <View style={[styles.radarAvatarCircle, styles.radarAvatarBlue]}>
