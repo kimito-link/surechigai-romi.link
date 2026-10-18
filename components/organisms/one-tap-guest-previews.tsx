@@ -1,7 +1,12 @@
 import { View, Text, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 import Svg, { Circle, Line, Path, Polyline, Rect } from "react-native-svg";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { color, palette } from "@/theme/tokens";
+
+const AVATAR_RINKU = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
+const AVATAR_KONTA = require("@/assets/images/characters/konta/kitsune-yukkuri-smile-mouth-open.png");
+const AVATAR_TANUNE = require("@/assets/images/characters/tanunee/tanuki-yukkuri-smile-mouth-open.png");
 
 const BLUE_06 = `${palette.kimitoBlue}0F`;
 const BLUE_10 = `${palette.kimitoBlue}1A`;
@@ -69,26 +74,47 @@ export function CheckinGuestPreview() {
   return (
     <RoadGrid
       overlay={
-        <View style={styles.checkinCardOverlay}>
-          <View style={styles.checkinBadgeRow}>
-            <View style={styles.liveDot} />
-            <Text style={styles.checkinMetaText}>GPS固定 · 14:32 · 精度 ±8m</Text>
+        <>
+          <View style={styles.mapPinCenterWrap} pointerEvents="none">
+            <View style={styles.speechBubbleOrange}>
+              <Text style={styles.speechBubbleOrangeText} numberOfLines={1}>
+                「渋谷区 にいるよ！」
+              </Text>
+            </View>
+            <View style={[styles.avatarPinRing, styles.avatarPinRingOrange]}>
+              <Image
+                source={AVATAR_RINKU}
+                accessibilityLabel="りんくのアイコン"
+                style={styles.avatarPinImg}
+                contentFit="cover"
+              />
+            </View>
+            <View style={styles.pinHandlePill}>
+              <Text style={styles.pinHandleText} numberOfLines={1}>
+                @kimitolink · #聖地巡礼
+              </Text>
+            </View>
           </View>
-          <Text style={styles.checkinPlaceTitle}>渋谷区道玄坂・東京都</Text>
-          <Text style={styles.checkinCoordText}>35.6595°N, 139.7005°E · H3 r8</Text>
-        </View>
+          <View style={styles.checkinCardOverlay}>
+            <View style={styles.checkinBadgeRow}>
+              <View style={styles.liveDot} />
+              <Text style={styles.checkinMetaText}>
+                GPS固定 · 𝕏 絵札OGPで同じ趣味に届く
+              </Text>
+            </View>
+            <Text style={styles.checkinPlaceTitle}>渋谷区道玄坂・東京都</Text>
+            <Text style={styles.checkinCoordText}>
+              35.6595°N, 139.7005°E · H3 r8 · 同じ場所の 𝕏 仲間と交差
+            </Text>
+          </View>
+        </>
       }
     >
-      <Circle cx="195" cy="290" r="108" fill={BLUE_06} stroke={BLUE_18} strokeWidth="1" />
-      <Circle cx="195" cy="290" r="68" fill={BLUE_10} stroke={BLUE_45} strokeWidth="1.5" />
-      <Circle cx="195" cy="290" r="32" fill={ORANGE_14} />
-      <Path
-        d="M195 224c-24 0-43 18-43 42 0 31 43 82 43 82s43-51 43-82c0-24-19-42-43-42z"
-        fill={palette.kimitoOrange}
-      />
-      <Circle cx="195" cy="265" r="14" fill={palette.white} />
-      <Circle cx="128" cy="228" r="6" fill={palette.kimitoBlue} />
-      <Circle cx="268" cy="348" r="6" fill={palette.kimitoBlue} />
+      <Circle cx="195" cy="250" r="108" fill={BLUE_06} stroke={BLUE_18} strokeWidth="1" />
+      <Circle cx="195" cy="250" r="68" fill={BLUE_10} stroke={BLUE_45} strokeWidth="1.5" />
+      <Circle cx="195" cy="250" r="32" fill={ORANGE_14} />
+      <Circle cx="128" cy="198" r="6" fill={palette.kimitoBlue} />
+      <Circle cx="268" cy="308" r="6" fill={palette.kimitoBlue} />
     </RoadGrid>
   );
 }
@@ -97,13 +123,43 @@ export function TrailGuestPreview() {
   return (
     <RoadGrid
       overlay={
-        <View style={styles.trailCardOverlay}>
-          <View style={styles.trailBadgeRow}>
-            <MaterialIcons name="timeline" size={14} color={palette.kimitoBlue} />
-            <Text style={styles.trailOverlayTitle}>今日の軌跡 · 4地点を記録</Text>
+        <>
+          <View style={styles.trailFloatingUsers} pointerEvents="none">
+            <View style={styles.trailUserChip}>
+              <Image
+                source={AVATAR_KONTA}
+                accessibilityLabel="こん太のアイコン"
+                style={styles.trailUserAvatar}
+                contentFit="cover"
+              />
+              <Text style={styles.trailUserText} numberOfLines={1}>
+                「東京駅で交差！」 @konta_tabi
+              </Text>
+            </View>
+            <View style={styles.trailUserChip}>
+              <Image
+                source={AVATAR_TANUNE}
+                accessibilityLabel="たぬ姉のアイコン"
+                style={styles.trailUserAvatar}
+                contentFit="cover"
+              />
+              <Text style={styles.trailUserText} numberOfLines={1}>
+                「聖地巡礼中！」 @tanunee_ch
+              </Text>
+            </View>
           </View>
-          <Text style={styles.trailOverlaySub}>秋葉原 → 神田 → 東京駅 → 有楽町</Text>
-        </View>
+          <View style={styles.trailCardOverlay}>
+            <View style={styles.trailBadgeRow}>
+              <MaterialIcons name="timeline" size={14} color={palette.kimitoBlue} />
+              <Text style={styles.trailOverlayTitle}>
+                今日の軌跡 · 4地点で 3人の 𝕏 旅人と交差
+              </Text>
+            </View>
+            <Text style={styles.trailOverlaySub}>
+              秋葉原 → 神田 → 東京駅 → 有楽町（#聖地巡礼 #推し活）
+            </Text>
+          </View>
+        </>
       }
     >
       <Polyline
@@ -176,46 +232,33 @@ export function RadarGuestPreview() {
 
         {/* 過去の移動軌跡ライン */}
         <Polyline
-          points="92,262 152,214 196,184 240,158"
+          points="86,248 148,196 196,168 240,148"
           fill="none"
           stroke={palette.kimitoBlue}
           strokeWidth="3"
           strokeDasharray="4,4"
-          strokeOpacity="0.55"
+          strokeOpacity="0.65"
         />
-        <Circle cx="92" cy="262" r="4.5" fill={palette.white} stroke={palette.kimitoBlue} strokeWidth="2" />
-        <Circle cx="152" cy="214" r="4.5" fill={palette.white} stroke={palette.kimitoBlue} strokeWidth="2" />
-        <Circle cx="196" cy="184" r="4.5" fill={palette.white} stroke={palette.kimitoBlue} strokeWidth="2" />
+        <Circle cx="86" cy="248" r="4.5" fill={palette.white} stroke={palette.kimitoBlue} strokeWidth="2" />
+        <Circle cx="148" cy="196" r="4.5" fill={palette.white} stroke={palette.kimitoBlue} strokeWidth="2" />
 
         {/* レーダー同心円と精度円 */}
-        <Circle cx="240" cy="158" r="126" fill="none" stroke={BLUE_18} strokeWidth="1.2" />
-        <Circle cx="240" cy="158" r="86" fill={BLUE_06} stroke={BLUE_18} strokeWidth="1.5" />
-        <Circle cx="240" cy="158" r="46" fill={BLUE_10} stroke={BLUE_45} strokeWidth="1.5" />
+        <Circle cx="240" cy="148" r="118" fill="none" stroke={BLUE_18} strokeWidth="1.2" />
+        <Circle cx="240" cy="148" r="80" fill={BLUE_06} stroke={BLUE_18} strokeWidth="1.5" />
+        <Circle cx="240" cy="148" r="42" fill={BLUE_10} stroke={BLUE_45} strokeWidth="1.5" />
 
         {/* 十字走査線とスキャンライン */}
-        <Line x1="240" y1="22" x2="240" y2="294" stroke={ROAD} strokeWidth="1" />
-        <Line x1="94" y1="158" x2="386" y2="158" stroke={ROAD} strokeWidth="1" />
+        <Line x1="240" y1="22" x2="240" y2="274" stroke={ROAD} strokeWidth="1" />
+        <Line x1="94" y1="148" x2="386" y2="148" stroke={ROAD} strokeWidth="1" />
         <Line
           x1="240"
-          y1="158"
-          x2="338"
+          y1="148"
+          x2="344"
           y2="82"
           stroke={palette.kimitoBlue}
           strokeWidth="2.5"
           strokeOpacity="0.5"
         />
-
-        {/* 周辺のすれ違ひシグナル点 */}
-        <Circle cx="164" cy="108" r="11" fill={ORANGE_14} />
-        <Circle cx="164" cy="108" r="5.5" fill={palette.kimitoOrange} />
-        <Circle cx="326" cy="126" r="10" fill={BLUE_10} />
-        <Circle cx="326" cy="126" r="5" fill={palette.kimitoBlue} />
-        <Circle cx="298" cy="208" r="10" fill={BLUE_10} />
-        <Circle cx="298" cy="208" r="5" fill={palette.kimitoBlue} />
-
-        {/* 現在地ピン（オレンジ核＋白縁） */}
-        <Circle cx="240" cy="158" r="15" fill={palette.white} />
-        <Circle cx="240" cy="158" r="10" fill={palette.kimitoOrange} />
       </Svg>
 
       {/* 左上: 現在地・測位精度バッジ */}
@@ -237,21 +280,99 @@ export function RadarGuestPreview() {
         </Text>
       </View>
 
-      {/* 下部: 受信したすれ違ひシグナルの実感カード（DESIGN.md: 最初の画面は使える画面にする） */}
+      {/* 地図上に浮かぶ「使うユーザーの顔・吹き出し・@handle」（LP .basho-meguri + .ofuda-card 準拠） */}
+      <View style={styles.radarCharacterStage} pointerEvents="none">
+        {/* 左: こん太（#推し活） */}
+        <View style={[styles.radarUserNode, styles.radarUserLeft]}>
+          <View style={styles.speechBubbleWhite}>
+            <Text style={styles.speechBubbleText} numberOfLines={1}>
+              「どこかなー？」
+            </Text>
+          </View>
+          <View style={[styles.radarAvatarCircle, styles.radarAvatarBlue]}>
+            <Image
+              source={AVATAR_KONTA}
+              accessibilityLabel="こん太のアイコン"
+              style={styles.radarAvatarImg}
+              contentFit="cover"
+            />
+          </View>
+          <View style={styles.radarHandleTag}>
+            <Text style={styles.radarHandleTagText} numberOfLines={1}>
+              #推し活
+            </Text>
+          </View>
+        </View>
+
+        {/* 中央: りんく（現在地・あなた） */}
+        <View style={[styles.radarUserNode, styles.radarUserCenter]}>
+          <View style={styles.speechBubbleOrange}>
+            <Text style={styles.speechBubbleOrangeText} numberOfLines={1}>
+              「秋葉原 にいるよ」
+            </Text>
+          </View>
+          <View style={[styles.radarAvatarCircleLarge, styles.radarAvatarOrange]}>
+            <Image
+              source={AVATAR_RINKU}
+              accessibilityLabel="りんくのアイコン"
+              style={styles.radarAvatarImgLarge}
+              contentFit="cover"
+            />
+          </View>
+          <View style={styles.radarHandleTagPrimary}>
+            <Text style={styles.radarHandleTagPrimaryText} numberOfLines={1}>
+              @kimitolink
+            </Text>
+          </View>
+        </View>
+
+        {/* 右: たぬ姉（#配信・聖地） */}
+        <View style={[styles.radarUserNode, styles.radarUserRight]}>
+          <View style={styles.speechBubbleWhite}>
+            <Text style={styles.speechBubbleText} numberOfLines={1}>
+              「あ、いたいた！」
+            </Text>
+          </View>
+          <View style={[styles.radarAvatarCircle, styles.radarAvatarBlue]}>
+            <Image
+              source={AVATAR_TANUNE}
+              accessibilityLabel="たぬ姉のアイコン"
+              style={styles.radarAvatarImg}
+              contentFit="cover"
+            />
+          </View>
+          <View style={styles.radarHandleTag}>
+            <Text style={styles.radarHandleTagText} numberOfLines={1}>
+              #聖地巡礼
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* 下部: 受信したすれ違ひ＆Xフォロワー増加の実感カード */}
       <View style={styles.radarBottomCard}>
         <View style={styles.radarSignalRow}>
-          <View style={styles.radarSignalIconWrap}>
-            <MaterialIcons name="mark-email-unread" size={16} color={palette.kimitoOrangeText} />
+          <View style={styles.radarBottomAvatarWrap}>
+            <Image
+              source={AVATAR_KONTA}
+              accessibilityLabel="すれ違ひ相手のアイコン"
+              style={styles.radarBottomAvatar}
+              contentFit="cover"
+            />
           </View>
           <View style={styles.radarSignalBody}>
             <View style={styles.radarSignalTitleRow}>
               <Text style={styles.radarSignalTitle} numberOfLines={1}>
-                秋葉原駅 電気街口付近で交差
+                こん太 @konta_tabi と秋葉原で交差！
               </Text>
-              <Text style={styles.radarSignalTime}>3分前</Text>
+              <View style={styles.followerGainBadge}>
+                <Text style={styles.followerGainText} numberOfLines={1}>
+                  𝕏 同趣味 +1
+                </Text>
+              </View>
             </View>
             <Text style={styles.radarSignalSub} numberOfLines={1}>
-              同セル通過 · タイムシフトすれ違ひ · ±8m
+              #推し活 #聖地巡礼 · 同じ場所を歩く人同士でフォロワーが増える
             </Text>
           </View>
         </View>
@@ -430,6 +551,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  radarBottomAvatarWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: palette.kimitoOrange,
+    backgroundColor: palette.white,
+    overflow: "hidden",
+    flexShrink: 0,
+  },
+  radarBottomAvatar: {
+    width: 32,
+    height: 32,
+  },
   radarSignalIconWrap: {
     width: 32,
     height: 32,
@@ -442,7 +577,7 @@ const styles = StyleSheet.create({
   radarSignalBody: {
     flex: 1,
     minWidth: 0,
-    gap: 1,
+    gap: 2,
   },
   radarSignalTitleRow: {
     flexDirection: "row",
@@ -456,6 +591,20 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     flex: 1,
   },
+  followerGainBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: "#FFF3E8",
+    borderWidth: 1,
+    borderColor: palette.kimitoOrange,
+    flexShrink: 0,
+  },
+  followerGainText: {
+    color: palette.kimitoOrangeText,
+    fontSize: 12,
+    fontWeight: "800",
+  },
   radarSignalTime: {
     color: palette.kimitoOrangeText,
     fontSize: 12,
@@ -463,9 +612,185 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   radarSignalSub: {
-    color: color.textMuted,
+    color: color.textSecondary,
     fontSize: 12,
     fontWeight: "600",
+  },
+  radarCharacterStage: {
+    position: "absolute",
+    top: 44,
+    left: 8,
+    right: 8,
+    bottom: 66,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+  },
+  radarUserNode: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+  },
+  radarUserLeft: {
+    marginTop: 8,
+  },
+  radarUserCenter: {
+    marginTop: -6,
+  },
+  radarUserRight: {
+    marginTop: 14,
+  },
+  speechBubbleWhite: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: palette.white,
+    borderWidth: 1.5,
+    borderColor: palette.kimitoBlue,
+  },
+  speechBubbleText: {
+    color: palette.kimitoBlue,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  speechBubbleOrange: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: "#FFF3E8",
+    borderWidth: 1.5,
+    borderColor: palette.kimitoOrange,
+  },
+  speechBubbleOrangeText: {
+    color: palette.kimitoOrangeText,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  radarAvatarCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: palette.white,
+    borderWidth: 2.5,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  radarAvatarCircleLarge: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: palette.white,
+    borderWidth: 3,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  radarAvatarBlue: {
+    borderColor: palette.kimitoBlue,
+  },
+  radarAvatarOrange: {
+    borderColor: palette.kimitoOrange,
+  },
+  radarAvatarImg: {
+    width: 40,
+    height: 40,
+  },
+  radarAvatarImgLarge: {
+    width: 48,
+    height: 48,
+  },
+  radarHandleTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: palette.kimitoBlueSoft,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+  },
+  radarHandleTagText: {
+    color: palette.kimitoBlue,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  radarHandleTagPrimary: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: palette.kimitoBlue,
+  },
+  radarHandleTagPrimaryText: {
+    color: palette.white,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  mapPinCenterWrap: {
+    position: "absolute",
+    top: "26%",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  avatarPinRing: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: palette.white,
+    borderWidth: 3,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  avatarPinRingOrange: {
+    borderColor: palette.kimitoOrange,
+  },
+  avatarPinImg: {
+    width: 52,
+    height: 52,
+  },
+  pinHandlePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+  },
+  pinHandleText: {
+    color: palette.kimitoBlue,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  trailFloatingUsers: {
+    position: "absolute",
+    top: "24%",
+    left: 16,
+    right: 16,
+    gap: 8,
+    alignItems: "center",
+  },
+  trailUserChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: palette.white,
+    borderWidth: 1.5,
+    borderColor: palette.kimitoBlue,
+  },
+  trailUserAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  trailUserText: {
+    color: palette.kimitoBlue,
+    fontSize: 12,
+    fontWeight: "800",
   },
   mypagePreviewCenter: {
     flex: 1,
