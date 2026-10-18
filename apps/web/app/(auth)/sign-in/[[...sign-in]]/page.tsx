@@ -44,7 +44,38 @@ export default async function SignInPage({ params }: SignInPageProps) {
   }
 
   return (
-    <AuthPageShell variant="sign-in" intro={<AuthPageIntro />}>
+    <AuthPageShell
+      variant="sign-in"
+      intro={<AuthPageIntro />}
+      cardHeader={
+        <div className="flex flex-col items-center bg-[#E2EDF7] px-4 py-3 text-center border-b border-sky-900/10">
+          <div className="flex items-center gap-2">
+            <span
+              className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs font-extrabold text-emerald-700"
+              aria-hidden
+            >
+              ✓
+            </span>
+            <span className="text-sm font-extrabold text-[#00427B]">
+              パスワード不要・𝕏 または Apple でかんたんログイン
+            </span>
+          </div>
+          <p className="mt-1 text-xs font-extrabold text-[#B84300]">
+            下のボタンを押すだけ ↓（初回も自動で登録されます）
+          </p>
+        </div>
+      }
+      noticesBelowCard={
+        <div className="w-full max-w-md rounded-2xl border border-sky-900/15 bg-white/90 px-4 py-3 text-xs leading-relaxed text-slate-600 shadow-2xs">
+          <p className="font-bold text-slate-800">
+            🔒 勝手にポストされたり、生座標がそのまま公開されることはありません
+          </p>
+          <p className="mt-1">
+            現在地の公開範囲（市区町村のみ／非公開など）はいつでも切り替えられます。
+          </p>
+        </div>
+      }
+    >
       {/* ★?auto=x のときだけ発火して X ボタンへ click を送る。 */}
       <AutoAdvanceToX />
       {/* ★fallback は本物と同寸のプレースホルダ（くるくるにしない。ちらつきゼロ契約）。 */}

@@ -21,7 +21,7 @@ export function TabHeaderSpacer({
   if (Platform.OS !== "web") return null;
 
   const hasLoggedInAccountRow = Boolean(isAuthReadyForUI && user);
-  const hasLoginButtonRow = Boolean(showLoginButton && isAuthReadyForUI && !user);
+  const hasLoginButtonRow = Boolean(showLoginButton && !user);
 
   const h = computeTabHeaderSpacerHeight({
     variant,

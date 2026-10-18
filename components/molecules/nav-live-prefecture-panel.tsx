@@ -44,7 +44,7 @@ function NavLivePrefecturePanelShell() {
         <MaterialIcons name="place" size={14} color={palette.kimitoBlue} />
         <Text style={styles.title}>みんなの現在地</Text>
       </View>
-      <Text style={styles.meta}>公開中の足あとを集計中</Text>
+      <Text style={styles.meta}>全国47都道府県の足あと図鑑</Text>
     </Pressable>
   );
 }
@@ -75,14 +75,12 @@ function NavLivePrefecturePanelInner() {
         <Text style={styles.title}>みんなの現在地</Text>
       </View>
 
-      {initialLoad ? (
-        <Text style={styles.meta}>公開中の足あとを集計中</Text>
-      ) : prefectures.length === 0 ? (
-        <Text style={styles.meta}>まだ誰も記録していません</Text>
+      {initialLoad || prefectures.length === 0 ? (
+        <Text style={styles.meta}>全国47都道府県の足あと図鑑</Text>
       ) : (
         <>
           <Text style={styles.meta}>
-            {totalPeople > 0 ? `${totalPeople} 人が記録中` : "公開中の足あと"}
+            {totalPeople > 0 ? `${totalPeople} 人が記録中` : "全国47都道府県の足あと図鑑"}
           </Text>
           <View style={styles.chips}>
             {prefectures.slice(0, MAX_CHIPS).map((row) => (

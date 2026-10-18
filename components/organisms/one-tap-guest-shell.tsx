@@ -133,7 +133,7 @@ export function OneTapGuestShell({
     !isDesktop && isSplitHero ? Math.min(heroPanelWidth, 300) : heroPanelWidth;
   const sideNavOffset = sideNavActive ? WEB_SIDE_NAV_WIDTH : 0;
 
-  const hasLoginButtonRow = Boolean(isAuthReadyForUI && !user);
+  const hasLoginButtonRow = Boolean(!user);
   const headerSpacerHeight = getTabHeaderSpacerHeight({
     variant: "compact",
     windowWidth: width,

@@ -49,15 +49,16 @@ function normalizeReturnTo(pathname: string | null): string {
 export function useLoginGuide() {
   const pathname = usePathname();
   const { login } = useAuth();
-  const { showHandoff } = useAuthHandoff();
+  const { hideHandoff } = useAuthHandoff();
 
   return useCallback(
     (options: LoginGuideOptions = {}) => {
       const returnTo = options.returnTo ?? normalizeReturnTo(pathname);
       const isSwitch = options.mode === "switch";
-      // ★「X へ行く」と決め打ちした案内は出さない（選べる画面へ送るため）。
-      //   "other" = 特定のプロバイダを名指ししない案内。
-      showHandoff("other");
+      // ★/sign-in 到着前に全画面の紺オーバーレイ（AuthHandoffOverlay）を被せると
+      //   白画面 → 紺全画面 → 白 /sign-in と2回フラッシュするため、遷移前は被せない
+      //   （/sign-in で実際にソーシャルボタンを押した瞬間だけ SignInAuthHandoffOverlay が案内を出す）。
+      hideHandoff();
 
       if (Platform.OS === "web" && typeof window !== "undefined") {
         // ★auto=x を付けない。付けると着地後に X が自動クリックされ、
@@ -80,6 +81,6 @@ export function useLoginGuide() {
         (isSwitch ? buildSignInSwitchHref(returnTo) : buildSignInHref(returnTo)) as Href,
       );
     },
-    [pathname, login, showHandoff],
+    [pathname, login, hideHandoff],
   );
 }

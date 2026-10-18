@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 40; // 2026-10-18: モバイルレーダー吹き出し余白＆ファーストビュー高さ調整
+export const CDN_CACHE_EPOCH = 41; // 2026-10-18: ちらつきゼロ＆ログイン遷移体験の改善

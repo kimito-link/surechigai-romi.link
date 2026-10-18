@@ -39,7 +39,10 @@ export function GuestHomeShellHeader() {
       </Text>
       <Link
         href={SIGN_IN_AUTO_X_HREF as Href}
-        onPress={() => openLoginGuide({ returnTo: "/" })}
+        onPress={(e) => {
+          e.preventDefault();
+          openLoginGuide({ returnTo: "/" });
+        }}
         accessibilityRole="button"
         accessibilityLabel="Xでログイン"
         style={[styles.loginLink, glyphOnly && styles.loginLinkGlyphOnly]}
