@@ -251,7 +251,7 @@ export function RadarGuestPreview() {
               <Text style={styles.radarSignalTime}>3分前</Text>
             </View>
             <Text style={styles.radarSignalSub} numberOfLines={1}>
-              同セル通過 · タイムシフトすれ違ひ成立 · 精度 ±8m
+              同セル通過 · タイムシフトすれ違ひ · ±8m
             </Text>
           </View>
         </View>
