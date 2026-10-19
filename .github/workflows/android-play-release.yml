@@ -124,8 +124,18 @@ jobs:
         if: ${{ !inputs.skip_checks }}
         run: pnpm install
 
+      # ★2026-10-19: RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY=1 を付ける。
+      #   pnpm check 内の公開サイトのセキュリティ満点チェックは、本番URLへ実アクセスして
+      #   「これから出す新コード」ではなく「入れ替わる前の今の本番」を測ってしまう。
+      #   実損: 本番の既存状態（CSP の unsafe-inline/unsafe-eval と、外部評価 VirusTotal の
+      #   -10点＝ヘッダ修正では直らない）で Android 本番リリースが検査段階で止まった
+      #   (run 39203030014)。deploy-vercel.yml / gate1.yml は 2026-09-29 に同じ対処済み。
+      #   本番URLの実測はデプロイ後（deploy-vercel.yml の Post-deploy）で行う。
+      #   ★これを外すと scripts/check-security-local-only-wired.mjs が赤になる。
       - name: Type check + gates
         if: ${{ !inputs.skip_checks }}
+        env:
+          RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY: "1"
         run: pnpm check
 
       - name: Test
