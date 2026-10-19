@@ -1103,7 +1103,7 @@ const styles = StyleSheet.create({
   },
   sectionKickerText: {
     color: color.textMuted,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "800",
     letterSpacing: 0.8,
   },
@@ -1208,7 +1208,7 @@ const styles = StyleSheet.create({
   },
   rankBadgeText: {
     color: palette.white,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "800",
   },
   travelerMetaCol: {
@@ -1322,7 +1322,7 @@ const styles = StyleSheet.create({
   },
   rankNumText: {
     color: palette.white,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "800",
   },
   rankRowBody: {
@@ -1484,7 +1484,7 @@ const styles = StyleSheet.create({
   },
   stepNumText: {
     color: palette.white,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "800",
   },
   stepBadgePill: {
@@ -1556,7 +1556,7 @@ const styles = StyleSheet.create({
   },
   yukkuriRoleText: {
     color: color.textMuted,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "700",
   },
   yukkuriSpeechText: {

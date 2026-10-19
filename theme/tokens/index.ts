@@ -45,4 +45,4 @@ export type { TypographyScaleKey } from "./typography";
  * 全チャンクの内容＝ファイル名が変わり、キャッシュ汚染を強制的に払える。
  * デプロイが「反映されない」時は +1 してデプロイすること。
  */
-export const CDN_CACHE_EPOCH = 46; // 2026-10-18: 狭幅ゲストのヘッダー下の余白（44px）を除去
+export const CDN_CACHE_EPOCH = 47; // 2026-10-19: ホームのゲスト画面の 11px 文字を 12px に
