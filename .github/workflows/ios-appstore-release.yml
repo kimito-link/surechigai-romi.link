@@ -152,8 +152,12 @@ jobs:
 
       # pnpm check = tsc + 各ゲート + 計器の統合入口(run-instruments)
       # ★selftest 込み。検知器が毒で赤くなれることも毎回確かめる。
+      # ★2026-10-19: RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY=1（理由は android-play-release.yml の
+      #   同名ステップのコメント参照）。外すと scripts/check-security-local-only-wired.mjs が赤になる。
       - name: Type check + gates
         if: ${{ !inputs.skip_checks }}
+        env:
+          RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY: "1"
         run: pnpm check
 
       - name: Test
