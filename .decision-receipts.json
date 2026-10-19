@@ -315,6 +315,15 @@
       "scopePaths": [
         "__tests__/signin-no-flicker.test.tsx"
       ]
+    },
+    {
+      "at": "2026-10-19T05:19:52.495Z",
+      "responsibility": "pnpm check を呼ぶ全workflowのステップに RUN_INSTRUMENTS_SECURITY_LOCAL_ONLY=1 があるかを見る検査。キット(web-ios-android/templates/scripts)に run-instruments の読み取り側はあるが、workflow側の付け忘れを数える道具は無い(2026-10-19 検索)。判定の土台は instrument-core の EXIT のみ共有。キットへ還流する候補",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "scripts/check-security-local-only-wired.mjs"
+      ]
     }
   ]
 }
