@@ -324,6 +324,107 @@
       "scopePaths": [
         "scripts/check-security-local-only-wired.mjs"
       ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.581Z",
+      "responsibility": "公開OGPから丁目・番地・郵便番号と細かい座標を落とす共通関門",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/sanitize-public-place.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.606Z",
+      "responsibility": "公開地名サニタイザの回帰テスト。東池袋の番地と郵便番号が残らないことを守る",
+      "decision": "REUSE",
+      "canonicalSource": "lib/ogp/sanitize-public-place.ts",
+      "scopePaths": [
+        "__tests__/sanitize-public-place.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.629Z",
+      "responsibility": "共有押下時の1200x630画像。api/og.tsx の @vercel/og は数秒かかるため同じ描画器は使わず resvg で別実装",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/render-share-card-image.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.655Z",
+      "responsibility": "共有カード画像の回帰テスト。300KB以下のJPEGになることを守る",
+      "decision": "REUSE",
+      "canonicalSource": "lib/ogp/render-share-card-image.ts",
+      "scopePaths": [
+        "__tests__/render-share-card-image.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.678Z",
+      "responsibility": "Vercel Blob への共有カード画像アップロード。トークンが無いときは静的画像へ落とす",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/upload-share-card-image.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.702Z",
+      "responsibility": "シェア押下時に凍結カードを1枚作り、描画・保存・DBの失敗時は都道府県の静的URLを返す",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/create-share-card.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.728Z",
+      "responsibility": "凍結カード作成の回帰テスト。失敗経路でも共有URLが返ることを守る",
+      "decision": "REUSE",
+      "canonicalSource": "lib/ogp/create-share-card.ts",
+      "scopePaths": [
+        "__tests__/create-share-card.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.753Z",
+      "responsibility": "凍結カードのメタHTML。api/u はライブ地点を引く別経路なのでHTML組み立ては共有しない",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/share-card-meta.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.780Z",
+      "responsibility": "凍結カードのクローラー向けHTMLと、その出力テスト。描画はせず保存済みURLを指す",
+      "decision": "REUSE",
+      "canonicalSource": "lib/ogp/share-card-meta.ts",
+      "scopePaths": [
+        "api/s/[id].ts",
+        "__tests__/share-card-meta.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.807Z",
+      "responsibility": "middleware が無いローカルExpoで /s/<id> を開いたときアプリへ戻す画面",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "app/s/[id].tsx"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.829Z",
+      "responsibility": "凍結した共有カード行の保存。退会時に所有者分を消す",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "drizzle/schema/share-cards.ts",
+        "server/db/share-cards.ts"
+      ]
     }
   ]
 }

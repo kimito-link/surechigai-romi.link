@@ -64,8 +64,19 @@ describe("buildPublicSharePageUrl", () => {
         recordedAt: at,
       }),
     ).toBe(
-      `https://surechigai.kimito.link/u/abc123?v=${at.getTime()}&area=${encodeURIComponent("岡谷市")}&pref=${encodeURIComponent("長野県")}&lat=36.07&lng=138.06&zoom=13`,
+      `https://surechigai.kimito.link/u/abc123?v=${at.getTime()}&area=${encodeURIComponent("岡谷市")}&pref=${encodeURIComponent("長野県")}`,
     );
+    expect(
+      buildPublicSharePageUrl("abc123", at, "https://surechigai.kimito.link", {
+        area: "岡谷市",
+        prefecture: "長野県",
+        lat: 36.07,
+        lng: 138.06,
+        hasLocation: true,
+        zoom: 13,
+        recordedAt: at,
+      }),
+    ).not.toContain("lat=");
   });
 });
 
@@ -265,7 +276,9 @@ describe("buildWarmTargetUrl（OGPキャッシュ事前ウォーム）", () => {
     const url = buildWarmTargetUrl(location, "streamerfunch");
     expect(url).toContain(`v=${location.recordedAt.getTime()}`);
     expect(url).toContain("area=%E5%B2%A1%E8%B0%B7%E5%B8%82");
-    expect(url).toContain("lat=36.065296");
+    expect(url).toContain("lat=36.07");
+    expect(url).not.toContain("36.065296");
+    expect(url).toContain("zoom=11");
   });
 
   it("位置なしでも生成でき、座標クエリを含まない", () => {
@@ -276,8 +289,7 @@ describe("buildWarmTargetUrl（OGPキャッシュ事前ウォーム）", () => {
 });
 
 /**
- * OGP/シェア文言で「岡谷市」ではなくチェックイン画面と同じ詳しさを出す（2026-07-31 の方針）。
- * 逆ジオの address は重複を含む冗長な文字列なので、畳んで読める形にする。
+ * 公開文面は都道府県+市区町村まで。丁目・街道・郵便番号は出さない。
  */
 describe("resolveShareDetailedPlace", () => {
   const base = {
@@ -290,21 +302,21 @@ describe("resolveShareDetailedPlace", () => {
     recordedAt: new Date("2026-07-31T00:00:00Z"),
   };
 
-  it("重複と「日本」を畳んで詳細住所を返す", () => {
+  it("丁目や街道を落として都道府県+市区町村だけ返す", () => {
     expect(
       resolveShareDetailedPlace({
         ...base,
         address: "川岸, 岡谷街道, 川岸東四丁目, 川岸, 岡谷市, 長野県, 日本",
       }),
-    ).toBe("川岸 岡谷街道 川岸東四丁目 岡谷市 長野県");
+    ).toBe("長野県岡谷市");
   });
 
-  it("address が無ければ市区町村へフォールバック", () => {
-    expect(resolveShareDetailedPlace({ ...base, address: null })).toBe("岡谷市");
+  it("address が無ければ都道府県+市区町村", () => {
+    expect(resolveShareDetailedPlace({ ...base, address: null })).toBe("長野県岡谷市");
   });
 
   it("address が空文字でもフォールバックする", () => {
-    expect(resolveShareDetailedPlace({ ...base, address: "   " })).toBe("岡谷市");
+    expect(resolveShareDetailedPlace({ ...base, address: "   " })).toBe("長野県岡谷市");
   });
 
   it("null を渡すと null", () => {
