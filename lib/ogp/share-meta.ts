@@ -2,6 +2,12 @@
  * OGP / X シェア用メタデータの純粋関数（vitest 可能）。
  * サーバーless では @/ エイリアス不可のため定数は直書き（lib/site-urls と同期）。
  */
+import {
+  capPublicZoom,
+  formatPublicCoordinate,
+  toPublicPlace,
+} from "./sanitize-public-place.js";
+
 const APP_ORIGIN = "https://surechigai.kimito.link";
 
 export type ShareLocationInfo = {
@@ -23,33 +29,21 @@ export function resolveShareAreaLabel(info: ShareLocationInfo | null | undefined
 }
 
 /**
- * OGP の見出し用に、可能なかぎり詳しい地名を返す。
+ * OGP・シェア文面に出してよい地名。都道府県と市区町村だけ。
  *
- * ユーザーの意図は「どこにいるかを正確に見せる」こと（2026-07-31 の判断）。
- * 隠す・消す・公開範囲を絞る手段はアプリ側に揃っているので、公開すると決めた足あとは
- * チェックイン画面と同じ粒度で見せる。address が無いときは市区町村へフォールバック。
- *
- * 逆ジオの address は "川岸, 岡谷街道, 川岸東四丁目, 川岸, 岡谷市, 長野県, 日本" のように
- * 冗長かつ重複を含むので、重複を畳んで読みやすい順（詳細→広域）に整える。
+ * 2026-07-31 はチェックイン画面と同じ詳しさ（丁目まで）を出していたが、
+ * Xのカードに番地と郵便番号が載る事故になった。公開面は粗い地名に戻す。
+ * address が無くても area / prefecture から同じ関門で組む。
  */
 export function resolveShareDetailedPlace(
   info: ShareLocationInfo | null | undefined,
 ): string | null {
   if (!info) return null;
-  const raw = info.address?.trim();
-  if (!raw) return resolveShareAreaLabel(info);
-
-  const seen = new Set<string>();
-  const parts: string[] = [];
-  for (const piece of raw.split(",").map((s) => s.trim())) {
-    if (!piece || piece === "日本") continue;
-    if (seen.has(piece)) continue;
-    seen.add(piece);
-    parts.push(piece);
-  }
-  if (parts.length === 0) return resolveShareAreaLabel(info);
-  // 長くなりすぎるとカードで省略されるので上限を設ける
-  return parts.slice(0, 5).join(" ");
+  return toPublicPlace({
+    address: info.address,
+    area: info.area,
+    prefecture: info.prefecture,
+  }).label;
 }
 
 /** X シェア用 URL（?v= で Card キャッシュを bust。地点ヒントも付与） */
@@ -62,12 +56,16 @@ export function buildPublicSharePageUrl(
   const params = new URLSearchParams();
   const v = recordedAt?.getTime() ?? Date.now();
   params.set("v", String(v));
-  if (location?.area) params.set("area", location.area);
-  if (location?.prefecture) params.set("pref", location.prefecture);
-  if (location?.hasLocation && location.lat != null && location.lng != null) {
-    params.set("lat", String(location.lat));
-    params.set("lng", String(location.lng));
-    params.set("zoom", String(location.zoom));
+  if (location) {
+    const place = toPublicPlace({
+      address: location.address,
+      area: location.area,
+      prefecture: location.prefecture,
+    });
+    // 公開URLに緯度経度は載せない。6桁座標が投稿URLに残るのを防ぐ。
+    if (place.municipality) params.set("area", place.municipality);
+    else if (place.prefecture) params.set("area", place.prefecture);
+    if (place.prefecture) params.set("pref", place.prefecture);
   }
   return `${origin}/u/${slug}?${params.toString()}`;
 }
@@ -133,12 +131,22 @@ export function buildOgImageSearchParams(
   options?: { name?: string | null; avatar?: string | null },
 ): URLSearchParams {
   const params = new URLSearchParams();
-  if (info.area) params.set("area", info.area);
-  if (info.prefecture) params.set("pref", info.prefecture);
+  const place = toPublicPlace({
+    address: info.address,
+    area: info.area,
+    prefecture: info.prefecture,
+  });
+  if (place.municipality) params.set("area", place.municipality);
+  else if (place.prefecture) params.set("area", place.prefecture);
+  if (place.prefecture) params.set("pref", place.prefecture);
   if (info.hasLocation && info.lat != null && info.lng != null) {
-    params.set("lat", String(info.lat));
-    params.set("lng", String(info.lng));
-    params.set("zoom", String(info.zoom));
+    const lat = formatPublicCoordinate(info.lat);
+    const lng = formatPublicCoordinate(info.lng);
+    if (lat && lng) {
+      params.set("lat", lat);
+      params.set("lng", lng);
+      params.set("zoom", String(capPublicZoom(info.zoom)));
+    }
   }
   if (info.recordedAt) {
     params.set("v", String(info.recordedAt.getTime()));
@@ -195,8 +203,11 @@ export function parseShareLocationFromQuery(
     const v = query[key];
     return Array.isArray(v) ? v[0] : v;
   };
-  const area = single("area") ?? null;
-  const prefecture = single("pref") ?? null;
+  const rawArea = single("area") ?? null;
+  const rawPrefecture = single("pref") ?? null;
+  const place = toPublicPlace({ area: rawArea, prefecture: rawPrefecture, address: rawArea });
+  const area = place.municipality;
+  const prefecture = place.prefecture;
   const latRaw = single("lat");
   const lngRaw = single("lng");
   const zoomRaw = single("zoom");
@@ -232,8 +243,8 @@ export function preferExplicitShareLocation(
   if (!explicit?.hasLocation || explicit.lat == null || explicit.lng == null) {
     return resolved ?? null;
   }
-  // クエリ由来のヒントには address が乗らない（URL長を抑えるため）。
-  // 同じ地点を指しているなら DB 側の詳細住所を引き継ぐ（OGP文面が市区町村に痩せるのを防ぐ）。
+  // クエリ由来のヒントには番地を載せない。DB側の住所は後段のサニタイザが
+  // 市区町村だけを拾うために引き継ぐ。丁目や郵便番号は公開文面に残さない。
   const withAddress = (loc: ShareLocationInfo): ShareLocationInfo =>
     loc.address || !resolved?.address ? loc : { ...loc, address: resolved.address };
 

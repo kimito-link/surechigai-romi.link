@@ -17,6 +17,10 @@ import {
   resolveShareDetailedPlace,
   type ShareLocationInfo,
 } from "../../lib/ogp/share-meta.js";
+import {
+  ensureSafePublicImageUrl,
+  sanitizePublicText,
+} from "../../lib/ogp/sanitize-public-place.js";
 
 const APP_ORIGIN = "https://surechigai.kimito.link";
 
@@ -70,8 +74,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             resolveShareDetailedPlace(resolvedLocation) ??
             resolveShareDetailedPlace(infoLocation) ??
             "どこか";
-          title = `${who} は ${place} にいるよ｜君斗りんくのすれ違ひ通信`;
-          description = `${place} で記録された足あと。キミの現在地を刻もう。`;
+          title = sanitizePublicText(`${who} は ${place} にいるよ｜君斗りんくのすれ違ひ通信`);
+          description = sanitizePublicText(`${place} で記録された足あと。キミの現在地を刻もう。`);
         }
       }
     } catch {
@@ -84,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const versionFromQuery =
     vHint != null && Number.isFinite(Number(vHint)) ? new Date(Number(vHint)) : null;
 
-  const ogImage =
+  const ogImageRaw =
     slug && /^[A-Za-z0-9]{1,16}$/.test(slug)
       ? buildOgRedirectImageTarget({
           origin: APP_ORIGIN,
@@ -101,6 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             Date.now(),
         })
       : `${APP_ORIGIN}/og-default.png`;
+  const ogImage = ensureSafePublicImageUrl(ogImageRaw, `${APP_ORIGIN}/og-default.png`);
   const pageUrl = slug ? `${APP_ORIGIN}/u/${slug}` : APP_ORIGIN;
   const imageAlt = title.replace(/｜.*$/, "").trim();
 

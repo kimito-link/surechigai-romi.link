@@ -32,7 +32,7 @@ import {
   shareMyLocation,
   type ShareTarget,
 } from "@/lib/share";
-import { warmOgImageNow } from "@/hooks/use-warm-og-image";
+import { publicShareLabel } from "@/lib/ogp/sanitize-public-place";
 import { readNoticeEnabled, writeNoticeEnabled } from "@/lib/encounter-notice";
 import type { TrailVisibility } from "@/modules/encounter/core/trail-visibility";
 import {
@@ -129,7 +129,9 @@ export function MypageAuthenticatedScreen() {
   // MVP では blocks テーブルを直接取得する API なし → 簡易プレースホルダ）
   const unblockMutation = trpc.safety.unblock.useMutation();
 
-  // 現在地シェア（/u/<slug> をXで共有 → 地図サムネ付きOGP）
+  // 現在地シェア。押した時点で凍結カードを作り、/s/<id> を投稿に載せる。
+  const shareCardMutation = trpc.ogp.createShareCard.useMutation();
+  // 公開ページ（/u/<slug>）を開くときだけ、従来のスラッグを発行する。
   const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
 
   // 共有サムネの粒度設定（false=市区町村 / true=正確座標）
@@ -222,11 +224,9 @@ export function MypageAuthenticatedScreen() {
     }
     try {
       // タイムアウト必須: 「遅い」だけだと catch に来ず空タブが about:blank のまま残る
-      const res = await withShareTimeout(shareSlugMutation.mutateAsync());
-      // OGP画像を温めてから開く（checkin 側と同じ理由。2026-08-14）。
-      // 温まる前にクローラーが来ると画像なしカードになる。上限で必ず打ち切る。
-      await warmOgImageNow(res.warmImageUrl);
-      const shared = await shareMyLocation(res.url, res.areaLabel ?? undefined, {
+      const res = await withShareTimeout(shareCardMutation.mutateAsync());
+      const areaLabel = publicShareLabel({ label: res.areaLabel }) ?? undefined;
+      const shared = await shareMyLocation(res.url, areaLabel, {
         popup: sharePopup,
         target,
       });
@@ -248,7 +248,7 @@ export function MypageAuthenticatedScreen() {
     } finally {
       shareInFlightRef.current = false;
     }
-  }, [shareSlugMutation]);
+  }, [shareCardMutation]);
 
   const handleTogglePrecision = useCallback(
     (next: boolean) => {
@@ -335,7 +335,7 @@ export function MypageAuthenticatedScreen() {
       user={user}
       tabInset={tabInset}
       hitokotoDisplay={hitokotoDisplay}
-      isSharing={shareSlugMutation.isPending}
+      isSharing={shareCardMutation.isPending || shareSlugMutation.isPending}
       handleViewPublicPage={handleViewPublicPage}
       handleShareLocation={handleShareLocation}
       settingsOpen={settingsOpen}

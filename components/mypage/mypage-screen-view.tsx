@@ -269,8 +269,8 @@ export function MypageScreenView(props: MypageScreenViewProps) {
             <Text style={styles.precisionTitle}>正確な現在地で共有する</Text>
             <Text style={styles.precisionSub}>
               {sharePrecise
-                ? "サムネに正確な座標を表示します（後でその場所に行ける精度）"
-                : "OFFの間は市区町村レベル（約500m）で安全側に表示します"}
+                ? "アプリ内の公開ページは正確な地点です。Xのカードは市区町村までです"
+                : "公開ページもXのカードも、市区町村までです"}
             </Text>
           </View>
           <Switch
