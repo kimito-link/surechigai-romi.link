@@ -33,6 +33,14 @@ beforeEach(() => {
 });
 
 describe("buildMyLocationShareText（3導線で共通の文面）", () => {
+  it("すれ違い件数を渡したときだけ「N人とすれ違った」を添える（既定は従来文面）", () => {
+    expect(buildMyLocationShareText("茅野市").text).toBe("茅野市にいるよ。キミの現在地を刻む。");
+    expect(buildMyLocationShareText("茅野市", { encounterCount: 3 }).text).toBe(
+      "茅野市にいるよ。3人とすれ違ったよ。キミの現在地を刻む。",
+    );
+    expect(buildMyLocationShareText(undefined, { encounterCount: 0 }).text).toBe("キミの現在地を刻む。");
+  });
+
   it("地名があれば本文に含める", () => {
     const { text } = buildMyLocationShareText("茅野市");
 

@@ -92,6 +92,21 @@ export async function fetchKimitoPublicProfile(
 export async function fetchTwitterApiProfile(
   username: string,
 ): Promise<TwitterCacheInfo | null> {
+  // ★支出ガード（server/x-api-spend-guard.ts）。
+  // resolvePrefectureCreatorProfiles は一覧を開くたびに needsAvatar の全員分ここを呼び、
+  // X 側に画像が無い・取得失敗のユーザーは DB キャッシュに残らないため毎回課金されていた。
+  // 拒否時は null を返す＝kimito.link / 既存キャッシュで表示を続ける（fail-soft）。
+  const clean = normalizeTwitterUsername(username);
+  if (!clean) return null;
+  const { getSharedXProfileLookupGuard } = await import("./x-api-spend-guard.js");
+  const decision = getSharedXProfileLookupGuard().tryAcquire(clean);
+  if (!decision.allowed) {
+    if (decision.reason === "hourly_cap") {
+      console.warn("[XSpendGuard] hourly cap reached, skip X profile lookup:", clean);
+    }
+    return null;
+  }
+
   const { getUserProfileByUsername } = await import("./twitter-oauth2.js");
   const profile = await getUserProfileByUsername(username);
   if (!profile) return null;

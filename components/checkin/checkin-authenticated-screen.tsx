@@ -55,6 +55,7 @@ import {
   type ShareTarget,
 } from "@/lib/share";
 import { useToast } from "@/components/atoms/toast";
+import { isShareEncounterCopyEnabled } from "@/lib/growth-flags";
 import { resolveCheckinErrorMessage } from "@/components/checkin/resolve-checkin-error-message";
 import { isDesktopWeb } from "@/lib/get-current-location";
 import {
@@ -164,6 +165,9 @@ export default function CheckinAuthenticatedScreen() {
       const shared = await shareMyLocation(res.url, areaLabel, {
         popup: sharePopup,
         target,
+        // EXPO_PUBLIC_SHARE_ENCOUNTER_COPY=true のときだけ件数を添える（既定は従来文面）
+        encounterCount:
+          isShareEncounterCopyEnabled() && state === "success" ? newCount : undefined,
       });
       if (!shared) {
         const where = target === "threads" ? "Threads" : "X";
@@ -179,7 +183,7 @@ export default function CheckinAuthenticatedScreen() {
     } finally {
       shareInFlightRef.current = false;
     }
-  }, [shareSlugMutation, showError, checkinMunicipality, checkinPrefecture]);
+  }, [shareSlugMutation, showError, checkinMunicipality, checkinPrefecture, state, newCount]);
 
   /**
    * Instagram 用にリンクをコピーする。

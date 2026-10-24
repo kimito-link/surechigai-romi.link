@@ -217,6 +217,12 @@ export const navigate = {
     console.log("[Navigation] Navigating to premium");
     router.push(STATIC_ROUTES.PREMIUM as never);
   },
+
+  /** 機能ゲートから /premium へ。from は lib/premium-paywall.ts の parsePaywallSource で検証される */
+  toPremiumFrom: (from: "export" | "adFree" | "advancedStats" | "markerCustom") => {
+    console.log("[Navigation] Navigating to premium from", from);
+    router.push({ pathname: STATIC_ROUTES.PREMIUM, params: { from } } as never);
+  },
   
   // 設定関連
   toSettings: () => {

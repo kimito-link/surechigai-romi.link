@@ -92,19 +92,37 @@ npx tsx scripts/init-api-cost-settings.ts
 - コスト上限に達すると通知が送信されます
 - 自動停止が有効な場合、API呼び出しが停止されます
 
-## コスト計算の仕組み
+## コスト計算の仕組み（2026-10 改訂: Pay-Per-Use 対応）
 
-1. **無料枠**: 月100件まで無料
-2. **超過分**: 100件を超えた分は $0.01/件（要確認）
-3. **計算式**: `cost = max(0, (usage - 100)) * 0.01`
+X API Pay-Per-Use は**リクエスト数ではなく返却オブジェクト数**で課金される
+（user 読み取り $0.010 / post 読み取り $0.005）。**2026-11-22 からは `expansions` で同梱された
+`includes.users` / `includes.tweets` も通常単価で課金**される。
 
-### コスト単価の更新
+1. **無料枠**: 月 `X_API_FREE_TIER_REQUESTS` 件（既定100）までは推定0
+2. **超過分**: `server/x-api-spend-guard.ts` の `estimateXApiCallCostUsd` がレスポンスの
+   `data`（配列なら件数）＋ `includes.*` を数えて推定（`server/rate-limit-handler.ts` から呼ばれる）
+3. 例: `/2/users/:id/following?max_results=1000` は1リクエストでも最大 $10
 
-X APIの実際の従量課金価格を確認し、`server/db/api-usage-db.ts` の `COST_PER_REQUEST` を更新してください：
+### expansions の現状（2026-10-25 確認）
 
-```typescript
-const COST_PER_REQUEST = 0.01; // 実際の価格に更新
-```
+- このリポの X API 呼び出し（`server/twitter-oauth2.ts`）はすべて素の `fetch`。`twitter-api-v2` 等のライブラリは未使用
+- `expansions` パラメータを付けている呼び出しは**0件**。`user.fields` は同一オブジェクトのフィールド指定なので追加課金なし
+- 新たに `expansions=pinned_tweet_id` 等を足すと、その分 post/user が課金される点に注意
+
+### 環境変数（すべて任意・未設定でも従来どおり動く）
+
+| 変数 | 既定 | 用途 |
+|---|---|---|
+| `X_API_COST_PER_USER_READ_USD` | 0.010 | user 1件の単価（推定用） |
+| `X_API_COST_PER_POST_READ_USD` | 0.005 | post 1件の単価（推定用） |
+| `X_API_FREE_TIER_REQUESTS` | 100 | 推定0として扱う月間件数。無料枠の無い契約なら 0 |
+| `X_API_ENRICH_DISABLED` | (未設定) | `true` でプロフィール enrichment からの X API 呼び出しを停止（キルスイッチ） |
+| `X_API_ENRICH_MAX_PER_HOUR` | 100 | enrichment の1時間あたり上限（インスタンス単位） |
+| `X_API_ENRICH_RETRY_COOLDOWN_MS` | 21600000 | 同じユーザー名を再取得しない間隔（6時間） |
+
+★enrichment（`server/creator-profile-enricher.ts` の `fetchTwitterApiProfile`）は都道府県クリエイター一覧の
+表示ごとに「アバター未取得」の全員分呼ばれ、X 側で取れなかったユーザーは DB キャッシュに残らないため
+毎回課金されていた。上記ガードで同一ユーザーの再取得と時間あたりの総数を抑える。
 
 ## トラブルシューティング
 

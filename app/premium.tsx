@@ -21,13 +21,19 @@
  *
  * ★色は semantic の color を使う（palette 直参照はコントラスト検証の外に出るため避ける）。
  */
-import React, { useCallback } from "react";
-import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, Text, View } from "react-native";
-import { Link, type Href } from "expo-router";
+import React, { useCallback, useState } from "react";
+import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, Share, Text, View } from "react-native";
+import { Link, useLocalSearchParams, type Href } from "expo-router";
 import Head from "expo-router/head";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
-import { PREMIUM_FEATURES, useIsPremium } from "@/lib/premium-features";
+import { PREMIUM_FEATURES, canUseFeature, useIsPremium } from "@/lib/premium-features";
+import {
+  orderPremiumFeatureKeys,
+  paywallContextLine,
+  parsePaywallSource,
+} from "@/lib/premium-paywall";
+import { trpc } from "@/lib/trpc";
 import { useTrpcReady } from "@/lib/trpc-ready-context";
 import { color } from "@/theme/tokens";
 import { ScreenContainer } from "@/components/organisms/screen-container";
@@ -117,6 +123,41 @@ function LinkText({ label }: { label: string }) {
  */
 function PremiumStatusCard() {
   const { isPremium, isLoading } = useIsPremium();
+  const exportTrail = trpc.premium.exportTrail.useMutation();
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
+
+  /**
+   * 足あとの書き出し（プレミアム特典）。
+   * ★サーバーにはもともと premium.exportTrail があったが、呼び出す UI がどこにも無く、
+   *   加入者が払った特典を使えない状態だった（解約理由になる）。
+   *   Web はファイルとして保存、ネイティブは共有シートに渡す（追加の依存を増やさない）。
+   */
+  const onExport = useCallback(
+    async (format: "gpx" | "geojson") => {
+      setExportMessage(null);
+      try {
+        const res = await exportTrail.mutateAsync({ format });
+        if (Platform.OS === "web" && typeof document !== "undefined") {
+          const blob = new Blob([res.content], {
+            type: format === "gpx" ? "application/gpx+xml" : "application/geo+json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = res.filename;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } else {
+          await Share.share({ title: res.filename, message: res.content });
+        }
+        setExportMessage(`${res.count}件の足あとを書き出しました。`);
+      } catch {
+        setExportMessage("書き出しに失敗しました。時間をおいて再度お試しください。");
+      }
+    },
+    [exportTrail],
+  );
+
   return (
     <Card>
       <Text style={{ fontSize: 13, fontWeight: "800", color: color.textMuted }}>
@@ -129,6 +170,41 @@ function PremiumStatusCard() {
           {isPremium ? "プレミアムをご利用中です" : "無料でご利用中です"}
         </Text>
       )}
+      {canUseFeature("export", isPremium) ? (
+        <View style={{ gap: 8 }}>
+          <Text style={{ fontSize: 14, fontWeight: "800", color: color.textPrimary }}>
+            {PREMIUM_FEATURES.export.label}
+          </Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            {(["gpx", "geojson"] as const).map((format) => (
+              <Pressable
+                key={format}
+                onPress={() => void onExport(format)}
+                disabled={exportTrail.isPending}
+                accessibilityRole="button"
+                testID={`premium-export-${format}`}
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: color.accentPrimary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: exportTrail.isPending ? 0.6 : 1,
+                }}
+              >
+                <Text style={{ color: color.accentPrimary, fontSize: 14, fontWeight: "800" }}>
+                  {format === "gpx" ? "GPX で書き出す" : "GeoJSON で書き出す"}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          {exportMessage ? (
+            <Text style={{ fontSize: 13, color: color.textSecondary }}>{exportMessage}</Text>
+          ) : null}
+        </View>
+      ) : null}
     </Card>
   );
 }
@@ -138,6 +214,9 @@ export default function PremiumScreen() {
   /* ★login() を直に呼ばない（Guideline 4.8）。理由は photo-import-screen.tsx と同じ。 */
   const openLoginGuide = useLoginGuide();
   const trpcReady = useTrpcReady();
+  // 機能ゲートから来たとき（/premium?from=export 等）の1行案内（設計 B-4）
+  const params = useLocalSearchParams<{ from?: string | string[] }>();
+  const contextLine = paywallContextLine(parsePaywallSource(params.from), PREMIUM_FEATURES);
   // 購入ボタンの活性判定に使う。状態カードを出せないときは常に false（フェイルクローズ）
   const isPremium = false;
 
@@ -177,6 +256,14 @@ export default function PremiumScreen() {
           <Text style={{ fontSize: 24, fontWeight: "800", color: color.textPrimary }}>
             プレミアム
           </Text>
+          {contextLine ? (
+            <Text
+              testID="premium-context-line"
+              style={{ fontSize: 15, fontWeight: "700", lineHeight: 22, color: color.accentPrimary }}
+            >
+              {contextLine}
+            </Text>
+          ) : null}
           {/* 無料の鉄則を先に置く（設計 B-5 の1番目） */}
           <Text style={{ fontSize: 15, lineHeight: 23, color: color.textSecondary }}>
             足あとの記録と、思い出の場所への再訪は
@@ -195,7 +282,7 @@ export default function PremiumScreen() {
             プレミアムでできること
           </Text>
           <View style={{ gap: 12 }}>
-            {(Object.keys(PREMIUM_FEATURES) as (keyof typeof PREMIUM_FEATURES)[]).map((key) => {
+            {orderPremiumFeatureKeys(PREMIUM_FEATURES).map((key) => {
               const feature = PREMIUM_FEATURES[key];
               return (
                 <Bullet
