@@ -9,8 +9,15 @@ import { apiUsage, apiCostSettings, InsertApiUsage, InsertApiCostSettings, type 
 import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
 
 // X APIの従量課金設定
-const FREE_TIER_LIMIT = 100; // 月100件まで無料
-// 要確認: X API公式の従量課金単価に更新すること（100件超過分のUSD/件）
+// 月N件までは推定コスト0として扱う（既定100＝従来どおり）。Pay-Per-Use で無料枠が無い契約なら
+// X_API_FREE_TIER_REQUESTS=0 にする。
+function readFreeTierLimit(): number {
+  const n = Number(process.env.X_API_FREE_TIER_REQUESTS);
+  return process.env.X_API_FREE_TIER_REQUESTS && Number.isFinite(n) && n >= 0 ? n : 100;
+}
+const FREE_TIER_LIMIT = readFreeTierLimit();
+// 呼び出し側が推定額を渡さなかったときの1件あたり単価（user 1件読み取り相当）。
+// 実額は server/x-api-spend-guard.ts の estimateXApiCallCostUsd が返却オブジェクト数から出す。
 const COST_PER_REQUEST = 0.01;
 
 /**
@@ -25,6 +32,11 @@ export async function recordApiUsage(usage: {
     remaining: number;
     reset: number;
   } | null;
+  /**
+   * 返却オブジェクト数（expansions 含む）から推定した額。
+   * 未指定なら従来どおり1件 COST_PER_REQUEST。
+   */
+  estimatedCostUsd?: number;
 }): Promise<number | null> {
   const db = await getDb();
   if (!db) {
@@ -40,7 +52,7 @@ export async function recordApiUsage(usage: {
     // 今月の使用量を取得してコストを計算
     const monthlyUsage = await getMonthlyUsage(month);
     const isFreeTier = monthlyUsage < FREE_TIER_LIMIT;
-    const cost = isFreeTier ? 0 : COST_PER_REQUEST;
+    const cost = isFreeTier ? 0 : (usage.estimatedCostUsd ?? COST_PER_REQUEST);
 
     const insertData: InsertApiUsage = {
       endpoint: usage.endpoint,

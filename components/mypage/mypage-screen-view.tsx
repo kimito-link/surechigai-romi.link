@@ -44,6 +44,7 @@ import { CategoryChips } from "@/components/molecules/category-chips";
 import type { CategoryId } from "@/modules/encounter/core/category";
 import type { AuthUser } from "@/lib/auth-context";
 import { styles } from "@/components/mypage/mypage-screen-styles";
+import { isPremiumExportEntryEnabled } from "@/lib/growth-flags";
 
 export type MypageScreenViewProps = {
   isDesktop: boolean;
@@ -238,6 +239,27 @@ export function MypageScreenView(props: MypageScreenViewProps) {
         <SwitchXAccountResultNotice onRetry={() => setSwitchModalVisible(true)} />
         <MypageActionList />
         <LatestFootprintCard />
+        {/*
+          足あとの書き出し（プレミアム特典）への入口（docs/monetization-DESIGN.md D-5 / B-4）。
+          機能を隠さず見せ、押したら /premium?from=export へ。加入者はそこで書き出せる。
+          EXPO_PUBLIC_PREMIUM_EXPORT_ENTRY=true のときだけ出す（既定 OFF＝従来どおり）。
+        */}
+        {isPremiumExportEntryEnabled() ? (
+          <Pressable
+            onPress={() => navigate.toPremiumFrom("export")}
+            style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
+            accessibilityRole="button"
+            testID="mypage-export-trail-entry"
+          >
+            <MaterialIcons name="download" size={20} color={palette.kimitoBlue} style={{ marginRight: 12 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.menuItemText, { color: color.textPrimary }]}>足あとを書き出す</Text>
+              <Text style={{ color: color.textMuted, fontSize: 11, marginTop: 2 }}>
+                GPX / GeoJSON で持ち出す（プレミアム）
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
         <MySignalSummary />
         {/* 協賛枠。在庫が無い/今日の上限に達している場合は何も描かない。
             統計の直後＝「自分の記録を見終えた」区切りに置く。 */}

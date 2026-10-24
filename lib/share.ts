@@ -371,9 +371,16 @@ export type ShareTarget = "x" | "threads";
 export async function shareMyLocation(
   shareUrl: string,
   areaLabel?: string,
-  options?: { popup?: PreparedSharePopup | null; target?: ShareTarget },
+  options?: {
+    popup?: PreparedSharePopup | null;
+    target?: ShareTarget;
+    /** チェックイン直後に届いたすれ違い件数（buildMyLocationShareText 参照） */
+    encounterCount?: number;
+  },
 ): Promise<boolean> {
-  const { text, hashtags } = buildMyLocationShareText(areaLabel);
+  const { text, hashtags } = buildMyLocationShareText(areaLabel, {
+    encounterCount: options?.encounterCount,
+  });
   const share = options?.target === "threads" ? shareToThreads : shareToTwitter;
   return share(text, shareUrl, hashtags, { popup: options?.popup });
 }
@@ -382,13 +389,20 @@ export async function shareMyLocation(
  * 共有の本文とハッシュタグ。X / Threads / Instagram 用コピーで共通に使う
  * （文言を変えるときに1箇所で済むようにする）。
  */
-export function buildMyLocationShareText(areaLabel?: string): {
+export function buildMyLocationShareText(
+  areaLabel?: string,
+  options?: { encounterCount?: number },
+): {
   text: string;
   hashtags: string[];
 } {
   const where = areaLabel ? `${areaLabel}にいるよ。` : "";
+  // すれ違いが届いた直後のシェアだけ件数を添える（呼び出し側がフラグで制御。既定は渡さない）。
+  // 未インストールの人に「ここで実際に人とすれ違える」具体的な証拠を見せる。
+  const count = options?.encounterCount ?? 0;
+  const met = Number.isInteger(count) && count > 0 ? `${count}人とすれ違ったよ。` : "";
   return {
-    text: `${where}キミの現在地を刻む。`,
+    text: `${where}${met}キミの現在地を刻む。`,
     hashtags: ["君斗りんくのすれ違ひ通信"],
   };
 }

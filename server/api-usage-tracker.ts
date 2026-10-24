@@ -58,7 +58,8 @@ export async function recordApiUsage(
     reset: number;
   } | null,
   success: boolean = true,
-  method: string = "GET"
+  method: string = "GET",
+  estimatedCostUsd?: number
 ): Promise<void> {
   const now = Date.now();
   
@@ -77,6 +78,7 @@ export async function recordApiUsage(
     method,
     success,
     rateLimitInfo,
+    estimatedCostUsd,
   }).catch((error) => {
     console.error("[API Usage] Failed to record to database:", error);
   });

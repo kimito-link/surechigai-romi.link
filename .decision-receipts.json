@@ -324,6 +324,35 @@
       "scopePaths": [
         "scripts/check-security-local-only-wired.mjs"
       ]
+    },
+    {
+      "at": "2026-10-24T22:51:15.151Z",
+      "responsibility": "x-api-spend-estimate-and-enrich-guard",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "server/x-api-spend-guard.ts",
+        "__tests__/x-api-spend-guard.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T22:51:15.186Z",
+      "responsibility": "growth-feature-flags",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/growth-flags.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T22:51:15.229Z",
+      "responsibility": "premium-paywall-display-logic",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/premium-paywall.ts",
+        "__tests__/premium-paywall.test.ts"
+      ]
     }
   ]
 }

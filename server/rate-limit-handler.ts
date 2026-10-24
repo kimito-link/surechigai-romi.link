@@ -209,13 +209,21 @@ export async function twitterApiFetch<T = unknown>(
   const urlObj = new URL(url);
   const endpoint = urlObj.pathname;
 
+  // ★返却オブジェクト数（expansions の includes.users / includes.tweets も含む）で推定する。
+  //   Pay-Per-Use はリクエスト数ではなくオブジェクト数課金（server/x-api-spend-guard.ts）。
+  const { estimateXApiCallCostUsd } = await import("./x-api-spend-guard.js");
+  const estimate = result.response.ok
+    ? estimateXApiCallCostUsd(endpoint, result.data)
+    : { costUsd: 0 };
+
   // API使用量を記録（非同期、エラーは無視）
   import("./api-usage-tracker.js").then((tracker) => {
     tracker.recordApiUsage(
       endpoint,
       result.rateLimitInfo,
       success,
-      method
+      method,
+      estimate.costUsd
     ).catch((error) => {
       console.error("[RateLimit] Failed to record API usage:", error);
     });
