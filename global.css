@@ -2,20 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-/* kimito.link ブランド統一: 淡いクール白基調。ハイドレーション時の地色 + 水平スクロール防止 */
+/* kimito.link ブランド統一: 淡いクール白基調。ハイドレーション時の地色 + 水平スクロール防止
+   max-width は 100vw にしない。100vw はスクロールバー幅を含み、モバイルでページが
+   1px はみ出して横スワイプで画面がずれ、拡大したように見える。 */
 html, body, #root {
   background-color: #F0F4F8;
   overflow-x: hidden;
-  max-width: 100vw;
+  overflow-x: clip;
+  max-width: 100%;
+  width: 100%;
   position: relative;
   min-height: 100%;
   height: 100%;
 }
 
-/* タッチデバイスでの水平スワイプを防止 */
+/* タッチデバイスでの水平スワイプを防止。pinch-zoom は横スワイプを拡大に使うので付けない。 */
 body {
   overscroll-behavior-x: none;
-  touch-action: pan-y pinch-zoom;
+  touch-action: pan-y;
 }
 
 /* iOSでの弾性スクロールを制限 */

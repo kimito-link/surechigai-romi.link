@@ -23,12 +23,13 @@ export type AuthState = {
   logout: () => Promise<void>;
   /**
    * provider 省略時は X。Apple は App Store Guideline 4.8 対応で追加。
-   * Web は Clerk 標準 <SignIn /> が3ボタンを描画するため provider を使うのはネイティブのみ。
+   * kimito はアプリ内の認証セッションで kimito.link に入り、カスタムスキームで戻る。
+   * Web は Clerk 標準 <SignIn /> がボタンを描画するため provider を使うのはネイティブのみ。
    */
   login: (
     returnUrl?: string,
     forceSwitch?: boolean,
-    provider?: "x" | "apple",
+    provider?: "x" | "apple" | "kimito",
   ) => Promise<void>;
 };
 

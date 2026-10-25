@@ -100,16 +100,16 @@ export function clerkCardBoxWidth(viewportWidth: number, box: ClerkCardBoxModel 
 
 /**
  * ネイティブ（iOS / Android）の本物＝components/organisms/clerk-sign-in.tsx（Clerk の Web カードは RN で描けないため
- * 自前の X / Apple の 2 ボタン）。プレースホルダはこの箱に合わせる。
+ * 自前の X / Apple / kimito.link の 3 ボタン）。プレースホルダはこの箱に合わせる。
  */
 export const NATIVE_SIGN_IN_BOX_MODEL = {
   buttonMinHeight: 48,
   buttonGap: 12,
   buttonRadius: 14,
-  providerCount: 2,
+  providerCount: 3,
 } as const;
 
-/** ネイティブの本物（2 ボタン＋gap）の高さ。48×2 + 12 = 108。 */
+/** ネイティブの本物（3 ボタン＋gap）の高さ。48×3 + 12×2 = 168。 */
 export function expectedNativeSignInHeight(
   box: typeof NATIVE_SIGN_IN_BOX_MODEL = NATIVE_SIGN_IN_BOX_MODEL,
 ): number {

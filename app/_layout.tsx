@@ -45,6 +45,7 @@ import { GestureRoot } from "@/components/providers/gesture-root";
 import { WebDocumentHead } from "@/components/brand/web-document-head";
 import { navigateReplace } from "@/lib/navigation";
 import { AutoAdvanceToX } from "@/components/auth/auto-advance-to-x";
+import { UpdateNotificationHost } from "@/components/providers/update-notification-host";
 
 /**
  * ★重要: ClerkRootProvider は lazy() ではなく手動 import で読み込む。
@@ -232,7 +233,7 @@ function AppShell({ children, liteBoundary = false }: { children: ReactNode; lit
   const Shell = liteBoundary && Platform.OS === "web" ? View : GestureRoot;
   return (
     <Boundary screenName="App">
-      <Shell style={{ flex: 1, overflow: "hidden", backgroundColor: "#F0F4F8" }}>
+      <Shell style={{ flex: 1, width: "100%", maxWidth: "100%", overflow: "hidden", backgroundColor: "#F0F4F8" }}>
         {children}
       </Shell>
     </Boundary>
@@ -362,6 +363,7 @@ export default function RootLayout() {
           受けず、useEffectの多重実行(=X認可への自動click中にコンポーネントが
           再マウントされ遷移が握りつぶされる不具合)を避けられる。 */}
       <AutoAdvanceToX />
+      <UpdateNotificationHost />
       <SafeAreaProvider initialMetrics={providerInitialMetrics}>
         {shouldOverrideSafeArea ? (
           <SafeAreaFrameContext.Provider value={frame}>

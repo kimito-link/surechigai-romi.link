@@ -31,9 +31,9 @@
  * ■ ★2026-10-05: 寸法を「本物」に合わせた（ちらつきゼロ契約 ②「プレースホルダは本物と同寸・同色」。
  *   正本: web-ios-android/templates/web/auth-mode/README.md ④ ／ _docs/DESIGN-signin-no-flicker-2026-10-05.md 判断 2）。
  *   本物はプラットフォームで違う:
- *   ・ネイティブ（iOS / Android）の本物 ＝ components/organisms/clerk-sign-in.tsx（X / Apple の 2 ボタン、gap 12）。
+ *   ・ネイティブ（iOS / Android）の本物 ＝ components/organisms/clerk-sign-in.tsx（X / Apple / kimito.link の 3 ボタン、gap 12）。
  *     旧実装は見出し＋補足文＋paddingVertical 28 を足していて本物より**高く**、差し替えで縮む方向にずれていた。
- *     → 見出し等を外し、本物と同じ 2 ボタンの箱（48×2 + 12 = 108px）にする。
+ *     → 見出し等を外し、本物と同じ 3 ボタンの箱（48×3 + 12×2 = 168px）にする。
  *   ・Web の本物 ＝ Clerk の `<SignIn/>` カード（ロゴ・見出し・X / Apple / Google の 3 ボタン・フッター、486px @430）。
  *     旧実装は 2 ボタンの小箱で本物より**低く**、差し替えで下がずれていた。
  *     → 本番 DOM を実測した箱モデル（lib/clerk-card-box-model.ts）どおりに描く。
@@ -83,7 +83,7 @@ function XGlyph({ size = 20 }: { size?: number }) {
   );
 }
 
-/** ネイティブの本物（clerk-sign-in.tsx）と同じ 2 ボタン・同じ gap。 */
+/** ネイティブの本物（clerk-sign-in.tsx）と同じ 3 ボタン・同じ gap。 */
 function NativeSignInFallback({ login }: { login: ReturnType<typeof useAuth>["login"] }) {
   const box = NATIVE_SIGN_IN_BOX_MODEL;
   return (
@@ -125,6 +125,24 @@ function NativeSignInFallback({ login }: { login: ReturnType<typeof useAuth>["lo
         }}
       >
         <Text style={{ color: "#ffffff", fontSize: 17, fontWeight: "700" }}>Apple で続ける</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={() => login(undefined, false, "kimito")}
+        accessibilityRole="button"
+        accessibilityLabel="kimito.link で続ける"
+        style={{
+          backgroundColor: "#00427B",
+          borderRadius: box.buttonRadius,
+          minHeight: box.buttonMinHeight,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 16,
+        }}
+      >
+        <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700" }} numberOfLines={1}>
+          kimito.link で続ける
+        </Text>
       </Pressable>
     </View>
   );

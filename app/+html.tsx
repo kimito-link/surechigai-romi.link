@@ -7,6 +7,7 @@ import { BOOT } from "@/theme/tokens/boot";
 import { NON_SESSION_CLERK_STORAGE_KEYS } from "@/lib/clerk-public-routes";
 // ★ベールのマークを CSS に直接埋め込む（data URI）。このファイル（Node 側の静的レンダリング専用）だけが import する。
 import { BOOT_MARK_DATA_URI } from "@/theme/tokens/boot-mark-data";
+import { ROOT_VIEWPORT_CONTENT } from "@/shared/web-viewport";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -28,10 +29,7 @@ export default function Root({ children }: PropsWithChildren) {
             通常訪問でも 27KB を最優先で取りに行っていた
             （Lighthouse: offscreen-images 27KB + uses-responsive-images 6KB の指摘）。
             ベールが出るのは「ログイン済みヒントあり」か「PWA standalone 起動」のときだけ。 */}
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
-        />
+        <meta name="viewport" content={ROOT_VIEWPORT_CONTENT} />
         {/* 既定のタイトル・説明（改ざん検知対策: 正規の内容を明示。各画面で上書き可） */}
         <title>{PWA_APP_NAME}</title>
         <meta
@@ -247,13 +245,26 @@ export default function Root({ children }: PropsWithChildren) {
             --color-border: #E2E8F0;
             color-scheme: light;
           }
-          html { background-color: var(--color-background); color-scheme: light; }
+          html {
+            background-color: var(--color-background);
+            color-scheme: light;
+            overflow-x: hidden;
+            overflow-x: clip;
+            max-width: 100%;
+            width: 100%;
+          }
           body {
             background-color: var(--color-background);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
             text-rendering: optimizeSpeed;
+            overflow-x: hidden;
+            overflow-x: clip;
+            max-width: 100%;
+            width: 100%;
+            overscroll-behavior-x: none;
+            touch-action: pan-y;
           }
-          #root { background-color: var(--color-background); min-height: 100%; }
+          #root { background-color: var(--color-background); min-height: 100%; max-width: 100%; overflow-x: clip; }
           /* ログイン済みヒント / PWA standalone 起動時のブートベール（ブランドスプラッシュ）:
              プリレンダ済みのゲスト用HTMLを一瞬見せず、アプリ起動までロゴ＋スピナーで繋ぐ。
              背景色をブランド色(#E2EDF7、manifest.background_colorと統一)で先に敷くので、

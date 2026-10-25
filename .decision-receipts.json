@@ -324,6 +324,114 @@
       "scopePaths": [
         "scripts/check-security-local-only-wired.mjs"
       ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.086Z",
+      "responsibility": "ネイティブへ戻す handoff の URL と ticket 判定。RN 依存の native-redirect には置けず、サーバとクライアントの両方から使う純粋関数",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "shared/kimito-native-auth.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.109Z",
+      "responsibility": "Clerk セッションからワンタイム sign-in token を作り handoff 結果にする。秘密鍵はサーバだけが持つ",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "server/native-auth-handoff.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.132Z",
+      "responsibility": "Vercel の GET /api/auth/native-handoff。実処理は server 側と共有し、api/auth/sync.ts と同じ薄い入口",
+      "decision": "REUSE",
+      "canonicalSource": "server/native-auth-handoff.ts",
+      "scopePaths": [
+        "api/auth/native-handoff.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.153Z",
+      "responsibility": "認証セッションで handoff を開く。戻り先スキームは既存の native OAuth と同じ契約を使う",
+      "decision": "REUSE",
+      "canonicalSource": "lib/auth/native-redirect.ts",
+      "scopePaths": [
+        "lib/auth/open-kimito-auth-session.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.177Z",
+      "responsibility": "更新と新しい内容を通知するかの純粋判定。expo-notifications を import しない",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "shared/update-notice.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.199Z",
+      "responsibility": "iOS/Android の更新通知。判定は shared、許可とローカル通知は既存の push-notifications",
+      "decision": "REUSE",
+      "canonicalSource": "shared/update-notice.ts",
+      "scopePaths": [
+        "lib/notifications/native-update-notice.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.224Z",
+      "responsibility": "インストール済み PWA の更新通知。Notification API はネイティブ束に入れない",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/notifications/web-update-notice.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.245Z",
+      "responsibility": "起動時に更新通知を始める描画しないマウント。Web とネイティブで読み込む実装を分ける",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/providers/update-notification-host.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.272Z",
+      "responsibility": "横スワイプ拡大を止める viewport 定数。+html とテストが同じ文字列を使う",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "shared/web-viewport.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.295Z",
+      "responsibility": "kimito.link 認証セッションの回帰テスト",
+      "decision": "REUSE",
+      "canonicalSource": "shared/kimito-native-auth.ts",
+      "scopePaths": [
+        "__tests__/kimito-native-auth.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.317Z",
+      "responsibility": "更新通知の判定と Android チャネル trigger の回帰テスト",
+      "decision": "REUSE",
+      "canonicalSource": "shared/update-notice.ts",
+      "scopePaths": [
+        "__tests__/update-notice.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.344Z",
+      "responsibility": "viewport ロックの回帰テスト",
+      "decision": "REUSE",
+      "canonicalSource": "shared/web-viewport.ts",
+      "scopePaths": [
+        "__tests__/viewport-lock.test.ts"
+      ]
     }
   ]
 }
