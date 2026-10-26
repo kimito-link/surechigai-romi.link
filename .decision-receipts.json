@@ -324,6 +324,25 @@
       "scopePaths": [
         "scripts/check-security-local-only-wired.mjs"
       ]
+    },
+    {
+      "at": "2026-10-26T23:45:26.965Z",
+      "responsibility": "画面ラベル用の場所の粗さ。shortPlaceLabel は保存用の短い地名、sanitizeAreaName は丁目サフィックスだけなので、座標と番地を落とす表示規則はここに置く",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/public-place-label.ts"
+      ]
+    },
+    {
+      "at": "2026-10-26T23:45:26.991Z",
+      "responsibility": "公開場所ラベルと地図ピンラベルの回帰テスト",
+      "decision": "REUSE",
+      "canonicalSource": "lib/public-place-label.ts",
+      "scopePaths": [
+        "__tests__/public-place-label.test.ts",
+        "__tests__/home-inbox-layout.test.ts"
+      ]
     }
   ]
 }

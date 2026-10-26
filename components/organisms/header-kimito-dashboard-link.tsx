@@ -71,7 +71,7 @@ export function HeaderKimitoDashboardLink() {
 const webAnchorStyle = {
   display: "inline-flex",
   alignItems: "center",
-  minHeight: 36,
+  minHeight: 44,
   paddingLeft: 12,
   paddingRight: 12,
   borderRadius: 999,
@@ -89,7 +89,7 @@ const webAnchorStyle = {
 
 const styles = StyleSheet.create({
   pill: {
-    minHeight: 36,
+    minHeight: 44,
     justifyContent: "center",
     paddingHorizontal: 12,
     borderRadius: 999,
