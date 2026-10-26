@@ -262,7 +262,7 @@ export default function Root({ children }: PropsWithChildren) {
             max-width: 100%;
             width: 100%;
             overscroll-behavior-x: none;
-            touch-action: pan-y;
+            touch-action: pan-y pinch-zoom;
           }
           #root { background-color: var(--color-background); min-height: 100%; max-width: 100%; overflow-x: clip; }
           /* ログイン済みヒント / PWA standalone 起動時のブートベール（ブランドスプラッシュ）:

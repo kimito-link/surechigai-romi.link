@@ -15,6 +15,8 @@ import {
   buildNativeCallbackUrl,
   decideNativeHandoff,
   formatNativeReturnUrl,
+  isOwnHandoffUrl,
+  isOwnNativeCallbackUrl,
   parseTicketFromCallback,
 } from "@/shared/kimito-native-auth";
 
@@ -66,7 +68,8 @@ describe("kimito.link 認証セッションの戻り先", () => {
     expect(result.html).toContain("kimito.link でログイン");
     expect(result.html).toContain("system-ui");
     expect(result.html).not.toContain("fonts.googleapis");
-    expect(result.html).toContain("maximum-scale=1");
+    expect(result.html).toContain("width=device-width, initial-scale=1, viewport-fit=cover");
+    expect(result.html).not.toMatch(/maximum-scale|minimum-scale|user-scalable/);
     expect(result.html).toContain("overflow-x:hidden");
   });
 
@@ -88,19 +91,55 @@ describe("kimito.link 認証セッションの戻り先", () => {
     expect(parseTicketFromCallback(result.location)).toBe(ticket);
   });
 
-  it("https の URL や空の ticket はアプリの戻りとして受け取らない", () => {
-    expect(parseTicketFromCallback("https://kimito.link/sign-in/?ticket=sit_abcdefghijklmnop")).toBeNull();
+  it("https の URL や空の ticket、別ホストのスキームはアプリの戻りとして受け取らない", () => {
+    const ticket = "sit_abcdefghijklmnop";
+    expect(parseTicketFromCallback(`https://kimito.link/sign-in/?ticket=${ticket}`)).toBeNull();
+    expect(parseTicketFromCallback(`https://surechigai.kimito.link/auth/return?ticket=${ticket}`)).toBeNull();
     expect(parseTicketFromCallback("surechigai://oauth-native-callback")).toBeNull();
     expect(parseTicketFromCallback("surechigai://oauth-native-callback?ticket=short")).toBeNull();
+    expect(parseTicketFromCallback(`surechigai://evil.example/?ticket=${ticket}`)).toBeNull();
+    expect(parseTicketFromCallback(`surechigai://oauth-native-callback.evil/?ticket=${ticket}`)).toBeNull();
+    expect(parseTicketFromCallback(`surechigai://oauth-native-callback?ticket=${ticket}&next=https://evil.example`)).toBeNull();
     expect(parseTicketFromCallback(null)).toBeNull();
+    expect(isOwnNativeCallbackUrl("surechigai://oauth-native-callback")).toBe(true);
+    expect(isOwnNativeCallbackUrl(`surechigai://oauth-native-callback?ticket=${ticket}`)).toBe(true);
+    expect(isOwnNativeCallbackUrl("otherapp://oauth-native-callback")).toBe(false);
   });
 
   it("サインイン URL は handoff の redirect_url だけを載せる", () => {
     const handoff = buildHandoffUrl("https://surechigai.kimito.link");
     const start = buildKimitoSignInStartUrl(handoff);
-    const url = new URL(start);
+    expect(start).toBeTruthy();
+    const url = new URL(start ?? "");
     expect(url.origin + url.pathname).toBe("https://kimito.link/sign-in/");
     expect(url.searchParams.get("redirect_url")).toBe(handoff);
+    expect(buildHandoffUrl("https://evil.example")).toBe(handoff);
+    expect(buildKimitoSignInStartUrl("https://evil.example/api/auth/native-handoff")).toBeNull();
+    expect(isOwnHandoffUrl(handoff)).toBe(true);
+    expect(isOwnHandoffUrl("https://surechigai.kimito.link.evil/api/auth/native-handoff")).toBe(false);
+    expect(buildNativeCallbackUrl("https://evil.example/auth/return", "sit_abcdefghijklmnop")).toBeNull();
+    expect(buildNativeCallbackUrl("surechigai://evil", "sit_abcdefghijklmnop")).toBeNull();
+  });
+
+  it("別オリジンや別スキームへ ticket を渡さない", () => {
+    const foreign = decideNativeHandoff({
+      userId: "user_123",
+      tried: false,
+      ticket: "sit_abcdefghijklmnop",
+      unavailable: false,
+      handoffUrl: buildHandoffUrl(),
+      returnUrl: "surechigai://evil.example",
+    });
+    expect(foreign.kind).toBe("error");
+    const foreignHandoff = decideNativeHandoff({
+      userId: null,
+      tried: false,
+      ticket: null,
+      unavailable: false,
+      handoffUrl: "https://evil.example/api/auth/native-handoff",
+      returnUrl: formatNativeReturnUrl(),
+    });
+    expect(foreignHandoff.kind).toBe("error");
   });
 
   it("コールバック URL の組み立てと解析が往復する", () => {

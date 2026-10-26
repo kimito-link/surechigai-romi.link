@@ -29,19 +29,65 @@ export function formatNativeReturnUrl(
   return `${scheme}://${path}`;
 }
 
+/**
+ * handoff の URL は本番オリジンの固定パスだけ。
+ * 渡された origin が違っても、そこへ redirect_url を向けない（オープンリダイレクトにしない）。
+ */
 export function buildHandoffUrl(origin: string = PRODUCTION_ORIGIN): string {
-  const base = (origin || PRODUCTION_ORIGIN).replace(/\/$/, "");
-  return `${base}${NATIVE_AUTH_HANDOFF_PATH}`;
+  const candidate = `${(origin || PRODUCTION_ORIGIN).replace(/\/$/, "")}${NATIVE_AUTH_HANDOFF_PATH}`;
+  return isOwnHandoffUrl(candidate) ? candidate : `${PRODUCTION_ORIGIN}${NATIVE_AUTH_HANDOFF_PATH}`;
 }
 
-/** 未ログインのとき handoff が飛ばす kimito.link のサインイン。redirect は自前の https だけ。 */
-export function buildKimitoSignInStartUrl(handoffUrl: string): string {
+/** https の受け渡し口は、自オリジン + /api/auth/native-handoff だけ。query は tried=1 のみ。 */
+export function isOwnHandoffUrl(value: string | null | undefined): boolean {
+  const url = parseUrl(value);
+  if (!url) return false;
+  if (url.origin !== PRODUCTION_ORIGIN) return false;
+  if (url.username || url.password || url.port) return false;
+  if (url.pathname !== NATIVE_AUTH_HANDOFF_PATH) return false;
+  const keys = [...url.searchParams.keys()];
+  if (keys.some((key) => key !== "tried")) return false;
+  const tried = url.searchParams.get("tried");
+  return tried === null || tried === "1";
+}
+
+/**
+ * ネイティブの戻り先は surechigai://oauth-native-callback だけ。
+ * 同じスキームでも別ホスト（surechigai://evil/...）は受け取らない。
+ * ticket 以外の query も受け取らない。
+ */
+export function isOwnNativeCallbackUrl(value: string | null | undefined): boolean {
+  const url = parseUrl(value);
+  if (!url) return false;
+  if (url.protocol !== `${NATIVE_APP_SCHEME}:`) return false;
+  if (url.username || url.password || url.port) return false;
+  if (url.hostname !== NATIVE_AUTH_CALLBACK_PATH) return false;
+  if (url.pathname !== "" && url.pathname !== "/") return false;
+  const keys = [...url.searchParams.keys()];
+  if (keys.some((key) => key !== "ticket")) return false;
+  return true;
+}
+
+function parseUrl(value: string | null | undefined): URL | null {
+  if (!value) return null;
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+}
+
+/** 未ログインのとき handoff が飛ばす kimito.link のサインイン。redirect は自オリジンの handoff だけ。 */
+export function buildKimitoSignInStartUrl(handoffUrl: string): string | null {
+  if (!isOwnHandoffUrl(handoffUrl)) return null;
   const url = new URL(KIMITO_SIGN_IN_PAGE);
   url.searchParams.set("redirect_url", handoffUrl);
   return url.toString();
 }
 
-export function buildNativeCallbackUrl(returnUrl: string, ticket: string): string {
+export function buildNativeCallbackUrl(returnUrl: string, ticket: string): string | null {
+  if (!isOwnNativeCallbackUrl(returnUrl)) return null;
+  if (!/^[A-Za-z0-9._-]{8,2048}$/.test(ticket)) return null;
   const url = new URL(returnUrl);
   url.searchParams.set("ticket", ticket);
   return url.toString();
@@ -59,8 +105,7 @@ export function parseTicketFromCallback(callbackUrl: string | null | undefined):
   } catch {
     return null;
   }
-  if (url.protocol === "http:" || url.protocol === "https:") return null;
-  if (url.protocol !== `${NATIVE_APP_SCHEME}:`) return null;
+  if (!isOwnNativeCallbackUrl(callbackUrl)) return null;
   const ticket = url.searchParams.get("ticket");
   if (!ticket || !/^[A-Za-z0-9._\-]{8,2048}$/.test(ticket)) return null;
   return ticket;
@@ -71,8 +116,7 @@ export type HandoffResult =
   | { kind: "html"; status: 200; html: string }
   | { kind: "error"; status: number; message: string };
 
-const RETRY_HTML_VIEWPORT =
-  "width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover";
+const RETRY_HTML_VIEWPORT = "width=device-width, initial-scale=1, viewport-fit=cover";
 
 function escapeAttr(value: string): string {
   return value
@@ -126,9 +170,23 @@ export function decideNativeHandoff(input: {
       message: "ログインの受け渡しを準備できませんでした。しばらくしてからもう一度お試しください。",
     };
   }
+  if (!isOwnHandoffUrl(input.handoffUrl) || !isOwnNativeCallbackUrl(input.returnUrl)) {
+    return {
+      kind: "error",
+      status: 503,
+      message: "ログインの受け渡しを準備できませんでした。しばらくしてからもう一度お試しください。",
+    };
+  }
   if (!input.userId) {
     const back = input.tried ? input.handoffUrl : `${input.handoffUrl}?tried=1`;
     const signInUrl = buildKimitoSignInStartUrl(back);
+    if (!signInUrl) {
+      return {
+        kind: "error",
+        status: 503,
+        message: "ログインの受け渡しを準備できませんでした。しばらくしてからもう一度お試しください。",
+      };
+    }
     if (!input.tried) {
       return { kind: "redirect", status: 302, location: signInUrl };
     }
@@ -141,9 +199,17 @@ export function decideNativeHandoff(input: {
       message: "ログインの受け渡しを準備できませんでした。しばらくしてからもう一度お試しください。",
     };
   }
+  const callback = buildNativeCallbackUrl(input.returnUrl, input.ticket);
+  if (!callback) {
+    return {
+      kind: "error",
+      status: 503,
+      message: "ログインの受け渡しを準備できませんでした。しばらくしてからもう一度お試しください。",
+    };
+  }
   return {
     kind: "redirect",
     status: 302,
-    location: buildNativeCallbackUrl(input.returnUrl, input.ticket),
+    location: callback,
   };
 }

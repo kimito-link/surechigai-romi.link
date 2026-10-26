@@ -1,30 +1,24 @@
 /**
- * 横スワイプで画面が拡大し、横へずれるのを止める viewport。
+ * 横にはみ出して画面がずれるのを止める viewport。ピンチと文字の拡大は残す。
  *
- * iOS Safari / Android Chrome（と、この HTML を開く WebView）は、
- * 幅が viewport より 1px でも広いと横パンを拡大のように扱う。
- * width=device-width と initial-scale=1 に加え、maximum-scale=1 で
- * そのジェスチャーを viewport 側で止める。shrink-to-fit は付けない
- * （Android WebView が画面幅に合わせて縮小し、スワイプで拡大し直す）。
+ * iOS Safari / Android Chrome は、幅が viewport より 1px でも広いと
+ * 横パンをページの横スクロール（ずれ）として扱う。止めるのははみ出しであって、
+ * maximum-scale や user-scalable=no ではない（アクセシビリティ）。
+ * shrink-to-fit も付けない（Android WebView が幅に合わせて縮小する）。
  *
- * ネイティブの React Native 画面は viewport を使わない。
- * WebView を足すときは WEBVIEW_ZOOM_LOCK を渡す（scalesPageToFit / 拡大コントロール）。
+ * ネイティブの React Native 画面は viewport を使わない。地図のピンチは MapLibre の操作。
  */
 export const ROOT_VIEWPORT_CONTENT =
-  "width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover";
+  "width=device-width, initial-scale=1, viewport-fit=cover";
 
-export function viewportLocksHorizontalZoom(content: string): boolean {
+export function viewportAllowsUserZoom(content: string): boolean {
   return (
     content.includes("width=device-width") &&
     content.includes("initial-scale=1") &&
-    /(?:^|,)\s*maximum-scale=1(?:\s*,|$)/.test(content) &&
+    content.includes("viewport-fit=cover") &&
+    !/maximum-scale\s*=/.test(content) &&
+    !/minimum-scale\s*=/.test(content) &&
+    !/user-scalable\s*=\s*no/i.test(content) &&
     !content.includes("shrink-to-fit")
   );
 }
-
-/** react-native-webview を使うときの拡大禁止。現状このアプリに WebView は無い。 */
-export const WEBVIEW_ZOOM_LOCK = {
-  scalesPageToFit: false,
-  setBuiltInZoomControls: false,
-  setDisplayZoomControls: false,
-} as const;

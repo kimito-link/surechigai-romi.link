@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /* kimito.link ブランド統一: 淡いクール白基調。ハイドレーション時の地色 + 水平スクロール防止
-   max-width は 100vw にしない。100vw はスクロールバー幅を含み、モバイルでページが
-   1px はみ出して横スワイプで画面がずれ、拡大したように見える。 */
+   max-width は 100vw にしない。100vw はスクロールバー幅を含み、ページが横にはみ出して
+   スワイプで画面がずれる。ピンチと文字の拡大は残す（touch-action に pinch-zoom）。 */
 html, body, #root {
   background-color: #F0F4F8;
   overflow-x: hidden;
@@ -16,10 +16,10 @@ html, body, #root {
   height: 100%;
 }
 
-/* タッチデバイスでの水平スワイプを防止。pinch-zoom は横スワイプを拡大に使うので付けない。 */
+/* 横パンではページをずらさない。ピンチ拡大は残す。 */
 body {
   overscroll-behavior-x: none;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 
 /* iOSでの弾性スクロールを制限 */
@@ -36,7 +36,7 @@ body {
 #root div[style*="overflow-y: scroll"] {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  touch-action: pan-y;
+  touch-action: pan-y pinch-zoom;
 }
 .lp-defer {
   content-visibility: auto;
