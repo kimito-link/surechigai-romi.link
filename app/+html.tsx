@@ -244,6 +244,7 @@ export default function Root({ children }: PropsWithChildren) {
           html, body {
             background-color: ${BOOT.background} !important;
             color-scheme: light;
+          }
           html {
             overflow-x: hidden;
             overflow-x: clip;
