@@ -27,3 +27,6 @@ export * from "./encounter.js";
 // 君斗りんくのすれ違ひ通信 / 動員ちゃれんじ 共通: Event（集まり）関連テーブル
 export * from "./event.js";
 export * from "./event-participation.js";
+
+// シェア押下時に凍結する公開OGPカード
+export * from "./share-cards.js";

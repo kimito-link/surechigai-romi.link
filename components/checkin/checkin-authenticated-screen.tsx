@@ -34,11 +34,11 @@ import MaterialIcons from "@/lib/icons/material-icons";
 import * as Haptics from "expo-haptics";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useResponsive } from "@/hooks/use-responsive";
-import { useWarmOgImage, warmOgImageNow } from "@/hooks/use-warm-og-image";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
 import { sendHubSummary } from "@/lib/kimito-link-urls";
 import { trpc } from "@/lib/trpc";
+import { publicShareLabel } from "@/lib/ogp/sanitize-public-place";
 import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MOBILE_WEB_CHROME } from "@/theme/tokens";
 import { computeCheckinScrollBottomInset } from "@/lib/layout/responsive-layout";
 import type { TrailPoint } from "@/lib/map/tile-geo";
@@ -120,11 +120,6 @@ export default function CheckinAuthenticatedScreen() {
   const checkinInFlightRef = useRef(false);
   /** シェア導線の二重起動ガード(2026-08-04): 連打で空タブが増える/429を誘発するのを防ぐ */
   const shareInFlightRef = useRef(false);
-  /**
-   * OGP画像の事前ウォーム対象URL(2026-08-04)。
-   * サーバーが og:image と同じ組み立てで返すので、そのまま useWarmOgImage に渡す。
-   */
-  const [warmImageUrl, setWarmImageUrl] = useState<string | null>(null);
   const displayedSponsorKeyRef = useRef<string | null>(null);
   // 二次的な設定・説明は折りたたみ（主役をファーストビューに集約するため）
   const [showSettings, setShowSettings] = useState(false);
@@ -133,9 +128,9 @@ export default function CheckinAuthenticatedScreen() {
 
   // ===========================================================================
   // 3. シェア導線（X / Threads / Instagram）
-  //    チェックイン直後にその場で現在地を共有する。OGP画像のウォームもここ。
+  //    押した時点で凍結カードを作り、/s/<id> が返ってから投稿画面を開く。
   // ===========================================================================
-  const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
+  const shareCardMutation = trpc.ogp.createShareCard.useMutation();
   const handleShareLocation = useCallback(async (target: ShareTarget = "x") => {
     // 連打ガード: 前回のシェアが飛んでいる間に再タップされると、空タブが増える上に
     // 共有リンク発行が重なって 429 を誘発する（連続シェアで固まる報告の一因）。
@@ -149,18 +144,13 @@ export default function CheckinAuthenticatedScreen() {
     try {
       // タイムアウト必須: 失敗ではなく「遅い」だけだと catch に来ず、
       // 空タブが about:blank のまま永久に残る。
-      const res = await withShareTimeout(shareSlugMutation.mutateAsync());
-      setWarmImageUrl(res.warmImageUrl ?? null);
-      // ★ここで待つ（2026-08-14）。state 更新は次のレンダリングまで効かないため、
-      //   以前はウォームが始まる前に X を開いてしまい、クローラーが未生成の画像を
-      //   取りに行っていた＝「OGPが出たり出なかったりする」の真因。
-      //   温まるまで待ってから開く。上限で必ず打ち切るのでシェアは止まらない。
-      await warmOgImageNow(res.warmImageUrl);
+      const res = await withShareTimeout(shareCardMutation.mutateAsync());
       const areaLabel =
-        checkinMunicipality ??
-        checkinPrefecture ??
-        res.areaLabel ??
-        undefined;
+        publicShareLabel({
+          label: res.areaLabel,
+          area: checkinMunicipality,
+          prefecture: checkinPrefecture,
+        }) ?? undefined;
       const shared = await shareMyLocation(res.url, areaLabel, {
         popup: sharePopup,
         target,
@@ -179,7 +169,7 @@ export default function CheckinAuthenticatedScreen() {
     } finally {
       shareInFlightRef.current = false;
     }
-  }, [shareSlugMutation, showError, checkinMunicipality, checkinPrefecture]);
+  }, [shareCardMutation, showError, checkinMunicipality, checkinPrefecture]);
 
   /**
    * Instagram 用にリンクをコピーする。
@@ -191,9 +181,13 @@ export default function CheckinAuthenticatedScreen() {
     if (shareInFlightRef.current) return;
     shareInFlightRef.current = true;
     try {
-      const res = await withShareTimeout(shareSlugMutation.mutateAsync());
+      const res = await withShareTimeout(shareCardMutation.mutateAsync());
       const areaLabel =
-        checkinMunicipality ?? checkinPrefecture ?? res.areaLabel ?? undefined;
+        publicShareLabel({
+          label: res.areaLabel,
+          area: checkinMunicipality,
+          prefecture: checkinPrefecture,
+        }) ?? undefined;
       const copied = await copyShareLinkForInstagram(res.url, areaLabel);
       if (copied) {
         showToast(
@@ -209,7 +203,7 @@ export default function CheckinAuthenticatedScreen() {
     } finally {
       shareInFlightRef.current = false;
     }
-  }, [shareSlugMutation, showError, showToast, checkinMunicipality, checkinPrefecture]);
+  }, [shareCardMutation, showError, showToast, checkinMunicipality, checkinPrefecture]);
 
   // アニメーション
   const scale = useSharedValue(1);
@@ -826,23 +820,6 @@ export default function CheckinAuthenticatedScreen() {
 
   const placeLine = checkinAddress ?? checkinLocationName;
 
-  // チェックイン完了の時点でウォーム対象URLを取り、シェアされる前に温め始める。
-  // シェアのタップを待つとクローラーの到着に間に合わないことがあるため。
-  // URLはサーバーが og:image と同じ組み立てで返したものを使う（自前で組むとキーがズレる）。
-  const warmUrlQuery = trpc.ogp.getShareWarmTarget.useQuery(undefined, {
-    enabled: isAuthenticated && isCheckinComplete,
-    staleTime: 60_000,
-    retry: false,
-  });
-
-  // OGP画像はキャッシュミスだと 1.7〜3.1 秒かかり X は ~2 秒で諦めるため、
-  // ブラウザから先に叩いてキャッシュを温める（サーバー応答は遅らせない）。
-  useWarmOgImage({
-    enabled: isCheckinComplete,
-    // シェア時に得た値があればそちらを優先（最新の記録時刻が反映されているため）
-    url: warmImageUrl ?? warmUrlQuery.data?.warmImageUrl ?? null,
-  });
-
   const sponsorQuery = trpc.ads.getCards.useQuery(
     {
       slot: "checkin_complete",
@@ -1001,7 +978,7 @@ export default function CheckinAuthenticatedScreen() {
       handleSponsorPress={handleSponsorPress}
       handleLocationIntroAllow={handleLocationIntroAllow}
       handleLocationIntroLater={handleLocationIntroLater}
-      isSharing={shareSlugMutation.isPending}
+      isSharing={shareCardMutation.isPending}
     />
   );
 }
