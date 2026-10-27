@@ -81,49 +81,51 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.kimitoBlue + "33",
   },
-  emptyOverlayMobile: {
-    top: "38%",
-  },
-  emptyOverlay: {
-    position: "absolute",
-    top: "45%",
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    paddingHorizontal: 32,
-    gap: 6,
-  },
-  emptyOverlayEmoji: {
-    fontSize: 40,
+  // 空状態は地図に重ねない。地図の下（デスクトップは右ペイン）の1枚のカード。
+  emptyCard: {
+    marginHorizontal: 12,
+    marginTop: 12,
     marginBottom: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 8,
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+    gap: 8,
   },
-  emptyOverlayTitle: {
+  emptyCardTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  emptyCardTitle: {
+    flex: 1,
     color: color.textPrimary,
     fontSize: 16,
     fontWeight: "700",
-    textAlign: "center",
+    lineHeight: 22,
   },
-  emptyOverlayText: {
+  emptyCardText: {
     color: color.textSecondary,
-    fontSize: 13,
-    textAlign: "center",
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 21,
   },
-  checkinLink: {
-    marginTop: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  checkinLinkText: {
-    color: color.accentPrimary,
-    fontSize: 13,
-    fontWeight: "700",
-    textDecorationLine: "underline",
-  },
-  checkinCtaDock: {
+  emptyCardButton: {
+    marginTop: 4,
+    minHeight: 44,
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
+    borderRadius: 8,
+    backgroundColor: palette.kimitoBlue,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "stretch",
+  },
+  emptyCardButtonText: {
+    color: palette.white,
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 20,
   },
   center: {
     flex: 1,

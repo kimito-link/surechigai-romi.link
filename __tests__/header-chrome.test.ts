@@ -4,7 +4,11 @@ import {
   HEADER_NARROW_ACCOUNT_EXTRA,
   HEADER_NARROW_LOGIN_EXTRA,
 } from "@/lib/layout/header-chrome";
-import { SCREEN_CONTEXT_BAR_MAX_HEIGHT } from "@/theme/tokens";
+import {
+  APP_HEADER_CHROME_HEIGHT_FOCUSED,
+  APP_HEADER_CHROME_HEIGHT_FOCUSED_WIDE,
+  SCREEN_CONTEXT_BAR_MAX_HEIGHT,
+} from "@/theme/tokens";
 
 const COMPACT_CHROME = 68;
 const FULL_CHROME = 124;
@@ -51,5 +55,29 @@ describe("computeTabHeaderSpacerHeight", () => {
         hasLoggedInAccountRow: true,
       }),
     ).toBe(FULL_CHROME + HEADER_NARROW_ACCOUNT_EXTRA + SCREEN_CONTEXT_BAR_MAX_HEIGHT);
+  });
+
+  it("focused は 360/390 でアカウント行を内包し、追加の2段目では本文を隠さない", () => {
+    for (const windowWidth of [360, 390]) {
+      expect(
+        computeTabHeaderSpacerHeight({
+          variant: "focused",
+          hasContextBar: false,
+          windowWidth,
+          hasLoggedInAccountRow: true,
+        }),
+      ).toBe(APP_HEADER_CHROME_HEIGHT_FOCUSED);
+    }
+  });
+
+  it("focused のデスクトップ幅は低い chrome。コンテキストバー分は足す", () => {
+    expect(
+      computeTabHeaderSpacerHeight({
+        variant: "focused",
+        hasContextBar: true,
+        windowWidth: 1280,
+        hasLoggedInAccountRow: true,
+      }),
+    ).toBe(APP_HEADER_CHROME_HEIGHT_FOCUSED_WIDE + SCREEN_CONTEXT_BAR_MAX_HEIGHT);
   });
 });

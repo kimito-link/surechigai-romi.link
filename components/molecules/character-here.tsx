@@ -1,10 +1,9 @@
 /**
- * 日本地図上に「キャラがここにいるよ」を吹き出しで示すマーカー。
- * アイコン＋吹き出し（"ここにいるよ"）＋名前。x/y（%）で地図上に絶対配置する
- * （EnvelopePulse と同じ配置方式）。淡いパルスで存在感を出す。
+ * 日本地図上の現在地ピン。
+ * 吹き出し・アバター名・空状態テキストを重ねない。ピン1つと、都道府県/市区町村の短いラベル1つだけ。
  */
 import { useEffect } from "react";
-import { View, Text, StyleSheet, Platform } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 import Animated, {
   useSharedValue,
@@ -15,32 +14,45 @@ import Animated, {
   cancelAnimation,
   useReducedMotion,
 } from "react-native-reanimated";
-import { color } from "@/theme/tokens";
+import { color, palette } from "@/theme/tokens";
+import { mapPinLabel } from "@/lib/public-place-label";
 
 type Props = {
-  source?: number; // require(...) した画像
+  source?: number;
   imageUrl?: string | null;
   name: string;
-  place?: string; // 居場所の地名（例: 小樽）。あれば「○○にいるよ」と表示
-  x: number; // 地図上の横位置（%）
-  y: number; // 地図上の縦位置（%）
+  place?: string;
+  x: number;
+  y: number;
   delay?: number;
   isSelf?: boolean;
   /**
    * false のとき地面パルスの無限ループを回さず静止表示にする。
-   * 認証済みホームで同時に動くマーカー数を絞り、無限ループ蓄積による
-   * OOM を防ぐため。吹き出し・アイコン・名前の表示は常に残す。
+   * 認証済みホームで同時に動くマーカー数を絞り、無限ループ蓄積による OOM を防ぐ。
    */
   animate?: boolean;
 };
 
-export function CharacterHere({ source, imageUrl, name, place, x, y, delay = 0, isSelf, animate = true }: Props) {
+export function CharacterHere({
+  source,
+  imageUrl,
+  name,
+  place,
+  x,
+  y,
+  isSelf,
+  animate = true,
+}: Props) {
   const float = useSharedValue(0);
   const pulse = useSharedValue(0.8);
   const reduceMotion = useReducedMotion();
+  const label = mapPinLabel({ place, name, isSelf });
+  const a11yName = /\d+\.\d+/.test(name) ? "ユーザー" : name;
+  const accessibilityLabel = isSelf
+    ? `自分のピン、${label}`
+    : `${a11yName}のピン、${label}`;
 
   useEffect(() => {
-    // animate=false / reduced-motion 時は静止（float=0・pulseは静的リング相当）。
     if (!animate || reduceMotion) {
       float.value = 0;
       pulse.value = 0.5;
@@ -58,7 +70,6 @@ export function CharacterHere({ source, imageUrl, name, place, x, y, delay = 0, 
       false,
     );
 
-    // cleanup: アンマウント/依存変更時に無限ループを必ず停止（OOM対策の要）。
     return () => {
       cancelAnimation(float);
       cancelAnimation(pulse);
@@ -66,40 +77,45 @@ export function CharacterHere({ source, imageUrl, name, place, x, y, delay = 0, 
   }, [float, pulse, animate, reduceMotion]);
 
   const floatStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: float.value * -4 }],
+    transform: [{ translateY: float.value * -3 }],
   }));
   const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + (1 - pulse.value) * 1.6 }],
-    opacity: pulse.value * 0.5,
+    transform: [{ scale: 1 + (1 - pulse.value) * 0.45 }],
+    opacity: 0.35 + pulse.value * 0.25,
   }));
 
   return (
-    <View style={[styles.container, { left: `${x}%`, top: `${y}%` }]}>
-      {/* 吹き出し */}
-      <Animated.View style={[styles.bubbleWrap, floatStyle]}>
-        <View style={styles.bubble}>
-          <Text style={styles.bubbleText}>{place ? `${place}にいるよ` : "ここにいるよ"}</Text>
+    <View
+      style={[styles.container, { left: `${x}%`, top: `${y}%` }]}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <Animated.View
+        style={floatStyle}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <View style={styles.markerArea}>
+          <Animated.View style={[styles.pulseRing, pulseStyle]} />
+          <View style={styles.iconRing}>
+            {imageUrl ? (
+              <Image source={{ uri: imageUrl }} style={styles.icon} contentFit="cover" />
+            ) : source ? (
+              <Image source={source} style={styles.icon} contentFit="contain" />
+            ) : (
+              <View style={styles.iconFallback}>
+                <Text style={styles.iconFallbackText}>{a11yName.slice(0, 1)}</Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View style={styles.bubbleTail} />
+        <View style={styles.labelChip}>
+          <Text style={styles.labelText} numberOfLines={1}>
+            {label}
+          </Text>
+        </View>
       </Animated.View>
-
-      {/* 地面のパルス（現在地マーカー） */}
-      <View style={styles.markerArea}>
-        <Animated.View style={[styles.pulseRing, pulseStyle]} />
-        {/* キャラアイコン */}
-        <View style={[styles.iconRing, isSelf && styles.iconRingSelf]}>
-          {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.icon} contentFit="cover" />
-          ) : source ? (
-            <Image source={source} style={styles.icon} contentFit="contain" />
-          ) : (
-            <View style={styles.iconFallback}>
-              <Text style={styles.iconFallbackText}>{name.slice(0, 1)}</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.name}>{name}</Text>
-      </View>
     </View>
   );
 }
@@ -107,95 +123,66 @@ export function CharacterHere({ source, imageUrl, name, place, x, y, delay = 0, 
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    width: 96,
-    marginLeft: -48,
-    marginTop: -64,
+    width: 112,
+    marginLeft: -56,
+    marginTop: -18,
     alignItems: "center",
     zIndex: 12,
     pointerEvents: "none",
   },
-  bubbleWrap: {
-    alignItems: "center",
-    marginBottom: 2,
-  },
-  bubble: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: color.accentPrimary,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  bubbleText: {
-    color: "#1a2540",
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  bubbleTail: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 5,
-    borderRightWidth: 5,
-    borderTopWidth: 6,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderTopColor: "#FFFFFF",
-    marginTop: -1,
-  },
   markerArea: {
+    width: 36,
+    height: 36,
     alignItems: "center",
     justifyContent: "center",
   },
   pulseRing: {
     position: "absolute",
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: color.accentPrimary,
   },
   iconRing: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(13,17,23,0.85)",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: palette.kimitoBlue,
     borderWidth: 2,
-    borderColor: color.accentPrimary,
+    borderColor: palette.white,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
-  iconRingSelf: {
-    borderColor: color.accentAlt,
-    borderWidth: 3,
-  },
   icon: {
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
   },
   iconFallback: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,128,51,0.35)",
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: palette.kimitoBlue,
   },
   iconFallbackText: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: palette.white,
+    fontSize: 14,
     fontWeight: "800",
   },
-  name: {
-    marginTop: 3,
-    color: "#FFFFFF",
-    fontSize: 10,
+  labelChip: {
+    marginTop: 4,
+    maxWidth: 104,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: palette.gray900,
+  },
+  labelText: {
+    color: palette.white,
+    fontSize: 12,
     fontWeight: "700",
-    textShadowColor: "rgba(0,0,0,0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    lineHeight: 16,
+    textAlign: "center",
   },
 });

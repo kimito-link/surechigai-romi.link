@@ -58,6 +58,14 @@ export const SCREEN_CONTEXT_BAR_MAX_HEIGHT = 48;
 export const APP_HEADER_CHROME_HEIGHT_COMPACT = 68;
 export const APP_HEADER_CHROME_HEIGHT_FULL = 124;
 export const APP_HEADER_CHROME_HEIGHT = APP_HEADER_CHROME_HEIGHT_FULL;
+/**
+ * ポスト画面 focused ヘッダー。
+ * 狭幅はブランド / タグライン / アカウントの3段をこの高さに含める（追加の2段目は足さない）。
+ * 880px以上はアカウントを1段目へ戻すので低い。
+ */
+export const HEADER_FOCUSED_WIDE_BREAKPOINT = 880;
+export const APP_HEADER_CHROME_HEIGHT_FOCUSED = 160;
+export const APP_HEADER_CHROME_HEIGHT_FOCUSED_WIDE = 116;
 
 /** 固定タブバー・スクロール inset 計算用定数（_layout / hooks と共有） */
 export const tabBar = {
