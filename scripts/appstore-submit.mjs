@@ -1106,8 +1106,26 @@ async function submitForReview(api, appId, versionId) {
         },
       },
     };
+    // ★上げた直後のスクショは Apple 側で処理中のことがあり、そのまま出すと
+    //   409 STATE_ERROR.ASSET_IN_POST_PROCESSING で落ちる（2026-10-27 run 40467162487）。
+    //   落ちた時点で前の提出は取り消し済みなので、処理が終わるまで待って出し直す。
+    const postItem = async () => {
+      for (let attempt = 1; ; attempt++) {
+        try {
+          return await api('POST', '/v1/reviewSubmissionItems', itemBody);
+        } catch (e) {
+          // asc-api はエラー本文を 800 文字で切るので、先頭に出る ENTITY_STATE_INVALID でも拾う
+          //（それ以外の理由なら 10 分待ったあとで同じエラーで落ちる）。
+          const msg = String(e.message);
+          const transient = msg.includes('ASSET_IN_POST_PROCESSING') || msg.includes('ENTITY_STATE_INVALID');
+          if (!transient || attempt >= 20) throw e;
+          console.log(`  assets still processing at Apple; wait 30s (${attempt}/20)`);
+          await new Promise((r) => setTimeout(r, 30_000));
+        }
+      }
+    };
     try {
-      await api('POST', '/v1/reviewSubmissionItems', itemBody);
+      await postItem();
     } catch (e) {
       const detail = String(e.message);
       const m = detail.match(/already added to another reviewSubmission with id ([0-9a-fA-F-]+)/);
@@ -1116,7 +1134,7 @@ async function submitForReview(api, appId, versionId) {
       console.log(`  ITEM_PART_OF_ANOTHER_SUBMISSION → attempt to free version from ${otherRsId}`);
       await freeVersionFromStaleSubmission(api, versionId, otherRsId);
       console.log(`  retry POST reviewSubmissionItems`);
-      await api('POST', '/v1/reviewSubmissionItems', itemBody);
+      await postItem();
     }
   }
   console.log(`  PATCH submitted=true`);
