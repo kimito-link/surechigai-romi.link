@@ -207,14 +207,24 @@ def main() -> None:
     save_android_foreground(ROOT / "assets/images/android-icon-foreground.png")
 
     # iOS Safari PWA向けスプラッシュ（apple-touch-startup-image）
-    for spec in load_ios_startup_sizes():
+    # ★起動画面の絵はタグラインに日本語フォントを使う。Vercel ビルド（GitHub Actions の
+    #   ubuntu）には入っていないので、無い環境ではここを飛ばし、コミット済みの
+    #   public/splash/ios-*.<hash>.png をそのまま使う（ビルドでは splash:sync を回さないため、
+    #   ここで書いたハッシュ無しの PNG はどのみち参照されない）。2026-10-27 デプロイ失敗。
+    if not boot_splash().FONT_PATH.is_file():
+        print(f"skip iOS startup images: font missing ({boot_splash().FONT_PATH})")
+        startup_specs = []
+    else:
+        startup_specs = load_ios_startup_sizes()
+    for spec in startup_specs:
         w, h = spec["px"]
         # ★ここではハッシュ無しの名前で出す。直後に `pnpm splash:sync` を実行すると、
         #   中身の sha256 先頭12桁入りの名前へ改名され、+html.tsx の href も揃う（2026-10-05）。
         save_ios_startup_image(w, h, ROOT / f"public/splash/ios-{w}x{h}.png")
     # media属性なしのフォールバック（新機種等でdevice-width/heightが未登録の解像度でも
     # スプラッシュが真っ黒/無地にならないようにする保険）。
-    save_ios_startup_image(1290, 2796, ROOT / "public/splash/ios-fallback.png")
+    if startup_specs:
+        save_ios_startup_image(1290, 2796, ROOT / "public/splash/ios-fallback.png")
 
     # レガシー互換パス
     shutil.copy2(ROOT / "public/favicon-48.png", ROOT / "public/favicon.ico")
