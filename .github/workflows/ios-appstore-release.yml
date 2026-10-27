@@ -44,6 +44,12 @@ on:
           (IN_REVIEW 以降は審査官が実機を見ているので、この指定でも触らない)。
         type: boolean
         default: false
+      keep_screenshots:
+        description: >-
+          ASC に上がっているスクショを消さずにそのまま使う。前回の上げ直しが
+          Apple 側で処理中のまま提出が 409 で落ちたときの出し直し用。
+        type: boolean
+        default: false
       skip_checks:
         description: >-
           ★検査を飛ばして提出する（緊急時のみ）。skip_reason が空だと失敗する。
@@ -926,6 +932,7 @@ jobs:
           # ASC のバージョン行が WAITING_FOR_REVIEW のまま残ると通常はスキップされ、
           # 修正した審査ノートもスクショも新ビルドも反映されない（2026-08-05 に発生）。
           IOS_FORCE_RESUBMIT: ${{ inputs.force_resubmit && '1' || '' }}
+          IOS_KEEP_SCREENSHOTS: ${{ inputs.keep_screenshots && '1' || '' }}
           # Reviewer contact info  EApple validates phone format and
           # rejects obviously-fake numbers. Stored as a repo secret.
           IOS_REVIEW_CONTACT_PHONE: ${{ secrets.IOS_REVIEW_CONTACT_PHONE }}

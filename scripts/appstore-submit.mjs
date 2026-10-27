@@ -1118,8 +1118,9 @@ async function submitForReview(api, appId, versionId) {
           //（それ以外の理由なら 10 分待ったあとで同じエラーで落ちる）。
           const msg = String(e.message);
           const transient = msg.includes('ASSET_IN_POST_PROCESSING') || msg.includes('ENTITY_STATE_INVALID');
-          if (!transient || attempt >= 20) throw e;
-          console.log(`  assets still processing at Apple; wait 30s (${attempt}/20)`);
+          // 10 分では足りなかった（2026-10-27 run 40471188258、10 枚中 7 枚が 13 分処理中のまま）。
+          if (!transient || attempt >= 50) throw e;
+          console.log(`  assets still processing at Apple; wait 30s (${attempt}/50)`);
           await new Promise((r) => setTimeout(r, 30_000));
         }
       }
@@ -1322,7 +1323,12 @@ async function submitForReview(api, appId, versionId) {
 
   console.log('\n[5b] Upload iPhone screenshots (6.7" + 6.5")...');
   const screenshotsDir = process.env.IOS_SCREENSHOTS_DIR || path.join(REPO, 'ios-screenshots');
-  try {
+  // ★IOS_KEEP_SCREENSHOTS=1 なら ASC に上がっているスクショをそのまま使う。
+  //   毎回消して上げ直すと Apple 側の処理が最初からになり、処理が遅い日は
+  //   提出が 409 ASSET_IN_POST_PROCESSING で落ち続ける（2026-10-27 に2回続いた）。
+  if (process.env.IOS_KEEP_SCREENSHOTS === '1') {
+    console.log('  IOS_KEEP_SCREENSHOTS=1: ASC のスクショをそのまま使う（上げ直さない）');
+  } else try {
     const r = await uploadIPhoneScreenshots(api, jaLoc.id, screenshotsDir);
     console.log(`  screenshots: uploaded=${r.uploaded} deleted=${r.deleted ?? 0} skipped=${r.skipped}`);
   } catch (e) {
