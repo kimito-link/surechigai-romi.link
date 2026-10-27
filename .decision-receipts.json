@@ -324,6 +324,261 @@
       "scopePaths": [
         "scripts/check-security-local-only-wired.mjs"
       ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.581Z",
+      "responsibility": "公開OGPから丁目・番地・郵便番号と細かい座標を落とす共通関門",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/sanitize-public-place.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.606Z",
+      "responsibility": "公開地名サニタイザの回帰テスト。東池袋の番地と郵便番号が残らないことを守る",
+      "decision": "REUSE",
+      "canonicalSource": "lib/ogp/sanitize-public-place.ts",
+      "scopePaths": [
+        "__tests__/sanitize-public-place.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.629Z",
+      "responsibility": "共有押下時の1200x630画像。api/og.tsx の @vercel/og は数秒かかるため同じ描画器は使わず resvg で別実装",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/render-share-card-image.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.655Z",
+      "responsibility": "共有カード画像の回帰テスト。300KB以下のJPEGになることを守る",
+      "decision": "REUSE",
+      "canonicalSource": "lib/ogp/render-share-card-image.ts",
+      "scopePaths": [
+        "__tests__/render-share-card-image.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.678Z",
+      "responsibility": "Vercel Blob への共有カード画像アップロード。トークンが無いときは静的画像へ落とす",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/upload-share-card-image.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.702Z",
+      "responsibility": "シェア押下時に凍結カードを1枚作り、描画・保存・DBの失敗時は都道府県の静的URLを返す",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/create-share-card.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.728Z",
+      "responsibility": "凍結カード作成の回帰テスト。失敗経路でも共有URLが返ることを守る",
+      "decision": "REUSE",
+      "canonicalSource": "lib/ogp/create-share-card.ts",
+      "scopePaths": [
+        "__tests__/create-share-card.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.753Z",
+      "responsibility": "凍結カードのメタHTML。api/u はライブ地点を引く別経路なのでHTML組み立ては共有しない",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/ogp/share-card-meta.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.780Z",
+      "responsibility": "凍結カードのクローラー向けHTMLと、その出力テスト。描画はせず保存済みURLを指す",
+      "decision": "REUSE",
+      "canonicalSource": "lib/ogp/share-card-meta.ts",
+      "scopePaths": [
+        "api/s/[id].ts",
+        "__tests__/share-card-meta.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.807Z",
+      "responsibility": "middleware が無いローカルExpoで /s/<id> を開いたときアプリへ戻す画面",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "app/s/[id].tsx"
+      ]
+    },
+    {
+      "at": "2026-10-24T05:52:14.829Z",
+      "responsibility": "凍結した共有カード行の保存。退会時に所有者分を消す",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "drizzle/schema/share-cards.ts",
+        "server/db/share-cards.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.086Z",
+      "responsibility": "ネイティブへ戻す handoff の URL と ticket 判定。RN 依存の native-redirect には置けず、サーバとクライアントの両方から使う純粋関数",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "shared/kimito-native-auth.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.109Z",
+      "responsibility": "Clerk セッションからワンタイム sign-in token を作り handoff 結果にする。秘密鍵はサーバだけが持つ",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "server/native-auth-handoff.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.132Z",
+      "responsibility": "Vercel の GET /api/auth/native-handoff。実処理は server 側と共有し、api/auth/sync.ts と同じ薄い入口",
+      "decision": "REUSE",
+      "canonicalSource": "server/native-auth-handoff.ts",
+      "scopePaths": [
+        "api/auth/native-handoff.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.153Z",
+      "responsibility": "認証セッションで handoff を開く。戻り先スキームは既存の native OAuth と同じ契約を使う",
+      "decision": "REUSE",
+      "canonicalSource": "lib/auth/native-redirect.ts",
+      "scopePaths": [
+        "lib/auth/open-kimito-auth-session.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.177Z",
+      "responsibility": "更新と新しい内容を通知するかの純粋判定。expo-notifications を import しない",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "shared/update-notice.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.199Z",
+      "responsibility": "iOS/Android の更新通知。判定は shared、許可とローカル通知は既存の push-notifications",
+      "decision": "REUSE",
+      "canonicalSource": "shared/update-notice.ts",
+      "scopePaths": [
+        "lib/notifications/native-update-notice.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.224Z",
+      "responsibility": "インストール済み PWA の更新通知。Notification API はネイティブ束に入れない",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/notifications/web-update-notice.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.245Z",
+      "responsibility": "起動時に更新通知を始める描画しないマウント。Web とネイティブで読み込む実装を分ける",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/providers/update-notification-host.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.272Z",
+      "responsibility": "横スワイプ拡大を止める viewport 定数。+html とテストが同じ文字列を使う",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "shared/web-viewport.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.295Z",
+      "responsibility": "kimito.link 認証セッションの回帰テスト",
+      "decision": "REUSE",
+      "canonicalSource": "shared/kimito-native-auth.ts",
+      "scopePaths": [
+        "__tests__/kimito-native-auth.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.317Z",
+      "responsibility": "更新通知の判定と Android チャネル trigger の回帰テスト",
+      "decision": "REUSE",
+      "canonicalSource": "shared/update-notice.ts",
+      "scopePaths": [
+        "__tests__/update-notice.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-25T01:07:50.344Z",
+      "responsibility": "viewport ロックの回帰テスト",
+      "decision": "REUSE",
+      "canonicalSource": "shared/web-viewport.ts",
+      "scopePaths": [
+        "__tests__/viewport-lock.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-26T23:45:26.965Z",
+      "responsibility": "画面ラベル用の場所の粗さ。shortPlaceLabel は保存用の短い地名、sanitizeAreaName は丁目サフィックスだけなので、座標と番地を落とす表示規則はここに置く",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/public-place-label.ts"
+      ]
+    },
+    {
+      "at": "2026-10-26T23:45:26.991Z",
+      "responsibility": "公開場所ラベルと地図ピンラベルの回帰テスト",
+      "decision": "REUSE",
+      "canonicalSource": "lib/public-place-label.ts",
+      "scopePaths": [
+        "__tests__/public-place-label.test.ts",
+        "__tests__/home-inbox-layout.test.ts"
+      ]
+    },
+    {
+      "at": "2026-10-26T23:56:56.497Z",
+      "responsibility": "起動画面の表示サイズ。BrandLoadingScreen は react-native を読むので、node のテストから同じ式を呼ぶには分けて置く",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/splash-art-size.ts"
+      ]
+    },
+    {
+      "at": "2026-10-26T23:56:56.520Z",
+      "responsibility": "起動画面を外すタイミング。lib/boot-veil.ts は document だけのモジュールに保ち、React を入れない（vitest が RN を読まない）",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/boot/use-release-boot.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-26T23:56:56.544Z",
+      "responsibility": "起動画面の絵の data URI。public/boot-splash.png から生成し、HTML の最初の描画に埋め込む。ロジックの複製ではない",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "theme/tokens/boot-splash-data.ts"
+      ]
     }
   ]
 }

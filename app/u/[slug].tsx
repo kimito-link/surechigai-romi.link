@@ -23,6 +23,7 @@ import {
   parseShareLocationFromQuery,
 } from "@/lib/ogp/share-meta";
 import { color, palette, contentMaxWidth } from "@/theme/tokens";
+import { useReleaseBootWhen } from "@/components/boot/use-release-boot";
 
 function displayWho(name: string | null, username: string | null): string {
   if (name) return name;
@@ -39,6 +40,7 @@ function displayWho(name: string | null, username: string | null): string {
  */
 export default function ShareLocationScreen() {
   const trpcReady = useTrpcReady();
+  useReleaseBootWhen(trpcReady);
   if (!trpcReady) {
     return (
       <ScreenContainer containerClassName="bg-background" showFooter={false}>

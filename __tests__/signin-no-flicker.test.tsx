@@ -6,7 +6,7 @@
  *   1. 到着時に全画面を被せない — SignInAuthHandoffOverlay はマウント直後も、時間が経っても何も描かない
  *      （以前は INTRO_MS=1100ms の紺の全画面 intro があり、本家 before でフラッシュ 2 枚の原因だった）
  *   2. プレースホルダは本物と同寸 — 箱モデルの式が本番 DOM 実測（2026-10-05、iPhone 15 Pro Max）と一致する:
- *      Web = Clerk カード 486px（3 プロバイダ）、ネイティブ = clerk-sign-in.tsx の 2 ボタン 108px
+ *      Web = Clerk カード 486px（3 プロバイダ）、ネイティブ = clerk-sign-in.tsx の 3 ボタン 168px
  *   3. Expo の ClerkMountFallback は Web では本物と同じ 3 ボタン、ネイティブでは本物と同じ 2 ボタンを押せる形で描く
  *   4. Next.js 側（apps/web。本番 /sign-in/ はこちらが応答する）は `<SignIn fallback={<ClerkMountFallback/>}/>` を持ち、
  *      その箱モデルの数値はルートの lib/clerk-card-box-model.ts と同じ（apps/web は別パッケージで import できないため
@@ -157,8 +157,8 @@ describe("契約 2: 箱モデルは本番 DOM 実測（2026-10-05）と一致す
     expect(CLERK_CARD_PROVIDERS.filter((p) => p.hero).map((p) => p.key)).toEqual(["x"]);
   });
 
-  it("ネイティブの本物（clerk-sign-in.tsx）は 2 ボタン・minHeight 48・gap 12 = 108px", () => {
-    expect(expectedNativeSignInHeight()).toBe(108);
+  it("ネイティブの本物（clerk-sign-in.tsx）は 3 ボタン・minHeight 48・gap 12 = 168px", () => {
+    expect(expectedNativeSignInHeight()).toBe(168);
     // 本物側のソースの数値がずれていないこと（ここを変えたら NATIVE_SIGN_IN_BOX_MODEL も変える）
     const real = read("components/organisms/clerk-sign-in.tsx");
     expect(real).toMatch(new RegExp(`gap:\\s*${NATIVE_SIGN_IN_BOX_MODEL.buttonGap}\\b`));
@@ -194,11 +194,15 @@ describe("契約 3: Expo の ClerkMountFallback は本物と同じ数の押せ�
     expect(container.textContent).toContain("アカウントをお持ちでないですか？");
   });
 
-  it("ネイティブ: 本物（clerk-sign-in.tsx）と同じ 2 ボタンだけ。見出し・補足・余白を足さない", () => {
+  it("ネイティブ: 本物（clerk-sign-in.tsx）と同じ 3 ボタン。見出し・補足・余白を足さない", () => {
     rn.platform.OS = "ios";
     const { container } = render(<ClerkMountFallback mode="sign-in" />);
     const buttons = Array.from(container.querySelectorAll("button"));
-    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual(["X（旧 Twitter）で続ける", "Apple で続ける"]);
+    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "X（旧 Twitter）で続ける",
+      "Apple で続ける",
+      "kimito.link で続ける",
+    ]);
     expect(container.textContent).not.toContain("君斗りんくのすれ違ひ通信にログイン");
     expect(container.textContent).not.toContain("アカウントをお持ちでないですか？");
     const root = JSON.parse(container.firstElementChild!.getAttribute("data-style")!);
@@ -207,6 +211,8 @@ describe("契約 3: Expo の ClerkMountFallback は本物と同じ数の押せ�
     expect(login).toHaveBeenLastCalledWith(undefined, false, "x");
     fireEvent.click(buttons[1]);
     expect(login).toHaveBeenLastCalledWith(undefined, false, "apple");
+    fireEvent.click(buttons[2]);
+    expect(login).toHaveBeenLastCalledWith(undefined, false, "kimito");
   });
 });
 

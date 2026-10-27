@@ -4,6 +4,7 @@
 import { Suspense, type ReactNode } from "react";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
+import { ReleaseBootOnMount } from "@/components/boot/use-release-boot";
 
 type TabAuthenticatedShellProps = {
   screenName: string;
@@ -20,7 +21,9 @@ type TabAuthenticatedShellProps = {
 export function TabAuthenticatedShell({ screenName, children }: TabAuthenticatedShellProps) {
   return (
     <ErrorBoundary screenName={screenName}>
-      <Suspense fallback={<BrandLoadingScreen />}>{children}</Suspense>
+      <Suspense fallback={<BrandLoadingScreen />}>
+        <ReleaseBootOnMount>{children}</ReleaseBootOnMount>
+      </Suspense>
     </ErrorBoundary>
   );
 }

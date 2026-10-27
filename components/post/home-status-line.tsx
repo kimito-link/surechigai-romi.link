@@ -12,6 +12,7 @@ import { View, Text, StyleSheet } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { color, spacing, borderRadius } from "@/theme/tokens";
 import { formatDateTime } from "@/components/organisms/precision-tile-map";
+import { toPublicPlaceLabel } from "@/lib/public-place-label";
 
 type HomeStatusLineProps = {
   checkedInToday: boolean;
@@ -36,13 +37,14 @@ export function HomeStatusLine({
   pausedUntilLabel,
 }: HomeStatusLineProps) {
   const accuracyLabel = formatAccuracy(accuracyM);
+  const placeLabel = toPublicPlaceLabel(latestPlaceLabel);
 
   return (
     <View style={styles.wrap}>
       {checkedInToday && latestRecordedAt ? (
         <>
           <Text style={styles.placeText} numberOfLines={1}>
-            {latestPlaceLabel ?? "記録済み"}
+            {placeLabel ?? "記録済み"}
           </Text>
           <Text style={styles.metaText} numberOfLines={1}>
             {formatDateTime(latestRecordedAt)}
@@ -101,8 +103,8 @@ const styles = StyleSheet.create({
     backgroundColor: color.accentOrange + "12",
   },
   pausedPillText: {
-    color: color.accentOrange,
-    fontSize: 11,
+    color: color.accentOrangeText,
+    fontSize: 12,
     fontWeight: "700",
   },
 });

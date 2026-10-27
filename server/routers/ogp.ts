@@ -10,6 +10,10 @@ import { getDb } from "../db/connection.js";
 import { getEventById } from "../../modules/event/db/queries.js";
 import { getOrCreateUserShareSlug, getUserShareSlug, getShareInfoBySlug, getPublicTrailByShareSlug } from "../../modules/encounter/db/queries.js";
 import { resolveShareDetailedPlace, buildPublicSharePageUrl, featureShareLocationFirst, buildOgRedirectImageTarget } from "../../lib/ogp/share-meta.js";
+import { createFrozenShareCard } from "../../lib/ogp/create-share-card.js";
+import { uploadShareCardImage } from "../../lib/ogp/upload-share-card-image.js";
+import { randomShareSlug } from "../../lib/share-slug.js";
+import { insertShareCard } from "../db/share-cards.js";
 import { TRPCError } from "@trpc/server";
 
 const APP_ORIGIN = "https://surechigai.kimito.link";
@@ -213,7 +217,7 @@ export const ogpRouter = router({
             recordedAt: info.recordedAt,
           }
         : null;
-      // X の投稿文にも OGP と同じ詳しさの地名を出す（2026-07-31 の方針）
+      // 公開文面は都道府県+市区町村まで。番地と郵便番号は出さない。
       areaLabel = resolveShareDetailedPlace(shareLocation);
       shareUrl = buildPublicSharePageUrl(
         slug,
@@ -250,5 +254,54 @@ export const ogpRouter = router({
     // 同じ理由で encounter.checkIn 側のウォームも撤去済み。
     // 代わりに warmImageUrl を返し、ブラウザ側(hooks/use-warm-og-image.ts)に叩かせる。
     return { slug, url: shareUrl, areaLabel, warmImageUrl };
+  }),
+
+  /**
+   * シェアボタン用。カード画像をその場で描いて保存し、短い /s/<id> を返す。
+   * 描画・Blob・DBのどれが失敗しても静的画像のURLを返し、共有自体は止めない。
+   * 番地・郵便番号・生座標はカードにも外部サービスにも渡さない。
+   */
+  createShareCard: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    let address: string | null = null;
+    let area: string | null = null;
+    let prefecture: string | null = null;
+    let handle: string | null = null;
+    if (db) {
+      try {
+        const slug = await getOrCreateUserShareSlug(db, ctx.user.id);
+        if (slug) {
+          const info = await getShareInfoBySlug(db, slug, ctx.user.id, {
+            ogpContext: true,
+            skipUsernameLookup: true,
+          });
+          address = info?.address ?? null;
+          area = info?.area ?? null;
+          prefecture = info?.prefecture ?? null;
+          handle = info?.username ?? null;
+        }
+      } catch {
+        // 地点が取れなくても、既定カードで共有は続ける
+      }
+    }
+    return createFrozenShareCard(
+      { userId: ctx.user.id, address, area, prefecture, handle },
+      {
+        renderImage: async (input) => {
+          try {
+            const { renderShareCardImage } = await import("../../lib/ogp/render-share-card-image.js");
+            return await renderShareCardImage(input);
+          } catch {
+            return null;
+          }
+        },
+        uploadImage: uploadShareCardImage,
+        insertCard: async (row) => {
+          if (!db) throw new Error("DB未接続");
+          await insertShareCard(db, row);
+        },
+        newId: () => randomShareSlug(12),
+      },
+    );
   }),
 });

@@ -53,6 +53,7 @@
  * ───────────────────────────────────────────────────────────────────────────
  */
 import appConfig from "@/app.config.json";
+import { isOwnNativeCallbackUrl } from "@/shared/kimito-native-auth";
 
 /* ★expo-auth-session はトップレベルで import しない（2026-08-29）。
    vitest が解析できず「Expected 'from', got 'typeOf'」でテストファイルごと落ちる。
@@ -63,14 +64,11 @@ import appConfig from "@/app.config.json";
 export const NATIVE_OAUTH_CALLBACK_PATH = "oauth-native-callback";
 
 /**
- * ★https を戻り先に使っていないか判定する（純粋関数・テスト用）。
- *
- * ネイティブの戻り先は必ずカスタムスキーム。
- * 「http(s) で始まっていたら誤り」という一点だけを見る。
+ * ネイティブの戻り先が、このアプリのスキームとコールバックだけか。
+ * https も、同じスキームの別ホスト（surechigai://evil）も誤り。
  */
 export function isValidNativeRedirectUrl(url: string): boolean {
-  if (!url) return false;
-  return !/^https?:\/\//i.test(url);
+  return isOwnNativeCallbackUrl(url);
 }
 
 /**

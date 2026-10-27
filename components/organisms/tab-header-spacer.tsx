@@ -10,7 +10,7 @@ export function TabHeaderSpacer({
   hasContextBar = false,
   showLoginButton = false,
 }: {
-  variant?: "full" | "compact";
+  variant?: "full" | "compact" | "focused";
   hasContextBar?: boolean;
   /** 未ログイン時のログインボタン2段目（checkin 等） */
   showLoginButton?: boolean;

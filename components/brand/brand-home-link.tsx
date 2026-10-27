@@ -22,6 +22,9 @@ export type BrandHomeLinkProps = {
   isNarrow?: boolean;
   /** タブ画面用 — 小さめアイコン、画面名のみ、バージョン非表示 */
   compact?: boolean;
+  /** ポスト画面 — kimito ワードマークを重ねず、アプリ名とバージョンを1行にする */
+  hideWordmark?: boolean;
+  singleLine?: boolean;
 };
 
 function goHome() {
@@ -37,10 +40,13 @@ export function BrandHomeLink({
   isDesktop = false,
   isNarrow = false,
   compact = false,
+  hideWordmark = false,
+  singleLine = false,
 }: BrandHomeLinkProps) {
   const iconSize = compact ? 28 : ICON_SIZE;
   const titleSize = compact ? 16 : isDesktop ? 18 : isNarrow ? 14 : 15;
   const versionSize = isDesktop ? 12 : 11;
+  const stackTitle = !singleLine && (compact || isNarrow);
 
   return (
     <Pressable
@@ -64,7 +70,7 @@ export function BrandHomeLink({
         contentFit="cover"
       />
       <View style={styles.textBlock}>
-        {!compact ? (
+        {!compact && !hideWordmark ? (
           <Image
             source={KIMITO_LINK_LOGO}
             accessibilityLabel={PARENT_BRAND}
@@ -72,8 +78,11 @@ export function BrandHomeLink({
             contentFit="contain"
           />
         ) : null}
-        <View style={compact || isNarrow ? styles.titleCol : styles.titleRow}>
-          <Text style={[styles.title, { fontSize: titleSize }]} numberOfLines={compact ? 1 : isNarrow ? 2 : 1}>
+        <View style={stackTitle ? styles.titleCol : styles.titleRow}>
+          <Text
+            style={[styles.title, { fontSize: titleSize }]}
+            numberOfLines={singleLine || compact || !isNarrow ? 1 : 2}
+          >
             {title}
           </Text>
           {!compact ? (

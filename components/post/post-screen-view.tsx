@@ -29,7 +29,6 @@ import {
 } from "@/lib/lazy-heavy-components";
 import appConfig from "@/app.config.json";
 import { latLngToRadarPercent } from "@/lib/japan-radar-position";
-import { CheckinCtaButton } from "@/components/molecules/checkin-cta-button";
 import { type EncounterItem } from "@/lib/post/encounter-shared";
 import { ReportModal } from "@/components/post/report-modal";
 import { styles } from "@/components/post/post-screen-styles";
@@ -87,9 +86,8 @@ export type PostScreenViewProps = {
   isPausing: boolean;
   pausedUntilLabel: string | null;
   unopened: EncounterItem[];
-  emptyOverlay: ReactNode;
+  emptyState: ReactNode;
   signalGrid: ReactNode;
-  showCheckinCta: boolean;
   openModalVisible: boolean;
   openItem: EncounterItem | null;
   setOpenModalVisible: (value: boolean) => void;
@@ -125,9 +123,8 @@ export function PostScreenView(props: PostScreenViewProps) {
     isPausing,
     pausedUntilLabel,
     unopened,
-    emptyOverlay,
+    emptyState,
     signalGrid,
-    showCheckinCta,
     openModalVisible,
     openItem,
     setOpenModalVisible,
@@ -217,16 +214,13 @@ export function PostScreenView(props: PostScreenViewProps) {
 
   return (
     <ScreenContainer style={{ backgroundColor: color.bg }} edges={[]}>
-      <AppHeader variant="full" contextBar={postContext.element} />
-      <TabHeaderSpacer variant="full" hasContextBar={postContext.hasBar} />
+      <AppHeader variant="focused" contextBar={postContext.element} />
+      <TabHeaderSpacer variant="focused" hasContextBar={postContext.hasBar} />
 
       {isDesktop ? (
       <View style={styles.desktopSplit}>
-        <View style={styles.desktopMapColumn}>
+        <View style={styles.desktopMapColumn} testID="inbox-radar-map">
           {renderRadarStage(StyleSheet.absoluteFillObject)}
-          {/* デスクトップは右ペインのSignalAccountGridが空状態を主に担うため、
-              地図上のemptyOverlayは重複回避で出さない(未認証時は従来どおり出す)。 */}
-          {!isAuthenticated && emptyOverlay}
           {renderSisterBanners()}
           {!isAuthenticated && (
             <Suspense fallback={null}>
@@ -249,7 +243,7 @@ export function PostScreenView(props: PostScreenViewProps) {
             {unopened.length > 0 ? (
               <EnvelopeRail items={unopened} onOpen={handleOpen} />
             ) : null}
-            {emptyOverlay}
+            {emptyState}
             {signalGrid}
           </ScrollView>
         ) : null}
@@ -274,21 +268,16 @@ export function PostScreenView(props: PostScreenViewProps) {
         {isAuthenticated && unopened.length > 0 ? (
           <EnvelopeRail items={unopened} onOpen={handleOpen} />
         ) : null}
-        <View style={[styles.mapHeroMobile, { height: mapMobileHeight }]}>
+        <View testID="inbox-radar-map" style={[styles.mapHeroMobile, { height: mapMobileHeight }]}>
           {renderRadarStage({ flex: 1 })}
-          {emptyOverlay}
           {!isAuthenticated && (
           <Suspense fallback={null}>
             <RadarHud isAuthenticated={false} />
           </Suspense>
         )}
         </View>
+        {emptyState}
         {signalGrid}
-        {showCheckinCta && !isDesktop ? (
-          <View style={styles.checkinCtaDock}>
-            <CheckinCtaButton label="足あとを残す — チェックイン" />
-          </View>
-        ) : null}
         <View style={styles.mobileFooter}>{renderSisterBanners(true)}</View>
       </ScrollView>
       )}

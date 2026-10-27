@@ -57,6 +57,26 @@ export function ClerkSignIn(_props: { redirectUrl: string }) {
           Apple で続ける
         </Text>
       </Pressable>
+
+      {/* kimito.link は X/Apple の代わりではない。既存の共通アカウントへ、
+          認証セッション（戻れるシート）で入る入口。色はブランドの紺。 */}
+      <Pressable
+        onPress={() => login(undefined, false, "kimito")}
+        accessibilityRole="button"
+        accessibilityLabel="kimito.link で続ける"
+        style={{
+          backgroundColor: "#00427B",
+          borderRadius: 14,
+          minHeight: 48,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 16,
+        }}
+      >
+        <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700" }} numberOfLines={1}>
+          kimito.link で続ける
+        </Text>
+      </Pressable>
     </View>
   );
 }

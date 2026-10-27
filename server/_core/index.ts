@@ -546,6 +546,30 @@ async function startServer() {
     res.status(result.status).json(result.body);
   });
 
+  app.get("/api/auth/native-handoff", rateLimiterMiddleware, async (req, res) => {
+    const { handleNativeAuthHandoff } = await import("../native-auth-handoff.js");
+    const tried = req.query.tried === "1" || req.query.tried === "true";
+    const result = await handleNativeAuthHandoff({
+      cookieHeader: req.headers.cookie,
+      tried,
+    });
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    if (result.kind === "redirect") {
+      res.status(result.status);
+      res.setHeader("Location", result.location);
+      res.end();
+      return;
+    }
+    if (result.kind === "html") {
+      res.status(result.status);
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.send(result.html);
+      return;
+    }
+    res.status(result.status).json({ error: result.message });
+  });
+
   app.use(
     "/api/trpc",
     createExpressMiddleware({

@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+import importlib.util
 import json
 import shutil
 from pathlib import Path
@@ -14,6 +15,24 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE_ICON_SOURCE = ROOT / "assets/images/site-icon-source.png"
+
+def load_boot_splash():
+    """起動画面の合成は compose-boot-splash.py が正本。brand:icons が古い紺アイコンに戻さない。"""
+    path = Path(__file__).with_name("compose-boot-splash.py")
+    spec = importlib.util.spec_from_file_location("compose_boot_splash", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load {path}")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+_BOOT = None
+
+def boot_splash():
+    global _BOOT
+    if _BOOT is None:
+        _BOOT = load_boot_splash()
+    return _BOOT
 KIMITO_BLUE = (0, 66, 123, 255)
 STREETPASS_CYAN = (34, 211, 238, 140)
 STREETPASS_MAGENTA = (236, 72, 153, 140)
@@ -99,8 +118,9 @@ def compose_splash_logo(size: int) -> Image.Image:
 
 
 def save_splash_logo(size: int, out: Path) -> None:
+    """Android 12+ の円形マスクに収まる透過アイコン。全面の構図は iOS 側。"""
     out.parent.mkdir(parents=True, exist_ok=True)
-    compose_splash_logo(size).save(out, format="PNG")
+    boot_splash().compose_android_icon(size).save(out, format="PNG")
     print(f"  wrote {out.relative_to(ROOT)} ({size}x{size}, transparent)")
 
 
@@ -152,41 +172,11 @@ def load_ios_startup_sizes() -> list:
 
 
 def save_ios_startup_image(width: int, height: int, out: Path) -> None:
-    """単色背景（manifest.background_colorと同色）の中央にロゴを配置したsplash画像。
-
-    ★背景は #E2EDF7 のまま変えない（2026-08-21）。
-      これは manifest.background_color であり、アプリ本体の地色でもある。
-      揃えておくとスプラッシュ→本体で色が変わらず、切り替わりが目立たない。
-
-    ★compose_site_icon() は「ネイビーの正方形」を返す（アプリアイコン用に地を焼いている）。
-      それを薄青の地にそのまま貼ると**濃紺の四角が浮いて見える**（実機PWAで確認）。
-      アイコンとしては正しいが、スプラッシュでは角を丸めて「バッジ」に見せる。
-
-    ★大きさ: 0.28 → 0.62（短辺比）。従来は画面高の約1/10しかなく、
-      「スプラッシュがひどい」「ファーストビューを覆うぐらいにロゴとキャラを」
-      という指摘に繋がっていた。短辺の 62% なら縦画面で高さの約29%を占め、
-      左右にはしっかり余白が残る（端まで詰めると窮屈になるため詰めない）。
-    """
-    bg = (0xE2, 0xED, 0xF7, 255)  # manifest.json background_color と一致させる
-    canvas = Image.new("RGBA", (width, height), bg)
-
-    icon_size = int(min(width, height) * 0.62)
-    icon = compose_site_icon(icon_size)
-
-    # 角を丸める（iOS のアプリアイコンと同じ比率 ≒ 22.37%）。
-    # 四角のまま貼ると薄青の地から浮くため。
-    radius = int(icon_size * 0.2237)
-    mask = Image.new("L", (icon_size, icon_size), 0)
-    ImageDraw.Draw(mask).rounded_rectangle(
-        [0, 0, icon_size - 1, icon_size - 1], radius=radius, fill=255
-    )
-    icon.putalpha(mask)
-
-    ox = (width - icon_size) // 2
-    oy = (height - icon_size) // 2
-    canvas.paste(icon, (ox, oy), icon)
+    """PWA の起動画像。地色と構図は compose-boot-splash.py（ネイティブ / Web と同じ絵）。"""
+    art = boot_splash().compose_artwork()
+    canvas = boot_splash().place_on_background(art, width, height)
     out.parent.mkdir(parents=True, exist_ok=True)
-    canvas.convert("RGB").save(out, optimize=True)
+    canvas.save(out, optimize=True)
     print(f"wrote {out.relative_to(ROOT)}")
 
 

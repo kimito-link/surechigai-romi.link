@@ -51,6 +51,8 @@ describe("★ネイティブ OAuth の戻り先（533 却下の再発防止）",
 
   it("カスタムスキームの戻り先を正しいと判定する", () => {
     expect(isValidNativeRedirectUrl("surechigai://oauth-native-callback")).toBe(true);
+    expect(isValidNativeRedirectUrl("surechigai://evil.example")).toBe(false);
+    expect(isValidNativeRedirectUrl("otherapp://oauth-native-callback")).toBe(false);
   });
 
   it("空文字は誤りとする（0件で緑にしない）", () => {

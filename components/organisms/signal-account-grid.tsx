@@ -1,9 +1,10 @@
 import MaterialIcons from "@/lib/icons/material-icons";
 import { Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import { color, palette } from "@/theme/tokens";
+import { palette } from "@/theme/tokens";
 import { formatEncounterDate } from "@/lib/post/encounter-shared";
 import { CreatorAvatar } from "@/components/molecules/creator-avatar";
 import { normalizeTwitterUsername } from "@/lib/twitter-username";
+import { toPublicPlaceLabel } from "@/lib/public-place-label";
 
 export type SignalAccountItem = {
   id: number;
@@ -46,7 +47,11 @@ function formatCount(count?: number | null): string {
 }
 
 function labelFor(item: SignalAccountItem): string {
-  return item.areaName || item.prefecture || "すれ違い";
+  const fromArea = toPublicPlaceLabel(item.areaName);
+  if (fromArea) return fromArea;
+  const fromPrefecture = toPublicPlaceLabel(item.prefecture);
+  if (fromPrefecture) return fromPrefecture;
+  return "すれ違い";
 }
 
 function displayNameFor(item: SignalAccountItem): string {
@@ -86,6 +91,8 @@ function AccountCard({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${displayNameFor(item)}、${labelFor(item)}${item.openedByMe ? "" : "、未開封"}`}
       style={({ pressed }) => [
         styles.card,
         { width: isDesktop ? "49%" : "100%" },
@@ -111,7 +118,7 @@ function AccountCard({
           <Text style={styles.accountName} numberOfLines={1}>
             {displayNameFor(item)}
           </Text>
-          {!item.openedByMe && <View style={styles.unreadDot} />}
+          {!item.openedByMe ? <Text style={styles.unreadLabel}>未開封</Text> : null}
         </View>
         {/* どこで・いつすれ違ったかを先に見せる(docs/investigation/dashboard-redesign-2026-07-14.md Step6) */}
         <View style={styles.metaRow}>
@@ -131,7 +138,10 @@ function AccountCard({
       </View>
 
       <View style={styles.rightMeta}>
-        <View style={[styles.gradeBadge, { backgroundColor: grade.color }]}>
+        <View
+          style={[styles.gradeBadge, { borderColor: grade.color }]}
+          accessibilityLabel={`等級 ${grade.label}`}
+        >
           <Text style={styles.gradeText}>{grade.label}</Text>
         </View>
       </View>
@@ -184,9 +194,7 @@ export function SignalAccountGrid({
         </ScrollView>
       ) : (
         <View style={styles.empty}>
-          <MaterialIcons name="travel-explore" size={28} color="#94A3B8" />
-          <Text style={styles.emptyTitle}>まだすれ違いは届いていません</Text>
-          <Text style={styles.emptyText}>チェックインすると、近くにいた人がここに並びます</Text>
+          <Text style={styles.emptyText}>開封済みの履歴も、まだありません</Text>
         </View>
       )}
     </View>
@@ -242,8 +250,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
   },
   headerHint: {
-    color: "#64748B",
-    fontSize: 11,
+    color: "#475569",
+    fontSize: 12,
     fontWeight: "700",
   },
   listContent: {
@@ -298,11 +306,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     flexShrink: 1,
   },
-  unreadDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: color.accentIndigo,
+  unreadLabel: {
+    color: "#00427B",
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 16,
   },
   metaRow: {
     flexDirection: "row",
@@ -322,14 +330,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   accountHandle: {
-    color: "#94A3B8",
-    fontSize: 11,
+    color: "#475569",
+    fontSize: 12,
+    lineHeight: 16,
     flexShrink: 1,
   },
   accountCount: {
-    color: "#94A3B8",
-    fontSize: 11,
+    color: "#475569",
+    fontSize: 12,
     fontWeight: "700",
+    lineHeight: 16,
   },
   rightMeta: {
     flexDirection: "row",
@@ -338,34 +348,29 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   gradeBadge: {
-    width: 22,
+    minWidth: 22,
     height: 22,
+    paddingHorizontal: 4,
     borderRadius: 6,
+    borderWidth: 1.5,
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
   gradeText: {
-    color: "#FFFFFF",
+    color: "#0F172A",
     fontSize: 12,
     fontWeight: "900",
   },
   empty: {
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 28,
-  },
-  emptyTitle: {
-    color: "#0F172A",
-    fontSize: 14,
-    fontWeight: "800",
-    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   emptyText: {
-    color: "#64748B",
-    fontSize: 12,
-    textAlign: "center",
-    lineHeight: 18,
-    marginTop: 4,
+    color: "#334155",
+    fontSize: 14,
+    lineHeight: 21,
   },
 });

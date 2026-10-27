@@ -34,6 +34,7 @@ import {
   twitterFollowStatus,
   userTwitterTokens,
   premiumEntitlements,
+  shareCards,
 } from "../../../drizzle/schema/index.js";
 
 type DB = PostgresJsDatabase<typeof schema>;
@@ -90,6 +91,8 @@ export async function deleteUserAccount(
   // （groupVisitReports は visitorToken ベースの匿名申告で userId を持たないため対象外）
   await db.delete(visitedAreas).where(eq(visitedAreas.userId, userId));
   await db.delete(locations).where(eq(locations.userId, userId));
+  // 公開した凍結カード（粗い地名と画像URL）。番地は入れていないが所有者に紐づくので消す
+  await db.delete(shareCards).where(eq(shareCards.userId, userId));
 
   // 集まり（主催した集まりと、参加表明）
   await db.delete(eventParticipations).where(eq(eventParticipations.userId, userId));

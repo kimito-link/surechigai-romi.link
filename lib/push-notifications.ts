@@ -1,21 +1,76 @@
 import * as Notifications from "expo-notifications";
 import { SchedulableTriggerInputTypes } from "expo-notifications";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { notificationTriggerFor } from "@/shared/update-notice";
 
 const PUSH_TOKEN_KEY = "expo_push_token";
 const NOTIFICATION_SETTINGS_KEY = "notification_settings";
 
-// 通知の表示設定
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+/** app.config.ts extra.eas.projectId と同じ。Constants に無いときの予備。 */
+export const EAS_PROJECT_ID_FALLBACK = "a58f673f-25cd-4713-9d1c-0d1062a68426";
+
+/** Android 8+ はチャネルが無い通知を捨てる。更新と新しい内容はここへ出す。 */
+export const UPDATE_CHANNEL_ID = "updates";
+
+let handlerInstalled = false;
+
+function installNotificationHandler(): void {
+  if (handlerInstalled || Platform.OS === "web") return;
+  handlerInstalled = true;
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
+
+export function resolveExpoProjectId(): string {
+  const fromEnv = process.env.EXPO_PUBLIC_PROJECT_ID?.trim();
+  if (fromEnv) return fromEnv;
+  const extra = Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined;
+  const fromConstants = extra?.eas?.projectId?.trim();
+  if (fromConstants) return fromConstants;
+  return EAS_PROJECT_ID_FALLBACK;
+}
+
+/**
+ * 許可と Android チャネルを用意する。トークン取得に失敗してもローカル通知は出せる。
+ * 拒否済みのときは毎回聞き直さない。
+ */
+export async function prepareLocalNotifications(): Promise<boolean> {
+  if (Platform.OS === "web") return false;
+  installNotificationHandler();
+  try {
+    const existing = await Notifications.getPermissionsAsync();
+    let granted = existing.status === "granted";
+    if (!granted) {
+      if (existing.status === "denied" && existing.canAskAgain === false) return false;
+      if (existing.status === "denied") return false;
+      const requested = await Notifications.requestPermissionsAsync({
+        ios: { allowAlert: true, allowBadge: false, allowSound: true },
+      });
+      granted = requested.status === "granted";
+    }
+    if (!granted) return false;
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync(UPDATE_CHANNEL_ID, {
+        name: "更新と新しい内容",
+        importance: Notifications.AndroidImportance.DEFAULT,
+        sound: "default",
+      });
+    }
+    return true;
+  } catch (error) {
+    console.error("[Push] prepare failed:", error);
+    return false;
+  }
+}
 
 export interface NotificationSettings {
   enabled: boolean;
@@ -42,25 +97,15 @@ export async function registerForPushNotifications(): Promise<string | null> {
     return null;
   }
 
+  const ready = await prepareLocalNotifications();
+  if (!ready) {
+    console.log("[Push] Permission not granted");
+    return null;
+  }
+
   try {
-    // 既存の許可状態を確認
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    // 許可されていない場合はリクエスト
-    if (existingStatus !== "granted") {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
-    }
-
-    if (finalStatus !== "granted") {
-      console.log("[Push] Permission not granted");
-      return null;
-    }
-
-    // Expoプッシュトークンを取得
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
+      projectId: resolveExpoProjectId(),
     });
     const token = tokenData.data;
 
@@ -115,7 +160,7 @@ export async function saveNotificationSettings(settings: Partial<NotificationSet
 }
 
 /**
- * ローカル通知をスケジュール
+ * ローカル通知をスケジュール。Android の channelId は content ではなく trigger に載せる。
  */
 export async function scheduleLocalNotification(
   title: string,
@@ -127,6 +172,9 @@ export async function scheduleLocalNotification(
     console.log("[Push] Web platform - skipping local notification");
     return null;
   }
+
+  const ready = await prepareLocalNotifications();
+  if (!ready) return null;
 
   try {
     const settings = await getNotificationSettings();
@@ -142,7 +190,11 @@ export async function scheduleLocalNotification(
         data: data || {},
         sound: true,
       },
-      trigger: trigger || null, // null = 即時通知
+      trigger: notificationTriggerFor(
+        Platform.OS,
+        trigger,
+        UPDATE_CHANNEL_ID,
+      ) as Notifications.NotificationTriggerInput,
     });
 
     console.log("[Push] Notification scheduled:", id);

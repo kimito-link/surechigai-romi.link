@@ -25,6 +25,11 @@ import {
   useOAuth,
   useClerk,
 } from "@clerk/expo";
+// @clerk/expo の useSignIn は Signal API（create が { error } を返す）になった。
+// ticket をセッションにするには、従来の SignInResource.create と setActive が要る。
+import { useSignIn } from "@clerk/react/legacy";
+import { openKimitoAuthSession } from "@/lib/auth/open-kimito-auth-session";
+import { parseTicketFromCallback } from "@/shared/kimito-native-auth";
 
 export function resolveReturnUrl(returnUrl?: string): string | undefined {
   if (typeof window === "undefined") {
@@ -207,10 +212,11 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
   // Guideline 4.8 対応。Clerk 側で oauth_apple は有効化済み（2026-07-31 確認）。
   // useOAuth は既に import 済みなのでモジュールの依存関係は増えない。
   const { startOAuthFlow: startAppleOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
+  const { signIn, setActive: setActiveFromSignIn, isLoaded: signInLoaded } = useSignIn();
   const clerk = useClerk();
 
   const login = useCallback(
-    async (returnUrl?: string, forceSwitch = false, provider: "x" | "apple" = "x") => {
+    async (returnUrl?: string, forceSwitch = false, provider: "x" | "apple" | "kimito" = "x") => {
       try {
         const safeReturnUrl =
           typeof returnUrl === "string" ? returnUrl : undefined;
@@ -257,6 +263,45 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
             resolveReturnPath(safeReturnUrl),
             forceSwitch,
           );
+          return;
+        }
+
+        if (provider === "kimito") {
+          /* 外部ブラウザではなく認証セッション。キャンセルは無言（エラーにしない）。
+             通ったときだけ ticket を Clerk のセッションにする。URL は ticket を含むのでログに出さない。 */
+          const sessionResult = await openKimitoAuthSession();
+          if (sessionResult.type !== "success") return;
+          const ticket = parseTicketFromCallback(sessionResult.url);
+          if (!ticket) {
+            throw new Error(
+              "kimito.link から戻れましたが、ログインを確認できませんでした。もう一度お試しください。",
+            );
+          }
+          if (!signInLoaded || !signIn || !setActiveFromSignIn) {
+            throw new Error(OAUTH_NOT_READY_MESSAGE);
+          }
+          const attempt = await signIn.create({ strategy: "ticket", ticket });
+          if (attempt.status === "complete" && attempt.createdSessionId) {
+            await setActiveFromSignIn({ session: attempt.createdSessionId });
+            const token = await getToken();
+            if (token) {
+              try {
+                await fetch(`${getApiBaseUrl()}/api/auth/sync`, {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                });
+              } catch (syncErr) {
+                console.warn("[Auth] Backend sync failed:", syncErr);
+              }
+            }
+          } else {
+            throw new Error(
+              "kimito.link のログインを完了できませんでした。もう一度お試しください。",
+            );
+          }
           return;
         }
 
@@ -323,7 +368,7 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
         }
       }
     },
-    [startOAuthFlow, startAppleOAuthFlow, getToken, signOut, clerk],
+    [startOAuthFlow, startAppleOAuthFlow, getToken, signOut, clerk, signIn, setActiveFromSignIn, signInLoaded],
   );
 
   const logout = useCallback(async () => {

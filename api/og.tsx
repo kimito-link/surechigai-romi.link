@@ -16,6 +16,12 @@
 import * as React from "react";
 import { ImageResponse } from "@vercel/og";
 import { shouldShowLocationPin } from "../lib/ogp/pin-visibility.js";
+import {
+  capPublicZoom,
+  coarsenPublicCoordinate,
+  sanitizePublicText,
+  toPublicPlace,
+} from "../lib/ogp/sanitize-public-place.js";
 
 export const config = { runtime: "edge" };
 
@@ -114,7 +120,7 @@ const TILE = 256;
 const TILE_UA =
   "surechigai-romi-og/1.0 (+https://surechigai.kimito.link; contact@surechigai-romi.link)";
 const TILE_LOAD_TIMEOUT_MS = 1500;
-const OGP_MAX_ZOOM = 14;
+const OGP_MAX_ZOOM = 11;
 const FONT_LOAD_TIMEOUT_MS = 1800;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
@@ -269,17 +275,22 @@ export default async function handler(req: Request): Promise<Response> {
 
 async function renderOgImage(req: Request, options?: { gradientOnly?: boolean }): Promise<Response> {
   const { searchParams } = new URL(req.url);
-  const latRaw = parseFloat(searchParams.get("lat") ?? "");
-  const lngRaw = parseFloat(searchParams.get("lng") ?? "");
+  const latParsed = parseFloat(searchParams.get("lat") ?? "");
+  const lngParsed = parseFloat(searchParams.get("lng") ?? "");
+  // クエリが6桁でも、描画とタイル取得は約1km（小数2桁）までしか使わない。
+  const lat = Number.isFinite(latParsed) ? coarsenPublicCoordinate(latParsed) : Number.NaN;
+  const lng = Number.isFinite(lngParsed) ? coarsenPublicCoordinate(lngParsed) : Number.NaN;
   const hasCoord =
-    !options?.gradientOnly && Number.isFinite(latRaw) && Number.isFinite(lngRaw);
-  const zoom = Math.min(
-    Math.max(parseInt(searchParams.get("zoom") ?? "13", 10) || 13, 3),
-    OGP_MAX_ZOOM,
-  );
-  const area = (searchParams.get("area") ?? "").slice(0, 24);
-  const pref = (searchParams.get("pref") ?? "").slice(0, 12);
-  const name = (searchParams.get("name") ?? "").slice(0, 24);
+    !options?.gradientOnly && Number.isFinite(lat) && Number.isFinite(lng);
+  const zoom = capPublicZoom(parseInt(searchParams.get("zoom") ?? "11", 10) || 11);
+  const place = toPublicPlace({
+    area: searchParams.get("area"),
+    prefecture: searchParams.get("pref"),
+    address: searchParams.get("area"),
+  });
+  const area = (place.municipality ?? "").slice(0, 24);
+  const pref = (place.prefecture ?? "").slice(0, 12);
+  const name = sanitizePublicText(searchParams.get("name") ?? "").replace(/^@/, "").slice(0, 24);
   // 地図の丸ピンに出す X のプロフィール画像（2026-08-19 指示）。
   // 外部URLを踏むので https と長さだけ検証する。取得失敗時は従来の白丸に落ちる。
   const avatarRaw = searchParams.get("avatar") ?? "";
@@ -302,13 +313,13 @@ async function renderOgImage(req: Request, options?: { gradientOnly?: boolean })
   const origin = new URL(req.url).origin;
   const [fonts, staticMap, mapTiles, japanSvg] = await Promise.all([
     withTimeout(loadFonts(fontText), FONT_LOAD_TIMEOUT_MS, []),
-    hasCoord ? loadStaticMapImage(latRaw, lngRaw, zoom) : Promise.resolve(null),
+    hasCoord ? loadStaticMapImage(lat, lng, zoom) : Promise.resolve(null),
     // MAPTILER_KEY が無い環境では Static Map が必ず null になり、座標があっても
     // 夜景フォールバックにしか行けなかった（2026-07-31 実測。loadMapTilesWithTimeout は
     // 定義されているだけで呼ばれていないデッドコードだった）。
     // キー無しでも実際の地図が出るよう OSM タイル合成を併走させる。
     hasCoord && !process.env.MAPTILER_KEY
-      ? loadMapTilesWithTimeout(latRaw, lngRaw, zoom)
+      ? loadMapTilesWithTimeout(lat, lng, zoom)
       : Promise.resolve([] as Tile[]),
     options?.gradientOnly
       ? Promise.resolve(null)

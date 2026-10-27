@@ -16,4 +16,16 @@
  *   package.json の main がこのファイルを指すことで保証される。
  */
 require("./lib/bootstrap/text-decoder-init");
+/* ネイティブの起動画面は、ルートが描画された瞬間に自動で消える。
+   その時点の下地は userInterfaceStyle が dark だと黒なので、
+   最初の実画面まで残してから一度だけフェードする。
+   時間は theme/tokens/boot.ts の BOOT.fadeMs（280）と揃える。
+   expo-router より前で呼ぶ。後だと自動非表示に間に合わない。 */
+try {
+  const SplashScreen = require("expo-splash-screen");
+  SplashScreen.preventAutoHideAsync();
+  SplashScreen.setOptions({ duration: 280, fade: true });
+} catch (e) {
+  /* web では起動画面モジュールが無い。ベール（+html.tsx）が同じ役をする。 */
+}
 require("expo-router/entry");

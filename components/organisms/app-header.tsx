@@ -7,7 +7,7 @@
  * 出典: kimitolink-linktree/components/Header.tsx, HeaderCurrentAccount.tsx
  */
 import { useState } from "react";
-import { color, palette, touchTarget, APP_HEADER_CHROME_HEIGHT, APP_HEADER_CHROME_HEIGHT_COMPACT, APP_HEADER_CHROME_HEIGHT_FULL } from "@/theme/tokens";
+import { color, palette, touchTarget, APP_HEADER_CHROME_HEIGHT, APP_HEADER_CHROME_HEIGHT_COMPACT, APP_HEADER_CHROME_HEIGHT_FULL, HEADER_FOCUSED_WIDE_BREAKPOINT } from "@/theme/tokens";
 import { View, Text, Pressable, Platform, StyleSheet, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
 import MaterialIcons from "@/lib/icons/material-icons";
@@ -40,8 +40,8 @@ export type AppHeaderProps = {
   showLoginButton?: boolean;
   /** ブランドコピー「現在地でつながる、すれ違ひ通信」を表示（既定 true）。ヒーローで強調済みの画面は false */
   showTagline?: boolean;
-  /** full=ポスト等 / compact=タブ画面（タグライン非表示・低ヘッダー） */
-  variant?: "full" | "compact";
+  /** full=従来の多段 / compact=タブ画面 / focused=ポスト（1本の見出しに機能を畳む） */
+  variant?: "full" | "compact" | "focused";
   /** ヘッダー直下のコンテキスト行（固定ヘッダー内） */
   contextBar?: React.ReactNode;
 };
@@ -116,10 +116,110 @@ export function AppHeader({
   };
 
   const isCompactHeader = variant === "compact";
-  const showTaglineRow = showTagline && !isCompactHeader;
-  const displayTitle = isCompactHeader
-    ? title || "君斗りんくのすれ違ひ通信"
-    : title || "君斗りんくのすれ違ひ通信";
+  const isFocusedHeader = variant === "focused";
+  const isFocusedWide = isFocusedHeader && windowWidth >= HEADER_FOCUSED_WIDE_BREAKPOINT;
+  const showTaglineRow = showTagline && !isCompactHeader && !isFocusedHeader;
+  const displayTitle = title || "君斗りんくのすれ違ひ通信";
+
+  const menuButton = showMenu ? (
+    <Pressable
+      onPress={handleMenuPress}
+      accessibilityRole="button"
+      accessibilityLabel="メニューを開く"
+      style={({ pressed }) => [
+        styles.menuButton,
+        pressed && { opacity: 0.7, transform: [{ scale: 0.97 }] },
+      ]}
+    >
+      <MaterialIcons name="menu" size={24} color={palette.kimitoBlue} />
+    </Pressable>
+  ) : null;
+
+  const focusedAccount = showLoginStatusStable && user ? (
+    <Pressable
+      onPress={goMypage}
+      accessibilityRole="button"
+      accessibilityLabel={`マイページを開く ${user.name || user.username || "ゲスト"}${user.username ? ` @${user.username}` : ""}`}
+      style={({ pressed }) => [
+        styles.focusAccount,
+        isFocusedWide && styles.focusAccountWide,
+        pressed && styles.accountPillPressed,
+      ]}
+    >
+      {user.profileImage ? (
+        <Image source={{ uri: user.profileImage }} style={styles.focusAvatar} contentFit="cover" />
+      ) : (
+        <View style={[styles.focusAvatar, styles.avatarFallback]}>
+          <MaterialIcons name="person" size={18} color={palette.kimitoNavInactive} />
+        </View>
+      )}
+      <View style={styles.focusAccountText}>
+        <Text style={styles.focusAccountName} numberOfLines={1}>
+          {user.name || user.username || "ゲスト"}
+        </Text>
+        <Text style={styles.focusAccountId} numberOfLines={1}>
+          {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId}
+        </Text>
+      </View>
+    </Pressable>
+  ) : null;
+
+  if (isFocusedHeader) {
+    return (
+      <>
+        <View style={[styles.shell, styles.shellFocused, webChromeStyle]}>
+          <View style={styles.topRow}>
+            <View style={[styles.brandBlock, styles.brandBlockNarrow]}>
+              {leftElement ?? null}
+              <BrandHomeLink
+                title={displayTitle}
+                isDesktop={isDesktop || isFocusedWide}
+                isNarrow={windowWidth < 480}
+                hideWordmark
+                singleLine
+              />
+            </View>
+            <View style={styles.actionRow}>
+              {isFocusedWide ? (
+                <>
+                  {focusedAccount}
+                  <HeaderKimitoDashboardLink />
+                  <HeaderUserButton />
+                </>
+              ) : (
+                <HeaderUserButton />
+              )}
+              {menuButton}
+            </View>
+          </View>
+
+          <View style={styles.focusMetaRow}>
+            <View style={styles.focusTagline}>
+              <BrandHomeTaglineLink>
+                <BrandTagline compact align="left" />
+              </BrandHomeTaglineLink>
+            </View>
+            {showLoginStatusStable ? (
+              <LivePresenceBadge enabled={isAuthReadyForUI && !!user} />
+            ) : null}
+          </View>
+
+          {!isFocusedWide && focusedAccount ? (
+            <View style={styles.focusUtilityRow}>
+              {focusedAccount}
+              <HeaderKimitoDashboardLink />
+            </View>
+          ) : null}
+
+          {contextBar}
+          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        </View>
+        {menuMounted && showMenu ? (
+          <LazyGlobalMenu isVisible={menuVisible} onClose={() => setMenuVisible(false)} />
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <>
@@ -464,5 +564,64 @@ const styles = StyleSheet.create({
     color: palette.kimitoInkMuted,
     fontSize: 14,
     marginTop: 6,
+  },
+  shellFocused: {
+    paddingTop: 8,
+    paddingBottom: 6,
+    paddingHorizontal: 12,
+  },
+  focusMetaRow: {
+    marginTop: 4,
+    minHeight: touchTarget.minSize,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  focusTagline: {
+    flex: 1,
+    minWidth: 0,
+  },
+  focusUtilityRow: {
+    marginTop: 4,
+    minHeight: touchTarget.minSize,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  focusAccount: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: touchTarget.minSize,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  focusAccountWide: {
+    flex: 0,
+    flexShrink: 1,
+    maxWidth: 220,
+  },
+  focusAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: palette.kimitoBorderSoft,
+    flexShrink: 0,
+  },
+  focusAccountText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  focusAccountName: {
+    color: color.textPrimary,
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 18,
+  },
+  focusAccountId: {
+    color: color.textSecondary,
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

@@ -13,6 +13,7 @@
  */
 
 import { View, Text, Pressable, Platform, useWindowDimensions, InteractionManager } from "react-native";
+import MaterialIcons from "@/lib/icons/material-icons";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import * as Haptics from "expo-haptics";
 import { useToast } from "@/components/atoms/toast";
@@ -26,12 +27,12 @@ import { LazySignalAccountGrid } from "@/lib/lazy-heavy-components";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useMySignal } from "@/hooks/use-my-signal";
 import { LIVE_PRESENCE_PULSE_INTERVAL_MS } from "@/modules/encounter/core/live-presence";
-import { CheckinCtaButton } from "@/components/molecules/checkin-cta-button";
 import { navigate } from "@/lib/navigation";
 import { useTabScrollToTop } from "@/hooks/use-tab-scroll-to-top";
 import { useScreenFocused } from "@/hooks/use-screen-focused";
 import { PostScreenView } from "@/components/post/post-screen-view";
 import { styles } from "@/components/post/post-screen-styles";
+import { color } from "@/theme/tokens";
 
 // ★2026-09-08 再有効化。2026-07-04 に 6058111eb で OOM 切り分けのため一時停止したが、
 // 真因は別（lib/icons/material-icons.web.tsx の動的import + React 19 の無限sync再レンダリング）で
@@ -193,8 +194,6 @@ export function PostAuthenticatedScreen() {
     return Date.now() - new Date(latest).getTime() < 24 * 60 * 60 * 1000;
   }, [trailPeek?.locations]);
 
-  const showCheckinCta = isAuthenticated && unopened.length === 0 && !checkedInRecently;
-
   // モバイル実機の OOM 対策: 地図に撒くマーカー数と、同時に動く無限アニメの
   // 本数を上限で絞る。あふれた分は「他N件」の集約チップで示し、全件は下部の
   // シグナル一覧から開封できるため情報自体は失われない（docs/auth-home-lightweight-PLAN.md §5）。
@@ -224,27 +223,27 @@ export function PostAuthenticatedScreen() {
     />
   ) : null;
 
-  const emptyOverlay = isAuthenticated && !isLoadingEncounters && unopened.length === 0 && (
-    <View style={[styles.emptyOverlay, !isDesktop && styles.emptyOverlayMobile]}>
-      <Text style={styles.emptyOverlayEmoji}>📭</Text>
-      <Text style={styles.emptyOverlayTitle}>まだ封筒は届いていません</Text>
-      <Text style={styles.emptyOverlayText}>
+  const emptyState = isAuthenticated && !isLoadingEncounters && unopened.length === 0 ? (
+    <View style={styles.emptyCard} testID="inbox-empty-card">
+      <View style={styles.emptyCardTitleRow}>
+        <MaterialIcons name="mail-outline" size={22} color={color.textPrimary} />
+        <Text style={styles.emptyCardTitle}>まだ封筒は届いていません</Text>
+      </View>
+      <Text style={styles.emptyCardText}>
         {checkedInRecently
-          ? "今日は記録済みです。\nまた移動したらチェックインを"
-          : "まず現在地を記録すると\n足あとが残り、すれ違いの判定が始まります"}
+          ? "今日は記録済みです。また移動したらチェックインを"
+          : "まず現在地を記録すると、足あとが残り、すれ違いの判定が始まります"}
       </Text>
-      {showCheckinCta ? (
-        <CheckinCtaButton compact style={{ marginTop: 14 }} />
-      ) : (
-        <Pressable
-          onPress={() => navigate.toCheckinTab()}
-          style={({ pressed }) => [styles.checkinLink, pressed && { opacity: 0.8 }]}
-        >
-          <Text style={styles.checkinLinkText}>チェックイン画面へ</Text>
-        </Pressable>
-      )}
+      <Pressable
+        onPress={() => navigate.toCheckinTab()}
+        accessibilityRole="button"
+        accessibilityLabel="チェックイン画面へ"
+        style={({ pressed }) => [styles.emptyCardButton, pressed && { opacity: 0.92 }]}
+      >
+        <Text style={styles.emptyCardButtonText}>チェックイン画面へ</Text>
+      </Pressable>
     </View>
-  );
+  ) : null;
 
   return (
     <PostScreenView
@@ -268,9 +267,8 @@ export function PostAuthenticatedScreen() {
       isPausing={isPausing}
       pausedUntilLabel={pausedUntilLabel}
       unopened={unopened}
-      emptyOverlay={emptyOverlay}
+      emptyState={emptyState}
       signalGrid={signalGrid}
-      showCheckinCta={showCheckinCta}
       openModalVisible={openModalVisible}
       openItem={openItem}
       setOpenModalVisible={setOpenModalVisible}

@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useRef, useCallback } from "react";
-import { View, StyleSheet, StatusBar, Platform, Text, ActivityIndicator } from "react-native";
+import { View, StyleSheet, StatusBar, Platform, Text } from "react-native";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -13,6 +13,7 @@ import { OnboardingSlide } from "./OnboardingSlide";
 import { OnboardingNavigation } from "./OnboardingNavigation";
 import { APP_VERSION } from "@/shared/version";
 import { palette, color } from "@/theme/tokens";
+import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 import { navigate } from "@/lib/navigation";
 
 export function OnboardingScreen() {
@@ -128,13 +129,13 @@ export function OnboardingScreen() {
   );
 }
 
-/** 永続化状態読み込み中 */
+/** 永続化状態読み込み中。起動画面と同じ絵で、スピナーは出さない。 */
 export function OnboardingBootSplash() {
   return (
-    <View style={styles.container}>
+    <>
       <StatusBar barStyle="dark-content" />
-      <ActivityIndicator size="large" color={palette.kimitoBlue} />
-    </View>
+      <BrandLoadingScreen />
+    </>
   );
 }
 

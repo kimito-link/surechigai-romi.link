@@ -16,6 +16,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { BOOT } from "../theme/tokens/boot";
 import { palette } from "../theme/tokens/palette";
+import { BOOT_SPLASH_DATA_URI } from "../theme/tokens/boot-splash-data";
 
 const ROOT = resolve(__dirname, "..");
 const read = (rel: string) => readFileSync(resolve(ROOT, rel), "utf8");
@@ -51,11 +52,11 @@ describe("参照する側は値を直書きしない", () => {
     expect(stripComments(read(rel))).not.toMatch(/["'`(]\/boot-mark\.png/);
   });
 
-  it("起動画面のタイトルは BOOT.title を表示する（+html.tsx の OGP メタタグなど別用途の文字列は対象外）", () => {
-    expect(read("app/+html.tsx")).toContain('<div className="romi-boot-title">{BOOT.title}</div>');
+  it("起動画面のタグラインは BOOT.tagline を参照する（文言の直書きはしない）", () => {
+    expect(read("app/+html.tsx")).toContain("{BOOT.tagline}");
     const loading = stripComments(read("components/atoms/brand-loading-screen.tsx"));
-    expect(loading).toContain("{BOOT.title}");
-    expect(loading).not.toContain(BOOT.title);
+    expect(loading).toContain("BOOT.tagline");
+    expect(loading).not.toContain(BOOT.tagline);
   });
 });
 
@@ -81,12 +82,59 @@ describe("参照できない静的ファイルは BOOT と同じ値", () => {
     const cfg = read("app.config.ts");
     const at = cfg.indexOf('"expo-splash-screen"');
     expect(at, "expo-splash-screen の設定が見つからない").toBeGreaterThan(-1);
-    const m = cfg.slice(at, at + 4000).match(/backgroundColor:\s*"(#[0-9A-Fa-f]{6})"/);
+    const m = cfg.slice(at, at + 8000).match(/backgroundColor:\s*"(#[0-9A-Fa-f]{6})"/);
     expect(m, "expo-splash-screen の backgroundColor が見つからない").not.toBeNull();
     expect(m![1].toUpperCase()).toBe(BOOT.background.toUpperCase());
   });
 
   it("app.config.ts は BOOT を import していない（Expo の設定読み込みが無言で失敗するため）", () => {
     expect(read("app.config.ts")).not.toMatch(/theme\/tokens\/boot/);
+  });
+});
+
+function channel(hex: string, shift: number): number {
+  const s = ((parseInt(hex.slice(1), 16) >> shift) & 255) / 255;
+  return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+}
+
+function contrast(fg: string, bg: string): number {
+  const L = (hex: string) => 0.2126 * channel(hex, 16) + 0.7152 * channel(hex, 8) + 0.0722 * channel(hex, 0);
+  const a = L(fg);
+  const b = L(bg);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+describe("起動は同じ絵を1枚出してから、短いフェードが1回", () => {
+  const config = read("app.config.ts");
+  const html = read("app/+html.tsx");
+  const entry = read("index.js");
+
+  it("userInterfaceStyle は light（dark だと名前付き色の起動画面が黒になる）", () => {
+    expect(config).toMatch(/userInterfaceStyle:\s*"light"/);
+    const splashAt = config.indexOf('"expo-splash-screen"');
+    const splashEnd = config.indexOf('"expo-system-ui"', splashAt);
+    expect(config.slice(splashAt, splashEnd)).not.toMatch(/\bdark\s*:/);
+  });
+
+  it("ネイティブの起動画面はルーターより前に握り、フェード時間は BOOT.fadeMs", () => {
+    const prevent = entry.indexOf("preventAutoHideAsync");
+    const router = entry.indexOf('require("expo-router/entry")');
+    expect(prevent).toBeGreaterThan(-1);
+    expect(prevent).toBeLessThan(router);
+    expect(entry).toContain(`duration: ${BOOT.fadeMs}`);
+    expect(entry).toContain("fade: true");
+  });
+
+  it("Web は最初の HTML から起動画面を出し、スピナーは無い", () => {
+    expect(html).toMatch(/<html[^>]*data-auth-boot="1"/);
+    expect(html).toContain("prefers-reduced-motion: reduce");
+    expect(html).not.toContain("romi-boot-spinner");
+    expect(html).toContain('background-image: url("${BOOT_SPLASH_DATA_URI}")');
+    expect(BOOT_SPLASH_DATA_URI.length / 1024).toBeLessThanOrEqual(80);
+  });
+
+  it("タグラインの文字色は地色に対して 4.5:1 以上", () => {
+    expect(BOOT.tagline).toBe("キミの現在地を、刻む。");
+    expect(contrast(BOOT.titleColor, BOOT.background)).toBeGreaterThanOrEqual(4.5);
   });
 });
