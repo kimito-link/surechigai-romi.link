@@ -314,7 +314,7 @@ export default function Root({ children }: PropsWithChildren) {
       <body>
         {/* ログイン中ヒントの判定（lib/clerk-public-routes.ts と同じ条件）。
             起動画面自体は <html data-auth-boot> に最初から出ている。ここではヒントか
-            PWA standalone のとき属性を付け直し、6秒で必ず外す（解除し忘れの保険）。
+            PWA standalone のとき属性を付け直し、6秒で外す（解除し忘れの保険）。
             絵のフェードは lib/boot-veil.ts。 */}
         <script
           dangerouslySetInnerHTML={{

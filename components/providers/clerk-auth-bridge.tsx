@@ -268,7 +268,7 @@ export function ClerkAuthBridge({ children }: { children: ReactNode }) {
 
         if (provider === "kimito") {
           /* 外部ブラウザではなく認証セッション。キャンセルは無言（エラーにしない）。
-             成功時だけ ticket を Clerk のセッションにする。URL は ticket を含むのでログに出さない。 */
+             通ったときだけ ticket を Clerk のセッションにする。URL は ticket を含むのでログに出さない。 */
           const sessionResult = await openKimitoAuthSession();
           if (sessionResult.type !== "success") return;
           const ticket = parseTicketFromCallback(sessionResult.url);
