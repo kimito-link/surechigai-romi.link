@@ -1,58 +1,105 @@
 // ブートベールの解除（lib/boot-veil.ts）の契約テスト。
-// 経緯: ルートのレイアウトのマウントで外すと、タブの画面が読み込み中の空白が露出した
-//       （ベール解除から本編まで、ゲストで約350ms / ヒントありで約570ms。本番を PWA 起動に見立てて測定）。
+// 経緯: ルートのレイアウトのマウントで外すと、タブの画面が読み込み中の空白が露出した。
+// 解除は2フレーム待ってから1回だけフェードする。すぐに属性を消すと絵が飛ぶ。
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { isBootVeilReleasedByLandingScreen, releaseBootVeil } from "../lib/boot-veil";
+import {
+  isBootVeilReleasedByLandingScreen,
+  releaseBootVeil,
+  resetBootVeilStateForTests,
+} from "../lib/boot-veil";
 
 const ROOT = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(ROOT, rel), "utf8");
 
 afterEach(() => {
+  resetBootVeilStateForTests();
   delete (globalThis as Record<string, unknown>).document;
   delete (globalThis as Record<string, unknown>).requestAnimationFrame;
+  delete (globalThis as Record<string, unknown>).matchMedia;
 });
 
+function stubDocument() {
+  const attrs = new Map<string, string>([["data-auth-boot", "1"]]);
+  const el = {
+    setAttribute: (k: string, v: string) => attrs.set(k, v),
+    removeAttribute: (k: string) => attrs.delete(k),
+    getAttribute: (k: string) => attrs.get(k) ?? null,
+  };
+  (globalThis as Record<string, unknown>).document = { documentElement: el };
+  return attrs;
+}
+
 describe("isBootVeilReleasedByLandingScreen", () => {
-  it("トップ（/）は画面自身が外す", () => {
-    for (const p of ["/", "", "/index", "/?auto=x", "//"]) expect(isBootVeilReleasedByLandingScreen(p)).toBe(true);
+  it("タブと公開プロフィールは画面自身が外す", () => {
+    for (const p of ["/", "", "/index", "/?auto=x", "//", "/checkin", "/zukan", "/map", "/mypage", "/u", "/u/abc"]) {
+      expect(isBootVeilReleasedByLandingScreen(p)).toBe(true);
+    }
   });
   it("それ以外の画面は、ルートのレイアウトが外す", () => {
-    for (const p of ["/sign-in", "/events", "/u/abc", "/terms", null, undefined]) {
+    for (const p of ["/sign-in", "/events", "/terms", null, undefined]) {
       expect(isBootVeilReleasedByLandingScreen(p as string)).toBe(false);
     }
   });
 });
 
 describe("releaseBootVeil", () => {
-  const stubDocument = () => {
-    const attrs = new Map<string, string>([["data-auth-boot", "1"]]);
-    (globalThis as Record<string, unknown>).document = {
-      documentElement: { removeAttribute: (k: string) => attrs.delete(k), getAttribute: (k: string) => attrs.get(k) ?? null },
-    };
-    return attrs;
-  };
-
-  it("2フレーム待ってから外す（1フレームでは足りない）", () => {
+  it("2フレーム待ってからフェードを始め、時間後に属性を消す", () => {
     const attrs = stubDocument();
     const queue: Array<() => void> = [];
     (globalThis as Record<string, unknown>).requestAnimationFrame = (cb: () => void) => void queue.push(cb);
-    releaseBootVeil();
-    expect(attrs.has("data-auth-boot")).toBe(true);
-    queue.shift()!(); // 1フレーム目
-    expect(attrs.has("data-auth-boot")).toBe(true);
-    queue.shift()!(); // 2フレーム目
-    expect(attrs.has("data-auth-boot")).toBe(false);
+    let pending: (() => void) | null = null;
+    const orig = globalThis.setTimeout;
+    globalThis.setTimeout = ((cb: () => void) => {
+      pending = cb;
+      return 0;
+    }) as typeof setTimeout;
+    try {
+      releaseBootVeil();
+      expect(attrs.get("data-auth-boot")).toBe("1");
+      expect(attrs.has("data-boot-leave")).toBe(false);
+      queue.shift()!();
+      expect(attrs.has("data-boot-leave")).toBe(false);
+      queue.shift()!();
+      expect(attrs.get("data-boot-leave")).toBe("1");
+      expect(attrs.get("data-auth-boot")).toBe("1");
+      pending!();
+      expect(attrs.has("data-auth-boot")).toBe(false);
+      expect(attrs.has("data-boot-leave")).toBe(false);
+    } finally {
+      globalThis.setTimeout = orig;
+    }
   });
 
-  it("requestAnimationFrame が無い環境では即座に外す", () => {
+  it("requestAnimationFrame が無い環境でも、フェードのあとで外す", () => {
     const attrs = stubDocument();
-    releaseBootVeil();
-    expect(attrs.has("data-auth-boot")).toBe(false);
+    let pending: (() => void) | null = null;
+    const orig = globalThis.setTimeout;
+    globalThis.setTimeout = ((cb: () => void) => {
+      pending = cb;
+      return 0;
+    }) as typeof setTimeout;
+    try {
+      releaseBootVeil();
+      expect(attrs.get("data-boot-leave")).toBe("1");
+      expect(attrs.get("data-auth-boot")).toBe("1");
+      pending!();
+      expect(attrs.has("data-auth-boot")).toBe(false);
+    } finally {
+      globalThis.setTimeout = orig;
+    }
   });
 
-  it("document が無い環境（ネイティブ）では何もしない・落ちない", () => {
+  it("prefers-reduced-motion では待たずに外す", () => {
+    const attrs = stubDocument();
+    (globalThis as Record<string, unknown>).matchMedia = () => ({ matches: true });
+    releaseBootVeil();
+    expect(attrs.has("data-auth-boot")).toBe(false);
+    expect(attrs.has("data-boot-leave")).toBe(false);
+  });
+
+  it("document が無い環境（ネイティブ）では落ちない", () => {
     expect(() => releaseBootVeil()).not.toThrow();
   });
 });
@@ -60,16 +107,14 @@ describe("releaseBootVeil", () => {
 describe("呼び出し箇所", () => {
   it("トップ画面（/）が自分で外す", () => {
     const src = read("app/(tabs)/index.tsx");
-    expect(src).toMatch(/import \{ releaseBootVeil \} from "@\/lib\/boot-veil"/);
-    expect(src).toMatch(/useEffect\(\(\) => \{\s*releaseBootVeil\(\);\s*\}, \[\]\)/);
+    expect(src).toMatch(/useReleaseBootWhen\(showGuestScreen\)/);
+    expect(src).not.toMatch(/useEffect\(\(\) => \{\s*releaseBootVeil\(\);\s*\}, \[\]\)/);
   });
 
-  it("ルートのレイアウトは、トップ（/）では外さない（空白が露出するため）", () => {
+  it("ルートのレイアウトは、画面自身が外すパスでは外さない", () => {
     const src = read("app/_layout.tsx");
     expect(src).toMatch(/if \(!isBootVeilReleasedByLandingScreen\(pathname\)\) releaseBootVeil\(\)/);
-    // 無条件に外す呼び出し（旧実装）に戻っていない
     expect(src).not.toMatch(/useEffect\(\(\) => \{\s*releaseBootVeil\(\);\s*\}, \[\]\)/);
-    // 実装本体は lib に1つだけ
     expect(src).not.toMatch(/function releaseBootVeil/);
   });
 });

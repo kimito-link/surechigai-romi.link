@@ -5,8 +5,8 @@ import { palette } from "@/theme/tokens/palette";
 import { BOOT } from "@/theme/tokens/boot";
 // ログイン中ヒントの「ゲストでも Clerk が書くキー」の除外リスト（lib/clerk-public-routes.ts が正本。下の判定スクリプトに埋め込む）
 import { NON_SESSION_CLERK_STORAGE_KEYS } from "@/lib/clerk-public-routes";
-// ★ベールのマークを CSS に直接埋め込む（data URI）。このファイル（Node 側の静的レンダリング専用）だけが import する。
-import { BOOT_MARK_DATA_URI } from "@/theme/tokens/boot-mark-data";
+// ★起動画面の絵を CSS に直接埋め込む（data URI）。このファイル（Node 側の静的レンダリング専用）だけが import する。
+import { BOOT_SPLASH_DATA_URI } from "@/theme/tokens/boot-splash-data";
 import type { PropsWithChildren } from "react";
 
 /**
@@ -17,17 +17,11 @@ export default function Root({ children }: PropsWithChildren) {
   const enableSpeedInsights = process.env.NODE_ENV === "production";
 
   return (
-    <html lang="ja">
+    <html lang="ja" data-auth-boot="1" style={{ backgroundColor: BOOT.background }}>
       <head>
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        {/* ★ブートベールのマークの preload は「ベールを出すと決めたときだけ」動的に挿す。
-            （下の判定スクリプト内で実行）
-
-            静的な <link rel="preload"> にしていたところ、ベールが出ない未ログインの
-            通常訪問でも 27KB を最優先で取りに行っていた
-            （Lighthouse: offscreen-images 27KB + uses-responsive-images 6KB の指摘）。
-            ベールが出るのは「ログイン済みヒントあり」か「PWA standalone 起動」のときだけ。 */}
+        <meta name="color-scheme" content="light" />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover"
@@ -79,143 +73,143 @@ export default function Root({ children }: PropsWithChildren) {
         {/* iPhone SE 4-inch */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-640x1136.d887d51e748f.png"
+          href="/splash/ios-640x1136.eef6d7df045a.png"
           media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 320px) and (device-height: 568px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPhone 8 */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-750x1334.cc6430c50ac3.png"
+          href="/splash/ios-750x1334.9284261b0802.png"
           media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 375px) and (device-height: 667px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPhone 11 */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-828x1792.b2ffabfc922a.png"
+          href="/splash/ios-828x1792.38dbd46e5661.png"
           media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 414px) and (device-height: 896px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPhone 13 mini */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1080x2340.9b67f2dc4922.png"
+          href="/splash/ios-1080x2340.a0add705dad8.png"
           media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 360px) and (device-height: 780px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone 11 Pro */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1125x2436.06a12e6c9349.png"
+          href="/splash/ios-1125x2436.0f68a1bcd3cc.png"
           media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 375px) and (device-height: 812px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone 16e */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1170x2532.a5de78f8b9a3.png"
+          href="/splash/ios-1170x2532.397ff9ce2e2f.png"
           media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 390px) and (device-height: 844px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone 16 */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1179x2556.8217cfbb8ce2.png"
+          href="/splash/ios-1179x2556.8adbc2463bda.png"
           media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 393px) and (device-height: 852px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone 17 Pro */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1206x2622.d424a7cf009b.png"
+          href="/splash/ios-1206x2622.818220e074f6.png"
           media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 402px) and (device-height: 874px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone 8 Plus */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1242x2208.68402a6e028c.png"
+          href="/splash/ios-1242x2208.b5b2c2941e40.png"
           media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 414px) and (device-height: 736px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone 11 Pro Max */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1242x2688.945664c0d7d4.png"
+          href="/splash/ios-1242x2688.82d600ac15c7.png"
           media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 414px) and (device-height: 896px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone Air */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1260x2736.b4060004bc07.png"
+          href="/splash/ios-1260x2736.745c0d45eb63.png"
           media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 420px) and (device-height: 912px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone 14 Plus */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1284x2778.33da0ac21b99.png"
+          href="/splash/ios-1284x2778.3887828ef464.png"
           media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 428px) and (device-height: 926px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone 16 Plus */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1290x2796.e79991887443.png"
+          href="/splash/ios-1290x2796.5bc229866291.png"
           media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 430px) and (device-height: 932px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPhone 17 Pro Max */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1320x2868.3f640093cf6f.png"
+          href="/splash/ios-1320x2868.0a14909cd7d8.png"
           media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait), (device-width: 440px) and (device-height: 956px) and (resolution: 3dppx) and (orientation: portrait)"
         />
         {/* iPad mini 8.3-inch */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1488x2266.65b8c59bb583.png"
+          href="/splash/ios-1488x2266.650184b7c0c9.png"
           media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 744px) and (device-height: 1133px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPad Pro 9.7-inch */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1536x2048.6aebf64be391.png"
+          href="/splash/ios-1536x2048.ba44b35cb1fa.png"
           media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 768px) and (device-height: 1024px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPad 10.2-inch */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1620x2160.c5af4ba0d023.png"
+          href="/splash/ios-1620x2160.4d386016033b.png"
           media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 810px) and (device-height: 1080px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPad Air 11-inch */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1640x2360.44babec28b9e.png"
+          href="/splash/ios-1640x2360.cb4fb7188c3f.png"
           media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 820px) and (device-height: 1180px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPad Pro 10.5-inch */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1668x2224.2c0aa406daae.png"
+          href="/splash/ios-1668x2224.747a5db1dfba.png"
           media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 834px) and (device-height: 1112px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPad Pro 11-inch 1st–4th generation */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1668x2388.4e0f54a01b6b.png"
+          href="/splash/ios-1668x2388.9db845186619.png"
           media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 834px) and (device-height: 1194px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPad Pro 11-inch 5th and 6th generation */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-1668x2420.6eebbf4da55c.png"
+          href="/splash/ios-1668x2420.270fcfeb6805.png"
           media="(device-width: 834px) and (device-height: 1210px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 834px) and (device-height: 1210px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPad Pro 12.9-inch */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-2048x2732.8e97edf9b224.png"
+          href="/splash/ios-2048x2732.d03d62d37bba.png"
           media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 1024px) and (device-height: 1366px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* iPad Pro 13-inch */}
         <link
           rel="apple-touch-startup-image"
-          href="/splash/ios-2064x2752.578bc0314da7.png"
+          href="/splash/ios-2064x2752.29077d6d3492.png"
           media="(device-width: 1032px) and (device-height: 1376px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait), (device-width: 1032px) and (device-height: 1376px) and (resolution: 2dppx) and (orientation: portrait)"
         />
         {/* フォールバック（media省略）: 未知の新機種の保険 */}
-        <link rel="apple-touch-startup-image" href="/splash/ios-fallback.e79991887443.png" />
+        <link rel="apple-touch-startup-image" href="/splash/ios-fallback.5bc229866291.png" />
 {/* SPLASH-LINKS:END */}
         {/* ★2026-10-05: theme-color を本体の地色 #E2EDF7（palette.kimitoBlueSoft ＝
             manifest.background_color ＝ ブートベール地）にそろえた。
@@ -247,107 +241,71 @@ export default function Root({ children }: PropsWithChildren) {
             --color-border: #E2E8F0;
             color-scheme: light;
           }
-          html { background-color: var(--color-background); color-scheme: light; }
+          /* 最初の塗りの地色は起動画面と同じ。本体のページ地は #root 側。
+             白や黒を先に塗ると、絵が出る前に別の画面が1枚挟まる。 */
+          html, body {
+            background-color: ${BOOT.background} !important;
+            color-scheme: light;
+          }
           body {
-            background-color: var(--color-background);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
             text-rendering: optimizeSpeed;
           }
           #root { background-color: var(--color-background); min-height: 100%; }
-          /* ログイン済みヒント / PWA standalone 起動時のブートベール（ブランドスプラッシュ）:
-             プリレンダ済みのゲスト用HTMLを一瞬見せず、アプリ起動までロゴ＋スピナーで繋ぐ。
-             背景色をブランド色(#E2EDF7、manifest.background_colorと統一)で先に敷くので、
-             PWA起動直後にロゴが確実に出る（apple-touch-startup-imageのOS依存に頼らない）。
-             解除は app/_layout.tsx のマウント時 effect（保険で6秒後に自動解除）。
-
-             ⚠️ 以前は body::before/::after の「擬似要素」でロゴ/スピナーを描いていたが、
-             iOS実機PWA(standalone)では擬似要素が描画されず単色面になる事象を確認(2026-07-06 実機録画)。
-             よって擬似要素をやめ、<body>直下の実DOM要素 #romi-boot-veil で描く方式に変更した。
-             実要素なのでiOS PWAでも確実に描画され、Playwright検証と実機挙動が一致する。 */
+          /* 起動画面は HTML の最初のバイトから出す（data-auth-boot は <html> に直書き）。
+             スクリプトで出し分けすると、決まるまでの1フレームが別の色になる。
+             絵は data URI。外部の CDN も画像の取得も待たない（ロックダウンモードでも同じ）。
+             解除は最初の実画面のあと1回だけフェード。スピナーは置かない。 */
           html[data-auth-boot="1"] #root { visibility: hidden; }
-          /* html/body 両方に背景色を敷き、初期段階でOS(ダークモード)の黒地が透けないようにする。 */
-          html[data-auth-boot="1"], html[data-auth-boot="1"] body {
-            background-color: ${BOOT.background} !important;
-          }
-          /* 実DOMの全面オーバーレイ。既定は非表示、ベール中(data-auth-boot=1)だけ表示。 */
+          html[data-boot-leave="1"] #root { visibility: visible; }
           #romi-boot-veil {
-            display: none;
+            display: flex;
             position: fixed;
             inset: 0;
             z-index: 2147483646;
             background-color: ${BOOT.background};
-            flex-direction: column;
             align-items: center;
             justify-content: center;
+            opacity: 1;
+            transition: opacity ${BOOT.fadeMs}ms ease;
           }
-          html[data-auth-boot="1"] #romi-boot-veil { display: flex; }
-          /* ★2026-08-15: 112px では「小さすぎて何か分からない」との指摘。
-             起動直後の数秒はブランドを伝える唯一の場面なので、画面幅に追従させて
-             大きく見せる（狭い端末でも潰れないよう min/max で挟む）。 */
-          /* ★2026-08-17: <img> から背景画像に変更。
-             <img> だと React が全ページの <head> に preload を自動生成し、
-             ベールが出ない通常訪問でも 27KB を取りに行っていた。
-             背景画像は「その要素が表示されるときだけ」読まれる（display:none の間は読まない）。
-             正方形の素材なので width/height を同値にして比率を保つ。 */
-          /* ★2026-10-12 Android 実機（moto g64y／Android 15）の起動録画で、OS の起動画面のアイコンと
-             ここのアイコンが「大きさ・縦位置」とも違い、切り替わりで飛んでいた:
-               OS の起動画面 = 画面幅の55.3% / 縦中心 49.9%
-               ここ（修正前）= 画面幅の44%  / 縦中心 約45%（タイトル+スピナーと一緒に中央寄せだったため上へ押し上がる）
-             → アイコンだけを画面中央に固定（absolute）し、タイトル+スピナーはその下に独立して置く。
-               大きさは OS の起動画面に合わせる（値は theme/tokens/boot.ts の BOOT.markSize が正本）。 */
-          #romi-boot-veil { --romi-boot-mark: ${BOOT.markSize}; }
-          #romi-boot-veil .romi-boot-chara {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: var(--romi-boot-mark);
-            height: var(--romi-boot-mark);
-            display: block;
-            /* ★2026-10-12 外部ファイル(BOOT.markSrc)でなく data URI を埋め込む。実機の起動録画 10 回中 4 回、
-               OS の起動画面→ベールの切り替わりでアイコンが 15〜109ms 消えていた＝最初の描画に画像の取得が
-               間に合っていなかった。静的な preload（media 付き）では頻度が変わらなかった（4/10→4/10）。
-               費用: HTML が約 31KB 増える（theme/tokens/boot-mark-data.ts、scripts/gen-boot-mark-data.mjs で生成）。 */
-            background-image: url("${BOOT_MARK_DATA_URI}");
+          html[data-boot-leave="1"] #romi-boot-veil { opacity: 0; }
+          html:not([data-auth-boot="1"]) #romi-boot-veil {
+            visibility: hidden;
+            pointer-events: none;
+            opacity: 0;
+          }
+          #romi-boot-veil .romi-boot-art {
+            width: ${BOOT.artWidth};
+            aspect-ratio: ${BOOT.artWidthPx} / ${BOOT.artHeightPx};
+            max-width: 100%;
+            background-image: url("${BOOT_SPLASH_DATA_URI}");
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
           }
-          /* タイトル+スピナー: アイコンの下端から BOOT.metaGap 下に置く（アイコンの位置には影響しない）。 */
-          #romi-boot-veil .romi-boot-meta {
+          #romi-boot-veil .romi-boot-sr {
             position: absolute;
-            left: 0;
-            right: 0;
-            top: calc(50% + var(--romi-boot-mark) / 2 + ${BOOT.metaGap});
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-          }
-          #romi-boot-veil .romi-boot-title {
-            font-size: 15px;
-            font-weight: 700;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
             color: ${BOOT.titleColor};
-            letter-spacing: 0.04em;
-            margin-bottom: 24px;
           }
-          #romi-boot-veil .romi-boot-spinner {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 3px solid rgba(0, 66, 123, 0.2);
-            border-top-color: var(--color-primary);
-            animation: romi-boot-spin 0.8s linear infinite;
+          @media (prefers-reduced-motion: reduce) {
+            #romi-boot-veil { transition: none; }
           }
-          @keyframes romi-boot-spin { to { transform: rotate(360deg); } }
         `}} />
       </head>
       <body>
-        {/* ブートベール判定。children より先に同期実行され、プリレンダHTMLの描画前にベールを掛ける。
-            (1) ログイン済みヒント（lib/clerk-public-routes.ts hasClerkSessionHint と同じ条件）がある、
-                または (2) PWA standalone 起動（ホーム画面から開いた）時に data-auth-boot を付ける。
-            (2) により、未ログインでもPWA起動時はロゴ入りブランドスプラッシュが出る
-            （apple-touch-startup-image のOS/機種依存に頼らず確実にロゴを見せる）。
-            解除は app/_layout.tsx の releaseBootVeil()（React マウント直後）＋保険で6秒後。 */}
+        {/* ログイン中ヒントの判定（lib/clerk-public-routes.ts と同じ条件）。
+            起動画面自体は <html data-auth-boot> に最初から出ている。ここではヒントか
+            PWA standalone のとき属性を付け直し、6秒で必ず外す（解除し忘れの保険）。
+            絵のフェードは lib/boot-veil.ts。 */}
         <script
           dangerouslySetInnerHTML={{
             /* ★2026-09-29: __client_uat（.kimito.link 共有Clerk cookie）チェックを追加。
@@ -363,36 +321,14 @@ export default function Root({ children }: PropsWithChildren) {
                マッチするとログイン済みでもゲスト誤判定していた。matchAll非対応の
                古いブラウザにも配るES5的なコードのため、正規表現のgフラグ+execの
                ループで全件を見て、いずれか1つでも'0'以外ならログイン済みとする。 */
-            __html: `(function(){try{var h=false;var re=/(?:^|;\\s*)__client_uat[^=]*=([^;]*)/g;var m;while((m=re.exec(document.cookie))){if(m[1]&&m[1]!=="0"){h=true;break}}var ls=window.localStorage;if(!h&&ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(!h&&ls){var ig=${JSON.stringify(NON_SESSION_CLERK_STORAGE_KEYS)};for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1&&ig.indexOf(k)===-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){try{var pl=document.createElement("link");pl.rel="preload";pl.as="image";pl.href="${BOOT.markSrc}";pl.setAttribute("fetchpriority","high");document.head.appendChild(pl)}catch(e3){}document.documentElement.setAttribute("data-auth-boot","1");window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot")},6000)}}catch(e){}})();`,
+            __html: `(function(){try{var h=false;var re=/(?:^|;\\s*)__client_uat[^=]*=([^;]*)/g;var m;while((m=re.exec(document.cookie))){if(m[1]&&m[1]!=="0"){h=true;break}}var ls=window.localStorage;if(!h&&ls&&ls.getItem("manus-runtime-user-info")){h=true}else if(!h&&ls){var ig=${JSON.stringify(NON_SESSION_CLERK_STORAGE_KEYS)};for(var i=0;i<ls.length;i++){var k=ls.key(i);if(k&&k.toLowerCase().indexOf("clerk")!==-1&&ig.indexOf(k)===-1){h=true;break}}}if(!h&&document.cookie&&document.cookie.indexOf("__session=")!==-1){h=true}var pwa=false;try{pwa=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true}catch(e2){}if(h||pwa){document.documentElement.setAttribute("data-auth-boot","1")}window.setTimeout(function(){document.documentElement.removeAttribute("data-auth-boot");document.documentElement.removeAttribute("data-boot-leave")},6000)}catch(e){}})();`,
           }}
         />
-        {/* ブートベールの実DOMオーバーレイ（ロゴ＋スピナー）。
-            擬似要素(body::before)はiOS実機PWAで描画されなかったため、本物の要素で描く。
-            既定は display:none。上のスクリプトが data-auth-boot=1 を付けた瞬間に CSS で display:flex になる。
-            children より前に置くので、プリレンダHTMLの描画前に前面へ出る。 */}
-        <div id="romi-boot-veil" aria-hidden="true">
-          {/* ★2026-08-16: iOS実機PWAの録画で「灰色→無地＋タブバー→本体」と流れ、
-              起動画面の絵が一度も出ていなかった。原因は参照先が
-              /lp/img/chara/link.png = 1500x1500 / 500KB で、表示は最大260pxなのに
-              6倍の解像度を起動直後に読ませていたこと。読み終わる前に
-              releaseBootVeil()（Reactマウント直後）でベールが外れて絵が出ない。
-
-              /boot-mark.png は pwa-icon-512 から起こした 520px / 27KB の
-              **アプリのマーク**（ホーム画面のアイコンと同じ絵柄・角丸付き）。
-              裸のキャラではなくマークにするのは、起動画面とホーム画面の
-              アイコンが一致していないと「別のアプリが開いた」ように見えるため。
-
-              ★2026-08-17: ここを <img> にしていたため、React が全ページの <head> に
-              `<link rel="preload" as="image" href="/boot-mark.png">` を自動生成し、
-              ベールが display:none の通常訪問でも 27KB を取りに行っていた
-              （Lighthouse: offscreen-images 27KB / uses-responsive-images 6KB）。
-              背景画像にすると preload は生成されず、**表示されるときだけ**読まれる。
-              ベールを出す場面では判定スクリプトが動的 preload を挿すので速度は落ちない。 */}
-          <div className="romi-boot-chara" role="presentation" />
-          <div className="romi-boot-meta">
-            <div className="romi-boot-title">{BOOT.title}</div>
-            <div className="romi-boot-spinner" />
-          </div>
+        {/* 起動画面の実DOM。擬似要素は iOS の PWA で描かれないので、本物の要素で描く。
+            <html data-auth-boot> がある最初のバイトから見える。children より前。 */}
+        <div id="romi-boot-veil">
+          <div className="romi-boot-art" aria-hidden="true" />
+          <p className="romi-boot-sr">{BOOT.tagline}</p>
         </div>
         {children}
         {enableSpeedInsights && (

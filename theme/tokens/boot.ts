@@ -47,6 +47,28 @@ export const BOOT = {
   /** マークの下に出すアプリ名。 */
   title: "君斗りんくのすれ違ひ通信",
 
-  /** タイトルの文字色。 */
+  /** タイトルの文字色。地色とのコントラストは 8.4:1（WCAG AA の 4.5:1 を超える）。 */
   titleColor: palette.kimitoBlue,
+
+  /**
+   * 起動画面に出すタグライン。ネイティブの画像・Web の画像・読み上げで同じ文。
+   * 文字色は titleColor（#00427B）を地色 #E2EDF7 に載せたもの。
+   */
+  tagline: "キミの現在地を、刻む。",
+
+  /** 起動画面から本編へフェードする時間（ms）。prefers-reduced-motion のときは 0。 */
+  fadeMs: 280,
+
+  /** 起動画面の絵（ワードマーク＋地図ピン＋ゆっくり＋タグライン）。ベールが参照する。 */
+  splashSrc: "/boot-splash.png",
+
+  /**
+   * 絵の表示幅。iOS の expo-splash-screen imageWidth 300dp（幅 390pt の約 77%）に合わせる。
+   * 86vh 上限は、縦が短い端末でタグラインが画面外に出ないため。
+   */
+  artWidth: "min(78vw, 420px, calc(86vh * 784 / 930))",
+
+  /** assets/images/splash-composition.png のピクセル寸法。CSS の aspect-ratio と揃える。 */
+  artWidthPx: 784,
+  artHeightPx: 930,
 } as const;

@@ -103,18 +103,7 @@ export function MapAuthenticatedScreen() {
   const isLoading = (isLoadingAreas || isLoadingTrail) && !hasTrailData;
 
   if (!isAuthReady) {
-    return (
-      <ScreenContainer containerClassName="bg-background">
-        <TabScreenHeader
-          title="軌跡"
-          contextKey="map"
-          showCharacters={false}
-          isDesktop={isDesktop}
-          showMenu
-        />
-        <BrandLoadingScreen />
-      </ScreenContainer>
-    );
+    return <BrandLoadingScreen />;
   }
 
   return (
