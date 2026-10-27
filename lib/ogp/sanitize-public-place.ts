@@ -84,7 +84,7 @@ export function normalizePublicText(input: string): string {
 
 /** 〒170-0013 / 170-0013 / 1700013 / 全角を落とす。 */
 export function stripPostalCodes(input: string): string {
-  return normalizePublicText(input).replace(/〒?\s*[0-9]{3}-?[0-9]{4}/g, " ");
+  return normalizePublicText(input).replace(/〒\s*[0-9]{3}-?[0-9]{4}|[0-9]{3}-?[0-9]{4}/g, " ");
 }
 
 /** 丁目・番地・号・ハイフン番地・建物名を落とす。 */

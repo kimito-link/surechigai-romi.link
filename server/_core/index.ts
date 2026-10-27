@@ -546,7 +546,7 @@ async function startServer() {
     res.status(result.status).json(result.body);
   });
 
-  app.get("/api/auth/native-handoff", async (req, res) => {
+  app.get("/api/auth/native-handoff", rateLimiterMiddleware, async (req, res) => {
     const { handleNativeAuthHandoff } = await import("../native-auth-handoff.js");
     const tried = req.query.tried === "1" || req.query.tried === "true";
     const result = await handleNativeAuthHandoff({
