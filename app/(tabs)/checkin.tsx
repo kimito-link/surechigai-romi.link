@@ -3,33 +3,21 @@
  * 未ログイン時は reanimated / 地図 chunk を読まない。
  */
 
-import { ScreenContainer } from "@/components/organisms/screen-container";
 import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
-import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
-import { useResponsive } from "@/hooks/use-responsive";
 import { useAuth } from "@/hooks/use-auth";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { OneTapGuestShell } from "@/components/organisms/one-tap-guest-shell";
 import { CheckinGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
+import { useReleaseBootWhen } from "@/components/boot/use-release-boot";
 
 export default function CheckinScreen() {
-  const { isDesktop } = useResponsive();
-  const { isAuthenticated, isAuthReady } = useAuth();
+  const { isAuthenticated, isAuthReady, isAuthReadyForUI } = useAuth();
+  const waiting = !isAuthReadyForUI || !isAuthReady;
+  useReleaseBootWhen(!waiting && !isAuthenticated);
 
-  if (!isAuthReady) {
-    return (
-      <ScreenContainer containerClassName="bg-background">
-        <TabScreenHeader
-          title="現在地"
-          showCharacters={false}
-          isDesktop={isDesktop}
-          showMenu
-          showLoginButton={!isAuthenticated}
-        />
-        <BrandLoadingScreen />
-      </ScreenContainer>
-    );
+  if (waiting) {
+    return <BrandLoadingScreen />;
   }
 
   if (!isAuthenticated) {

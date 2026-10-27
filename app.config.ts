@@ -24,7 +24,14 @@ const config: ExpoConfig = {
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
-  "userInterfaceStyle": "dark",
+  /* ★light 固定（2026-10-26）。
+     dark のままだと iOS の Launch Screen が、暗色バリエーションを持たない
+     名前付き色を黒で描く。実機録画は「アイコンをタップすると約1秒の黒→本編が急に出る」。
+     画面自体は明色（#E2EDF7 / #F0F4F8）なので、システム全体も light に揃える。
+     splash に dark.backgroundColor を足すと、プラグインが UIUserInterfaceStyle を
+     Automatic に上書きし、暗い端末でルートビューが再び黒になる。だから dark は足さない。 */
+  userInterfaceStyle: "light",
+  backgroundColor: "#E2EDF7",
   newArchEnabled: true,
   ios: {
     // iPhone 専用（2026-08-07）。CI は Capacitor 時代から
@@ -33,6 +40,7 @@ const config: ExpoConfig = {
     // （Guideline 2.1(a)「iPad で期待どおり動くこと」）。
     // 位置情報アプリで iPad の需要は薄く、審査変数を増やすだけなので false。
     supportsTablet: false,
+    backgroundColor: "#E2EDF7",
     bundleIdentifier: env.iosBundleId,
     infoPlist: {
       // 「記録」だけでなく「他の利用者に市区町村粒度で共有される」ことまで書く。
@@ -51,6 +59,7 @@ const config: ExpoConfig = {
       backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
+    backgroundColor: "#E2EDF7",
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
@@ -104,6 +113,8 @@ const config: ExpoConfig = {
 
            新: 画像は**透過PNG 1024px**（Expo 公式の推奨サイズ）。絵柄は安全円の内側
            （実測: 半対角比 0.285 < 0.333）。背景は下の backgroundColor に任せる。 */
+        /* Android 12+ は円形マスクなので、ここは安全円に収まる透過アイコン。
+           iOS は円形マスクが無く、下の ios.image で全面の構図を出す。 */
         image: "./assets/images/splash-icon.png",
         /* dp 指定（px ではない）。Android xxxhdpi は 4x なので 240dp → 960px を要求する。
            素材が 1024px あるのでアップスケールは起きない（ここが 1024 にした理由）。
@@ -121,8 +132,25 @@ const config: ExpoConfig = {
            PWA manifest(#E2EDF7) と Web のスプラッシュ地も明色なので、
            ★4箇所のうちネイティブだけが違う状態だった。明色側へ寄せる。 */
         backgroundColor: "#E2EDF7",
+        ios: {
+          /* ワードマーク・ピン・ゆっくり・タグラインを1枚に焼いた透過PNG。
+             地色は backgroundColor。最初の JS フレーム（BrandLoadingScreen）と同じ絵。 */
+          image: "./assets/images/splash-composition.png",
+          /* 390pt 幅の約 77%。Web の min(78vw, 420px) と揃える。 */
+          imageWidth: 300,
+          resizeMode: "contain",
+          backgroundColor: "#E2EDF7",
+        },
+        android: {
+          image: "./assets/images/splash-icon.png",
+          imageWidth: 240,
+          resizeMode: "contain",
+          backgroundColor: "#E2EDF7",
+        },
       },
     ],
+    /* ルートビューの下地。スプラッシュが外れた直後の1フレームが黒／白にならない。 */
+    "expo-system-ui",
     [
       "expo-build-properties",
       {

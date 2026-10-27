@@ -19,7 +19,7 @@ if (typeof document !== "undefined") {
 import { usePathname } from "expo-router";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppNavigationStack } from "@/components/providers/app-navigation-stack";
-import { Alert, Platform, View, Text } from "react-native";
+import { AccessibilityInfo, Alert, Platform, View, Text } from "react-native";
 import { OAUTH_NOT_READY_MESSAGE } from "@/lib/auth/oauth-result";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
@@ -37,7 +37,8 @@ import {
 } from "@/lib/clerk-public-routes";
 import { startDeferredWebBootstrap } from "@/lib/bootstrap/web-bootstrap";
 import { prefetchGuestTabChunks, prefetchHeavyTabChunks } from "@/lib/bootstrap/prefetch-tab-chunks";
-import { isBootVeilReleasedByLandingScreen, releaseBootVeil } from "@/lib/boot-veil";
+import { isBootVeilReleasedByLandingScreen, registerNativeSplashHide, releaseBootVeil } from "@/lib/boot-veil";
+import { BOOT } from "@/theme/tokens/boot";
 import { GuestWebProviders } from "@/components/providers/guest-web-providers";
 import { GuestAuthProvider, AuthContextProvider, type AuthState } from "@/lib/auth-context";
 import { TrpcReadyProvider } from "@/lib/trpc-ready-context";
@@ -255,11 +256,53 @@ export default function RootLayout() {
   const useGuestWebShell = Platform.OS === "web" && shouldUseGuestWebShell(pathname);
   const deferNativeWind = useGuestWebShell && shouldDeferTrpcOnGuestWeb(pathname);
 
-  // +html.tsx のブートベール解除。トップ画面（/）は、画面の中身が出た時に画面自身が外す
-  // （app/(tabs)/index.tsx）。ここで外すと、タブの画面が読み込み中の空白が露出する。
-  // それ以外の画面は、React がマウントした時点で外す。lib/boot-veil.ts 参照。
+  // ネイティブの起動画面は、最初の実画面が描かれてから一度だけフェードする。
+  // hide は2フレーム待つ。useLayoutEffect の中で即隠すと、描画前の黒いビューが透ける。
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    let SplashScreen: {
+      setOptions: (opts: { duration: number; fade: boolean }) => void;
+      hideAsync: () => Promise<void>;
+    };
+    try {
+      SplashScreen = require("expo-splash-screen");
+    } catch {
+      return;
+    }
+    registerNativeSplashHide(() => {
+      const hide = () => {
+        void (async () => {
+          let reduce = false;
+          try {
+            reduce = await AccessibilityInfo.isReduceMotionEnabled();
+          } catch {
+            reduce = false;
+          }
+          try {
+            SplashScreen.setOptions({ duration: reduce ? 0 : BOOT.fadeMs, fade: !reduce });
+            await SplashScreen.hideAsync();
+          } catch {
+            /* すでに隠れている */
+          }
+        })();
+      };
+      if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(() => requestAnimationFrame(hide));
+      } else {
+        setTimeout(hide, 32);
+      }
+    });
+  }, []);
+
+  // +html.tsx のブートベール解除。タブと公開プロフィールは、画面の中身が出た時に画面自身が外す。
+  // ここで先に外すと、読み込み中の別画面が露出する。それ以外はマウント時点で外す。
   useEffect(() => {
     if (!isBootVeilReleasedByLandingScreen(pathname)) releaseBootVeil();
+  }, []);
+
+  useEffect(() => {
+    const id = setTimeout(releaseBootVeil, 6000);
+    return () => clearTimeout(id);
   }, []);
 
   useEffect(() => {

@@ -8,11 +8,14 @@ import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 import { GuestPlaceContext } from "@/components/molecules/guest-place-context";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
+import { useReleaseBootWhen } from "@/components/boot/use-release-boot";
 
 export default function MapScreen() {
-  const { isAuthenticated, isAuthReadyForUI } = useAuth();
+  const { isAuthenticated, isAuthReady, isAuthReadyForUI } = useAuth();
+  const waiting = !isAuthReadyForUI || (isAuthenticated && !isAuthReady);
+  useReleaseBootWhen(!waiting && !isAuthenticated);
 
-  if (!isAuthReadyForUI) {
+  if (waiting) {
     return <BrandLoadingScreen />;
   }
 

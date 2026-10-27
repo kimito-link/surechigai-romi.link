@@ -1,18 +1,6 @@
-import { View, ActivityIndicator } from "react-native";
-import { color } from "@/theme/tokens";
+import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 
-/** Clerk chunk 読込中の軽量プレースホルダ（初回 bundle に Clerk を含めない）。 */
+/** Clerk chunk 読込中。起動画面と同じ絵でつなぎ、別のスピナー画面を挟まない。 */
 export function AppBootstrapFallback() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#F0F4F8",
-      }}
-    >
-      <ActivityIndicator size="large" color={color.accentPrimary} />
-    </View>
-  );
+  return <BrandLoadingScreen />;
 }

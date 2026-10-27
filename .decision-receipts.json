@@ -451,6 +451,33 @@
         "__tests__/public-place-label.test.ts",
         "__tests__/home-inbox-layout.test.ts"
       ]
+    },
+    {
+      "at": "2026-10-26T23:56:56.497Z",
+      "responsibility": "起動画面の表示サイズ。BrandLoadingScreen は react-native を読むので、node のテストから同じ式を呼ぶには分けて置く",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/splash-art-size.ts"
+      ]
+    },
+    {
+      "at": "2026-10-26T23:56:56.520Z",
+      "responsibility": "起動画面を外すタイミング。lib/boot-veil.ts は document だけのモジュールに保ち、React を入れない（vitest が RN を読まない）",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/boot/use-release-boot.tsx"
+      ]
+    },
+    {
+      "at": "2026-10-26T23:56:56.544Z",
+      "responsibility": "起動画面の絵の data URI。public/boot-splash.png から生成し、HTML の最初の描画に埋め込む。ロジックの複製ではない",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "theme/tokens/boot-splash-data.ts"
+      ]
     }
   ]
 }

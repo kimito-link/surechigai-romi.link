@@ -8,15 +8,18 @@ import { BrandLoadingScreen } from "@/components/atoms/brand-loading-screen";
 import { TabAuthenticatedShell } from "@/components/tabs/tab-authenticated-shell";
 import { AuthenticatedScreenSlot } from "@/components/tabs/authenticated-screen-slot";
 import { GuestPlaceContext } from "@/components/molecules/guest-place-context";
+import { useReleaseBootWhen } from "@/components/boot/use-release-boot";
 
 /** 地図ペイン優先のためzukanのみ右パネルを狭める(実測: 見出し・ベネフィット・CTAが
  * 収まる最小幅として280pxを採用。詳細はdocs/zukan-map-larger-DESIGN.md参照)。 */
 const ZUKAN_HERO_PANEL_WIDTH = 280;
 
 export default function ZukanScreen() {
-  const { isAuthenticated, isAuthReadyForUI } = useAuth();
+  const { isAuthenticated, isAuthReady, isAuthReadyForUI } = useAuth();
+  const waiting = !isAuthReadyForUI || (isAuthenticated && !isAuthReady);
+  useReleaseBootWhen(!waiting && !isAuthenticated);
 
-  if (!isAuthReadyForUI) {
+  if (waiting) {
     return <BrandLoadingScreen />;
   }
 
