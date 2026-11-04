@@ -579,6 +579,15 @@
       "scopePaths": [
         "theme/tokens/boot-splash-data.ts"
       ]
+    },
+    {
+      "at": "2026-11-04T11:45:52.720Z",
+      "responsibility": "画面コードが @clerk/react / @clerk/shared を直接 import しないことを固定するこのリポ固有の回帰テスト（Clerk の二重読み込みによる起動時例外の再発防止）。キットに同責務の道具は無い",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/clerk-single-package-instance.test.ts"
+      ]
     }
   ]
 }

@@ -27,7 +27,13 @@ import {
 } from "@clerk/expo";
 // @clerk/expo の useSignIn は Signal API（create が { error } を返す）になった。
 // ticket をセッションにするには、従来の SignInResource.create と setActive が要る。
-import { useSignIn } from "@clerk/react/legacy";
+// ★@clerk/react/legacy から直接 import しないこと（build 549 の 2.1(a) 却下の真因）。
+//   Metro は ESM の import に "import" 条件を使うので legacy.mjs（ESM 版）が選ばれ、
+//   @clerk/expo が require する CJS 版の @clerk/react と別の React context になる。
+//   ESM 版の useSignIn は ClerkProvider を見つけられず、起動直後に例外を投げて
+//   ErrorBoundary の「エラーが発生しました」が出る。@clerk/expo/legacy は CJS で
+//   require するので、ClerkProvider と同じ context を使う。
+import { useSignIn } from "@clerk/expo/legacy";
 import { openKimitoAuthSession } from "@/lib/auth/open-kimito-auth-session";
 import { parseTicketFromCallback } from "@/shared/kimito-native-auth";
 
