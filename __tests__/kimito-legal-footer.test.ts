@@ -38,6 +38,13 @@ describe("kimito-legal-footer", () => {
     expect(f.buildHtml({ serviceName: "x" })).not.toContain("<ul>");
   });
 
+  it("全サービス共通で「同じ運営のほかのサービス」（一覧ページ）への戻り道を、法務リンクの後ろに出す", () => {
+    const f = load();
+    const html = f.buildHtml({ serviceName: "x", privacy: "/privacy/" });
+    expect(html).toContain('<a href="https://best-trust.biz/products/">同じ運営のほかのサービス</a>');
+    expect(html.indexOf("同じ運営のほかのサービス")).toBeGreaterThan(html.indexOf("プライバシーポリシー"));
+  });
+
   it("危険なURL（javascript: / data: / // / http:）は描画しない", () => {
     const f = load();
     for (const bad of ["javascript:alert(1)", "data:text/html,x", "//evil.example/", "http://insecure.example/"]) {
