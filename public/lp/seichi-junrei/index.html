@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>推しの聖地巡礼を記録するアプリ｜行った場所が地図に残る｜君斗りんくのすれ違ひ通信</title>
+<meta name="description" content="聖地巡礼で行った場所を、正確な足あととして地図に残せるアプリ。推しが歩いた場所をたどり、同じ場所に行ったファンを見つけ、ナビでそのまま向かえます。iPhone・Android・パソコンのブラウザで使えます。" />
+<link rel="canonical" href="https://surechigai.kimito.link/lp/seichi-junrei/" />
+<meta property="og:title" content="推しの聖地巡礼を記録するアプリ｜すれ違ひ通信" />
+<meta property="og:description" content="行った場所が正確な足あととして地図に残る。推しの歩いた道をたどる聖地巡礼に。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://surechigai.kimito.link/lp/seichi-junrei/" />
+<meta property="og:site_name" content="君斗りんくのすれ違ひ通信" />
+<meta property="og:image" content="https://surechigai.kimito.link/lp/img/ogp-lp-v1.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://surechigai.kimito.link/lp/img/ogp-lp-v1.jpg" />
+<meta name="theme-color" content="#00427B" />
+<link rel="icon" href="../favicon.ico" sizes="any" />
+<link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"BreadcrumbList","itemListElement":[
+{"@type":"ListItem","position":1,"name":"すれ違ひ通信","item":"https://surechigai.kimito.link/lp/"},
+{"@type":"ListItem","position":2,"name":"推しの聖地巡礼を記録する","item":"https://surechigai.kimito.link/lp/seichi-junrei/"}]},
+{"@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"お金はかかりますか？","acceptedAnswer":{"@type":"Answer","text":"足あとの記録と、行った場所をふり返る機能は、ずっと無料で使えます。"}},
+{"@type":"Question","name":"アプリを入れる必要はありますか？","acceptedAnswer":{"@type":"Answer","text":"iPhone・Android・パソコンのブラウザで、そのまま使えます。ホーム画面に追加すると、アプリのように開けます。"}},
+{"@type":"Question","name":"自分の家の場所が知られることはありませんか？","acceptedAnswer":{"@type":"Answer","text":"自宅の場所は、すれ違った相手にも隠せます。足あとを誰まで見せるか（自分だけ・リンクを知っている人・すれ違った人・公開）と、市区町村までにするか正確にするかも選べます。"}},
+{"@type":"Question","name":"どうやってログインしますか？","acceptedAnswer":{"@type":"Answer","text":"X（旧Twitter）のアカウントでログインします。巡礼用に別のアカウントを使えば、足あとはそちらの名前にだけ残ります。"}}]}
+]}
+</script>
+<style>
+  :root{
+    --klf-bg:#efe7d6; --klf-fg:#3a352c;
+    --washi:#efe7d6; --washi-2:#e6dcc6; --sumi:#23201b; --sumi-soft:#3a352c; --muted:#5f574a;
+    --line:rgba(35,32,27,.16); --ai:#3c5a6e; --taisha:#a8572f; --kin:#b08a3e;
+    --mincho:"Shippori Mincho","Yu Mincho","Hiragino Mincho ProN",serif;
+  }
+  *{box-sizing:border-box}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--kin);outline-offset:2px;border-radius:2px}
+  html{overflow-x:hidden}
+  body{margin:0;background:var(--washi);color:var(--sumi);font-family:var(--mincho);line-height:1.95;letter-spacing:.03em;overflow-wrap:anywhere}
+  .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+  header.top{border-bottom:1px solid var(--line);padding:14px 0}
+  header.top a{color:var(--sumi);text-decoration:none;font-weight:700}
+  .crumb{font-size:13px;color:var(--muted);margin:20px 0 0}
+  .crumb a{color:var(--ai)}
+  h1{font-size:clamp(24px,6vw,34px);line-height:1.5;margin:10px 0 14px}
+  h2{font-size:clamp(19px,4.6vw,24px);line-height:1.5;margin:44px 0 12px;padding-top:18px;border-top:1px solid var(--line)}
+  h3{font-size:17px;margin:0 0 4px}
+  p{margin:0 0 14px}
+  .lead{font-size:17px}
+  .cards{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+  .cards li{background:var(--washi-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .cards p{margin:0;color:var(--sumi-soft);font-size:15px}
+  ol.steps{padding-left:1.4em;margin:0}
+  ol.steps li{margin:0 0 10px}
+  details{border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:0 0 10px;background:#f6f0e3}
+  summary{cursor:pointer;font-weight:700}
+  details p{margin:10px 0 0;color:var(--sumi-soft)}
+  .cta{margin:36px 0 20px;padding:22px 18px;border-radius:14px;background:#00427B;color:#fff;text-align:center}
+  .cta p{margin:0 0 14px}
+  .btn{display:inline-block;padding:13px 26px;border-radius:999px;background:#fff;color:#00427B;font-weight:700;text-decoration:none}
+  .sub{display:inline-block;margin-top:12px;color:#fff}
+  .note{font-size:13px;color:var(--muted)}
+  footer.space{height:40px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><a href="/lp/">君斗りんくのすれ違ひ通信</a></div></header>
+<main class="wrap">
+  <p class="crumb"><a href="/lp/">すれ違ひ通信</a> / 推しの聖地巡礼を記録する</p>
+  <h1>推しの聖地巡礼を、地図に残す</h1>
+  <p class="lead">アニメの舞台、推しが歩いた街、ライブのあとに寄ったお店。聖地巡礼で行った場所は、時間がたつと「どこだったか」があいまいになります。すれ違ひ通信は、移動するだけで行った場所を正確な足あととして残し、あとから地図でたどれるアプリです。</p>
+
+  <h2>聖地巡礼でできること</h2>
+  <ul class="cards">
+    <li><h3>行った場所が、正確な足あとで残る</h3><p>歩くだけで、訪れた場所が足あととして残ります。足あとは消えないので、何年たっても「あのときの場所」へもう一度行けます。</p></li>
+    <li><h3>歩いた道が、地図の上の線になる</h3><p>一日の巡礼の道のりが、地図に一本の線として描かれます。どの順番で回ったかも、あとから見返せます。</p></li>
+    <li><h3>推しの「いまの場所」と歩いた道をたどれる</h3><p>推しが公開していれば、X の名前のページ（/u/〜）で、最新の場所と歩いた道を見られます。同じ景色を見に行く道しるべになります。</p></li>
+    <li><h3>同じ場所に行ったファンが見つかる</h3><p>都道府県ごとの図鑑に、その土地へ足を運んだ人が並びます。同じ場所を30日以内に通った人とは、日にちがずれていても「すれ違ひ」になり、便りが届きます。</p></li>
+    <li><h3>ナビでそのまま向かえる</h3><p>「ここへ向かう」を押すと、Google マップや Apple のマップの道案内がそのまま開きます。</p></li>
+    <li><h3>巡礼の記録を X に送れる</h3><p>歩いた道をそのまま X に投稿して、巡礼の報告ができます。</p></li>
+  </ul>
+
+  <h2>使い方</h2>
+  <ol class="steps">
+    <li>ブラウザで開き、X のアカウントでログインします（アプリを入れる必要はありません）。</li>
+    <li>位置情報の利用を許可します。あとは移動するだけで足あとが残ります。</li>
+    <li>巡礼のあとは、地図と図鑑で行った場所をふり返ります。</li>
+  </ol>
+
+  <h2>家の場所を知られないために</h2>
+  <p>聖地巡礼の記録を人に見せるときに気になるのが、自宅の場所です。すれ違ひ通信では、次のことを自分で選べます。</p>
+  <ul class="cards">
+    <li><h3>自宅の場所は隠せる</h3><p>自宅のまわりは、すれ違った相手にも見せないようにできます。</p></li>
+    <li><h3>誰まで見せるかを選べる</h3><p>自分だけ・リンクを知っている人・すれ違った人・公開、の4段階です。市区町村までにするか、正確にするかも選べます。</p></li>
+    <li><h3>記録を休められる</h3><p>最長72時間、足あとの記録を止められます。</p></li>
+    <li><h3>巡礼用の名前を分けられる</h3><p>X の別アカウントでログインすれば、足あとはそちらの名前にだけ残ります。</p></li>
+  </ul>
+
+  <h2>よくある質問</h2>
+  <details><summary>お金はかかりますか？</summary><p>足あとの記録と、行った場所をふり返る機能は、ずっと無料で使えます。</p></details>
+  <details><summary>アプリを入れる必要はありますか？</summary><p>iPhone・Android・パソコンのブラウザで、そのまま使えます。ホーム画面に追加すると、アプリのように開けます。</p></details>
+  <details><summary>自分の家の場所が知られることはありませんか？</summary><p>自宅の場所は、すれ違った相手にも隠せます。足あとを誰まで見せるか（自分だけ・リンクを知っている人・すれ違った人・公開）と、市区町村までにするか正確にするかも選べます。</p></details>
+  <details><summary>どうやってログインしますか？</summary><p>X（旧Twitter）のアカウントでログインします。巡礼用に別のアカウントを使えば、足あとはそちらの名前にだけ残ります。</p></details>
+
+  <div class="cta">
+    <p>次の聖地巡礼から、足あとを残してみませんか。</p>
+    <a class="btn" href="https://surechigai.kimito.link/sign-in">X でログインしてはじめる</a><br />
+    <a class="sub" href="/lp/">すれ違ひ通信の紹介ページを見る</a>
+  </div>
+  <p class="note">位置情報は、許可したときだけ記録します。記録の扱いは<a href="/privacy">プライバシーポリシー</a>をご覧ください。</p>
+</main>
+<footer class="space"></footer>
+<script src="../kimito-legal-footer.js" data-service-name="君斗りんくのすれ違ひ通信" data-terms="/terms/" data-privacy="/privacy/"></script>
+</body>
+</html>
