@@ -164,9 +164,15 @@ export function PostAuthenticatedScreen() {
 
   const handleBlock = useCallback(
     (userId: number) => {
-      blockMutation.mutate({ userId });
+      blockMutation.mutate(
+        { userId },
+        {
+          onSuccess: () => toast.showSuccess("ブロックしました。この相手は表示されなくなります"),
+          onError: () => toast.showError("ブロックに失敗しました。時間をおいて再度お試しください"),
+        },
+      );
     },
-    [blockMutation],
+    [blockMutation, toast],
   );
 
   const handleReport = useCallback((item: EncounterItem) => {
@@ -176,13 +182,19 @@ export function PostAuthenticatedScreen() {
 
   const handleReportSubmit = useCallback(
     (targetUserId: number, encounterId: number, reason: string) => {
-      reportMutation.mutate({
-        targetUserId,
-        encounterId,
-        reason: reason as "inappropriate_hitokoto" | "spam" | "harassment" | "other",
-      });
+      reportMutation.mutate(
+        {
+          targetUserId,
+          encounterId,
+          reason: reason as "inappropriate_hitokoto" | "spam" | "harassment" | "other",
+        },
+        {
+          onSuccess: () => toast.showSuccess("通報しました。運営が24時間以内に確認します"),
+          onError: () => toast.showError("通報に失敗しました。時間をおいて再度お試しください"),
+        },
+      );
     },
-    [reportMutation],
+    [reportMutation, toast],
   );
 
   // 未開封 / 開封済みに分類

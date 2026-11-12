@@ -290,7 +290,7 @@ export function MypageScreenView(props: MypageScreenViewProps) {
               {isPausing
                 ? "位置情報が一時停止中のため利用できません"
                 : liveEnabled
-                  ? "ONの間、レーダー上で「いまここにいるよ」と表示されます（約45秒ごとに更新）"
+                  ? "ONの間、レーダー上で「いまここにいるよ」と表示されます（アプリを開いている間、約1分ごとに更新）"
                   : "OFFの間は他の人にリアルタイムの居場所は表示されません"}
             </Text>
           </View>

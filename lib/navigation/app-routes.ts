@@ -30,6 +30,7 @@ export const STATIC_ROUTES = {
   LOGOUT: "/logout",
   SPECIAL_THANKS: "/special-thanks",
   PREMIUM: "/premium",
+  TERMS: "/terms",
   
   // 設定関連
   SETTINGS: "/settings",
@@ -203,6 +204,11 @@ export const navigate = {
     router.push({ pathname: STATIC_ROUTES.LOGIN_GUIDE, params: params ?? {} } as never);
   },
   
+  /** 利用規約（app/terms.tsx）。ログイン前の EULA 同意ゲートから開く */
+  toTerms: () => {
+    router.push(STATIC_ROUTES.TERMS as never);
+  },
+
   toLogout: () => {
     console.log("[Navigation] Navigating to logout");
     router.push(STATIC_ROUTES.LOGOUT as never);

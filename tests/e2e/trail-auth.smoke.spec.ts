@@ -86,8 +86,8 @@ test.use({
     await target.click();
 
     // 初回（またはlocalStorage未保持のセッション）は位置情報イントロダイアログが挟まる。
-    // 出たら許可して続行（本来のチェックインフローに合流させる）。
-    const allowLocationBtn = page.getByRole("button", { name: "位置情報を許可して記録" });
+    // 出たら「次へ」で続行（本来のチェックインフローに合流させる）。
+    const allowLocationBtn = page.getByRole("button", { name: "次へ" });
     if (await allowLocationBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await allowLocationBtn.click();
     }

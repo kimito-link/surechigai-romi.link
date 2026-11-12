@@ -588,6 +588,15 @@
       "scopePaths": [
         "__tests__/clerk-single-package-instance.test.ts"
       ]
+    },
+    {
+      "at": "2026-11-12T11:13:59.672Z",
+      "responsibility": "eula-consent-before-login",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/auth/eula-consent-gate.tsx"
+      ]
     }
   ]
 }
