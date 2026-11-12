@@ -672,7 +672,7 @@ export default function CheckinAuthenticatedScreen() {
     void performLocateAndCheckin();
   }, [performLocateAndCheckin]);
 
-  /** 説明画面の「次へ」→ 必ず OS の位置情報ダイアログへ進む（Guideline 5.1.1(iv)） */
+  /** 説明画面の「次へ」→ そのまま OS の位置情報ダイアログへ進む（Guideline 5.1.1(iv)） */
   const handleLocationIntroNext = useCallback(async () => {
     skipLocationIntroRef.current = true;
     setShowLocationIntro(false);
