@@ -11,6 +11,7 @@ import { AddXAccountNotice } from "@/components/auth/add-x-account-notice";
 import { AuthCallbackShell } from "@/components/auth/auth-callback-shell";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
 import { ClerkMountFallback } from "@/components/auth/clerk-mount-fallback";
+import { EulaConsentGate } from "@/components/auth/eula-consent-gate";
 import { ClerkSignIn } from "@/components/organisms/clerk-sign-in";
 import { useAuth } from "@/hooks/use-auth";
 import { normalizePostAuthRedirect } from "@/lib/auth-redirect-path";
@@ -55,7 +56,9 @@ export default function SignInScreen() {
       {/* ログイン済みで /sign-in が開かれた＝「アカウントを追加」導線。X 側セッションが残ると
           同じ垢に戻るため、先にXを切り替える案内を <SignIn/> の上に出す（設計 A/C）。 */}
       {isAuthenticated ? <AddXAccountNotice /> : null}
-      {signInBody}
+      {/* App Store Guideline 1.2: ログイン・登録の前に利用規約（EULA）への同意を求める。
+          同意するまでログインボタンは押せない。 */}
+      <EulaConsentGate>{signInBody}</EulaConsentGate>
     </AuthPageShell>
   );
 }

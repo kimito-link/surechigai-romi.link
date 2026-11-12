@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Platform,
   ScrollView,
+  Linking,
   type ViewStyle,
 } from "react-native";
 import type { ReactNode } from "react";
@@ -75,8 +76,7 @@ export type CheckinScreenViewProps = {
   /** Instagram 用にリンクをコピー（未指定なら導線を出さない） */
   handleCopyInstagramLink?: () => void;
   handleSponsorPress: (card: SponsorCardData) => void;
-  handleLocationIntroAllow: () => void;
-  handleLocationIntroLater: () => void;
+  handleLocationIntroNext: () => void;
   isSharing: boolean;
 };
 
@@ -122,8 +122,7 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
     handleShareLocation,
     handleCopyInstagramLink,
     handleSponsorPress,
-    handleLocationIntroAllow,
-    handleLocationIntroLater,
+    handleLocationIntroNext,
     isSharing,
   } = props;
 
@@ -339,6 +338,18 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
                 エラーが発生しました
               </Text>
               <Text style={styles.resultSubtitle}>{errorMsg}</Text>
+              {/* 位置情報が拒否されたとき、チェックインは動かないので設定アプリへの導線を出す
+                  （Guideline 5.1.1(iv) の Next Steps が勧める形）。 */}
+              {Platform.OS !== "web" && errorMsg.includes("位置情報の許可") && (
+                <Pressable
+                  onPress={() => void Linking.openSettings()}
+                  accessibilityRole="button"
+                  accessibilityLabel="設定アプリを開く"
+                  style={({ pressed }) => [styles.openSettingsBtn, pressed && { opacity: 0.8 }]}
+                >
+                  <Text style={styles.openSettingsText}>設定アプリを開く</Text>
+                </Pressable>
+              )}
             </View>
           )}
 
@@ -363,8 +374,7 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
       )}
       <PostLoginLocationIntro
         visible={showLocationIntro}
-        onAllow={handleLocationIntroAllow}
-        onLater={handleLocationIntroLater}
+        onNext={handleLocationIntroNext}
       />
     </ScreenContainer>
   );
@@ -560,6 +570,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     marginBottom: 4,
+  },
+  openSettingsBtn: {
+    marginTop: 10,
+    alignSelf: "center",
+    minHeight: 40,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: color.danger,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  openSettingsText: {
+    color: color.danger,
+    fontSize: 14,
+    fontWeight: "700",
   },
   resultSubtitle: {
     fontSize: 13,

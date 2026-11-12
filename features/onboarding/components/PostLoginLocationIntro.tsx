@@ -54,40 +54,45 @@ async function markPostLoginLocationIntroDone(): Promise<void> {
 
 type PostLoginLocationIntroProps = {
   visible: boolean;
-  onAllow: () => void | Promise<void>;
-  onLater: () => void | Promise<void>;
+  /** 「次へ」で閉じたあと、OS の位置情報ダイアログへ進む */
+  onNext: () => void | Promise<void>;
 };
 
+/**
+ * OS の位置情報ダイアログの前に出す説明画面。
+ *
+ * ★App Store Guideline 5.1.1(iv)（2026-11-12 build 551 で却下）:
+ * - ボタン文言は「次へ」「続ける」にする（「許可して記録」のような許可を促す語は不可）
+ * - 説明画面を閉じて許可を先送りする導線（「今はしない」等）を置かない。
+ *   説明のあとは必ず OS のダイアログへ進ませ、許可するかは OS 側で利用者が決める。
+ * スキップボタンを戻したり、ボタン文言を「許可」系に変えたりしないこと。
+ */
 export function PostLoginLocationIntro({
   visible,
-  onAllow,
-  onLater,
+  onNext,
 }: PostLoginLocationIntroProps) {
   const [busy, setBusy] = useState(false);
 
-  const handleAllow = useCallback(async () => {
+  const handleNext = useCallback(async () => {
     if (Platform.OS !== "web") {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
     setBusy(true);
     try {
       await markPostLoginLocationIntroDone();
-      await onAllow();
+      await onNext();
     } finally {
       setBusy(false);
     }
-  }, [onAllow]);
+  }, [onNext]);
 
-  const handleLater = useCallback(async () => {
-    if (Platform.OS !== "web") {
-      void Haptics.selectionAsync();
-    }
-    await markPostLoginLocationIntroDone();
-    await onLater();
-  }, [onLater]);
+  // Android の戻るキーでも OS ダイアログへ進める（説明だけ見て閉じる経路を作らない）。
+  const handleRequestClose = useCallback(() => {
+    if (!busy) void handleNext();
+  }, [busy, handleNext]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={handleLater}>
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={handleRequestClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheet} accessibilityRole="alert">
           <Image source={RINKU_HERO} style={styles.hero} contentFit="contain" />
@@ -109,30 +114,22 @@ export function PostLoginLocationIntro({
           </View>
 
           <Text style={styles.reassurance}>
-            ボタンを押した時だけ記録します。1タップでいつでも一時停止できます。
+            このあと端末の確認画面が出ます。許可するかどうかはそこで選べます。
+            記録はボタンを押した時だけで、1タップでいつでも一時停止できます。
           </Text>
 
           <Pressable
-            onPress={handleAllow}
+            onPress={handleNext}
             disabled={busy}
             style={({ pressed }) => [styles.primaryBtn, pressed && { opacity: 0.9 }, busy && { opacity: 0.7 }]}
             accessibilityRole="button"
-            accessibilityLabel="位置情報を許可して記録"
+            accessibilityLabel="次へ"
           >
             {busy ? (
               <ActivityIndicator color={palette.white} />
             ) : (
-              <Text style={styles.primaryBtnText}>位置情報を許可して記録</Text>
+              <Text style={styles.primaryBtnText}>次へ</Text>
             )}
-          </Pressable>
-
-          <Pressable
-            onPress={handleLater}
-            disabled={busy}
-            style={({ pressed }) => [styles.secondaryBtn, pressed && { opacity: 0.8 }]}
-            accessibilityRole="button"
-          >
-            <Text style={styles.secondaryBtnText}>今はしない</Text>
           </Pressable>
         </View>
       </View>
@@ -229,15 +226,5 @@ const styles = StyleSheet.create({
     color: palette.white,
     fontSize: 15,
     fontWeight: "800",
-  },
-  secondaryBtn: {
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  secondaryBtnText: {
-    color: color.textMuted,
-    fontSize: 13,
-    fontWeight: "700",
   },
 });

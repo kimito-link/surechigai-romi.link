@@ -672,16 +672,12 @@ export default function CheckinAuthenticatedScreen() {
     void performLocateAndCheckin();
   }, [performLocateAndCheckin]);
 
-  const handleLocationIntroAllow = useCallback(async () => {
+  /** 説明画面の「次へ」→ 必ず OS の位置情報ダイアログへ進む（Guideline 5.1.1(iv)） */
+  const handleLocationIntroNext = useCallback(async () => {
     skipLocationIntroRef.current = true;
     setShowLocationIntro(false);
     await handleCheckin();
   }, [handleCheckin]);
-
-  const handleLocationIntroLater = useCallback(() => {
-    skipLocationIntroRef.current = false;
-    setShowLocationIntro(false);
-  }, []);
 
   // ===========================================================================
   // 5. 設定・位置の一時停止
@@ -976,8 +972,7 @@ export default function CheckinAuthenticatedScreen() {
       handleShareLocation={handleShareLocation}
       handleCopyInstagramLink={handleCopyInstagramLink}
       handleSponsorPress={handleSponsorPress}
-      handleLocationIntroAllow={handleLocationIntroAllow}
-      handleLocationIntroLater={handleLocationIntroLater}
+      handleLocationIntroNext={handleLocationIntroNext}
       isSharing={shareCardMutation.isPending}
     />
   );
