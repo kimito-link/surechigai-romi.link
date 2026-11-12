@@ -205,10 +205,10 @@ export function FootprintSheet({
                 <Pressable
                   onPress={() => onEditNote(point)}
                   style={({ pressed }) => [styles.manageButton, styles.noteButton, pressed && { opacity: 0.75 }]}
-                  accessibilityLabel={hasPlaceNote(point) ? "メモを編集" : "メモを添える"}
+                  accessibilityLabel="この場所を X にポスト"
                 >
                   <Text style={[styles.manageButtonText, styles.noteButtonText]}>
-                    {hasPlaceNote(point) ? "メモを編集" : "メモを添える"}
+                    この場所を X にポスト
                   </Text>
                 </Pressable>
               ) : null}

@@ -26,6 +26,7 @@ import { PlaceContextBar } from "@/components/molecules/place-context-bar";
 import { TabMapLoadingFallback, TabQueryShell } from "@/components/molecules/tab-query-shell";
 import { FootprintSheet } from "@/components/map/footprint-sheet";
 import { PlaceNoteModal } from "@/components/map/place-note-modal";
+import { openTwitterShare } from "@/lib/navigation/external-links";
 import { isStatCardInteractive } from "@/components/organisms/web-trail-map-stats";
 import type { LocationVisibility } from "@/modules/encounter/core/location-visibility";
 
@@ -313,7 +314,10 @@ export function WebTrailMap({
           onClose={() => setNotePoint(null)}
           onSave={(placeName, note) => {
             if (!notePoint) return;
-            onSaveNote(notePoint.id, placeName, note);
+            // ★場所メモはアプリに保存せず X にポストする（2026-11-12）。onSaveNote は呼ばない。
+            const place = placeName.trim() || notePoint.municipality || notePoint.prefecture || "";
+            const lines = [place ? `📍${place}` : "", note.trim(), "#すれ違ひ通信"].filter(Boolean);
+            void openTwitterShare(lines.join("\n"), "https://surechigai.kimito.link");
             setNotePoint(null);
           }}
         />

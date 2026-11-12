@@ -463,18 +463,13 @@ export const encounterRouter = router({
 
       const items = await getMyEncounters(db, ctx.user.id, input.cursor);
 
-      // 24h以内のひとことのみ返す
-      const now = new Date();
-      return items.map((item) => {
-        const hitokotoAge = item.partnerHitokotoUpdatedAt
-          ? now.getTime() - item.partnerHitokotoUpdatedAt.getTime()
-          : Infinity;
-        return {
-          ...item,
-          partnerHitokoto:
-            hitokotoAge < 24 * 60 * 60 * 1000 ? item.partnerHitokoto : null,
-        };
-      });
+      // ★相手の「ひとこと」本文は返さない（2026-11-12）。言葉は X で見てもらう方針で、
+      // 他人の自由文をアプリ内に出す場所を減らす（App Store 1.2）。
+      // 古いアプリ版でも表示されないよう、サーバー側で null にする。
+      return items.map((item) => ({
+        ...item,
+        partnerHitokoto: null as string | null,
+      }));
     }),
 
   /**

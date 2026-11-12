@@ -1253,9 +1253,10 @@ export async function getCreatorsByPrefecture(
       lngGrid: locations.lngGrid,
       recordedAt: locations.recordedAt,
       visibility: locations.visibility,
-      placeName: locations.placeName,
-      note: locations.note,
-      noteUpdatedAt: locations.noteUpdatedAt,
+      // ★他人に見せる経路では場所メモを返さない（2026-11-12。メモは X にポストする方針・App Store 1.2）
+      placeName: sql<string | null>`NULL`,
+      note: sql<string | null>`NULL`,
+      noteUpdatedAt: sql<Date | null>`NULL`,
     })
     .from(locations)
     .innerJoin(users, eq(locations.userId, users.id))
@@ -1780,9 +1781,10 @@ export async function getPublicTrailByShareSlug(
       address: locations.address,
       recordedAt: locations.recordedAt,
       visibility: locations.visibility,
-      placeName: locations.placeName,
-      note: locations.note,
-      noteUpdatedAt: locations.noteUpdatedAt,
+      // ★他人に見せる経路では場所メモを返さない（2026-11-12。メモは X にポストする方針・App Store 1.2）
+      placeName: sql<string | null>`NULL`,
+      note: sql<string | null>`NULL`,
+      noteUpdatedAt: sql<Date | null>`NULL`,
     })
     .from(locations)
     .where(
@@ -1967,9 +1969,10 @@ export async function getShareInfoBySlug(
       h3R8: locations.h3R8,
       recordedAt: locations.recordedAt,
       visibility: locations.visibility,
-      placeName: locations.placeName,
-      note: locations.note,
-      noteUpdatedAt: locations.noteUpdatedAt,
+      // ★他人に見せる経路では場所メモを返さない（2026-11-12。メモは X にポストする方針・App Store 1.2）
+      placeName: sql<string | null>`NULL`,
+      note: sql<string | null>`NULL`,
+      noteUpdatedAt: sql<Date | null>`NULL`,
     })
     .from(locations)
     .where(

@@ -47,9 +47,9 @@ export function HitokotoModal({
       <Pressable style={styles.modalOverlay} onPress={onClose}>
         <View style={styles.hitokotoModal}>
           <Pressable onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.hitokotoModalTitle}>ひとこと編集</Text>
+            <Text style={styles.hitokotoModalTitle}>ひとことを X にポスト</Text>
             <Text style={styles.hitokotoHint}>
-              24時間だけすれ違い相手に表示されます
+              X にポストします。すれ違った人は、封筒からあなたの X を見に来ます（アプリ内には表示されません）
             </Text>
 
             <TextInput
@@ -96,7 +96,7 @@ export function HitokotoModal({
                 onPress={handleSave}
                 style={({ pressed }) => [styles.saveButton, pressed && { opacity: 0.8 }]}
               >
-                <Text style={styles.saveButtonText}>保存</Text>
+                <Text style={styles.saveButtonText}>X にポストする</Text>
               </Pressable>
             </View>
           </Pressable>
