@@ -49,7 +49,6 @@ export type MypageScreenViewProps = {
   isDesktop: boolean;
   user: AuthUser;
   tabInset: number;
-  hitokotoDisplay: string;
   isSharing: boolean;
   handleViewPublicPage: () => void;
   /** 共有先を渡す。既定は X。 */
@@ -98,7 +97,6 @@ export function MypageScreenView(props: MypageScreenViewProps) {
     isDesktop,
     user,
     tabInset,
-    hitokotoDisplay,
     isSharing,
     handleViewPublicPage,
     handleShareLocation,
@@ -403,12 +401,11 @@ export function MypageScreenView(props: MypageScreenViewProps) {
               style={({ pressed }) => [styles.editButton, pressed && { opacity: 0.7 }]}
             >
               <MaterialIcons name="edit" size={16} color={color.accentIndigo} />
-              <Text style={styles.editButtonText}>編集</Text>
+              <Text style={styles.editButtonText}>X にポスト</Text>
             </Pressable>
           </View>
-          <Text style={styles.hitokotoDisplay}>{hitokotoDisplay}</Text>
           <Text style={styles.hitokotoNote}>
-            すれ違い相手に24時間だけ表示されます
+            ひとことは X にポストします。すれ違った人は、封筒の「最新ポストを X で見る」からあなたの X を見に来ます
           </Text>
         </View>
 

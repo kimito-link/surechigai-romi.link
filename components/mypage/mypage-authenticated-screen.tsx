@@ -23,7 +23,7 @@ import { useTutorial } from "@/lib/tutorial-context";
 import { useOnboarding } from "@/features/onboarding/hooks/useOnboarding";
 import { trpc } from "@/lib/trpc";
 import { color } from "@/theme/tokens";
-import { navigate } from "@/lib/navigation";
+import { navigate, openTwitterShare } from "@/lib/navigation";
 import {
   closePreparedSharePopup,
   prepareSharePopup,
@@ -114,17 +114,6 @@ export function MypageAuthenticatedScreen() {
   const { resetTutorial } = useTutorial();
   const { resetOnboarding } = useOnboarding();
 
-  const updateHitokoto = trpc.encounter.updateHitokoto.useMutation({
-    onSuccess: () => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-    },
-    onError: (err) => {
-      Alert.alert("エラー", err.message || "ひとことの更新に失敗しました");
-    },
-  });
-
   // ブロックリスト（encounters から相手IDを一意にするのが正規だが、
   // MVP では blocks テーブルを直接取得する API なし → 簡易プレースホルダ）
   const unblockMutation = trpc.safety.unblock.useMutation();
@@ -171,13 +160,15 @@ export function MypageAuthenticatedScreen() {
     }
   }, [settingsQuery.data]);
 
-  const handleHitokotoSave = useCallback(
-    (text: string) => {
-      setLocalHitokoto(text);
-      updateHitokoto.mutate({ text });
-    },
-    [updateHitokoto],
-  );
+  /**
+   * ひとことは X にポストする（2026-11-12）。アプリには保存・表示しない。
+   * すれ違った相手は封筒の「最新ポストを X で見る」から読みに来る＝X を見に行くきっかけ。
+   */
+  const handleHitokotoSave = useCallback((text: string) => {
+    const body = text.trim();
+    if (!body) return;
+    void openTwitterShare(`${body}\n#すれ違ひ通信`, "https://surechigai.kimito.link");
+  }, []);
 
   const updateCategories = trpc.encounter.updateCategories.useMutation({
     onSuccess: () => {
@@ -327,14 +318,12 @@ export function MypageAuthenticatedScreen() {
     return null;
   }
 
-  const hitokotoDisplay = localHitokoto || "(ひとこと未設定)";
 
   return (
     <MypageScreenView
       isDesktop={isDesktop}
       user={user}
       tabInset={tabInset}
-      hitokotoDisplay={hitokotoDisplay}
       isSharing={shareCardMutation.isPending || shareSlugMutation.isPending}
       handleViewPublicPage={handleViewPublicPage}
       handleShareLocation={handleShareLocation}

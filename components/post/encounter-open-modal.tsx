@@ -227,12 +227,21 @@ export function EncounterOpenModal({
               ) : null}
             </View>
 
-            {item.partnerHitokoto && (
-              <View style={styles.modalHitokotoWrap}>
-                <Text style={styles.modalHitokoto} numberOfLines={4}>
-                  {item.partnerHitokoto}
+            {/* ★ひとことの本文はアプリ内に出さない（2026-11-12 りんくさんの方針）。
+                相手の言葉は X で見てもらう＝X を見に行くきっかけを増やす。
+                あわせて、他人の自由文がアプリ内に表示される場所を減らす（App Store 1.2）。
+                URL は検証済みハンドルからだけ組む（表示名から組むと 404 になる。2026-08-07）。 */}
+            {modalHandle && (
+              <Pressable
+                onPress={() => Linking.openURL(`https://x.com/${modalHandle}`)}
+                accessibilityRole="link"
+                accessibilityLabel={`@${modalHandle} の最新ポストを X で見る`}
+                style={({ pressed }) => [styles.modalFollowButton, pressed && { opacity: 0.85 }]}
+              >
+                <Text style={styles.modalFollowButtonText} numberOfLines={1}>
+                  @{modalHandle} の最新ポストを X で見る
                 </Text>
-              </View>
+              </Pressable>
             )}
 
             {/* 属性。一致したものは枠つきで強調される（CategoryChips の highlight） */}
@@ -275,21 +284,6 @@ export function EncounterOpenModal({
             </View>
             {sentEmoji && (
               <Text style={styles.stampConfirm}>{sentEmoji} を送りました ✨</Text>
-            )}
-
-            {/* ★表示名から URL を組んではいけない（2026-08-07）。
-                users.name は表示名なので https://x.com/君斗りんく@動員ちゃれんじ のような
-                必ず404になる URL ができていた。検証済みハンドルが無いときはリンクを出さない
-                （壊れたリンクは無価値どころか有害）。 */}
-            {modalHandle && (
-              <Pressable
-                onPress={() => Linking.openURL(`https://x.com/${modalHandle}`)}
-                style={({ pressed }) => [styles.modalXButton, pressed && { opacity: 0.8 }]}
-              >
-                <Text style={styles.modalXButtonText} numberOfLines={1}>
-                  X プロフィールを見る @{modalHandle}
-                </Text>
-              </Pressable>
             )}
 
             {/* このアプリはアプリ内DMを持たない（交流は X に委ねる設計）ので、
@@ -422,19 +416,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontVariant: ["tabular-nums"],
   },
-  modalHitokotoWrap: {
-    backgroundColor: palette.kimitoBg,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: palette.kimitoBorderSoft,
-    padding: 12,
-    marginBottom: 12,
-  },
-  modalHitokoto: {
-    color: color.textSecondary,
-    fontSize: 14,
-    textAlign: "center",
-  },
   modalCategoriesWrap: {
     alignItems: "center",
     gap: 6,
@@ -496,18 +477,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 14,
   },
-  modalXButton: {
-    backgroundColor: palette.kimitoBlueSoft,
-    borderWidth: 1,
-    borderColor: palette.kimitoBorderSoft,
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    minHeight: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
   modalFollowButton: {
     backgroundColor: palette.xBlack,
     borderRadius: 8,
@@ -520,11 +489,6 @@ const styles = StyleSheet.create({
   },
   modalFollowButtonText: {
     color: color.textWhite,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  modalXButtonText: {
-    color: palette.kimitoBlue,
     fontSize: 14,
     fontWeight: "700",
   },

@@ -67,7 +67,7 @@ export default function TermsScreen() {
         </LegalBullet>
         <LegalBullet>本アプリを商業目的で無断利用する行為</LegalBullet>
         <LegalBullet>
-          ひとこと・場所メモ・プロフィール等に、わいせつ、暴力的、差別的、誹謗中傷、
+          プロフィール、グループ訪問の表示名やメモ等に、わいせつ、暴力的、差別的、誹謗中傷、
           違法行為を助長するなどの不適切なコンテンツを投稿する行為
         </LegalBullet>
         <LegalCallout>

@@ -1,8 +1,9 @@
 /**
  * components/map/place-note-modal.tsx
  *
- * 足あと1件に「その場所のメモ」を書くモーダル。
- * 設計は docs/place-info-DESIGN.md。
+ * 足あと1件について「その場所のこと」を書いて X にポストするモーダル。
+ * ★2026-11-12 から場所メモはアプリに保存・表示せず、X にポストする（X を見に行くきっかけを増やす。
+ *   他人の自由文をアプリ内に出さない＝App Store 1.2）。旧設計は docs/place-info-DESIGN.md。
  *
  * 「ここのガソリンが安い」「この店が旨い」を、座標に固定して残すための入力。
  * 口コミ機能ではないので、評価・星・他人への返信は作らない。
@@ -66,10 +67,10 @@ export function PlaceNoteModal({
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
           <View style={styles.handle} />
-          <Text style={styles.title}>この場所のメモ</Text>
+          <Text style={styles.title}>この場所のことを X にポスト</Text>
           <Text style={styles.lead}>
-            あとで自分がたどるための記録です。公開設定にしている足あとでは、
-            見に来た人にも表示されます。
+            書いた内容は X にポストします（アプリ内には表示されません）。
+            見た人があなたの X に来るきっかけになります。
           </Text>
 
           <ScrollView keyboardShouldPersistTaps="handled">
@@ -121,9 +122,7 @@ export function PlaceNoteModal({
             </View>
 
             <Text style={styles.hint}>
-              {isEmpty
-                ? "空のまま保存すると、メモを消せます。"
-                : "価格などは変わります。いつの情報かが一緒に表示されます。"}
+              次の画面で X の投稿画面が開きます。内容を確かめてからポストしてください。
             </Text>
           </ScrollView>
 
@@ -141,18 +140,18 @@ export function PlaceNoteModal({
             </Pressable>
             <Pressable
               onPress={() => onSave(placeName, note)}
-              disabled={isSaving}
+              disabled={isSaving || isEmpty}
               style={({ pressed }) => [
                 styles.button,
                 styles.saveButton,
                 pressed && { opacity: 0.85 },
-                isSaving && { opacity: 0.5 },
+                (isSaving || isEmpty) && { opacity: 0.5 },
               ]}
             >
               {isSaving ? (
                 <ActivityIndicator size="small" color={color.textWhite} />
               ) : (
-                <Text style={styles.saveText}>{isEmpty ? "メモを消す" : "保存"}</Text>
+                <Text style={styles.saveText}>X にポストする</Text>
               )}
             </Pressable>
           </View>
