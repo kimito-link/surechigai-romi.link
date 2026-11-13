@@ -19,6 +19,7 @@ import MaterialIcons from "@/lib/icons/material-icons";
 import { loginCtaNote } from "@/lib/native-app-shell";
 import { BrandTagline } from "@/components/molecules/brand-tagline";
 import { MARKETING_URL } from "@/lib/site-urls";
+import { openExternalUrl } from "@/lib/navigation/external-links";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
 import { SIGN_IN_AUTO_X_HREF } from "@/lib/clerk-route";
@@ -607,6 +608,8 @@ export function PostGuestScreen() {
           window.location.assign(MARKETING_URL);
           return;
         }
+        // ★以前はネイティブで何もしなかった（押しても無反応。2026-11-13 の総点検で発見）。
+        void openExternalUrl(MARKETING_URL);
       }}
       style={[styles.marketingLink, isSplitLayout && styles.marketingLinkSplit]}
     >

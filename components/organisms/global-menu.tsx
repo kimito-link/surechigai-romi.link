@@ -2,7 +2,7 @@
  * グローバルメニュー
  * 君斗りんくのすれ違ひ通信: シンプルなナビゲーションメニュー
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { color, palette } from "@/theme/tokens";
 import { View, Text, Modal, Pressable, ScrollView, Platform } from "react-native";
 import { Link } from "expo-router";
@@ -14,6 +14,11 @@ import { UserAccountChip } from "@/components/molecules/user-account-chip";
 import { LogoutConfirmModal } from "@/components/molecules/logout-confirm-modal";
 import { useTextScale } from "@/lib/text-scale";
 import * as Haptics from "expo-haptics";
+import Constants from "expo-constants";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { isNativeAppShell } from "@/lib/native-app-shell";
+
+const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 
 interface GlobalMenuProps {
   isVisible: boolean;
@@ -38,6 +43,10 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const { isLarge, toggle: toggleTextSize } = useTextScale();
+  // ★iOS では透過 Modal が画面いっぱいに出るので、上を時計・ダイナミックアイランドの分だけ空ける
+  //   （空けないと閉じるボタンがその下に潜って押せない。2026-11-13 の総点検）。
+  const insets = useSafeAreaInsets();
+  const nativeShell = isNativeAppShell();
 
   const handleToggleTextSize = () => {
     handleHaptic();
@@ -56,8 +65,24 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
     openLoginGuide();
   };
 
+  // ★iOS では Modal の上に別の Modal を同時に出せない（メニューが開いたままだと
+  //   確認モーダルが出ず、ログアウトを押しても何も起きないように見えた。2026-11-13 実機 555）。
+  //   iOS はメニューを閉じきってから（onDismiss）確認を出す。
+  const pendingLogoutConfirm = useRef(false);
+
   const handleLogout = () => {
     handleHaptic();
+    if (Platform.OS === "ios") {
+      pendingLogoutConfirm.current = true;
+      onClose();
+      return;
+    }
+    setShowLogoutModal(true);
+  };
+
+  const handleMenuDismiss = () => {
+    if (!pendingLogoutConfirm.current) return;
+    pendingLogoutConfirm.current = false;
     setShowLogoutModal(true);
   };
 
@@ -96,7 +121,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
 
   return (
     <>
-      <Modal visible={isVisible} transparent animationType="fade" onRequestClose={onClose}>
+      <Modal visible={isVisible} transparent animationType="fade" onRequestClose={onClose} onDismiss={handleMenuDismiss}>
         <Pressable
           style={{ flex: 1, backgroundColor: palette.black + "99" }}
           onPress={onClose}
@@ -108,6 +133,8 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
               right: 0,
               width: 280,
               height: "100%",
+              paddingTop: Platform.OS === "web" ? 0 : insets.top,
+              paddingBottom: Platform.OS === "web" ? 0 : insets.bottom,
               backgroundColor: color.surface,
               shadowColor: palette.black,
               shadowOffset: { width: -2, height: 0 },
@@ -121,7 +148,7 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
               {/* ヘッダー */}
               <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: color.borderAlt }}>
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                  <Text style={{ color: color.textPrimary, fontSize: 13, fontWeight: "bold" }}>メニュー (君斗りんくのすれ違ひ通信 v1.0.0)</Text>
+                  <Text style={{ color: color.textPrimary, fontSize: 13, fontWeight: "bold" }}>メニュー（すれ違ひ通信 v{APP_VERSION}）</Text>
                   <Pressable
                     onPress={onClose}
                     style={({ pressed }) => [{
@@ -146,13 +173,15 @@ export function GlobalMenu({ isVisible, onClose }: GlobalMenuProps) {
                     onPress={handleLogin}
                     style={({ pressed }) => [{
                       flexDirection: "row", alignItems: "center", justifyContent: "center",
-                      backgroundColor: palette.black,
+                      // kimito.link 本体と同じ紺（2026-11-13）
+                      backgroundColor: palette.kimitoBlue,
                       paddingHorizontal: 20, paddingVertical: 12, borderRadius: 24,
                     }, pressed && { opacity: 0.85 }]}
                   >
                     <MaterialIcons name="login" size={20} color={palette.white} style={{ marginRight: 8 }} />
                     <Text style={{ color: palette.white, fontSize: 16, fontWeight: "700" }}>
-                      Xでログイン
+                      {/* ネイティブでは X を名指ししない（Apple でも入れる。Guideline 4.8） */}
+                      {nativeShell ? "ログイン" : "Xでログイン"}
                     </Text>
                   </Pressable>
                 )}

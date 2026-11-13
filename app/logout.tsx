@@ -24,6 +24,7 @@ import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
+import { isNativeAppShell } from "@/lib/native-app-shell";
 
 const LINK_CHARACTER = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 
@@ -162,8 +163,11 @@ export default function LogoutScreen() {
                   onPress={handleXLogin}
                   style={({ pressed }) => [styles.btnX, pressed && styles.pressed]}
                 >
-                  <XGlyph size={16} />
-                  <Text style={styles.btnXText}>X でログインする</Text>
+                  {/* ネイティブでは X を名指ししない（行き先の /sign-in は Apple も選べる。Guideline 4.8） */}
+                  {isNativeAppShell() ? null : <XGlyph size={16} />}
+                  <Text style={styles.btnXText}>
+                    {isNativeAppShell() ? "もう一度ログインする" : "X でログインする"}
+                  </Text>
                 </Pressable>
 
                 <Pressable
