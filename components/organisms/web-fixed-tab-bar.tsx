@@ -2,7 +2,7 @@
  * タブ外ルート用の固定フッターナビ（Web）。
  * (tabs) レイアウトと同じ6タブへリンクする。
  */
-import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { usePathname, type Href } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "@/lib/icons/material-icons";
@@ -65,9 +65,7 @@ function isTabActive(pathname: string, tab: TabItem): boolean {
 export function WebFixedTabBar() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const prefetchTab = usePrefetchTab();
-  const compact = width < 480;
   const bottomPad = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
 
   if (Platform.OS !== "web") return null;
@@ -94,17 +92,15 @@ export function WebFixedTabBar() {
             onPressIn={() => prefetchTab(tab.prefetchKey)}
             style={styles.item}
             accessibilityRole="tab"
-            // compact ではラベルを描かないので、名前がアイコンだけになり
-            // アクセシブル名が消える（axe: aria-tab-name）。常に明示する。
             accessibilityLabel={tab.label}
             accessibilityState={{ selected: active }}
           >
             <MaterialIcons name={tab.icon} size={24} color={tint} />
-            {!compact ? (
-              <Text style={[styles.label, { color: tint }]} numberOfLines={1}>
-                {tab.label}
-              </Text>
-            ) : null}
+            {/* ★2026-11-13: スマホ幅でもラベルを出す。(tabs) 側のタブバーは常にラベル付きなので、
+                タブ外の画面（訪問申告・規約など）だけアイコンのみになり、同じアプリに見えなかった。 */}
+            <Text style={[styles.label, { color: tint }]} numberOfLines={1}>
+              {tab.label}
+            </Text>
           </Pressable>
         );
       })}

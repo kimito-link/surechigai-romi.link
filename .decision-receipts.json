@@ -607,6 +607,15 @@
         "lib/after-modal-dismiss.ts",
         "__tests__/ios-modal-chain.test.ts"
       ]
+    },
+    {
+      "at": "2026-11-13T04:08:19.343Z",
+      "responsibility": "native-subpage-bar",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/molecules/native-subpage-bar.tsx"
+      ]
     }
   ]
 }

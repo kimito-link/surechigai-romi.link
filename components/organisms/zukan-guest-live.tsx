@@ -49,7 +49,17 @@ type ZukanGuestLiveProps = {
 const OVERLAY_TOP_INSET = 72;
 const STACKED_TOP_INSET = 12;
 
-export function ZukanGuestLive({ availableWidth, stacked = false }: ZukanGuestLiveProps) {
+/**
+ * 地図の左右に残す余白の合計。
+ * ★2026-11-13: availableWidth を渡すと computeMapLayout は「余白は引き済み」とみなすため、
+ *   ペイン幅そのものを渡すと地図が画面幅ぴったり＋セルの枠ぶんはみ出し、iPhone 幅で
+ *   左端の「長崎」や右端の「北海道」が欠けていた（393px 幅の実画面で確認）。ここで引いて渡す。
+ */
+const MAP_SIDE_GUTTER_TOTAL = 24;
+
+export function ZukanGuestLive({ availableWidth: paneWidth, stacked = false }: ZukanGuestLiveProps) {
+  const availableWidth =
+    paneWidth != null ? Math.max(0, paneWidth - MAP_SIDE_GUTTER_TOTAL) : undefined;
   const trpcReady = useTrpcReady();
   if (!trpcReady) return <ZukanGuestLiveShell availableWidth={availableWidth} stacked={stacked} />;
   return <ZukanGuestLiveInner availableWidth={availableWidth} stacked={stacked} />;
