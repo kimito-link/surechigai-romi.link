@@ -1,0 +1,55 @@
+# App Review 情報のメモと添付（実機録画）だけを差し替える。ビルドは作らない。
+# 録画は main に入れない。一時ブランチに置いて、このワークフローで取り出したらブランチごと消す。
+name: ASC review notes & attachment
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_branch:
+        description: "録画を置いた一時ブランチ（空ならメモだけ）"
+        required: false
+        default: ""
+      video_path:
+        description: "そのブランチ内の録画のパス"
+        required: false
+        default: "review-recording.mp4"
+      allow_resubmit:
+        description: "審査待ちで編集できないとき、取り消して同じビルドで出し直す"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asc-review-attachment
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download recording
+        if: ${{ inputs.video_branch != '' }}
+        env:
+          VIDEO_BRANCH: ${{ inputs.video_branch }}
+          VIDEO_PATH: ${{ inputs.video_path }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/review"
+          git fetch --depth=1 origin "refs/heads/$VIDEO_BRANCH:refs/remotes/origin/review-video"
+          out="$RUNNER_TEMP/review/$(basename "$VIDEO_PATH")"
+          git show "origin/review-video:$VIDEO_PATH" > "$out"
+          ls -la "$RUNNER_TEMP/review"
+          echo "REVIEW_ATTACHMENT_PATH=$out" >> "$GITHUB_ENV"
+      - name: Update App Review information
+        env:
+          APPSTORE_CONNECT_KEY_ID: ${{ secrets.APPSTORE_CONNECT_KEY_ID }}
+          APPSTORE_CONNECT_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_ISSUER_ID }}
+          APPSTORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APPSTORE_CONNECT_API_KEY_P8_BASE64 }}
+          ALLOW_RESUBMIT: ${{ inputs.allow_resubmit }}
+        run: node scripts/asc-review-attachment.mjs

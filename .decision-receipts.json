@@ -616,6 +616,33 @@
       "scopePaths": [
         "components/molecules/native-subpage-bar.tsx"
       ]
+    },
+    {
+      "at": "2026-11-13T04:44:31.956Z",
+      "responsibility": "asc-review-attachment",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "scripts/asc-review-attachment.mjs"
+      ]
+    },
+    {
+      "at": "2026-11-13T04:44:31.985Z",
+      "responsibility": "asc-review-notes",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "store-assets/appstore/review-notes-en.txt"
+      ]
+    },
+    {
+      "at": "2026-11-13T04:44:32.012Z",
+      "responsibility": "asc-review-attachment-workflow",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        ".github/workflows/asc-review-attachment.yml"
+      ]
     }
   ]
 }

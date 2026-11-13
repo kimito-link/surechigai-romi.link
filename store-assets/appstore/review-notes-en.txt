@@ -1,0 +1,31 @@
+Kimito Link Surechigai Tsushin records where you have been with accurate location check-ins and lets you meet people who passed the same places.
+
+SIGN-IN
+Sign-in is not required to browse the first screens. To review the signed-in experience, tap the start button, check "利用規約（EULA）に同意します" (I agree to the Terms of Use / EULA), then choose "Sign in with Apple" (your own Apple ID works) or X. There is no username/password login.
+
+A SCREEN RECORDING ON A PHYSICAL IPHONE IS ATTACHED. It shows: agreeing to the EULA, signing in, returning to the home screen, opening a received envelope (encounter), tapping "通報" (Report), choosing an action, and blocking the user ("ブロックしました" / "Blocked").
+
+GUIDELINE 1.2 (user-generated content)
+- Users must agree to the Terms of Use (EULA) before signing in or registering. The sign-in buttons stay disabled until the checkbox is checked. The full terms can be opened from the same screen.
+- The terms state that there is no tolerance for objectionable content or abusive users. Violating content is removed and the user's account is suspended.
+- Report: open a received envelope and tap "通報" (Report), then choose a reason.
+- Block: in the same screen, tap "ブロック" (Block). Blocked users' content and location are no longer shown.
+- We review reports within 24 hours. Accounts reported by three different users are suspended automatically.
+
+GUIDELINE 5.1.1(iv) (location permission)
+The explanation screen shown before the system location prompt has a single "次へ" (Next) button. The user always proceeds to the iOS permission dialog and decides there. If access is declined, check-in shows a message with a button that opens Settings.
+
+GUIDELINE 2.1 - Can users see other users' locations on a map in real time?
+Yes, but only for users who explicitly turn it on:
+- Real-time sharing is a separate setting, "居場所をリアルタイム公開" (Share my location in real time), on the My Page tab. It is OFF by default.
+- Only while it is ON and the app is open in the foreground, the app sends the user's location about once a minute. The app does not collect location in the background.
+- Other signed-in users can see that user's current position on the in-app map. A position that has not been updated for 5 minutes is no longer shown.
+- Turning the setting OFF immediately deletes the stored real-time position.
+- Users are never shown to people they have blocked or who have blocked them. Users can also pause location entirely or hide their home area.
+- Users who do not turn this setting on are never shown on the map in real time.
+
+BUSINESS MODEL
+No in-app purchases, subscriptions or paid digital content are required to use the app.
+
+ACCOUNT DELETION (5.1.1(v))
+Users can delete their data at https://surechigai.kimito.link/deletion.
