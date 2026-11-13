@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { Link, type Href } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { APP_HEADER_CHROME_HEIGHT_COMPACT, palette, touchTarget } from "@/theme/tokens";
 import { SIGN_IN_AUTO_X_HREF } from "@/lib/clerk-route";
 import { useLoginGuide } from "@/hooks/use-login-guide";
@@ -21,6 +22,11 @@ export function GuestHomeShellHeader() {
   const { width } = useWindowDimensions();
   const sideNavActive = useWebSideNavActive();
   const glyphOnly = width < 360;
+  // ★iOS/Android アプリでは時計・ダイナミックアイランドの下から始める（2026-11-13 実機で重なりを確認）。
+  //   ゲストホームは ScreenContainer を通らないので、上の余白をここで足す。Web は従来どおり。
+  const insets = useSafeAreaInsets();
+  const nativeTopInset =
+    Platform.OS === "web" ? null : { paddingTop: insets.top, height: GUEST_HOME_HEADER_HEIGHT + insets.top };
   const webFixed =
     Platform.OS === "web"
       ? ({
@@ -33,7 +39,7 @@ export function GuestHomeShellHeader() {
       : null;
 
   return (
-    <View style={[styles.shell, webFixed]} accessibilityRole="header">
+    <View style={[styles.shell, webFixed, nativeTopInset]} accessibilityRole="header">
       <Text style={styles.title} numberOfLines={1} accessibilityRole="text">
         君斗りんくのすれ違ひ通信
       </Text>
