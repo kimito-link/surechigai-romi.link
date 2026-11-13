@@ -9,11 +9,11 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import MaterialIcons from "@/lib/icons/material-icons";
-import { navigate } from "@/lib/navigation";
+import { navigate, navigateBack } from "@/lib/navigation";
 import { color, palette } from "@/theme/tokens";
 
 export function goBackOrHome() {
-  if (router.canGoBack()) router.back();
+  if (router.canGoBack()) navigateBack();
   else navigate.toHome();
 }
 
