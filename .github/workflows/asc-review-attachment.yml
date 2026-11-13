@@ -1,0 +1,50 @@
+# App Review 情報のメモと添付（実機録画）だけを差し替える。ビルドは作らない。
+# 録画は公開リポジトリに置かず、下書きリリース（共同作業者しか見えない）の添付から取る。
+name: ASC review notes & attachment
+
+on:
+  workflow_dispatch:
+    inputs:
+      asset_id:
+        description: "下書きリリースに上げた録画の asset id（空ならメモだけ）"
+        required: false
+        default: ""
+      allow_resubmit:
+        description: "審査待ちで編集できないとき、取り消して同じビルドで出し直す"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: asc-review-attachment
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download recording
+        if: ${{ inputs.asset_id != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/review"
+          name=$(gh api "repos/${{ github.repository }}/releases/assets/${{ inputs.asset_id }}" --jq .name)
+          gh api -H "Accept: application/octet-stream" \
+            "repos/${{ github.repository }}/releases/assets/${{ inputs.asset_id }}" > "$RUNNER_TEMP/review/$name"
+          ls -la "$RUNNER_TEMP/review"
+          echo "REVIEW_ATTACHMENT_PATH=$RUNNER_TEMP/review/$name" >> "$GITHUB_ENV"
+      - name: Update App Review information
+        env:
+          APPSTORE_CONNECT_KEY_ID: ${{ secrets.APPSTORE_CONNECT_KEY_ID }}
+          APPSTORE_CONNECT_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_ISSUER_ID }}
+          APPSTORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APPSTORE_CONNECT_API_KEY_P8_BASE64 }}
+          ALLOW_RESUBMIT: ${{ inputs.allow_resubmit }}
+        run: node scripts/asc-review-attachment.mjs
