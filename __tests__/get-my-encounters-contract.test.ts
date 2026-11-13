@@ -18,8 +18,25 @@
  *   6. encounters #3 — 累計すれ違い数 userB側 GROUP BY（#2 と合算される）
  * パートナーIDが空（全員ブロック等）の場合は 3 以降は発行されない。
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getMyEncounters } from "../modules/encounter/db/queries.js";
+
+// Clerk への問い合わせ（キャッシュで X を見つけられなかった Clerk ユーザーの補い）を差し替える。
+// 既定は「Clerk も何も返さない」＝従来の挙動。
+const clerkProfilesMock = vi.hoisted(() => ({
+  map: new Map<string, unknown>(),
+  calls: [] as string[][],
+}));
+vi.mock("../server/clerk-profile-sync.js", () => ({
+  fetchClerkTwitterProfiles: async (openIds: string[]) => {
+    clerkProfilesMock.calls.push(openIds);
+    return clerkProfilesMock.map;
+  },
+}));
+beforeEach(() => {
+  clerkProfilesMock.map = new Map();
+  clerkProfilesMock.calls = [];
+});
 
 // ---------------------------------------------------------------------------
 // モックDBビルダー
@@ -341,6 +358,70 @@ describe("getMyEncounters — 返却契約", () => {
     expect(items[0].partnerProfileImage).toBeNull();
     // 表示名そのものは partnerName / partnerDisplayName で従来どおり出る
     expect(items[0].partnerDisplayName).toBe("君斗りんく@動員ちゃれんじ");
+  });
+
+  it("★表示名が一致しない Clerk ユーザーは Clerk の X 連携からアイコンと @ID を補う（2026-11-13）", async () => {
+    // users.name は初回登録時の名前のまま（例: Apple で先に登録した「りんく ゆっくり」）。
+    // キャッシュの displayName と一致しないので、以前は頭文字アイコン・@ID 無しになっていた。
+    const partner = { ...BASE_PARTNER, name: "りんく ゆっくり" };
+    clerkProfilesMock.map = new Map([
+      [
+        "clerk:user_partner",
+        {
+          twitterUsername: "yukkuri_rinku",
+          twitterId: "123",
+          displayName: "りんく@ゆっくり",
+          profileImage: "https://pbs.twimg.com/profile_images/9/r_normal.jpg",
+        },
+      ],
+    ]);
+    const db = createMockDb({
+      blocks: [[]],
+      encounters: [[BASE_ENCOUNTER_ROW], [{ partnerId: 200, cnt: 1 }], []],
+      users: [[partner]],
+      twitter_user_cache: [[]],
+    });
+
+    const items = await getMyEncounters(db as never, selfUserId);
+    expect(clerkProfilesMock.calls).toEqual([["clerk:user_partner"]]);
+    expect(items[0].partnerUsername).toBe("yukkuri_rinku");
+    expect(items[0].partnerDisplayName).toBe("りんく@ゆっくり");
+    expect(items[0].partnerProfileImage).toMatch(/^https:\/\/pbs\.twimg\.com\//);
+  });
+
+  it("キャッシュで見つかった人には Clerk へ問い合わせない（1件も無ければ呼ばない）", async () => {
+    const db = createMockDb({
+      blocks: [[]],
+      encounters: [[BASE_ENCOUNTER_ROW], [{ partnerId: 200, cnt: 1 }], []],
+      users: [[BASE_PARTNER]],
+      twitter_user_cache: [
+        [
+          {
+            twitterUsername: "partner_user",
+            twitterId: null,
+            displayName: "partner",
+            profileImage: null,
+            followersCount: 0,
+          },
+        ],
+      ],
+    });
+    await getMyEncounters(db as never, selfUserId);
+    expect(clerkProfilesMock.calls).toEqual([]);
+  });
+
+  it("Clerk にも X 連携が無い人（Apple だけ等）は従来どおりハンドルを推測しない", async () => {
+    const partner = { ...BASE_PARTNER, name: "りんく ゆっくり" };
+    const db = createMockDb({
+      blocks: [[]],
+      encounters: [[BASE_ENCOUNTER_ROW], [{ partnerId: 200, cnt: 1 }], []],
+      users: [[partner]],
+      twitter_user_cache: [[]],
+    });
+    const items = await getMyEncounters(db as never, selfUserId);
+    expect(items[0].partnerUsername).toBeNull();
+    expect(items[0].partnerProfileImage).toBeNull();
+    expect(items[0].partnerDisplayName).toBe("りんく ゆっくり");
   });
 
   it("partnerId: 自分が userBId のときは userAId が相手になる", async () => {
