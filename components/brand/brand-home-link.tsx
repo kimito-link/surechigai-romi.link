@@ -7,14 +7,19 @@ import { Pressable, View, Text, StyleSheet, Platform } from "react-native";
 import { Image } from "expo-image";
 import Constants from "expo-constants";
 import * as Haptics from "expo-haptics";
-import { APP_BRAND_ICON } from "@/components/brand/app-brand-icon";
-import { KIMITO_LINK_LOGO, PRODUCT_NAME, PARENT_BRAND } from "@/components/brand/brand-constants";
+import {
+  KIMITO_LINK_MARK,
+  KIMITO_LINK_MARK_ASPECT,
+  PRODUCT_NAME,
+  PRODUCT_SUBTITLE,
+  PARENT_BRAND,
+} from "@/components/brand/brand-constants";
 import { navigate } from "@/lib/navigation";
 import { triggerHomeScroll } from "@/lib/home-scroll";
 import { palette } from "@/theme/tokens";
 
 const DISPLAY_VERSION = Constants.expoConfig?.version ?? "1.0.0";
-const ICON_SIZE = 36;
+const MARK_HEIGHT = 34;
 
 export type BrandHomeLinkProps = {
   title?: string;
@@ -22,7 +27,7 @@ export type BrandHomeLinkProps = {
   isNarrow?: boolean;
   /** タブ画面用 — 小さめアイコン、画面名のみ、バージョン非表示 */
   compact?: boolean;
-  /** ポスト画面 — kimito ワードマークを重ねず、アプリ名とバージョンを1行にする */
+  /** 旧: ワードマークの出し分け。2026-11-13 にロゴへ一本化したので今は使わない（呼び出し側の互換のため残す） */
   hideWordmark?: boolean;
   singleLine?: boolean;
 };
@@ -38,15 +43,14 @@ function goHome() {
 export function BrandHomeLink({
   title = "君斗りんくのすれ違ひ通信",
   isDesktop = false,
-  isNarrow = false,
   compact = false,
-  hideWordmark = false,
-  singleLine = false,
 }: BrandHomeLinkProps) {
-  const iconSize = compact ? 28 : ICON_SIZE;
-  const titleSize = compact ? 16 : isDesktop ? 18 : isNarrow ? 14 : 15;
+  const markHeight = compact ? 30 : MARK_HEIGHT;
+  const titleSize = compact ? 14 : isDesktop ? 17 : 15;
   const versionSize = isDesktop ? 12 : 11;
-  const stackTitle = !singleLine && (compact || isNarrow);
+  // ★2026-11-13 左上は kimito.link 本体・Voice と同じ「Kimito Link」ロゴ＋「すれ違ひ通信」。
+  //   以前は丸いアプリアイコン＋「君斗りんくのすれ違ひ通信」で、姉妹サービスに見えなかった。
+  const shownTitle = title === PRODUCT_NAME ? PRODUCT_SUBTITLE : title;
 
   return (
     <Pressable
@@ -64,36 +68,28 @@ export function BrandHomeLink({
           プレースホルダー経路にしか効かない。alt を渡しても <img> に出ないので
           accessibilityLabel を使う（axe: image-alt）。空文字も falsy で消える。 */}
       <Image
-        source={APP_BRAND_ICON}
-        accessibilityLabel={PRODUCT_NAME}
-        style={[styles.icon, { width: iconSize, height: iconSize, borderRadius: iconSize / 2 }]}
-        contentFit="cover"
+        source={KIMITO_LINK_MARK}
+        accessibilityLabel={PARENT_BRAND}
+        style={{ width: Math.round(markHeight * KIMITO_LINK_MARK_ASPECT), height: markHeight, flexShrink: 0 }}
+        contentFit="contain"
       />
-      <View style={styles.textBlock}>
-        {!compact && !hideWordmark ? (
-          <Image
-            source={KIMITO_LINK_LOGO}
-            accessibilityLabel={PARENT_BRAND}
-            style={styles.wordmark}
-            contentFit="contain"
-          />
-        ) : null}
-        <View style={stackTitle ? styles.titleCol : styles.titleRow}>
+      <View style={styles.divider} />
+      <View style={styles.titleRow}>
+        <Text
+          style={[styles.title, { fontSize: titleSize }]}
+          numberOfLines={1}
+          accessibilityLabel={PRODUCT_NAME}
+        >
+          {shownTitle}
+        </Text>
+        {!compact ? (
           <Text
-            style={[styles.title, { fontSize: titleSize }]}
-            numberOfLines={singleLine || compact || !isNarrow ? 1 : 2}
+            style={[styles.version, { fontSize: versionSize }]}
+            accessibilityLabel={`バージョン ${DISPLAY_VERSION}`}
           >
-            {title}
+            v{DISPLAY_VERSION}
           </Text>
-          {!compact ? (
-            <Text
-              style={[styles.version, { fontSize: versionSize }]}
-              accessibilityLabel={`バージョン ${DISPLAY_VERSION}`}
-            >
-              v{DISPLAY_VERSION}
-            </Text>
-          ) : null}
-        </View>
+        ) : null}
       </View>
     </Pressable>
   );
@@ -121,7 +117,7 @@ const styles = StyleSheet.create({
   hitArea: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
     flexShrink: 1,
     minWidth: 0,
     marginLeft: -4,
@@ -140,18 +136,11 @@ const styles = StyleSheet.create({
   hitAreaPressed: {
     opacity: 0.88,
   },
-  icon: {
-    width: ICON_SIZE,
-    height: ICON_SIZE,
-    borderRadius: ICON_SIZE / 2,
+  divider: {
+    width: 1,
+    height: 22,
+    backgroundColor: "rgba(0,66,123,0.2)",
     flexShrink: 0,
-  },
-  textBlock: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 2,
-    flexShrink: 1,
-    minWidth: 0,
   },
   titleRow: {
     flexDirection: "row",
@@ -159,19 +148,6 @@ const styles = StyleSheet.create({
     gap: 6,
     flexShrink: 1,
     minWidth: 0,
-  },
-  titleCol: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 2,
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  wordmark: {
-    width: 88,
-    height: 22,
-    marginBottom: 2,
-    flexShrink: 0,
   },
   title: {
     color: palette.kimitoBlue,

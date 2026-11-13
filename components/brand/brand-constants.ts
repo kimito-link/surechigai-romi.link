@@ -11,6 +11,9 @@ export const PARENT_PROJECT = "Kimito-Link Project";
 export const PARENT_SITE_URL = "https://kimito-link.com";
 
 export const KIMITO_LINK_LOGO = require("@/assets/images/logos/kimitolink-logo.webp");
+/** ヘッダー左上用: 透過・余白なしに切り出した「Kimito Link」ロゴ（209x132） */
+export const KIMITO_LINK_MARK = require("@/assets/images/logos/kimitolink-logo-mark.webp");
+export const KIMITO_LINK_MARK_ASPECT = 209 / 132;
 
 export const BRAND_CHARACTERS = [
   require("@/assets/images/characters/konta.png"),

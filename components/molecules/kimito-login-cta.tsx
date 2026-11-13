@@ -34,8 +34,10 @@ const buttonStyle = {
   minHeight: 48,
 };
 
-/** X を名指しするボタン（𝕏 付き）の地。X のブランドの黒にして「X のボタン」だと一目で分かるようにする。 */
-const xButtonStyle = { ...buttonStyle, backgroundColor: palette.xBlack };
+/** X を名指しするボタン（𝕏 付き）の地。
+ *  ★2026-11-13 黒から紺へ。kimito.link 本体の「X で今すぐ参加する」と同じ色にして、
+ *  姉妹サービスの一部に見えるようにした（𝕏 の字で X のボタンだとは分かる）。 */
+const xButtonStyle = { ...buttonStyle, backgroundColor: palette.kimitoBlue };
 
 export function KimitoLoginCta({
   signInHref,
@@ -92,8 +94,8 @@ export function KimitoLoginCta({
   const a11yLabel = isNative
     ? `${nativeLabel}（AppleまたはXでサインイン）`
     : `Xで${displayLabel}`;
-  /* ★2026-10-12 X を名指しするボタン（𝕏 付き＝ネイティブ以外）は X の黒。
-     ネイティブは「はじめる」だけで X を名指ししない（Apple も選べる。Guideline 4.8）ので従来の紺のまま。 */
+  /* X を名指しするボタン（𝕏 付き＝ネイティブ以外）も、ネイティブの「はじめる」も紺（2026-11-13）。
+     ネイティブは X を名指ししない（Apple も選べる。Guideline 4.8）。 */
   const baseButtonStyle = isNative ? buttonStyle : xButtonStyle;
 
   if (Platform.OS === "web") {

@@ -660,13 +660,10 @@ export function PostGuestScreen() {
           </View>
         ) : (
           <View style={styles.mobileContainer}>
+            {/* ★2026-11-13 スマホの最初の画面は「コピー → レーダー → ボタン」だけにする。
+                「フォロワーが増える」が帯・小見出し・帯の3回出ていて、kimito.link 本体や Voice の
+                「1画面1メッセージ」と比べて詰め込みすぎだった（実機で確認）。 */}
             <View style={styles.hero}>
-              <View style={styles.kickerPill}>
-                <View style={styles.kickerDot} />
-                <Text style={styles.kickerText}>
-                  𝕏 連携 · 歩くほど同じ趣味のフォロワーが増える
-                </Text>
-              </View>
               <BrandTagline compact={false} align="center" lcpProminent />
               <Text style={styles.heroSub}>
                 同じ聖地・街を歩いた 𝕏 仲間と交差してフォロワーが増える
@@ -678,7 +675,6 @@ export function PostGuestScreen() {
             >
               <RadarGuestPreview />
             </View>
-            {xSuperpowerMiniStrip}
             {ctaSection}
             {benefitCards}
           </View>
