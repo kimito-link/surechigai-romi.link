@@ -5,8 +5,9 @@
  * Clerk 標準 `<SignIn />` + hash SSO コールバック時は AuthCallbackShell。
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Platform } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 import { AddXAccountNotice } from "@/components/auth/add-x-account-notice";
 import { AuthCallbackShell } from "@/components/auth/auth-callback-shell";
 import { AuthPageShell } from "@/components/auth/auth-page-shell";
@@ -16,6 +17,7 @@ import { ClerkSignIn } from "@/components/organisms/clerk-sign-in";
 import { useAuth } from "@/hooks/use-auth";
 import { normalizePostAuthRedirect } from "@/lib/auth-redirect-path";
 import { isClerkHashSsoCallback } from "@/lib/clerk-route";
+import { navigateReplace } from "@/lib/navigation";
 
 function resolveRedirectUrl(): string {
   if (Platform.OS !== "web" || typeof window === "undefined") return "/";
@@ -28,7 +30,27 @@ export default function SignInScreen() {
   const [isCallback, setIsCallback] = useState(() =>
     Platform.OS === "web" ? isClerkHashSsoCallback() : false,
   );
-  const { isAuthReady, isAuthenticated } = useAuth();
+  const { isAuthReady, isAuthenticated, user } = useAuth();
+  const nativeParams = useLocalSearchParams<{ redirect_url?: string }>();
+
+  // ★iOS/Android: ログインが終わったら元の画面へ戻す（2026-11-13 実機 554 で発覚）。
+  //   ネイティブは認証シートが閉じたあと /sign-in に留まったままで、
+  //   「アプリにアクセスを許可」しても次の画面に進まなかった（Web は Clerk が戻り先へ飛ばす）。
+  //   開いた時点のユーザーを覚えておき、別のユーザーでログインし終えた瞬間に戻す。
+  //   ログイン済みで開いた「アカウントを追加」のときは、同じユーザーのままなので動かない。
+  const initialUserKey = useRef<string | null | undefined>(undefined);
+  const userKey = isAuthReady ? (isAuthenticated ? (user?.openId ?? "signed-in") : null) : undefined;
+  useEffect(() => {
+    if (Platform.OS === "web" || userKey === undefined) return;
+    if (initialUserKey.current === undefined) {
+      initialUserKey.current = userKey;
+      return;
+    }
+    if (userKey && userKey !== initialUserKey.current) {
+      const raw = nativeParams.redirect_url;
+      navigateReplace.withUrl(normalizePostAuthRedirect(Array.isArray(raw) ? raw[0] : raw));
+    }
+  }, [userKey, nativeParams.redirect_url]);
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") return;

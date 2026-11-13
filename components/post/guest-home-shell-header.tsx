@@ -5,6 +5,7 @@ import {
   View,
   Text,
   Image,
+  Pressable,
   StyleSheet,
   Platform,
   useWindowDimensions,
@@ -67,23 +68,39 @@ export function GuestHomeShellHeader() {
           すれ違ひ通信
         </Text>
       </View>
-      <Link
-        href={SIGN_IN_AUTO_X_HREF as Href}
-        onPress={(e) => {
-          e.preventDefault();
-          openLoginGuide({ returnTo: "/" });
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={native ? "ログイン" : "Xでログイン"}
-        style={[styles.loginLink, glyphOnly && !native && styles.loginLinkGlyphOnly]}
-      >
-        {!native ? <Text style={styles.loginGlyph} numberOfLines={1}>𝕏</Text> : null}
-        {native || !glyphOnly ? (
+      {Platform.OS === "web" ? (
+        <Link
+          href={SIGN_IN_AUTO_X_HREF as Href}
+          onPress={(e) => {
+            e.preventDefault();
+            openLoginGuide({ returnTo: "/" });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={native ? "ログイン" : "Xでログイン"}
+          style={[styles.loginLink, glyphOnly && !native && styles.loginLinkGlyphOnly]}
+        >
+          {!native ? <Text style={styles.loginGlyph} numberOfLines={1}>𝕏</Text> : null}
+          {native || !glyphOnly ? (
+            <Text style={styles.loginText} numberOfLines={1}>
+              {native ? loginLabel : "で参加する"}
+            </Text>
+          ) : null}
+        </Link>
+      ) : (
+        // ★iOS/Android では expo-router の Link は <Text> として描かれ、
+        //   alignItems/justifyContent が効かず文字がボタンの上に寄っていた（2026-11-13 実機 554 で確認）。
+        //   ネイティブは View の Pressable で描いて、文字を上下左右とも中央にそろえる。
+        <Pressable
+          onPress={() => openLoginGuide({ returnTo: "/" })}
+          accessibilityRole="button"
+          accessibilityLabel="ログイン"
+          style={({ pressed }) => [styles.loginLink, pressed && { opacity: 0.85 }]}
+        >
           <Text style={styles.loginText} numberOfLines={1}>
-            {native ? loginLabel : "で参加する"}
+            {loginLabel}
           </Text>
-        ) : null}
-      </Link>
+        </Pressable>
+      )}
     </View>
   );
 }
