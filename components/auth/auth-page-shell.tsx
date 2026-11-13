@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Head from "expo-router/head";
 import { ReactNode } from "react";
 import { Platform, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AuthPageIntro } from "@/components/auth/auth-page-intro";
 import { AuthRedirectNotice } from "@/components/auth/auth-redirect-notice";
 import { AuthSupportNotice } from "@/components/auth/auth-support-notice";
@@ -92,6 +93,8 @@ export function AuthPageShell({ variant, children }: AuthPageShellProps) {
   // Apple の可否はここで解決して AuthPageIntro に props で渡す
   // （認証画面のモジュールに import を足すとチャンク分割がずれる地雷があるため）。
   const appleEnabled = isAppleLoginEnabled();
+  const insets = useSafeAreaInsets();
+  const nativeTopInset = Platform.OS === "web" ? 0 : insets.top;
 
   return (
     <View style={{ flex: 1 }}>
@@ -115,6 +118,8 @@ export function AuthPageShell({ variant, children }: AuthPageShellProps) {
             flexGrow: 1,
             paddingHorizontal: 16,
             paddingVertical: 32,
+            // iOS/Android アプリでは時計・ダイナミックアイランドの下から始める（2026-11-13）
+            paddingTop: 32 + nativeTopInset,
             paddingBottom: 48,
             maxWidth: 1152,
             width: "100%",

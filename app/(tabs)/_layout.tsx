@@ -59,11 +59,12 @@ function TabNav() {
           tabBarInactiveTintColor: color.textMuted,
           headerShown: false,
           tabBarButton: HapticTab,
-          tabBarShowLabel: !compactTabs,
+          // ★2026-11-13 スマホでも名前を出す。アイコンだけだと何の画面か分からなかった（実機で確認）。
+          tabBarShowLabel: true,
           tabBarAllowFontScaling: false,
           tabBarLabelStyle: {
             fontWeight: "700",
-            fontSize: compactTabs ? 0 : 11,
+            fontSize: 11,
           },
           tabBarIconStyle: compactTabs ? { marginBottom: 0 } : undefined,
           tabBarItemStyle: compactTabs

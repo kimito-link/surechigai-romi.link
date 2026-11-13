@@ -104,6 +104,7 @@ Web配信の正式対象は Chrome/Edge/Firefox 100+、Safari/iOS 15.4+ の現�
 ## Visual Taste
 
 kimito.link 親ブランドに合わせ、**淡いクール白（#F0F4F8）** をページ地、**薄青（#E2EDF7）** をヘッダー・強調カード、**ネイビー（#00427B）** と **オレンジ（#DD6500）** をアクセントに使います。  
+左上は kimito.link 本体・Kimito Link Voice と同じ筆記体の「Kimito Link」ロゴ（`assets/images/logos/kimitolink-logo-mark.webp`）＋「すれ違ひ通信」。姉妹サービスの一部に見えることを優先します（2026-11-13）。  
 アプリ全体はライト UI 単一テーマです（旧 midnight ダークは廃止）。地図ヒーロー上のオーバーレイだけ、読みやすさのため白文字を許容します。
 
 避けるべき方向:
@@ -199,7 +200,7 @@ Appleの「探す」のように、場所が正確にわかることを優先し
 ## Contrast Contract（WCAG 2.1 AA）
 
 - **本文（14px+）**: 背景とのコントラスト比 **4.5:1 以上** — `textPrimary` / `textSecondary` / `textMuted` on `kimitoBg` / `white` / `kimitoBlueSoft`
-- **CTA**: 背景 `kimitoBlue` または `#0F1419`（X）+ 文字 `textOnAccent`（白）
+- **CTA**: 背景 `kimitoBlue` + 文字 `textOnAccent`（白）。X のログインボタンも本体 kimito.link と同じ紺（2026-11-13 に X の黒 `#0F1419` から変更）
 - **禁止**: `textWhite` を `#E2EDF7` / `#FFFFFF` / 白カード上に使用。本文に `opacity < 0.75` を使わない
 - **Web CTA**: `Link asChild` + `Pressable` だけに頼らず、[`KimitoLoginCta`](components/molecules/kimito-login-cta.tsx) のように `<a>` / `Link` へ背景色を直付け
 - **最小サイズ**: 補助テキスト 12px（タブラベル 11px のみ例外）
