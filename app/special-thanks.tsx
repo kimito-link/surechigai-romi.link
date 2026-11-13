@@ -11,7 +11,7 @@ export default function SpecialThanksScreen() {
   const { isDesktop } = useResponsive();
 
   return (
-    <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
+    <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle="特別協力">
       <ScrollView contentContainerStyle={styles.content}>
 
         {/* ===== 和テイストのクレジットバナー ===== */}

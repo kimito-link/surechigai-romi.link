@@ -33,6 +33,7 @@ import { useScreenFocused } from "@/hooks/use-screen-focused";
 import { PostScreenView } from "@/components/post/post-screen-view";
 import { styles } from "@/components/post/post-screen-styles";
 import { color } from "@/theme/tokens";
+import { runAfterModalDismiss } from "@/lib/after-modal-dismiss";
 
 // ★2026-09-08 再有効化。2026-07-04 に 6058111eb で OOM 切り分けのため一時停止したが、
 // 真因は別（lib/icons/material-icons.web.tsx の動的import + React 19 の無限sync再レンダリング）で
@@ -177,7 +178,8 @@ export function PostAuthenticatedScreen() {
 
   const handleReport = useCallback((item: EncounterItem) => {
     setReportItem(item);
-    setReportModalVisible(true);
+    // 封筒の Modal を閉じた直後に開くので、iOS は閉じ終わるのを待つ（lib/after-modal-dismiss.ts）。
+    runAfterModalDismiss(() => setReportModalVisible(true));
   }, []);
 
   const handleReportSubmit = useCallback(

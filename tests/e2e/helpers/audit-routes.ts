@@ -43,7 +43,7 @@ export const TAB_ROUTES: AuditRoute[] = [
   {
     path: "/mypage",
     label: "マイページ",
-    expectText: /あなたの足あとと公開範囲|プロフィール|いまやること/,
+    expectText: /足あとと公開範囲|プロフィール|いまやること/,
     guestOk: true,
   },
 ];

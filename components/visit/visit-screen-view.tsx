@@ -125,7 +125,7 @@ export function VisitScreenView(props: VisitScreenViewProps) {
             <MaterialIcons name="groups" size={28} color={color.textWhite} />
           </View>
           <View style={styles.heroTextBlock}>
-            <Text style={styles.eyebrow}>GROUP VISIT LOG</Text>
+            <Text style={styles.eyebrow}>グループの訪問記録</Text>
             <Text style={styles.heroTitle}>グループ内の訪問を見える化</Text>
             <Text style={styles.heroCopy}>
               同じコードを知っている人だけが、申告した場所を見られます。

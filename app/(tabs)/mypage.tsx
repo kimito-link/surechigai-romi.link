@@ -22,7 +22,7 @@ export default function MypageScreen() {
     return (
       <OneTapGuestShell
         title="マイページ"
-        headline="あなたの足あとと公開範囲を、ここで"
+        headline="足あとと公開範囲を、ここで決める"
         preview={<MypageGuestPreview />}
         benefits={[
           { icon: "person", label: "プロフィール" },

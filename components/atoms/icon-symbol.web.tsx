@@ -26,6 +26,7 @@ const MAPPING: Record<string, string> = {
   "location.fill": "location-on",
   "book.fill": "menu-book",
   "map.fill": "map",
+  "globe.asia.australia.fill": "public",
   "person.crop.circle.fill": "account-circle",
   "envelope.open.fill": "drafts",
   "flag.fill": "flag",

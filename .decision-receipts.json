@@ -597,6 +597,25 @@
       "scopePaths": [
         "components/auth/eula-consent-gate.tsx"
       ]
+    },
+    {
+      "at": "2026-11-13T03:53:53.029Z",
+      "responsibility": "ios-modal-chain-wait",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/after-modal-dismiss.ts",
+        "__tests__/ios-modal-chain.test.ts"
+      ]
+    },
+    {
+      "at": "2026-11-13T04:08:19.343Z",
+      "responsibility": "native-subpage-bar",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/molecules/native-subpage-bar.tsx"
+      ]
     }
   ]
 }

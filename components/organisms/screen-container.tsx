@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { AppHeader, type AppHeaderProps } from "@/components/organisms/app-header";
 import { WebFixedTabBar } from "@/components/organisms/web-fixed-tab-bar";
 import { useAppChromeInset } from "@/hooks/use-app-chrome-inset";
+import { NativeSubpageBar } from "@/components/molecules/native-subpage-bar";
 
 export interface ScreenContainerProps extends ViewProps {
   edges?: Edge[];
@@ -17,6 +18,12 @@ export interface ScreenContainerProps extends ViewProps {
   headerProps?: AppHeaderProps;
   headerSlot?: React.ReactNode;
   showFooter?: boolean;
+  /**
+   * ネイティブのタブ外画面で、上に「戻る＋画面名」の帯を出すときの画面名。
+   * 省略時は headerProps.title を使う。どちらも無ければ帯は出さない
+   * （利用規約など、画面側で戻るボタンを持っているページ向け）。
+   */
+  nativeTitle?: string;
 }
 
 export function ScreenContainer({
@@ -30,6 +37,7 @@ export function ScreenContainer({
   headerProps,
   headerSlot,
   showFooter,
+  nativeTitle,
   ...props
 }: ScreenContainerProps) {
   const segments = useSegments();
@@ -37,6 +45,9 @@ export function ScreenContainer({
   const chrome = useAppChromeInset();
   const showFooterBar = showFooter ?? (withChrome && !inTabs);
   const embedHeader = withChrome && !inTabs;
+  const subpageTitle = nativeTitle ?? headerProps?.title;
+  const showNativeSubpageBar =
+    Platform.OS !== "web" && !withChrome && !inTabs && Boolean(subpageTitle);
 
   const content = (
     <SafeAreaView
@@ -57,6 +68,7 @@ export function ScreenContainer({
         style,
       ]}
     >
+      {showNativeSubpageBar ? <NativeSubpageBar title={subpageTitle as string} /> : null}
       <View className={cn("flex-1", className)} style={{ overflow: "hidden" }}>
         {children}
       </View>

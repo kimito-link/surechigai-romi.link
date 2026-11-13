@@ -153,7 +153,7 @@ export default function PremiumScreen() {
   const showNativePurchase = Platform.OS !== "web" && isAuthenticated;
 
   return (
-    <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
+    <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle="プレミアム">
       {Platform.OS === "web" ? (
         <Head>
           <title>プレミアム｜君斗りんくのすれ違ひ通信</title>
@@ -312,11 +312,17 @@ export default function PremiumScreen() {
           </Pressable>
 
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 16, marginTop: 4 }}>
-            <Link href={"/terms" as Href} style={{ minHeight: 44, justifyContent: "center" }}>
-              <LinkText label="利用規約" />
+            {/* ★<Link> はネイティブで <Text> になり、minHeight（押せる高さ）が効かない。
+                 購読画面の規約リンクは審査（3.1.2）で見られる箇所なので Link asChild + Pressable にする。 */}
+            <Link href={"/terms" as Href} asChild>
+              <Pressable accessibilityRole="link" style={{ minHeight: 44, justifyContent: "center" }}>
+                <LinkText label="利用規約" />
+              </Pressable>
             </Link>
-            <Link href={"/privacy" as Href} style={{ minHeight: 44, justifyContent: "center" }}>
-              <LinkText label="プライバシーポリシー" />
+            <Link href={"/privacy" as Href} asChild>
+              <Pressable accessibilityRole="link" style={{ minHeight: 44, justifyContent: "center" }}>
+                <LinkText label="プライバシーポリシー" />
+              </Pressable>
             </Link>
           </View>
         </Card>

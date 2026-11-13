@@ -86,7 +86,7 @@ export function PhotoImportScreen() {
   // ここは tRPC を触らないので Provider の有無に関係なく描画できる。
   if (isAuthReady && !isAuthenticated) {
     return (
-      <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
+      <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle="写真からとりこむ">
         <View style={{ padding: 24, gap: 16, maxWidth: 560, alignSelf: "center", width: "100%" }}>
           <Text style={{ fontSize: 22, fontWeight: "800", color: color.textPrimary }}>
             写真から思い出をとりこむ
@@ -118,7 +118,7 @@ export function PhotoImportScreen() {
   // ネイティブは v1.2。落とさず案内する（設計 地雷7）
   if (Platform.OS !== "web") {
     return (
-      <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
+      <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle="写真からとりこむ">
         <View style={{ padding: 24, gap: 12, maxWidth: 560, alignSelf: "center", width: "100%" }}>
           <Text style={{ fontSize: 22, fontWeight: "800", color: color.textPrimary }}>
             写真から思い出をとりこむ
@@ -142,7 +142,7 @@ export function PhotoImportScreen() {
   //   Provider の有無だけを見る。
   if (!trpcReady) {
     return (
-      <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
+      <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle="写真からとりこむ">
         <View style={{ padding: 24, alignItems: "center" }}>
           <ActivityIndicator color={color.accentPrimary} />
         </View>
@@ -271,7 +271,7 @@ function PhotoImportBody() {
   // 描画
   // -----------------------------------------------------------------------
   return (
-    <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]}>
+    <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle="写真からとりこむ">
       <ScrollView
         contentContainerStyle={{
           padding: 16,

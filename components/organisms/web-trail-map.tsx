@@ -29,6 +29,7 @@ import { PlaceNoteModal } from "@/components/map/place-note-modal";
 import { openTwitterShare } from "@/lib/navigation/external-links";
 import { isStatCardInteractive } from "@/components/organisms/web-trail-map-stats";
 import type { LocationVisibility } from "@/modules/encounter/core/location-visibility";
+import { runAfterModalDismiss } from "@/lib/after-modal-dismiss";
 
 export type VisitedAreaSummary = {
   prefecture: string | null;
@@ -301,7 +302,15 @@ export function WebTrailMap({
             : undefined
         }
         onToggleVisibility={onToggleVisibility}
-        onEditNote={onSaveNote ? (p) => { setNotePoint(p); setSelectedPoint(null); } : undefined}
+        onEditNote={
+          onSaveNote
+            ? (p) => {
+                setSelectedPoint(null);
+                // 足あとのシートを閉じた直後に開くので、iOS は閉じ終わるのを待つ。
+                runAfterModalDismiss(() => setNotePoint(p));
+              }
+            : undefined
+        }
         isDeleting={selectedPoint != null && deletingLocationId === selectedPoint.id}
         isUpdatingVisibility={selectedPoint != null && updatingLocationId === selectedPoint.id}
       />
