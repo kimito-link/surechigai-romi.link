@@ -10,7 +10,12 @@ import { Platform, useWindowDimensions, View } from "react-native";
 import { useColors } from "@/hooks/use-colors";
 import { PostTabIcon } from "@/components/post/post-tab-icon";
 import { TAB_BAR_BODY_HEIGHT } from "@/hooks/use-tab-bar-inset";
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
+import { TutorialProvider } from "@/lib/tutorial-context";
+import {
+  CheckinTabIconAuthenticated,
+  TabAuthenticatedExtras,
+} from "@/components/tabs/tab-lazy-parts";
 import { useAuth } from "@/hooks/use-auth";
 import {
   WebSideNav,
@@ -18,17 +23,6 @@ import {
   WEB_SIDE_NAV_WIDTH,
 } from "@/components/organisms/web-side-nav";
 import { WebAppFooter } from "@/components/organisms/web-app-footer";
-
-const CheckinTabIconAuthenticated = lazy(() =>
-  import("@/components/tabs/checkin-tab-icon-authenticated").then((m) => ({
-    default: m.CheckinTabIconAuthenticated,
-  })),
-);
-const TabAuthenticatedChrome = lazy(() =>
-  import("@/components/tabs/tab-authenticated-chrome").then((m) => ({
-    default: m.TabAuthenticatedChrome,
-  })),
-);
 
 function CheckinTabIcon({ color: iconColor }: { color: string }) {
   const { isAuthenticated } = useAuth();
@@ -153,28 +147,25 @@ function TabNav() {
 
 export default function TabLayout() {
   const { isAuthenticated } = useAuth();
+  const sideNavActive = useWebSideNavActive();
 
-  const chrome = (
-    <>
-      <WebSideNav />
-      {useWebSideNavActive() ? <WebAppFooter /> : null}
-    </>
-  );
-
-  const body = (
-    <View style={{ flex: 1 }}>
-      {chrome}
-      <TabNav />
-    </View>
-  );
-
-  if (!isAuthenticated) {
-    return body;
-  }
-
+  // ★2026-11-14: ログイン前後で木の形を変えない。以前は
+  //   ゲスト: <View>{tabs}</View> / ログイン後: <Suspense><TabAuthenticatedChrome>{tabs}</...></Suspense>
+  //   と親の型が入れ替わっていたため、ログインした瞬間（とログアウト・セッション更新の瞬間）に
+  //   タブ全体がアンマウント→作り直しになり、白い画面が挟まって開いていたタブもホームに戻っていた。
+  //   TutorialProvider は常に置き（ゲストでは何もしない）、ログイン後だけの部品は兄弟に足すだけにする。
   return (
-    <Suspense fallback={<View style={{ flex: 1 }} />}>
-      <TabAuthenticatedChrome>{body}</TabAuthenticatedChrome>
-    </Suspense>
+    <TutorialProvider>
+      <View style={{ flex: 1 }}>
+        <WebSideNav />
+        {sideNavActive ? <WebAppFooter /> : null}
+        <TabNav />
+      </View>
+      {isAuthenticated ? (
+        <Suspense fallback={null}>
+          <TabAuthenticatedExtras />
+        </Suspense>
+      ) : null}
+    </TutorialProvider>
   );
 }
