@@ -643,6 +643,21 @@
       "scopePaths": [
         ".github/workflows/asc-review-attachment.yml"
       ]
+    },
+    {
+      "at": "2026-11-14T06:45:38.409Z",
+      "responsibility": "native-static-instead-of-lazy",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "lib/lazy-heavy-components.native.tsx",
+        "components/tabs/authenticated-screen-slot.native.tsx",
+        "components/post/radar-parts.tsx",
+        "components/post/radar-parts.native.tsx",
+        "components/tabs/tab-lazy-parts.tsx",
+        "components/tabs/tab-lazy-parts.native.tsx",
+        "__tests__/native-no-lazy-suspend.test.ts"
+      ]
     }
   ]
 }

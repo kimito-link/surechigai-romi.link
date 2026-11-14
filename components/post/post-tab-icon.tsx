@@ -1,12 +1,8 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { IconSymbol } from "@/components/atoms/icon-symbol";
 import { useAuth } from "@/hooks/use-auth";
+import { PostTabIconAuthenticated } from "@/components/tabs/tab-lazy-parts";
 
-const PostTabIconAuthenticated = lazy(() =>
-  import("@/components/post/post-tab-icon-authenticated").then((m) => ({
-    default: m.PostTabIconAuthenticated,
-  })),
-);
 
 /** 未認証は envelope のみ。認証後に badge chunk を読む。 */
 export function PostTabIcon({ color: iconColor }: { color: string }) {
