@@ -10,39 +10,30 @@ import middleware, { config as middlewareConfig } from "../middleware";
 const STORED_IMAGE = "https://blob.example/share-cards/Abcd2345efgh.jpg";
 
 describe("/s メタHTML", () => {
-  it("保存済み画像を summary_large_image で指し、番地も郵便番号も座標も出さない", () => {
+  it("保存済み画像を summary_large_image で指し、場所は詳しいまま出す（2026-11-14 方針）", () => {
     const html = buildShareCardMetaHtml({
-      title: "@streamerfunch は 東池袋一丁目 豊島区 東京都 170-0013 にいるよ｜君斗りんくのすれ違ひ通信",
-      description: "〒170-0013 東京都豊島区東池袋一丁目で記録された足あと。",
+      title: "@streamerfunch は 東池袋一丁目 豊島区 東京都 にいるよ｜君斗りんくのすれ違ひ通信",
+      description: "東池袋一丁目 豊島区 東京都で記録された足あと。",
       imageUrl: STORED_IMAGE,
-      pageUrl: "https://surechigai.kimito.link/s/Abcd2345efgh?lat=35.729812&lng=139.715432",
+      pageUrl: "https://surechigai.kimito.link/s/Abcd2345efgh",
     });
     expect(html).toContain('property="og:image" content="https://blob.example/share-cards/Abcd2345efgh.jpg"');
     expect(html).toContain('name="twitter:card" content="summary_large_image"');
     expect(html).toContain('name="twitter:image" content="https://blob.example/share-cards/Abcd2345efgh.jpg"');
     expect(html).toContain('property="og:image:width" content="1200"');
     expect(html).toContain('property="og:image:height" content="630"');
-    expect(html).toContain("東京都");
-    expect(html).toContain("豊島区");
-    expect(html).not.toContain("東池袋");
-    expect(html).not.toContain("丁目");
-    expect(html).not.toContain("170-0013");
-    expect(html).not.toContain("lat=");
-    expect(html).not.toContain("35.729812");
-    expect(html).not.toContain("139.715432");
+    expect(html).toContain("東池袋一丁目");
   });
 
-  it("6桁座標の画像URLは出さず、静的画像へ差し替える", () => {
+  it("https でない画像URLは静的画像へ差し替える", () => {
     const html = buildShareCardMetaHtml({
       title: "東京都豊島区にいるよ｜君斗りんくのすれ違ひ通信",
       description: "東京都豊島区で記録された足あと。キミの現在地を刻もう。",
-      imageUrl: "https://surechigai.kimito.link/api/og?lat=35.729812&lng=139.715432&area=%E6%9D%B1%E6%B1%A0%E8%A2%8B%E4%B8%80%E4%B8%81%E7%9B%AE",
+      imageUrl: "http://example.com/x.jpg",
       pageUrl: "https://surechigai.kimito.link/s/Abcd2345efgh",
       fallbackImageUrl: "https://surechigai.kimito.link/og/prefectures/13.jpg",
     });
     expect(html).toContain('property="og:image" content="https://surechigai.kimito.link/og/prefectures/13.jpg"');
-    expect(html).not.toContain("35.729812");
-    expect(html).not.toContain("東池袋");
   });
 
   it("メタHTMLのキャッシュは長期 immutable", () => {

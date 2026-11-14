@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { buildOgImageSearchParams, buildPublicSharePageUrl } from "@/lib/ogp/share-meta";
 import {
   coarsenPublicCoordinate,
   formatPublicCoordinate,
@@ -63,45 +62,9 @@ describe("公開地名サニタイザ", () => {
     ).toBe("神奈川県横浜市西区");
   });
 
-  it("座標は小数2桁に丸め、公開URLへ6桁を出さない", () => {
+  it("座標を小数2桁に丸める関数（OGP では使っていない。2026-11-14 から正確な座標で描く）", () => {
     expect(formatPublicCoordinate(35.729812)).toBe("35.73");
     expect(formatPublicCoordinate(139.715432)).toBe("139.72");
     expect(coarsenPublicCoordinate(35.729812)).toBe(35.73);
-
-    const at = new Date("2026-10-24T00:00:00.000Z");
-    const page = buildPublicSharePageUrl("TGszTcz7stEb", at, "https://surechigai.kimito.link", {
-      area: "豊島区",
-      prefecture: "東京都",
-      address: IKEBUKURO,
-      lat: 35.729812,
-      lng: 139.715432,
-      hasLocation: true,
-      zoom: 16,
-      recordedAt: at,
-    });
-    expect(page).not.toContain("lat=");
-    expect(page).not.toContain("lng=");
-    expect(page).not.toContain("35.729812");
-    expect(page).not.toContain("東池袋");
-    expect(page).not.toContain("170-0013");
-    expect(page).toContain(encodeURIComponent("豊島区"));
-
-    const og = buildOgImageSearchParams({
-      area: "東池袋一丁目",
-      prefecture: "東京都",
-      address: IKEBUKURO,
-      lat: 35.729812,
-      lng: 139.715432,
-      hasLocation: true,
-      zoom: 16,
-      recordedAt: at,
-    });
-    expect(og.get("lat")).toBe("35.73");
-    expect(og.get("lng")).toBe("139.72");
-    expect(og.get("zoom")).toBe("11");
-    expect(og.get("area")).toBe("豊島区");
-    expect(og.toString()).not.toContain("東池袋");
-    expect(og.toString()).not.toContain("170-0013");
-    expect(og.toString()).not.toContain("35.729812");
   });
 });

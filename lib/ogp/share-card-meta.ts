@@ -2,13 +2,7 @@
  * 凍結した共有カード /s/<id> のクローラー向けメタ。
  * DBも画像生成もここには置かない。タイトルと画像URLをHTMLにするだけ。
  */
-import {
-  ensureSafePublicImageUrl,
-  prefectureCode,
-  prefectureNameByCode,
-  sanitizePublicText,
-  toPublicPlace,
-} from "./sanitize-public-place.js";
+import { prefectureCode, prefectureNameByCode } from "./sanitize-public-place.js";
 
 export const APP_ORIGIN = "https://surechigai.kimito.link";
 
@@ -51,19 +45,14 @@ export type ShareCardMetaInput = {
 };
 
 export function buildShareCardDescription(areaText: string | null | undefined): string {
-  const place = toPublicPlace({
-    address: areaText,
-    area: areaText,
-    prefecture: areaText,
-  }).label;
-  const where = place ?? "どこか";
+  const where = areaText?.trim() || "どこか";
   return `${where}で記録された足あと。キミの現在地を刻もう。`;
 }
 
 export function buildShareCardTitle(handle: string | null, label: string | null): string {
   const place = label ?? "どこか";
   const who = handle ? `@${handle} は ` : "";
-  return sanitizePublicText(`${who}${place}にいるよ｜君斗りんくのすれ違ひ通信`);
+  return `${who}${place}にいるよ｜君斗りんくのすれ違ひ通信`;
 }
 
 export function staticShareCardView(id: string, origin = APP_ORIGIN): ShareCardMetaInput {
@@ -108,23 +97,18 @@ function safePageUrl(url: string, origin: string): string {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:") return `${origin}/s/default`;
-    const decoded = decodeURIComponent(`${parsed.pathname}${parsed.search}`);
-    if (/丁目|番地|号室|号棟|〒|\d{3}-\d{4}/.test(decoded)) return `${origin}/s/default`;
-    parsed.searchParams.delete("lat");
-    parsed.searchParams.delete("lng");
-    parsed.searchParams.delete("zoom");
     return parsed.toString();
   } catch {
     return `${origin}/s/default`;
   }
 }
 
-/** クローラーに返すメタHTML。番地・郵便番号・細かい座標はここに残さない。 */
+/** クローラーに返すメタHTML。場所は記録どおり詳しく出す（2026-11-14 方針）。 */
 export function buildShareCardMetaHtml(input: ShareCardMetaInput, origin = APP_ORIGIN): string {
-  const title = sanitizePublicText(input.title);
-  const description = sanitizePublicText(input.description);
+  const title = input.title;
+  const description = input.description;
   const fallback = input.fallbackImageUrl ?? `${origin}/og-default.png`;
-  const imageUrl = ensureSafePublicImageUrl(input.imageUrl, fallback);
+  const imageUrl = input.imageUrl.startsWith("https://") ? input.imageUrl : fallback;
   const pageUrl = safePageUrl(input.pageUrl, origin);
   const imageType = imageContentType(imageUrl);
   const imageAlt = title.replace(/｜.*$/, "").trim();

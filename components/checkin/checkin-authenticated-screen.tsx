@@ -38,7 +38,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
 import { sendHubSummary } from "@/lib/kimito-link-urls";
 import { trpc } from "@/lib/trpc";
-import { publicShareLabel } from "@/lib/ogp/sanitize-public-place";
 import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MOBILE_WEB_CHROME } from "@/theme/tokens";
 import { computeCheckinScrollBottomInset } from "@/lib/layout/responsive-layout";
 import type { TrailPoint } from "@/lib/map/tile-geo";
@@ -146,11 +145,7 @@ export default function CheckinAuthenticatedScreen() {
       // 空タブが about:blank のまま永久に残る。
       const res = await withShareTimeout(shareCardMutation.mutateAsync());
       const areaLabel =
-        publicShareLabel({
-          label: res.areaLabel,
-          area: checkinMunicipality,
-          prefecture: checkinPrefecture,
-        }) ?? undefined;
+        res.areaLabel ?? checkinMunicipality ?? checkinPrefecture ?? undefined;
       const shared = await shareMyLocation(res.url, areaLabel, {
         popup: sharePopup,
         target,
@@ -183,11 +178,7 @@ export default function CheckinAuthenticatedScreen() {
     try {
       const res = await withShareTimeout(shareCardMutation.mutateAsync());
       const areaLabel =
-        publicShareLabel({
-          label: res.areaLabel,
-          area: checkinMunicipality,
-          prefecture: checkinPrefecture,
-        }) ?? undefined;
+        res.areaLabel ?? checkinMunicipality ?? checkinPrefecture ?? undefined;
       const copied = await copyShareLinkForInstagram(res.url, areaLabel);
       if (copied) {
         showToast(

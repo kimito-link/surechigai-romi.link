@@ -1,7 +1,7 @@
 /**
  * シェアボタンのたびに凍結カードを1枚作る。
  * 描画・Blob・DBのどれが失敗しても、都道府県か既定の静的画像URLを返す。
- * 住所文字列はこの関数の外へ出さない。描画へ渡すのは公開ラベルだけ。
+ * カードのタイトルと地図には、記録した場所を詳しく出す（2026-11-14 方針）。
  */
 import {
   staticShareCardId,
@@ -9,7 +9,8 @@ import {
   buildShareCardTitle,
   APP_ORIGIN,
 } from "./share-card-meta.js";
-import { ensureSafePublicImageUrl, toPublicPlace } from "./sanitize-public-place.js";
+import { toPublicPlace } from "./sanitize-public-place.js";
+import { resolveShareDetailedPlace } from "./share-meta.js";
 
 /**
  * 空タブを見たまま待たせない。クライアントの共有タイムアウト（8秒）より短く切る。
@@ -38,7 +39,7 @@ export type FrozenShareCardInput = {
   area?: string | null;
   prefecture?: string | null;
   handle?: string | null;
-  /** 地図入りカードの描画元（/api/og）。番地・細かい座標を含む URL は捨てる。 */
+  /** 地図入りカードの描画元（/api/og。正確な座標のまま）。 */
   mapImageUrl?: string | null;
 };
 
@@ -113,7 +114,19 @@ export async function createFrozenShareCard(
     area: input.area,
     prefecture: input.prefecture,
   });
-  const areaText = place.label;
+  // 場所はできるだけ詳しく出す（りんくさんの方針。2026-11-14）。丁目まで出してよい。
+  // 都道府県の静的画像を選ぶときだけ toPublicPlace の都道府県判定を使う。
+  const areaText =
+    resolveShareDetailedPlace({
+      area: input.area ?? null,
+      prefecture: input.prefecture ?? null,
+      address: input.address ?? null,
+      lat: null,
+      lng: null,
+      hasLocation: false,
+      zoom: 13,
+      recordedAt: null,
+    }) ?? place.label;
   const title = buildShareCardTitle(safeHandle(input.handle), areaText);
   const fallbackImage = staticShareImageUrl(place.prefecture, origin);
   const fallbackId = staticShareCardId(place.prefecture);
@@ -123,9 +136,7 @@ export async function createFrozenShareCard(
   let rendered = false;
 
   const mapImageUrl =
-    input.mapImageUrl && ensureSafePublicImageUrl(input.mapImageUrl, "") === input.mapImageUrl
-      ? input.mapImageUrl
-      : null;
+    input.mapImageUrl && input.mapImageUrl.startsWith("https://") ? input.mapImageUrl : null;
   const drawn = await withDeadline(
     deps.renderImage({ label: areaText, mapImageUrl }),
     remaining(),
