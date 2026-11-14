@@ -64,12 +64,35 @@ describe("createFrozenShareCard のフォールバック", () => {
       { userId: 7, address: IKEBUKURO, area: "豊島区", prefecture: "東京都" },
       d,
     );
-    expect(seen).toEqual({ label: "東京都豊島区" });
+    expect(seen).toEqual({ label: "東京都豊島区", mapImageUrl: null });
     expect(JSON.stringify(seen)).not.toContain("東池袋");
     expect(JSON.stringify(seen)).not.toContain("170-0013");
     expect(result.fallback).toBe(true);
     expect(result.imageUrl).toContain("/og/prefectures/13.jpg");
     expect(inserted).toHaveLength(1);
+  });
+
+  it("地図カードの URL を描画に渡す。細かい座標や番地を含む URL は渡さない", async () => {
+    const seen: ShareCardRenderInput[] = [];
+    const { deps: d } = deps({
+      renderImage: async (input) => {
+        seen.push(input);
+        return { body: new Uint8Array([1, 2, 3, 4]), contentType: "image/jpeg" };
+      },
+    });
+    const ok = "https://surechigai.kimito.link/api/og?area=x&pref=y&lat=35.73&lng=139.72&zoom=11";
+    await createFrozenShareCard({ userId: 7, area: "豊島区", prefecture: "東京都", mapImageUrl: ok }, d);
+    await createFrozenShareCard(
+      {
+        userId: 7,
+        area: "豊島区",
+        prefecture: "東京都",
+        mapImageUrl: "https://surechigai.kimito.link/api/og?lat=35.729503&lng=139.718",
+      },
+      d,
+    );
+    expect(seen[0]?.mapImageUrl).toBe(ok);
+    expect(seen[1]?.mapImageUrl).toBeNull();
   });
 
   it("DB挿入が失敗しても都道府県の静的カードURLを返す", async () => {

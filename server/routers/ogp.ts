@@ -257,7 +257,8 @@ export const ogpRouter = router({
   }),
 
   /**
-   * シェアボタン用。カード画像をその場で描いて保存し、短い /s/<id> を返す。
+   * シェアボタン用。地図入りのカード画像をその場で描いて Blob に保存し、短い /s/<id> を返す。
+   * X は下書きの時点で /s/<id> を取りに来るので、画像は保存済みの静的URL（速い）にしておく。
    * 描画・Blob・DBのどれが失敗しても静的画像のURLを返し、共有自体は止めない。
    * 番地・郵便番号・生座標はカードにも外部サービスにも渡さない。
    */
@@ -267,6 +268,8 @@ export const ogpRouter = router({
     let area: string | null = null;
     let prefecture: string | null = null;
     let handle: string | null = null;
+    /** 地図入りカードの描画元。/u/<slug> の og:image と同じ組み立て（座標は公開用に丸める）。 */
+    let mapImageUrl: string | null = null;
     if (db) {
       try {
         const slug = await getOrCreateUserShareSlug(db, ctx.user.id);
@@ -279,13 +282,30 @@ export const ogpRouter = router({
           area = info?.area ?? null;
           prefecture = info?.prefecture ?? null;
           handle = info?.username ?? null;
+          if (info?.hasLocation && info.lat != null && info.lng != null) {
+            mapImageUrl = buildOgRedirectImageTarget({
+              origin: APP_ORIGIN,
+              location: {
+                area: info.area,
+                prefecture: info.prefecture,
+                address: info.address,
+                lat: info.lat,
+                lng: info.lng,
+                hasLocation: info.hasLocation,
+                zoom: info.zoom,
+                recordedAt: info.recordedAt,
+              },
+              username: null,
+              version: info.recordedAt?.getTime() ?? Date.now(),
+            });
+          }
         }
       } catch {
         // 地点が取れなくても、既定カードで共有は続ける
       }
     }
     return createFrozenShareCard(
-      { userId: ctx.user.id, address, area, prefecture, handle },
+      { userId: ctx.user.id, address, area, prefecture, handle, mapImageUrl },
       {
         renderImage: async (input) => {
           try {
