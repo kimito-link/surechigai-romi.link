@@ -80,14 +80,11 @@ describe("OGPウォームURLとクローラーURLの一致", () => {
     expect(url).toContain(`v=${base.recordedAt!.getTime()}`);
   });
 
-  it("公開OGPの座標は小数2桁、zoomは市区レベルで両側が一致する", () => {
+  it("zoom は設定由来の値をそのまま使う（決め打ちにしない）", () => {
+    // sharePrecise ON のユーザーは zoom=16。ここを "14" 固定にすると再びキー分裂する。
     const precise: ShareLocationInfo = { ...base, zoom: 16 };
-    const url = crawlerOgImageUrl(precise);
-    expect(url).toContain("zoom=11");
-    expect(crawlerOgImageUrl(base)).toContain("zoom=11");
-    expect(url).toContain("lat=36.07");
-    expect(url).not.toContain("36.065296");
-    expect(url).not.toContain("138.05211");
+    expect(crawlerOgImageUrl(precise)).toContain("zoom=16");
+    expect(crawlerOgImageUrl(base)).toContain("zoom=13");
   });
 
   it("記録時刻が変われば別URLになる（新しいチェックインは別キャッシュ）", () => {

@@ -1,6 +1,11 @@
 /**
  * 1200x630 の共有カードをその場で描く。
- * 地図タイルも外部フォントAPIも叩かない。渡されるのは公開ラベル（都道府県+市区町村）だけ。
+ *
+ * 2026-11-14: 地図入りカードに戻した。
+ *   2026-10-24 の凍結カード化（023b405）で、カードが「紺の背景に地名だけ」になっていた。
+ *   りんくさんの求める X のカードは「地図＋場所」なので、mapImageUrl（/api/og。座標は
+ *   公開用に丸め済み）があれば、その地図画像を JPEG にして使う。
+ *   取れない・遅いときだけ、下の文字だけのカードに落とす。
  * 失敗したら null。呼び出し側が都道府県の静的画像に落とす。
  */
 import { readFileSync } from "node:fs";
@@ -17,6 +22,8 @@ const FONT_FAMILY = "Noto Sans JP Thin";
 const WIDTH = 1200;
 const HEIGHT = 630;
 const RENDER_TIMEOUT_MS = 2500;
+/** /api/og はキャッシュが無いと 2〜5 秒かかる（2026-11-14 実測）。これを超えたら文字カードへ。 */
+const MAP_FETCH_TIMEOUT_MS = 4000;
 
 function escXml(value: string): string {
   return value.replace(/[&<>"']/g, (ch) => {
@@ -69,9 +76,40 @@ function assertBundledFont(): void {
   fontReady = true;
 }
 
+/** /api/og が描いた地図カードを取ってきて JPEG（300KB 以下）にする。失敗は null。 */
+export async function fetchMapCardImage(
+  url: string,
+  fetchImpl: typeof fetch = fetch,
+  timeoutMs = MAP_FETCH_TIMEOUT_MS,
+): Promise<ShareCardImage | null> {
+  if (!url.startsWith("https://")) return null;
+  try {
+    const res = await fetchImpl(url, {
+      headers: {
+        Accept: "image/png,image/*",
+        "User-Agent": "surechigai-share-card/1.0 (+https://surechigai.kimito.link)",
+      },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!res.ok) return null;
+    if (!(res.headers.get("content-type") ?? "").startsWith("image/")) return null;
+    const body = new Uint8Array(await res.arrayBuffer());
+    if (body.byteLength === 0) return null;
+    const meta = await sharp(body).metadata();
+    if (meta.width !== WIDTH || meta.height !== HEIGHT) return null;
+    return await compressPng(body);
+  } catch {
+    return null;
+  }
+}
+
 export async function renderShareCardImage(
   input: ShareCardRenderInput,
 ): Promise<ShareCardImage | null> {
+  if (input.mapImageUrl) {
+    const map = await fetchMapCardImage(input.mapImageUrl);
+    if (map) return map;
+  }
   try {
     assertBundledFont();
     const svg = buildShareCardSvg(input.label);

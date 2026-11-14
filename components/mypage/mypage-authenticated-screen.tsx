@@ -32,7 +32,6 @@ import {
   shareMyLocation,
   type ShareTarget,
 } from "@/lib/share";
-import { publicShareLabel } from "@/lib/ogp/sanitize-public-place";
 import { readNoticeEnabled, writeNoticeEnabled } from "@/lib/encounter-notice";
 import type { TrailVisibility } from "@/modules/encounter/core/trail-visibility";
 import {
@@ -216,7 +215,7 @@ export function MypageAuthenticatedScreen() {
     try {
       // タイムアウト必須: 「遅い」だけだと catch に来ず空タブが about:blank のまま残る
       const res = await withShareTimeout(shareCardMutation.mutateAsync());
-      const areaLabel = publicShareLabel({ label: res.areaLabel }) ?? undefined;
+      const areaLabel = res.areaLabel ?? undefined;
       const shared = await shareMyLocation(res.url, areaLabel, {
         popup: sharePopup,
         target,

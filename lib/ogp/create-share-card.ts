@@ -1,7 +1,7 @@
 /**
  * シェアボタンのたびに凍結カードを1枚作る。
  * 描画・Blob・DBのどれが失敗しても、都道府県か既定の静的画像URLを返す。
- * 住所文字列はこの関数の外へ出さない。描画へ渡すのは公開ラベルだけ。
+ * カードのタイトルと地図には、記録した場所を詳しく出す（2026-11-14 方針）。
  */
 import {
   staticShareCardId,
@@ -10,13 +10,22 @@ import {
   APP_ORIGIN,
 } from "./share-card-meta.js";
 import { toPublicPlace } from "./sanitize-public-place.js";
+import { resolveShareDetailedPlace } from "./share-meta.js";
 
-/** 空タブを見たまま待たせない。クライアントの共有タイムアウト（8秒）より短く切る。 */
-export const SHARE_CARD_BUDGET_MS = 3500;
+/**
+ * 空タブを見たまま待たせない。クライアントの共有タイムアウト（8秒）より短く切る。
+ * 地図カードの描画（/api/og、実測 2〜5 秒）を待てるよう 6.5 秒にしている（2026-11-14）。
+ */
+export const SHARE_CARD_BUDGET_MS = 6500;
 export const SHARE_CARD_MAX_IMAGE_BYTES = 300 * 1024;
 
 export type ShareCardRenderInput = {
   label: string | null;
+  /**
+   * 地図入りカードを描く /api/og の URL（座標は公開用に丸め済み）。
+   * あれば地図カードを優先し、取れなければ文字だけのカードに落とす。
+   */
+  mapImageUrl?: string | null;
 };
 
 export type ShareCardImage = {
@@ -30,6 +39,8 @@ export type FrozenShareCardInput = {
   area?: string | null;
   prefecture?: string | null;
   handle?: string | null;
+  /** 地図入りカードの描画元（/api/og。正確な座標のまま）。 */
+  mapImageUrl?: string | null;
 };
 
 export type ShareCardRow = {
@@ -103,7 +114,19 @@ export async function createFrozenShareCard(
     area: input.area,
     prefecture: input.prefecture,
   });
-  const areaText = place.label;
+  // 場所はできるだけ詳しく出す（りんくさんの方針。2026-11-14）。丁目まで出してよい。
+  // 都道府県の静的画像を選ぶときだけ toPublicPlace の都道府県判定を使う。
+  const areaText =
+    resolveShareDetailedPlace({
+      area: input.area ?? null,
+      prefecture: input.prefecture ?? null,
+      address: input.address ?? null,
+      lat: null,
+      lng: null,
+      hasLocation: false,
+      zoom: 13,
+      recordedAt: null,
+    }) ?? place.label;
   const title = buildShareCardTitle(safeHandle(input.handle), areaText);
   const fallbackImage = staticShareImageUrl(place.prefecture, origin);
   const fallbackId = staticShareCardId(place.prefecture);
@@ -112,7 +135,12 @@ export async function createFrozenShareCard(
   let imageUrl = fallbackImage;
   let rendered = false;
 
-  const drawn = await withDeadline(deps.renderImage({ label: areaText }), remaining());
+  const mapImageUrl =
+    input.mapImageUrl && input.mapImageUrl.startsWith("https://") ? input.mapImageUrl : null;
+  const drawn = await withDeadline(
+    deps.renderImage({ label: areaText, mapImageUrl }),
+    remaining(),
+  );
   let image = fitsBudget(drawn) ? drawn : null;
   if (!image && drawn && drawn.body.byteLength > SHARE_CARD_MAX_IMAGE_BYTES && deps.compressImage) {
     const compressed = await withDeadline(deps.compressImage(drawn), remaining());
