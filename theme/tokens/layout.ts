@@ -86,6 +86,16 @@ export const tabBar = {
  */
 export const WEB_TAB_BAR_HEIGHT = tabBar.bodyHeight + tabBar.webBottomPadding;
 
+/**
+ * Web の固定タブバー下余白（CSS）。ホーム画面に追加した iPhone ではホームバーの分
+ * （safe-area-inset-bottom、約34px）が要るので、12px と比べて大きい方を使う。
+ * Web の useSafeAreaInsets は常に 0 なので、JS の数値ではなく CSS の env() で持つ。
+ * ★2026-11-15 追加。タブバー2種（(tabs) / WebFixedTabBar）とチェックインのドックで揃える。
+ */
+export const WEB_TAB_BAR_BOTTOM_PADDING_CSS = `max(${tabBar.webBottomPadding}px, env(safe-area-inset-bottom))`;
+/** Web の固定タブバーの実高さ（CSS）。ドックをタブバーの真上に重ねるときはこちらを使う。 */
+export const WEB_TAB_BAR_HEIGHT_CSS = `calc(${tabBar.bodyHeight}px + ${WEB_TAB_BAR_BOTTOM_PADDING_CSS})`;
+
 /** チェックイン完了画面の下部固定シェアドック高さ */
 export const CHECKIN_STICKY_DOCK_HEIGHT = 76;
 

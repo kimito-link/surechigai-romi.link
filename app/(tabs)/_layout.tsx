@@ -2,7 +2,7 @@
  * タブレイアウト — 認証済みのみ Tutorial + presence runners（ゲスト bundle から分離）
  */
 import { Tabs } from "expo-router";
-import { color } from "@/theme/tokens";
+import { color, WEB_TAB_BAR_BOTTOM_PADDING_CSS, WEB_TAB_BAR_HEIGHT_CSS } from "@/theme/tokens";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HapticTab } from "@/components/atoms/haptic-tab";
 import { IconSymbol } from "@/components/atoms/icon-symbol";
@@ -47,7 +47,11 @@ function TabNav() {
   const colors = useColors();
   const { width: windowWidth } = useWindowDimensions();
   const sideNavActive = useWebSideNavActive();
-  const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
+  const isWeb = Platform.OS === "web";
+  const bottomPadding = isWeb ? 12 : Math.max(insets.bottom, 8);
+  // ★2026-11-15 Web（ホーム画面に追加した iPhone）はホームバーの分（safe-area-inset-bottom）を
+  //   CSS の env() で足す。12px 固定だとラベルがホームバーに重なって下が欠けていた。
+  //   web の insets は常に 0（app/_layout.tsx）なので JS の値では取れない。
   const tabBarHeight = TAB_BAR_BODY_HEIGHT + bottomPadding;
   const compactTabs = windowWidth < 480;
 
@@ -65,11 +69,15 @@ function TabNav() {
           tabBarLabelStyle: {
             fontWeight: "700",
             fontSize: 11,
+            // ★2026-11-15 行の高さを明示。未指定だと Web で箱が 11px になり、overflow:hidden で
+            //   「現在地」「さがす」等の下側が欠けていた（計測で確認）。flexShrink: 0 でアイコンに押し縮められないようにする。
+            lineHeight: 15,
+            flexShrink: 0,
           },
           tabBarIconStyle: compactTabs ? { marginBottom: 0 } : undefined,
-          tabBarItemStyle: compactTabs
-            ? { flex: 1, minWidth: 0, maxWidth: 72, paddingHorizontal: 2 }
-            : { flex: 1, minWidth: 0, paddingHorizontal: 2 },
+          // ★2026-11-15 maxWidth を外して5つを均等割りにした。スマホで maxWidth: 72 があると
+          //   72×5=360px しか使わず、幅 390〜440px の iPhone では右側に空きができて左に偏っていた。
+          tabBarItemStyle: { flex: 1, minWidth: 0, paddingHorizontal: 2 },
           sceneStyle: {
             backgroundColor: colors.background,
             flex: 1,
@@ -78,9 +86,9 @@ function TabNav() {
             ? { display: "none" }
             : {
                 paddingTop: compactTabs ? 6 : 8,
-                paddingBottom: bottomPadding,
+                paddingBottom: (isWeb ? WEB_TAB_BAR_BOTTOM_PADDING_CSS : bottomPadding) as number,
                 paddingHorizontal: compactTabs ? 2 : 4,
-                height: tabBarHeight,
+                height: (isWeb ? WEB_TAB_BAR_HEIGHT_CSS : tabBarHeight) as number,
                 backgroundColor: color.surface,
                 borderTopColor: color.border,
                 borderTopWidth: 1,

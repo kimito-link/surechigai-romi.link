@@ -643,6 +643,15 @@
       "scopePaths": [
         ".github/workflows/asc-review-attachment.yml"
       ]
+    },
+    {
+      "at": "2026-11-15T05:07:26.475Z",
+      "responsibility": "tab-bar-always-visible-regression-test",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "__tests__/tab-bar-always-visible.test.ts"
+      ]
     }
   ]
 }
