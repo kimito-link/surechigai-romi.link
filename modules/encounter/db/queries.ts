@@ -51,6 +51,19 @@ import {
 } from "../core/prefecture-creator-row.js";
 import type { TwitterFollowInfo } from "../core/prefecture-creator-types.js";
 import { resolveListProfileImage } from "../../../lib/profile-image.js";
+import type { ClerkTwitterProfile } from "../../../lib/clerk-twitter-profile.js";
+
+/** Clerk の X プロフィールを twitter_user_cache 行と同じ形にそろえる（フォロワー数は持たない） */
+function clerkProfileAsCache(profile: ClerkTwitterProfile | undefined) {
+  if (!profile) return undefined;
+  return {
+    twitterUsername: profile.twitterUsername,
+    twitterId: profile.twitterId,
+    displayName: profile.displayName,
+    profileImage: profile.profileImage,
+    followersCount: null as number | null,
+  };
+}
 
 /** encounter 経路では follow 情報を使わない（X API を増やさないため）。毎回生成しないよう固定。 */
 const EMPTY_FOLLOW_MAP: Map<number, TwitterFollowInfo> = new Map();
@@ -878,6 +891,36 @@ export async function getMyEncounters(
       .map((c) => [c.displayName, c] as const),
   );
 
+  // キャッシュで X を見つけられなかった Clerk ユーザーは、Clerk に X 連携を直接聞く（2026-11-13）。
+  // users.name は初回登録時の名前のまま更新されないので、後から X の表示名を変えた人・
+  // Apple で先に登録してから X をつないだ人は、上の表示名一致では永久に見つからない
+  // （封筒を開くとアイコンが頭文字・@ID 無しになっていた）。都道府県クリエイター一覧は
+  // 既にこの方法で補っており、すれ違い一覧だけが抜けていた。
+  // getUserList は1リクエストで束ねる。失敗しても表示は止めない（従来どおり空のまま）。
+  const unresolvedClerkOpenIds = visiblePartners
+    .filter((p) => p.openId?.startsWith("clerk:"))
+    .filter(
+      (p) =>
+        !resolveTwitterCacheForUser(
+          { id: p.id, openId: p.openId, name: p.name },
+          EMPTY_FOLLOW_MAP,
+          cacheByTwitterId,
+          cacheByUsername,
+        ) && !(p.name && cacheByDisplayName.get(p.name)),
+    )
+    .map((p) => p.openId);
+  let clerkProfiles = new Map<string, ClerkTwitterProfile>();
+  if (unresolvedClerkOpenIds.length > 0) {
+    try {
+      const { fetchClerkTwitterProfiles } = await import(
+        "../../../server/clerk-profile-sync.js"
+      );
+      clerkProfiles = await fetchClerkTwitterProfiles(unresolvedClerkOpenIds);
+    } catch (err) {
+      console.warn("[getMyEncounters] Clerk profile fallback failed:", err);
+    }
+  }
+
   // パートナーの累計すれ違い数を一括集計。
   // 従来の `userAId = p OR userBId = p` の count と等価になるよう、
   // userA側とuserB側を別々に GROUP BY して合算する（userB側は自己ペア行を除外して二重加算を防ぐ）。
@@ -932,7 +975,9 @@ export async function getMyEncounters(
         EMPTY_FOLLOW_MAP,
         cacheByTwitterId,
         cacheByUsername,
-      ) ?? (partner.name ? cacheByDisplayName.get(partner.name) : undefined);
+      ) ??
+      (partner.name ? cacheByDisplayName.get(partner.name) : undefined) ??
+      clerkProfileAsCache(clerkProfiles.get(partner.openId));
 
     // ハンドルはキャッシュ由来の検証済みの値だけを使う。
     // partner.name（表示名）へフォールバックしてはいけない ← それが今回の不具合の本体。
