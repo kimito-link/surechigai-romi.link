@@ -38,6 +38,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getAuthToken } from "@/lib/auth-token";
 import { sendHubSummary } from "@/lib/kimito-link-urls";
 import { trpc } from "@/lib/trpc";
+import { usePrefetchedShareCard } from "@/hooks/use-prefetched-share-card";
 import { color, palette, contentMaxWidth, CHECKIN_STICKY_DOCK_HEIGHT, CHECKIN_MOBILE_WEB_CHROME } from "@/theme/tokens";
 import { computeCheckinScrollBottomInset } from "@/lib/layout/responsive-layout";
 import type { TrailPoint } from "@/lib/map/tile-geo";
@@ -129,12 +130,18 @@ export default function CheckinAuthenticatedScreen() {
   // 3. シェア導線（X / Threads / Instagram）
   //    押した時点で凍結カードを作り、/s/<id> が返ってから投稿画面を開く。
   // ===========================================================================
-  const shareCardMutation = trpc.ogp.createShareCard.useMutation();
+  // カードはチェックイン完了の時点で先に作っておく（下書きでカードをすぐ出すため）。
+  // isCheckinComplete はこの下で定義されるので、state から同じ条件を組む。
+  const { take: takeShareCard } = usePrefetchedShareCard(
+    isAuthenticated && (state === "success" || state === "zero"),
+  );
+  const [isSharing, setIsSharing] = useState(false);
   const handleShareLocation = useCallback(async (target: ShareTarget = "x") => {
     // 連打ガード: 前回のシェアが飛んでいる間に再タップされると、空タブが増える上に
     // 共有リンク発行が重なって 429 を誘発する（連続シェアで固まる報告の一因）。
     if (shareInFlightRef.current) return;
     shareInFlightRef.current = true;
+    setIsSharing(true);
 
     const sharePopup = prepareSharePopup();
     if (Platform.OS !== "web") {
@@ -143,7 +150,7 @@ export default function CheckinAuthenticatedScreen() {
     try {
       // タイムアウト必須: 失敗ではなく「遅い」だけだと catch に来ず、
       // 空タブが about:blank のまま永久に残る。
-      const res = await withShareTimeout(shareCardMutation.mutateAsync());
+      const res = await withShareTimeout(takeShareCard());
       const areaLabel =
         res.areaLabel ?? checkinMunicipality ?? checkinPrefecture ?? undefined;
       const shared = await shareMyLocation(res.url, areaLabel, {
@@ -163,8 +170,9 @@ export default function CheckinAuthenticatedScreen() {
       );
     } finally {
       shareInFlightRef.current = false;
+      setIsSharing(false);
     }
-  }, [shareCardMutation, showError, checkinMunicipality, checkinPrefecture]);
+  }, [takeShareCard, showError, checkinMunicipality, checkinPrefecture]);
 
   /**
    * Instagram 用にリンクをコピーする。
@@ -176,7 +184,7 @@ export default function CheckinAuthenticatedScreen() {
     if (shareInFlightRef.current) return;
     shareInFlightRef.current = true;
     try {
-      const res = await withShareTimeout(shareCardMutation.mutateAsync());
+      const res = await withShareTimeout(takeShareCard());
       const areaLabel =
         res.areaLabel ?? checkinMunicipality ?? checkinPrefecture ?? undefined;
       const copied = await copyShareLinkForInstagram(res.url, areaLabel);
@@ -194,7 +202,7 @@ export default function CheckinAuthenticatedScreen() {
     } finally {
       shareInFlightRef.current = false;
     }
-  }, [shareCardMutation, showError, showToast, checkinMunicipality, checkinPrefecture]);
+  }, [takeShareCard, showError, showToast, checkinMunicipality, checkinPrefecture]);
 
   // アニメーション
   const scale = useSharedValue(1);
@@ -964,7 +972,7 @@ export default function CheckinAuthenticatedScreen() {
       handleCopyInstagramLink={handleCopyInstagramLink}
       handleSponsorPress={handleSponsorPress}
       handleLocationIntroNext={handleLocationIntroNext}
-      isSharing={shareCardMutation.isPending}
+      isSharing={isSharing}
     />
   );
 }
