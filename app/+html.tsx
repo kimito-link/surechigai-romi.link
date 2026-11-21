@@ -262,6 +262,12 @@ export default function Root({ children }: PropsWithChildren) {
             touch-action: pan-y pinch-zoom;
           }
           #root { background-color: var(--color-background); min-height: 100%; max-width: 100%; overflow-x: clip; }
+          /* ★2026-11-15 ページ全体（html/body）を縦にも動かさない。スクロールは中の ScrollView だけ。
+             iPhone（特にホーム画面に追加したとき）は body が overflow:hidden でも、中のリストを
+             端まで送るとページ全体が上に持ち上がり、下に地色の帯が出て固定タブバーが見えなくなっていた
+             （実機スクショで確認）。#root を画面に固定し、はね返りもページ全体には伝えない。 */
+          html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+          #root { position: fixed; top: 0; right: 0; bottom: 0; left: 0; overflow: hidden; }
           /* 起動画面は HTML の最初のバイトから出す（data-auth-boot は <html> に直書き）。
              スクリプトで出し分けすると、決まるまでの1フレームが別の色になる。
              絵は data URI。外部の CDN も画像の取得も待たない（ロックダウンモードでも同じ）。

@@ -4,11 +4,9 @@
  */
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { usePathname, type Href } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { navigate } from "@/lib/navigation";
-import { color } from "@/theme/tokens";
-import { TAB_BAR_BODY_HEIGHT } from "@/hooks/use-tab-bar-inset";
+import { color, WEB_TAB_BAR_BOTTOM_PADDING_CSS, WEB_TAB_BAR_HEIGHT_CSS } from "@/theme/tokens";
 import { usePrefetchTab } from "@/hooks/use-tab-prefetch";
 import type { TabPrefetchKey } from "@/lib/bootstrap/prefetch-tab-data";
 
@@ -64,9 +62,7 @@ function isTabActive(pathname: string, tab: TabItem): boolean {
 
 export function WebFixedTabBar() {
   const pathname = usePathname();
-  const insets = useSafeAreaInsets();
   const prefetchTab = usePrefetchTab();
-  const bottomPad = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
 
   if (Platform.OS !== "web") return null;
 
@@ -76,9 +72,11 @@ export function WebFixedTabBar() {
       accessibilityRole="tablist"
       style={[
         styles.bar,
+        // ★2026-11-15 (tabs) のタブバーと同じく、ホーム画面に追加した iPhone のホームバー分を
+        //   env(safe-area-inset-bottom) で足す（12px 固定だとラベルがホームバーに重なる）。
         {
-          paddingBottom: bottomPad,
-          height: TAB_BAR_BODY_HEIGHT + bottomPad,
+          paddingBottom: WEB_TAB_BAR_BOTTOM_PADDING_CSS as unknown as number,
+          height: WEB_TAB_BAR_HEIGHT_CSS as unknown as number,
         },
       ]}
     >
@@ -140,5 +138,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: "700",
+    lineHeight: 15,
   },
 });

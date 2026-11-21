@@ -20,7 +20,7 @@ import Animated, { type AnimatedStyle } from "react-native-reanimated";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
-import { color, palette, contentMaxWidth, WEB_TAB_BAR_HEIGHT } from "@/theme/tokens";
+import { color, palette, contentMaxWidth, WEB_TAB_BAR_HEIGHT_CSS } from "@/theme/tokens";
 import { LazyPrecisionTileMap } from "@/lib/lazy-heavy-components";
 import { MapErrorBoundary } from "@/components/ui/map-error-boundary";
 import { formatDateTime } from "@/components/organisms/precision-tile-map";
@@ -267,7 +267,7 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
               style={[
                 styles.stickyShareDock,
                 Platform.OS === "web" && isMobile
-                  ? { bottom: WEB_TAB_BAR_HEIGHT, paddingBottom: 10 }
+                  ? { bottom: WEB_TAB_BAR_HEIGHT_CSS as unknown as number, paddingBottom: 10 }
                   : { paddingBottom: tabInset + mobileWebChrome },
               ]}
             >
