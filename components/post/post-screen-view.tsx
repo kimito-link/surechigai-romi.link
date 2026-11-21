@@ -12,6 +12,8 @@ import {
   Linking,
   ScrollView,
   ActivityIndicator,
+  Alert,
+  Platform,
 } from "react-native";
 import { Suspense, lazy, type RefObject, type ReactNode } from "react";
 import { ScreenContainer } from "@/components/organisms/screen-container";
@@ -101,6 +103,29 @@ export type PostScreenViewProps = {
   handleReportSubmit: (targetUserId: number, encounterId: number, reason: string) => void;
 };
 
+/**
+ * 地図（レーダー）上の他の人のピンからブロックする。
+ * 2026-11-21 build 556 却下 5.1.2(i)「地図に位置が出る他のユーザーをブロックできる仕組み」。
+ * 以前は封筒（すれ違い）からしかブロックできず、地図のピンは押しても何も起きなかった。
+ * ★Modal ではなく Alert にする（iOS で Modal 連鎖が無反応になった前科: lib/after-modal-dismiss.ts）。
+ */
+function confirmBlockFromMap(userId: number, name: string, onBlock: (userId: number) => void) {
+  const title = `${name} さん`;
+  const message =
+    "いま地図に出ている人です。ブロックすると、お互いの地図・すれ違い・集まりに表示されなくなります。";
+  if (Platform.OS === "web") {
+    // react-native-web の Alert.alert は何もしないので、Web は確認ダイアログで代用する
+    if (typeof window !== "undefined" && window.confirm(`${title}\n\n${message}\n\nブロックしますか？`)) {
+      onBlock(userId);
+    }
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: "キャンセル", style: "cancel" },
+    { text: "ブロックする", style: "destructive", onPress: () => onBlock(userId) },
+  ]);
+}
+
 export function PostScreenView(props: PostScreenViewProps) {
   const {
     isDesktop,
@@ -174,6 +199,11 @@ export function PostScreenView(props: PostScreenViewProps) {
                   delay={index * 120}
                   isSelf={marker.isSelf}
                   animate={shouldAnimate}
+                  onPress={
+                    marker.isSelf
+                      ? undefined
+                      : () => confirmBlockFromMap(marker.userId, marker.name ?? "このユーザー", handleBlock)
+                  }
                 />
               );
             })}

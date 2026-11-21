@@ -17,7 +17,14 @@ import {
   Platform,
   useWindowDimensions,
   ActivityIndicator,
+  Alert,
 } from "react-native";
+import {
+  readFootprintMapConsent,
+  saveFootprintMapConsent,
+  type FootprintMapConsent,
+} from "@/lib/footprint-map-consent";
+import { LIVE_PRESENCE_MANUAL_CHECKIN } from "@/lib/live-presence-manual";
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import {
@@ -79,6 +86,27 @@ import { hasCompletedPostLoginLocationIntro } from "@/features/onboarding/compon
 type CheckinState = "idle" | "loading" | "adjust" | "success" | "error" | "zero";
 type LoadingPhase = "locating" | "saving";
 const RETRY_FIX_MAX_AGE_MS = 60_000;
+
+/**
+ * 足あと（チェックインした場所）をほかの人の地図に出すかを聞く（iOS・初回のみ）。
+ * 2026-11-21 build 556 却下 5.1.2(i)「地図に位置を出すことの許可を求め、断る選択肢を用意すること」。
+ * ★Modal ではなく Alert（iOS で Modal 連鎖が無反応になった前科: lib/after-modal-dismiss.ts）。
+ */
+function askFootprintMapConsent(): Promise<FootprintMapConsent> {
+  return new Promise((resolve) => {
+    Alert.alert(
+      "チェックインした場所を地図に出しますか？",
+      "許可すると、チェックインした場所（正確な位置）があなたの足あととして、ほかのユーザーが見られる地図に表示されます。" +
+        "地図に出るのは、あなたがチェックインボタンを押したときだけです。\n\n" +
+        "許可しない場合も、足あとは自分だけが見られる形で記録できます。マイページの「軌跡の公開範囲」でいつでも変えられます。",
+      [
+        { text: "許可しない", style: "cancel", onPress: () => resolve("private") },
+        { text: "許可する", onPress: () => resolve("public") },
+      ],
+      { cancelable: false },
+    );
+  });
+}
 
 export default function CheckinAuthenticatedScreen() {
   // ===========================================================================
@@ -248,6 +276,13 @@ export default function CheckinAuthenticatedScreen() {
   }));
 
   const checkIn = trpc.encounter.checkIn.useMutation();
+  /** iOS: チェックインしたときだけ、ほかの人の地図（レーダー）に1回出す（lib/live-presence-manual.ts） */
+  const presencePulse = trpc.presence.pulse.useMutation({
+    onSuccess: () => void utils.presence.list.invalidate(),
+  });
+  const setTrailVisibilityMutation = trpc.settings.setTrailVisibility.useMutation();
+  /** iOS: 足あとを地図に出すかの本人の答え。null は未回答（初回チェックイン前に聞く） */
+  const footprintConsentRef = useRef<FootprintMapConsent | null>(null);
   const pauseLocation = trpc.settings.pauseLocation.useMutation();
   const resumeLocation = trpc.settings.resume.useMutation();
   const trackSponsor = trpc.ads.track.useMutation();
@@ -338,6 +373,7 @@ export default function CheckinAuthenticatedScreen() {
           lat: pos.lat,
           lng: pos.lng,
           accuracy: pos.accuracy,
+          ...(footprintConsentRef.current === "private" ? { visibility: "private" as const } : {}),
         });
       } catch (err) {
         console.error("[checkin] checkIn.mutateAsync failed:", err);
@@ -348,6 +384,12 @@ export default function CheckinAuthenticatedScreen() {
       // saved欠落レスポンス(DB未接続・一時停止等の旧「無言成功」形)が将来紛れ込んでも完了UIに誤進行しない(P0-1)
       if (result.saved !== true) {
         throw new Error("足あとを保存できませんでした。もう一度送ってください");
+      }
+
+      // ★iOS: 居場所の公開を許可している人だけ、この手動チェックインの位置を地図に1回出す。
+      //   自動では出さない（2026-11-21 build 556 却下 5.1.2(i)）。失敗してもチェックインは成功扱い。
+      if (LIVE_PRESENCE_MANUAL_CHECKIN && settingsQuery.data?.livePresenceEnabled) {
+        presencePulse.mutate({ lat: result.lat, lng: result.lng, accuracy: pos.accuracy });
       }
 
       const locName = result.prefecture
@@ -479,7 +521,7 @@ export default function CheckinAuthenticatedScreen() {
         }
       }
     },
-    [checkIn, utils, pulse, mapScale, mapOpacity],
+    [checkIn, utils, pulse, mapScale, mapOpacity, presencePulse, settingsQuery.data?.livePresenceEnabled],
   );
 
   /** 測位して adjust または success/zero へ進む（state="adjust" の再測位からも呼ばれる） */
@@ -663,8 +705,19 @@ export default function CheckinAuthenticatedScreen() {
     }
     skipLocationIntroRef.current = false;
 
+    // ★iOS: 足あとをほかの人の地図に出すかを、初回だけ聞く（断れること。5.1.2(i)）
+    if (LIVE_PRESENCE_MANUAL_CHECKIN && footprintConsentRef.current == null) {
+      const saved = await readFootprintMapConsent();
+      const answer = saved ?? (await askFootprintMapConsent());
+      footprintConsentRef.current = answer;
+      if (!saved) {
+        void saveFootprintMapConsent(answer);
+        setTrailVisibilityMutation.mutate({ visibility: answer === "private" ? "private" : "public" });
+      }
+    }
+
     await performLocateAndCheckin();
-  }, [state, confirmAdjustedCheckin, performLocateAndCheckin]);
+  }, [state, confirmAdjustedCheckin, performLocateAndCheckin, setTrailVisibilityMutation]);
 
   /** 保存前プレビューで「もう一度測る」: adjust のまま再測位する（idle を経由しない） */
   const handleRetryLocation = useCallback(() => {

@@ -5,6 +5,7 @@
  * 呼び出し側(MypageAuthenticatedScreen)が持つ状態・ハンドラーをそのまま
  * propsとして受け取り、351-676行にあったJSXをそのまま配置する。
  */
+import type { ReactNode } from "react";
 import {
   View,
   Text,
@@ -67,6 +68,14 @@ export type MypageScreenViewProps = {
   liveEnabled: boolean;
   toggleLivePresence: (value: boolean) => void;
   livePresenceLoading: boolean;
+  /** iOS: 地図に出すのは手動チェックインのときだけ（hooks/use-live-presence.ts） */
+  liveManual?: {
+    manualCheckIn: boolean;
+    checkInNow: () => Promise<boolean>;
+    isCheckingIn: boolean;
+    lastCheckInAt: number | null;
+    checkInError: string | null;
+  };
   /** すれちがい到着のアプリ内お知らせ（端末ローカル設定。サーバー同期しない） */
   noticeEnabled: boolean;
   onToggleEncounterNotice: (value: boolean) => void;
@@ -87,6 +96,8 @@ export type MypageScreenViewProps = {
   setCategoryModalVisible: (value: boolean) => void;
   handleCategoriesSave: (ids: CategoryId[]) => void;
   showBlockList: boolean;
+  /** ブロックリストの中身（一覧・空表示）。mypage-authenticated-screen が組み立てる */
+  blockListBody?: ReactNode;
   setShowBlockList: (value: boolean) => void;
   resetTutorial: () => void;
   resetOnboarding: () => void;
@@ -113,6 +124,7 @@ export function MypageScreenView(props: MypageScreenViewProps) {
     liveEnabled,
     toggleLivePresence,
     livePresenceLoading,
+    liveManual,
     noticeEnabled,
     onToggleEncounterNotice,
     trailVisibility,
@@ -131,6 +143,7 @@ export function MypageScreenView(props: MypageScreenViewProps) {
     setCategoryModalVisible,
     handleCategoriesSave,
     showBlockList,
+    blockListBody,
     setShowBlockList,
     resetTutorial,
     resetOnboarding,
@@ -288,9 +301,13 @@ export function MypageScreenView(props: MypageScreenViewProps) {
             <Text style={styles.precisionSub}>
               {isPausing
                 ? "位置情報が一時停止中のため利用できません"
-                : liveEnabled
-                  ? "ONの間、レーダー上で「いまここにいるよ」と表示されます（アプリを開いている間、約1分ごとに更新）"
-                  : "OFFの間は他の人にリアルタイムの居場所は表示されません"}
+                : liveManual?.manualCheckIn
+                  ? liveEnabled
+                    ? "「いまの場所を地図に出す」を押したときだけ、約5分間ほかの人の地図に表示されます。自動では表示されません"
+                    : "OFFの間は、あなたの位置がほかの人の地図に表示されることはありません"
+                  : liveEnabled
+                    ? "ONの間、レーダー上で「いまここにいるよ」と表示されます（アプリを開いている間、約1分ごとに更新）"
+                    : "OFFの間は他の人にリアルタイムの居場所は表示されません"}
             </Text>
           </View>
           <Switch
@@ -301,6 +318,32 @@ export function MypageScreenView(props: MypageScreenViewProps) {
             thumbColor={palette.white}
           />
         </View>
+        {liveManual?.manualCheckIn && liveEnabled && !isPausing ? (
+          <View style={[styles.precisionRow, { flexDirection: "column", alignItems: "stretch", gap: 8 }]}>
+            <Pressable
+              onPress={() => void liveManual.checkInNow()}
+              disabled={liveManual.isCheckingIn}
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.editButton,
+                { justifyContent: "center", paddingVertical: 12 },
+                (pressed || liveManual.isCheckingIn) && { opacity: 0.7 },
+              ]}
+            >
+              <MaterialIcons name="my-location" size={18} color={color.accentIndigo} />
+              <Text style={[styles.editButtonText, { fontSize: 14 }]}>
+                {liveManual.isCheckingIn ? "地図に出しています…" : "いまの場所を地図に出す"}
+              </Text>
+            </Pressable>
+            <Text style={styles.precisionSub}>
+              {liveManual.checkInError
+                ? liveManual.checkInError
+                : liveManual.lastCheckInAt
+                  ? `${new Date(liveManual.lastCheckInAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} に地図に出しました（約5分で消えます）`
+                  : "押すたびに、その時点の場所を1回だけ地図に出します"}
+            </Text>
+          </View>
+        ) : null}
 
         {/* すれちがいのお知らせ（アプリ内表示のみ・端末ローカル設定） */}
         <View style={styles.precisionRow}>
@@ -425,9 +468,9 @@ export function MypageScreenView(props: MypageScreenViewProps) {
           </Pressable>
           {showBlockList && (
             <View style={styles.blockListContent}>
-              <Text style={styles.blockListEmpty}>
-                ブロックしているユーザーはいません
-              </Text>
+              {blockListBody ?? (
+                <Text style={styles.blockListEmpty}>ブロックしているユーザーはいません</Text>
+              )}
             </View>
           )}
         </View>

@@ -4,6 +4,7 @@
  * safety tRPC ルーター。
  * - safety.block
  * - safety.unblock
+ * - safety.listBlocks（マイページのブロックリスト）
  * - safety.report（3件自動停止）
  */
 
@@ -11,7 +12,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../../../server/_core/trpc.js";
 import { requireDb } from "../../../server/db/connection.js";
-import { blockUser, unblockUser, createReport } from "../db/queries.js";
+import { blockUser, unblockUser, createReport, listBlockedUsers } from "../db/queries.js";
 import { REPORT_REASONS } from "../core/report-reasons.js";
 
 // 通報理由の正本は core/report-reasons.ts（UIと共有し二重管理を防ぐ）
@@ -34,6 +35,14 @@ export const safetyRouter = router({
       await blockUser(db, ctx.user.id, input.userId);
       return { ok: true };
     }),
+
+  /**
+   * 自分がブロックしている相手の一覧。
+   */
+  listBlocks: protectedProcedure.query(async ({ ctx }) => {
+    const db = await requireDb();
+    return listBlockedUsers(db, ctx.user.id);
+  }),
 
   /**
    * ブロック解除。
