@@ -10,6 +10,7 @@ import {
   Text,
   ScrollView,
   Linking,
+  Platform,
   Pressable,
   Switch,
 } from "react-native";
@@ -461,6 +462,13 @@ export function MypageScreenView(props: MypageScreenViewProps) {
             カード型にせず設定リストの静かな1行に留める（訴求密度ルール:
             1画面1商業訴求・新しい訴求枠を作らない）。
           */}
+          {/*
+            ★iOS では出さない（2026-11-21 build 556 却下 Guideline 2.1(b) / 3.1.2(c)）。
+            購入は PURCHASE_AVAILABLE=false で未実装なのに「プレミアム」の文言があるだけで
+            「IAP 商品が審査に出ていない」「サブスクの EULA 情報が無い」と判断された。
+            iOS で売るときは ASC でサブスク商品を審査に出してから戻すこと。
+          */}
+          {Platform.OS !== "ios" && (
           <Pressable
             onPress={navigate.toPremium}
             style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.7 }]}
@@ -478,6 +486,7 @@ export function MypageScreenView(props: MypageScreenViewProps) {
               </Text>
             </View>
           </Pressable>
+          )}
 
           <Pressable
             onPress={navigate.toSpecialThanks}
