@@ -128,7 +128,7 @@ export function useLivePresenceControls() {
         applyToggle(next);
         return;
       }
-      // ★iOS: ON にする前に必ず許可を求める（断れること）。2026-11-21 build 556 却下 5.1.2(i)。
+      // ★iOS: ON にする前に毎回許可を求める（断れること）。2026-11-21 build 556 却下 5.1.2(i)。
       Alert.alert(
         "あなたの位置を地図に出しますか？",
         "ONにすると、「いまの場所を地図に出す」を押したときだけ、あなたのアイコンと現在地（正確な位置）が" +

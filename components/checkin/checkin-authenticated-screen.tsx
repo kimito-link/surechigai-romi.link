@@ -387,7 +387,7 @@ export default function CheckinAuthenticatedScreen() {
       }
 
       // ★iOS: 居場所の公開を許可している人だけ、この手動チェックインの位置を地図に1回出す。
-      //   自動では出さない（2026-11-21 build 556 却下 5.1.2(i)）。失敗してもチェックインは成功扱い。
+      //   自動では出さない（2026-11-21 build 556 却下 5.1.2(i)）。送れなくてもチェックイン自体は完了扱い。
       if (LIVE_PRESENCE_MANUAL_CHECKIN && settingsQuery.data?.livePresenceEnabled) {
         presencePulse.mutate({ lat: result.lat, lng: result.lng, accuracy: pos.accuracy });
       }
