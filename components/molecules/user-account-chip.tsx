@@ -95,7 +95,7 @@ export function UserAccountChip({ user, compact = false, onPress, style }: UserA
 
           <View style={styles.metaPill}>
             <MaterialIcons name="groups" size={compact ? 12 : 13} color={palette.kimitoBlue} />
-            <Text style={[styles.metaValue, styles.followersValue, { fontSize: compact ? 11 : 12 }]} numberOfLines={1}>
+            <Text style={[styles.metaValue, styles.followersValue, { fontSize: compact ? 11 : 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               フォロワー {followers ?? "—"}
             </Text>
           </View>

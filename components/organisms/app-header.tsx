@@ -259,7 +259,7 @@ export function AppHeader({
                   </View>
                 )}
                 <View style={styles.accountText}>
-                  <Text style={styles.accountStatus} numberOfLines={1}>
+                  <Text style={styles.accountStatus} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                     現在このアカウントでログインしています
                   </Text>
                   <Text style={styles.accountName} numberOfLines={1}>

@@ -64,7 +64,7 @@ export function GuestHomeShellHeader() {
           resizeMode="contain"
         />
         <View style={styles.brandDivider} />
-        <Text style={styles.title} numberOfLines={1} accessibilityRole="text">
+        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} accessibilityRole="text">
           すれ違ひ通信
         </Text>
       </View>
@@ -81,7 +81,7 @@ export function GuestHomeShellHeader() {
         >
           {!native ? <Text style={styles.loginGlyph} numberOfLines={1}>𝕏</Text> : null}
           {native || !glyphOnly ? (
-            <Text style={styles.loginText} numberOfLines={1}>
+            <Text style={styles.loginText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               {native ? loginLabel : "で参加する"}
             </Text>
           ) : null}

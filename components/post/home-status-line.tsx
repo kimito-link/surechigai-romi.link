@@ -52,7 +52,7 @@ export function HomeStatusLine({
           </Text>
         </>
       ) : (
-        <Text style={styles.text} numberOfLines={1}>
+        <Text style={styles.text} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
           今日はまだ足あとがありません
         </Text>
       )}

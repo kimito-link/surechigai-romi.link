@@ -362,8 +362,10 @@ export function RadarGuestPreview() {
           </View>
           <View style={styles.radarSignalBody}>
             <View style={styles.radarSignalTitleRow}>
-              <Text style={styles.radarSignalTitle} numberOfLines={1}>
-                こん太 @konta_tabi と秋葉原で交差！
+              {/* ★iPad（iPhone 互換 375pt 幅）で「…」に切れて 2026-11-21 Guideline 4 で却下。
+                  1行に収まる長さに縮め、念のため2行まで折り返せるようにする */}
+              <Text style={styles.radarSignalTitle} numberOfLines={2}>
+                こん太と秋葉原で交差！
               </Text>
               <View style={styles.followerGainBadge}>
                 <Text style={styles.followerGainText} numberOfLines={1}>
@@ -371,7 +373,7 @@ export function RadarGuestPreview() {
                 </Text>
               </View>
             </View>
-            <Text style={styles.radarSignalSub} numberOfLines={1}>
+            <Text style={styles.radarSignalSub} numberOfLines={2}>
               #推し活 #聖地巡礼 · 同じ場所を歩く人同士でフォロワーが増える
             </Text>
           </View>

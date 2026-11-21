@@ -89,7 +89,7 @@ function ZukanGuestLiveShell({ availableWidth, stacked = false }: ZukanGuestLive
             contentFit="cover"
           />
         </View>
-        <Text style={styles.liveText} numberOfLines={1}>
+        <Text style={styles.liveText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
           県をタップして同じ趣味の 𝕏 旅人を探そう
         </Text>
       </View>
@@ -146,7 +146,7 @@ function ZukanGuestLiveInner({ availableWidth, stacked = false }: ZukanGuestLive
             contentFit="cover"
           />
         </View>
-        <Text style={styles.liveText} numberOfLines={1}>
+        <Text style={styles.liveText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
           {totalPeople > 0
             ? `いま ${totalPeople} 人の 𝕏 旅人が現在地を公開中`
             : "県をタップして同じ趣味の 𝕏 旅人を探そう"}
