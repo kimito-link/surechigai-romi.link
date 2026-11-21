@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTutorial } from "@/lib/tutorial-context";
 import { useOnboarding } from "@/features/onboarding/hooks/useOnboarding";
 import { trpc } from "@/lib/trpc";
+import { usePrefetchedShareCard } from "@/hooks/use-prefetched-share-card";
 import { color } from "@/theme/tokens";
 import { navigate, openTwitterShare } from "@/lib/navigation";
 import {
@@ -117,8 +118,10 @@ export function MypageAuthenticatedScreen() {
   // MVP では blocks テーブルを直接取得する API なし → 簡易プレースホルダ）
   const unblockMutation = trpc.safety.unblock.useMutation();
 
-  // 現在地シェア。押した時点で凍結カードを作り、/s/<id> を投稿に載せる。
-  const shareCardMutation = trpc.ogp.createShareCard.useMutation();
+  // 現在地シェア。凍結カードはマイページを開いた時点で先に作っておき（下書きでカードを
+  // すぐ出すため）、押したら出来上がった /s/<id> を投稿に載せる。
+  const { take: takeShareCard } = usePrefetchedShareCard(true);
+  const [isSharingCard, setIsSharingCard] = useState(false);
   // 公開ページ（/u/<slug>）を開くときだけ、従来のスラッグを発行する。
   const shareSlugMutation = trpc.ogp.getOrCreateShareSlug.useMutation();
 
@@ -207,6 +210,7 @@ export function MypageAuthenticatedScreen() {
     // 連打ガード: 前回のシェアが飛んでいる間の再タップを弾く（空タブ増殖・429の誘発を防ぐ）
     if (shareInFlightRef.current) return;
     shareInFlightRef.current = true;
+    setIsSharingCard(true);
 
     const sharePopup = prepareSharePopup();
     if (Platform.OS !== "web") {
@@ -214,7 +218,7 @@ export function MypageAuthenticatedScreen() {
     }
     try {
       // タイムアウト必須: 「遅い」だけだと catch に来ず空タブが about:blank のまま残る
-      const res = await withShareTimeout(shareCardMutation.mutateAsync());
+      const res = await withShareTimeout(takeShareCard());
       const areaLabel = res.areaLabel ?? undefined;
       const shared = await shareMyLocation(res.url, areaLabel, {
         popup: sharePopup,
@@ -237,8 +241,9 @@ export function MypageAuthenticatedScreen() {
       );
     } finally {
       shareInFlightRef.current = false;
+      setIsSharingCard(false);
     }
-  }, [shareCardMutation]);
+  }, [takeShareCard]);
 
   const handleTogglePrecision = useCallback(
     (next: boolean) => {
@@ -323,7 +328,7 @@ export function MypageAuthenticatedScreen() {
       isDesktop={isDesktop}
       user={user}
       tabInset={tabInset}
-      isSharing={shareCardMutation.isPending || shareSlugMutation.isPending}
+      isSharing={isSharingCard || shareSlugMutation.isPending}
       handleViewPublicPage={handleViewPublicPage}
       handleShareLocation={handleShareLocation}
       settingsOpen={settingsOpen}
