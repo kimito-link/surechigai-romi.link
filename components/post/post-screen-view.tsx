@@ -13,7 +13,8 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { Suspense, lazy, type RefObject, type ReactNode } from "react";
+import { Suspense, type RefObject, type ReactNode } from "react";
+import { JapanRadarMap, RadarHud } from "@/components/post/radar-parts";
 import { ScreenContainer } from "@/components/organisms/screen-container";
 import { AppHeader } from "@/components/organisms/app-header";
 import { TabHeaderSpacer } from "@/components/organisms/tab-header-spacer";
@@ -34,12 +35,6 @@ import { ReportModal } from "@/components/post/report-modal";
 import { styles } from "@/components/post/post-screen-styles";
 import type { useMySignal } from "@/hooks/use-my-signal";
 
-const JapanRadarMap = lazy(() =>
-  import("@/components/organisms/japan-radar-map").then((m) => ({ default: m.JapanRadarMap })),
-);
-const RadarHud = lazy(() =>
-  import("@/components/organisms/radar-hud").then((m) => ({ default: m.RadarHud })),
-);
 
 function DeferredRadarFallback({ style }: { style?: object }) {
   return (
