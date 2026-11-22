@@ -27,6 +27,7 @@ interface GlobalMenuProps {
 
 const TAB_SHORTCUTS = [
   { icon: "home", label: "ポスト", path: "/(tabs)" },
+  { icon: "groups", label: "みんなの居場所", path: "/(tabs)/nearby" },
   { icon: "location-on", label: "現在地", path: "/(tabs)/checkin" },
   { icon: "public", label: "さがす", path: "/(tabs)/zukan" },
   { icon: "map", label: "軌跡", path: "/(tabs)/map" },
@@ -34,7 +35,7 @@ const TAB_SHORTCUTS = [
 ] as const;
 
 const PRIMARY_ITEMS = [
-  { icon: "near-me", label: "みんなの居場所", path: "/nearby" },
+  { icon: "groups", label: "みんなの居場所", path: "/(tabs)/nearby" },
   { icon: "groups", label: "訪問申告", path: "/visit" },
 ] as const;
 

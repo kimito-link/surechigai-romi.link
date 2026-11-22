@@ -5,7 +5,7 @@ import type { trpc } from "@/lib/trpc";
 
 export type TrpcUtils = ReturnType<typeof trpc.useUtils>;
 
-export type TabPrefetchKey = "post" | "checkin" | "zukan" | "map" | "mypage";
+export type TabPrefetchKey = "post" | "nearby" | "checkin" | "zukan" | "map" | "mypage";
 
 const TAB_PREFETCH: Record<TabPrefetchKey, (utils: TrpcUtils) => Promise<unknown>[]> = {
   post: (utils) => [
@@ -13,6 +13,7 @@ const TAB_PREFETCH: Record<TabPrefetchKey, (utils: TrpcUtils) => Promise<unknown
     utils.presence.list.prefetch(undefined),
     utils.zukan.myTrail.prefetch({ limit: 1 }),
   ],
+  nearby: (utils) => [utils.presence.list.prefetch(undefined)],
   checkin: (utils) => [
     utils.settings.get.prefetch(undefined),
     utils.zukan.myTrail.prefetch({ limit: 10 }),
@@ -49,6 +50,7 @@ const loadAuthenticatedScreens = () => import("@/components/tabs/authenticated-s
 
 const TAB_CHUNK_LOADERS: Record<TabPrefetchKey, () => Promise<unknown>> = {
   post: loadAuthenticatedScreens,
+  nearby: () => import("@/components/nearby/nearby-presence-screen"),
   checkin: loadAuthenticatedScreens,
   zukan: loadAuthenticatedScreens,
   map: loadAuthenticatedScreens,
@@ -65,7 +67,7 @@ export function prefetchTabData(utils: TrpcUtils, tab: TabPrefetchKey): void {
   void Promise.allSettled(TAB_PREFETCH[tab](utils));
 }
 
-const ALL_TAB_KEYS: TabPrefetchKey[] = ["post", "checkin", "zukan", "map", "mypage"];
+const ALL_TAB_KEYS: TabPrefetchKey[] = ["post", "nearby", "checkin", "zukan", "map", "mypage"];
 
 /** ログイン直後のアイドル時間に全タブ chunk を温める */
 export function prefetchAllTabChunksIdle(): void {

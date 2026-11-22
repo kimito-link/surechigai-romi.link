@@ -29,8 +29,8 @@ export const STATIC_ROUTES = {
   LOGIN_GUIDE: "/auth/kimito-link",
   LOGOUT: "/logout",
   SPECIAL_THANKS: "/special-thanks",
-  /** みんなの居場所（地図＋近い順リスト）。実体は app/nearby.tsx */
-  NEARBY: "/nearby",
+  /** みんなの居場所（地図＋近い順リスト）。タブの1つ。実体は app/(tabs)/nearby.tsx */
+  NEARBY: "/(tabs)/nearby",
   PREMIUM: "/premium",
   TERMS: "/terms",
   

@@ -29,6 +29,13 @@ const TABS: TabItem[] = [
     prefetchKey: "post",
   },
   {
+    href: "/(tabs)/nearby",
+    label: "みんな",
+    icon: "groups",
+    activePaths: ["/nearby"],
+    prefetchKey: "nearby",
+  },
+  {
     href: "/(tabs)/checkin",
     label: "現在地",
     icon: "location-on",
@@ -131,14 +138,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 2,
-    paddingHorizontal: 2,
+    paddingHorizontal: 0,
     // Apple HIG / DESIGN.md の下限。中身(アイコン+ラベル)だけだと実測 61x24px しか
     // 無く、主要導線なのに押しにくかった（2026-08-19 本番実測・375px幅）。
     // バー本体は 56px あるので 44 を入れても収まる。
     minHeight: 44,
   },
+  // ★タブが6つになり、スマホ幅で「マイページ」が切れないよう (tabs) 側と同じく少し詰める
   label: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
+    letterSpacing: -0.3,
   },
 });

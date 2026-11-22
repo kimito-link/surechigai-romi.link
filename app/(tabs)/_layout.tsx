@@ -50,6 +50,8 @@ function TabNav() {
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = TAB_BAR_BODY_HEIGHT + bottomPadding;
   const compactTabs = windowWidth < 480;
+  // iPhone SE 1st 等 360px 未満では 1タブ約53px しかなく、10px でも「マイページ」が切れる
+  const tinyTabs = windowWidth < 360;
 
   return (
     <View style={{ flex: 1, marginLeft: sideNavActive ? WEB_SIDE_NAV_WIDTH : 0 }}>
@@ -62,13 +64,16 @@ function TabNav() {
           // ★2026-11-13 スマホでも名前を出す。アイコンだけだと何の画面か分からなかった（実機で確認）。
           tabBarShowLabel: true,
           tabBarAllowFontScaling: false,
+          // ★2026-11-22 タブが6つ（みんな を追加）になり、スマホ幅で「マイページ」が「マイペ…」に切れた。
+          //   幅の狭い画面では1px小さくし、左右の余白を詰めて収める（DESIGN.md: 文字を切らない）。
           tabBarLabelStyle: {
             fontWeight: "700",
-            fontSize: 11,
+            fontSize: tinyTabs ? 9 : compactTabs ? 10 : 11,
+            letterSpacing: tinyTabs ? -0.5 : compactTabs ? -0.3 : 0,
           },
           tabBarIconStyle: compactTabs ? { marginBottom: 0 } : undefined,
           tabBarItemStyle: compactTabs
-            ? { flex: 1, minWidth: 0, maxWidth: 72, paddingHorizontal: 2 }
+            ? { flex: 1, minWidth: 0, maxWidth: 72, paddingHorizontal: 0 }
             : { flex: 1, minWidth: 0, paddingHorizontal: 2 },
           sceneStyle: {
             backgroundColor: colors.background,
@@ -79,7 +84,7 @@ function TabNav() {
             : {
                 paddingTop: compactTabs ? 6 : 8,
                 paddingBottom: bottomPadding,
-                paddingHorizontal: compactTabs ? 2 : 4,
+                paddingHorizontal: compactTabs ? 0 : 4,
                 height: tabBarHeight,
                 backgroundColor: color.surface,
                 borderTopColor: color.border,
@@ -102,6 +107,17 @@ function TabNav() {
             title: "ポスト",
             tabBarAccessibilityLabel: "ポスト — 封筒とレーダー",
             tabBarIcon: ({ color: iconColor }) => <PostTabIcon color={iconColor} />,
+          }}
+        />
+        <Tabs.Screen
+          name="nearby"
+          options={{
+            lazy: true,
+            title: "みんな",
+            tabBarAccessibilityLabel: "みんなの居場所 — 近い順に地図で見る",
+            tabBarIcon: ({ color: iconColor }) => (
+              <IconSymbol size={26} name="person.2.fill" color={iconColor} />
+            ),
           }}
         />
         <Tabs.Screen

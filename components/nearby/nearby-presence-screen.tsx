@@ -11,7 +11,7 @@
  *   他の人はリストからもブロックできる（5.1.2(i)「地図に出る相手をブロックできること」）。
  * ★useToast は使わない（ToastProvider の外でも描画されうる。photo-import と同じ理由）。
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   View,
   Text,
@@ -24,6 +24,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { ScreenContainer } from "@/components/organisms/screen-container";
+import { TabScreenHeader } from "@/components/organisms/tab-screen-header";
+import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -67,7 +69,7 @@ export function NearbyPresenceScreen() {
 
   if (isAuthReady && !isAuthenticated) {
     return (
-      <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle={TITLE}>
+      <NearbyShell>
         <View style={styles.gate}>
           <Text style={styles.title}>{TITLE}</Text>
           <Text style={styles.gateText}>
@@ -77,17 +79,17 @@ export function NearbyPresenceScreen() {
             <Text style={styles.primaryButtonText}>ログインして続ける</Text>
           </Pressable>
         </View>
-      </ScreenContainer>
+      </NearbyShell>
     );
   }
 
   if (!isAuthReady || !trpcReady) {
     return (
-      <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle={TITLE}>
+      <NearbyShell>
         <View style={{ padding: 24, alignItems: "center" }}>
           <ActivityIndicator color={color.accentPrimary} />
         </View>
-      </ScreenContainer>
+      </NearbyShell>
     );
   }
 
@@ -193,6 +195,7 @@ export function NearbyPresenceView({
 }: NearbyPresenceViewProps) {
   const { isDesktop } = useResponsive();
   const { height: windowHeight } = useWindowDimensions();
+  const tabInset = useTabBarInset();
   const [rangeKey, setRangeKey] = useState<NearbyRangeKey>("walk15");
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -396,24 +399,35 @@ export function NearbyPresenceView({
 
   if (isDesktop) {
     return (
-      <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle={TITLE}>
+      <NearbyShell>
         <View style={styles.desktopSplit}>
           <View style={styles.desktopMap}>{map}</View>
           <ScrollView style={styles.desktopPanel} contentContainerStyle={{ paddingBottom: 32 }}>
             {panel}
           </ScrollView>
         </View>
-      </ScreenContainer>
+      </NearbyShell>
     );
   }
 
   const mapHeight = Math.min(Math.max(windowHeight * 0.45, 280), 460);
   return (
-    <ScreenContainer style={{ backgroundColor: color.bg }} edges={["top", "bottom"]} nativeTitle={TITLE}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
+    <NearbyShell>
+      <ScrollView contentContainerStyle={{ paddingBottom: tabInset + 24 }}>
         <View style={{ height: mapHeight }}>{map}</View>
         {panel}
       </ScrollView>
+    </NearbyShell>
+  );
+}
+
+/** タブ画面の枠（ヘッダー＋メニュー。フッターのタブはタブレイアウトが出す） */
+function NearbyShell({ children }: { children: ReactNode }) {
+  const { isDesktop } = useResponsive();
+  return (
+    <ScreenContainer containerClassName="bg-background" style={{ backgroundColor: color.bg }}>
+      <TabScreenHeader title={TITLE} showCharacters={false} isDesktop={isDesktop} showMenu />
+      {children}
     </ScreenContainer>
   );
 }
