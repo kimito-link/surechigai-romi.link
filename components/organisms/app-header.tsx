@@ -158,7 +158,7 @@ export function AppHeader({
           {user.name || user.username || "ゲスト"}
         </Text>
         <Text style={styles.focusAccountId} numberOfLines={1}>
-          {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId}
+          {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : "ログイン中"}
         </Text>
       </View>
     </Pressable>
@@ -267,7 +267,7 @@ export function AppHeader({
                   </Text>
                   <View style={styles.accountMetaRow}>
                     <Text style={styles.accountId} numberOfLines={1}>
-                      {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId}
+                      {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : "ログイン中"}
                     </Text>
                     {typeof user.followersCount === "number" && (
                       <Text style={styles.accountFollowers} numberOfLines={1}>
@@ -350,7 +350,7 @@ export function AppHeader({
                 {user.name || user.username || "ゲスト"}
               </Text>
               <Text style={[styles.accountId, isCompactAccount && styles.accountIdCompact]} numberOfLines={1}>
-                {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId}
+                {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : "ログイン中"}
               </Text>
             </View>
           </Pressable>
