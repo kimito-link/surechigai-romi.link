@@ -63,6 +63,8 @@ export const palette = {
    * 面・アイコン・大きな見出しには従来どおり kimitoOrange を使うこと。
    */
   kimitoOrangeText: "#A84B00",
+  kimitoOrangeSoft: "#FFF4E8",  // キャラの吹き出し地（みんなの居場所）
+  kimitoOrangeBorder: "#F7D9B8", // 吹き出しの縁
   kimitoInkMuted: "#334155",  // 淡色背景上の補助テキスト（slate-700 相当）
   kimitoNavInactive: "#64748B", // 非アクティブなナビ（slate-500）
   kimitoBorderSoft: "#E2E8F0",  // やわらかい境界（slate-200）

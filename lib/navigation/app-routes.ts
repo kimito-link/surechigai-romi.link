@@ -29,6 +29,8 @@ export const STATIC_ROUTES = {
   LOGIN_GUIDE: "/auth/kimito-link",
   LOGOUT: "/logout",
   SPECIAL_THANKS: "/special-thanks",
+  /** みんなの居場所（地図＋近い順リスト）。実体は app/nearby.tsx */
+  NEARBY: "/nearby",
   PREMIUM: "/premium",
   TERMS: "/terms",
   
@@ -155,6 +157,10 @@ export const navigate = {
   toMypageTab: () => {
     console.log("[Navigation] Navigating to mypage tab");
     router.push(STATIC_ROUTES.MYPAGE_TAB as never);
+  },
+
+  toNearby: () => {
+    router.push(STATIC_ROUTES.NEARBY as never);
   },
 
   toCheckinTab: () => {

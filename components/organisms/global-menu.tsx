@@ -34,6 +34,7 @@ const TAB_SHORTCUTS = [
 ] as const;
 
 const PRIMARY_ITEMS = [
+  { icon: "near-me", label: "みんなの居場所", path: "/nearby" },
   { icon: "groups", label: "訪問申告", path: "/visit" },
 ] as const;
 
