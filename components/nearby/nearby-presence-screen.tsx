@@ -53,8 +53,10 @@ import {
 const AVATAR_RINKU = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 const AVATAR_KONTA = require("@/assets/images/characters/konta/kitsune-yukkuri-smile-mouth-open.png");
 const AVATAR_TANUNE = require("@/assets/images/characters/tanunee/tanuki-yukkuri-smile-mouth-open.png");
-/** メインのりんく（見出し横と、誰もいないときの大きなサムネ） */
+/** 誰もいないときの大きなりんく */
 const MAIN_RINKU = require("@/assets/images/characters/link/link-normal.png");
+/** メインのりんく（X のアイコンと同じ君斗りんく。見出し横） */
+const MAIN_RINKU_FACE = require("@/assets/images/characters/kimitolink-face.png");
 
 const TITLE = "みんなの居場所";
 
@@ -235,10 +237,10 @@ export function NearbyPresenceView({
           <Text style={styles.subtitle}>いま地図に出ている人を、現在地から近い順に（5分以内の居場所）</Text>
         </View>
         <Image
-          source={MAIN_RINKU}
+          source={MAIN_RINKU_FACE}
           style={styles.headThumb}
-          resizeMode="contain"
-          accessibilityLabel="りんく"
+          resizeMode="cover"
+          accessibilityLabel="君斗りんく"
         />
       </View>
 
@@ -454,7 +456,13 @@ const styles = StyleSheet.create({
   panel: { paddingHorizontal: 20, paddingTop: 20, gap: 14, backgroundColor: palette.white },
   panelHeadRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   panelHead: { flex: 1, gap: 4 },
-  headThumb: { width: 72, height: 72 },
+  headThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 3,
+    borderColor: palette.kimitoOrange,
+  },
   title: { fontSize: 24, fontWeight: "900", color: color.textPrimary },
   subtitle: { fontSize: 13, lineHeight: 19, color: color.textSecondary },
 
