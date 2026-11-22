@@ -52,6 +52,9 @@ import {
 
 const AVATAR_RINKU = require("@/assets/images/characters/link/link-yukkuri-smile-mouth-open.png");
 const AVATAR_KONTA = require("@/assets/images/characters/konta/kitsune-yukkuri-smile-mouth-open.png");
+const AVATAR_TANUNE = require("@/assets/images/characters/tanunee/tanuki-yukkuri-smile-mouth-open.png");
+/** メインのりんく（見出し横と、誰もいないときの大きなサムネ） */
+const MAIN_RINKU = require("@/assets/images/characters/link/link-normal.png");
 
 const TITLE = "みんなの居場所";
 
@@ -226,9 +229,17 @@ export function NearbyPresenceView({
 
   const panel = (
     <View style={styles.panel}>
-      <View style={styles.panelHead}>
-        <Text style={styles.title}>{TITLE}</Text>
-        <Text style={styles.subtitle}>いま地図に出ている人を、現在地から近い順に（5分以内の居場所）</Text>
+      <View style={styles.panelHeadRow}>
+        <View style={styles.panelHead}>
+          <Text style={styles.title}>{TITLE}</Text>
+          <Text style={styles.subtitle}>いま地図に出ている人を、現在地から近い順に（5分以内の居場所）</Text>
+        </View>
+        <Image
+          source={MAIN_RINKU}
+          style={styles.headThumb}
+          resizeMode="contain"
+          accessibilityLabel="りんく"
+        />
       </View>
 
       {origin ? (
@@ -256,6 +267,7 @@ export function NearbyPresenceView({
       <View style={styles.talk}>
         <CharacterLine source={AVATAR_RINKU} name="りんく" text={lines.rinku} />
         <CharacterLine source={AVATAR_KONTA} name="こん太" text={lines.konta} />
+        <CharacterLine source={AVATAR_TANUNE} name="たぬ姉" text={lines.tanune} />
       </View>
 
       {notice ? (
@@ -276,7 +288,7 @@ export function NearbyPresenceView({
         <ActivityIndicator color={color.accentPrimary} style={{ marginVertical: 24 }} />
       ) : inRange.length === 0 ? (
         <View style={styles.empty}>
-          <Image source={AVATAR_RINKU} style={styles.emptyChar} resizeMode="contain" />
+          <Image source={MAIN_RINKU} style={styles.emptyChar} resizeMode="contain" />
           <Text style={styles.emptyText}>
             りんく「{sorted.length === 0 ? "いまは誰も地図に出てないみたい…" : `${range.label}以内には見つからなかったよ…`}」
           </Text>
@@ -440,7 +452,9 @@ const styles = StyleSheet.create({
   },
 
   panel: { paddingHorizontal: 20, paddingTop: 20, gap: 14, backgroundColor: palette.white },
-  panelHead: { gap: 4 },
+  panelHeadRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  panelHead: { flex: 1, gap: 4 },
+  headThumb: { width: 72, height: 72 },
   title: { fontSize: 24, fontWeight: "900", color: color.textPrimary },
   subtitle: { fontSize: 13, lineHeight: 19, color: color.textSecondary },
 
@@ -482,7 +496,7 @@ const styles = StyleSheet.create({
   listMeta: { fontSize: 12, color: color.textSecondary },
 
   empty: { alignItems: "center", gap: 12, paddingVertical: 16 },
-  emptyChar: { width: 96, height: 96 },
+  emptyChar: { width: 120, height: 120 },
   emptyText: { fontSize: 14, fontWeight: "700", color: color.textPrimary, textAlign: "center" },
   outlineButton: {
     minHeight: 48,

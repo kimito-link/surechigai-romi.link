@@ -113,27 +113,31 @@ export function characterLines(
   countAll: number,
   range: NearbyRange,
   hasOrigin: boolean,
-): { rinku: string; konta: string } {
+): { rinku: string; konta: string; tanune: string } {
   if (!hasOrigin) {
     return {
       rinku: "現在地がわからないから、新しい順に並べたよ",
       konta: "位置情報を許可すると近い順になるよ",
+      tanune: "地図のピンは、みんなの正確な場所だよ",
     };
   }
   if (countAll === 0) {
     return {
       rinku: "いまは誰も地図に出てないみたい…",
       konta: "居場所を出した人は5分だけここに映るよ",
+      tanune: "あとでまたのぞいてみてね",
     };
   }
   if (countInRange === 0) {
     return {
       rinku: `${range.label}以内にはいないみたい…`,
       konta: "少し広げると見つかるかも",
+      tanune: `もう少し先には${countAll}人いるわよ`,
     };
   }
   return {
     rinku: `${range.meters == null ? "" : `${range.label}以内に`}${countInRange}人いるよ！`,
     konta: "ピンを押すと、その人の場所がわかるよ",
+    tanune: "会いに行くなら、Xでひと声かけてからね",
   };
 }

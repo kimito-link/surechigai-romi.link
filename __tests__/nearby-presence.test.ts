@@ -61,5 +61,6 @@ describe("nearby-presence", () => {
     expect(characterLines(0, 2, getNearbyRange("walk5"), true).rinku).toContain("徒歩5分以内にはいない");
     expect(characterLines(2, 2, getNearbyRange("walk15"), true).rinku).toBe("徒歩15分以内に2人いるよ！");
     expect(characterLines(0, 0, getNearbyRange("all"), true).rinku).toContain("誰も");
+    expect(characterLines(0, 3, getNearbyRange("walk5"), true).tanune).toBe("もう少し先には3人いるわよ");
   });
 });
