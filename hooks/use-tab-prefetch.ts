@@ -10,6 +10,7 @@ import {
 const HREF_TAB_MAP: Record<string, TabPrefetchKey> = {
   "/": "post",
   "/index": "post",
+  "/nearby": "nearby",
   "/checkin": "checkin",
   "/zukan": "zukan",
   "/map": "map",

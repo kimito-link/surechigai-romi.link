@@ -42,6 +42,13 @@ const NAV_ITEMS: NavItem[] = [
     prefetchKey: "post",
   },
   {
+    href: "/(tabs)/nearby",
+    label: "みんな",
+    icon: "groups",
+    activePaths: ["/nearby"],
+    prefetchKey: "nearby",
+  },
+  {
     href: "/(tabs)/checkin",
     label: "現在地",
     icon: "location-on",

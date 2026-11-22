@@ -1,5 +1,5 @@
 /**
- * /nearby — みんなの居場所（地図＋近い順リスト）。
+ * /nearby — みんなの居場所（地図＋近い順リスト）。下のタブ「みんな」。
  *
  * 実体は components/nearby/nearby-presence-screen.tsx。ここでは Head（Web の meta）だけ足す。
  * ★このファイルで Clerk の React フックを import しないこと（app/photo-import.tsx と同じ理由）。
