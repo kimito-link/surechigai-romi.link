@@ -158,7 +158,7 @@ export function AppHeader({
           {user.name || user.username || "ゲスト"}
         </Text>
         <Text style={styles.focusAccountId} numberOfLines={1}>
-          {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId}
+          {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : "ログイン中"}
         </Text>
       </View>
     </Pressable>
@@ -259,7 +259,7 @@ export function AppHeader({
                   </View>
                 )}
                 <View style={styles.accountText}>
-                  <Text style={styles.accountStatus} numberOfLines={1}>
+                  <Text style={styles.accountStatus} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                     現在このアカウントでログインしています
                   </Text>
                   <Text style={styles.accountName} numberOfLines={1}>
@@ -267,7 +267,7 @@ export function AppHeader({
                   </Text>
                   <View style={styles.accountMetaRow}>
                     <Text style={styles.accountId} numberOfLines={1}>
-                      {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId}
+                      {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : "ログイン中"}
                     </Text>
                     {typeof user.followersCount === "number" && (
                       <Text style={styles.accountFollowers} numberOfLines={1}>
@@ -350,7 +350,7 @@ export function AppHeader({
                 {user.name || user.username || "ゲスト"}
               </Text>
               <Text style={[styles.accountId, isCompactAccount && styles.accountIdCompact]} numberOfLines={1}>
-                {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId}
+                {user.username ? `@${user.username}` : user.twitterId ? user.twitterId : "ログイン中"}
               </Text>
             </View>
           </Pressable>

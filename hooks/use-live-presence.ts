@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, Platform, type AppStateStatus } from "react-native";
+import { Alert, AppState, Platform, type AppStateStatus } from "react-native";
 import { trpc } from "@/lib/trpc";
 import {
   LIVE_PRESENCE_MIN_PULSE_GAP_MS,
@@ -12,6 +12,10 @@ import {
 import type { CurrentLocation } from "@/lib/get-current-location";
 import { startWebLiveLocationSession, type LiveLocationSession } from "@/lib/live-location-session";
 import { readLocationOptInSync } from "@/lib/location-opt-in";
+import {
+  LIVE_PRESENCE_MANUAL_CHECKIN,
+  LIVE_PRESENCE_MANUAL_VISIBLE_MINUTES,
+} from "@/lib/live-presence-manual";
 import { publishUnopenedSummary } from "@/lib/encounter-notice";
 import {
   readLivePresenceUserOffSync,
@@ -47,8 +51,43 @@ export function useLivePresenceControls() {
   const setEnabledMutation = trpc.presence.setEnabled.useMutation({
     onSuccess: () => utils.settings.invalidate(),
   });
+  const pulseMutation = trpc.presence.pulse.useMutation({
+    onSuccess: () => utils.presence.list.invalidate(),
+  });
 
   const [liveEnabled, setLiveEnabled] = useState(false);
+  /** 手動チェックイン（iOS）で最後に地図に出した時刻 */
+  const [lastCheckInAt, setLastCheckInAt] = useState<number | null>(null);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
+
+  /**
+   * いまの場所を1回だけ地図に出す（手動チェックイン）。
+   * iOS では自動送信しないので、地図に出るのはこれを押したときだけ。
+   */
+  const pulseMutateAsync = pulseMutation.mutateAsync;
+  const checkInNow = useCallback(async () => {
+    setCheckInError(null);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Location = (await import("expo-location")) as any;
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setCheckInError("位置情報が許可されていないため、地図に出せませんでした");
+        return false;
+      }
+      const loc = await readNativeLocation();
+      const result = await pulseMutateAsync({ lat: loc.lat, lng: loc.lng, accuracy: loc.accuracy });
+      if (result?.ok === false) {
+        setCheckInError("地図に出せませんでした。少し時間をおいてもう一度お試しください");
+        return false;
+      }
+      setLastCheckInAt(Date.now());
+      return true;
+    } catch {
+      setCheckInError("地図に出せませんでした。少し時間をおいてもう一度お試しください");
+      return false;
+    }
+  }, [pulseMutateAsync]);
 
   useEffect(() => {
     if (settingsQuery.data) {
@@ -56,8 +95,8 @@ export function useLivePresenceControls() {
     }
   }, [settingsQuery.data]);
 
-  const toggleLivePresence = useCallback(
-    (next: boolean) => {
+  const applyToggle = useCallback(
+    (next: boolean, afterEnabled?: () => void) => {
       const prev = liveEnabled;
       setLiveEnabled(next);
       if (next) {
@@ -70,6 +109,9 @@ export function useLivePresenceControls() {
       setEnabledMutation.mutate(
         { enabled: next },
         {
+          onSuccess: () => {
+            if (next) afterEnabled?.();
+          },
           onError: () => {
             setLiveEnabled(prev);
             setOptimisticLivePresenceDesired(prev);
@@ -78,6 +120,30 @@ export function useLivePresenceControls() {
       );
     },
     [liveEnabled, setEnabledMutation],
+  );
+
+  const toggleLivePresence = useCallback(
+    (next: boolean) => {
+      if (!LIVE_PRESENCE_MANUAL_CHECKIN || !next) {
+        applyToggle(next);
+        return;
+      }
+      // ★iOS: ON にする前に毎回許可を求める（断れること）。2026-11-21 build 556 却下 5.1.2(i)。
+      Alert.alert(
+        "あなたの位置を地図に出しますか？",
+        "ONにすると、「いまの場所を地図に出す」を押したときだけ、あなたのアイコンと現在地（正確な位置）が" +
+          `ほかのユーザーの地図に約${LIVE_PRESENCE_MANUAL_VISIBLE_MINUTES}分間表示されます。` +
+          "自動では表示されません。いつでもOFFにできます。",
+        [
+          { text: "許可しない", style: "cancel" },
+          {
+            text: "許可して、いま地図に出す",
+            onPress: () => applyToggle(true, () => void checkInNow()),
+          },
+        ],
+      );
+    },
+    [applyToggle, checkInNow],
   );
 
   const isPausing =
@@ -89,6 +155,12 @@ export function useLivePresenceControls() {
     toggleLivePresence,
     isPausing,
     isLoading: settingsQuery.isLoading || setEnabledMutation.isPending,
+    /** true のとき（iOS）、地図に出るのは checkInNow を押したときだけ */
+    manualCheckIn: LIVE_PRESENCE_MANUAL_CHECKIN,
+    checkInNow,
+    isCheckingIn: pulseMutation.isPending,
+    lastCheckInAt,
+    checkInError,
   };
 }
 
@@ -107,6 +179,8 @@ function useEffectiveLivePresenceEnabled(serverEnabled: boolean): boolean {
     setOptimistic(readOptimisticLivePresenceDesired());
   }), []);
 
+  // ★iOS は自動で位置を送り続けない（手動チェックインのみ）。lib/live-presence-manual.ts 参照
+  if (LIVE_PRESENCE_MANUAL_CHECKIN) return false;
   if (readLivePresenceUserOffSync()) return false;
   if (serverEnabled) return true;
   if (optimistic) return true;

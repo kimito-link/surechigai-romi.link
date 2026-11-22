@@ -9,6 +9,7 @@
  * - encounter.updateHitokoto
  */
 
+import { LOCATION_VISIBILITY_VALUES } from "../core/location-visibility.js";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../../../server/_core/trpc.js";
@@ -87,6 +88,11 @@ export const encounterRouter = router({
         lng: z.number(),
         accuracy: z.number().optional(),
         municipality: z.string().optional(),
+        /**
+         * この足あとをほかの人の地図に出すか（2026-11-21 iOS 審査 5.1.2(i) 対応）。
+         * 本人が「地図に出さない」を選んだ iOS 端末は "private" を送る。省略時は従来どおり public。
+         */
+        visibility: z.enum(LOCATION_VISIBILITY_VALUES).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -157,6 +163,7 @@ export const encounterRouter = router({
             municipality,
             prefecture,
             address,
+            visibility: input.visibility,
           }),
           upsertVisitedArea(db, {
             userId,

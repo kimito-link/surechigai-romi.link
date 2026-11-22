@@ -3,7 +3,7 @@
  * 吹き出し・アバター名・空状態テキストを重ねない。ピン1つと、都道府県/市区町村の短いラベル1つだけ。
  */
 import { useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import Animated, {
   useSharedValue,
@@ -31,6 +31,12 @@ type Props = {
    * 認証済みホームで同時に動くマーカー数を絞り、無限ループ蓄積による OOM を防ぐ。
    */
   animate?: boolean;
+  /**
+   * 他の人のピンを押したとき（ブロック・通報の入口）。
+   * 2026-11-21 build 556 却下 5.1.2(i)「地図に出ている他の人をブロックできること」。
+   * 渡されたときだけピン全体を押せるようにする（自分のピンには渡さない）。
+   */
+  onPress?: () => void;
 };
 
 export function CharacterHere({
@@ -42,6 +48,7 @@ export function CharacterHere({
   y,
   isSelf,
   animate = true,
+  onPress,
 }: Props) {
   const float = useSharedValue(0);
   const pulse = useSharedValue(0.8);
@@ -84,12 +91,18 @@ export function CharacterHere({
     opacity: 0.35 + pulse.value * 0.25,
   }));
 
+  const Wrapper = onPress ? Pressable : View;
   return (
-    <View
-      style={[styles.container, { left: `${x}%`, top: `${y}%` }]}
+    <Wrapper
+      style={[
+        styles.container,
+        { left: `${x}%`, top: `${y}%` },
+        onPress ? { pointerEvents: "auto" } : null,
+      ]}
       accessible
-      accessibilityRole="image"
+      accessibilityRole={onPress ? "button" : "image"}
       accessibilityLabel={accessibilityLabel}
+      {...(onPress ? { onPress, hitSlop: 6 } : {})}
     >
       <Animated.View
         style={floatStyle}
@@ -116,7 +129,7 @@ export function CharacterHere({
           </Text>
         </View>
       </Animated.View>
-    </View>
+    </Wrapper>
   );
 }
 

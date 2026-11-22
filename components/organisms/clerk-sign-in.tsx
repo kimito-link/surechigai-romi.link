@@ -73,7 +73,7 @@ export function ClerkSignIn(_props: { redirectUrl: string }) {
           paddingHorizontal: 16,
         }}
       >
-        <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700" }} numberOfLines={1}>
+        <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "700" }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
           kimito.link で続ける
         </Text>
       </Pressable>

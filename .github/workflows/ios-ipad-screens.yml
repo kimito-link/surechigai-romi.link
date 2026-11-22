@@ -1,0 +1,133 @@
+# iPad で文字が切れていないかを撮って確かめる（調査専用・提出しない）
+#
+# 2026-11-21 build 556 が Guideline 4「iPad で文字が切れている」で却下された。
+# supportsTablet=false なので iPad では iPhone 互換モード（375x667pt 相当・ノッチ無し）で動く。
+# 審査と同じ iPad Air で Release ビルドを起動し、ゲストで開ける画面を順に撮って artifact に上げる。
+# 比較用に iPhone SE（同じ 375x667pt）も撮る。
+#
+# 起動・ビルド手順は ios-crash-probe.yml と同じ（そちらのコメントの落とし穴を参照）。
+name: ios-ipad-screens
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ["claude/**"]
+    paths:
+      - ".github/workflows/ios-ipad-screens.yml"
+
+concurrency:
+  group: ios-ipad-screens-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  screens:
+    runs-on: macos-latest
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Select Xcode (iOS 26 SDK or later)
+        run: |
+          set -euo pipefail
+          chosen=""
+          for app in /Applications/Xcode_26*.app /Applications/Xcode_27*.app /Applications/Xcode_28*.app; do
+            [ -d "$app" ] || continue
+            chosen="$app"
+          done
+          [ -n "$chosen" ] || { echo "::error::No Xcode 26+"; exit 1; }
+          sudo xcode-select -s "$chosen/Contents/Developer"
+          xcodebuild -version
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - uses: pnpm/action-setup@v6
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Write .env for Metro (EXPO_PUBLIC_*)
+        env:
+          EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+          [ -n "${EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY:-}" ] || { echo "::error::Clerk key missing"; exit 1; }
+          echo "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=$EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY" > .env
+
+      - name: expo prebuild (iOS)
+        run: |
+          rm -rf ios
+          npx expo prebuild --platform ios --no-install
+
+      - name: Patch Podfile (use_modular_headers!)
+        run: node scripts/patch-ios-podfile-modular-headers.mjs
+
+      - name: pod install
+        run: |
+          set -euo pipefail
+          PODDIR="$(dirname "$(find ios -maxdepth 2 -name Podfile | head -1)")"
+          cd "$PODDIR"
+          pod install --repo-update
+
+      - name: Build for simulator (Release)
+        run: |
+          set -euo pipefail
+          if [ -d ios/app.xcworkspace ]; then XCODE_FLAG=(-workspace ios/app.xcworkspace); else XCODE_FLAG=(-project ios/app.xcodeproj); fi
+          xcodebuild "${XCODE_FLAG[@]}" -scheme app -configuration Release -sdk iphonesimulator \
+            -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO build | tail -20
+
+      - name: Shoot screens
+        run: |
+          set -uo pipefail
+          APP="$(find build/dd/Build/Products -maxdepth 2 -name '*.app' | head -1)"
+          BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")"
+          SCHEME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleURLTypes:0:CFBundleURLSchemes:0' "$APP/Info.plist" 2>/dev/null || echo surechigai)"
+          echo "bundle=$BUNDLE_ID scheme=$SCHEME"
+          mkdir -p /tmp/shots
+          xcrun simctl list devicetypes | grep -iE "ipad|iphone se" || true
+
+          ROUTES="sign-in privacy terms support premium (tabs)/map (tabs)/checkin (tabs)/zukan (tabs)/mypage (tabs)"
+
+          shoot_device() {
+            local NAME="$1" TAG="$2"
+            local UDID
+            UDID="$(xcrun simctl create "shots-$TAG" "$NAME" 2>/dev/null || true)"
+            [ -n "$UDID" ] || { echo "::warning::no simulator '$NAME'"; return 0; }
+            xcrun simctl boot "$UDID" || true
+            xcrun simctl bootstatus "$UDID" -b || true
+            sleep 10
+            xcrun simctl install "$UDID" "$APP"
+            sleep 5
+            xcrun simctl launch "$UDID" "$BUNDLE_ID" || true
+            sleep 25
+            xcrun simctl io "$UDID" screenshot "/tmp/shots/$TAG-00-launch.png" || true
+            local i=1
+            for R in $ROUTES; do
+              xcrun simctl openurl "$UDID" "$SCHEME:///$R" 2>/dev/null || echo "::warning::openurl $R failed"
+              sleep 9
+              local SAFE="${R//[()\/]/_}"
+              xcrun simctl io "$UDID" screenshot "/tmp/shots/$TAG-$(printf %02d $i)-$SAFE.png" || true
+              i=$((i+1))
+            done
+            xcrun simctl shutdown "$UDID" || true
+          }
+
+          IPAD=""
+          for n in "iPad Air (5th generation)" "iPad Air 11-inch (M3)" "iPad Air 11-inch (M2)" "iPad (A16)" "iPad Pro 11-inch (M4)"; do
+            if xcrun simctl list devicetypes | grep -qF "$n"; then IPAD="$n"; break; fi
+          done
+          echo "iPad device: $IPAD"
+          [ -n "$IPAD" ] && shoot_device "$IPAD" ipad
+          shoot_device "iPhone SE (3rd generation)" se
+          ls -la /tmp/shots
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipad-screens
+          path: /tmp/shots
+          retention-days: 7

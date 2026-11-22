@@ -18,7 +18,9 @@ function formatFollowers(count?: number | null): string | null {
 
 export function UserAccountChip({ user, compact = false, onPress, style }: UserAccountChipProps) {
   const displayName = user.name || user.username || "ロミユーザー";
-  const accountId = user.username ? `@${user.username}` : user.twitterId ? user.twitterId : user.openId;
+  // ★内部 ID（"clerk:user_…"）は出さない。Apple でログインした人は X の @ が無く、
+  //   内部 ID がそのまま出て iPad で右にはみ出していた（2026-11-21 build 556 Guideline 4 の却下画面）。
+  const accountId = user.username ? `@${user.username}` : user.twitterId ? user.twitterId : null;
   const followers = formatFollowers(user.followersCount);
   const baseStyle: ViewStyle = {
     flexDirection: "row",
@@ -76,26 +78,33 @@ export function UserAccountChip({ user, compact = false, onPress, style }: UserA
           </View>
           <Text
             style={[styles.accountName, { fontSize: compact ? 14 : 15 }]}
-            numberOfLines={1}
+            numberOfLines={2}
           >
             {displayName}
           </Text>
         </View>
 
         <View style={styles.metaRow}>
-          <View style={styles.metaPill}>
-            <MaterialIcons name="alternate-email" size={compact ? 12 : 13} color={palette.kimitoInkMuted} />
-            <Text style={[styles.metaLabel, { fontSize: compact ? 10 : 11 }]} numberOfLines={1}>
-              アカウントID
-            </Text>
-            <Text style={[styles.metaValue, { fontSize: compact ? 11 : 12 }]} numberOfLines={1}>
-              {accountId}
-            </Text>
-          </View>
+          {accountId ? (
+            <View style={styles.metaPill}>
+              <MaterialIcons name="alternate-email" size={compact ? 12 : 13} color={palette.kimitoInkMuted} />
+              <Text style={[styles.metaLabel, { fontSize: compact ? 10 : 11 }]} numberOfLines={1}>
+                アカウントID
+              </Text>
+              <Text
+                style={[styles.metaValue, styles.metaValueShrink, { fontSize: compact ? 11 : 12 }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
+                {accountId}
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.metaPill}>
             <MaterialIcons name="groups" size={compact ? 12 : 13} color={palette.kimitoBlue} />
-            <Text style={[styles.metaValue, styles.followersValue, { fontSize: compact ? 11 : 12 }]} numberOfLines={1}>
+            <Text style={[styles.metaValue, styles.followersValue, { fontSize: compact ? 11 : 12 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               フォロワー {followers ?? "—"}
             </Text>
           </View>
@@ -150,6 +159,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
     gap: 7,
   },
   statusPill: {
@@ -174,7 +184,7 @@ const styles = StyleSheet.create({
   },
   accountName: {
     minWidth: 0,
-    flex: 1,
+    flexShrink: 1,
     color: color.textPrimary,
     fontWeight: "800",
     letterSpacing: 0,
@@ -189,6 +199,7 @@ const styles = StyleSheet.create({
   metaPill: {
     minWidth: 0,
     maxWidth: "100%",
+    flexShrink: 1,
     minHeight: 23,
     flexDirection: "row",
     alignItems: "center",
@@ -210,6 +221,9 @@ const styles = StyleSheet.create({
     color: color.textPrimary,
     fontWeight: "800",
     letterSpacing: 0,
+  },
+  metaValueShrink: {
+    flexShrink: 1,
   },
   followersValue: {
     color: palette.kimitoBlue,

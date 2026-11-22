@@ -2,6 +2,7 @@
  * 位置オプトイン済み — サーバー settings 応答を待たず居場所 ON（星野ロミ型常駐）。
  */
 import { useEffect, useRef } from "react";
+import { LIVE_PRESENCE_MANUAL_CHECKIN } from "@/lib/live-presence-manual";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { readLocationOptIn, readLocationOptInSync } from "@/lib/location-opt-in";
@@ -50,6 +51,9 @@ export function useAutoStartLivePresence() {
 
   useEffect(() => {
     if (!isAuthReady || !isAuthenticated) return;
+    // ★iOS では自動で点けない（2026-11-21 build 556 却下 5.1.2(i)
+    //   「地図に位置を出すのは毎回ユーザーの手動チェックインで。自動チェックインは不可」）。
+    if (LIVE_PRESENCE_MANUAL_CHECKIN) return;
 
     if (settingsQuery.data?.livePresenceEnabled) {
       setOptimisticLivePresenceDesired(true);

@@ -28,7 +28,7 @@ export function MySignalSummary() {
       accessibilityLabel="活動サマリーを図鑑で見る"
     >
       <Text style={styles.heading}>活動サマリー</Text>
-      <Text style={styles.summaryLine} numberOfLines={1}>
+      <Text style={styles.summaryLine} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
         足あと {statValue(data?.trailCount, initial)} ・ すれ違い{" "}
         {statValue(data?.encounterPartnerCount, initial)}人 ・{" "}
         {statValue(data?.visitedPrefectureCount, initial)}都道府県

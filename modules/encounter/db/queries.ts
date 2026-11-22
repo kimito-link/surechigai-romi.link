@@ -245,11 +245,14 @@ export async function insertLocation(
     municipality: string | null;
     prefecture: string | null;
     address?: string | null;
+    /** 省略時は DB 既定（public） */
+    visibility?: "public" | "private";
   }
 ): Promise<number> {
   const [row] = await db
     .insert(locations)
     .values({
+      ...(params.visibility ? { visibility: params.visibility } : {}),
       userId: params.userId,
       h3R8: params.h3R8,
       h3R7: toH3ParentCell(params.h3R8, H3_RES_7),
@@ -1413,6 +1416,24 @@ export async function blockUser(
     .insert(blocks)
     .values({ blockerId, blockedId, createdAt: new Date() })
     .onConflictDoNothing();
+}
+
+/**
+ * 自分がブロックしている相手の一覧（マイページのブロックリスト用・新しい順）。
+ * 2026-11-21 iOS 審査 5.1.2(i) 対応で、それまで常に「いません」と出ていた一覧を実データにした。
+ */
+export async function listBlockedUsers(
+  db: DB,
+  blockerId: number,
+): Promise<{ userId: number; name: string | null; blockedAt: Date }[]> {
+  const rows = await db
+    .select({ userId: blocks.blockedId, name: users.name, blockedAt: blocks.createdAt })
+    .from(blocks)
+    .leftJoin(users, eq(users.id, blocks.blockedId))
+    .where(eq(blocks.blockerId, blockerId))
+    .orderBy(desc(blocks.createdAt))
+    .limit(200);
+  return rows.map((r) => ({ userId: r.userId, name: r.name ?? null, blockedAt: r.blockedAt }));
 }
 
 export async function unblockUser(

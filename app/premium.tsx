@@ -23,7 +23,7 @@
  */
 import React, { useCallback } from "react";
 import { ActivityIndicator, Linking, Platform, Pressable, ScrollView, Text, View } from "react-native";
-import { Link, type Href } from "expo-router";
+import { Link, Redirect, type Href } from "expo-router";
 import Head from "expo-router/head";
 import { useAuth } from "@/hooks/use-auth";
 import { useLoginGuide } from "@/hooks/use-login-guide";
@@ -134,6 +134,13 @@ function PremiumStatusCard() {
 }
 
 export default function PremiumScreen() {
+  // ★iOS では出さない（2026-11-21 build 556 却下 2.1(b)/3.1.2(c)）。導線はマイページで隠しているが、
+  //   ディープリンク等で直に開かれても IAP 未提出の課金画面を見せないようマイページへ戻す。
+  if (Platform.OS === "ios") return <Redirect href={"/(tabs)/mypage" as Href} />;
+  return <PremiumScreenBody />;
+}
+
+function PremiumScreenBody() {
   const { isAuthenticated, isAuthReady } = useAuth();
   /* ★login() を直に呼ばない（Guideline 4.8）。理由は photo-import-screen.tsx と同じ。 */
   const openLoginGuide = useLoginGuide();

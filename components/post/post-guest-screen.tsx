@@ -295,7 +295,8 @@ function GuestRankingBoardView({
                 </View>
               </View>
               <View style={styles.travelerQuoteBox}>
-                <Text style={styles.travelerQuoteText} numberOfLines={1}>
+                {/* 375pt 幅で「…」に切れていた（2026-11-21 Guideline 4 却下）。折り返して全文を出す */}
+                <Text style={styles.travelerQuoteText}>
                   💬 「{t.quote}」
                 </Text>
                 <Text style={styles.travelerScoreText} numberOfLines={1}>
@@ -337,7 +338,7 @@ function GuestRankingBoardView({
                 <Text style={styles.rankRowName} numberOfLines={1}>
                   {row.name}
                 </Text>
-                <Text style={styles.rankRowSub} numberOfLines={1}>
+                <Text style={styles.rankRowSub} numberOfLines={2}>
                   {row.handle}
                 </Text>
               </View>
@@ -374,7 +375,7 @@ function GuestRankingBoardView({
                 <Text style={styles.rankRowName} numberOfLines={1}>
                   {row.name}
                 </Text>
-                <Text style={styles.rankRowSub} numberOfLines={1}>
+                <Text style={styles.rankRowSub} numberOfLines={2}>
                   {row.handle}
                 </Text>
               </View>
@@ -417,7 +418,7 @@ function GuestRankingBoardView({
                 <Text style={styles.rankRowName} numberOfLines={1}>
                   {pref.prefecture}
                 </Text>
-                <Text style={styles.rankRowSub} numberOfLines={1}>
+                <Text style={styles.rankRowSub} numberOfLines={2}>
                   タップして県の旅人を見る
                 </Text>
               </View>
@@ -547,10 +548,10 @@ export function PostGuestScreen() {
         />
       </View>
       <View style={styles.xMiniTextCol}>
-        <Text style={styles.xMiniTitle} numberOfLines={1}>
+        <Text style={styles.xMiniTitle} numberOfLines={2}>
           使うほど同じ趣味の 𝕏 フォロワーが増える！
         </Text>
-        <Text style={styles.xMiniSub} numberOfLines={1}>
+        <Text style={styles.xMiniSub} numberOfLines={2}>
           #推し活 #聖地巡礼 #配信 · 顔が見える絵札＆30日交差
         </Text>
       </View>
@@ -578,10 +579,10 @@ export function PostGuestScreen() {
               color={palette.kimitoBlue}
             />
           </View>
-          <Text style={styles.benefitText} numberOfLines={1}>
+          <Text style={styles.benefitText} numberOfLines={2}>
             {benefit.label}
           </Text>
-          <Text style={styles.benefitSubText} numberOfLines={1}>
+          <Text style={styles.benefitSubText} numberOfLines={2}>
             {benefit.sub}
           </Text>
         </Pressable>

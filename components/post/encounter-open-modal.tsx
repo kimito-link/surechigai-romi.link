@@ -238,7 +238,7 @@ export function EncounterOpenModal({
                 accessibilityLabel={`@${modalHandle} の最新ポストを X で見る`}
                 style={({ pressed }) => [styles.modalFollowButton, pressed && { opacity: 0.85 }]}
               >
-                <Text style={styles.modalFollowButtonText} numberOfLines={1}>
+                <Text style={styles.modalFollowButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                   @{modalHandle} の最新ポストを X で見る
                 </Text>
               </Pressable>
@@ -298,7 +298,7 @@ export function EncounterOpenModal({
                 accessibilityLabel={`@${modalHandle} をXでフォローする`}
                 style={({ pressed }) => [styles.modalFollowButton, pressed && { opacity: 0.8 }]}
               >
-                <Text style={styles.modalFollowButtonText} numberOfLines={1}>
+                <Text style={styles.modalFollowButtonText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
                   X でフォローする
                 </Text>
               </Pressable>

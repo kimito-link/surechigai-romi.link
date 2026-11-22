@@ -40,15 +40,18 @@ import {
   type CategoryId,
 } from "@/modules/encounter/core/category";
 import { useLivePresenceControls } from "@/hooks/use-live-presence";
+import { saveFootprintMapConsent } from "@/lib/footprint-map-consent";
 import { MypageScreenView } from "@/components/mypage/mypage-screen-view";
 import { styles } from "@/components/mypage/mypage-screen-styles";
 
-/** ブロックリストアイテム(現状JSXからは未使用。safety.unblock実装時に使う想定) */
+/** ブロックリストの1行（safety.listBlocks の結果） */
 function BlockedUserRow({
   userId,
+  name,
   onUnblock,
 }: {
   userId: number;
+  name: string | null;
   onUnblock: (userId: number) => void;
 }) {
   return (
@@ -57,7 +60,9 @@ function BlockedUserRow({
         <MaterialIcons name="account-circle" size={36} color={color.textMuted} />
       </View>
       <View style={styles.blockedInfo}>
-        <Text style={styles.blockedName}>ユーザー #{userId}</Text>
+        <Text style={styles.blockedName} numberOfLines={1}>
+          {name?.trim() ? name : `ユーザー #${userId}`}
+        </Text>
       </View>
       <Pressable
         onPress={() => onUnblock(userId)}
@@ -114,9 +119,11 @@ export function MypageAuthenticatedScreen() {
   const { resetTutorial } = useTutorial();
   const { resetOnboarding } = useOnboarding();
 
-  // ブロックリスト（encounters から相手IDを一意にするのが正規だが、
-  // MVP では blocks テーブルを直接取得する API なし → 簡易プレースホルダ）
-  const unblockMutation = trpc.safety.unblock.useMutation();
+  // ブロックリスト（2026-11-21: 常に「いません」と出していたプレースホルダを実データにした）
+  const blockListQuery = trpc.safety.listBlocks.useQuery(undefined, { enabled: showBlockList });
+  const unblockMutation = trpc.safety.unblock.useMutation({
+    onSuccess: () => void blockListQuery.refetch(),
+  });
 
   // 現在地シェア。凍結カードはマイページを開いた時点で先に作っておき（下書きでカードを
   // すぐ出すため）、押したら出来上がった /s/<id> を投稿に載せる。
@@ -133,8 +140,17 @@ export function MypageAuthenticatedScreen() {
   const [trailVisibility, setTrailVisibilityState] = useState<TrailVisibility>("public");
   /** シェア導線の二重起動ガード(2026-08-04): 連打で空タブが増える/429を誘発するのを防ぐ */
   const shareInFlightRef = useRef(false);
-  const { liveEnabled, toggleLivePresence, isPausing, isLoading: livePresenceLoading } =
-    useLivePresenceControls();
+  const {
+    liveEnabled,
+    toggleLivePresence,
+    isPausing,
+    isLoading: livePresenceLoading,
+    manualCheckIn,
+    checkInNow,
+    isCheckingIn,
+    lastCheckInAt,
+    checkInError,
+  } = useLivePresenceControls();
   const pauseLocationMutation = trpc.settings.pauseLocation.useMutation({
     onSuccess: () => void settingsQuery.refetch(),
   });
@@ -268,6 +284,10 @@ export function MypageAuthenticatedScreen() {
       setTrailVisibility.mutate(
         { visibility: next },
         {
+          onSuccess: () => {
+            // 以後のチェックインの足あとも、この選択に合わせる（lib/footprint-map-consent.ts）
+            void saveFootprintMapConsent(next === "private" ? "private" : "public");
+          },
           onError: () => {
             setTrailVisibilityState(prev);
             Alert.alert("エラー", "公開範囲の保存に失敗しました。時間をおいて再度お試しください。");
@@ -345,6 +365,7 @@ export function MypageAuthenticatedScreen() {
       liveEnabled={liveEnabled}
       toggleLivePresence={toggleLivePresence}
       livePresenceLoading={livePresenceLoading}
+      liveManual={{ manualCheckIn, checkInNow, isCheckingIn, lastCheckInAt, checkInError }}
       trailVisibility={trailVisibility}
       handleSelectTrailVisibility={handleSelectTrailVisibility}
       isSetTrailVisibilityPending={setTrailVisibility.isPending}
@@ -363,6 +384,19 @@ export function MypageAuthenticatedScreen() {
       setCategoryModalVisible={setCategoryModalVisible}
       handleCategoriesSave={handleCategoriesSave}
       showBlockList={showBlockList}
+      blockListBody={
+        blockListQuery.isLoading ? (
+          <Text style={styles.blockListEmpty}>読み込み中…</Text>
+        ) : blockListQuery.data && blockListQuery.data.length > 0 ? (
+          <>
+            {blockListQuery.data.map((b) => (
+              <BlockedUserRow key={b.userId} userId={b.userId} name={b.name} onUnblock={handleUnblock} />
+            ))}
+          </>
+        ) : (
+          <Text style={styles.blockListEmpty}>ブロックしているユーザーはいません</Text>
+        )
+      }
       setShowBlockList={setShowBlockList}
       resetTutorial={resetTutorial}
       resetOnboarding={resetOnboarding}

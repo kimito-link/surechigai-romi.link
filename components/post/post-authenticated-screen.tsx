@@ -100,7 +100,7 @@ export function PostAuthenticatedScreen() {
     { enabled: isAuthenticated, refetchInterval: false },
   );
 
-  const { data: livePresence } = trpc.presence.list.useQuery(undefined, {
+  const { data: livePresence, refetch: refetchPresence } = trpc.presence.list.useQuery(undefined, {
     enabled: isAuthenticated && LIVE_PRESENCE_RADAR_ENABLED,
     // docs/auth-home-oom-diagnosis-v2.md 施策G: モバイルは90秒に延ばしrefetch頻度を下げる。
     refetchInterval: Math.max(LIVE_PRESENCE_PULSE_INTERVAL_MS, isDesktop ? 60_000 : 90_000),
@@ -132,7 +132,11 @@ export function PostAuthenticatedScreen() {
   const openMutation = trpc.encounter.open.useMutation();
   const reactMutation = trpc.encounter.react.useMutation();
   const blockMutation = trpc.safety.block.useMutation({
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      refetch();
+      // 地図（レーダー）からも即座に消す
+      void refetchPresence();
+    },
   });
   const reportMutation = trpc.safety.report.useMutation();
 

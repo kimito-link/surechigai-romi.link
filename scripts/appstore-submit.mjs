@@ -820,6 +820,12 @@ async function ensureAgeRating(api, versionId, appId) {
     console.log('  [diag] declaration.attributes が空 → 既知集合で埋める');
     attrs = buildAgeRatingAttributes();
   }
+  // ★18+ に上書きする（2026-11-21 build 556 却下 Guideline 5.1.2(i)）。
+  //   「地図に他の人の位置が出るアプリは 18+ にすること。該当する記述子が無ければ
+  //   Override to a Higher Age Rating で 18+ にしてよい」と指示された。
+  //   提出のたびに上の全 NONE で上書きするので、ここで毎回 18+ を付け直す。
+  //   NOT_ALLOWED が返る環境では下のリトライで落ちるので、その場合は ASC の画面で手で設定する。
+  attrs.ageRatingOverrideV2 = 'EIGHTEEN_PLUS';
 
   for (let attempt = 1; attempt <= 5; attempt++) {
     try {
