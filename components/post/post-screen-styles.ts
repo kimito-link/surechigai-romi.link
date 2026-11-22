@@ -296,4 +296,28 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 1,
   },
+  // 「みんなの居場所」への入口（レーダーの直下 / デスクトップ右ペイン先頭）
+  nearbyEntry: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderRadius: 8,
+    backgroundColor: palette.kimitoBlue,
+  },
+  nearbyEntryTitle: {
+    color: color.textOnAccent,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  nearbyEntrySub: {
+    color: color.textOnAccent,
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 2,
+  },
 });

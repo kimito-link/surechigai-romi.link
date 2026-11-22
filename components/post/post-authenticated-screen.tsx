@@ -229,6 +229,7 @@ export function PostAuthenticatedScreen() {
   const presenceOthers = presenceAll.filter((m) => !m.isSelf);
   const presenceMarkers = [...presenceSelf, ...presenceOthers].slice(0, MAX_PRESENCE_MARKERS);
   const hiddenPresenceCount = presenceAll.length - presenceMarkers.length;
+  const othersOnMapCount = presenceOthers.length;
 
   const signalGrid = isAuthenticated ? (
     <LazySignalAccountGrid
@@ -278,6 +279,7 @@ export function PostAuthenticatedScreen() {
       presenceMarkers={presenceMarkers}
       hiddenEnvelopeCount={hiddenEnvelopeCount}
       hiddenPresenceCount={hiddenPresenceCount}
+      othersOnMapCount={othersOnMapCount}
       handleOpen={handleOpen}
       animateEnvelopeN={ANIMATE_ENVELOPE_N}
       animatePresenceN={ANIMATE_PRESENCE_N}

@@ -643,6 +643,44 @@
       "scopePaths": [
         ".github/workflows/asc-review-attachment.yml"
       ]
+    },
+    {
+      "at": "2026-11-22T12:52:34.777Z",
+      "responsibility": "nearby-presence-sort-and-format",
+      "decision": "KEEP_SEPARATE",
+      "canonicalSource": "lib/get-current-location.ts",
+      "scopePaths": [
+        "lib/nearby-presence.ts",
+        "__tests__/nearby-presence.test.ts"
+      ]
+    },
+    {
+      "at": "2026-11-22T12:52:34.808Z",
+      "responsibility": "block-from-map-confirm",
+      "decision": "ESTABLISH_REHOME",
+      "canonicalSource": "components/presence/confirm-block-from-map.ts",
+      "scopePaths": [
+        "components/presence/confirm-block-from-map.ts"
+      ]
+    },
+    {
+      "at": "2026-11-22T12:52:34.842Z",
+      "responsibility": "nearby-presence-tile-map",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/nearby/nearby-presence-map.tsx"
+      ]
+    },
+    {
+      "at": "2026-11-22T12:52:34.872Z",
+      "responsibility": "nearby-presence-screen",
+      "decision": "LOCAL",
+      "canonicalSource": null,
+      "scopePaths": [
+        "components/nearby/nearby-presence-screen.tsx",
+        "app/nearby.tsx"
+      ]
     }
   ]
 }

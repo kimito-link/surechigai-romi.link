@@ -12,7 +12,6 @@ import {
   Linking,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Platform,
 } from "react-native";
 import { Suspense, lazy, type RefObject, type ReactNode } from "react";
@@ -24,6 +23,7 @@ import { color } from "@/theme/tokens";
 import { HomeStatusLine } from "@/components/post/home-status-line";
 import { EnvelopeRail } from "@/components/post/envelope-rail";
 import { RadarStageBoundary } from "@/components/post/radar-stage-boundary";
+import { confirmBlockFromMap } from "@/components/presence/confirm-block-from-map";
 import {
   LazyEnvelopePulse,
   LazyCharacterHere,
@@ -33,6 +33,7 @@ import appConfig from "@/app.config.json";
 import { latLngToRadarPercent } from "@/lib/japan-radar-position";
 import { type EncounterItem } from "@/lib/post/encounter-shared";
 import { ReportModal } from "@/components/post/report-modal";
+import { navigate } from "@/lib/navigation/app-routes";
 import { styles } from "@/components/post/post-screen-styles";
 import type { useMySignal } from "@/hooks/use-my-signal";
 
@@ -81,6 +82,8 @@ export type PostScreenViewProps = {
   }[];
   hiddenEnvelopeCount: number;
   hiddenPresenceCount: number;
+  /** いま地図に出ている自分以外の人数（「みんなの居場所」入口に出す） */
+  othersOnMapCount: number;
   handleOpen: (item: EncounterItem) => void;
   animateEnvelopeN: number;
   animatePresenceN: number;
@@ -103,29 +106,6 @@ export type PostScreenViewProps = {
   handleReportSubmit: (targetUserId: number, encounterId: number, reason: string) => void;
 };
 
-/**
- * 地図（レーダー）上の他の人のピンからブロックする。
- * 2026-11-21 build 556 却下 5.1.2(i)「地図に位置が出る他のユーザーをブロックできる仕組み」。
- * 以前は封筒（すれ違い）からしかブロックできず、地図のピンは押しても何も起きなかった。
- * ★Modal ではなく Alert にする（iOS で Modal 連鎖が無反応になった前科: lib/after-modal-dismiss.ts）。
- */
-function confirmBlockFromMap(userId: number, name: string, onBlock: (userId: number) => void) {
-  const title = `${name} さん`;
-  const message =
-    "いま地図に出ている人です。ブロックすると、お互いの地図・すれ違い・集まりに表示されなくなります。";
-  if (Platform.OS === "web") {
-    // react-native-web の Alert.alert は何もしないので、Web は確認ダイアログで代用する
-    if (typeof window !== "undefined" && window.confirm(`${title}\n\n${message}\n\nブロックしますか？`)) {
-      onBlock(userId);
-    }
-    return;
-  }
-  Alert.alert(title, message, [
-    { text: "キャンセル", style: "cancel" },
-    { text: "ブロックする", style: "destructive", onPress: () => onBlock(userId) },
-  ]);
-}
-
 export function PostScreenView(props: PostScreenViewProps) {
   const {
     isDesktop,
@@ -141,6 +121,7 @@ export function PostScreenView(props: PostScreenViewProps) {
     presenceMarkers,
     hiddenEnvelopeCount,
     hiddenPresenceCount,
+    othersOnMapCount,
     handleOpen,
     animateEnvelopeN,
     animatePresenceN,
@@ -162,6 +143,25 @@ export function PostScreenView(props: PostScreenViewProps) {
     setReportModalVisible,
     handleReportSubmit,
   } = props;
+
+  const nearbyEntry = isAuthenticated ? (
+    <Pressable
+      onPress={() => navigate.toNearby()}
+      accessibilityRole="button"
+      accessibilityLabel="みんなの居場所を地図で見る"
+      testID="home-nearby-entry"
+      style={({ pressed }) => [styles.nearbyEntry, pressed && { opacity: 0.88 }]}
+    >
+      <MaterialIcons name="groups" size={22} color={color.textOnAccent} />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.nearbyEntryTitle}>みんなの居場所を地図で見る</Text>
+        <Text style={styles.nearbyEntrySub}>
+          {othersOnMapCount > 0 ? `いま${othersOnMapCount}人が地図に出ています・近い順` : "近い順に、正確な場所で"}
+        </Text>
+      </View>
+      <MaterialIcons name="chevron-right" size={22} color={color.textOnAccent} />
+    </Pressable>
+  ) : null;
 
   const renderRadarStage = (stageStyle?: object) => {
     if (liteMode) return <LiteRadarPlaceholder style={stageStyle} />;
@@ -260,6 +260,7 @@ export function PostScreenView(props: PostScreenViewProps) {
         </View>
         {isAuthenticated ? (
           <ScrollView style={styles.desktopRightPane} showsVerticalScrollIndicator={false}>
+            {nearbyEntry}
             {mySignal ? (
               <HomeStatusLine
                 checkedInToday={mySignal.checkedInToday}
@@ -306,6 +307,7 @@ export function PostScreenView(props: PostScreenViewProps) {
           </Suspense>
         )}
         </View>
+        {nearbyEntry}
         {emptyState}
         {signalGrid}
         <View style={styles.mobileFooter}>{renderSisterBanners(true)}</View>

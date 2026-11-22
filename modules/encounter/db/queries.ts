@@ -2334,6 +2334,8 @@ export type LivePresenceMarker = {
   userId: number;
   name: string | null;
   profileImage: string | null;
+  /** X のハンドル（@ なし）。キャッシュから引けて形式が正しいときだけ。「みんなの居場所」の「Xを見る」用 */
+  username: string | null;
   lat: number;
   lng: number;
   place: string | null;
@@ -2434,12 +2436,14 @@ export async function listLivePresenceForViewer(
     }
 
     let profileImage: string | null = null;
+    let username: string | null = null;
     if (row.name) {
       const { lookupCacheByDisplayNameFuzzy } = await import(
         "../../../server/creator-profile-enricher.js"
       );
-      profileImage =
-        (await lookupCacheByDisplayNameFuzzy(db, row.name))?.profileImage ?? null;
+      const cached = await lookupCacheByDisplayNameFuzzy(db, row.name);
+      profileImage = cached?.profileImage ?? null;
+      username = normalizeTwitterUsername(cached?.twitterUsername);
     }
 
     const { latGrid, lngGrid } = toGrid(row.livePresenceLat, row.livePresenceLng);
@@ -2451,6 +2455,7 @@ export async function listLivePresenceForViewer(
       userId: row.userId,
       name: row.name,
       profileImage,
+      username,
       lat: row.livePresenceLat,
       lng: row.livePresenceLng,
       place: row.livePresenceMunicipality ?? null,
