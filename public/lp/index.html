@@ -1157,6 +1157,10 @@
   .app-intro .sb-txt{ display:flex; flex-direction:column; align-items:flex-start; line-height:1.15; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
   .app-intro .sb-txt small{ font-size:9px; color:#9fb3c8; letter-spacing:.04em; }
   .app-intro .sb-txt b{ font-size:15px; font-weight:600; color:#fff; letter-spacing:.02em; }
+  /* 公式バッジ（画像は改変しない。高さ48pxで揃え、Google を小さくしない） */
+  .app-intro .store-badge-official{ display:flex; justify-content:center; line-height:0; transition:transform .3s; }
+  .app-intro .store-badge-official img{ height:48px; width:auto; display:block; }
+  .app-intro .store-badge-official:hover{ transform:translateY(-1px); }
   .app-intro .store-web{ display:block; text-align:center; text-decoration:none; color:#cfe0f0; font-family:var(--mincho);
     font-size:13px; letter-spacing:.08em; border:1px solid #2b3a4b; border-radius:12px; padding:9px; margin-top:2px; transition:border-color .3s; }
   .app-intro .store-web:hover{ border-color:#5c7a9c; }
@@ -2405,12 +2409,12 @@
         <span class="sb-glyph"></span>
         <span class="sb-txt"><small>Download on the</small><b>App&nbsp;Store</b></span>
       </a>
-      <a class="store-badge" href="https://surechigai.kimito.link/sign-in" data-store="android" aria-label="Google Play（準備中）">
-        <span class="sb-glyph">&#9658;</span>
-        <span class="sb-txt"><small>GET IT ON</small><b>Google&nbsp;Play</b></span>
+      <!-- ★2026-11-22 Google Play は配信中（15_APP_LINK_FROM_WEB）。公式バッジ（/store-badges/・無改変・高さ48px）で本物のストアへ。 -->
+      <a class="store-badge-official" href="https://play.google.com/store/apps/details?id=com.kimito.link.surechigai" target="_blank" rel="noopener" data-store="android" aria-label="Google Playで手に入れよう">
+        <img src="/store-badges/google-play-ja.png" alt="Google Playで手に入れよう" width="124" height="48" />
       </a>
       <a class="store-web" href="https://surechigai.kimito.link/sign-in">𝕏 まづはブラウザで旅をはじめる</a>
-      <p class="ai-note">※ ストア配信は準備中。今すぐ 𝕏 で、はじめられます。</p>
+      <p class="ai-note">※ Android は Google Play で配信中。App Store は準備中。今すぐ 𝕏 で、はじめられます。</p>
     </div>
   </div>
   <div class="ai-feats">

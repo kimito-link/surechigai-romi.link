@@ -681,6 +681,17 @@
         "components/nearby/nearby-presence-screen.tsx",
         "app/nearby.tsx"
       ]
+    },
+    {
+      "at": "2026-11-23T00:00:11.293Z",
+      "responsibility": "web-to-app-store-download-cta",
+      "decision": "REUSE",
+      "canonicalSource": "components/molecules/app-download-cta.tsx",
+      "scopePaths": [
+        "__tests__/app-download-cta-viewer.test.ts",
+        "components/molecules/app-download-cta.tsx",
+        "components/post/post-guest-screen.tsx"
+      ]
     }
   ]
 }
