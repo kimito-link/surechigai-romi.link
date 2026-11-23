@@ -12,7 +12,7 @@
  * - 閲覧端末のストアがまだ配信前（例: iPhone で見ているのに App Store が未公開）
  *
  * ★2026-11-22 トップ（ゲスト用ホーム）にも置いた（web-ios-android docs/ai-rules/15_APP_LINK_FROM_WEB.md
- *   「アプリがある Web には必ずアプリへの導線」）。あわせて次の3点を金型 templates/web/ に揃えた:
+ *   「アプリがある Web にはアプリへの導線を置く」）。あわせて次の3点を金型 templates/web/ に揃えた:
  *   - 自作のボタンをやめ、公式バッジ（public/store-badges/・fetch-store-badges.mjs で取得、改変しない）。
  *     高さ48pxで揃える＝Google のバッジを Apple より小さくしない。
  *   - 端末で出し分け: iPhone/iPad→App Store だけ／Android→Google Play だけ／PC→配信中の全部。
