@@ -41,3 +41,15 @@ describe("pickNearbyRide", () => {
     expect(pickNearbyRide(null, null)).toEqual({ rides: [], toilets: [], areas: [], credits: [] });
   });
 });
+
+import { roundForNearby, NEARBY_RIDE_OPEN_URL } from "@/lib/nearby-ride/types";
+
+describe("roundForNearby / NEARBY_RIDE_OPEN_URL", () => {
+  it("小数3桁に丸める（約100m）", () => {
+    expect(roundForNearby(35.681236)).toBe("35.681");
+    expect(roundForNearby(139.76712)).toBe("139.767");
+  });
+  it("地図で全部見るに流入元が付く", () => {
+    expect(new URL(NEARBY_RIDE_OPEN_URL).searchParams.get("utm_source")).toBe("surechigai");
+  });
+});
