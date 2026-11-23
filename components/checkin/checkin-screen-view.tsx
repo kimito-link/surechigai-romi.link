@@ -216,7 +216,7 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
               />
             ) : null}
 
-            {(state === "success" || state === "zero") && mapPoint ? (
+            {state === "success" || state === "zero" ? (
               <CheckinNearbyRide
                 lat={(fixedMapCenter ?? mapPoint).lat}
                 lng={(fixedMapCenter ?? mapPoint).lng}
