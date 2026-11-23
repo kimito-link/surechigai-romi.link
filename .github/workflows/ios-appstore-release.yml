@@ -373,6 +373,8 @@ jobs:
           # CocoaPods 自身が案内するとおり use_modular_headers! を入れる
           # （2026-08-06 プローブで実証: これ1行で 108依存・123pods が通る）。
           node scripts/patch-ios-podfile-modular-headers.mjs
+          # Xcode 27 は deployment target 15.0 未満の pod をエラーにするので下限を揃える（PR #127）。
+          node scripts/patch-ios-podfile-deployment-target.mjs
 
           echo "--- generated layout ---"
           ls -la ios | head -20

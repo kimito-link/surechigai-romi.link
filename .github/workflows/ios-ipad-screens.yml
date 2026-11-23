@@ -91,6 +91,10 @@ jobs:
       - name: Patch Podfile (use_modular_headers!)
         run: node scripts/patch-ios-podfile-modular-headers.mjs
 
+      # Xcode 27 は deployment target 15.0 未満の pod をエラーにするので下限を揃える（PR #127）。
+      - name: Patch Podfile (pod deployment target >= 15.1)
+        run: node scripts/patch-ios-podfile-deployment-target.mjs
+
       - name: pod install
         run: |
           set -euo pipefail
