@@ -21,12 +21,16 @@ const PODFILE = "ios/Podfile";
 const MIN = "15.1";
 const MARK = "# [patch-ios-podfile-deployment-target]";
 
-if (!fs.existsSync(PODFILE)) {
+// existsSync → readFileSync の2段にしない（CodeQL: file system race condition）。
+// 開いた fd で読み書きを完結させる。
+let fd;
+try {
+  fd = fs.openSync(PODFILE, "r+");
+} catch {
   console.error(`::error::${PODFILE} が無い。expo prebuild が失敗している可能性がある。`);
   process.exit(1);
 }
-
-const original = fs.readFileSync(PODFILE, "utf8");
+const original = fs.readFileSync(fd, "utf8");
 if (original.includes(MARK)) {
   console.log("deployment target の引き上げは既にある（何もしない）");
   process.exit(0);
@@ -64,5 +68,8 @@ const snippet = [
   `${body}end`,
 ];
 lines.splice(end, 0, ...snippet);
-fs.writeFileSync(PODFILE, lines.join("\n"));
+const out = Buffer.from(lines.join("\n"), "utf8");
+fs.ftruncateSync(fd, 0);
+fs.writeSync(fd, out, 0, out.length, 0);
+fs.closeSync(fd);
 console.log(`inserted deployment target floor (${MIN}) before line ${end + 1}`);
