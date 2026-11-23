@@ -28,6 +28,7 @@ import type { TrailPoint } from "@/lib/map/tile-geo";
 import { SponsorCard, type SponsorCardData } from "@/components/molecules/sponsor-card";
 import { CheckinPreviewCard } from "@/components/checkin/checkin-preview-card";
 import { CheckinSuccessPanel } from "@/components/checkin/checkin-success-panel";
+import { CheckinNearbyRide } from "@/components/checkin/checkin-nearby-ride";
 import { navigate } from "@/lib/navigation";
 import { PostLoginLocationIntro } from "@/features/onboarding/components/PostLoginLocationIntro";
 import type { AuthUser } from "@/lib/auth-context";
@@ -212,6 +213,14 @@ export function CheckinScreenView(props: CheckinScreenViewProps) {
                 onShare={handleShareLocation}
                 onCopyInstagram={handleCopyInstagramLink}
                 isSharing={isSharing}
+              />
+            ) : null}
+
+            {(state === "success" || state === "zero") && mapPoint ? (
+              <CheckinNearbyRide
+                lat={(fixedMapCenter ?? mapPoint).lat}
+                lng={(fixedMapCenter ?? mapPoint).lng}
+                placeLabel={placeLine}
               />
             ) : null}
 

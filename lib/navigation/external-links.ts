@@ -54,6 +54,9 @@ const ALLOWED_EXTERNAL_DOMAINS = [
   // （components/organisms/header-kimito-dashboard-link.tsx）がネイティブでここを通る。
   // ここに無いと openExternalUrl が無言で false を返し、押しても何も起きない。
   "kimito.link",
+  // 姉妹サービス「近くの乗りもの・トイレ」（チェックイン後の「地図で全部見る」）。
+  // components/checkin/checkin-nearby-ride.tsx から開く。ここに無いと無言で false になる。
+  "nearby-ride-map.vercel.app",
   // その他
   "line.me",
   // lin.ee は LINE 公式アカウントの短縮URL（友だち追加の流入経路つき）。
