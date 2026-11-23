@@ -10,19 +10,24 @@
  * ★失敗はすべて 200 + {ok:false}。補助情報なので、取れなければ画面に出さないだけ。
  * ★位置はここでも中継先でも保存しない（中継先は位置を受け取って近い順に並べるだけ）。
  */
-import { pickNearbyRide, NEARBY_RIDE_SITE } from "../lib/nearby-ride/types.js";
+import { pickNearbyRide, roundForNearby, NEARBY_RIDE_SITE } from "../lib/nearby-ride/types.js";
 
 export const config = { runtime: "edge" };
 
 const TIMEOUT_MS = 6000;
 
-function json(body: unknown): Response {
+/**
+ * 空き台数の更新は約1分ごと。座標を約100mに丸めているので、同じ場所の問い合わせは CDN で1分まとめる。
+ * 失敗はキャッシュしない（次で回復させる）。
+ */
+const CACHE_CONTROL = "public, s-maxage=60, stale-while-revalidate=60";
+
+function json(body: unknown, cache = false): Response {
   return new Response(JSON.stringify(body), {
     status: 200,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      // 空き台数は1分ごとに変わるので CDN には持たせない
-      "Cache-Control": "no-store",
+      "Cache-Control": cache ? CACHE_CONTROL : "no-store",
     },
   });
 }
@@ -49,13 +54,13 @@ export default async function handler(req: Request): Promise<Response> {
     if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
       return json({ ok: false });
     }
-    const q = `lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}`;
+    const q = `lat=${roundForNearby(lat)}&lon=${roundForNearby(lng)}`;
     const [nearby, toilets] = await Promise.all([
       getJson(`${NEARBY_RIDE_SITE}/api/nearby?${q}`),
       getJson(`${NEARBY_RIDE_SITE}/api/toilets?${q}`),
     ]);
     if (!nearby && !toilets) return json({ ok: false });
-    return json({ ok: true, result: pickNearbyRide(nearby, toilets) });
+    return json({ ok: true, result: pickNearbyRide(nearby, toilets) }, true);
   } catch {
     return json({ ok: false });
   }

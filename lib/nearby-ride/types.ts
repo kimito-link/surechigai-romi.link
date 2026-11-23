@@ -4,6 +4,17 @@
  */
 export const NEARBY_RIDE_SITE = "https://nearby-ride-map.vercel.app";
 
+/** 「地図で全部見る」の行き先。流入元が分かるよう utm を付ける（nearby-ride-map 側で inbound として計測） */
+export const NEARBY_RIDE_OPEN_URL = `${NEARBY_RIDE_SITE}/?utm_source=surechigai&utm_medium=referral&utm_campaign=checkin`;
+
+/**
+ * 中継APIに渡す座標の丸め（小数3桁 ≒ 約100m）。
+ * 同じ場所の問い合わせを CDN で1分まとめられる（上流への負荷と費用を抑える）。徒歩の分数は1分程度しか変わらない。
+ */
+export function roundForNearby(v: number): string {
+  return v.toFixed(3);
+}
+
 export type NearbyRideItem = {
   kind: "ride" | "toilet";
   /** 表示名（ポート名・トイレ名） */

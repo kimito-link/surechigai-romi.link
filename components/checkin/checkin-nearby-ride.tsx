@@ -12,7 +12,7 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
 import { color, palette, contentMaxWidth, borderRadius, spacing } from "@/theme/tokens";
 import { useNearbyRide } from "@/hooks/use-nearby-ride";
-import { NEARBY_RIDE_SITE, type NearbyRideItem } from "@/lib/nearby-ride/types";
+import { NEARBY_RIDE_OPEN_URL, NEARBY_RIDE_SITE, type NearbyRideItem } from "@/lib/nearby-ride/types";
 import { openExternalUrl } from "@/lib/navigation/external-links";
 import { shareToTwitter, prepareSharePopup } from "@/lib/share";
 
@@ -72,7 +72,7 @@ export function CheckinNearbyRide({ lat, lng, placeLabel }: Props) {
       ))}
       <View style={styles.actions}>
         <Pressable
-          onPress={() => void openExternalUrl(NEARBY_RIDE_SITE)}
+          onPress={() => void openExternalUrl(NEARBY_RIDE_OPEN_URL)}
           style={({ pressed }) => [styles.button, styles.buttonPrimary, pressed && styles.pressed]}
           accessibilityRole="link"
         >

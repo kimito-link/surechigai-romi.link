@@ -5,7 +5,7 @@
  * ★取れなければ何も出さない（fail-silent）。use-pref-weather と同じ考え方。
  */
 import { useEffect, useState } from "react";
-import type { NearbyRideResult } from "@/lib/nearby-ride/types";
+import { roundForNearby, type NearbyRideResult } from "@/lib/nearby-ride/types";
 
 export function useNearbyRide(
   lat: number | null | undefined,
@@ -19,7 +19,7 @@ export function useNearbyRide(
       return;
     }
     let alive = true;
-    const params = new URLSearchParams({ lat: lat.toFixed(5), lng: lng.toFixed(5) });
+    const params = new URLSearchParams({ lat: roundForNearby(lat), lng: roundForNearby(lng) });
     void (async () => {
       try {
         const res = await fetch(`/api/nearby-ride?${params.toString()}`);
