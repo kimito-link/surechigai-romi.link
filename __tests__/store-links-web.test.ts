@@ -60,9 +60,15 @@ describe("web で共有リンクを見ているとき", () => {
     expect(iosStoreUrl()).toBeNull();
   });
 
-  it("【出荷ゲート】Play も未公開なので導線は0件", () => {
-    expect((appConfig.stores.playAppId || "").trim()).toBe("");
-    expect(availableStoreLinks()).toHaveLength(0);
+  it("【出荷ゲート】Play は公開中なので Google Play 導線だけを出す", () => {
+    // ★2026-11-22 Play の公開を確認（play.google.com/store/apps/details?id=com.kimito.link.surechigai が 200、
+    //   存在しない id は 404 の対照つき）。playAppId に Play Console のアプリ ID を入れた。
+    //   iOS を公開したら上の iOS の出荷ゲートと一緒に、ここも2件に書き換える。
+    expect((appConfig.stores.playAppId || "").trim()).toBe("4974108202924371469");
+    expect(availableStoreLinks().map((l) => l.kind)).toEqual(["android"]);
+    expect(androidStoreUrl()).toBe(
+      "https://play.google.com/store/apps/details?id=com.kimito.link.surechigai"
+    );
   });
 
   it("Play 未登録の間は Google Play を出さない（押すと404になるため）", () => {

@@ -22,6 +22,7 @@ import { MARKETING_URL } from "@/lib/site-urls";
 import { openExternalUrl } from "@/lib/navigation/external-links";
 import { useTabBarInset } from "@/hooks/use-tab-bar-inset";
 import { KimitoLoginCta } from "@/components/molecules/kimito-login-cta";
+import { AppDownloadCta } from "@/components/molecules/app-download-cta";
 import { SIGN_IN_AUTO_X_HREF } from "@/lib/clerk-route";
 import { RadarGuestPreview } from "@/components/organisms/one-tap-guest-previews";
 import { useLoginGuide } from "@/hooks/use-login-guide";
@@ -600,6 +601,16 @@ export function PostGuestScreen() {
     </View>
   );
 
+  /* ★自分のアプリ（Google Play / App Store）への導線（2026-11-22・web-ios-android 15_APP_LINK_FROM_WEB）。
+     配信中のストアだけ・端末に合うものだけ・アプリの中では出さない（判定は AppDownloadCta）。
+     ログインの主ボタンより下に置き、最初の画面の「コピー → レーダー → ボタン」は崩さない。 */
+  const appDownloadNode = (
+    <AppDownloadCta
+      headline="アプリでも、すれ違ひ通信"
+      note="ホーム画面のアイコンから、いつでもすぐに開けます"
+    />
+  );
+
   const marketingLinkNode = (
     <Pressable
       accessibilityRole="link"
@@ -660,6 +671,7 @@ export function PostGuestScreen() {
               {xSuperpowerMiniStrip}
               {ctaSection}
               {benefitCards}
+              {appDownloadNode}
             </View>
           </View>
         ) : (
@@ -681,6 +693,7 @@ export function PostGuestScreen() {
             </View>
             {ctaSection}
             {benefitCards}
+            {appDownloadNode}
           </View>
         )}
 
@@ -797,6 +810,7 @@ export function PostGuestScreen() {
 
             <View style={styles.bottomCtaFooter}>
               {ctaSection}
+              {appDownloadNode}
               {marketingLinkNode}
             </View>
           </View>
