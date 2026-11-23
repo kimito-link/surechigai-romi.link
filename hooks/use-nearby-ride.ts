@@ -3,9 +3,12 @@
  *
  * チェックインした場所の「この近くの乗りもの・トイレ」を取る（/api/nearby-ride 経由）。
  * ★取れなければ何も出さない（fail-silent）。use-pref-weather と同じ考え方。
+ * ★ストア版（ネイティブ）では相対パス "/api/..." が届かないので、getApiBaseUrl() を前に付ける
+ *   （Web の本番は "" ＝同じオリジン、ネイティブは https://surechigai.kimito.link）。
  */
 import { useEffect, useState } from "react";
 import { roundForNearby, type NearbyRideResult } from "@/lib/nearby-ride/types";
+import { getApiBaseUrl } from "@/lib/api/config";
 
 export function useNearbyRide(
   lat: number | null | undefined,
@@ -22,7 +25,7 @@ export function useNearbyRide(
     const params = new URLSearchParams({ lat: roundForNearby(lat), lng: roundForNearby(lng) });
     void (async () => {
       try {
-        const res = await fetch(`/api/nearby-ride?${params.toString()}`);
+        const res = await fetch(`${getApiBaseUrl()}/api/nearby-ride?${params.toString()}`);
         const data = (await res.json()) as { ok: true; result: NearbyRideResult } | { ok: false };
         if (alive) setResult(data.ok ? data.result : null);
       } catch {
