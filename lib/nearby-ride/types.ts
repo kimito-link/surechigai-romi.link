@@ -20,7 +20,7 @@ export type NearbyRideResult = {
   toilets: NearbyRideItem[];
   /** 公開データの無いサービス（LUUP など）のエリア名 */
   areas: string[];
-  /** データの出典（必ず表示する） */
+  /** データの出典（画面に表示する。CC BY の条件） */
   credits: string[];
 };
 

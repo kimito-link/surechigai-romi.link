@@ -6,7 +6,7 @@
  * 感想などの書き込みはアプリ内に作らず X に任せる（CLAUDE.md 設計原則4: 交流はXに委譲）。
  *
  * ★取れなければセクションごと出さない（補助情報。チェックインの主役を邪魔しない）。
- * ★出典（CC BY など）は必ず表示する。
+ * ★出典（CC BY など）は表示を省かない（ライセンスの条件）。
  */
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import MaterialIcons from "@/lib/icons/material-icons";
