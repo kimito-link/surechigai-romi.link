@@ -195,7 +195,7 @@ jobs:
   submit-ios-build:
     # ★検査が緑になるまで提出しない（これが無いと 529 と同じことが起きる）
     needs: checks
-    runs-on: macos-latest
+    runs-on: xcode-27
     timeout-minutes: 90
     env:
       # ↓↓ app.config.json の値で置換 ↓↓
@@ -225,35 +225,43 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Select Xcode (iOS 26 SDK or later)
+      - name: Select Xcode (Xcode 27 / iOS 27 SDK or later)
+        # ★2026-11-23: build 558 に ITMS-90725 の警告（iOS 26.5 SDK でビルド）。
+        #   2027年4月以降は iOS 27 SDK（Xcode 27）以上でないと App Store に上げられない。
+        #   macos-latest(macOS 26)には Xcode 26.x しか無いので、runs-on を xcode-27 ラベルにした。
+        #   ★旧版の「glob の最後」選びは Xcode_27.app(=27.0) が 27.2 より後に並ぶので使わない。
+        #   ランナー既定の /Applications/Xcode.app が 27 以上ならそれ、無ければ 27 以上の最新を選ぶ。
         run: |
           set -euo pipefail
           echo "--- installed Xcode versions ---"
           ls -1d /Applications/Xcode*.app 2>/dev/null || true
-
+          ver() { /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$1/Contents/Info.plist" 2>/dev/null || echo 0; }
           chosen=""
-          for app in /Applications/Xcode_26*.app /Applications/Xcode_27*.app /Applications/Xcode_28*.app; do
-            [ -d "$app" ] || continue
-            chosen="$app"
-          done
-          if [ -z "$chosen" ]; then
-            for app in $(ls -1d /Applications/Xcode*.app 2>/dev/null | sort -V); do
-              v="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist" 2>/dev/null || echo 0)"
-              major="${v%%.*}"
-              if [ -n "$major" ] && [ "$major" -ge 26 ] 2>/dev/null; then
-                chosen="$app"
-              fi
-            done
+          if [ -d /Applications/Xcode.app ]; then
+            v="$(ver /Applications/Xcode.app)"
+            if [ "${v%%.*}" -ge 27 ] 2>/dev/null; then chosen="$(cd /Applications/Xcode.app && pwd -P)"; fi
           fi
           if [ -z "$chosen" ]; then
-            echo "::error::No Xcode 26+ found on this runner."
-            ls -1d /Applications/Xcode*.app 2>/dev/null
+            cands=""
+            for app in /Applications/Xcode*.app; do
+              [ -d "$app" ] && [ ! -L "$app" ] || continue
+              v="$(ver "$app")"
+              [ "${v%%.*}" -ge 27 ] 2>/dev/null || continue
+              cands="${cands}${v} ${app}"$'\n'
+            done
+            best="$(printf '%s' "$cands" | sort -V | tail -1)"
+            chosen="${best#* }"
+          fi
+          if [ -z "$chosen" ] || [ ! -d "$chosen" ]; then
+            echo "::error::No Xcode 27+ found on this runner (ITMS-90725: iOS 27 SDK required from 2027-04)."
             exit 1
           fi
-          echo "Selecting $chosen"
+          echo "Selecting $chosen ($(ver "$chosen"))"
           sudo xcode-select -s "$chosen/Contents/Developer"
           xcodebuild -version
-          xcrun --sdk iphoneos --show-sdk-version
+          sdk="$(xcrun --sdk iphoneos --show-sdk-version)"
+          echo "iphoneos SDK: $sdk"
+          [ "${sdk%%.*}" -ge 27 ] || { echo "::error::iphoneos SDK $sdk < 27"; exit 1; }
 
       - name: Validate required secrets
         run: |
