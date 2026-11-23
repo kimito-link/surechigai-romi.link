@@ -16,6 +16,9 @@
  */
 import { describe, it, expect, vi } from "vitest";
 
+// フックが API の宛先を決めるために読む設定（expo-constants を引くので node では差し替える）
+vi.mock("@/lib/api/config", () => ({ getApiBaseUrl: () => "" }));
+
 vi.mock("react-native", () => ({
   Platform: { OS: "web" },
   Linking: { canOpenURL: vi.fn(), openURL: vi.fn() },

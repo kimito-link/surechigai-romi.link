@@ -10,6 +10,8 @@
  *   エラー表示もスケルトンも出さずに行ごと消す。天気は補助情報であり、
  *   シートの主役（場所と時刻）を待たせてはいけない。
  */
+// ★ストア版（ネイティブ）では相対パス "/api/..." が届かないので getApiBaseUrl() を前に付ける
+import { getApiBaseUrl } from "@/lib/api/config";
 import { useEffect, useState } from "react";
 import type { PrefWeather } from "@/lib/weather/jma-forecast";
 
@@ -45,7 +47,7 @@ export function usePrefWeather(
 
     void (async () => {
       try {
-        const res = await fetch(`/api/weather?${params.toString()}`);
+        const res = await fetch(`${getApiBaseUrl()}/api/weather?${params.toString()}`);
         const data = (await res.json()) as
           | { ok: true; weather: PrefWeather }
           | { ok: false };

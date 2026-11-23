@@ -10,6 +10,8 @@
  *   呼び出し側は従来どおり「検索結果ページを開くボタン」を出すので、
  *   **失敗しても導線は消えない**。ここが取れたときだけ体験が良くなる。
  */
+// ★ストア版（ネイティブ）では相対パス "/api/..." が届かないので getApiBaseUrl() を前に付ける
+import { getApiBaseUrl } from "@/lib/api/config";
 import { useEffect, useState } from "react";
 import type { PickedLiveStream } from "@/lib/live-camera/live-stream-pick";
 
@@ -46,7 +48,7 @@ export function useLiveStream(
 
     void (async () => {
       try {
-        const res = await fetch(`/api/live-stream?${params.toString()}`);
+        const res = await fetch(`${getApiBaseUrl()}/api/live-stream?${params.toString()}`);
         const data = (await res.json()) as
           | { ok: true; stream: PickedLiveStream }
           | { ok: false };
