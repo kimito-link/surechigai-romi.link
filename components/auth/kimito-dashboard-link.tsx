@@ -1,4 +1,8 @@
 /**
+ * ★正本: kimito-link/kimitolink-linktree の shared/kimito-hub/kimito-dashboard-link.tsx
+ *   姉妹サービス側のこのファイルは自動同期で上書きされる。直接編集せず、正本を直すこと
+ *   （本家 main にマージされると、各姉妹リポに同期 PR が自動で立つ）。
+ *
  * KimitoDashboardLink — 本家マイページ（https://kimito.link/dashboard/）への導線（React 版）。
  *
  * ★出典: kimitolink-linktree/components/HeaderNav.tsx（ログイン中だけ「マイページ」→ /dashboard/）
