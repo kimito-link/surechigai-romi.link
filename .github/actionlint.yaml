@@ -1,0 +1,7 @@
+# actionlint の設定。
+# xcode-27 は GitHub が 2026-10 に出した Xcode 単位のランナーラベル（GitHub ホスト・arm64）。
+# actionlint の版によっては既知ラベルに入っておらず「unknown label」になるので明示する。
+self-hosted-runner:
+  labels:
+    - xcode-27
+    - xcode-27-xlarge
